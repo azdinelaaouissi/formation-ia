@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 03 - Optimisation et Entrainement</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 03 - Optimisation et Entrainement</h1>
+    <p class="subtitle">Cours 3/12 - SGD, Adam, learning rate scheduling et regularisation</p>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================================= -->
+    <h2>1. Le probleme d'optimisation en Deep Learning</h2>
+
+    <div class="definition">
+        Entrainer un reseau de neurones revient a minimiser une <strong>fonction de cout</strong> (loss) L(&theta;) par rapport aux parametres &theta; du modele. Ce probleme est non-convexe, de tres haute dimension, et presente de nombreux defis specifiques.
+    </div>
+
+    <p>En Deep Learning, la surface de la loss (le "paysage de la loss") est extremement complexe. Contrairement a la regression lineaire ou la fonction de cout est convexe avec un unique minimum global, les reseaux de neurones presentent :</p>
+    <ul>
+        <li><strong>Des minima locaux</strong> : points ou le gradient est nul et la courbure est positive dans toutes les directions</li>
+        <li><strong>Des saddle points</strong> (points de selle) : points ou le gradient est nul mais la courbure est positive dans certaines directions et negative dans d'autres</li>
+        <li><strong>Des plateaux</strong> : regions ou le gradient est tres proche de zero sur de grandes etendues</li>
+        <li><strong>Des ravines</strong> : zones ou la loss change rapidement dans une direction mais lentement dans une autre</li>
+    </ul>
+
+    <div class="prof-note">
+        En haute dimension, les saddle points sont beaucoup plus frequents que les minima locaux. Pour un reseau avec des millions de parametres, la probabilite d'avoir un vrai minimum local (courbure positive dans TOUTES les directions) est astronomiquement faible. Le vrai probleme en pratique, ce sont les saddle points et les plateaux.
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="320" viewBox="0 0 700 320">
+            <defs>
+                <linearGradient id="lossGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:0.3"/>
+                    <stop offset="100%" style="stop-color:#0f0f23;stop-opacity:0"/>
+                </linearGradient>
+            </defs>
+            <text x="350" y="20" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Paysage de la Loss (Loss Landscape)</text>
+            <!-- Axes -->
+            <line x1="50" y1="280" x2="660" y2="280" stroke="#555" stroke-width="1"/>
+            <line x1="50" y1="280" x2="50" y2="30" stroke="#555" stroke-width="1"/>
+            <text x="350" y="310" fill="#aaa" font-size="12" text-anchor="middle">Espace des parametres &theta;</text>
+            <text x="25" y="155" fill="#aaa" font-size="12" text-anchor="middle" transform="rotate(-90,25,155)">Loss L(&theta;)</text>
+            <!-- Loss curve -->
+            <path d="M60,80 Q120,200 160,180 Q200,160 220,100 Q250,40 300,120 Q340,180 380,170 Q420,160 450,165 Q480,170 510,100 Q540,30 580,140 Q620,220 650,190" stroke="#ff6b35" stroke-width="2.5" fill="none"/>
+            <!-- Annotations -->
+            <circle cx="160" cy="180" r="5" fill="#00ff88"/>
+            <text x="160" y="210" fill="#00ff88" font-size="11" text-anchor="middle">Minimum local</text>
+            <circle cx="300" cy="120" r="5" fill="#ff4444"/>
+            <text x="300" y="145" fill="#ff4444" font-size="11" text-anchor="middle">Saddle point</text>
+            <circle cx="450" cy="165" r="5" fill="#ffaa00"/>
+            <text x="450" y="195" fill="#ffaa00" font-size="11" text-anchor="middle">Plateau</text>
+            <circle cx="540" cy="30" r="5" fill="#569cd6"/>
+            <text x="555" y="55" fill="#569cd6" font-size="11" text-anchor="middle">Maximum local</text>
+            <!-- Global minimum -->
+            <circle cx="220" cy="100" r="6" fill="#00ff88" stroke="#fff" stroke-width="2"/>
+            <text x="220" y="85" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold">Minimum global</text>
+        </svg>
+    </div>
+
+    <div class="concept-box green">
+        <h4>Bonne nouvelle</h4>
+        <p>Des recherches recentes montrent que pour les grands reseaux, la plupart des minima locaux ont des valeurs de loss tres proches du minimum global. En pratique, trouver un "bon" minimum local suffit generalement a obtenir d'excellentes performances de generalisation.</p>
+    </div>
+
+    <h3>1.1 Formulation mathematique</h3>
+    <p>L'objectif est de trouver les parametres optimaux &theta;* :</p>
+    <div class="code-block">&theta;* = argmin L(&theta;)
+            &theta;
+
+ou L(&theta;) = (1/N) &sum; l(f(x_i; &theta;), y_i)  pour i = 1 a N
+
+avec :
+  - f(x_i; &theta;) : la prediction du modele
+  - y_i : la vraie etiquette
+  - l : la fonction de perte individuelle (ex: cross-entropy)
+  - N : le nombre d'exemples d'entrainement</div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================================= -->
+    <h2>2. Descente de Gradient (Gradient Descent)</h2>
+
+    <div class="definition">
+        La <strong>descente de gradient</strong> est un algorithme iteratif d'optimisation qui met a jour les parametres dans la direction opposee au gradient de la fonction de cout : &theta; &larr; &theta; - &eta; &nabla;L(&theta;), ou &eta; est le <strong>learning rate</strong> (taux d'apprentissage).
+    </div>
+
+    <h3>2.1 Batch Gradient Descent (GD complet)</h3>
+    <p>Le gradient est calcule sur <strong>l'ensemble</strong> du jeu d'entrainement a chaque mise a jour :</p>
+    <div class="code-block">&theta;_{t+1} = &theta;_t - &eta; * (1/N) &sum; &nabla; l(f(x_i; &theta;_t), y_i)</div>
+    <ul>
+        <li><strong>Avantage</strong> : gradient tres precis, convergence stable</li>
+        <li><strong>Inconvenient</strong> : extremement lent pour de grands datasets, ne tient pas en memoire GPU</li>
+    </ul>
+
+    <h3>2.2 Stochastic Gradient Descent (SGD)</h3>
+    <p>Le gradient est calcule sur <strong>un seul exemple</strong> choisi aleatoirement :</p>
+    <div class="code-block">&theta;_{t+1} = &theta;_t - &eta; * &nabla; l(f(x_i; &theta;_t), y_i)    pour un seul i aleatoire</div>
+    <ul>
+        <li><strong>Avantage</strong> : mises a jour tres rapides, peut s'echapper des minima locaux grace au bruit</li>
+        <li><strong>Inconvenient</strong> : gradient tres bruite, convergence oscillante</li>
+    </ul>
+
+    <h3>2.3 Mini-Batch Gradient Descent</h3>
+    <p>Compromis entre les deux : le gradient est calcule sur un <strong>mini-batch</strong> de B exemples :</p>
+    <div class="code-block">&theta;_{t+1} = &theta;_t - &eta; * (1/B) &sum; &nabla; l(f(x_j; &theta;_t), y_j)    pour j dans le mini-batch</div>
+
+    <div class="prof-note">
+        En pratique, quand on parle de "SGD" en Deep Learning, on fait presque toujours reference au mini-batch SGD. La taille typique du batch est de 32, 64, 128 ou 256. Le choix depend de la memoire GPU disponible et de la nature du probleme.
+    </div>
+
+    <table>
+        <tr><th>Methode</th><th>Taille batch</th><th>Vitesse</th><th>Stabilite</th><th>Memoire</th></tr>
+        <tr><td>Batch GD</td><td>N (tout le dataset)</td><td>Tres lent</td><td>Tres stable</td><td>Enorme</td></tr>
+        <tr><td>SGD pur</td><td>1</td><td>Rapide par iteration</td><td>Tres instable</td><td>Minimale</td></tr>
+        <tr><td>Mini-batch SGD</td><td>32-256</td><td>Bon compromis</td><td>Stable</td><td>Raisonnable</td></tr>
+    </table>
+
+    <div class="svg-container">
+        <svg width="500" height="320" viewBox="0 0 500 320">
+            <text x="250" y="20" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Trajectoires : Batch GD vs SGD vs Mini-batch</text>
+            <!-- Contour lines (ellipses) -->
+            <ellipse cx="320" cy="200" rx="150" ry="80" stroke="#333" fill="none" stroke-width="1"/>
+            <ellipse cx="320" cy="200" rx="120" ry="60" stroke="#444" fill="none" stroke-width="1"/>
+            <ellipse cx="320" cy="200" rx="90" ry="40" stroke="#555" fill="none" stroke-width="1"/>
+            <ellipse cx="320" cy="200" rx="60" ry="22" stroke="#666" fill="none" stroke-width="1"/>
+            <ellipse cx="320" cy="200" rx="30" ry="10" stroke="#777" fill="none" stroke-width="1"/>
+            <circle cx="320" cy="200" r="4" fill="#00ff88"/>
+            <text x="320" y="225" fill="#00ff88" font-size="10" text-anchor="middle">Minimum</text>
+            <!-- Batch GD - smooth line -->
+            <path d="M180,120 Q220,140 260,160 Q290,175 310,195" stroke="#569cd6" stroke-width="2.5" fill="none"/>
+            <circle cx="180" cy="120" r="4" fill="#569cd6"/>
+            <!-- SGD - noisy line -->
+            <path d="M180,280 L200,260 L190,250 L215,240 L205,230 L230,220 L220,215 L250,210 L240,205 L270,203 L280,198 L310,200" stroke="#ff4444" stroke-width="1.5" fill="none" stroke-dasharray="3,2"/>
+            <circle cx="180" cy="280" r="4" fill="#ff4444"/>
+            <!-- Mini-batch - moderate -->
+            <path d="M180,160 L210,170 L205,175 L240,182 L235,186 L270,190 L268,193 L300,197 L315,199" stroke="#ffaa00" stroke-width="2" fill="none"/>
+            <circle cx="180" cy="160" r="4" fill="#ffaa00"/>
+            <!-- Legend -->
+            <rect x="30" y="260" width="15" height="3" fill="#569cd6"/>
+            <text x="50" y="264" fill="#569cd6" font-size="11">Batch GD</text>
+            <rect x="30" y="278" width="15" height="3" fill="#ff4444"/>
+            <text x="50" y="282" fill="#ff4444" font-size="11">SGD pur</text>
+            <rect x="30" y="296" width="15" height="3" fill="#ffaa00"/>
+            <text x="50" y="300" fill="#ffaa00" font-size="11">Mini-batch</text>
+        </svg>
+    </div>
+
+    <h3>2.4 Implementation PyTorch de SGD</h3>
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+
+<span class="comment"># Creation d'un modele simple</span>
+model = nn.Sequential(
+    nn.Linear(<span class="number">784</span>, <span class="number">256</span>),
+    nn.ReLU(),
+    nn.Linear(<span class="number">256</span>, <span class="number">10</span>)
+)
+
+<span class="comment"># Optimiseur SGD classique</span>
+optimizer = optim.SGD(model.parameters(), lr=<span class="number">0.01</span>)
+
+<span class="comment"># Boucle d'entrainement basique</span>
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(<span class="number">10</span>):
+    <span class="keyword">for</span> batch_x, batch_y <span class="keyword">in</span> dataloader:
+        optimizer.zero_grad()           <span class="comment"># Reinitialiser les gradients</span>
+        predictions = model(batch_x)    <span class="comment"># Forward pass</span>
+        loss = nn.CrossEntropyLoss()(predictions, batch_y)
+        loss.backward()                 <span class="comment"># Backward pass (calcul des gradients)</span>
+        optimizer.step()                <span class="comment"># Mise a jour des parametres</span></div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================================= -->
+    <h2>3. Momentum et Nesterov Accelerated Gradient</h2>
+
+    <div class="analogy">
+        <h4>Analogie : la balle qui roule</h4>
+        <p>Imaginez une balle qui roule sur le paysage de la loss. Sans momentum, la balle se deplace uniquement en fonction de la pente locale : si la pente change de direction, la balle change immediatement. Avec momentum, la balle a une <strong>inertie</strong> : elle accumule de la vitesse dans une direction et ne change pas de cap instantanement. Cela lui permet de traverser les petites bosses (bruit du SGD) et d'accelerer dans les vallees etroites.</p>
+    </div>
+
+    <h3>3.1 SGD avec Momentum</h3>
+    <div class="definition">
+        Le <strong>momentum</strong> introduit un terme de vitesse v_t qui accumule les gradients passes avec un facteur d'attenuation &beta; (typiquement 0.9) :
+    </div>
+    <div class="code-block">v_t = &beta; * v_{t-1} + &nabla;L(&theta;_t)
+&theta;_{t+1} = &theta;_t - &eta; * v_t
+
+ou :
+  - v_t : le vecteur de vitesse (momentum)
+  - &beta; : le coefficient de momentum (0.9 typiquement)
+  - &eta; : le learning rate</div>
+
+    <div class="effect">Le momentum lisse les oscillations du SGD et accelere la convergence, surtout dans les directions ou le gradient est consistant. Il permet de traverser les plateaux et les saddle points plus rapidement.</div>
+
+    <h3>3.2 Nesterov Accelerated Gradient (NAG)</h3>
+    <p>L'idee de Nesterov est de calculer le gradient non pas a la position actuelle, mais a la position <strong>anticipee</strong> apres l'application du momentum :</p>
+    <div class="code-block">v_t = &beta; * v_{t-1} + &nabla;L(&theta;_t - &eta; * &beta; * v_{t-1})
+&theta;_{t+1} = &theta;_t - &eta; * v_t
+
+Intuition : "regarde devant toi avant de corriger ta trajectoire"</div>
+
+    <div class="prof-note">
+        Nesterov est presque toujours preferable au momentum classique. En PyTorch, il suffit d'ajouter <code>nesterov=True</code> dans l'optimiseur SGD. En pratique, le gain est modeste mais systematique.
+    </div>
+
+    <div class="code-block"><span class="comment"># SGD avec momentum classique</span>
+optimizer_m = optim.SGD(model.parameters(), lr=<span class="number">0.01</span>, momentum=<span class="number">0.9</span>)
+
+<span class="comment"># SGD avec Nesterov momentum</span>
+optimizer_n = optim.SGD(model.parameters(), lr=<span class="number">0.01</span>, momentum=<span class="number">0.9</span>, nesterov=<span class="keyword">True</span>)</div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================================= -->
+    <h2>4. Optimiseurs adaptatifs</h2>
+
+    <p>Les optimiseurs adaptatifs ajustent le learning rate <strong>individuellement pour chaque parametre</strong> en fonction de l'historique de ses gradients. Cela est crucial quand differents parametres necessitent des taux d'apprentissage differents.</p>
+
+    <h3>4.1 AdaGrad (Adaptive Gradient)</h3>
+    <div class="code-block">G_t = G_{t-1} + (&nabla;L(&theta;_t))^2          <span class="comment">(accumulation des gradients carres)</span>
+&theta;_{t+1} = &theta;_t - (&eta; / &radic;(G_t + &epsilon;)) * &nabla;L(&theta;_t)
+
+&epsilon; = 1e-8 (pour eviter la division par zero)</div>
+    <ul>
+        <li><strong>Avantage</strong> : adapte le LR par parametre; bon pour les donnees eparses</li>
+        <li><strong>Inconvenient</strong> : G_t croit indefiniment, le LR tend vers 0 et l'apprentissage s'arrete</li>
+    </ul>
+
+    <h3>4.2 RMSProp (Root Mean Square Propagation)</h3>
+    <p>Propose par Geoffrey Hinton, RMSProp resout le probleme d'AdaGrad en utilisant une <strong>moyenne mobile exponentielle</strong> des gradients carres :</p>
+    <div class="code-block">E[g^2]_t = &beta; * E[g^2]_{t-1} + (1 - &beta;) * (&nabla;L(&theta;_t))^2
+&theta;_{t+1} = &theta;_t - (&eta; / &radic;(E[g^2]_t + &epsilon;)) * &nabla;L(&theta;_t)
+
+&beta; = 0.99 typiquement</div>
+    <div class="effect">Le learning rate ne decroit plus indefiniment, il s'adapte a la courbure locale recente de la loss.</div>
+
+    <h3>4.3 Adam (Adaptive Moment Estimation)</h3>
+    <div class="definition">
+        <strong>Adam</strong> combine les avantages du momentum (premier moment) et de RMSProp (second moment). C'est l'optimiseur le plus utilise en Deep Learning.
+    </div>
+    <div class="code-block"><span class="comment"># Formules d'Adam :</span>
+
+m_t = &beta;_1 * m_{t-1} + (1 - &beta;_1) * g_t          <span class="comment"># Premier moment (moyenne des gradients)</span>
+v_t = &beta;_2 * v_{t-1} + (1 - &beta;_2) * g_t^2        <span class="comment"># Second moment (variance des gradients)</span>
+
+<span class="comment"># Correction du biais (crucial au debut de l'entrainement)</span>
+m_hat_t = m_t / (1 - &beta;_1^t)
+v_hat_t = v_t / (1 - &beta;_2^t)
+
+<span class="comment"># Mise a jour</span>
+&theta;_{t+1} = &theta;_t - &eta; * m_hat_t / (&radic;(v_hat_t) + &epsilon;)
+
+<span class="comment"># Hyperparametres par defaut :</span>
+&beta;_1 = 0.9, &beta;_2 = 0.999, &epsilon; = 1e-8</div>
+
+    <div class="warning">
+        La <strong>correction du biais</strong> (bias correction) est essentielle. Au debut (t petit), m_t et v_t sont biaises vers zero car ils sont initialises a zero. La correction divise par (1 - &beta;^t) qui vaut presque 1 pour t grand mais corrige significativement pour t petit.
+    </div>
+
+    <h3>4.4 AdamW (Adam avec Weight Decay decouple)</h3>
+    <p>Adam standard applique la regularisation L2 dans le gradient, ce qui interfere avec le mecanisme adaptatif. AdamW <strong>decouple</strong> le weight decay de l'optimisation :</p>
+    <div class="code-block"><span class="comment"># Adam standard (weight decay mal applique) :</span>
+g_t = &nabla;L(&theta;_t) + &lambda; * &theta;_t     <span class="comment"># L2 dans le gradient</span>
+
+<span class="comment"># AdamW (weight decay decouple) :</span>
+&theta;_{t+1} = &theta;_t - &eta; * (m_hat_t / (&radic;(v_hat_t) + &epsilon;)) - &eta; * &lambda; * &theta;_t</div>
+
+    <div class="prof-note">
+        AdamW est aujourd'hui considere comme le meilleur choix par defaut pour la plupart des taches de Deep Learning. C'est l'optimiseur utilise pour entrainer GPT, BERT, ViT, et la quasi-totalite des modeles modernes.
+    </div>
+
+    <h3>4.5 Comparaison en PyTorch</h3>
+    <div class="code-block"><span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+
+<span class="comment"># SGD classique</span>
+opt_sgd = optim.SGD(model.parameters(), lr=<span class="number">0.01</span>)
+
+<span class="comment"># SGD avec momentum et Nesterov</span>
+opt_sgd_m = optim.SGD(model.parameters(), lr=<span class="number">0.01</span>, momentum=<span class="number">0.9</span>, nesterov=<span class="keyword">True</span>)
+
+<span class="comment"># RMSProp</span>
+opt_rms = optim.RMSprop(model.parameters(), lr=<span class="number">0.001</span>, alpha=<span class="number">0.99</span>)
+
+<span class="comment"># Adam</span>
+opt_adam = optim.Adam(model.parameters(), lr=<span class="number">0.001</span>, betas=(<span class="number">0.9</span>, <span class="number">0.999</span>))
+
+<span class="comment"># AdamW (le prefere en pratique)</span>
+opt_adamw = optim.AdamW(model.parameters(), lr=<span class="number">0.001</span>, weight_decay=<span class="number">0.01</span>)</div>
+
+    <table>
+        <tr><th>Optimiseur</th><th>LR typique</th><th>Cas d'usage</th><th>Forces</th></tr>
+        <tr><td>SGD + Momentum</td><td>0.01 - 0.1</td><td>Vision (CNN)</td><td>Meilleure generalisation</td></tr>
+        <tr><td>RMSProp</td><td>0.001</td><td>RNN, RL</td><td>Gestion des gradients instables</td></tr>
+        <tr><td>Adam</td><td>0.001</td><td>General</td><td>Convergence rapide</td></tr>
+        <tr><td>AdamW</td><td>0.001</td><td>Transformers, NLP</td><td>Adam + bon weight decay</td></tr>
+    </table>
+
+    <div class="svg-container">
+        <svg width="600" height="300" viewBox="0 0 600 300">
+            <text x="300" y="20" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Trajectoire de convergence : SGD vs Adam</text>
+            <!-- Contour lines -->
+            <ellipse cx="420" cy="160" rx="150" ry="100" stroke="#333" fill="none" stroke-width="1"/>
+            <ellipse cx="420" cy="160" rx="110" ry="70" stroke="#444" fill="none" stroke-width="1"/>
+            <ellipse cx="420" cy="160" rx="70" ry="40" stroke="#555" fill="none" stroke-width="1"/>
+            <ellipse cx="420" cy="160" rx="30" ry="15" stroke="#666" fill="none" stroke-width="1"/>
+            <circle cx="420" cy="160" r="4" fill="#00ff88"/>
+            <!-- SGD trajectory (oscillating) -->
+            <path d="M280,60 L310,100 L290,130 L330,140 L310,155 L360,158 L340,160 L400,160 L410,160" stroke="#ff4444" stroke-width="2" fill="none"/>
+            <circle cx="280" cy="60" r="5" fill="#ff4444"/>
+            <text x="280" y="50" fill="#ff4444" font-size="11" text-anchor="middle">SGD</text>
+            <!-- Adam trajectory (smoother) -->
+            <path d="M280,260 L320,240 L350,220 L380,200 L400,180 L410,168 L418,162" stroke="#569cd6" stroke-width="2" fill="none"/>
+            <circle cx="280" cy="260" r="5" fill="#569cd6"/>
+            <text x="280" y="278" fill="#569cd6" font-size="11" text-anchor="middle">Adam</text>
+            <text x="420" y="185" fill="#00ff88" font-size="10" text-anchor="middle">Optimum</text>
+        </svg>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================================= -->
+    <h2>5. Learning Rate Scheduling</h2>
+
+    <div class="definition">
+        Un <strong>learning rate scheduler</strong> ajuste le learning rate au cours de l'entrainement selon une strategie predefined. L'idee est de commencer avec un LR eleve pour explorer rapidement, puis de le reduire pour affiner la convergence.
+    </div>
+
+    <h3>5.1 StepLR</h3>
+    <p>Reduit le LR d'un facteur &gamma; tous les <em>step_size</em> epochs :</p>
+    <div class="code-block"><span class="comment"># LR divise par 10 toutes les 30 epochs</span>
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=<span class="number">30</span>, gamma=<span class="number">0.1</span>)
+
+<span class="comment"># lr = lr_initial * gamma^(epoch // step_size)</span></div>
+
+    <h3>5.2 CosineAnnealingLR</h3>
+    <p>Fait suivre au LR une courbe cosinus, redescendant de &eta;_max a &eta;_min :</p>
+    <div class="code-block"><span class="comment"># Cosine annealing sur T_max epochs</span>
+scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=<span class="number">100</span>, eta_min=<span class="number">1e-6</span>)
+
+<span class="comment"># lr_t = eta_min + 0.5 * (eta_max - eta_min) * (1 + cos(pi * t / T_max))</span></div>
+
+    <h3>5.3 OneCycleLR</h3>
+    <p>Strategie proposee par Leslie Smith : le LR monte d'abord (warmup) puis descend, formant un seul cycle :</p>
+    <div class="code-block"><span class="comment"># OneCycleLR avec warmup integre</span>
+scheduler = optim.lr_scheduler.OneCycleLR(
+    optimizer,
+    max_lr=<span class="number">0.01</span>,
+    total_steps=<span class="number">1000</span>,
+    pct_start=<span class="number">0.3</span>,    <span class="comment"># 30% du temps pour le warmup</span>
+    anneal_strategy=<span class="string">'cos'</span>
+)</div>
+
+    <h3>5.4 ReduceLROnPlateau</h3>
+    <p>Reduit le LR quand une metrique stagne pendant un certain nombre d'epochs :</p>
+    <div class="code-block"><span class="comment"># Reduction quand la validation loss stagne</span>
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode=<span class="string">'min'</span>,       <span class="comment"># reduire quand la metrique diminue</span>
+    factor=<span class="number">0.1</span>,      <span class="comment"># LR *= 0.1</span>
+    patience=<span class="number">10</span>,     <span class="comment"># attendre 10 epochs sans amelioration</span>
+    min_lr=<span class="number">1e-7</span>
+)
+
+<span class="comment"># Utilisation (noter: step() prend la metrique en argument)</span>
+scheduler.step(val_loss)</div>
+
+    <h3>5.5 Warmup</h3>
+    <p>Le warmup consiste a demarrer avec un LR tres bas et l'augmenter lineairement pendant les premieres iterations. C'est essentiel pour stabiliser le debut de l'entrainement, surtout avec Adam et les grands batch sizes.</p>
+    <div class="code-block"><span class="comment"># Warmup lineaire + cosine decay (utilise par les Transformers)</span>
+<span class="keyword">def</span> <span class="function">get_lr_lambda</span>(current_step, warmup_steps, total_steps):
+    <span class="keyword">if</span> current_step < warmup_steps:
+        <span class="keyword">return</span> current_step / warmup_steps
+    progress = (current_step - warmup_steps) / (total_steps - warmup_steps)
+    <span class="keyword">return</span> <span class="number">0.5</span> * (<span class="number">1.0</span> + math.cos(math.pi * progress))
+
+scheduler = optim.lr_scheduler.LambdaLR(
+    optimizer,
+    lr_lambda=<span class="keyword">lambda</span> step: get_lr_lambda(step, <span class="number">1000</span>, <span class="number">50000</span>)
+)</div>
+
+    <div class="svg-container">
+        <svg width="700" height="280" viewBox="0 0 700 280">
+            <text x="350" y="20" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Strategies de Learning Rate Scheduling</text>
+            <!-- Axes -->
+            <line x1="60" y1="240" x2="660" y2="240" stroke="#555" stroke-width="1"/>
+            <line x1="60" y1="240" x2="60" y2="40" stroke="#555" stroke-width="1"/>
+            <text x="360" y="270" fill="#aaa" font-size="11" text-anchor="middle">Epochs</text>
+            <text x="30" y="140" fill="#aaa" font-size="11" text-anchor="middle" transform="rotate(-90,30,140)">Learning Rate</text>
+            <!-- StepLR -->
+            <path d="M80,80 L250,80 L250,150 L420,150 L420,210 L600,210" stroke="#ff4444" stroke-width="2" fill="none"/>
+            <!-- CosineAnnealing -->
+            <path d="M80,80 Q180,85 250,130 Q320,180 400,210 Q480,230 560,235 L640,236" stroke="#569cd6" stroke-width="2" fill="none"/>
+            <!-- OneCycleLR (warmup + decay) -->
+            <path d="M80,200 L180,80 Q300,82 400,160 Q500,220 600,235" stroke="#00ff88" stroke-width="2" fill="none"/>
+            <!-- Legend -->
+            <line x1="80" y1="255" x2="100" y2="255" stroke="#ff4444" stroke-width="2"/>
+            <text x="105" y="259" fill="#ff4444" font-size="10">StepLR</text>
+            <line x1="200" y1="255" x2="220" y2="255" stroke="#569cd6" stroke-width="2"/>
+            <text x="225" y="259" fill="#569cd6" font-size="10">CosineAnnealing</text>
+            <line x1="370" y1="255" x2="390" y2="255" stroke="#00ff88" stroke-width="2"/>
+            <text x="395" y="259" fill="#00ff88" font-size="10">OneCycleLR</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        En pratique, la combinaison <strong>AdamW + CosineAnnealing avec warmup</strong> est devenue la norme pour les Transformers et le NLP. Pour la vision par ordinateur avec des CNN, <strong>SGD + Momentum + StepLR</strong> donne souvent les meilleurs resultats en generalisation.
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================================= -->
+    <h2>6. Regularisation</h2>
+
+    <div class="definition">
+        La <strong>regularisation</strong> designe l'ensemble des techniques qui empechent le modele de surapprendre (overfitting) les donnees d'entrainement. Elle penalise la complexite du modele pour ameliorer sa capacite de generalisation.
+    </div>
+
+    <h3>6.1 Regularisation L2 (Ridge / Weight Decay)</h3>
+    <p>Ajoute un terme de penalite proportionnel a la norme L2 des poids :</p>
+    <div class="code-block">L_reg(&theta;) = L(&theta;) + (&lambda;/2) * ||&theta;||_2^2
+
+&nabla;L_reg = &nabla;L(&theta;) + &lambda; * &theta;
+
+En PyTorch, le weight decay est integre a l'optimiseur :
+optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=0.01)</div>
+    <div class="effect">Pousse les poids vers zero, empechant les grandes valeurs. Les features peu utiles recoivent des poids proches de zero.</div>
+
+    <h3>6.2 Regularisation L1 (Lasso)</h3>
+    <div class="code-block">L_reg(&theta;) = L(&theta;) + &lambda; * ||&theta;||_1
+
+<span class="comment"># Pas d'option native dans les optimiseurs PyTorch</span>
+<span class="comment"># On l'ajoute manuellement :</span>
+l1_lambda = <span class="number">0.001</span>
+l1_norm = sum(p.abs().sum() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+loss = loss + l1_lambda * l1_norm</div>
+    <div class="effect">Produit des poids exactement nuls (parcimonie / sparsity). Utile pour la selection de features.</div>
+
+    <h3>6.3 Dropout</h3>
+    <div class="definition">
+        Le <strong>Dropout</strong> desactive aleatoirement une fraction p des neurones pendant l'entrainement. A chaque forward pass, un masque binaire aleatoire est applique. A l'inference, tous les neurones sont actifs mais les sorties sont multipliees par (1-p) pour compenser.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="comment"># Modele avec Dropout</span>
+model = nn.Sequential(
+    nn.Linear(<span class="number">784</span>, <span class="number">512</span>),
+    nn.ReLU(),
+    nn.Dropout(p=<span class="number">0.5</span>),      <span class="comment"># 50% des neurones desactives</span>
+    nn.Linear(<span class="number">512</span>, <span class="number">256</span>),
+    nn.ReLU(),
+    nn.Dropout(p=<span class="number">0.3</span>),      <span class="comment"># 30% des neurones desactives</span>
+    nn.Linear(<span class="number">256</span>, <span class="number">10</span>)
+)
+
+<span class="comment"># IMPORTANT : passer en mode eval pour l'inference !</span>
+model.eval()   <span class="comment"># Desactive le dropout</span>
+model.train()  <span class="comment"># Reactive le dropout</span></div>
+
+    <div class="warning">
+        Oublier de passer le modele en mode <code>model.eval()</code> avant l'inference est une erreur classique. Le dropout sera toujours actif et les predictions seront aleatoires et sous-optimales.
+    </div>
+
+    <div class="svg-container">
+        <svg width="600" height="220" viewBox="0 0 600 220">
+            <text x="300" y="20" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Dropout : Entrainement vs Inference</text>
+            <!-- Training -->
+            <text x="150" y="45" fill="#569cd6" font-size="12" text-anchor="middle" font-weight="bold">Entrainement (dropout actif)</text>
+            <!-- Neurons layer 1 -->
+            <circle cx="80" cy="80" r="12" fill="#ff6b35" opacity="1"/>
+            <circle cx="120" cy="80" r="12" fill="#ff6b35" opacity="0.2" stroke="#ff4444" stroke-width="2" stroke-dasharray="3,3"/>
+            <circle cx="160" cy="80" r="12" fill="#ff6b35" opacity="1"/>
+            <circle cx="200" cy="80" r="12" fill="#ff6b35" opacity="0.2" stroke="#ff4444" stroke-width="2" stroke-dasharray="3,3"/>
+            <circle cx="240" cy="80" r="12" fill="#ff6b35" opacity="1"/>
+            <!-- Neurons layer 2 -->
+            <circle cx="100" cy="150" r="12" fill="#569cd6" opacity="0.2" stroke="#ff4444" stroke-width="2" stroke-dasharray="3,3"/>
+            <circle cx="150" cy="150" r="12" fill="#569cd6" opacity="1"/>
+            <circle cx="200" cy="150" r="12" fill="#569cd6" opacity="1"/>
+            <!-- Connections (only active) -->
+            <line x1="80" y1="92" x2="150" y2="138" stroke="#555" stroke-width="1"/>
+            <line x1="80" y1="92" x2="200" y2="138" stroke="#555" stroke-width="1"/>
+            <line x1="160" y1="92" x2="150" y2="138" stroke="#555" stroke-width="1"/>
+            <line x1="160" y1="92" x2="200" y2="138" stroke="#555" stroke-width="1"/>
+            <line x1="240" y1="92" x2="150" y2="138" stroke="#555" stroke-width="1"/>
+            <line x1="240" y1="92" x2="200" y2="138" stroke="#555" stroke-width="1"/>
+            <text x="120" y="190" fill="#ff4444" font-size="10" text-anchor="middle">X = desactive</text>
+            <!-- Inference -->
+            <text x="450" y="45" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">Inference (tous actifs)</text>
+            <circle cx="380" cy="80" r="12" fill="#ff6b35"/>
+            <circle cx="420" cy="80" r="12" fill="#ff6b35"/>
+            <circle cx="460" cy="80" r="12" fill="#ff6b35"/>
+            <circle cx="500" cy="80" r="12" fill="#ff6b35"/>
+            <circle cx="540" cy="80" r="12" fill="#ff6b35"/>
+            <circle cx="400" cy="150" r="12" fill="#569cd6"/>
+            <circle cx="450" cy="150" r="12" fill="#569cd6"/>
+            <circle cx="500" cy="150" r="12" fill="#569cd6"/>
+            <!-- All connections -->
+            <line x1="380" y1="92" x2="400" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="380" y1="92" x2="450" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="380" y1="92" x2="500" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="420" y1="92" x2="400" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="420" y1="92" x2="450" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="420" y1="92" x2="500" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="460" y1="92" x2="400" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="460" y1="92" x2="450" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="460" y1="92" x2="500" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="500" y1="92" x2="400" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="500" y1="92" x2="450" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="500" y1="92" x2="500" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="540" y1="92" x2="400" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="540" y1="92" x2="450" y2="138" stroke="#555" stroke-width="0.7"/>
+            <line x1="540" y1="92" x2="500" y2="138" stroke="#555" stroke-width="0.7"/>
+            <text x="450" y="190" fill="#00ff88" font-size="10" text-anchor="middle">Poids x (1-p)</text>
+        </svg>
+    </div>
+
+    <h3>6.4 Data Augmentation</h3>
+    <p>Bien que ce ne soit pas de la regularisation au sens strict, la <strong>data augmentation</strong> est la technique la plus efficace contre le surapprentissage :</p>
+    <div class="code-block"><span class="keyword">from</span> torchvision <span class="keyword">import</span> transforms
+
+train_transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(p=<span class="number">0.5</span>),
+    transforms.RandomRotation(degrees=<span class="number">15</span>),
+    transforms.RandomCrop(<span class="number">32</span>, padding=<span class="number">4</span>),
+    transforms.ColorJitter(brightness=<span class="number">0.2</span>, contrast=<span class="number">0.2</span>),
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.5</span>,), (<span class="number">0.5</span>,))
+])</div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================================= -->
+    <h2>7. Batch Normalization en detail</h2>
+
+    <div class="definition">
+        La <strong>Batch Normalization</strong> (BatchNorm) normalise les activations de chaque couche en soustrayant la moyenne et divisant par l'ecart-type du mini-batch, puis applique une transformation affine apprise. Proposee par Ioffe & Szegedy en 2015.
+    </div>
+
+    <h3>7.1 Le probleme : Internal Covariate Shift</h3>
+    <p>Lorsqu'on empile de nombreuses couches, la distribution des activations de chaque couche change a chaque mise a jour des parametres des couches precedentes. Les couches suivantes doivent constamment s'adapter a des distributions changeantes, ce qui ralentit et destabilise l'entrainement.</p>
+
+    <h3>7.2 Formules de BatchNorm</h3>
+    <div class="code-block"><span class="comment"># Pour un mini-batch B = {x_1, ..., x_B} :</span>
+
+<span class="comment"># 1. Calculer la moyenne du mini-batch</span>
+&mu;_B = (1/B) &sum; x_i
+
+<span class="comment"># 2. Calculer la variance du mini-batch</span>
+&sigma;^2_B = (1/B) &sum; (x_i - &mu;_B)^2
+
+<span class="comment"># 3. Normaliser</span>
+x_hat_i = (x_i - &mu;_B) / &radic;(&sigma;^2_B + &epsilon;)
+
+<span class="comment"># 4. Transformation affine apprise (scale & shift)</span>
+y_i = &gamma; * x_hat_i + &beta;
+
+<span class="comment"># &gamma; et &beta; sont des parametres appris par le reseau</span>
+<span class="comment"># Ils permettent au reseau de "defaire" la normalisation si necessaire</span></div>
+
+    <h3>7.3 Train vs Eval</h3>
+    <div class="concept-box blue">
+        <h4>Mode entrainement vs inference</h4>
+        <ul>
+            <li><strong>Entrainement</strong> : &mu; et &sigma; sont calcules sur le mini-batch courant. Des moyennes mobiles exponentielles (running_mean, running_var) sont mises a jour.</li>
+            <li><strong>Inference</strong> : &mu; et &sigma; utilisent les statistiques accumulees (running_mean, running_var) car on peut avoir un seul exemple (pas de batch).</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="comment"># BatchNorm dans un MLP</span>
+model = nn.Sequential(
+    nn.Linear(<span class="number">784</span>, <span class="number">256</span>),
+    nn.BatchNorm1d(<span class="number">256</span>),     <span class="comment"># BN pour tenseurs 1D (apres Linear)</span>
+    nn.ReLU(),
+    nn.Linear(<span class="number">256</span>, <span class="number">128</span>),
+    nn.BatchNorm1d(<span class="number">128</span>),
+    nn.ReLU(),
+    nn.Linear(<span class="number">128</span>, <span class="number">10</span>)
+)
+
+<span class="comment"># BatchNorm dans un CNN</span>
+conv_block = nn.Sequential(
+    nn.Conv2d(<span class="number">3</span>, <span class="number">64</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+    nn.BatchNorm2d(<span class="number">64</span>),      <span class="comment"># BN pour tenseurs 2D (apres Conv2d)</span>
+    nn.ReLU()
+)</div>
+
+    <h3>7.4 Layer Normalization</h3>
+    <p>Alternative a BatchNorm qui normalise sur les <strong>features</strong> plutot que sur le batch. Utilisee dans les Transformers car elle ne depend pas de la taille du batch :</p>
+    <div class="code-block"><span class="comment"># LayerNorm normalise sur la derniere dimension</span>
+layer_norm = nn.LayerNorm(normalized_shape=<span class="number">256</span>)
+
+<span class="comment"># Comparaison</span>
+<span class="comment"># BatchNorm : normalise sur le batch (dimension 0)</span>
+<span class="comment"># LayerNorm : normalise sur les features (derniere dimension)</span></div>
+
+    <div class="prof-note">
+        BatchNorm est a utiliser avec les CNN et les MLP. LayerNorm est a utiliser avec les Transformers et les RNN. La regle est simple : si votre batch size est variable ou petit, preferez LayerNorm.
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================================= -->
+    <h2>8. Initialisation des poids</h2>
+
+    <p>L'initialisation des poids est critique pour le bon demarrage de l'entrainement. Une mauvaise initialisation peut mener a des gradients qui explosent ou disparaissent des les premieres iterations.</p>
+
+    <h3>8.1 Pourquoi pas zeros ?</h3>
+    <div class="warning">
+        Initialiser tous les poids a zero est catastrophique. Tous les neurones d'une couche calculent la meme chose, recoivent le meme gradient, et restent identiques a jamais. C'est le <strong>probleme de symetrie</strong> : le reseau ne peut pas apprendre des representations differentes.
+    </div>
+
+    <h3>8.2 Xavier / Glorot (2010)</h3>
+    <div class="definition">
+        L'initialisation de <strong>Xavier</strong> (pour les activations lineaires, sigmoide, tanh) initialise les poids selon :
+        W ~ U(-a, a) ou N(0, &sigma;^2) avec a = &radic;(6 / (n_in + n_out)) et &sigma;^2 = 2 / (n_in + n_out).
+        L'objectif est de maintenir la variance des activations constante a travers les couches.
+    </div>
+
+    <h3>8.3 He / Kaiming (2015)</h3>
+    <div class="definition">
+        L'initialisation de <strong>He</strong> (pour ReLU et ses variantes) compense le fait que ReLU annule la moitie des activations :
+        W ~ N(0, &sigma;^2) avec &sigma;^2 = 2 / n_in.
+        C'est l'initialisation par defaut recommandee pour les reseaux utilisant ReLU.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.nn.init <span class="keyword">as</span> init
+
+<span class="comment"># Initialisation Xavier (pour tanh/sigmoid)</span>
+init.xavier_uniform_(layer.weight)
+init.xavier_normal_(layer.weight)
+
+<span class="comment"># Initialisation He/Kaiming (pour ReLU)</span>
+init.kaiming_uniform_(layer.weight, nonlinearity=<span class="string">'relu'</span>)
+init.kaiming_normal_(layer.weight, nonlinearity=<span class="string">'relu'</span>)
+
+<span class="comment"># Initialiser un modele complet</span>
+<span class="keyword">def</span> <span class="function">init_weights</span>(m):
+    <span class="keyword">if</span> isinstance(m, nn.Linear):
+        init.kaiming_normal_(m.weight, nonlinearity=<span class="string">'relu'</span>)
+        <span class="keyword">if</span> m.bias <span class="keyword">is not None</span>:
+            init.zeros_(m.bias)
+    <span class="keyword">elif</span> isinstance(m, nn.Conv2d):
+        init.kaiming_normal_(m.weight, mode=<span class="string">'fan_out'</span>, nonlinearity=<span class="string">'relu'</span>)
+
+model.apply(init_weights)</div>
+
+    <table>
+        <tr><th>Initialisation</th><th>Activation cible</th><th>Formule (variance)</th></tr>
+        <tr><td>Xavier Uniform</td><td>tanh, sigmoid, lineaire</td><td>U(-a, a), a = &radic;(6/(n_in+n_out))</td></tr>
+        <tr><td>Xavier Normal</td><td>tanh, sigmoid, lineaire</td><td>N(0, 2/(n_in+n_out))</td></tr>
+        <tr><td>Kaiming Uniform</td><td>ReLU, LeakyReLU</td><td>U(-a, a), a = &radic;(6/n_in)</td></tr>
+        <tr><td>Kaiming Normal</td><td>ReLU, LeakyReLU</td><td>N(0, 2/n_in)</td></tr>
+    </table>
+
+    <div class="prof-note">
+        En pratique, PyTorch utilise deja Kaiming Uniform par defaut pour les couches <code>nn.Linear</code> et <code>nn.Conv2d</code>. Vous n'avez generalement pas besoin de reinitialiser manuellement, sauf si vous utilisez des activations non standard.
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================================= -->
+    <h2>9. Problemes de gradient</h2>
+
+    <h3>9.1 Vanishing Gradients (gradients qui disparaissent)</h3>
+    <div class="definition">
+        Le <strong>vanishing gradient</strong> se produit quand les gradients deviennent exponentiellement petits en remontant les couches lors de la retropropagation. Les couches proches de l'entree ne recoivent presque plus de signal de gradient et n'apprennent plus.
+    </div>
+    <p>Causes principales :</p>
+    <ul>
+        <li>Fonctions d'activation saturantes (sigmoid, tanh) dont les derivees sont proches de 0 aux extremes</li>
+        <li>Reseaux tres profonds sans techniques de stabilisation</li>
+        <li>Mauvaise initialisation des poids</li>
+    </ul>
+    <p><strong>Solutions :</strong></p>
+    <ul>
+        <li>Utiliser ReLU ou ses variantes (LeakyReLU, ELU, GELU)</li>
+        <li>Batch Normalization</li>
+        <li>Connexions residuelles (skip connections)</li>
+        <li>Initialisation He/Kaiming</li>
+    </ul>
+
+    <h3>9.2 Exploding Gradients (gradients qui explosent)</h3>
+    <div class="definition">
+        L'<strong>exploding gradient</strong> est le probleme inverse : les gradients deviennent exponentiellement grands, causant des mises a jour de poids enormes et une divergence de l'entrainement. Tres frequent dans les RNN.
+    </div>
+    <p><strong>Solutions :</strong></p>
+    <ul>
+        <li><strong>Gradient Clipping</strong> : technique la plus directe</li>
+        <li>Batch Normalization</li>
+        <li>Reduction du learning rate</li>
+        <li>Meilleure initialisation</li>
+    </ul>
+
+    <h3>9.3 Gradient Clipping</h3>
+    <div class="code-block"><span class="comment"># Gradient Clipping par norme (le plus courant)</span>
+<span class="comment"># Limite la norme globale du gradient a max_norm</span>
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">1.0</span>)
+
+<span class="comment"># Gradient Clipping par valeur</span>
+<span class="comment"># Clipe chaque composante du gradient dans [-clip_value, clip_value]</span>
+torch.nn.utils.clip_grad_value_(model.parameters(), clip_value=<span class="number">0.5</span>)
+
+<span class="comment"># Utilisation dans la boucle d'entrainement :</span>
+optimizer.zero_grad()
+loss.backward()
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">1.0</span>)  <span class="comment"># AVANT step()</span>
+optimizer.step()</div>
+
+    <h3>9.4 Skip Connections (introduction)</h3>
+    <p>Les connexions residuelles permettent au gradient de "sauter" des couches, resolvant elegamment le vanishing gradient :</p>
+    <div class="code-block"><span class="comment"># Bloc residuel simple</span>
+<span class="keyword">class</span> <span class="function">ResidualBlock</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, dim):
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Linear(dim, dim),
+            nn.BatchNorm1d(dim),
+            nn.ReLU(),
+            nn.Linear(dim, dim),
+            nn.BatchNorm1d(dim)
+        )
+        self.relu = nn.ReLU()
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        residual = x                  <span class="comment"># Sauvegarder l'entree</span>
+        out = self.block(x)           <span class="comment"># Transformation</span>
+        out = out + residual          <span class="comment"># Skip connection !</span>
+        <span class="keyword">return</span> self.relu(out)</div>
+
+    <div class="concept-box green">
+        <h4>Pourquoi les skip connections fonctionnent ?</h4>
+        <p>Si F(x) est la transformation du bloc, la sortie est y = F(x) + x. Le gradient est &nabla;y = &nabla;F(x) + 1. Meme si &nabla;F(x) tend vers zero, le gradient est au minimum 1 grace au terme identite. Le gradient ne peut plus disparaitre !</p>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================================= -->
+    <h2>10. Recapitulatif : boucle d'entrainement complete en PyTorch</h2>
+
+    <p>Voici un exemple complet qui integre toutes les notions vues dans ce cours : optimiseur, scheduler, regularisation, gradient clipping, et bonnes pratiques.</p>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 1. CONFIGURATION</span>
+<span class="comment"># ============================================</span>
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+EPOCHS = <span class="number">50</span>
+BATCH_SIZE = <span class="number">128</span>
+LR = <span class="number">0.001</span>
+WEIGHT_DECAY = <span class="number">0.01</span>
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 2. DONNEES avec augmentation</span>
+<span class="comment"># ============================================</span>
+train_transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomCrop(<span class="number">28</span>, padding=<span class="number">4</span>),
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.1307</span>,), (<span class="number">0.3081</span>,))
+])
+
+test_transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.1307</span>,), (<span class="number">0.3081</span>,))
+])
+
+train_dataset = datasets.MNIST(<span class="string">'./data'</span>, train=<span class="keyword">True</span>,
+                               download=<span class="keyword">True</span>, transform=train_transform)
+test_dataset = datasets.MNIST(<span class="string">'./data'</span>, train=<span class="keyword">False</span>,
+                              transform=test_transform)
+
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=<span class="keyword">True</span>)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 3. MODELE avec BatchNorm et Dropout</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">class</span> <span class="function">MLP</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        super().__init__()
+        self.flatten = nn.Flatten()
+        self.network = nn.Sequential(
+            nn.Linear(<span class="number">784</span>, <span class="number">512</span>),
+            nn.BatchNorm1d(<span class="number">512</span>),
+            nn.ReLU(),
+            nn.Dropout(<span class="number">0.3</span>),
+            nn.Linear(<span class="number">512</span>, <span class="number">256</span>),
+            nn.BatchNorm1d(<span class="number">256</span>),
+            nn.ReLU(),
+            nn.Dropout(<span class="number">0.2</span>),
+            nn.Linear(<span class="number">256</span>, <span class="number">10</span>)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        x = self.flatten(x)
+        <span class="keyword">return</span> self.network(x)
+
+model = MLP().to(device)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 4. OPTIMISEUR + SCHEDULER</span>
+<span class="comment"># ============================================</span>
+optimizer = optim.AdamW(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
+criterion = nn.CrossEntropyLoss()
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 5. BOUCLE D'ENTRAINEMENT</span>
+<span class="comment"># ============================================</span>
+best_val_acc = <span class="number">0.0</span>
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(EPOCHS):
+    <span class="comment"># --- Phase d'entrainement ---</span>
+    model.train()
+    train_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">for</span> batch_x, batch_y <span class="keyword">in</span> train_loader:
+        batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+
+        optimizer.zero_grad()
+        outputs = model(batch_x)
+        loss = criterion(outputs, batch_y)
+        loss.backward()
+
+        <span class="comment"># Gradient clipping</span>
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">1.0</span>)
+
+        optimizer.step()
+
+        train_loss += loss.item() * batch_x.size(<span class="number">0</span>)
+        _, predicted = outputs.max(<span class="number">1</span>)
+        total += batch_y.size(<span class="number">0</span>)
+        correct += predicted.eq(batch_y).sum().item()
+
+    train_loss /= total
+    train_acc = <span class="number">100.</span> * correct / total
+
+    <span class="comment"># --- Phase de validation ---</span>
+    model.eval()
+    val_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="keyword">for</span> batch_x, batch_y <span class="keyword">in</span> test_loader:
+            batch_x, batch_y = batch_x.to(device), batch_y.to(device)
+            outputs = model(batch_x)
+            loss = criterion(outputs, batch_y)
+
+            val_loss += loss.item() * batch_x.size(<span class="number">0</span>)
+            _, predicted = outputs.max(<span class="number">1</span>)
+            total += batch_y.size(<span class="number">0</span>)
+            correct += predicted.eq(batch_y).sum().item()
+
+    val_loss /= total
+    val_acc = <span class="number">100.</span> * correct / total
+
+    <span class="comment"># Mise a jour du scheduler</span>
+    scheduler.step()
+
+    <span class="comment"># Sauvegarde du meilleur modele</span>
+    <span class="keyword">if</span> val_acc > best_val_acc:
+        best_val_acc = val_acc
+        torch.save(model.state_dict(), <span class="string">'best_model.pth'</span>)
+
+    current_lr = optimizer.param_groups[<span class="number">0</span>][<span class="string">'lr'</span>]
+    print(<span class="string">f'Epoch {epoch+1}/{EPOCHS} | '</span>
+          <span class="string">f'Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.2f}% | '</span>
+          <span class="string">f'Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.2f}% | '</span>
+          <span class="string">f'LR: {current_lr:.6f}'</span>)
+
+print(<span class="string">f'\nMeilleure accuracy en validation : {best_val_acc:.2f}%'</span>)</div>
+
+    <div class="output-block">Epoch 1/50 | Train Loss: 0.3421 | Train Acc: 89.54% | Val Loss: 0.0812 | Val Acc: 97.42% | LR: 0.000998
+Epoch 2/50 | Train Loss: 0.1245 | Train Acc: 96.12% | Val Loss: 0.0654 | Val Acc: 97.89% | LR: 0.000990
+...
+Epoch 50/50 | Train Loss: 0.0198 | Train Acc: 99.42% | Val Loss: 0.0312 | Val Acc: 98.95% | LR: 0.000000
+
+Meilleure accuracy en validation : 98.95%</div>
+
+    <div class="concept-box">
+        <h4>Checklist d'entrainement</h4>
+        <ol>
+            <li>Choisir l'optimiseur : <strong>AdamW</strong> en general, SGD+Momentum pour les CNN en vision</li>
+            <li>Choisir le LR initial : 0.001 pour Adam, 0.01-0.1 pour SGD</li>
+            <li>Ajouter un <strong>scheduler</strong> : CosineAnnealing ou OneCycleLR</li>
+            <li>Ajouter un <strong>warmup</strong> pour les grands modeles</li>
+            <li>Regulariser : <strong>weight decay</strong> (0.01), <strong>Dropout</strong> (0.1-0.5)</li>
+            <li>Utiliser <strong>BatchNorm</strong> apres chaque couche (avant l'activation)</li>
+            <li><strong>Gradient clipping</strong> si instabilite (max_norm=1.0)</li>
+            <li>Sauvegarder le meilleur modele sur la validation</li>
+            <li>Toujours mettre <strong>model.eval()</strong> avant l'inference</li>
+            <li>Utiliser <strong>torch.no_grad()</strong> pendant la validation</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        L'optimisation est un art autant qu'une science. Les hyperparametres par defaut d'Adam (lr=0.001, betas=(0.9, 0.999)) fonctionnent remarquablement bien dans la majorite des cas. Commencez par les valeurs par defaut et ajustez uniquement si necessaire. La recherche d'hyperparametres systematique (grid search, random search, Bayesian optimization) sera abordee dans un cours ulterieur.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_02_reseaux_neurones.html">&larr; Cours precedent : Reseaux de neurones</a>
+        <a href="dl_04_cnn.html">Cours suivant : CNN &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

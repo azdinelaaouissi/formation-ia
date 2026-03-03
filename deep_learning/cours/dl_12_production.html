@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 12 - Deploiement et Production</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 12 - Deploiement et Production</h1>
+    <p class="subtitle">Cours 12/12 - ONNX, quantization, optimisation et MLOps pour le Deep Learning</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================================ -->
+    <h2>1. Du prototype a la production</h2>
+
+    <p>La majorite des projets de Deep Learning echouent lors du passage en production. Un modele qui fonctionne dans un notebook Jupyter est tres different d'un modele qui sert des millions de requetes en temps reel. Ce dernier cours couvre toutes les etapes necessaires pour deployer un modele de maniere fiable et efficace.</p>
+
+    <div class="analogy">
+        <h4>Analogie : le prototype de voiture</h4>
+        <p>Entrainer un modele de DL, c'est comme construire un prototype de voiture dans un garage. Le prototype roule, mais il n'est pas pret pour la production en serie : il faut l'optimiser pour le cout, la fiabilite, la maintenance, la securite et la scalabilite. Le passage du prototype a la production est un metier a part entiere.</p>
+    </div>
+
+    <h3>1.1 Les defis du deploiement</h3>
+
+    <div class="concept-box">
+        <h4>Les 5 defis majeurs</h4>
+        <ul>
+            <li><strong>Latence</strong> : Un modele en production doit repondre en quelques millisecondes (10-100ms typiquement). Un ResNet-152 prend ~50ms sur GPU mais ~500ms sur CPU.</li>
+            <li><strong>Memoire</strong> : GPT-3 necessite ~350 Go de VRAM en FP16. Meme un modele "moyen" peut necessiter plusieurs Go.</li>
+            <li><strong>Cout</strong> : Les GPU en cloud coutent $1-30/heure. Optimiser le modele reduit directement les couts d'inference.</li>
+            <li><strong>Scalabilite</strong> : Servir 10 requetes/s est trivial. Servir 10 000 requetes/s necessite une architecture robuste.</li>
+            <li><strong>Reproductibilite</strong> : Le modele doit produire les memes resultats en production qu'en developpement.</li>
+        </ul>
+    </div>
+
+    <h3>1.2 Le pipeline de production</h3>
+
+    <div class="svg-container">
+        <svg width="880" height="200" viewBox="0 0 880 200">
+            <text x="440" y="20" fill="#ff6b35" font-size="15" font-weight="bold" text-anchor="middle">Pipeline : Du Notebook a la Production</text>
+
+            <!-- Step 1 -->
+            <rect x="10" y="50" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="75" y="75" fill="#ff6b35" font-size="11" text-anchor="middle" font-weight="bold">1. Entrainement</text>
+            <text x="75" y="95" fill="#aaa" font-size="9" text-anchor="middle">PyTorch / notebook</text>
+
+            <!-- Step 2 -->
+            <rect x="170" y="50" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="235" y="75" fill="#ff8c42" font-size="11" text-anchor="middle" font-weight="bold">2. Optimisation</text>
+            <text x="235" y="95" fill="#aaa" font-size="9" text-anchor="middle">Quantize / Prune</text>
+
+            <!-- Step 3 -->
+            <rect x="330" y="50" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="395" y="75" fill="#569cd6" font-size="11" text-anchor="middle" font-weight="bold">3. Export</text>
+            <text x="395" y="95" fill="#aaa" font-size="9" text-anchor="middle">ONNX / TorchScript</text>
+
+            <!-- Step 4 -->
+            <rect x="490" y="50" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="555" y="75" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">4. Serving</text>
+            <text x="555" y="95" fill="#aaa" font-size="9" text-anchor="middle">API / TorchServe</text>
+
+            <!-- Step 5 -->
+            <rect x="650" y="50" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#ce9178" stroke-width="2"/>
+            <text x="715" y="75" fill="#ce9178" font-size="11" text-anchor="middle" font-weight="bold">5. Monitoring</text>
+            <text x="715" y="95" fill="#aaa" font-size="9" text-anchor="middle">Logs / Alertes</text>
+
+            <!-- Arrows -->
+            <line x1="145" y1="80" x2="165" y2="80" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowProd)"/>
+            <line x1="305" y1="80" x2="325" y2="80" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowProd)"/>
+            <line x1="465" y1="80" x2="485" y2="80" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowProd)"/>
+            <line x1="625" y1="80" x2="645" y2="80" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowProd)"/>
+
+            <defs>
+                <marker id="arrowProd" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/>
+                </marker>
+            </defs>
+
+            <!-- Feedback loop -->
+            <path d="M 715 115 L 715 160 L 75 160 L 75 115" fill="none" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,5"/>
+            <text x="400" y="178" fill="#ff4444" font-size="10" text-anchor="middle">Boucle de feedback : retraining si drift detecte</text>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================================ -->
+    <h2>2. ONNX - Open Neural Network Exchange</h2>
+
+    <p>ONNX est un format ouvert pour representer les modeles de Machine Learning. Il permet d'exporter un modele entraine dans un framework (PyTorch) et de l'executer dans un autre runtime optimise (ONNX Runtime, TensorRT, etc.).</p>
+
+    <div class="definition">
+        <strong>ONNX</strong> (Open Neural Network Exchange) est un standard ouvert qui definit un ensemble commun d'operateurs et un format de fichier pour representer les modeles de Deep Learning, independamment du framework d'entrainement utilise.
+    </div>
+
+    <h3>2.1 Pourquoi ONNX ?</h3>
+
+    <div class="concept-box">
+        <ul>
+            <li><strong>Portabilite</strong> : un modele ONNX peut tourner sur PyTorch, TensorFlow, Caffe2, ou des runtimes specialises</li>
+            <li><strong>Performance</strong> : ONNX Runtime applique des optimisations de graphe (fusion d'operateurs, elimination de noeuds inutiles)</li>
+            <li><strong>Deploiement multi-plateforme</strong> : CPU, GPU, mobile, edge, navigateur web</li>
+            <li><strong>Acceleration hardware</strong> : support TensorRT (NVIDIA), OpenVINO (Intel), CoreML (Apple)</li>
+        </ul>
+    </div>
+
+    <div class="svg-container">
+        <svg width="750" height="250" viewBox="0 0 750 250">
+            <text x="375" y="25" fill="#ff6b35" font-size="15" font-weight="bold" text-anchor="middle">Flux de conversion ONNX</text>
+
+            <!-- Source frameworks -->
+            <rect x="30" y="60" width="120" height="40" rx="6" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="90" y="85" fill="#ff6b35" font-size="12" text-anchor="middle">PyTorch</text>
+
+            <rect x="30" y="115" width="120" height="40" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1"/>
+            <text x="90" y="140" fill="#ff8c42" font-size="12" text-anchor="middle">TensorFlow</text>
+
+            <rect x="30" y="170" width="120" height="40" rx="6" fill="#1a1a2e" stroke="#ffab76" stroke-width="1"/>
+            <text x="90" y="195" fill="#ffab76" font-size="12" text-anchor="middle">Keras / JAX</text>
+
+            <!-- ONNX box -->
+            <rect x="260" y="80" width="160" height="100" rx="10" fill="#16213e" stroke="#569cd6" stroke-width="3"/>
+            <text x="340" y="120" fill="#569cd6" font-size="16" font-weight="bold" text-anchor="middle">ONNX</text>
+            <text x="340" y="142" fill="#aaa" font-size="10" text-anchor="middle">Format standard</text>
+            <text x="340" y="158" fill="#aaa" font-size="10" text-anchor="middle">(.onnx)</text>
+
+            <!-- Target runtimes -->
+            <rect x="530" y="45" width="170" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="615" y="68" fill="#00ff88" font-size="11" text-anchor="middle">ONNX Runtime (CPU/GPU)</text>
+
+            <rect x="530" y="95" width="170" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1"/>
+            <text x="615" y="118" fill="#00ff88" font-size="11" text-anchor="middle">TensorRT (NVIDIA)</text>
+
+            <rect x="530" y="145" width="170" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1"/>
+            <text x="615" y="168" fill="#00ff88" font-size="11" text-anchor="middle">OpenVINO (Intel)</text>
+
+            <rect x="530" y="195" width="170" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1"/>
+            <text x="615" y="218" fill="#00ff88" font-size="11" text-anchor="middle">CoreML (Apple)</text>
+
+            <!-- Arrows -->
+            <line x1="155" y1="80" x2="255" y2="115" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="155" y1="135" x2="255" y2="130" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="155" y1="190" x2="255" y2="145" stroke="#aaa" stroke-width="1.5"/>
+
+            <line x1="425" y1="110" x2="525" y2="62" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="425" y1="120" x2="525" y2="112" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="425" y1="140" x2="525" y2="162" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="425" y1="155" x2="525" y2="212" stroke="#00ff88" stroke-width="1.5"/>
+        </svg>
+    </div>
+
+    <h3>2.2 Export PyTorch vers ONNX</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="comment"># Definir un modele simple</span>
+<span class="keyword">class</span> <span class="function">SimpleModel</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        <span class="keyword">super</span>().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(<span class="number">3</span>, <span class="number">32</span>, <span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d(<span class="number">1</span>),
+            nn.Flatten(),
+            nn.Linear(<span class="number">32</span>, <span class="number">10</span>)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="keyword">return</span> self.features(x)
+
+model = SimpleModel()
+model.eval()
+
+<span class="comment"># Entree fictive pour tracer le modele</span>
+dummy_input = torch.randn(<span class="number">1</span>, <span class="number">3</span>, <span class="number">224</span>, <span class="number">224</span>)
+
+<span class="comment"># Export ONNX</span>
+torch.onnx.export(
+    model,                       <span class="comment"># Modele PyTorch</span>
+    dummy_input,                 <span class="comment"># Entree exemple</span>
+    <span class="string">"model.onnx"</span>,               <span class="comment"># Fichier de sortie</span>
+    export_params=<span class="keyword">True</span>,         <span class="comment"># Inclure les poids</span>
+    opset_version=<span class="number">13</span>,           <span class="comment"># Version des operateurs ONNX</span>
+    do_constant_folding=<span class="keyword">True</span>,   <span class="comment"># Optimiser les constantes</span>
+    input_names=[<span class="string">"input"</span>],       <span class="comment"># Nom de l'entree</span>
+    output_names=[<span class="string">"output"</span>],     <span class="comment"># Nom de la sortie</span>
+    dynamic_axes={               <span class="comment"># Axes dynamiques (batch variable)</span>
+        <span class="string">"input"</span>: {<span class="number">0</span>: <span class="string">"batch_size"</span>},
+        <span class="string">"output"</span>: {<span class="number">0</span>: <span class="string">"batch_size"</span>}
+    }
+)
+
+<span class="keyword">print</span>(<span class="string">"Modele exporte en ONNX avec succes!"</span>)</div>
+
+    <div class="output-block">Modele exporte en ONNX avec succes!</div>
+
+    <h3>2.3 Inference avec ONNX Runtime</h3>
+
+    <div class="code-block"><span class="keyword">import</span> onnxruntime <span class="keyword">as</span> ort
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Charger le modele ONNX</span>
+session = ort.InferenceSession(
+    <span class="string">"model.onnx"</span>,
+    providers=[<span class="string">"CUDAExecutionProvider"</span>, <span class="string">"CPUExecutionProvider"</span>]
+)
+
+<span class="comment"># Preparer l'entree</span>
+input_data = np.random.randn(<span class="number">1</span>, <span class="number">3</span>, <span class="number">224</span>, <span class="number">224</span>).astype(np.float32)
+
+<span class="comment"># Inference</span>
+input_name = session.get_inputs()[<span class="number">0</span>].name
+output_name = session.get_outputs()[<span class="number">0</span>].name
+result = session.run([output_name], {input_name: input_data})
+
+<span class="keyword">print</span>(f<span class="string">"Shape de la sortie: {result[0].shape}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Predictions: {result[0]}"</span>)
+
+<span class="comment"># Benchmark de vitesse</span>
+<span class="keyword">import</span> time
+start = time.time()
+<span class="keyword">for</span> _ <span class="keyword">in</span> range(<span class="number">100</span>):
+    session.run([output_name], {input_name: input_data})
+elapsed = (time.time() - start) / <span class="number">100</span>
+<span class="keyword">print</span>(f<span class="string">"Latence moyenne ONNX: {elapsed*1000:.2f} ms"</span>)</div>
+
+    <div class="output-block">Shape de la sortie: (1, 10)
+Predictions: [[-0.12  0.34  0.08  ...]]
+Latence moyenne ONNX: 2.45 ms</div>
+
+    <div class="effect">ONNX Runtime est generalement 2 a 5 fois plus rapide que PyTorch natif pour l'inference, grace aux optimisations de graphe, a la fusion d'operateurs et au support hardware optimise.</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================================ -->
+    <h2>3. TorchScript</h2>
+
+    <p>TorchScript est le propre systeme de PyTorch pour exporter des modeles en un format serializeable et optimisable, executable sans Python.</p>
+
+    <h3>3.1 torch.jit.trace vs torch.jit.script</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff6b35;">jit.trace</h4>
+            <p>Execute le modele avec une entree exemple et enregistre les operations. Ideal pour les modeles sans branchement conditionnel.</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">jit.script</h4>
+            <p>Analyse le code Python et le compile. Supporte les conditions if/else et les boucles. Plus flexible mais plus restrictif sur la syntaxe.</p>
+        </div>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+
+<span class="comment"># --- Methode 1 : torch.jit.trace ---</span>
+model.eval()
+example = torch.randn(<span class="number">1</span>, <span class="number">3</span>, <span class="number">224</span>, <span class="number">224</span>)
+
+traced_model = torch.jit.trace(model, example)
+traced_model.save(<span class="string">"model_traced.pt"</span>)
+
+<span class="comment"># Verification</span>
+output_original = model(example)
+output_traced = traced_model(example)
+<span class="keyword">print</span>(f<span class="string">"Difference max: {(output_original - output_traced).abs().max().item()}"</span>)
+
+<span class="comment"># --- Methode 2 : torch.jit.script ---</span>
+<span class="keyword">class</span> <span class="function">ConditionalModel</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        <span class="keyword">super</span>().__init__()
+        self.linear = nn.Linear(<span class="number">10</span>, <span class="number">5</span>)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x, use_relu: bool = <span class="keyword">True</span>):
+        x = self.linear(x)
+        <span class="keyword">if</span> use_relu:
+            x = torch.relu(x)
+        <span class="keyword">return</span> x
+
+cond_model = ConditionalModel()
+scripted_model = torch.jit.script(cond_model)
+scripted_model.save(<span class="string">"model_scripted.pt"</span>)
+
+<span class="comment"># Chargement sans le code Python original</span>
+loaded = torch.jit.load(<span class="string">"model_traced.pt"</span>)
+output = loaded(example)
+<span class="keyword">print</span>(f<span class="string">"Inference TorchScript: {output.shape}"</span>)</div>
+
+    <div class="output-block">Difference max: 0.0
+Inference TorchScript: torch.Size([1, 10])</div>
+
+    <div class="warning">torch.jit.trace ne capture pas les branchements conditionnels. Si votre modele contient des if/else qui dependent des donnees, le trace ne suivra qu'un seul chemin. Utilisez torch.jit.script pour ces cas.</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================================ -->
+    <h2>4. Quantization</h2>
+
+    <p>La quantization reduit la precision numerique des poids et activations (de FP32 a INT8, par exemple), reduisant la taille du modele et accelerant l'inference.</p>
+
+    <div class="definition">
+        La <strong>quantization</strong> est le processus de conversion des poids et activations d'un modele de nombres a virgule flottante (FP32, FP16) vers des entiers de precision inferieure (INT8, INT4), avec une perte minimale de precision.
+    </div>
+
+    <h3>4.1 Comparaison des precisions</h3>
+
+    <div class="svg-container">
+        <svg width="700" height="220" viewBox="0 0 700 220">
+            <text x="350" y="25" fill="#ff6b35" font-size="15" font-weight="bold" text-anchor="middle">Comparaison des precisions numeriques</text>
+
+            <!-- FP32 -->
+            <rect x="30" y="50" width="150" height="70" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="105" y="75" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">FP32</text>
+            <text x="105" y="95" fill="#aaa" font-size="10" text-anchor="middle">32 bits / parametre</text>
+            <text x="105" y="110" fill="#aaa" font-size="10" text-anchor="middle">Taille : 100%</text>
+
+            <!-- FP16 -->
+            <rect x="210" y="50" width="150" height="70" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="285" y="75" fill="#ff8c42" font-size="14" font-weight="bold" text-anchor="middle">FP16</text>
+            <text x="285" y="95" fill="#aaa" font-size="10" text-anchor="middle">16 bits / parametre</text>
+            <text x="285" y="110" fill="#aaa" font-size="10" text-anchor="middle">Taille : 50%</text>
+
+            <!-- INT8 -->
+            <rect x="390" y="50" width="150" height="70" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="465" y="75" fill="#00ff88" font-size="14" font-weight="bold" text-anchor="middle">INT8</text>
+            <text x="465" y="95" fill="#aaa" font-size="10" text-anchor="middle">8 bits / parametre</text>
+            <text x="465" y="110" fill="#aaa" font-size="10" text-anchor="middle">Taille : 25%</text>
+
+            <!-- INT4 -->
+            <rect x="570" y="50" width="100" height="70" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="620" y="75" fill="#569cd6" font-size="14" font-weight="bold" text-anchor="middle">INT4</text>
+            <text x="620" y="95" fill="#aaa" font-size="10" text-anchor="middle">4 bits / param</text>
+            <text x="620" y="110" fill="#aaa" font-size="10" text-anchor="middle">Taille : 12.5%</text>
+
+            <!-- Speed bars -->
+            <text x="30" y="155" fill="#aaa" font-size="11">Vitesse relative (CPU inference) :</text>
+            <rect x="30" y="165" width="150" height="15" rx="3" fill="#ff6b35" opacity="0.6"/>
+            <text x="105" y="177" fill="#fff" font-size="9" text-anchor="middle">1x (baseline)</text>
+
+            <rect x="210" y="165" width="150" height="15" rx="3" fill="#ff8c42" opacity="0.6"/>
+            <text x="285" y="177" fill="#fff" font-size="9" text-anchor="middle">~2x plus rapide</text>
+
+            <rect x="390" y="165" width="150" height="15" rx="3" fill="#00ff88" opacity="0.6"/>
+            <text x="465" y="177" fill="#fff" font-size="9" text-anchor="middle">~3-4x plus rapide</text>
+
+            <rect x="570" y="165" width="100" height="15" rx="3" fill="#569cd6" opacity="0.6"/>
+            <text x="620" y="177" fill="#fff" font-size="9" text-anchor="middle">~5-6x</text>
+
+            <text x="350" y="210" fill="#666" font-size="10" text-anchor="middle">La perte de precision est generalement negligeable (&lt;1% de degradation en accuracy)</text>
+        </svg>
+    </div>
+
+    <h3>4.2 Les trois types de quantization</h3>
+
+    <table>
+        <tr><th>Type</th><th>Quand quantizer</th><th>Precision</th><th>Complexite</th></tr>
+        <tr><td><strong>Dynamic</strong></td><td>A l'inference seulement</td><td>Bonne</td><td>Tres simple (1 ligne de code)</td></tr>
+        <tr><td><strong>Static (PTQ)</strong></td><td>Apres entrainement, avec calibration</td><td>Meilleure</td><td>Necessite un dataset de calibration</td></tr>
+        <tr><td><strong>QAT</strong></td><td>Pendant l'entrainement</td><td>Optimale</td><td>Complexe, requiert re-entrainement</td></tr>
+    </table>
+
+    <h3>4.3 Dynamic Quantization (la plus simple)</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="comment"># Modele original</span>
+model_fp32 = nn.Sequential(
+    nn.Linear(<span class="number">784</span>, <span class="number">256</span>),
+    nn.ReLU(),
+    nn.Linear(<span class="number">256</span>, <span class="number">128</span>),
+    nn.ReLU(),
+    nn.Linear(<span class="number">128</span>, <span class="number">10</span>)
+)
+model_fp32.eval()
+
+<span class="comment"># Quantization dynamique en UNE ligne!</span>
+model_int8 = torch.quantization.quantize_dynamic(
+    model_fp32,
+    {nn.Linear},           <span class="comment"># Couches a quantizer</span>
+    dtype=torch.qint8      <span class="comment"># Precision cible</span>
+)
+
+<span class="comment"># Comparaison de taille</span>
+<span class="keyword">import</span> os
+torch.save(model_fp32.state_dict(), <span class="string">"model_fp32.pth"</span>)
+torch.save(model_int8.state_dict(), <span class="string">"model_int8.pth"</span>)
+
+size_fp32 = os.path.getsize(<span class="string">"model_fp32.pth"</span>) / <span class="number">1024</span>
+size_int8 = os.path.getsize(<span class="string">"model_int8.pth"</span>) / <span class="number">1024</span>
+
+<span class="keyword">print</span>(f<span class="string">"Taille FP32: {size_fp32:.1f} Ko"</span>)
+<span class="keyword">print</span>(f<span class="string">"Taille INT8: {size_int8:.1f} Ko"</span>)
+<span class="keyword">print</span>(f<span class="string">"Reduction: {(1 - size_int8/size_fp32)*100:.1f}%"</span>)
+
+<span class="comment"># Verification de la precision</span>
+x = torch.randn(<span class="number">1</span>, <span class="number">784</span>)
+out_fp32 = model_fp32(x)
+out_int8 = model_int8(x)
+<span class="keyword">print</span>(f<span class="string">"Difference max: {(out_fp32 - out_int8).abs().max().item():.6f}"</span>)</div>
+
+    <div class="output-block">Taille FP32: 835.2 Ko
+Taille INT8: 245.8 Ko
+Reduction: 70.6%
+Difference max: 0.003421</div>
+
+    <h3>4.4 Static Quantization (Post-Training)</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">from</span> torch.quantization <span class="keyword">import</span> quantize
+
+<span class="comment"># Etape 1 : Preparer le modele</span>
+model_fp32.eval()
+model_fp32.qconfig = torch.quantization.get_default_qconfig(<span class="string">"fbgemm"</span>)
+
+<span class="comment"># Etape 2 : Inserer les observateurs</span>
+model_prepared = torch.quantization.prepare(model_fp32)
+
+<span class="comment"># Etape 3 : Calibration avec des donnees representatives</span>
+<span class="keyword">with</span> torch.no_grad():
+    <span class="keyword">for</span> data, _ <span class="keyword">in</span> calibration_loader:  <span class="comment"># ~100-1000 echantillons suffisent</span>
+        model_prepared(data)
+
+<span class="comment"># Etape 4 : Convertir les observateurs en quantization</span>
+model_quantized = torch.quantization.convert(model_prepared)
+
+<span class="keyword">print</span>(<span class="string">"Static quantization terminee!"</span>)</div>
+
+    <div class="prof-note">
+        La quantization dynamique est le meilleur point de depart : une seule ligne de code pour une reduction de ~70% de la taille et une acceleration de ~2-3x sur CPU. Pour les modeles ou chaque pourcent de precision compte, passez a la quantization statique ou au QAT.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================================ -->
+    <h2>5. Pruning (elagage)</h2>
+
+    <p>Le pruning consiste a supprimer les connexions (poids) les moins importantes du reseau, reduisant sa taille et son cout de calcul.</p>
+
+    <div class="definition">
+        Le <strong>pruning</strong> est une technique d'optimisation qui met a zero les poids ayant la plus faible magnitude dans le reseau, creant un modele "creux" (sparse) qui necessite moins de calculs et de memoire pour l'inference.
+    </div>
+
+    <h3>5.1 Types de pruning</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff6b35;">Unstructured Pruning</h4>
+            <p>Supprime des poids individuels. Haute sparsity possible mais necessite du hardware specialise pour accelerer reellement.</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#00ff88;">Structured Pruning</h4>
+            <p>Supprime des filtres ou canaux entiers. Acceleration reelle sur hardware standard mais sparsity plus limitee.</p>
+        </div>
+    </div>
+
+    <h3>5.2 Implementation avec torch.nn.utils.prune</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.nn.utils.prune <span class="keyword">as</span> prune
+
+<span class="comment"># Modele exemple</span>
+model = nn.Sequential(
+    nn.Linear(<span class="number">784</span>, <span class="number">256</span>),
+    nn.ReLU(),
+    nn.Linear(<span class="number">256</span>, <span class="number">128</span>),
+    nn.ReLU(),
+    nn.Linear(<span class="number">128</span>, <span class="number">10</span>)
+)
+
+<span class="comment"># --- Unstructured Pruning : supprimer 30% des poids les plus petits ---</span>
+<span class="keyword">for</span> name, module <span class="keyword">in</span> model.named_modules():
+    <span class="keyword">if</span> isinstance(module, nn.Linear):
+        prune.l1_unstructured(module, name=<span class="string">"weight"</span>, amount=<span class="number">0.3</span>)
+
+<span class="comment"># Verifier la sparsity</span>
+<span class="keyword">def</span> <span class="function">compute_sparsity</span>(model):
+    total = <span class="number">0</span>
+    zeros = <span class="number">0</span>
+    <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters():
+        total += p.numel()
+        zeros += (p == <span class="number">0</span>).sum().item()
+    <span class="keyword">return</span> zeros / total * <span class="number">100</span>
+
+<span class="keyword">print</span>(f<span class="string">"Sparsity: {compute_sparsity(model):.1f}%"</span>)
+
+<span class="comment"># --- Rendre le pruning permanent ---</span>
+<span class="keyword">for</span> name, module <span class="keyword">in</span> model.named_modules():
+    <span class="keyword">if</span> isinstance(module, nn.Linear):
+        prune.remove(module, <span class="string">"weight"</span>)
+
+<span class="comment"># --- Structured Pruning : supprimer 20% des filtres ---</span>
+conv_model = nn.Conv2d(<span class="number">64</span>, <span class="number">128</span>, <span class="number">3</span>, padding=<span class="number">1</span>)
+prune.ln_structured(conv_model, name=<span class="string">"weight"</span>, amount=<span class="number">0.2</span>, n=<span class="number">1</span>, dim=<span class="number">0</span>)
+<span class="keyword">print</span>(f<span class="string">"Filtres restants effectifs: {128 - int(128 * 0.2)} / 128"</span>)</div>
+
+    <div class="output-block">Sparsity: 30.0%
+Filtres restants effectifs: 102 / 128</div>
+
+    <h3>5.3 Pruning iteratif (meilleurs resultats)</h3>
+
+    <div class="code-block"><span class="comment"># Le pruning iteratif alterne entre pruning et fine-tuning</span>
+<span class="keyword">for</span> round_num <span class="keyword">in</span> range(<span class="number">5</span>):
+    <span class="comment"># 1. Pruner 10% supplementaires</span>
+    <span class="keyword">for</span> name, module <span class="keyword">in</span> model.named_modules():
+        <span class="keyword">if</span> isinstance(module, nn.Linear):
+            prune.l1_unstructured(module, name=<span class="string">"weight"</span>, amount=<span class="number">0.1</span>)
+
+    <span class="comment"># 2. Fine-tuner pendant quelques epochs</span>
+    <span class="keyword">for</span> epoch <span class="keyword">in</span> range(<span class="number">3</span>):
+        train_one_epoch(model, train_loader, criterion, optimizer, device)
+
+    sparsity = compute_sparsity(model)
+    _, val_acc = evaluate(model, val_loader, criterion, device)
+    <span class="keyword">print</span>(f<span class="string">"Round {round_num+1} | Sparsity: {sparsity:.1f}% | Val Acc: {val_acc:.2f}%"</span>)</div>
+
+    <div class="output-block">Round 1 | Sparsity: 10.0% | Val Acc: 99.12%
+Round 2 | Sparsity: 19.0% | Val Acc: 99.08%
+Round 3 | Sparsity: 27.1% | Val Acc: 98.95%
+Round 4 | Sparsity: 34.4% | Val Acc: 98.87%
+Round 5 | Sparsity: 41.0% | Val Acc: 98.72%</div>
+
+    <div class="effect">Avec le pruning iteratif, on peut atteindre 40-50% de sparsity avec moins de 0.5% de perte en accuracy. Certains travaux montrent qu'on peut atteindre 90%+ de sparsity sur de grands modeles.</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================================ -->
+    <h2>6. Knowledge Distillation</h2>
+
+    <p>La knowledge distillation transfere les connaissances d'un grand modele (teacher) vers un petit modele (student), obtenant un modele compact et performant.</p>
+
+    <div class="definition">
+        La <strong>knowledge distillation</strong> (Hinton et al., 2015) entraine un modele student a imiter les sorties (soft labels) d'un modele teacher plus grand, plutot que de s'entrainer uniquement sur les labels durs du dataset.
+    </div>
+
+    <h3>6.1 L'intuition</h3>
+
+    <div class="analogy">
+        <h4>Analogie : l'apprenti et le maitre</h4>
+        <p>Imaginez un maitre artisan (teacher) qui transmet son savoir a un apprenti (student). L'apprenti n'apprend pas seulement les reponses correctes, mais aussi les nuances : "cette piece ressemble aussi un peu a celle-la". Les soft probabilities du teacher contiennent plus d'information que les simples labels durs.</p>
+    </div>
+
+    <h3>6.2 Temperature et soft labels</h3>
+
+    <div class="concept-box blue">
+        <h4>Le role de la temperature T</h4>
+        <p>On divise les logits par une temperature T avant d'appliquer le softmax :</p>
+        <p><strong>p_i = exp(z_i / T) / sum(exp(z_j / T))</strong></p>
+        <ul>
+            <li><strong>T = 1</strong> : softmax classique (sharp)</li>
+            <li><strong>T > 1</strong> : distribution plus douce, revele les relations entre classes</li>
+            <li>Typiquement <strong>T = 3 a 20</strong> pour la distillation</li>
+        </ul>
+        <p>Avec T eleve, la probabilite de la classe "8" quand la vraie classe est "3" revele que les deux chiffres se ressemblent visuellement. Cette information est perdue avec les labels durs.</p>
+    </div>
+
+    <h3>6.3 Loss de distillation</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F
+
+<span class="keyword">class</span> <span class="function">DistillationLoss</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, temperature=<span class="number">4.0</span>, alpha=<span class="number">0.7</span>):
+        <span class="keyword">super</span>().__init__()
+        self.temperature = temperature
+        self.alpha = alpha  <span class="comment"># Poids de la distillation vs hard labels</span>
+        self.ce_loss = nn.CrossEntropyLoss()
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, student_logits, teacher_logits, targets):
+        <span class="comment"># 1. Soft loss (KL divergence entre les distributions douces)</span>
+        soft_teacher = F.softmax(teacher_logits / self.temperature, dim=<span class="number">1</span>)
+        soft_student = F.log_softmax(student_logits / self.temperature, dim=<span class="number">1</span>)
+        soft_loss = F.kl_div(soft_student, soft_teacher, reduction=<span class="string">"batchmean"</span>)
+        soft_loss = soft_loss * (self.temperature ** <span class="number">2</span>)  <span class="comment"># Compensation du scaling</span>
+
+        <span class="comment"># 2. Hard loss (cross-entropy classique avec les vrais labels)</span>
+        hard_loss = self.ce_loss(student_logits, targets)
+
+        <span class="comment"># 3. Combinaison ponderee</span>
+        total_loss = self.alpha * soft_loss + (<span class="number">1</span> - self.alpha) * hard_loss
+        <span class="keyword">return</span> total_loss</div>
+
+    <h3>6.4 Boucle d'entrainement de distillation</h3>
+
+    <div class="code-block"><span class="comment"># Teacher : grand modele pre-entraine (fige)</span>
+teacher_model = BigResNet().to(device)
+teacher_model.load_state_dict(torch.load(<span class="string">"teacher_weights.pth"</span>))
+teacher_model.eval()
+
+<span class="comment"># Student : petit modele a entrainer</span>
+student_model = SmallNet().to(device)
+
+<span class="comment"># Configuration</span>
+distill_criterion = DistillationLoss(temperature=<span class="number">4.0</span>, alpha=<span class="number">0.7</span>)
+optimizer = torch.optim.Adam(student_model.parameters(), lr=<span class="number">1e-3</span>)
+
+<span class="comment"># Entrainement</span>
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(<span class="number">20</span>):
+    student_model.train()
+    <span class="keyword">for</span> data, targets <span class="keyword">in</span> train_loader:
+        data, targets = data.to(device), targets.to(device)
+
+        <span class="comment"># Forward du teacher (sans gradient!)</span>
+        <span class="keyword">with</span> torch.no_grad():
+            teacher_logits = teacher_model(data)
+
+        <span class="comment"># Forward du student</span>
+        student_logits = student_model(data)
+
+        <span class="comment"># Loss de distillation</span>
+        loss = distill_criterion(student_logits, teacher_logits, targets)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    <span class="comment"># Evaluation</span>
+    _, acc = evaluate(student_model, val_loader, nn.CrossEntropyLoss(), device)
+    <span class="keyword">print</span>(f<span class="string">"Epoch {epoch+1} | Student Acc: {acc:.2f}%"</span>)</div>
+
+    <div class="output-block">Epoch 1 | Student Acc: 96.45%
+Epoch 5 | Student Acc: 98.12%
+Epoch 10 | Student Acc: 98.67%
+Epoch 20 | Student Acc: 98.91%</div>
+
+    <div class="prof-note">
+        Le student distille atteint souvent des performances proches du teacher tout en etant 5 a 10 fois plus petit et rapide. C'est la technique utilisee par exemple pour creer DistilBERT (60% plus petit, 97% des performances de BERT).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================================ -->
+    <h2>7. Serving - Mettre le modele en ligne</h2>
+
+    <p>Une fois le modele optimise, il faut le rendre accessible via une API pour que les applications puissent l'utiliser.</p>
+
+    <h3>7.1 FastAPI + PyTorch (solution simple et flexible)</h3>
+
+    <div class="code-block"><span class="comment"># api.py - Serveur FastAPI pour l'inference</span>
+<span class="keyword">from</span> fastapi <span class="keyword">import</span> FastAPI, UploadFile, File
+<span class="keyword">from</span> fastapi.responses <span class="keyword">import</span> JSONResponse
+<span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> transforms
+<span class="keyword">from</span> PIL <span class="keyword">import</span> Image
+<span class="keyword">import</span> io
+
+app = FastAPI(title=<span class="string">"Image Classification API"</span>)
+
+<span class="comment"># Charger le modele au demarrage</span>
+device = torch.device(<span class="string">"cuda"</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">"cpu"</span>)
+model = torch.jit.load(<span class="string">"model_traced.pt"</span>, map_location=device)
+model.eval()
+
+<span class="comment"># Preprocessing</span>
+preprocess = transforms.Compose([
+    transforms.Resize(<span class="number">256</span>),
+    transforms.CenterCrop(<span class="number">224</span>),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        mean=[<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],
+        std=[<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>]
+    )
+])
+
+CLASSES = [<span class="string">"chat"</span>, <span class="string">"chien"</span>, <span class="string">"oiseau"</span>, <span class="string">"poisson"</span>, <span class="string">"fleur"</span>,
+           <span class="string">"voiture"</span>, <span class="string">"avion"</span>, <span class="string">"maison"</span>, <span class="string">"arbre"</span>, <span class="string">"personne"</span>]
+
+
+<span class="keyword">@app.post</span>(<span class="string">"/predict"</span>)
+<span class="keyword">async def</span> <span class="function">predict</span>(file: UploadFile = File(...)):
+    <span class="string">"""Endpoint de prediction d'image."""</span>
+    <span class="comment"># Lire et pre-traiter l'image</span>
+    image_bytes = <span class="keyword">await</span> file.read()
+    image = Image.open(io.BytesIO(image_bytes)).convert(<span class="string">"RGB"</span>)
+    input_tensor = preprocess(image).unsqueeze(<span class="number">0</span>).to(device)
+
+    <span class="comment"># Inference</span>
+    <span class="keyword">with</span> torch.no_grad():
+        logits = model(input_tensor)
+        probs = F.softmax(logits, dim=<span class="number">1</span>)
+        confidence, predicted = probs.max(<span class="number">1</span>)
+
+    <span class="keyword">return</span> JSONResponse({
+        <span class="string">"class"</span>: CLASSES[predicted.item()],
+        <span class="string">"confidence"</span>: round(confidence.item(), <span class="number">4</span>),
+        <span class="string">"all_probabilities"</span>: {
+            cls: round(p, <span class="number">4</span>)
+            <span class="keyword">for</span> cls, p <span class="keyword">in</span> zip(CLASSES, probs[<span class="number">0</span>].tolist())
+        }
+    })
+
+
+<span class="keyword">@app.get</span>(<span class="string">"/health"</span>)
+<span class="keyword">async def</span> <span class="function">health</span>():
+    <span class="keyword">return</span> {<span class="string">"status"</span>: <span class="string">"ok"</span>, <span class="string">"device"</span>: str(device)}
+
+<span class="comment"># Lancer avec : uvicorn api:app --host 0.0.0.0 --port 8000</span></div>
+
+    <h3>7.2 TorchServe (solution industrielle)</h3>
+
+    <div class="concept-box">
+        <h4>TorchServe : le serveur officiel de PyTorch</h4>
+        <ul>
+            <li><strong>Batching automatique</strong> : regroupe les requetes pour maximiser le throughput GPU</li>
+            <li><strong>Multi-modele</strong> : gere plusieurs modeles simultanement</li>
+            <li><strong>Scaling</strong> : plusieurs workers par modele</li>
+            <li><strong>API REST et gRPC</strong> integrées</li>
+            <li><strong>Metriques Prometheus</strong> pour le monitoring</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># 1. Creer un handler personnalise (handler.py)</span>
+<span class="keyword">from</span> ts.torch_handler.base_handler <span class="keyword">import</span> BaseHandler
+<span class="keyword">import</span> torch
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> transforms
+
+<span class="keyword">class</span> <span class="function">ImageClassifierHandler</span>(BaseHandler):
+    <span class="keyword">def</span> <span class="function">initialize</span>(self, context):
+        <span class="keyword">super</span>().initialize(context)
+        self.transform = transforms.Compose([
+            transforms.Resize(<span class="number">256</span>),
+            transforms.CenterCrop(<span class="number">224</span>),
+            transforms.ToTensor(),
+            transforms.Normalize([<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],
+                                 [<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>])
+        ])
+
+    <span class="keyword">def</span> <span class="function">preprocess</span>(self, data):
+        images = []
+        <span class="keyword">for</span> row <span class="keyword">in</span> data:
+            image = Image.open(io.BytesIO(row[<span class="string">"body"</span>]))
+            images.append(self.transform(image))
+        <span class="keyword">return</span> torch.stack(images).to(self.device)
+
+<span class="comment"># 2. Packager le modele</span>
+<span class="comment"># $ torch-model-archiver --model-name classifier \</span>
+<span class="comment">#     --version 1.0 \</span>
+<span class="comment">#     --serialized-file model_traced.pt \</span>
+<span class="comment">#     --handler handler.py \</span>
+<span class="comment">#     --export-path model_store</span>
+
+<span class="comment"># 3. Lancer TorchServe</span>
+<span class="comment"># $ torchserve --start --model-store model_store \</span>
+<span class="comment">#     --models classifier=classifier.mar</span></div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================================ -->
+    <h2>8. Containerisation avec Docker</h2>
+
+    <p>Docker est essentiel pour assurer la reproductibilite et la portabilite du deploiement.</p>
+
+    <h3>8.1 Dockerfile pour l'inference Deep Learning</h3>
+
+    <div class="code-block"><span class="comment"># Dockerfile pour inference PyTorch avec GPU</span>
+
+<span class="comment"># Image de base NVIDIA avec CUDA et cuDNN</span>
+<span class="keyword">FROM</span> nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+<span class="comment"># Variables d'environnement</span>
+<span class="keyword">ENV</span> DEBIAN_FRONTEND=noninteractive
+<span class="keyword">ENV</span> PYTHONUNBUFFERED=1
+
+<span class="comment"># Installation Python</span>
+<span class="keyword">RUN</span> apt-get update && apt-get install -y \
+    python3.10 python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+<span class="comment"># Repertoire de travail</span>
+<span class="keyword">WORKDIR</span> /app
+
+<span class="comment"># Copier et installer les dependances</span>
+<span class="keyword">COPY</span> requirements.txt .
+<span class="keyword">RUN</span> pip3 install --no-cache-dir -r requirements.txt
+
+<span class="comment"># Copier le code et le modele</span>
+<span class="keyword">COPY</span> api.py .
+<span class="keyword">COPY</span> model_traced.pt .
+
+<span class="comment"># Port expose</span>
+<span class="keyword">EXPOSE</span> 8000
+
+<span class="comment"># Lancer l'API</span>
+<span class="keyword">CMD</span> ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]</div>
+
+    <h3>8.2 requirements.txt</h3>
+
+    <div class="code-block">torch==2.1.0
+torchvision==0.16.0
+fastapi==0.104.0
+uvicorn==0.24.0
+Pillow==10.1.0
+python-multipart==0.0.6</div>
+
+    <h3>8.3 Docker Compose pour un service complet</h3>
+
+    <div class="code-block"><span class="comment"># docker-compose.yml</span>
+<span class="keyword">version</span>: <span class="string">"3.8"</span>
+
+<span class="keyword">services</span>:
+  <span class="function">inference</span>:
+    build: .
+    ports:
+      - <span class="string">"8000:8000"</span>
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: <span class="number">1</span>
+              capabilities: [gpu]
+    volumes:
+      - ./models:/app/models
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    restart: always
+    healthcheck:
+      test: [<span class="string">"CMD"</span>, <span class="string">"curl"</span>, <span class="string">"-f"</span>, <span class="string">"http://localhost:8000/health"</span>]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  <span class="function">nginx</span>:
+    image: nginx:latest
+    ports:
+      - <span class="string">"80:80"</span>
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - inference</div>
+
+    <div class="code-block"><span class="comment"># Commandes Docker</span>
+
+<span class="comment"># Construire l'image</span>
+$ docker build -t dl-inference .
+
+<span class="comment"># Lancer le conteneur (avec GPU)</span>
+$ docker run --gpus all -p 8000:8000 dl-inference
+
+<span class="comment"># Avec Docker Compose</span>
+$ docker compose up -d
+
+<span class="comment"># Tester</span>
+$ curl -X POST http://localhost:8000/predict \
+    -F "file=@test_image.jpg"</div>
+
+    <div class="output-block">{"class": "chat", "confidence": 0.9734, "all_probabilities": {"chat": 0.9734, "chien": 0.0189, ...}}</div>
+
+    <div class="warning">L'image Docker avec CUDA peut etre volumineuse (5-10 Go). Utilisez des images de base minimales et des builds multi-stage pour reduire la taille. Pour l'inference CPU uniquement, partez d'une image Python legere.</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================================ -->
+    <h2>9. MLOps - Operations pour le Machine Learning</h2>
+
+    <p>MLOps etend les principes DevOps au Machine Learning, couvrant le suivi des experiences, la gestion des modeles, le CI/CD et le monitoring en production.</p>
+
+    <h3>9.1 Experiment Tracking avec MLflow</h3>
+
+    <div class="code-block"><span class="keyword">import</span> mlflow
+<span class="keyword">import</span> mlflow.pytorch
+
+<span class="comment"># Demarrer une experience</span>
+mlflow.set_experiment(<span class="string">"classification-mnist"</span>)
+
+<span class="keyword">with</span> mlflow.start_run(run_name=<span class="string">"cnn-v2-augmented"</span>):
+    <span class="comment"># Logger les hyperparametres</span>
+    mlflow.log_params({
+        <span class="string">"epochs"</span>: EPOCHS,
+        <span class="string">"batch_size"</span>: BATCH_SIZE,
+        <span class="string">"learning_rate"</span>: LR,
+        <span class="string">"optimizer"</span>: <span class="string">"Adam"</span>,
+        <span class="string">"architecture"</span>: <span class="string">"CNN-2conv-2fc"</span>,
+        <span class="string">"augmentation"</span>: <span class="keyword">True</span>
+    })
+
+    <span class="comment"># Boucle d'entrainement</span>
+    <span class="keyword">for</span> epoch <span class="keyword">in</span> range(EPOCHS):
+        train_loss, train_acc = train_one_epoch(...)
+        val_loss, val_acc = evaluate(...)
+
+        <span class="comment"># Logger les metriques a chaque epoch</span>
+        mlflow.log_metrics({
+            <span class="string">"train_loss"</span>: train_loss,
+            <span class="string">"train_accuracy"</span>: train_acc,
+            <span class="string">"val_loss"</span>: val_loss,
+            <span class="string">"val_accuracy"</span>: val_acc
+        }, step=epoch)
+
+    <span class="comment"># Logger le modele final</span>
+    mlflow.pytorch.log_model(model, <span class="string">"model"</span>)
+
+    <span class="comment"># Logger des artefacts (graphes, matrices de confusion, etc.)</span>
+    mlflow.log_artifact(<span class="string">"confusion_matrix.png"</span>)
+
+    <span class="keyword">print</span>(f<span class="string">"Run ID: {mlflow.active_run().info.run_id}"</span>)</div>
+
+    <h3>9.2 Weights &amp; Biases (W&amp;B)</h3>
+
+    <div class="code-block"><span class="keyword">import</span> wandb
+
+<span class="comment"># Initialiser un run W&B</span>
+wandb.init(
+    project=<span class="string">"deep-learning-cours"</span>,
+    name=<span class="string">"cnn-mnist-v2"</span>,
+    config={
+        <span class="string">"epochs"</span>: EPOCHS,
+        <span class="string">"batch_size"</span>: BATCH_SIZE,
+        <span class="string">"lr"</span>: LR,
+        <span class="string">"architecture"</span>: <span class="string">"CNN"</span>
+    }
+)
+
+<span class="comment"># Logger pendant l'entrainement</span>
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(EPOCHS):
+    train_loss, train_acc = train_one_epoch(...)
+    val_loss, val_acc = evaluate(...)
+
+    wandb.log({
+        <span class="string">"train/loss"</span>: train_loss,
+        <span class="string">"train/accuracy"</span>: train_acc,
+        <span class="string">"val/loss"</span>: val_loss,
+        <span class="string">"val/accuracy"</span>: val_acc,
+        <span class="string">"epoch"</span>: epoch
+    })
+
+<span class="comment"># Sauvegarder le modele comme artefact</span>
+artifact = wandb.Artifact(<span class="string">"model-cnn"</span>, type=<span class="string">"model"</span>)
+artifact.add_file(<span class="string">"best_model.pth"</span>)
+wandb.log_artifact(artifact)
+
+wandb.finish()</div>
+
+    <h3>9.3 CI/CD pour le Machine Learning</h3>
+
+    <div class="concept-box">
+        <h4>Pipeline CI/CD typique pour le ML</h4>
+        <ol>
+            <li><strong>Tests unitaires</strong> : verifier les shapes, les types, les outputs du modele</li>
+            <li><strong>Tests de qualite des donnees</strong> : verifier les distributions, les valeurs manquantes</li>
+            <li><strong>Entrainement automatise</strong> : declenche par un push ou un schedule</li>
+            <li><strong>Evaluation automatique</strong> : comparer les metriques avec le modele en production</li>
+            <li><strong>Validation</strong> : tests A/B, canary deployment</li>
+            <li><strong>Deploiement</strong> : mise en production si les metriques sont satisfaisantes</li>
+            <li><strong>Monitoring</strong> : alertes si les performances degradent (data drift, model drift)</li>
+        </ol>
+    </div>
+
+    <h3>9.4 Monitoring en production</h3>
+
+    <div class="code-block"><span class="comment"># monitoring.py - Detecter le data drift</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> scipy <span class="keyword">import</span> stats
+
+<span class="keyword">class</span> <span class="function">DriftDetector</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, reference_predictions):
+        <span class="string">"""Initialiser avec les predictions de reference (validation set)."""</span>
+        self.reference = reference_predictions
+        self.threshold = <span class="number">0.05</span>  <span class="comment"># p-value seuil</span>
+
+    <span class="keyword">def</span> <span class="function">check_drift</span>(self, new_predictions):
+        <span class="string">"""Verifier si les nouvelles predictions different significativement."""</span>
+        <span class="comment"># Test de Kolmogorov-Smirnov</span>
+        statistic, p_value = stats.ks_2samp(
+            self.reference.flatten(),
+            new_predictions.flatten()
+        )
+
+        drift_detected = p_value < self.threshold
+        <span class="keyword">return</span> {
+            <span class="string">"drift_detected"</span>: drift_detected,
+            <span class="string">"p_value"</span>: p_value,
+            <span class="string">"ks_statistic"</span>: statistic,
+            <span class="string">"action"</span>: <span class="string">"RETRAIN"</span> <span class="keyword">if</span> drift_detected <span class="keyword">else</span> <span class="string">"OK"</span>
+        }
+
+<span class="comment"># Utilisation</span>
+detector = DriftDetector(validation_predictions)
+result = detector.check_drift(production_predictions_last_hour)
+<span class="keyword">if</span> result[<span class="string">"drift_detected"</span>]:
+    send_alert(f<span class="string">"Data drift detecte! p-value: {result['p_value']:.4f}"</span>)</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================================ -->
+    <h2>10. Recapitulatif de la formation complete</h2>
+
+    <p>Ce dernier chapitre offre une vue d'ensemble des 12 cours de cette formation en Deep Learning, avec les concepts cles de chaque cours et des parcours recommandes.</p>
+
+    <h3>10.1 Vue d'ensemble des 12 cours</h3>
+
+    <table>
+        <tr><th>Cours</th><th>Titre</th><th>Concepts cles</th></tr>
+        <tr><td><strong>DL 01</strong></td><td>Introduction au Deep Learning</td><td>Neurone, perceptron, activation, historique</td></tr>
+        <tr><td><strong>DL 02</strong></td><td>Reseaux de neurones denses</td><td>MLP, forward pass, backpropagation, gradient descent</td></tr>
+        <tr><td><strong>DL 03</strong></td><td>Fonctions d'activation et optimisation</td><td>ReLU, Adam, SGD, learning rate, regularisation</td></tr>
+        <tr><td><strong>DL 04</strong></td><td>Reseaux convolutifs (CNN)</td><td>Convolution, pooling, filtres, feature maps</td></tr>
+        <tr><td><strong>DL 05</strong></td><td>Architectures CNN avancees</td><td>ResNet, VGG, Inception, transfer learning</td></tr>
+        <tr><td><strong>DL 06</strong></td><td>Reseaux recurrents (RNN)</td><td>RNN, LSTM, GRU, sequences, NLP basique</td></tr>
+        <tr><td><strong>DL 07</strong></td><td>Attention et Transformers</td><td>Self-attention, multi-head, encodeur-decodeur, BERT, GPT</td></tr>
+        <tr><td><strong>DL 08</strong></td><td>GANs</td><td>Generateur, discriminateur, adversarial training</td></tr>
+        <tr><td><strong>DL 09</strong></td><td>Autoencoders</td><td>Encodeur-decodeur, VAE, espace latent, reconstruction</td></tr>
+        <tr><td><strong>DL 10</strong></td><td>Modeles de Diffusion</td><td>DDPM, forward/reverse process, Stable Diffusion</td></tr>
+        <tr><td><strong>DL 11</strong></td><td>PyTorch en Pratique</td><td>Tensors, autograd, DataLoader, boucle d'entrainement</td></tr>
+        <tr><td><strong>DL 12</strong></td><td>Deploiement et Production</td><td>ONNX, quantization, pruning, serving, MLOps</td></tr>
+    </table>
+
+    <h3>10.2 Parcours recommandes</h3>
+
+    <div class="concept-box">
+        <h4>Parcours "Vision par Ordinateur"</h4>
+        <p>DL 01 -> DL 02 -> DL 03 -> DL 04 -> DL 05 -> DL 11 -> DL 12</p>
+        <p style="color:#aaa;">Focus sur les CNN, architectures avancees, et deploiement.</p>
+    </div>
+
+    <div class="concept-box green">
+        <h4>Parcours "NLP / Traitement du Langage"</h4>
+        <p>DL 01 -> DL 02 -> DL 03 -> DL 06 -> DL 07 -> DL 11 -> DL 12</p>
+        <p style="color:#aaa;">Focus sur les sequences, attention, Transformers.</p>
+    </div>
+
+    <div class="concept-box blue">
+        <h4>Parcours "IA Generative"</h4>
+        <p>DL 01 -> DL 02 -> DL 04 -> DL 07 -> DL 08 -> DL 09 -> DL 10 -> DL 11</p>
+        <p style="color:#aaa;">Focus sur GANs, VAE, diffusion et generation d'images/texte.</p>
+    </div>
+
+    <h3>10.3 Competences acquises</h3>
+
+    <div class="metric-card">
+        <h4>Theorie</h4>
+        <p>Comprendre les architectures fondamentales (MLP, CNN, RNN, Transformer, GAN, VAE, Diffusion), leurs mathematiques sous-jacentes et quand les utiliser.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Pratique</h4>
+        <p>Implementer, entrainer et evaluer des modeles complets en PyTorch. Maitriser le cycle de vie complet : donnees, entrainement, evaluation, optimisation.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Production</h4>
+        <p>Deployer des modeles en production avec ONNX, quantization, API REST, Docker, et les pratiques MLOps pour le monitoring et la maintenance.</p>
+    </div>
+
+    <h3>10.4 Pour aller plus loin</h3>
+
+    <div class="concept-box">
+        <h4>Ressources recommandees</h4>
+        <ul>
+            <li><strong>Papiers fondamentaux</strong> : "Attention Is All You Need", "Deep Residual Learning", "DDPM", "Auto-Encoding Variational Bayes"</li>
+            <li><strong>Cours en ligne</strong> : CS231n (Stanford, Vision), CS224n (Stanford, NLP), fast.ai</li>
+            <li><strong>Livres</strong> : "Deep Learning" (Goodfellow, Bengio, Courville), "Dive into Deep Learning"</li>
+            <li><strong>Pratique</strong> : Kaggle competitions, HuggingFace Hub, Papers with Code</li>
+            <li><strong>Communaute</strong> : PyTorch Forums, r/MachineLearning, ArXiv (cs.LG, cs.CV, cs.CL)</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Le Deep Learning est un domaine en evolution rapide. Les fondamentaux couverts dans cette formation resteront pertinents, mais les architectures et techniques specifiques evolueront. L'apprentissage continu est essentiel : suivez les publications des conferences majeures (NeurIPS, ICML, ICLR, CVPR, ACL) et experimentez constamment. Le meilleur apprentissage passe par la pratique et la reimplementation des papiers.
+    </div>
+
+    <div class="concept-box" style="border-color: #ff6b35; background: linear-gradient(135deg, #1a1a2e, #2a1a2e);">
+        <h4 style="color: #ff6b35;">Felicitations !</h4>
+        <p>Vous avez complete les 12 cours de la formation Deep Learning. Vous avez desormais les bases theoriques et pratiques pour concevoir, entrainer, optimiser et deployer des modeles de Deep Learning. Le voyage ne fait que commencer -- chaque projet est une opportunite d'approfondir vos connaissances et de repousser les limites de ce que vous pouvez creer avec ces outils puissants.</p>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_11_pytorch.html">&larr; Cours 11 : PyTorch en Pratique</a>
+        <span style="color: #666;">Dernier cours DL</span>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

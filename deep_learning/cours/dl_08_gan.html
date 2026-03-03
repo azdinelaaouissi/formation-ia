@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 08 - Reseaux Generatifs Adversariaux (GAN)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 08 - Reseaux Generatifs Adversariaux (GAN)</h1>
+    <p class="subtitle">Cours 8/12 - Generator, Discriminator, DCGAN et StyleGAN</p>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================ -->
+    <h2>1. Introduction aux Modeles Generatifs</h2>
+
+    <h3>1.1 Modeles discriminatifs vs generatifs</h3>
+
+    <p>En apprentissage automatique, on distingue deux grandes familles de modeles selon leur objectif :</p>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff8c42;">Modele Discriminatif</h4>
+            <p>Apprend la frontiere de decision <strong>P(y|x)</strong></p>
+            <p>Reponse : "A quelle classe appartient cette image ?"</p>
+            <p><em>Exemples : CNN pour classification, SVM, regression logistique</em></p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Modele Generatif</h4>
+            <p>Apprend la distribution des donnees <strong>P(x)</strong> ou <strong>P(x|y)</strong></p>
+            <p>Reponse : "A quoi ressemble une image de cette classe ?"</p>
+            <p><em>Exemples : GAN, VAE, modeles de diffusion, modeles autoregessifs</em></p>
+        </div>
+    </div>
+
+    <div class="definition">
+        Un <strong>modele generatif</strong> est un modele capable d'apprendre la distribution de probabilite sous-jacente des donnees d'entrainement et de generer de nouveaux echantillons qui suivent cette meme distribution. Autrement dit, il apprend a creer des donnees realistes qui n'existaient pas dans le jeu d'entrainement.
+    </div>
+
+    <h3>1.2 Types de modeles generatifs</h3>
+
+    <table>
+        <tr><th>Type</th><th>Methode</th><th>Exemples</th><th>Avantages</th></tr>
+        <tr><td>GAN</td><td>Jeu adversarial</td><td>DCGAN, StyleGAN</td><td>Images tres realistes</td></tr>
+        <tr><td>VAE</td><td>Inference variationnelle</td><td>VAE, Beta-VAE</td><td>Espace latent structure</td></tr>
+        <tr><td>Diffusion</td><td>Debruitage iteratif</td><td>DDPM, Stable Diffusion</td><td>Qualite + diversite</td></tr>
+        <tr><td>Autoregressif</td><td>Prediction sequentielle</td><td>PixelCNN, GPT</td><td>Vraisemblance exacte</td></tr>
+        <tr><td>Flow</td><td>Transformations inversibles</td><td>RealNVP, Glow</td><td>Vraisemblance exacte</td></tr>
+    </table>
+
+    <div class="prof-note">
+        Les GANs ont domine la generation d'images de 2014 a 2021 environ. Depuis, les modeles de diffusion (Stable Diffusion, DALL-E) les ont largement surpasses en termes de qualite et de stabilite d'entrainement. Neanmoins, comprendre les GANs reste essentiel : ils ont introduit des concepts fondamentaux et restent utilises dans de nombreuses applications.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================ -->
+    <h2>2. L'Idee du GAN</h2>
+
+    <h3>2.1 L'analogie du faussaire et du detective</h3>
+
+    <div class="analogy">
+        <h4>Analogie : Le Faussaire et le Detective</h4>
+        <p>Imaginez un jeu entre deux personnes :</p>
+        <ul>
+            <li><strong>Le Faussaire (Generator) :</strong> Un artiste qui tente de creer des contrefacons de billets de banque les plus realistes possibles. Au debut, ses faux billets sont grossiers et faciles a reperer.</li>
+            <li><strong>Le Detective (Discriminator) :</strong> Un expert qui examine les billets et determine s'ils sont vrais ou faux. Il s'ameliore en voyant de plus en plus de vrais et de faux billets.</li>
+        </ul>
+        <p>Au fil du temps, le faussaire s'ameliore grace aux retours du detective, et le detective affine son expertise face aux contrefacons de plus en plus sophistiquees. A l'equilibre, le faussaire produit des billets indiscernables des vrais, et le detective ne fait pas mieux qu'un tirage au sort (50/50).</p>
+    </div>
+
+    <h3>2.2 Formalisation mathematique</h3>
+
+    <div class="concept-box">
+        <h4>Le jeu minimax</h4>
+        <p>Le GAN est formule comme un jeu a deux joueurs avec la fonction objectif suivante :</p>
+        <p style="text-align:center; font-size:1.15rem; margin:15px 0;">
+            <strong>min_G max_D V(D, G) = E[log D(x)] + E[log(1 - D(G(z)))]</strong>
+        </p>
+        <p>Ou :</p>
+        <ul>
+            <li><strong>G(z)</strong> : le generateur qui transforme un bruit aleatoire z en donnees synthetiques</li>
+            <li><strong>D(x)</strong> : le discriminateur qui estime la probabilite que x soit une donnee reelle</li>
+            <li><strong>E[log D(x)]</strong> : le discriminateur veut maximiser la probabilite d'identifier les vrais comme vrais</li>
+            <li><strong>E[log(1 - D(G(z)))]</strong> : le discriminateur veut maximiser la probabilite d'identifier les faux comme faux, tandis que le generateur veut la minimiser</li>
+        </ul>
+    </div>
+
+    <h3>2.3 Les losses en pratique</h3>
+
+    <div class="step-box"><strong>Loss du Discriminateur :</strong> L_D = -E[log D(x_reel)] - E[log(1 - D(G(z)))]<br>Le discriminateur maximise sa capacite a distinguer le vrai du faux.</div>
+    <div class="step-box"><strong>Loss du Generateur :</strong> L_G = -E[log D(G(z))]<br>Le generateur maximise la probabilite que le discriminateur se trompe sur ses fausses images.</div>
+
+    <div class="prof-note">
+        En pratique, on utilise -E[log D(G(z))] pour le generateur au lieu de E[log(1 - D(G(z)))]. Ce "non-saturating trick" de l'article original fournit de meilleurs gradients au debut de l'entrainement, quand le generateur est encore mauvais et que D(G(z)) est proche de 0.
+    </div>
+
+    <h3>2.4 Schema du flux GAN</h3>
+
+    <div class="svg-container">
+        <svg width="750" height="320" viewBox="0 0 750 320">
+            <defs>
+                <marker id="arrowGan" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/>
+                </marker>
+                <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+                <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/>
+                </marker>
+            </defs>
+            <!-- Noise z -->
+            <rect x="20" y="120" width="90" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="65" y="140" fill="#569cd6" text-anchor="middle" font-size="12" font-weight="bold">Bruit z</text>
+            <text x="65" y="158" fill="#aaa" text-anchor="middle" font-size="10">~ N(0, I)</text>
+            <!-- Generator -->
+            <rect x="160" y="110" width="130" height="70" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="225" y="140" fill="#ff6b35" text-anchor="middle" font-size="13" font-weight="bold">Generator</text>
+            <text x="225" y="158" fill="#aaa" text-anchor="middle" font-size="10">G(z)</text>
+            <line x1="110" y1="145" x2="160" y2="145" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowGan)"/>
+            <!-- Fake image -->
+            <rect x="340" y="110" width="100" height="70" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="390" y="140" fill="#ff8c42" text-anchor="middle" font-size="11" font-weight="bold">Fausse</text>
+            <text x="390" y="158" fill="#ff8c42" text-anchor="middle" font-size="11">Image</text>
+            <line x1="290" y1="145" x2="340" y2="145" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowGan)"/>
+            <!-- Real image -->
+            <rect x="340" y="220" width="100" height="50" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="390" y="250" fill="#00ff88" text-anchor="middle" font-size="11" font-weight="bold">Vraie Image</text>
+            <!-- Discriminator -->
+            <rect x="500" y="140" width="130" height="70" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="565" y="165" fill="#569cd6" text-anchor="middle" font-size="13" font-weight="bold">Discriminator</text>
+            <text x="565" y="185" fill="#aaa" text-anchor="middle" font-size="10">D(x)</text>
+            <!-- Arrows to discriminator -->
+            <line x1="440" y1="145" x2="500" y2="165" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowGan)"/>
+            <line x1="440" y1="245" x2="500" y2="195" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowGreen)"/>
+            <!-- Output -->
+            <rect x="670" y="150" width="60" height="50" rx="8" fill="#1a1a2e" stroke="#ffab76" stroke-width="2"/>
+            <text x="700" y="172" fill="#ffab76" text-anchor="middle" font-size="11">Vrai</text>
+            <text x="700" y="189" fill="#ffab76" text-anchor="middle" font-size="11">/ Faux</text>
+            <line x1="630" y1="175" x2="670" y2="175" stroke="#ffab76" stroke-width="2" marker-end="url(#arrowGan)"/>
+            <!-- Feedback arrows -->
+            <path d="M 700 200 L 700 290 L 225 290 L 225 180" stroke="#ff4444" stroke-width="2" fill="none" stroke-dasharray="6" marker-end="url(#arrowRed)"/>
+            <text x="460" y="282" fill="#ff4444" text-anchor="middle" font-size="11">Gradient vers G (ameliorer la qualite)</text>
+            <path d="M 565 210 L 565 260 L 520 260 L 520 210" stroke="#569cd6" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
+            <text x="565" y="270" fill="#569cd6" text-anchor="middle" font-size="10">Mise a jour de D</text>
+            <!-- Title -->
+            <text x="375" y="30" fill="#ff6b35" text-anchor="middle" font-size="15" font-weight="bold">Boucle d'entrainement GAN</text>
+        </svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================ -->
+    <h2>3. Architecture du Generator</h2>
+
+    <h3>3.1 Du bruit a l'image</h3>
+
+    <p>Le generateur prend en entree un vecteur de bruit aleatoire <strong>z</strong> echantillonne depuis une distribution simple (generalement une gaussienne standard) et le transforme progressivement en une image. Cette transformation utilise des couches de <strong>convolution transposee</strong> (ou deconvolution) qui augmentent la resolution spatiale.</p>
+
+    <div class="definition">
+        La <strong>convolution transposee</strong> (ConvTranspose2d) est l'operation inverse de la convolution classique : elle augmente les dimensions spatiales de l'entree. Si une convolution 3x3 avec stride 2 reduit la taille par 2, une convolution transposee 3x3 avec stride 2 l'augmente par 2.
+    </div>
+
+    <h3>3.2 Structure typique du Generator</h3>
+
+    <div class="concept-box">
+        <h4>Pipeline du Generator (pour images 64x64)</h4>
+        <ol>
+            <li><strong>Entree :</strong> Vecteur z de taille (latent_dim,) - typiquement 100 dimensions</li>
+            <li><strong>Projection :</strong> Couche lineaire z -> (512, 4, 4) puis reshape en feature map 3D</li>
+            <li><strong>ConvTranspose 1 :</strong> (512, 4, 4) -> (256, 8, 8) - doublement de resolution</li>
+            <li><strong>ConvTranspose 2 :</strong> (256, 8, 8) -> (128, 16, 16)</li>
+            <li><strong>ConvTranspose 3 :</strong> (128, 16, 16) -> (64, 32, 32)</li>
+            <li><strong>ConvTranspose 4 :</strong> (64, 32, 32) -> (3, 64, 64) - image RGB finale</li>
+            <li><strong>Activation finale :</strong> tanh() pour obtenir des valeurs dans [-1, 1]</li>
+        </ol>
+    </div>
+
+    <h3>3.3 Diagramme du Generator</h3>
+
+    <div class="svg-container">
+        <svg width="700" height="240" viewBox="0 0 700 240">
+            <defs>
+                <marker id="arrG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#ff8c42"/>
+                </marker>
+            </defs>
+            <text x="350" y="20" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Architecture Generator</text>
+            <!-- z input -->
+            <rect x="10" y="90" width="60" height="60" rx="6" fill="#569cd6" opacity="0.3" stroke="#569cd6" stroke-width="2"/>
+            <text x="40" y="115" fill="#569cd6" text-anchor="middle" font-size="10" font-weight="bold">z</text>
+            <text x="40" y="130" fill="#aaa" text-anchor="middle" font-size="9">100</text>
+            <!-- Project -->
+            <rect x="95" y="80" width="60" height="80" rx="6" fill="#1a1a2e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="125" y="110" fill="#ff6b35" text-anchor="middle" font-size="9">Project</text>
+            <text x="125" y="125" fill="#aaa" text-anchor="middle" font-size="8">512x4x4</text>
+            <line x1="70" y1="120" x2="95" y2="120" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+            <!-- ConvT 1 -->
+            <rect x="180" y="85" width="70" height="70" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="215" y="110" fill="#ff8c42" text-anchor="middle" font-size="9">ConvT</text>
+            <text x="215" y="125" fill="#aaa" text-anchor="middle" font-size="8">256x8x8</text>
+            <text x="215" y="140" fill="#6a9955" text-anchor="middle" font-size="7">BN+ReLU</text>
+            <line x1="155" y1="120" x2="180" y2="120" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+            <!-- ConvT 2 -->
+            <rect x="275" y="80" width="75" height="80" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="312" y="110" fill="#ff8c42" text-anchor="middle" font-size="9">ConvT</text>
+            <text x="312" y="125" fill="#aaa" text-anchor="middle" font-size="8">128x16x16</text>
+            <text x="312" y="140" fill="#6a9955" text-anchor="middle" font-size="7">BN+ReLU</text>
+            <line x1="250" y1="120" x2="275" y2="120" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+            <!-- ConvT 3 -->
+            <rect x="375" y="75" width="80" height="90" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="415" y="110" fill="#ff8c42" text-anchor="middle" font-size="9">ConvT</text>
+            <text x="415" y="125" fill="#aaa" text-anchor="middle" font-size="8">64x32x32</text>
+            <text x="415" y="140" fill="#6a9955" text-anchor="middle" font-size="7">BN+ReLU</text>
+            <line x1="350" y1="120" x2="375" y2="120" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+            <!-- ConvT 4 -->
+            <rect x="480" y="70" width="85" height="100" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="522" y="110" fill="#ff8c42" text-anchor="middle" font-size="9">ConvT</text>
+            <text x="522" y="125" fill="#aaa" text-anchor="middle" font-size="8">3x64x64</text>
+            <text x="522" y="140" fill="#6a9955" text-anchor="middle" font-size="7">Tanh</text>
+            <line x1="455" y1="120" x2="480" y2="120" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+            <!-- Output image -->
+            <rect x="595" y="65" width="90" height="110" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="640" y="115" fill="#00ff88" text-anchor="middle" font-size="10" font-weight="bold">Image</text>
+            <text x="640" y="132" fill="#00ff88" text-anchor="middle" font-size="10">generee</text>
+            <text x="640" y="150" fill="#aaa" text-anchor="middle" font-size="9">64x64x3</text>
+            <line x1="565" y1="120" x2="595" y2="120" stroke="#00ff88" stroke-width="2" marker-end="url(#arrG)"/>
+            <!-- Scale arrows -->
+            <text x="40" y="170" fill="#aaa" text-anchor="middle" font-size="9">petite dim</text>
+            <text x="640" y="195" fill="#aaa" text-anchor="middle" font-size="9">grande dim</text>
+            <path d="M 70 185 L 600 185" stroke="#555" stroke-width="1" marker-end="url(#arrG)" stroke-dasharray="4"/>
+            <text x="350" y="205" fill="#555" text-anchor="middle" font-size="10">Resolution croissante</text>
+        </svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================ -->
+    <h2>4. Architecture du Discriminator</h2>
+
+    <h3>4.1 Classification real/fake</h3>
+
+    <p>Le discriminateur est un classificateur binaire qui prend une image en entree et produit une probabilite que cette image soit reelle. Son architecture est essentiellement un CNN classique, mais au lieu de classifier des categories d'objets, il predit "vrai" ou "faux".</p>
+
+    <div class="concept-box">
+        <h4>Pipeline du Discriminator (pour images 64x64)</h4>
+        <ol>
+            <li><strong>Entree :</strong> Image de taille (3, 64, 64)</li>
+            <li><strong>Conv 1 :</strong> (3, 64, 64) -> (64, 32, 32) - stride 2, LeakyReLU</li>
+            <li><strong>Conv 2 :</strong> (64, 32, 32) -> (128, 16, 16) - stride 2, BN, LeakyReLU</li>
+            <li><strong>Conv 3 :</strong> (128, 16, 16) -> (256, 8, 8) - stride 2, BN, LeakyReLU</li>
+            <li><strong>Conv 4 :</strong> (256, 8, 8) -> (512, 4, 4) - stride 2, BN, LeakyReLU</li>
+            <li><strong>Conv finale :</strong> (512, 4, 4) -> (1, 1, 1) - sortie unique</li>
+            <li><strong>Activation :</strong> Sigmoid pour obtenir une probabilite entre 0 et 1</li>
+        </ol>
+    </div>
+
+    <h3>4.2 Diagramme du Discriminator</h3>
+
+    <div class="svg-container">
+        <svg width="700" height="230" viewBox="0 0 700 230">
+            <text x="350" y="20" fill="#569cd6" text-anchor="middle" font-size="14" font-weight="bold">Architecture Discriminator</text>
+            <!-- Input image -->
+            <rect x="10" y="60" width="85" height="110" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="52" y="110" fill="#ff8c42" text-anchor="middle" font-size="10" font-weight="bold">Image</text>
+            <text x="52" y="128" fill="#aaa" text-anchor="middle" font-size="9">3x64x64</text>
+            <!-- Conv layers -->
+            <rect x="120" y="70" width="75" height="90" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="157" y="105" fill="#569cd6" text-anchor="middle" font-size="9">Conv</text>
+            <text x="157" y="120" fill="#aaa" text-anchor="middle" font-size="8">64x32x32</text>
+            <text x="157" y="135" fill="#6a9955" text-anchor="middle" font-size="7">LReLU</text>
+            <line x1="95" y1="115" x2="120" y2="115" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+
+            <rect x="220" y="75" width="75" height="80" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="257" y="105" fill="#569cd6" text-anchor="middle" font-size="9">Conv</text>
+            <text x="257" y="120" fill="#aaa" text-anchor="middle" font-size="8">128x16x16</text>
+            <text x="257" y="135" fill="#6a9955" text-anchor="middle" font-size="7">BN+LReLU</text>
+            <line x1="195" y1="115" x2="220" y2="115" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+
+            <rect x="320" y="80" width="75" height="70" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="357" y="105" fill="#569cd6" text-anchor="middle" font-size="9">Conv</text>
+            <text x="357" y="120" fill="#aaa" text-anchor="middle" font-size="8">256x8x8</text>
+            <text x="357" y="135" fill="#6a9955" text-anchor="middle" font-size="7">BN+LReLU</text>
+            <line x1="295" y1="115" x2="320" y2="115" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+
+            <rect x="420" y="85" width="75" height="60" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="457" y="105" fill="#569cd6" text-anchor="middle" font-size="9">Conv</text>
+            <text x="457" y="120" fill="#aaa" text-anchor="middle" font-size="8">512x4x4</text>
+            <text x="457" y="135" fill="#6a9955" text-anchor="middle" font-size="7">BN+LReLU</text>
+            <line x1="395" y1="115" x2="420" y2="115" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+
+            <rect x="520" y="95" width="65" height="40" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="552" y="115" fill="#569cd6" text-anchor="middle" font-size="9">Conv</text>
+            <text x="552" y="128" fill="#aaa" text-anchor="middle" font-size="8">1x1x1</text>
+            <line x1="495" y1="115" x2="520" y2="115" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+            <!-- Sigmoid -->
+            <rect x="610" y="90" width="70" height="50" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="645" y="112" fill="#00ff88" text-anchor="middle" font-size="10" font-weight="bold">Sigmoid</text>
+            <text x="645" y="128" fill="#aaa" text-anchor="middle" font-size="9">[0, 1]</text>
+            <line x1="585" y1="115" x2="610" y2="115" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrG)"/>
+            <!-- Scale -->
+            <text x="52" y="190" fill="#aaa" text-anchor="middle" font-size="9">grande dim</text>
+            <text x="645" y="160" fill="#aaa" text-anchor="middle" font-size="9">scalaire</text>
+            <path d="M 95 190 L 600 190" stroke="#555" stroke-width="1" marker-end="url(#arrG)" stroke-dasharray="4"/>
+            <text x="350" y="210" fill="#555" text-anchor="middle" font-size="10">Resolution decroissante</text>
+        </svg>
+    </div>
+
+    <div class="warning">
+        Le discriminateur ne doit PAS utiliser de Batch Normalization dans sa premiere couche. De plus, il utilise LeakyReLU (pente negative de 0.2) au lieu de ReLU pour eviter les "neurones morts" et maintenir un flux de gradient meme pour les activations negatives.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================ -->
+    <h2>5. Entrainement des GANs</h2>
+
+    <h3>5.1 Entrainement alterne</h3>
+
+    <p>L'entrainement d'un GAN alterne entre deux phases a chaque iteration :</p>
+
+    <div class="step-box"><strong>Phase 1 - Entrainer le Discriminateur :</strong>
+        <ol>
+            <li>Echantillonner un batch d'images reelles x du dataset</li>
+            <li>Echantillonner un bruit z et generer des fausses images G(z)</li>
+            <li>Calculer L_D = -[mean(log(D(x))) + mean(log(1 - D(G(z))))]</li>
+            <li>Mettre a jour les poids du discriminateur uniquement</li>
+        </ol>
+    </div>
+
+    <div class="step-box"><strong>Phase 2 - Entrainer le Generateur :</strong>
+        <ol>
+            <li>Echantillonner un nouveau bruit z</li>
+            <li>Generer des fausses images G(z)</li>
+            <li>Calculer L_G = -mean(log(D(G(z))))</li>
+            <li>Mettre a jour les poids du generateur uniquement (le discriminateur est fige)</li>
+        </ol>
+    </div>
+
+    <h3>5.2 Equilibre de Nash</h3>
+
+    <div class="definition">
+        L'<strong>equilibre de Nash</strong> dans le contexte des GANs est atteint lorsque le generateur produit des echantillons parfaitement realistes (P_G = P_data) et le discriminateur ne peut plus distinguer le vrai du faux (D(x) = 0.5 pour tout x). En theorie, c'est un point de selle de la fonction objectif du jeu minimax.
+    </div>
+
+    <div class="warning">
+        En pratique, atteindre l'equilibre de Nash est extremement difficile. L'entrainement des GANs est notoirement instable et peut souffrir de plusieurs problemes : mode collapse, oscillations, divergence du discriminateur, ou vanishing gradients pour le generateur.
+    </div>
+
+    <h3>5.3 Mode Collapse</h3>
+
+    <div class="concept-box">
+        <h4>Le probleme du Mode Collapse</h4>
+        <p>Le <strong>mode collapse</strong> est le probleme le plus courant des GANs. Le generateur trouve un petit nombre d'images (ou meme une seule) qui trompe systematiquement le discriminateur, et se met a produire uniquement ces images, ignorant la diversite des donnees reelles.</p>
+        <ul>
+            <li><strong>Collapse total :</strong> Le generateur ne produit qu'une seule image, quelle que soit l'entree z</li>
+            <li><strong>Collapse partiel :</strong> Le generateur produit quelques modes de la distribution mais en ignore d'autres (ex: ne genere que des 1 et des 7 dans MNIST)</li>
+        </ul>
+    </div>
+
+    <h3>5.4 Indicateurs de qualite pendant l'entrainement</h3>
+
+    <div class="metric-card">
+        <h4>Metrics a surveiller</h4>
+        <ul>
+            <li><strong>Loss D :</strong> Ne devrait pas tendre vers 0 (sinon D est trop fort) ni diverger</li>
+            <li><strong>Loss G :</strong> Devrait diminuer progressivement sans oscillations violentes</li>
+            <li><strong>D(x_reel) :</strong> La sortie moyenne du discriminateur sur des images reelles (~0.5 a l'equilibre)</li>
+            <li><strong>D(G(z)) :</strong> La sortie moyenne sur des fausses images (~0.5 a l'equilibre)</li>
+            <li><strong>FID (Frechet Inception Distance) :</strong> Mesure statistique de la qualite et diversite des images generees. Plus bas = meilleur.</li>
+        </ul>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================ -->
+    <h2>6. DCGAN - Deep Convolutional GAN</h2>
+
+    <h3>6.1 Les regles architecturales de DCGAN</h3>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2015</span>
+        <div>
+            <strong>"Unsupervised Representation Learning with DCGANs"</strong> - Radford et al. Cet article etablit des guidelines architecturales qui stabilisent considerablement l'entrainement des GANs convolutionnels.
+        </div>
+    </div>
+
+    <div class="concept-box green">
+        <h4>Guidelines DCGAN</h4>
+        <ol>
+            <li><strong>Remplacer le pooling par des convolutions stridees</strong> (stride 2 pour le discriminateur, transposed convolutions pour le generateur)</li>
+            <li><strong>Utiliser Batch Normalization</strong> dans le generateur et le discriminateur (sauf premiere couche de D et derniere de G)</li>
+            <li><strong>Supprimer les couches fully-connected</strong> dans les couches intermediaires</li>
+            <li><strong>Utiliser ReLU dans le generateur</strong> sauf la derniere couche (tanh)</li>
+            <li><strong>Utiliser LeakyReLU dans le discriminateur</strong> avec une pente de 0.2</li>
+        </ol>
+    </div>
+
+    <h3>6.2 Hyperparametres recommandes</h3>
+
+    <div class="param-box">
+        <h4>Configuration DCGAN standard</h4>
+        <table>
+            <tr><th>Parametre</th><th>Valeur</th></tr>
+            <tr><td>Optimiseur</td><td>Adam (beta1=0.5, beta2=0.999)</td></tr>
+            <tr><td>Learning rate</td><td>0.0002</td></tr>
+            <tr><td>Taille du batch</td><td>128</td></tr>
+            <tr><td>Dimension latente z</td><td>100</td></tr>
+            <tr><td>LeakyReLU slope (D)</td><td>0.2</td></tr>
+            <tr><td>Initialisation des poids</td><td>N(0, 0.02) pour Conv et ConvTranspose</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        La valeur beta1=0.5 (au lieu du defaut 0.9) pour Adam est cruciale pour la stabilite des GANs. Un momentum trop eleve creerait des oscillations dans l'entrainement adversarial. Ce petit detail a un impact enorme sur la convergence.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================ -->
+    <h2>7. Problemes et Solutions Avancees</h2>
+
+    <h3>7.1 Recapitulatif des problemes</h3>
+
+    <table>
+        <tr><th>Probleme</th><th>Symptome</th><th>Cause</th></tr>
+        <tr><td>Mode collapse</td><td>Le G produit toujours la meme image</td><td>G trouve un optimum local facile</td></tr>
+        <tr><td>Training instability</td><td>Oscillations des losses, divergence</td><td>Desequilibre G/D, mauvais hyperparametres</td></tr>
+        <tr><td>Vanishing gradients</td><td>G n'apprend plus</td><td>D trop performant, gradients proches de 0</td></tr>
+        <tr><td>Non-convergence</td><td>Pas d'amelioration malgre l'entrainement</td><td>Pas d'equilibre de Nash atteignable</td></tr>
+    </table>
+
+    <h3>7.2 Tricks d'entrainement</h3>
+
+    <div class="concept-box">
+        <h4>Astuces pratiques pour stabiliser l'entrainement</h4>
+        <ul>
+            <li><strong>Label smoothing :</strong> Remplacer les labels 1 (vrai) par 0.9 pour le discriminateur. Cela empeche D de devenir trop confiant.</li>
+            <li><strong>Label flipping occasionnel :</strong> Inverser les labels de quelques exemples (5-10%) pour regulariser D.</li>
+            <li><strong>Entrainer D plus souvent :</strong> Faire k steps de D pour 1 step de G (typiquement k=1 a 5).</li>
+            <li><strong>Ajout de bruit aux images :</strong> Ajouter un leger bruit gaussien aux entrees de D, en le reduisant au fil de l'entrainement.</li>
+            <li><strong>Spectral normalization :</strong> Normaliser les poids de D pour controler sa constante de Lipschitz.</li>
+        </ul>
+    </div>
+
+    <h3>7.3 Wasserstein GAN (WGAN)</h3>
+
+    <div class="definition">
+        Le <strong>WGAN</strong> (Arjovsky et al., 2017) remplace la divergence de Jensen-Shannon par la <strong>distance de Wasserstein</strong> (ou Earth Mover's Distance), qui fournit un signal de gradient plus informatif, meme lorsque les distributions du generateur et des donnees reelles ne se chevauchent pas.
+    </div>
+
+    <div class="concept-box blue">
+        <h4>Differences WGAN vs GAN classique</h4>
+        <ul>
+            <li>La sortie du discriminateur (appele "critique") n'utilise <strong>pas de sigmoid</strong> - elle retourne un score non borne</li>
+            <li>Loss du critique : <strong>L_C = E[D(G(z))] - E[D(x)]</strong> (minimiser)</li>
+            <li>Loss du generateur : <strong>L_G = -E[D(G(z))]</strong> (minimiser)</li>
+            <li>Contrainte de Lipschitz : les poids du critique sont clippes dans [-c, c] (WGAN original) ou penalise par gradient penalty (WGAN-GP)</li>
+        </ul>
+    </div>
+
+    <h3>7.4 WGAN-GP (Gradient Penalty)</h3>
+
+    <p>Le clipping des poids dans WGAN original est une approche crude. WGAN-GP (Gulrajani et al., 2017) remplace le clipping par une <strong>penalite sur la norme du gradient</strong> du critique :</p>
+
+    <div class="step-box"><strong>Gradient Penalty :</strong> GP = lambda * E[(||grad_x D(x_hat)||_2 - 1)^2]</div>
+
+    <p>Ou x_hat est un point aleatoire entre une donnee reelle et une donnee generee (interpolation). La loss finale du critique est :</p>
+
+    <div class="step-box"><strong>L_C = E[D(G(z))] - E[D(x)] + lambda * GP</strong> (typiquement lambda = 10)</div>
+
+    <div class="effect">
+        WGAN-GP produit un entrainement beaucoup plus stable que le GAN original, avec une loss du critique qui correle directement avec la qualite visuelle des images generees - ce qui permet un monitoring fiable de l'entrainement.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================ -->
+    <h2>8. StyleGAN</h2>
+
+    <h3>8.1 L'innovation StyleGAN</h3>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2018</span>
+        <div>
+            <strong>"A Style-Based Generator Architecture for GANs"</strong> - Karras et al. (NVIDIA). StyleGAN revolutionne la generation d'images en introduisant un controle hierarchique sur les styles visuels a differentes echelles.
+        </div>
+    </div>
+
+    <h3>8.2 Composants cles de StyleGAN</h3>
+
+    <div class="concept-box">
+        <h4>Architecture du Mapping Network</h4>
+        <p>Au lieu d'alimenter directement le bruit z dans le generateur, StyleGAN utilise un <strong>mapping network</strong> compose de 8 couches fully-connected qui transforme z en un vecteur de style <strong>w</strong> dans un espace latent intermediaire W.</p>
+        <p>L'espace W est moins "enchevetre" que l'espace Z : chaque dimension de w tend a controler un attribut visuel specifique (age, genre, orientation, eclairage...).</p>
+    </div>
+
+    <div class="concept-box green">
+        <h4>Adaptive Instance Normalization (AdaIN)</h4>
+        <p>Le vecteur de style w est injecte dans chaque couche de generation via l'<strong>AdaIN</strong> :</p>
+        <p style="text-align:center; margin:10px 0;">
+            <strong>AdaIN(x_i, y) = y_s * (x_i - mean(x_i)) / std(x_i) + y_b</strong>
+        </p>
+        <p>Ou y_s et y_b sont des parametres de scale et de biais derives du vecteur de style w via des couches lineaires apprises. Cela permet d'injecter l'information de style a chaque resolution.</p>
+    </div>
+
+    <h3>8.3 Style Mixing</h3>
+
+    <p>StyleGAN permet le <strong>style mixing</strong> : utiliser differents vecteurs de style w a differentes resolutions du generateur :</p>
+
+    <ul>
+        <li><strong>Styles grossiers (4x4 - 8x8) :</strong> Controlent la pose, la forme du visage, la structure globale</li>
+        <li><strong>Styles moyens (16x16 - 32x32) :</strong> Controlent les traits du visage, la coiffure, les yeux</li>
+        <li><strong>Styles fins (64x64 - 1024x1024) :</strong> Controlent la texture, la couleur de la peau, les details fins</li>
+    </ul>
+
+    <div class="prof-note">
+        Le style mixing est la raison pour laquelle StyleGAN a ete si revolutionnaire : on peut prendre le style "global" d'un visage A (forme, pose) et le combiner avec le style "fin" d'un visage B (texture, couleur) pour creer un troisieme visage combinant les deux. C'est un niveau de controle qui etait impossible avec les GANs traditionnels.
+    </div>
+
+    <h3>8.4 Diagramme simplifie de StyleGAN</h3>
+
+    <div class="svg-container">
+        <svg width="650" height="450" viewBox="0 0 650 450">
+            <text x="325" y="25" fill="#ff6b35" text-anchor="middle" font-size="15" font-weight="bold">Architecture StyleGAN (simplifiee)</text>
+            <defs>
+                <marker id="arrS" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#ff8c42"/>
+                </marker>
+            </defs>
+            <!-- Mapping Network -->
+            <rect x="30" y="50" width="150" height="180" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="105" y="75" fill="#569cd6" text-anchor="middle" font-size="12" font-weight="bold">Mapping Network</text>
+            <text x="105" y="100" fill="#aaa" text-anchor="middle" font-size="10">z (latent)</text>
+            <line x1="65" y1="110" x2="145" y2="110" stroke="#555" stroke-width="1"/>
+            <text x="105" y="130" fill="#aaa" text-anchor="middle" font-size="10">FC x 8</text>
+            <line x1="65" y1="140" x2="145" y2="140" stroke="#555" stroke-width="1"/>
+            <text x="105" y="165" fill="#ffab76" text-anchor="middle" font-size="11" font-weight="bold">w (style)</text>
+            <text x="105" y="185" fill="#aaa" text-anchor="middle" font-size="9">Espace W</text>
+            <!-- Arrows from w to synthesis blocks -->
+            <line x1="180" y1="160" x2="280" y2="120" stroke="#ffab76" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arrS)"/>
+            <line x1="180" y1="160" x2="280" y2="210" stroke="#ffab76" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arrS)"/>
+            <line x1="180" y1="160" x2="280" y2="300" stroke="#ffab76" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arrS)"/>
+            <text x="220" y="105" fill="#ffab76" font-size="9">style w</text>
+            <text x="220" y="220" fill="#ffab76" font-size="9">style w</text>
+            <text x="220" y="310" fill="#ffab76" font-size="9">style w</text>
+            <!-- Synthesis Network -->
+            <rect x="270" y="50" width="340" height="360" rx="12" fill="none" stroke="#ff6b35" stroke-width="2"/>
+            <text x="440" y="75" fill="#ff6b35" text-anchor="middle" font-size="12" font-weight="bold">Synthesis Network</text>
+            <!-- Constant input -->
+            <rect x="310" y="90" width="120" height="35" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="370" y="112" fill="#569cd6" text-anchor="middle" font-size="10">Constante 4x4</text>
+            <!-- Block 1 -->
+            <rect x="290" y="145" width="160" height="45" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="370" y="162" fill="#ff8c42" text-anchor="middle" font-size="10">Conv + AdaIN</text>
+            <text x="370" y="180" fill="#aaa" text-anchor="middle" font-size="9">4x4 -> 8x8</text>
+            <line x1="370" y1="125" x2="370" y2="145" stroke="#aaa" stroke-width="1.5"/>
+            <!-- Noise 1 -->
+            <rect x="475" y="150" width="60" height="25" rx="5" fill="#1a1a2e" stroke="#555" stroke-width="1"/>
+            <text x="505" y="167" fill="#aaa" text-anchor="middle" font-size="8">Noise</text>
+            <line x1="475" y1="162" x2="450" y2="162" stroke="#555" stroke-width="1"/>
+            <!-- Block 2 -->
+            <rect x="290" y="210" width="160" height="45" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="370" y="227" fill="#ff8c42" text-anchor="middle" font-size="10">Conv + AdaIN</text>
+            <text x="370" y="245" fill="#aaa" text-anchor="middle" font-size="9">8x8 -> 16x16 -> ...</text>
+            <line x1="370" y1="190" x2="370" y2="210" stroke="#aaa" stroke-width="1.5"/>
+            <!-- Noise 2 -->
+            <rect x="475" y="215" width="60" height="25" rx="5" fill="#1a1a2e" stroke="#555" stroke-width="1"/>
+            <text x="505" y="232" fill="#aaa" text-anchor="middle" font-size="8">Noise</text>
+            <line x1="475" y1="227" x2="450" y2="227" stroke="#555" stroke-width="1"/>
+            <!-- Dots -->
+            <text x="370" y="275" fill="#aaa" text-anchor="middle" font-size="16">...</text>
+            <!-- Block N -->
+            <rect x="290" y="290" width="160" height="45" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="370" y="307" fill="#ff8c42" text-anchor="middle" font-size="10">Conv + AdaIN</text>
+            <text x="370" y="325" fill="#aaa" text-anchor="middle" font-size="9">... -> 1024x1024</text>
+            <!-- Noise 3 -->
+            <rect x="475" y="295" width="60" height="25" rx="5" fill="#1a1a2e" stroke="#555" stroke-width="1"/>
+            <text x="505" y="312" fill="#aaa" text-anchor="middle" font-size="8">Noise</text>
+            <line x1="475" y1="307" x2="450" y2="307" stroke="#555" stroke-width="1"/>
+            <!-- Output -->
+            <rect x="330" y="355" width="100" height="35" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="380" y="377" fill="#00ff88" text-anchor="middle" font-size="11" font-weight="bold">Image HD</text>
+            <line x1="370" y1="335" x2="370" y2="355" stroke="#00ff88" stroke-width="1.5"/>
+            <!-- Labels -->
+            <text x="540" y="135" fill="#aaa" font-size="9">Styles grossiers</text>
+            <text x="540" y="260" fill="#aaa" font-size="9">Styles fins</text>
+        </svg>
+    </div>
+
+    <h3>8.5 Evolutions de StyleGAN</h3>
+
+    <table>
+        <tr><th>Version</th><th>Annee</th><th>Ameliorations</th></tr>
+        <tr><td>StyleGAN</td><td>2018</td><td>Mapping network, AdaIN, style mixing, progressive growing</td></tr>
+        <tr><td>StyleGAN2</td><td>2019</td><td>Suppression du progressive growing, weight demodulation, path length regularization</td></tr>
+        <tr><td>StyleGAN3</td><td>2021</td><td>Alias-free generation, equivariance aux translations et rotations</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================ -->
+    <h2>9. Applications des GANs</h2>
+
+    <h3>9.1 Generation de visages</h3>
+
+    <p>L'application la plus emblematique des GANs. Le site <strong>thispersondoesnotexist.com</strong> (base sur StyleGAN) genere des visages photorealistes de personnes qui n'existent pas. La resolution et le realisme sont tels qu'il est pratiquement impossible de distinguer les visages generes des vrais.</p>
+
+    <h3>9.2 Super-resolution (SRGAN)</h3>
+
+    <div class="concept-box">
+        <h4>Super-Resolution GAN</h4>
+        <p>Le <strong>SRGAN</strong> (Ledig et al., 2017) prend une image basse resolution en entree et genere une version haute resolution. Le generateur apprend a ajouter des details realistes qui n'existent pas dans l'image originale. La loss combine :</p>
+        <ul>
+            <li><strong>Loss de contenu :</strong> MSE entre l'image generee et l'image HR originale (ou loss perceptuelle basee sur les features VGG)</li>
+            <li><strong>Loss adversariale :</strong> Le discriminateur apprend a distinguer les images HR reelles des images upscalees</li>
+        </ul>
+    </div>
+
+    <h3>9.3 Traduction image-a-image</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff8c42;">pix2pix (2016)</h4>
+            <p>Traduction <strong>supervisee</strong> : necessite des paires d'images alignees (ex: photo satellite / carte routiere).</p>
+            <p>Utilise un generateur U-Net et un discriminateur PatchGAN.</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">CycleGAN (2017)</h4>
+            <p>Traduction <strong>non supervisee</strong> : ne necessite pas de paires, juste deux collections d'images de chaque domaine.</p>
+            <p>Utilise une <strong>cycle consistency loss</strong> : F(G(x)) ≈ x.</p>
+        </div>
+    </div>
+
+    <h3>9.4 Autres applications</h3>
+
+    <div class="metric-card">
+        <h4>Domaines d'application des GANs</h4>
+        <ul>
+            <li><strong>Augmentation de donnees :</strong> Generer des exemples d'entrainement synthetiques pour les classes sous-representees</li>
+            <li><strong>Inpainting :</strong> Reconstruire les parties manquantes d'une image de maniere coherente</li>
+            <li><strong>Transfert de style :</strong> Appliquer le style d'une image a une autre (ex: photo -> peinture de Monet)</li>
+            <li><strong>Edition semantique :</strong> Modifier des attributs specifiques d'une image (age, expression, eclairage)</li>
+            <li><strong>Generation de texte-a-image :</strong> Generer des images a partir de descriptions textuelles (StackGAN, AttnGAN)</li>
+            <li><strong>Synthese video :</strong> Generer des videos realistes a partir de few-shot (DeepFake, vid2vid)</li>
+            <li><strong>Decouverte de medicaments :</strong> Generer des structures moleculaires candidates</li>
+        </ul>
+    </div>
+
+    <div class="warning">
+        Les GANs, en particulier pour la generation de visages et de videos, posent des questions ethiques majeures (deepfakes, desinformation). Il est essentiel de developper et deployer ces technologies de maniere responsable, avec des mecanismes de detection et de traçabilite.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================ -->
+    <h2>10. Implementation Complete : DCGAN pour MNIST</h2>
+
+    <h3>10.1 Le Generator</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="keyword">class</span> <span class="function">Generator</span>(nn.Module):
+    <span class="string">"""Generator DCGAN pour images 28x28 (MNIST)"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, latent_dim=<span class="number">100</span>, channels=<span class="number">1</span>):
+        <span class="function">super</span>().__init__()
+        self.latent_dim = latent_dim
+
+        self.main = nn.Sequential(
+            <span class="comment"># Entree : z de taille (latent_dim, 1, 1)</span>
+            <span class="comment"># Sortie : (256, 7, 7)</span>
+            nn.ConvTranspose2d(latent_dim, <span class="number">256</span>, <span class="number">7</span>, <span class="number">1</span>, <span class="number">0</span>, bias=<span class="keyword">False</span>),
+            nn.BatchNorm2d(<span class="number">256</span>),
+            nn.ReLU(<span class="keyword">True</span>),
+
+            <span class="comment"># Sortie : (128, 14, 14)</span>
+            nn.ConvTranspose2d(<span class="number">256</span>, <span class="number">128</span>, <span class="number">4</span>, <span class="number">2</span>, <span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.BatchNorm2d(<span class="number">128</span>),
+            nn.ReLU(<span class="keyword">True</span>),
+
+            <span class="comment"># Sortie : (channels, 28, 28)</span>
+            nn.ConvTranspose2d(<span class="number">128</span>, channels, <span class="number">4</span>, <span class="number">2</span>, <span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.Tanh()
+        )
+
+        <span class="comment"># Initialisation des poids (guideline DCGAN)</span>
+        self.<span class="function">apply</span>(self._init_weights)
+
+    <span class="keyword">def</span> <span class="function">_init_weights</span>(self, m):
+        <span class="keyword">if</span> isinstance(m, (nn.ConvTranspose2d, nn.Conv2d)):
+            nn.init.normal_(m.weight, <span class="number">0.0</span>, <span class="number">0.02</span>)
+        <span class="keyword">elif</span> isinstance(m, nn.BatchNorm2d):
+            nn.init.normal_(m.weight, <span class="number">1.0</span>, <span class="number">0.02</span>)
+            nn.init.constant_(m.bias, <span class="number">0</span>)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, z):
+        <span class="comment"># z: (batch, latent_dim) -> reshape en (batch, latent_dim, 1, 1)</span>
+        z = z.view(-<span class="number">1</span>, self.latent_dim, <span class="number">1</span>, <span class="number">1</span>)
+        <span class="keyword">return</span> self.main(z)
+
+<span class="comment"># Test</span>
+gen = <span class="function">Generator</span>(latent_dim=<span class="number">100</span>)
+z = torch.randn(<span class="number">16</span>, <span class="number">100</span>)
+fake_images = gen(z)
+<span class="function">print</span>(f<span class="string">"Generator - Entree: {z.shape} -> Sortie: {fake_images.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Plage de valeurs: [{fake_images.min():.3f}, {fake_images.max():.3f}]"</span>)</div>
+
+    <div class="output-block">Generator - Entree: torch.Size([16, 100]) -> Sortie: torch.Size([16, 1, 28, 28])
+Plage de valeurs: [-0.987, 0.991]</div>
+
+    <h3>10.2 Le Discriminator</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">Discriminator</span>(nn.Module):
+    <span class="string">"""Discriminator DCGAN pour images 28x28 (MNIST)"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, channels=<span class="number">1</span>):
+        <span class="function">super</span>().__init__()
+
+        self.main = nn.Sequential(
+            <span class="comment"># Entree : (channels, 28, 28)</span>
+            <span class="comment"># Sortie : (64, 14, 14)</span>
+            nn.Conv2d(channels, <span class="number">64</span>, <span class="number">4</span>, <span class="number">2</span>, <span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.LeakyReLU(<span class="number">0.2</span>, inplace=<span class="keyword">True</span>),
+
+            <span class="comment"># Sortie : (128, 7, 7)</span>
+            nn.Conv2d(<span class="number">64</span>, <span class="number">128</span>, <span class="number">4</span>, <span class="number">2</span>, <span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.BatchNorm2d(<span class="number">128</span>),
+            nn.LeakyReLU(<span class="number">0.2</span>, inplace=<span class="keyword">True</span>),
+
+            <span class="comment"># Sortie : (1, 1, 1)</span>
+            nn.Conv2d(<span class="number">128</span>, <span class="number">1</span>, <span class="number">7</span>, <span class="number">1</span>, <span class="number">0</span>, bias=<span class="keyword">False</span>),
+            nn.Sigmoid()
+        )
+
+        self.<span class="function">apply</span>(self._init_weights)
+
+    <span class="keyword">def</span> <span class="function">_init_weights</span>(self, m):
+        <span class="keyword">if</span> isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
+            nn.init.normal_(m.weight, <span class="number">0.0</span>, <span class="number">0.02</span>)
+        <span class="keyword">elif</span> isinstance(m, nn.BatchNorm2d):
+            nn.init.normal_(m.weight, <span class="number">1.0</span>, <span class="number">0.02</span>)
+            nn.init.constant_(m.bias, <span class="number">0</span>)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="keyword">return</span> self.main(x).view(-<span class="number">1</span>)
+
+<span class="comment"># Test</span>
+disc = <span class="function">Discriminator</span>()
+real_images = torch.randn(<span class="number">16</span>, <span class="number">1</span>, <span class="number">28</span>, <span class="number">28</span>)
+predictions = disc(real_images)
+<span class="function">print</span>(f<span class="string">"Discriminator - Entree: {real_images.shape} -> Sortie: {predictions.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Predictions (probabilites): {predictions[:5].tolist()}"</span>)</div>
+
+    <div class="output-block">Discriminator - Entree: torch.Size([16, 1, 28, 28]) -> Sortie: torch.Size([16])
+Predictions (probabilites): [0.498, 0.512, 0.503, 0.497, 0.505]</div>
+
+    <h3>10.3 Boucle d'entrainement complete</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms
+
+<span class="comment"># Hyperparametres</span>
+LATENT_DIM = <span class="number">100</span>
+BATCH_SIZE = <span class="number">128</span>
+LR = <span class="number">0.0002</span>
+BETA1 = <span class="number">0.5</span>
+NUM_EPOCHS = <span class="number">50</span>
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+
+<span class="comment"># Dataset MNIST</span>
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize([<span class="number">0.5</span>], [<span class="number">0.5</span>])  <span class="comment"># Normalise dans [-1, 1]</span>
+])
+dataset = datasets.MNIST(root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>,
+                         transform=transform, download=<span class="keyword">True</span>)
+dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=<span class="keyword">True</span>)
+
+<span class="comment"># Modeles</span>
+generator = <span class="function">Generator</span>(latent_dim=LATENT_DIM).to(device)
+discriminator = <span class="function">Discriminator</span>().to(device)
+
+<span class="comment"># Optimiseurs (beta1=0.5 comme recommande par DCGAN)</span>
+optim_G = torch.optim.Adam(generator.parameters(), lr=LR, betas=(BETA1, <span class="number">0.999</span>))
+optim_D = torch.optim.Adam(discriminator.parameters(), lr=LR, betas=(BETA1, <span class="number">0.999</span>))
+
+<span class="comment"># Loss</span>
+criterion = nn.BCELoss()
+
+<span class="comment"># Bruit fixe pour visualiser la progression</span>
+fixed_noise = torch.randn(<span class="number">64</span>, LATENT_DIM, device=device)
+
+<span class="comment"># Boucle d'entrainement</span>
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(NUM_EPOCHS):
+    <span class="keyword">for</span> i, (real_imgs, _) <span class="keyword">in</span> enumerate(dataloader):
+        batch_size = real_imgs.size(<span class="number">0</span>)
+        real_imgs = real_imgs.to(device)
+
+        <span class="comment"># Labels</span>
+        real_labels = torch.ones(batch_size, device=device)
+        fake_labels = torch.zeros(batch_size, device=device)
+
+        <span class="comment"># ========================</span>
+        <span class="comment"># PHASE 1 : Entrainer D</span>
+        <span class="comment"># ========================</span>
+        optim_D.zero_grad()
+
+        <span class="comment"># Loss sur les images reelles</span>
+        output_real = discriminator(real_imgs)
+        loss_D_real = criterion(output_real, real_labels)
+
+        <span class="comment"># Loss sur les images fausses</span>
+        z = torch.randn(batch_size, LATENT_DIM, device=device)
+        fake_imgs = generator(z).detach()  <span class="comment"># detach pour ne pas backprop vers G</span>
+        output_fake = discriminator(fake_imgs)
+        loss_D_fake = criterion(output_fake, fake_labels)
+
+        <span class="comment"># Loss totale du discriminateur</span>
+        loss_D = loss_D_real + loss_D_fake
+        loss_D.backward()
+        optim_D.step()
+
+        <span class="comment"># ========================</span>
+        <span class="comment"># PHASE 2 : Entrainer G</span>
+        <span class="comment"># ========================</span>
+        optim_G.zero_grad()
+
+        z = torch.randn(batch_size, LATENT_DIM, device=device)
+        fake_imgs = generator(z)
+        output = discriminator(fake_imgs)
+
+        <span class="comment"># G veut que D classifie les faux comme vrais</span>
+        loss_G = criterion(output, real_labels)
+        loss_G.backward()
+        optim_G.step()
+
+    <span class="comment"># Afficher les metriques</span>
+    D_x = output_real.mean().item()    <span class="comment"># D(x) sur les vrais</span>
+    D_G_z = output_fake.mean().item()  <span class="comment"># D(G(z)) sur les faux</span>
+    <span class="function">print</span>(f<span class="string">"Epoch [{epoch+1}/{NUM_EPOCHS}] "
+          f"Loss_D: {loss_D.item():.4f} Loss_G: {loss_G.item():.4f} "
+          f"D(x): {D_x:.3f} D(G(z)): {D_G_z:.3f}"</span>)</div>
+
+    <div class="output-block">Epoch [1/50] Loss_D: 0.6931 Loss_G: 0.6931 D(x): 0.500 D(G(z)): 0.500
+Epoch [2/50] Loss_D: 0.5823 Loss_G: 1.2145 D(x): 0.782 D(G(z)): 0.352
+...
+Epoch [25/50] Loss_D: 0.8542 Loss_G: 1.3201 D(x): 0.678 D(G(z)): 0.321
+...
+Epoch [50/50] Loss_D: 0.9213 Loss_G: 1.1058 D(x): 0.612 D(G(z)): 0.413</div>
+
+    <h3>10.4 Visualisation des resultats</h3>
+
+    <div class="code-block"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">import</span> torchvision.utils <span class="keyword">as</span> vutils
+
+<span class="keyword">def</span> <span class="function">visualize_generated</span>(generator, fixed_noise, epoch):
+    <span class="string">"""Generer et afficher une grille d'images"""</span>
+    generator.eval()
+    <span class="keyword">with</span> torch.no_grad():
+        fake_images = generator(fixed_noise).cpu()
+
+    <span class="comment"># Creer une grille 8x8</span>
+    grid = vutils.make_grid(fake_images[:64], nrow=<span class="number">8</span>,
+                            normalize=<span class="keyword">True</span>, padding=<span class="number">2</span>)
+
+    plt.figure(figsize=(<span class="number">10</span>, <span class="number">10</span>))
+    plt.imshow(grid.permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>).numpy(), cmap=<span class="string">'gray'</span>)
+    plt.title(f<span class="string">'Images generees - Epoch {epoch}'</span>)
+    plt.axis(<span class="string">'off'</span>)
+    plt.savefig(f<span class="string">'generated_epoch_{epoch}.png'</span>, dpi=<span class="number">150</span>, bbox_inches=<span class="string">'tight'</span>)
+    plt.close()
+    generator.train()
+
+<span class="comment"># Generer des images avec le bruit fixe</span>
+<span class="function">visualize_generated</span>(generator, fixed_noise, epoch=<span class="number">50</span>)</div>
+
+    <h3>10.5 Interpolation dans l'espace latent</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">interpolate_latent</span>(generator, z1, z2, n_steps=<span class="number">10</span>):
+    <span class="string">"""Interpolation lineaire entre deux points de l'espace latent"""</span>
+    generator.eval()
+    alphas = torch.linspace(<span class="number">0</span>, <span class="number">1</span>, n_steps)
+    interpolated = []
+
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="keyword">for</span> alpha <span class="keyword">in</span> alphas:
+            z = (<span class="number">1</span> - alpha) * z1 + alpha * z2
+            img = generator(z.unsqueeze(<span class="number">0</span>))
+            interpolated.append(img)
+
+    <span class="comment"># Concatener et afficher</span>
+    all_imgs = torch.cat(interpolated, dim=<span class="number">0</span>)
+    grid = vutils.make_grid(all_imgs, nrow=n_steps, normalize=<span class="keyword">True</span>)
+
+    plt.figure(figsize=(<span class="number">20</span>, <span class="number">3</span>))
+    plt.imshow(grid.permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>).cpu().numpy(), cmap=<span class="string">'gray'</span>)
+    plt.title(<span class="string">'Interpolation dans l\'espace latent'</span>)
+    plt.axis(<span class="string">'off'</span>)
+    plt.show()
+    generator.train()
+
+<span class="comment"># Interpoler entre deux points aleatoires</span>
+z1 = torch.randn(LATENT_DIM, device=device)
+z2 = torch.randn(LATENT_DIM, device=device)
+<span class="function">interpolate_latent</span>(generator, z1, z2, n_steps=<span class="number">12</span>)</div>
+
+    <div class="prof-note">
+        L'interpolation dans l'espace latent est un test revelateur de la qualite du generateur. Si les transitions entre deux images sont fluides et realistes (morphing progressif), cela indique que le generateur a bien appris la variete (manifold) sous-jacente des donnees, et non simplement memorise des exemples.
+    </div>
+
+    <div class="concept-box green">
+        <h4>Resume : Points cles des GANs</h4>
+        <ul>
+            <li>Les GANs sont bases sur un jeu adversarial entre un Generator et un Discriminator</li>
+            <li>L'entrainement alterne entre les mises a jour de D et G</li>
+            <li>DCGAN a etabli les guidelines architecturales pour des GANs stables</li>
+            <li>Le mode collapse et l'instabilite d'entrainement sont les principaux defis</li>
+            <li>WGAN-GP resout partiellement ces problemes avec la distance de Wasserstein</li>
+            <li>StyleGAN a atteint un realisme photographique en introduisant le controle hierarchique du style</li>
+            <li>Les applications sont vastes : generation, super-resolution, traduction d'images, augmentation de donnees</li>
+        </ul>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_07_transformer.html">&larr; Cours precedent : L'Architecture Transformer</a>
+        <a href="dl_09_autoencoders.html">Cours suivant : Autoencoders et VAE &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

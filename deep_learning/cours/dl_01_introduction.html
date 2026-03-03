@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 01 - Introduction au Deep Learning</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 01 - Introduction au Deep Learning</h1>
+    <p class="subtitle">Cours 1/12 - Comprendre le Deep Learning, ses origines et son ecosysteme | Prof. Azdine Laaouissi</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================================ -->
+    <h2>1. Qu'est-ce que le Deep Learning ?</h2>
+
+    <div class="definition">
+        Le <strong>Deep Learning</strong> (apprentissage profond) est un sous-domaine du Machine Learning qui utilise des reseaux de neurones artificiels comportant de multiples couches (d'ou le terme "profond") pour apprendre automatiquement des representations hierarchiques a partir de donnees brutes.
+    </div>
+
+    <p>Pour bien comprendre le Deep Learning, il faut d'abord le situer dans la hierarchie des disciplines de l'intelligence artificielle. Le Deep Learning ne remplace ni l'IA ni le Machine Learning : il est un outil particulierement puissant <strong>a l'interieur</strong> de ces domaines.</p>
+
+    <h3>1.1 La hierarchie IA &gt; ML &gt; DL</h3>
+
+    <p>Voici comment ces trois disciplines s'imbriquent :</p>
+
+    <ul>
+        <li><strong>Intelligence Artificielle (IA)</strong> : toute technique permettant a une machine de simuler l'intelligence humaine (regles expertes, logique symbolique, recherche heuristique, apprentissage...).</li>
+        <li><strong>Machine Learning (ML)</strong> : sous-ensemble de l'IA ou les machines apprennent a partir de donnees sans etre explicitement programmees (regression, arbres de decision, SVM, k-NN...).</li>
+        <li><strong>Deep Learning (DL)</strong> : sous-ensemble du ML utilisant des reseaux de neurones profonds avec de nombreuses couches pour apprendre des representations complexes.</li>
+    </ul>
+
+    <div class="svg-container">
+        <svg width="500" height="500" viewBox="0 0 500 500">
+            <!-- Cercle IA (le plus grand) -->
+            <circle cx="250" cy="250" r="230" fill="none" stroke="#ff6b35" stroke-width="3" opacity="0.7"/>
+            <text x="250" y="60" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Intelligence Artificielle</text>
+            <text x="250" y="82" text-anchor="middle" fill="#aaa" font-size="12">Regles, logique, systemes experts...</text>
+
+            <!-- Cercle ML -->
+            <circle cx="250" cy="280" r="165" fill="none" stroke="#569cd6" stroke-width="3" opacity="0.7"/>
+            <text x="250" y="145" text-anchor="middle" fill="#569cd6" font-size="16" font-weight="bold">Machine Learning</text>
+            <text x="250" y="165" text-anchor="middle" fill="#aaa" font-size="11">SVM, Arbres, k-NN, Regression...</text>
+
+            <!-- Cercle DL -->
+            <circle cx="250" cy="320" r="100" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="3"/>
+            <text x="250" y="300" text-anchor="middle" fill="#00ff88" font-size="16" font-weight="bold">Deep Learning</text>
+            <text x="250" y="322" text-anchor="middle" fill="#aaa" font-size="11">CNN, RNN, Transformer</text>
+            <text x="250" y="342" text-anchor="middle" fill="#aaa" font-size="11">GAN, Autoencoder...</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        En pratique, toutes les avancees spectaculaires recentes (reconnaissance d'images, traduction automatique, generation de texte, conduite autonome) proviennent du Deep Learning. Mais il ne faut pas oublier que le ML classique reste incontournable pour beaucoup de problemes industriels ou les donnees sont tabulaires et limitees en volume.
+    </div>
+
+    <h3>1.2 Les trois ingredients du DL</h3>
+
+    <div class="concept-box">
+        <h4>Trois piliers fondamentaux :</h4>
+        <ol>
+            <li><strong>Les donnees</strong> : le Deep Learning necessite de grandes quantites de donnees pour apprendre des representations significatives.</li>
+            <li><strong>Le modele</strong> : un reseau de neurones profond avec une architecture adaptee au probleme (CNN pour les images, Transformer pour le texte...).</li>
+            <li><strong>L'optimisation</strong> : un algorithme (generalement la descente de gradient) qui ajuste les parametres du modele pour minimiser une fonction de cout.</li>
+        </ol>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================================ -->
+    <h2>2. L'histoire du Deep Learning</h2>
+
+    <p>L'histoire du Deep Learning est marquee par des periodes d'enthousiasme et de desillusion, appelees "hivers de l'IA". Voici les evenements cles :</p>
+
+    <h3>2.1 Les pionniers (1943-1969)</h3>
+
+    <div class="timeline-item">
+        <span class="timeline-year">1943</span>
+        <div><strong>McCulloch & Pitts</strong> proposent le premier modele mathematique d'un neurone artificiel, inspiree de la neurobiologie. C'est une fonction binaire a seuil.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">1957</span>
+        <div><strong>Frank Rosenblatt</strong> invente le <strong>Perceptron</strong>, le premier modele capable d'apprendre a partir de donnees. Il peut separer des classes lineairement separables. Le New York Times titre : "La Marine a construit un ordinateur electronique qui peut apprendre".</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">1969</span>
+        <div><strong>Minsky & Papert</strong> publient "Perceptrons" et demontrent mathematiquement que le perceptron simple ne peut pas resoudre le probleme XOR. Cela declenche le <strong>premier hiver de l'IA</strong>.</div>
+    </div>
+
+    <h3>2.2 La renaissance et les seconds doutes (1986-2000)</h3>
+
+    <div class="timeline-item">
+        <span class="timeline-year">1986</span>
+        <div><strong>Rumelhart, Hinton & Williams</strong> publient l'algorithme de <strong>retropropagation du gradient</strong> (backpropagation), permettant d'entrainer des reseaux multicouches. C'est l'une des decouvertes les plus importantes de l'histoire du DL.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">1989</span>
+        <div><strong>Yann LeCun</strong> developpe <strong>LeNet</strong>, le premier reseau convolutif (CNN), pour la reconnaissance de chiffres manuscrits (lecture de cheques). Utilise la backpropagation appliquee aux convolutions.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">1997</span>
+        <div><strong>Hochreiter & Schmidhuber</strong> inventent le <strong>LSTM</strong> (Long Short-Term Memory), resolvant le probleme du gradient qui disparait dans les reseaux recurrents.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">~2000</span>
+        <div>Le <strong>deuxieme hiver</strong> s'installe : les reseaux profonds sont difficiles a entrainer, les SVM dominent le paysage du ML. Le Deep Learning est considere comme une impasse par beaucoup.</div>
+    </div>
+
+    <h3>2.3 La revolution Deep Learning (2006-present)</h3>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2006</span>
+        <div><strong>Geoffrey Hinton</strong> publie son travail sur les <strong>Deep Belief Networks</strong>, montrant qu'on peut pre-entrainer les couches une par une de facon non-supervisee. C'est le renouveau du deep learning.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2012</span>
+        <div><strong>AlexNet</strong> (Krizhevsky, Sutskever, Hinton) remporte ImageNet avec un ecart enorme. C'est le moment ou le monde prend conscience de la puissance du DL. Utilise les GPU pour la premiere fois de maniere massive.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2014</span>
+        <div><strong>GAN</strong> (Generative Adversarial Networks) invente par <strong>Ian Goodfellow</strong>. Deux reseaux s'affrontent : un generateur et un discriminateur. Revolution pour la generation d'images.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2017</span>
+        <div><strong>"Attention is All You Need"</strong> : Google publie l'architecture <strong>Transformer</strong>, basee entierement sur le mecanisme d'attention. Cette architecture va revolutionner le NLP puis l'ensemble du DL.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2018</span>
+        <div><strong>BERT</strong> (Google) et <strong>GPT</strong> (OpenAI) montrent la puissance du pre-entrainement massif de modeles de langage. Le transfer learning en NLP devient la norme.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2020</span>
+        <div><strong>GPT-3</strong> (175 milliards de parametres) demontre des capacites emergentes impressionnantes : generation de texte, code, raisonnement en "few-shot".</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2022</span>
+        <div><strong>ChatGPT</strong> (OpenAI) et les modeles de diffusion (DALL-E 2, Stable Diffusion, Midjourney) demontrent au grand public la puissance du Deep Learning. L'IA generative devient un phenomene mondial.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2023-25</span>
+        <div><strong>GPT-4, Claude, Gemini, Llama</strong> : les grands modeles de langage (LLM) deviennent multimodaux, plus performants et plus accessibles. La course a l'IA s'intensifie.</div>
+    </div>
+
+    <div class="svg-container">
+        <svg width="900" height="180" viewBox="0 0 900 180">
+            <line x1="30" y1="90" x2="870" y2="90" stroke="#333" stroke-width="2"/>
+            <!-- Points cles -->
+            <circle cx="60" cy="90" r="8" fill="#ff6b35"/>
+            <text x="60" y="75" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">1957</text>
+            <text x="60" y="120" text-anchor="middle" fill="#aaa" font-size="9">Perceptron</text>
+
+            <circle cx="180" cy="90" r="8" fill="#ff4444"/>
+            <text x="180" y="75" text-anchor="middle" fill="#ff4444" font-size="11" font-weight="bold">1969</text>
+            <text x="180" y="120" text-anchor="middle" fill="#aaa" font-size="9">Hiver 1</text>
+
+            <circle cx="300" cy="90" r="8" fill="#ff6b35"/>
+            <text x="300" y="75" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">1986</text>
+            <text x="300" y="120" text-anchor="middle" fill="#aaa" font-size="9">Backprop</text>
+
+            <circle cx="410" cy="90" r="8" fill="#569cd6"/>
+            <text x="410" y="75" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">2006</text>
+            <text x="410" y="120" text-anchor="middle" fill="#aaa" font-size="9">Deep Belief</text>
+
+            <circle cx="520" cy="90" r="8" fill="#00ff88"/>
+            <text x="520" y="75" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">2012</text>
+            <text x="520" y="120" text-anchor="middle" fill="#aaa" font-size="9">AlexNet</text>
+
+            <circle cx="630" cy="90" r="8" fill="#00ff88"/>
+            <text x="630" y="75" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">2017</text>
+            <text x="630" y="120" text-anchor="middle" fill="#aaa" font-size="9">Transformer</text>
+
+            <circle cx="740" cy="90" r="8" fill="#00ff88"/>
+            <text x="740" y="75" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">2018</text>
+            <text x="740" y="120" text-anchor="middle" fill="#aaa" font-size="9">BERT/GPT</text>
+
+            <circle cx="840" cy="90" r="8" fill="#dcdcaa"/>
+            <text x="840" y="75" text-anchor="middle" fill="#dcdcaa" font-size="11" font-weight="bold">2022</text>
+            <text x="840" y="120" text-anchor="middle" fill="#aaa" font-size="9">ChatGPT</text>
+
+            <!-- Zones hiver -->
+            <rect x="160" y="140" width="130" height="20" rx="5" fill="rgba(255,68,68,0.15)" stroke="#ff4444" stroke-width="1"/>
+            <text x="225" y="155" text-anchor="middle" fill="#ff4444" font-size="10">Hiver de l'IA</text>
+        </svg>
+    </div>
+
+    <div class="warning">
+        Les hivers de l'IA montrent que le progres scientifique n'est pas lineaire. Chaque vague d'enthousiasme excessif a ete suivie d'une desillusion. Aujourd'hui, le Deep Learning produit des resultats concrets et commerciaux, mais certains defis fondamentaux (generalisation, raisonnement, efficacite energetique) restent ouverts.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================================ -->
+    <h2>3. Pourquoi le Deep Learning fonctionne maintenant ?</h2>
+
+    <p>Le concept des reseaux de neurones existe depuis les annees 1950. Pourquoi les resultats spectaculaires n'arrivent-ils qu'a partir de 2012 ? Trois facteurs convergents expliquent cette revolution :</p>
+
+    <h3>3.1 Big Data : l'explosion des donnees</h3>
+
+    <div class="concept-box green">
+        <h4>L'ere du Big Data</h4>
+        <p>Le Deep Learning est vorace en donnees. Un modele profond peut avoir des millions voire des milliards de parametres, et il a besoin de donnees massives pour apprendre sans sur-ajuster.</p>
+        <ul>
+            <li><strong>ImageNet</strong> : 14 millions d'images etiquetees dans 20 000 categories.</li>
+            <li><strong>Common Crawl</strong> : des milliards de pages web pour entrainer les modeles de langage.</li>
+            <li><strong>YouTube, Instagram, Wikipedia</strong> : des sources de donnees quasi infinies pour le pre-entrainement.</li>
+            <li>En 2025, l'humanite produit environ <strong>120 zettaoctets</strong> de donnees par an.</li>
+        </ul>
+    </div>
+
+    <h3>3.2 Puissance de calcul : GPU et parallelisme</h3>
+
+    <div class="concept-box blue">
+        <h4>La revolution GPU</h4>
+        <p>Les GPU (Graphics Processing Units), initialement concues pour le jeu video, se revelent ideales pour le Deep Learning car elles excellent dans le calcul matriciel parallele.</p>
+        <table>
+            <tr><th>Composant</th><th>Coeurs</th><th>Type de calcul</th><th>Usage DL</th></tr>
+            <tr><td>CPU (Intel i9)</td><td>~16-24 coeurs</td><td>Sequentiel, polyvalent</td><td>Pre-traitement des donnees</td></tr>
+            <tr><td>GPU (NVIDIA A100)</td><td>~6912 coeurs CUDA</td><td>Parallele massif</td><td>Entrainement de modeles</td></tr>
+            <tr><td>TPU (Google v4)</td><td>Architecture dediee</td><td>Optimise tenseurs</td><td>Entrainement large-scale</td></tr>
+        </table>
+    </div>
+
+    <div class="analogy">
+        <h4>Analogie : CPU vs GPU</h4>
+        <p>Imaginez que vous devez additionner 1000 paires de nombres. Le <strong>CPU</strong>, c'est un mathematicien genial qui resout chaque addition tres vite, mais une par une. Le <strong>GPU</strong>, c'est une salle de 1000 eleves moyens : chacun peut faire une addition, et les 1000 sont faites en parallele, en un seul cycle.</p>
+        <p>Le Deep Learning consiste essentiellement en des multiplications de grandes matrices : c'est exactement le genre de travail ou les GPU brillent.</p>
+    </div>
+
+    <h3>3.3 Ameliorations algorithmiques</h3>
+
+    <p>En parallele du materiel et des donnees, de nombreuses innovations algorithmiques ont rendu les reseaux profonds viables :</p>
+
+    <ul>
+        <li><strong>ReLU (2010)</strong> : remplace sigmoid/tanh, resout le probleme du gradient qui disparait.</li>
+        <li><strong>Dropout (2012)</strong> : technique de regularisation ou on "eteint" aleatoirement des neurones pendant l'entrainement.</li>
+        <li><strong>Batch Normalization (2015)</strong> : normalise les activations entre couches, stabilise et accelere l'entrainement.</li>
+        <li><strong>Adam (2014)</strong> : optimiseur adaptatif qui combine les avantages de SGD avec momentum et RMSProp.</li>
+        <li><strong>Residual Connections (2015)</strong> : permettent d'entrainer des reseaux tres profonds (100+ couches) sans degradation.</li>
+        <li><strong>Attention & Transformers (2017)</strong> : remplacent les recurrences par des mecanismes d'attention parallelisables.</li>
+    </ul>
+
+    <div class="prof-note">
+        C'est la convergence de ces trois facteurs -- donnees, calcul et algorithmes -- qui a cree l'explosion du Deep Learning. Aucun facteur seul n'aurait suffi. C'est pourquoi les memes idees qui echouaient en 1990 fonctionnent brillamment en 2012.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================================ -->
+    <h2>4. Deep Learning vs Machine Learning traditionnel</h2>
+
+    <p>La difference fondamentale entre le ML classique et le DL reside dans la maniere dont les <strong>features</strong> (caracteristiques) sont extraites des donnees.</p>
+
+    <h3>4.1 Feature Engineering vs Feature Learning</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">ML Traditionnel</h4>
+            <p><strong>Feature Engineering</strong></p>
+            <p>L'expert humain doit concevoir manuellement les caracteristiques pertinentes</p>
+            <p>Donnees brutes &rarr; Features manuelles &rarr; Modele &rarr; Prediction</p>
+            <p style="color:#aaa; font-size:0.9rem;">Exemple : pour classer des emails, l'expert cree des features comme "nombre de mots en majuscules", "presence de liens", "frequence du mot gratuit"...</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#00ff88;">Deep Learning</h4>
+            <p><strong>Feature Learning</strong></p>
+            <p>Le reseau apprend automatiquement les representations pertinentes</p>
+            <p>Donnees brutes &rarr; Reseau profond &rarr; Prediction</p>
+            <p style="color:#aaa; font-size:0.9rem;">Exemple : pour classer des emails, on fournit le texte brut au reseau qui apprend seul quels motifs sont discriminants.</p>
+        </div>
+    </div>
+
+    <h3>4.2 Quand utiliser le DL vs le ML classique ?</h3>
+
+    <table>
+        <tr><th>Critere</th><th>ML Classique</th><th>Deep Learning</th></tr>
+        <tr><td>Volume de donnees</td><td>Petit a moyen (&lt;10k echantillons)</td><td>Grand (&gt;10k, idealement &gt;100k)</td></tr>
+        <tr><td>Type de donnees</td><td>Tabulaire, structuree</td><td>Images, texte, audio, video</td></tr>
+        <tr><td>Interpretabilite</td><td>Souvent interpretable</td><td>Souvent "boite noire"</td></tr>
+        <tr><td>Temps d'entrainement</td><td>Minutes a heures</td><td>Heures a semaines</td></tr>
+        <tr><td>Materiel requis</td><td>CPU suffit</td><td>GPU recommandee, souvent indispensable</td></tr>
+        <tr><td>Feature Engineering</td><td>Necessaire et crucial</td><td>Automatique (appris par le reseau)</td></tr>
+        <tr><td>Exemples d'algos</td><td>Random Forest, XGBoost, SVM</td><td>CNN, RNN, Transformer, GAN</td></tr>
+    </table>
+
+    <div class="warning">
+        Ne tombez pas dans le piege du "tout Deep Learning". Pour des donnees tabulaires avec peu de lignes (quelques milliers), un <strong>XGBoost</strong> ou un <strong>Random Forest</strong> sera souvent plus performant, plus rapide et plus interpretable qu'un reseau de neurones profond. Le DL excelle sur les donnees non-structurees (images, texte, audio) et les tres grands volumes.
+    </div>
+
+    <div class="svg-container">
+        <svg width="600" height="280" viewBox="0 0 600 280">
+            <text x="300" y="25" text-anchor="middle" fill="#ff8c42" font-size="16" font-weight="bold">Pipeline ML classique vs Deep Learning</text>
+            <!-- ML pipeline -->
+            <rect x="20" y="60" width="100" height="40" rx="8" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="70" y="84" text-anchor="middle" fill="#569cd6" font-size="11">Donnees</text>
+            <line x1="120" y1="80" x2="150" y2="80" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow-blue)"/>
+
+            <rect x="150" y="60" width="120" height="40" rx="8" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="210" y="84" text-anchor="middle" fill="#569cd6" font-size="11">Feature Eng.</text>
+            <line x1="270" y1="80" x2="300" y2="80" stroke="#569cd6" stroke-width="2"/>
+
+            <rect x="300" y="60" width="100" height="40" rx="8" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="350" y="84" text-anchor="middle" fill="#569cd6" font-size="11">Modele ML</text>
+            <line x1="400" y1="80" x2="430" y2="80" stroke="#569cd6" stroke-width="2"/>
+
+            <rect x="430" y="60" width="100" height="40" rx="8" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="480" y="84" text-anchor="middle" fill="#569cd6" font-size="11">Prediction</text>
+
+            <text x="10" y="84" fill="#569cd6" font-size="12" font-weight="bold">ML</text>
+
+            <!-- DL pipeline -->
+            <rect x="20" y="170" width="100" height="40" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="70" y="194" text-anchor="middle" fill="#00ff88" font-size="11">Donnees</text>
+            <line x1="120" y1="190" x2="150" y2="190" stroke="#00ff88" stroke-width="2"/>
+
+            <rect x="150" y="160" width="280" height="60" rx="8" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="2"/>
+            <text x="290" y="185" text-anchor="middle" fill="#00ff88" font-size="11">Reseau Profond</text>
+            <text x="290" y="205" text-anchor="middle" fill="#aaa" font-size="10">(features + classification automatiques)</text>
+            <line x1="430" y1="190" x2="460" y2="190" stroke="#00ff88" stroke-width="2"/>
+
+            <rect x="460" y="170" width="100" height="40" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="510" y="194" text-anchor="middle" fill="#00ff88" font-size="11">Prediction</text>
+
+            <text x="10" y="194" fill="#00ff88" font-size="12" font-weight="bold">DL</text>
+
+            <!-- Label -->
+            <text x="290" y="260" text-anchor="middle" fill="#aaa" font-size="11" font-style="italic">Le DL supprime l'etape de feature engineering manuel</text>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================================ -->
+    <h2>5. Les grands types de reseaux de neurones</h2>
+
+    <p>Le Deep Learning n'est pas une technique unique, mais une famille d'architectures specialisees. Voici les principales :</p>
+
+    <h3>5.1 Reseaux de neurones denses (MLP)</h3>
+    <div class="concept-box">
+        <p>Le <strong>Multi-Layer Perceptron</strong> est l'architecture fondamentale. Chaque neurone d'une couche est connecte a tous les neurones de la couche suivante (fully connected). C'est l'architecture que nous etudierons en detail dans le cours 2.</p>
+        <p><strong>Usage</strong> : donnees tabulaires, classification simple, regression.</p>
+    </div>
+
+    <h3>5.2 Reseaux convolutifs (CNN)</h3>
+    <div class="concept-box">
+        <p>Les <strong>Convolutional Neural Networks</strong> utilisent des filtres (noyaux de convolution) qui glissent sur les donnees d'entree pour detecter des motifs locaux. Ils exploitent la structure spatiale des donnees.</p>
+        <p><strong>Usage</strong> : vision par ordinateur (classification d'images, detection d'objets, segmentation).</p>
+        <p><strong>Architectures celebres</strong> : LeNet, AlexNet, VGG, ResNet, EfficientNet.</p>
+    </div>
+
+    <h3>5.3 Reseaux recurrents (RNN/LSTM/GRU)</h3>
+    <div class="concept-box">
+        <p>Les <strong>Recurrent Neural Networks</strong> possedent des connexions cycliques permettant de traiter des sequences de longueur variable. Les variantes LSTM et GRU resolvent le probleme du gradient qui disparait.</p>
+        <p><strong>Usage</strong> : series temporelles, traitement du langage (historiquement), prevision de sequences.</p>
+        <p><strong>Limitation</strong> : entrainement sequentiel, difficulte a paralleliser, en grande partie remplaces par les Transformers.</p>
+    </div>
+
+    <h3>5.4 Transformers</h3>
+    <div class="concept-box green">
+        <p>L'architecture <strong>Transformer</strong> (2017) repose entierement sur le mecanisme d'<strong>attention</strong> (self-attention). Elle permet de traiter des sequences en parallele et de capturer des dependances a longue distance.</p>
+        <p><strong>Usage</strong> : NLP (BERT, GPT, T5), vision (ViT), audio (Whisper), multimodal.</p>
+        <p><strong>C'est l'architecture dominante en 2025</strong>, a la base de tous les grands modeles de langage (LLM).</p>
+    </div>
+
+    <h3>5.5 Reseaux generatifs (GAN, VAE, Diffusion)</h3>
+    <div class="concept-box blue">
+        <p>Les reseaux generatifs apprennent la distribution des donnees pour en <strong>generer de nouvelles</strong>.</p>
+        <ul>
+            <li><strong>GAN</strong> : deux reseaux en competition (generateur vs discriminateur).</li>
+            <li><strong>VAE</strong> (Variational Autoencoder) : encode les donnees dans un espace latent probabiliste.</li>
+            <li><strong>Modeles de Diffusion</strong> : apprennent a debruiter progressivement (DALL-E, Stable Diffusion, Midjourney).</li>
+        </ul>
+        <p><strong>Usage</strong> : generation d'images, de musique, de video, augmentation de donnees.</p>
+    </div>
+
+    <h3>5.6 Autoencoders</h3>
+    <div class="concept-box">
+        <p>Les <strong>Autoencoders</strong> apprennent a compresser (encoder) puis a reconstruire (decoder) les donnees d'entree. Le goulot d'etranglement central force le reseau a apprendre une representation compacte.</p>
+        <p><strong>Usage</strong> : reduction de dimensionnalite, debruitage, detection d'anomalies, generation.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================================ -->
+    <h2>6. Les frameworks de Deep Learning</h2>
+
+    <p>Un framework de DL fournit les outils pour construire, entrainer et deployer des reseaux de neurones. Les deux dominants sont <strong>PyTorch</strong> et <strong>TensorFlow</strong>.</p>
+
+    <h3>6.1 PyTorch vs TensorFlow</h3>
+
+    <table>
+        <tr><th>Critere</th><th>PyTorch (Meta)</th><th>TensorFlow (Google)</th></tr>
+        <tr><td>Paradigme</td><td>Graphe dynamique (eager execution)</td><td>Graphe statique (eager depuis v2)</td></tr>
+        <tr><td>Langage principal</td><td>Python</td><td>Python (+ C++, JS, Swift)</td></tr>
+        <tr><td>Simplicite</td><td>Plus pythonique, intuitif</td><td>Plus verbeux, API plus complexe</td></tr>
+        <tr><td>Recherche</td><td>Dominant (~75% des papiers en 2024)</td><td>Encore present mais en baisse</td></tr>
+        <tr><td>Production</td><td>TorchServe, ONNX, TorchScript</td><td>TF Serving, TF Lite, TF.js</td></tr>
+        <tr><td>Ecosysteme</td><td>torchvision, torchaudio, HuggingFace</td><td>Keras, TF Hub, TF Datasets</td></tr>
+        <tr><td>Debug</td><td>pdb standard Python</td><td>Plus complexe (sessions, graphes)</td></tr>
+        <tr><td>Communaute</td><td>En forte croissance</td><td>Grande, mature</td></tr>
+    </table>
+
+    <div class="prof-note">
+        Dans ce cours, nous utiliserons <strong>PyTorch</strong> pour tous les exemples de code. C'est le choix dominant dans la recherche et de plus en plus dans l'industrie. Sa syntaxe Pythonique et son mode dynamique facilitent grandement l'apprentissage et le debogage.
+    </div>
+
+    <h3>6.2 L'ecosysteme PyTorch</h3>
+
+    <ul>
+        <li><strong>torch</strong> : le coeur -- tenseurs, autograd, CUDA.</li>
+        <li><strong>torch.nn</strong> : couches (Linear, Conv2d, LSTM...), fonctions de cout, conteneurs de modeles.</li>
+        <li><strong>torch.optim</strong> : optimiseurs (SGD, Adam, AdamW...).</li>
+        <li><strong>torchvision</strong> : datasets (MNIST, CIFAR, ImageNet), transforms, modeles pre-entraines.</li>
+        <li><strong>torchaudio</strong> : traitement audio.</li>
+        <li><strong>torchtext</strong> : traitement du texte.</li>
+        <li><strong>HuggingFace Transformers</strong> : modeles pre-entraines (BERT, GPT-2, Llama...) compatibles PyTorch.</li>
+        <li><strong>PyTorch Lightning</strong> : surcouche pour structurer le code d'entrainement.</li>
+    </ul>
+
+    <h3>6.3 Verification de l'installation PyTorch</h3>
+
+    <p>Voici le premier code que vous devez executer pour verifier que PyTorch est correctement installe :</p>
+
+    <div class="code-block"><span class="comment"># Installation de PyTorch (si pas deja installe)</span>
+<span class="comment"># pip install torch torchvision torchaudio</span>
+
+<span class="keyword">import</span> torch
+
+<span class="comment"># Verification de la version</span>
+<span class="function">print</span>(<span class="string">f"PyTorch version : {torch.__version__}"</span>)
+
+<span class="comment"># Verification de la disponibilite du GPU (CUDA)</span>
+<span class="function">print</span>(<span class="string">f"CUDA disponible : {torch.cuda.is_available()}"</span>)
+<span class="keyword">if</span> torch.cuda.<span class="function">is_available</span>():
+    <span class="function">print</span>(<span class="string">f"GPU : {torch.cuda.get_device_name(0)}"</span>)
+    <span class="function">print</span>(<span class="string">f"Memoire GPU : {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} Go"</span>)
+
+<span class="comment"># Creation d'un tenseur simple</span>
+x = torch.<span class="function">tensor</span>([<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>])
+<span class="function">print</span>(<span class="string">f"Tenseur : {x}"</span>)
+<span class="function">print</span>(<span class="string">f"Type : {x.dtype}"</span>)
+<span class="function">print</span>(<span class="string">f"Device : {x.device}"</span>)
+
+<span class="comment"># Operations de base</span>
+y = torch.<span class="function">tensor</span>([<span class="number">4.0</span>, <span class="number">5.0</span>, <span class="number">6.0</span>])
+<span class="function">print</span>(<span class="string">f"Addition : {x + y}"</span>)
+<span class="function">print</span>(<span class="string">f"Produit scalaire : {torch.dot(x, y)}"</span>)
+<span class="function">print</span>(<span class="string">f"Multiplication matricielle :"</span>)
+
+<span class="comment"># Tenseur 2D (matrice)</span>
+A = torch.<span class="function">randn</span>(<span class="number">3</span>, <span class="number">4</span>)
+B = torch.<span class="function">randn</span>(<span class="number">4</span>, <span class="number">2</span>)
+C = torch.<span class="function">mm</span>(A, B)
+<span class="function">print</span>(<span class="string">f"A : {A.shape}, B : {B.shape}, C = A @ B : {C.shape}"</span>)</div>
+
+    <div class="output-block">PyTorch version : 2.2.0
+CUDA disponible : True
+GPU : NVIDIA GeForce RTX 3090
+Memoire GPU : 24.3 Go
+Tenseur : tensor([1., 2., 3.])
+Type : torch.float32
+Device : cpu
+Addition : tensor([5., 7., 9.])
+Produit scalaire : 32.0
+Multiplication matricielle :
+A : torch.Size([3, 4]), B : torch.Size([4, 2]), C = A @ B : torch.Size([3, 2])</div>
+
+    <div class="effect">
+        Ce code verifie que PyTorch est installe, detecte le GPU si disponible, et effectue des operations tensorsielles de base. Si CUDA n'est pas disponible, l'entrainement se fera sur CPU (beaucoup plus lent).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================================ -->
+    <h2>7. Le materiel pour le Deep Learning</h2>
+
+    <p>Le choix du materiel est crucial car il determine la vitesse d'entrainement et la taille des modeles que vous pouvez manipuler.</p>
+
+    <h3>7.1 GPU NVIDIA et CUDA</h3>
+
+    <div class="concept-box">
+        <p><strong>CUDA</strong> (Compute Unified Device Architecture) est la plateforme de calcul parallele de NVIDIA. PyTorch l'utilise pour accelerer les calculs sur GPU.</p>
+        <table>
+            <tr><th>GPU</th><th>VRAM</th><th>Usage</th><th>Prix approx.</th></tr>
+            <tr><td>RTX 3060</td><td>12 Go</td><td>Apprentissage, petits modeles</td><td>~350 EUR</td></tr>
+            <tr><td>RTX 3090</td><td>24 Go</td><td>Recherche, modeles moyens</td><td>~900 EUR</td></tr>
+            <tr><td>RTX 4090</td><td>24 Go</td><td>Recherche avancee</td><td>~1800 EUR</td></tr>
+            <tr><td>A100</td><td>40/80 Go</td><td>Production, gros modeles</td><td>~10 000 EUR</td></tr>
+            <tr><td>H100</td><td>80 Go</td><td>LLM, entrainement massif</td><td>~30 000 EUR</td></tr>
+        </table>
+    </div>
+
+    <h3>7.2 TPU (Tensor Processing Unit)</h3>
+
+    <p>Les TPU sont des processeurs specialises concus par Google specifiquement pour les operations de tenseurs. Ils sont disponibles via Google Cloud et Google Colab.</p>
+
+    <h3>7.3 Le Cloud Computing pour le DL</h3>
+
+    <div class="param-box">
+        <h4>Principales plateformes cloud</h4>
+        <ul>
+            <li><strong>Google Colab</strong> : gratuit avec GPU T4, ideal pour apprendre et prototyper. Version Pro avec A100.</li>
+            <li><strong>AWS (SageMaker)</strong> : instances GPU puissantes (p4d avec A100), solutions MLOps completes.</li>
+            <li><strong>Google Cloud (Vertex AI)</strong> : TPU disponibles, integration avec TensorFlow.</li>
+            <li><strong>Azure ML</strong> : integration Microsoft, instances GPU variees.</li>
+            <li><strong>Lambda Cloud, Paperspace, Vast.ai</strong> : alternatives economiques specialisees GPU.</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Pour ce cours, <strong>Google Colab</strong> suffit amplement. Il fournit gratuitement un GPU Tesla T4 (16 Go VRAM) qui permet d'entrainer la plupart des modeles que nous etudierons. N'investissez pas dans du materiel couteux tant que vous apprenez les fondamentaux.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================================ -->
+    <h2>8. Applications concretes du Deep Learning</h2>
+
+    <p>Le Deep Learning transforme de nombreux domaines. Voici un panorama des applications les plus marquantes :</p>
+
+    <h3>8.1 Vision par ordinateur</h3>
+    <div class="metric-card">
+        <h4>Classification et detection d'images</h4>
+        <ul>
+            <li><strong>Classification</strong> : identifier le contenu d'une image (ResNet, EfficientNet).</li>
+            <li><strong>Detection d'objets</strong> : localiser et identifier les objets dans une image (YOLO, Faster R-CNN).</li>
+            <li><strong>Segmentation semantique</strong> : classer chaque pixel (U-Net, Mask R-CNN).</li>
+            <li><strong>Reconnaissance faciale</strong> : identification biometrique (FaceNet, ArcFace).</li>
+            <li><strong>Vehicules autonomes</strong> : perception de l'environnement en temps reel.</li>
+        </ul>
+    </div>
+
+    <h3>8.2 Traitement du Langage Naturel (NLP)</h3>
+    <div class="metric-card">
+        <h4>Comprendre et generer du texte</h4>
+        <ul>
+            <li><strong>Traduction automatique</strong> : Google Translate, DeepL (qualite quasi-humaine).</li>
+            <li><strong>Chatbots et assistants</strong> : ChatGPT, Claude, Gemini.</li>
+            <li><strong>Resume automatique</strong> : condenser de longs documents.</li>
+            <li><strong>Analyse de sentiments</strong> : classifier les opinions positives/negatives.</li>
+            <li><strong>Generation de code</strong> : GitHub Copilot, Claude Code.</li>
+        </ul>
+    </div>
+
+    <h3>8.3 Audio et parole</h3>
+    <div class="metric-card">
+        <h4>Traiter les signaux sonores</h4>
+        <ul>
+            <li><strong>Reconnaissance vocale</strong> : Whisper (OpenAI), transcription automatique.</li>
+            <li><strong>Synthese vocale (TTS)</strong> : voix artificielles realistes.</li>
+            <li><strong>Generation musicale</strong> : MusicGen (Meta), composition automatique.</li>
+        </ul>
+    </div>
+
+    <h3>8.4 Sciences et medecine</h3>
+    <div class="metric-card">
+        <h4>Accelerer la recherche scientifique</h4>
+        <ul>
+            <li><strong>AlphaFold</strong> (DeepMind) : prediction de la structure 3D des proteines, revolution en biologie.</li>
+            <li><strong>Imagerie medicale</strong> : detection de cancers, radiologie assistee par IA.</li>
+            <li><strong>Decouverte de medicaments</strong> : simulation de molecules candidates.</li>
+            <li><strong>Previsions meteo</strong> : GraphCast (Google) predit la meteo plus rapidement et plus precisement que les methodes traditionnelles.</li>
+        </ul>
+    </div>
+
+    <h3>8.5 Jeux et creation</h3>
+    <div class="metric-card">
+        <h4>Repousser les limites</h4>
+        <ul>
+            <li><strong>AlphaGo / AlphaZero</strong> : bat les champions du monde de Go et d'echecs.</li>
+            <li><strong>IA generative</strong> : DALL-E, Stable Diffusion, Midjourney pour la creation d'images.</li>
+            <li><strong>Generation de video</strong> : Sora (OpenAI), generation de video a partir de texte.</li>
+            <li><strong>Agents IA</strong> : agents autonomes capables de jouer a des jeux video complexes.</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================================ -->
+    <h2>9. Limites et defis du Deep Learning</h2>
+
+    <p>Malgre ses succes impressionnants, le Deep Learning presente des limitations importantes qu'il faut connaitre :</p>
+
+    <h3>9.1 Dependance aux donnees</h3>
+
+    <div class="warning">
+        Les reseaux profonds sont extremement gourmands en donnees. Un modele de classification d'images typique a besoin de milliers d'exemples par classe. Les LLM sont entraines sur des centaines de milliards de tokens. Dans de nombreux domaines (medical, juridique, langues rares), ces donnees n'existent tout simplement pas en quantite suffisante.
+    </div>
+
+    <h3>9.2 Cout computationnel et impact environnemental</h3>
+
+    <div class="concept-box">
+        <h4>L'empreinte carbone du DL</h4>
+        <p>L'entrainement de grands modeles consomme des quantites enormes d'energie :</p>
+        <ul>
+            <li><strong>GPT-3</strong> : l'entrainement a emis environ <strong>552 tonnes de CO2</strong>, l'equivalent de 120 voitures pendant un an.</li>
+            <li><strong>GPT-4</strong> : cout d'entrainement estime a plus de <strong>100 millions de dollars</strong>.</li>
+            <li>Les data centers de l'IA representent une part croissante de la consommation electrique mondiale.</li>
+        </ul>
+        <p>Des pistes pour reduire cet impact : modeles plus efficaces (distillation, pruning, quantization), energies renouvelables, small models qui suffisent pour beaucoup de taches.</p>
+    </div>
+
+    <h3>9.3 Interpretabilite : le probleme de la boite noire</h3>
+
+    <p>Un reseau profond avec des millions de parametres est tres difficile a interpreter. On ne sait pas toujours <strong>pourquoi</strong> il fait une prediction donnee. C'est un probleme majeur dans des domaines critiques :</p>
+
+    <ul>
+        <li><strong>Medecine</strong> : un medecin doit comprendre pourquoi l'IA suggere un diagnostic.</li>
+        <li><strong>Justice</strong> : un juge ne peut pas condamner sur la base d'un score opaque.</li>
+        <li><strong>Finance</strong> : la reglementation exige des explications pour les decisions de credit.</li>
+    </ul>
+
+    <p>Des techniques comme <strong>Grad-CAM</strong>, <strong>SHAP</strong>, <strong>LIME</strong> ou les <strong>attention maps</strong> tentent de rendre les modeles plus interpretables.</p>
+
+    <h3>9.4 Biais et equite</h3>
+
+    <div class="warning">
+        Les modeles de DL heritent des biais presents dans leurs donnees d'entrainement. Si les donnees contiennent des stereotypes de genre, de race ou culturels, le modele les reproduira et potentiellement les amplifiera. C'est un enjeu ethique majeur qui demande une attention constante lors de la collecte des donnees et de l'evaluation des modeles.
+    </div>
+
+    <h3>9.5 Robustesse et exemples adversariaux</h3>
+
+    <p>Les reseaux profonds sont vulnerables aux <strong>exemples adversariaux</strong> : des perturbations imperceptibles a l'oeil humain qui trompent completement le modele. Par exemple, ajouter un bruit invisible a une image de panda peut faire qu'un CNN le classifie comme gibbon avec 99% de confiance.</p>
+
+    <h3>9.6 Generalisation et hallucinations</h3>
+
+    <p>Les LLM peuvent generer du contenu factuellement incorrect mais formule de maniere tres convaincante : ce sont les <strong>hallucinations</strong>. La capacite des modeles a generaliser au-dela de leurs donnees d'entrainement reste un defi fondamental.</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================================ -->
+    <h2>10. Recapitulatif et vision d'ensemble</h2>
+
+    <p>Dans ce premier cours, nous avons pose les fondations de notre parcours en Deep Learning. Voici les points cles a retenir :</p>
+
+    <div class="concept-box green">
+        <h4>Ce que vous devez retenir</h4>
+        <ol>
+            <li>Le Deep Learning est un <strong>sous-domaine du Machine Learning</strong> utilisant des reseaux de neurones profonds.</li>
+            <li>Son histoire est marquee par des hauts et des bas, mais depuis 2012 (<strong>AlexNet</strong>), les progres sont continus.</li>
+            <li>Trois facteurs expliquent son succes actuel : <strong>Big Data + GPU + ameliorations algorithmiques</strong>.</li>
+            <li>Le DL excelle sur les donnees non-structurees (images, texte, audio) mais le ML classique reste pertinent pour les donnees tabulaires.</li>
+            <li>Les architectures principales : <strong>MLP, CNN, RNN/LSTM, Transformer, GAN, Autoencoders</strong>.</li>
+            <li>Nous utiliserons <strong>PyTorch</strong>, le framework dominant en recherche et de plus en plus en industrie.</li>
+            <li>Le GPU est essentiel ; <strong>Google Colab</strong> offre un acces gratuit.</li>
+            <li>Les applications sont immenses : vision, NLP, audio, science, medecine, jeux.</li>
+            <li>Les defis restent : donnees, calcul, interpretabilite, biais, robustesse, impact environnemental.</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        Ce cours d'introduction vous a donne une vue d'ensemble du Deep Learning. A partir du prochain cours, nous plongerons dans la theorie et la pratique : nous construirons un reseau de neurones pas a pas, en comprenant chaque composant mathematiquement et en l'implementant en PyTorch. Assurez-vous d'avoir installe PyTorch et d'avoir acces a un environnement Python (Colab, Jupyter, ou local) avant le prochain cours.
+    </div>
+
+    <h3>Programme des prochains cours</h3>
+
+    <table>
+        <tr><th>Cours</th><th>Sujet</th></tr>
+        <tr><td>DL 02</td><td>Reseaux de neurones en profondeur (Perceptron, MLP, Backpropagation)</td></tr>
+        <tr><td>DL 03</td><td>Optimisation (SGD, Adam, Learning Rate, Batch Size)</td></tr>
+        <tr><td>DL 04</td><td>Regularisation (Dropout, Batch Norm, Data Augmentation)</td></tr>
+        <tr><td>DL 05</td><td>Reseaux convolutifs (CNN) - Partie 1</td></tr>
+        <tr><td>DL 06</td><td>Reseaux convolutifs (CNN) - Partie 2 et Transfer Learning</td></tr>
+        <tr><td>DL 07</td><td>Reseaux recurrents (RNN, LSTM, GRU)</td></tr>
+        <tr><td>DL 08</td><td>Mecanisme d'attention et Transformers</td></tr>
+        <tr><td>DL 09</td><td>Modeles de langage (BERT, GPT)</td></tr>
+        <tr><td>DL 10</td><td>Reseaux generatifs (GAN, VAE, Diffusion)</td></tr>
+        <tr><td>DL 11</td><td>Deploiement et MLOps</td></tr>
+        <tr><td>DL 12</td><td>Projet final et tendances actuelles</td></tr>
+    </table>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <span style="color:#666;">&larr; Premier cours DL</span>
+        <a href="dl_02_reseaux_neurones.html">Cours suivant : Reseaux de Neurones en Profondeur &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

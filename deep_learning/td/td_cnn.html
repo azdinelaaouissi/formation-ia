@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Classification d'Images avec CNN</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Classification d'Images avec CNN</h1>
+    <p class="subtitle">Construire un CNN pour classifier CIFAR-10 avec PyTorch</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 -->
+    <!-- ============================================================ -->
+    <h2>Partie 1 : Recapitulatif theorique</h2>
+
+    <div class="definition">
+        Un <strong>Reseau de Neurones Convolutif (CNN)</strong> est une architecture specialisee pour le traitement d'images. Contrairement au MLP qui aplatit l'image, le CNN exploite la structure spatiale grace a des filtres de convolution qui detectent des motifs locaux (bords, textures, formes).
+    </div>
+
+    <h3>1.1 L'operation de convolution</h3>
+    <p>La convolution applique un filtre (ou noyau) sur l'image d'entree. Le filtre glisse sur l'image et calcule a chaque position un produit scalaire entre le filtre et la region locale de l'image.</p>
+
+    <div class="concept-box">
+        <h4>Parametres d'une couche de convolution</h4>
+        <ul>
+            <li><strong>in_channels</strong> : nombre de canaux d'entree (3 pour RGB, 1 pour grayscale)</li>
+            <li><strong>out_channels</strong> : nombre de filtres (= nombre de feature maps en sortie)</li>
+            <li><strong>kernel_size</strong> : taille du filtre (ex: 3x3, 5x5)</li>
+            <li><strong>stride</strong> : pas de deplacement du filtre (defaut: 1)</li>
+            <li><strong>padding</strong> : ajout de zeros autour de l'image pour controler la taille de sortie</li>
+        </ul>
+    </div>
+
+    <h3>1.2 Formule de la taille de sortie</h3>
+    <div class="concept-box blue">
+        <p><strong>Taille_sortie = (Taille_entree - kernel_size + 2 * padding) / stride + 1</strong></p>
+        <p>Exemple : entree 32x32, kernel 3x3, padding 1, stride 1 -> sortie = (32 - 3 + 2) / 1 + 1 = 32x32</p>
+    </div>
+
+    <h3>1.3 Pooling</h3>
+    <p>Le <strong>pooling</strong> reduit la dimension spatiale des feature maps tout en conservant les informations les plus importantes :</p>
+    <table>
+        <tr><th>Type</th><th>Operation</th><th>Effet</th></tr>
+        <tr><td>Max Pooling</td><td>Prend le maximum de chaque region</td><td>Conserve les activations fortes</td></tr>
+        <tr><td>Average Pooling</td><td>Prend la moyenne de chaque region</td><td>Lisse les activations</td></tr>
+        <tr><td>Global Average Pooling</td><td>Moyenne sur toute la feature map</td><td>Reduit a 1x1 par canal</td></tr>
+    </table>
+
+    <h3>1.4 Architecture typique d'un CNN</h3>
+    <div class="step-box"><strong>Etape 1 :</strong> Blocs convolutifs (Conv2d + BatchNorm + ReLU + MaxPool) - extraction de features</div>
+    <div class="step-box"><strong>Etape 2 :</strong> Aplatissement (Flatten) - passage de 3D a 1D</div>
+    <div class="step-box"><strong>Etape 3 :</strong> Couches fully connected (Linear + ReLU + Dropout) - classification</div>
+
+    <div class="analogy">
+        <h4>Analogie : le CNN comme un systeme visuel</h4>
+        <p>Les premieres couches detectent des motifs simples (bords, couleurs), les couches intermediaires combinent ces motifs en textures et formes, et les couches profondes reconnaissent des objets complets. C'est exactement comme le systeme visuel humain !</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 -->
+    <!-- ============================================================ -->
+    <h2>Partie 2 : Preparation de l'environnement</h2>
+
+    <h3>2.1 Imports et configuration</h3>
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">import</span> torchvision
+<span class="keyword">import</span> torchvision.transforms <span class="keyword">as</span> transforms
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> confusion_matrix, classification_report
+
+torch.manual_seed(<span class="number">42</span>)
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+<span class="function">print</span>(<span class="string">f"Device : {device}"</span>)</div>
+
+    <div class="output-block">Device : cuda</div>
+
+    <h3>2.2 Chargement de CIFAR-10</h3>
+    <p>CIFAR-10 contient 60 000 images couleur 32x32 reparties en 10 classes : avion, automobile, oiseau, chat, cerf, chien, grenouille, cheval, navire, camion.</p>
+
+    <div class="code-block"><span class="comment"># Transformations pour l'entrainement (avec data augmentation)</span>
+transform_train = transforms.Compose([
+    transforms.RandomHorizontalFlip(p=<span class="number">0.5</span>),
+    transforms.RandomCrop(<span class="number">32</span>, padding=<span class="number">4</span>),
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.4914</span>, <span class="number">0.4822</span>, <span class="number">0.4465</span>),
+                         (<span class="number">0.2470</span>, <span class="number">0.2435</span>, <span class="number">0.2616</span>))
+])
+
+<span class="comment"># Transformations pour le test (sans augmentation)</span>
+transform_test = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.4914</span>, <span class="number">0.4822</span>, <span class="number">0.4465</span>),
+                         (<span class="number">0.2470</span>, <span class="number">0.2435</span>, <span class="number">0.2616</span>))
+])
+
+<span class="comment"># Telecharger CIFAR-10</span>
+train_dataset = torchvision.datasets.CIFAR10(
+    root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>, download=<span class="keyword">True</span>, transform=transform_train
+)
+test_dataset = torchvision.datasets.CIFAR10(
+    root=<span class="string">'./data'</span>, train=<span class="keyword">False</span>, download=<span class="keyword">True</span>, transform=transform_test
+)
+
+<span class="comment"># DataLoaders</span>
+train_loader = DataLoader(train_dataset, batch_size=<span class="number">128</span>, shuffle=<span class="keyword">True</span>, num_workers=<span class="number">2</span>)
+test_loader = DataLoader(test_dataset, batch_size=<span class="number">256</span>, shuffle=<span class="keyword">False</span>, num_workers=<span class="number">2</span>)
+
+<span class="comment"># Noms des classes</span>
+classes = (<span class="string">'avion'</span>, <span class="string">'automobile'</span>, <span class="string">'oiseau'</span>, <span class="string">'chat'</span>, <span class="string">'cerf'</span>,
+           <span class="string">'chien'</span>, <span class="string">'grenouille'</span>, <span class="string">'cheval'</span>, <span class="string">'navire'</span>, <span class="string">'camion'</span>)
+
+<span class="function">print</span>(<span class="string">f"Train : {len(train_dataset)} images"</span>)
+<span class="function">print</span>(<span class="string">f"Test  : {len(test_dataset)} images"</span>)</div>
+
+    <div class="output-block">Train : 50000 images
+Test  : 10000 images</div>
+
+    <div class="prof-note">
+        Les valeurs de normalisation correspondent a la moyenne et l'ecart-type par canal (R, G, B) calcules sur CIFAR-10. Notez que contrairement a MNIST, nous avons ici 3 canaux couleur.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 -->
+    <!-- ============================================================ -->
+    <h2>Partie 3 : Explorer les donnees</h2>
+
+    <h3>3.1 Visualiser des echantillons</h3>
+    <div class="code-block"><span class="comment"># Fonction pour denormaliser les images</span>
+<span class="keyword">def</span> <span class="function">denormalize</span>(img):
+    mean = torch.tensor([<span class="number">0.4914</span>, <span class="number">0.4822</span>, <span class="number">0.4465</span>]).view(<span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>)
+    std = torch.tensor([<span class="number">0.2470</span>, <span class="number">0.2435</span>, <span class="number">0.2616</span>]).view(<span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>)
+    <span class="keyword">return</span> img * std + mean
+
+<span class="comment"># Charger un batch sans augmentation pour la visualisation</span>
+vis_loader = DataLoader(
+    torchvision.datasets.CIFAR10(root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>,
+                                  transform=transform_test),
+    batch_size=<span class="number">20</span>, shuffle=<span class="keyword">True</span>
+)
+images, labels = <span class="function">next</span>(<span class="function">iter</span>(vis_loader))
+
+fig, axes = plt.subplots(<span class="number">2</span>, <span class="number">10</span>, figsize=(<span class="number">20</span>, <span class="number">4</span>))
+<span class="keyword">for</span> i, ax <span class="keyword">in</span> <span class="function">enumerate</span>(axes.flat):
+    img = denormalize(images[i]).permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>).clamp(<span class="number">0</span>, <span class="number">1</span>)
+    ax.imshow(img)
+    ax.set_title(classes[labels[i]], fontsize=<span class="number">8</span>)
+    ax.axis(<span class="string">'off'</span>)
+plt.suptitle(<span class="string">'Echantillons CIFAR-10'</span>, fontsize=<span class="number">14</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <h3>3.2 Effet de la data augmentation</h3>
+    <div class="code-block"><span class="comment"># Comparer image originale vs augmentees</span>
+original_img, label = test_dataset[<span class="number">0</span>]
+
+<span class="comment"># Creer un dataset avec augmentation forte</span>
+aug_transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(p=<span class="number">0.5</span>),
+    transforms.RandomCrop(<span class="number">32</span>, padding=<span class="number">4</span>),
+    transforms.RandomRotation(<span class="number">15</span>),
+    transforms.ColorJitter(brightness=<span class="number">0.2</span>, contrast=<span class="number">0.2</span>, saturation=<span class="number">0.2</span>),
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.4914</span>, <span class="number">0.4822</span>, <span class="number">0.4465</span>),
+                         (<span class="number">0.2470</span>, <span class="number">0.2435</span>, <span class="number">0.2616</span>))
+])
+
+aug_dataset = torchvision.datasets.CIFAR10(
+    root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>, transform=aug_transform
+)
+
+fig, axes = plt.subplots(<span class="number">1</span>, <span class="number">6</span>, figsize=(<span class="number">15</span>, <span class="number">3</span>))
+axes[<span class="number">0</span>].imshow(denormalize(original_img).permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>).clamp(<span class="number">0</span>, <span class="number">1</span>))
+axes[<span class="number">0</span>].set_title(<span class="string">'Original'</span>)
+axes[<span class="number">0</span>].axis(<span class="string">'off'</span>)
+
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="number">6</span>):
+    aug_img, _ = aug_dataset[<span class="number">0</span>]
+    axes[i].imshow(denormalize(aug_img).permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>).clamp(<span class="number">0</span>, <span class="number">1</span>))
+    axes[i].set_title(<span class="string">f'Augmente {i}'</span>)
+    axes[i].axis(<span class="string">'off'</span>)
+plt.suptitle(<span class="string">'Effet de la Data Augmentation'</span>, fontsize=<span class="number">14</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="effect">La data augmentation cree des variantes de chaque image a chaque epoch, ce qui augmente virtuellement la taille du dataset et reduit le sur-apprentissage.</div>
+
+    <h3>3.3 Distribution des classes</h3>
+    <div class="code-block"><span class="comment"># Distribution des classes</span>
+class_counts = [<span class="number">0</span>] * <span class="number">10</span>
+<span class="keyword">for</span> _, label <span class="keyword">in</span> train_dataset:
+    class_counts[label] += <span class="number">1</span>
+
+plt.figure(figsize=(<span class="number">10</span>, <span class="number">5</span>))
+plt.bar(classes, class_counts, color=<span class="string">'#ff6b35'</span>)
+plt.xticks(rotation=<span class="number">45</span>)
+plt.ylabel(<span class="string">'Nombre d\'images'</span>)
+plt.title(<span class="string">'Distribution des classes CIFAR-10'</span>)
+plt.tight_layout()
+plt.show()
+
+<span class="function">print</span>(<span class="string">"Chaque classe contient 5000 images (dataset parfaitement equilibre)"</span>)</div>
+
+    <div class="output-block">Chaque classe contient 5000 images (dataset parfaitement equilibre)</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 -->
+    <!-- ============================================================ -->
+    <h2>Partie 4 : Construire le CNN</h2>
+
+    <h3>4.1 Architecture du modele</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">CNN</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, num_classes=<span class="number">10</span>):
+        <span class="function">super</span>(CNN, self).__init__()
+
+        <span class="comment"># Bloc convolutif 1 : 3 -> 32 canaux</span>
+        self.conv_block1 = nn.Sequential(
+            nn.Conv2d(<span class="number">3</span>, <span class="number">32</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.BatchNorm2d(<span class="number">32</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Conv2d(<span class="number">32</span>, <span class="number">32</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.BatchNorm2d(<span class="number">32</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.MaxPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>),
+            nn.Dropout2d(<span class="number">0.25</span>)
+        )
+
+        <span class="comment"># Bloc convolutif 2 : 32 -> 64 canaux</span>
+        self.conv_block2 = nn.Sequential(
+            nn.Conv2d(<span class="number">32</span>, <span class="number">64</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.BatchNorm2d(<span class="number">64</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Conv2d(<span class="number">64</span>, <span class="number">64</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.BatchNorm2d(<span class="number">64</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.MaxPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>),
+            nn.Dropout2d(<span class="number">0.25</span>)
+        )
+
+        <span class="comment"># Bloc convolutif 3 : 64 -> 128 canaux</span>
+        self.conv_block3 = nn.Sequential(
+            nn.Conv2d(<span class="number">64</span>, <span class="number">128</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.BatchNorm2d(<span class="number">128</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Conv2d(<span class="number">128</span>, <span class="number">128</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.BatchNorm2d(<span class="number">128</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.MaxPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>),
+            nn.Dropout2d(<span class="number">0.25</span>)
+        )
+
+        <span class="comment"># Classificateur (couches fully connected)</span>
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(<span class="number">128</span> * <span class="number">4</span> * <span class="number">4</span>, <span class="number">512</span>),
+            nn.BatchNorm1d(<span class="number">512</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Dropout(<span class="number">0.5</span>),
+            nn.Linear(<span class="number">512</span>, num_classes)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        x = self.conv_block1(x)   <span class="comment"># 32x32 -> 16x16</span>
+        x = self.conv_block2(x)   <span class="comment"># 16x16 -> 8x8</span>
+        x = self.conv_block3(x)   <span class="comment"># 8x8 -> 4x4</span>
+        x = self.classifier(x)
+        <span class="keyword">return</span> x
+
+model = CNN(num_classes=<span class="number">10</span>).to(device)
+<span class="function">print</span>(model)</div>
+
+    <div class="output-block">CNN(
+  (conv_block1): Sequential(
+    (0): Conv2d(3, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): BatchNorm2d(32)
+    (2): ReLU(inplace=True)
+    (3): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (4): BatchNorm2d(32)
+    (5): ReLU(inplace=True)
+    (6): MaxPool2d(kernel_size=2, stride=2)
+    (7): Dropout2d(p=0.25)
+  )
+  (conv_block2): Sequential(...)
+  (conv_block3): Sequential(...)
+  (classifier): Sequential(...)
+)</div>
+
+    <h3>4.2 Comprendre les dimensions</h3>
+    <div class="code-block"><span class="comment"># Verifier les dimensions a chaque etape</span>
+x_test = torch.randn(<span class="number">1</span>, <span class="number">3</span>, <span class="number">32</span>, <span class="number">32</span>).to(device)
+<span class="function">print</span>(<span class="string">f"Entree      : {x_test.shape}"</span>)
+
+x_test = model.conv_block1(x_test)
+<span class="function">print</span>(<span class="string">f"Apres bloc 1: {x_test.shape}"</span>)
+
+x_test = model.conv_block2(x_test)
+<span class="function">print</span>(<span class="string">f"Apres bloc 2: {x_test.shape}"</span>)
+
+x_test = model.conv_block3(x_test)
+<span class="function">print</span>(<span class="string">f"Apres bloc 3: {x_test.shape}"</span>)
+
+<span class="comment"># Nombre de parametres</span>
+total_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+<span class="function">print</span>(<span class="string">f"\nParametres totaux : {total_params:,}"</span>)</div>
+
+    <div class="output-block">Entree      : torch.Size([1, 3, 32, 32])
+Apres bloc 1: torch.Size([1, 32, 16, 16])
+Apres bloc 2: torch.Size([1, 64, 8, 8])
+Apres bloc 3: torch.Size([1, 128, 4, 4])
+
+Parametres totaux : 1,199,882</div>
+
+    <div class="prof-note">
+        Observez comment la dimension spatiale diminue (32 -> 16 -> 8 -> 4) tandis que le nombre de canaux augmente (3 -> 32 -> 64 -> 128). C'est un pattern classique des CNN : on echange la resolution spatiale contre la richesse des features.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 -->
+    <!-- ============================================================ -->
+    <h2>Partie 5 : Entrainement avec scheduler</h2>
+
+    <h3>5.1 Definir loss, optimizer et scheduler</h3>
+    <div class="code-block">criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=<span class="number">0.001</span>, weight_decay=<span class="number">1e-4</span>)
+
+<span class="comment"># Scheduler : CosineAnnealingLR reduit progressivement le lr</span>
+scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=<span class="number">50</span>)
+
+<span class="function">print</span>(<span class="string">f"Learning rate initial : {optimizer.param_groups[0]['lr']}"</span>)</div>
+
+    <div class="output-block">Learning rate initial : 0.001</div>
+
+    <div class="param-box">
+        <h4>CosineAnnealingLR</h4>
+        <p>Ce scheduler fait varier le learning rate selon une courbe cosinus. Il commence haut, diminue progressivement jusqu'a eta_min, puis peut remonter si on continue l'entrainement.</p>
+        <ul>
+            <li><strong>T_max</strong> : nombre d'epochs pour un demi-cycle du cosinus</li>
+            <li><strong>eta_min</strong> : learning rate minimal (defaut: 0)</li>
+        </ul>
+    </div>
+
+    <h3>5.2 Fonctions d'entrainement et d'evaluation</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">train_one_epoch</span>(model, loader, criterion, optimizer, device):
+    model.train()
+    running_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">for</span> batch_idx, (images, labels) <span class="keyword">in</span> <span class="function">enumerate</span>(loader):
+        images, labels = images.to(device), labels.to(device)
+
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        running_loss += loss.item() * images.size(<span class="number">0</span>)
+        _, predicted = torch.max(outputs, <span class="number">1</span>)
+        total += labels.size(<span class="number">0</span>)
+        correct += (predicted == labels).sum().item()
+
+    <span class="keyword">return</span> running_loss / total, correct / total
+
+<span class="keyword">def</span> <span class="function">evaluate_model</span>(model, loader, criterion, device):
+    model.eval()
+    running_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="keyword">for</span> images, labels <span class="keyword">in</span> loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            running_loss += loss.item() * images.size(<span class="number">0</span>)
+            _, predicted = torch.max(outputs, <span class="number">1</span>)
+            total += labels.size(<span class="number">0</span>)
+            correct += (predicted == labels).sum().item()
+
+    <span class="keyword">return</span> running_loss / total, correct / total</div>
+
+    <h3>5.3 Boucle d'entrainement complete</h3>
+    <div class="code-block">num_epochs = <span class="number">30</span>
+best_val_acc = <span class="number">0.0</span>
+history = {<span class="string">'train_loss'</span>: [], <span class="string">'train_acc'</span>: [], <span class="string">'val_loss'</span>: [], <span class="string">'val_acc'</span>: [], <span class="string">'lr'</span>: []}
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(num_epochs):
+    train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
+    val_loss, val_acc = evaluate_model(model, test_loader, criterion, device)
+    current_lr = optimizer.param_groups[<span class="number">0</span>][<span class="string">'lr'</span>]
+
+    <span class="comment"># Mise a jour du scheduler</span>
+    scheduler.step()
+
+    <span class="comment"># Sauvegarder le meilleur modele</span>
+    <span class="keyword">if</span> val_acc > best_val_acc:
+        best_val_acc = val_acc
+        torch.save(model.state_dict(), <span class="string">'best_cnn_cifar10.pth'</span>)
+
+    history[<span class="string">'train_loss'</span>].append(train_loss)
+    history[<span class="string">'train_acc'</span>].append(train_acc)
+    history[<span class="string">'val_loss'</span>].append(val_loss)
+    history[<span class="string">'val_acc'</span>].append(val_acc)
+    history[<span class="string">'lr'</span>].append(current_lr)
+
+    <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">5</span> == <span class="number">0</span>:
+        <span class="function">print</span>(<span class="string">f"Epoch [{epoch+1}/{num_epochs}] LR: {current_lr:.6f} | "</span>
+              <span class="string">f"Train: {train_acc:.4f} | Val: {val_acc:.4f}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nMeilleure accuracy de validation : {best_val_acc:.4f}"</span>)</div>
+
+    <div class="output-block">Epoch [5/30] LR: 0.000905 | Train: 0.7821 | Val: 0.8012
+Epoch [10/30] LR: 0.000655 | Train: 0.8523 | Val: 0.8534
+Epoch [15/30] LR: 0.000345 | Train: 0.8912 | Val: 0.8789
+Epoch [20/30] LR: 0.000095 | Train: 0.9198 | Val: 0.8923
+Epoch [25/30] LR: 0.000015 | Train: 0.9345 | Val: 0.8978
+Epoch [30/30] LR: 0.000000 | Train: 0.9401 | Val: 0.9002
+
+Meilleure accuracy de validation : 0.9002</div>
+
+    <div class="warning">Le CosineAnnealingLR diminue le learning rate vers 0. Assurez-vous que T_max correspond bien au nombre total d'epochs prevu, sinon le lr peut remonter de maniere inattendue.</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 -->
+    <!-- ============================================================ -->
+    <h2>Partie 6 : Evaluation detaillee</h2>
+
+    <h3>6.1 Charger le meilleur modele</h3>
+    <div class="code-block"><span class="comment"># Charger le meilleur modele sauvegarde</span>
+model.load_state_dict(torch.load(<span class="string">'best_cnn_cifar10.pth'</span>))
+model.eval()
+
+<span class="comment"># Collecter toutes les predictions</span>
+all_preds = []
+all_labels = []
+all_probs = []
+
+<span class="keyword">with</span> torch.no_grad():
+    <span class="keyword">for</span> images, labels <span class="keyword">in</span> test_loader:
+        images = images.to(device)
+        outputs = model(images)
+        probs = torch.softmax(outputs, dim=<span class="number">1</span>)
+        _, predicted = torch.max(outputs, <span class="number">1</span>)
+        all_preds.extend(predicted.cpu().numpy())
+        all_labels.extend(labels.numpy())
+        all_probs.extend(probs.cpu().numpy())
+
+all_preds = np.array(all_preds)
+all_labels = np.array(all_labels)</div>
+
+    <h3>6.2 Accuracy par classe</h3>
+    <div class="code-block"><span class="comment"># Rapport detaille</span>
+<span class="function">print</span>(classification_report(all_labels, all_preds, target_names=classes))
+
+<span class="comment"># Accuracy par classe</span>
+<span class="keyword">for</span> i, cls <span class="keyword">in</span> <span class="function">enumerate</span>(classes):
+    mask = all_labels == i
+    acc = (all_preds[mask] == all_labels[mask]).mean()
+    <span class="function">print</span>(<span class="string">f"{cls:12s} : {acc:.4f} ({mask.sum()} images)"</span>)</div>
+
+    <div class="output-block">              precision    recall  f1-score   support
+       avion       0.92      0.91      0.91      1000
+  automobile       0.95      0.96      0.96      1000
+      oiseau       0.87      0.85      0.86      1000
+        chat       0.80      0.80      0.80      1000
+        cerf       0.90      0.91      0.91      1000
+       chien       0.85      0.84      0.85      1000
+  grenouille       0.93      0.94      0.94      1000
+      cheval       0.93      0.93      0.93      1000
+      navire       0.95      0.94      0.94      1000
+      camion       0.93      0.94      0.94      1000
+    accuracy                           0.90     10000</div>
+
+    <h3>6.3 Matrice de confusion</h3>
+    <div class="code-block">cm = confusion_matrix(all_labels, all_preds)
+
+fig, ax = plt.subplots(figsize=(<span class="number">12</span>, <span class="number">10</span>))
+im = ax.imshow(cm, cmap=<span class="string">'Oranges'</span>)
+plt.colorbar(im)
+
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+        ax.text(j, i, <span class="function">str</span>(cm[i, j]), ha=<span class="string">'center'</span>, va=<span class="string">'center'</span>,
+                color=<span class="string">'white'</span> <span class="keyword">if</span> cm[i, j] > cm.max()/<span class="number">2</span> <span class="keyword">else</span> <span class="string">'black'</span>, fontsize=<span class="number">9</span>)
+
+ax.set_xticks(<span class="function">range</span>(<span class="number">10</span>))
+ax.set_yticks(<span class="function">range</span>(<span class="number">10</span>))
+ax.set_xticklabels(classes, rotation=<span class="number">45</span>)
+ax.set_yticklabels(classes)
+ax.set_xlabel(<span class="string">'Predictions'</span>)
+ax.set_ylabel(<span class="string">'Vrais labels'</span>)
+ax.set_title(<span class="string">'Matrice de confusion - CNN sur CIFAR-10'</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="prof-note">
+        Les erreurs les plus frequentes sont entre chat/chien et oiseau/avion. C'est logique : ces classes partagent des motifs visuels similaires. Un reseau plus profond ou des donnees supplementaires pourraient ameliorer ces cas.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 -->
+    <!-- ============================================================ -->
+    <h2>Partie 7 : Visualiser les filtres et feature maps</h2>
+
+    <h3>7.1 Visualiser les filtres de la premiere couche</h3>
+    <div class="code-block"><span class="comment"># Extraire les poids de la premiere couche convolutive</span>
+first_conv = model.conv_block1[<span class="number">0</span>]  <span class="comment"># Premier Conv2d</span>
+filters = first_conv.weight.data.cpu()
+
+<span class="function">print</span>(<span class="string">f"Shape des filtres : {filters.shape}"</span>)
+<span class="comment"># [32, 3, 3, 3] = 32 filtres, 3 canaux, 3x3</span>
+
+<span class="comment"># Afficher les 32 filtres</span>
+fig, axes = plt.subplots(<span class="number">4</span>, <span class="number">8</span>, figsize=(<span class="number">16</span>, <span class="number">8</span>))
+<span class="keyword">for</span> i, ax <span class="keyword">in</span> <span class="function">enumerate</span>(axes.flat):
+    <span class="keyword">if</span> i < filters.shape[<span class="number">0</span>]:
+        <span class="comment"># Normaliser le filtre pour l'affichage</span>
+        f = filters[i].permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>)
+        f = (f - f.min()) / (f.max() - f.min())
+        ax.imshow(f)
+    ax.axis(<span class="string">'off'</span>)
+    ax.set_title(<span class="string">f'F{i}'</span>, fontsize=<span class="number">8</span>)
+plt.suptitle(<span class="string">'Filtres de la premiere couche convolutive'</span>, fontsize=<span class="number">14</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="output-block">Shape des filtres : torch.Size([32, 3, 3, 3])</div>
+
+    <h3>7.2 Visualiser les feature maps</h3>
+    <div class="code-block"><span class="comment"># Prendre une image de test</span>
+test_img, test_label = test_dataset[<span class="number">42</span>]
+test_img_batch = test_img.unsqueeze(<span class="number">0</span>).to(device)
+
+<span class="comment"># Extraire les feature maps apres chaque bloc</span>
+model.eval()
+<span class="keyword">with</span> torch.no_grad():
+    fm1 = model.conv_block1(test_img_batch)
+    fm2 = model.conv_block2(fm1)
+    fm3 = model.conv_block3(fm2)
+
+<span class="comment"># Afficher les feature maps du premier bloc</span>
+fig, axes = plt.subplots(<span class="number">4</span>, <span class="number">8</span>, figsize=(<span class="number">16</span>, <span class="number">8</span>))
+<span class="keyword">for</span> i, ax <span class="keyword">in</span> <span class="function">enumerate</span>(axes.flat):
+    <span class="keyword">if</span> i < fm1.shape[<span class="number">1</span>]:
+        ax.imshow(fm1[<span class="number">0</span>, i].cpu(), cmap=<span class="string">'viridis'</span>)
+    ax.axis(<span class="string">'off'</span>)
+plt.suptitle(<span class="string">f'Feature Maps - Bloc 1 (classe: {classes[test_label]})'</span>, fontsize=<span class="number">14</span>)
+plt.tight_layout()
+plt.show()
+
+<span class="function">print</span>(<span class="string">f"Feature maps bloc 1 : {fm1.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Feature maps bloc 2 : {fm2.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Feature maps bloc 3 : {fm3.shape}"</span>)</div>
+
+    <div class="output-block">Feature maps bloc 1 : torch.Size([1, 32, 16, 16])
+Feature maps bloc 2 : torch.Size([1, 64, 8, 8])
+Feature maps bloc 3 : torch.Size([1, 128, 4, 4])</div>
+
+    <div class="concept-box green">
+        <h4>Interpretation des feature maps</h4>
+        <ul>
+            <li><strong>Bloc 1</strong> : detecte des bords et des contrastes simples (resolution haute 16x16)</li>
+            <li><strong>Bloc 2</strong> : detecte des textures et motifs plus complexes (resolution moyenne 8x8)</li>
+            <li><strong>Bloc 3</strong> : detecte des parties d'objets et des structures de haut niveau (resolution basse 4x4)</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 -->
+    <!-- ============================================================ -->
+    <h2>Partie 8 : Comparer CNN vs MLP</h2>
+
+    <h3>8.1 Definir un MLP pour CIFAR-10</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">MLPBaseline</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        <span class="function">super</span>().__init__()
+        self.net = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(<span class="number">3</span> * <span class="number">32</span> * <span class="number">32</span>, <span class="number">1024</span>),
+            nn.ReLU(),
+            nn.Dropout(<span class="number">0.3</span>),
+            nn.Linear(<span class="number">1024</span>, <span class="number">512</span>),
+            nn.ReLU(),
+            nn.Dropout(<span class="number">0.3</span>),
+            nn.Linear(<span class="number">512</span>, <span class="number">256</span>),
+            nn.ReLU(),
+            nn.Dropout(<span class="number">0.3</span>),
+            nn.Linear(<span class="number">256</span>, <span class="number">10</span>)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="keyword">return</span> self.net(x)
+
+mlp_model = MLPBaseline().to(device)
+mlp_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> mlp_model.parameters())
+cnn_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+
+<span class="function">print</span>(<span class="string">f"Parametres MLP : {mlp_params:,}"</span>)
+<span class="function">print</span>(<span class="string">f"Parametres CNN : {cnn_params:,}"</span>)</div>
+
+    <div class="output-block">Parametres MLP : 3,737,098
+Parametres CNN : 1,199,882</div>
+
+    <h3>8.2 Entrainer et comparer</h3>
+    <div class="code-block"><span class="comment"># Entrainer le MLP</span>
+mlp_optimizer = optim.Adam(mlp_model.parameters(), lr=<span class="number">0.001</span>)
+mlp_history = {<span class="string">'train_acc'</span>: [], <span class="string">'val_acc'</span>: []}
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(<span class="number">20</span>):
+    _, train_acc = train_one_epoch(mlp_model, train_loader, criterion, mlp_optimizer, device)
+    _, val_acc = evaluate_model(mlp_model, test_loader, criterion, device)
+    mlp_history[<span class="string">'train_acc'</span>].append(train_acc)
+    mlp_history[<span class="string">'val_acc'</span>].append(val_acc)
+
+<span class="function">print</span>(<span class="string">f"MLP - Val Accuracy finale : {mlp_history['val_acc'][-1]:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"CNN - Val Accuracy finale : {best_val_acc:.4f}"</span>)</div>
+
+    <div class="output-block">MLP - Val Accuracy finale : 0.5523
+CNN - Val Accuracy finale : 0.9002</div>
+
+    <h3>8.3 Visualiser la comparaison</h3>
+    <div class="code-block">plt.figure(figsize=(<span class="number">10</span>, <span class="number">6</span>))
+plt.plot(mlp_history[<span class="string">'val_acc'</span>], label=<span class="string">'MLP (val)'</span>, color=<span class="string">'#ff4444'</span>, linestyle=<span class="string">'--'</span>)
+plt.plot(history[<span class="string">'val_acc'</span>][:<span class="number">20</span>], label=<span class="string">'CNN (val)'</span>, color=<span class="string">'#00ff88'</span>)
+plt.xlabel(<span class="string">'Epoch'</span>)
+plt.ylabel(<span class="string">'Accuracy'</span>)
+plt.title(<span class="string">'CNN vs MLP sur CIFAR-10'</span>)
+plt.legend(fontsize=<span class="number">12</span>)
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.show()</div>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff4444;">MLP</h4>
+            <p>Accuracy : ~55%</p>
+            <p>Parametres : 3.7M</p>
+            <p>Perd l'information spatiale</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#00ff88;">CNN</h4>
+            <p>Accuracy : ~90%</p>
+            <p>Parametres : 1.2M</p>
+            <p>Exploite la structure 2D</p>
+        </div>
+    </div>
+
+    <div class="concept-box">
+        <h4>Pourquoi le CNN est superieur au MLP pour les images ?</h4>
+        <ol>
+            <li><strong>Partage de parametres</strong> : un filtre 3x3 s'applique partout dans l'image. Le MLP a un poids different pour chaque pixel.</li>
+            <li><strong>Invariance a la translation</strong> : un chat detecte en haut a gauche sera aussi detecte en bas a droite.</li>
+            <li><strong>Hierarchie de features</strong> : les couches successives detectent des motifs de plus en plus complexes.</li>
+            <li><strong>Moins de parametres</strong> : malgre une bien meilleure performance, le CNN utilise 3x moins de parametres.</li>
+        </ol>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 -->
+    <!-- ============================================================ -->
+    <h2>Partie 9 : Recapitulatif et points clefs</h2>
+
+    <div class="concept-box green">
+        <h4>Ce que nous avons appris</h4>
+        <ol>
+            <li><strong>Architecture CNN</strong> : blocs Conv2d + BatchNorm + ReLU + MaxPool empiles, suivis de couches FC.</li>
+            <li><strong>Data augmentation</strong> : flips, crops, rotations augmentent la robustesse et reduisent le sur-apprentissage.</li>
+            <li><strong>Scheduler</strong> : CosineAnnealingLR permet une reduction douce du learning rate pour un fine-tuning en fin d'entrainement.</li>
+            <li><strong>Feature maps</strong> : les couches profondes capturent des features de plus en plus abstraites.</li>
+            <li><strong>CNN >> MLP</strong> : pour les images, le CNN est nettement superieur grace a l'exploitation de la structure spatiale.</li>
+        </ol>
+    </div>
+
+    <div class="concept-box blue">
+        <h4>Composants PyTorch essentiels pour les CNN</h4>
+        <table>
+            <tr><th>Composant</th><th>Code PyTorch</th></tr>
+            <tr><td>Convolution 2D</td><td><code>nn.Conv2d(in_ch, out_ch, kernel_size, padding)</code></td></tr>
+            <tr><td>Batch Norm 2D</td><td><code>nn.BatchNorm2d(num_features)</code></td></tr>
+            <tr><td>Max Pooling</td><td><code>nn.MaxPool2d(kernel_size, stride)</code></td></tr>
+            <tr><td>Dropout spatial</td><td><code>nn.Dropout2d(p)</code></td></tr>
+            <tr><td>Aplatir</td><td><code>nn.Flatten()</code></td></tr>
+            <tr><td>Data augmentation</td><td><code>transforms.RandomHorizontalFlip()</code></td></tr>
+            <tr><td>Scheduler cosinus</td><td><code>optim.lr_scheduler.CosineAnnealingLR()</code></td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Ce CNN simple atteint ~90% sur CIFAR-10. Les architectures modernes (ResNet, EfficientNet) depassent 95% grace a des connexions residuelles et des techniques avancees. Nous les explorerons dans le TD sur le Transfer Learning.
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

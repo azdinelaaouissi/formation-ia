@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 11 - PyTorch en Pratique</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 11 - PyTorch en Pratique</h1>
+    <p class="subtitle">Cours 11/12 - Tensors, autograd, Datasets, DataLoaders et boucle d'entrainement complete</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================================ -->
+    <h2>1. Pourquoi PyTorch ?</h2>
+
+    <p>PyTorch est devenu le framework de Deep Learning le plus utilise en recherche et de plus en plus adopte en production. Developpe par Facebook AI Research (FAIR), il se distingue par son approche intuitive et pythonique.</p>
+
+    <h3>1.1 Historique</h3>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2002</span>
+        <div><strong>Torch</strong> est cree en Lua par Ronan Collobert et al. au IDIAP. Framework precurseur mais langage peu populaire.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2015</span>
+        <div><strong>TensorFlow</strong> est publie par Google Brain. Graphe statique (define-and-run). Domine pendant plusieurs annees.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2016</span>
+        <div><strong>PyTorch 0.1</strong> est lance par FAIR. Approche dynamique (define-by-run) qui seduit immediatement les chercheurs.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2018</span>
+        <div>PyTorch 1.0 fusionne avec Caffe2. Ajout de TorchScript pour la production. Adoption massive en recherche.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2022</span>
+        <div>PyTorch 2.0 avec <strong>torch.compile</strong>, acceleration significative, graphes dynamiques compiles.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2023</span>
+        <div>PyTorch rejoint la <strong>Linux Foundation</strong>. Il devient le standard de facto pour la recherche ET la production.</div>
+    </div>
+
+    <h3>1.2 PyTorch vs TensorFlow</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff6b35;">PyTorch</h4>
+            <ul style="text-align:left;">
+                <li><strong>Graphe dynamique</strong> (eager mode)</li>
+                <li>Debug avec pdb/breakpoints</li>
+                <li>API pythonique et intuitive</li>
+                <li>Dominant en recherche (>80% des papiers)</li>
+                <li>TorchScript pour la production</li>
+                <li>Ecosysteme : HuggingFace, Lightning</li>
+            </ul>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">TensorFlow</h4>
+            <ul style="text-align:left;">
+                <li><strong>Graphe statique</strong> (graph mode, eager depuis v2)</li>
+                <li>TensorBoard pour la visualisation</li>
+                <li>Keras comme API haut niveau</li>
+                <li>Fort en production/mobile (TF Lite, TF.js)</li>
+                <li>SavedModel pour le deploiement</li>
+                <li>Ecosysteme : TFX, TF Serving</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="definition">
+        Le <strong>graphe dynamique</strong> (define-by-run) signifie que le graphe de calcul est construit a la volee lors de l'execution du code Python. Chaque appel forward cree un nouveau graphe. Cela permet d'utiliser des conditions, des boucles et du debugging Python natif.
+    </div>
+
+    <div class="prof-note">
+        En 2025, le debat PyTorch vs TensorFlow est largement resolu : PyTorch domine la recherche et gagne du terrain en production. Je recommande PyTorch comme premier framework a apprendre. TensorFlow reste pertinent pour les deploiements mobiles et web.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================================ -->
+    <h2>2. Tensors - La brique fondamentale</h2>
+
+    <p>Les <strong>tensors</strong> sont la structure de donnees centrale de PyTorch. Ce sont des tableaux multidimensionnels similaires aux arrays NumPy, mais avec le support GPU et la differentiation automatique.</p>
+
+    <h3>2.1 Creation de tensors</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+
+<span class="comment"># --- Creation a partir de donnees ---</span>
+t1 = torch.tensor([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>])                     <span class="comment"># 1D</span>
+t2 = torch.tensor([[<span class="number">1</span>, <span class="number">2</span>], [<span class="number">3</span>, <span class="number">4</span>]])               <span class="comment"># 2D (matrice)</span>
+t3 = torch.tensor([[[<span class="number">1</span>, <span class="number">2</span>], [<span class="number">3</span>, <span class="number">4</span>]], [[<span class="number">5</span>, <span class="number">6</span>], [<span class="number">7</span>, <span class="number">8</span>]]])  <span class="comment"># 3D</span>
+
+<span class="comment"># --- Creation avec des fonctions utilitaires ---</span>
+zeros = torch.zeros(<span class="number">3</span>, <span class="number">4</span>)                      <span class="comment"># Matrice 3x4 de zeros</span>
+ones = torch.ones(<span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>)                     <span class="comment"># Tenseur 2x3x5 de uns</span>
+rand = torch.rand(<span class="number">4</span>, <span class="number">4</span>)                        <span class="comment"># Uniforme [0, 1)</span>
+randn = torch.randn(<span class="number">3</span>, <span class="number">3</span>)                      <span class="comment"># Gaussien N(0, 1)</span>
+arange = torch.arange(<span class="number">0</span>, <span class="number">10</span>, <span class="number">2</span>)                 <span class="comment"># [0, 2, 4, 6, 8]</span>
+linspace = torch.linspace(<span class="number">0</span>, <span class="number">1</span>, <span class="number">5</span>)              <span class="comment"># [0, 0.25, 0.5, 0.75, 1.0]</span>
+eye = torch.eye(<span class="number">3</span>)                               <span class="comment"># Matrice identite 3x3</span>
+full = torch.full((<span class="number">2</span>, <span class="number">3</span>), <span class="number">7.0</span>)                  <span class="comment"># Matrice 2x3 remplie de 7</span>
+
+<span class="comment"># --- Creation a partir de NumPy ---</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+np_array = np.array([<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">3.0</span>])
+t_from_np = torch.from_numpy(np_array)            <span class="comment"># Partage la memoire!</span>
+t_copy = torch.tensor(np_array)                    <span class="comment"># Copie independante</span>
+
+<span class="keyword">print</span>(f<span class="string">"t2 shape: {t2.shape}, dtype: {t2.dtype}"</span>)
+<span class="keyword">print</span>(f<span class="string">"randn shape: {randn.shape}, device: {randn.device}"</span>)</div>
+
+    <div class="output-block">t2 shape: torch.Size([2, 2]), dtype: torch.int64
+randn shape: torch.Size([3, 3]), device: cpu</div>
+
+    <h3>2.2 Types de donnees (dtypes)</h3>
+
+    <table>
+        <tr><th>dtype</th><th>Description</th><th>Taille</th><th>Cas d'usage</th></tr>
+        <tr><td><strong>torch.float32</strong></td><td>Float 32 bits (defaut)</td><td>4 octets</td><td>Entrainement standard</td></tr>
+        <tr><td><strong>torch.float16</strong></td><td>Float 16 bits (half)</td><td>2 octets</td><td>Mixed precision training</td></tr>
+        <tr><td><strong>torch.bfloat16</strong></td><td>Brain Float 16 bits</td><td>2 octets</td><td>LLMs, GPU modernes</td></tr>
+        <tr><td><strong>torch.float64</strong></td><td>Float 64 bits (double)</td><td>8 octets</td><td>Calcul haute precision</td></tr>
+        <tr><td><strong>torch.int64</strong></td><td>Integer 64 bits (long)</td><td>8 octets</td><td>Indices, labels</td></tr>
+        <tr><td><strong>torch.int32</strong></td><td>Integer 32 bits</td><td>4 octets</td><td>Indices compacts</td></tr>
+        <tr><td><strong>torch.bool</strong></td><td>Booleen</td><td>1 octet</td><td>Masques</td></tr>
+    </table>
+
+    <div class="code-block"><span class="comment"># Conversion de types</span>
+t = torch.rand(<span class="number">3</span>, <span class="number">3</span>)                  <span class="comment"># float32 par defaut</span>
+t_half = t.half()                       <span class="comment"># float16</span>
+t_double = t.double()                   <span class="comment"># float64</span>
+t_int = t.to(torch.int32)              <span class="comment"># conversion explicite</span>
+t_bool = t > <span class="number">0.5</span>                       <span class="comment"># masque booleen</span>
+
+<span class="keyword">print</span>(f<span class="string">"float32: {t.dtype}, half: {t_half.dtype}, bool: {t_bool.dtype}"</span>)</div>
+
+    <div class="output-block">float32: torch.float32, half: torch.float16, bool: torch.bool</div>
+
+    <h3>2.3 Operations sur les tensors</h3>
+
+    <div class="code-block"><span class="comment"># --- Operations arithmetiques ---</span>
+a = torch.tensor([[<span class="number">1.0</span>, <span class="number">2.0</span>], [<span class="number">3.0</span>, <span class="number">4.0</span>]])
+b = torch.tensor([[<span class="number">5.0</span>, <span class="number">6.0</span>], [<span class="number">7.0</span>, <span class="number">8.0</span>]])
+
+<span class="comment"># Element-wise</span>
+add = a + b                    <span class="comment"># ou torch.add(a, b)</span>
+sub = a - b                    <span class="comment"># ou torch.sub(a, b)</span>
+mul = a * b                    <span class="comment"># element-wise, pas matmul!</span>
+div = a / b
+
+<span class="comment"># Multiplication matricielle</span>
+matmul = a @ b                 <span class="comment"># ou torch.matmul(a, b) ou a.mm(b)</span>
+
+<span class="comment"># Reductions</span>
+<span class="keyword">print</span>(f<span class="string">"Somme: {a.sum()}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Moyenne: {a.mean()}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Max: {a.max()}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Argmax: {a.argmax()}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Somme par ligne: {a.sum(dim=1)}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Somme par colonne: {a.sum(dim=0)}"</span>)
+
+<span class="comment"># Fonctions mathematiques</span>
+<span class="keyword">print</span>(f<span class="string">"Exp: {torch.exp(a)}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Log: {torch.log(a)}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Sqrt: {torch.sqrt(a)}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Clamp: {torch.clamp(a, min=2, max=3)}"</span>)</div>
+
+    <div class="output-block">Somme: 10.0
+Moyenne: 2.5
+Max: 4.0
+Argmax: 3
+Somme par ligne: tensor([3., 7.])
+Somme par colonne: tensor([4., 6.])</div>
+
+    <h3>2.4 Reshape, view et slicing</h3>
+
+    <div class="code-block"><span class="comment"># --- Reshape et reorganisation ---</span>
+t = torch.arange(<span class="number">12</span>).float()
+
+<span class="comment"># Reshape</span>
+t_3x4 = t.view(<span class="number">3</span>, <span class="number">4</span>)          <span class="comment"># 12 -> 3x4</span>
+t_2x6 = t.reshape(<span class="number">2</span>, <span class="number">6</span>)       <span class="comment"># 12 -> 2x6</span>
+t_auto = t.view(<span class="number">3</span>, -<span class="number">1</span>)         <span class="comment"># -1 = taille inferee automatiquement</span>
+
+<span class="comment"># Squeeze / Unsqueeze</span>
+t = torch.rand(<span class="number">3</span>, <span class="number">1</span>, <span class="number">4</span>)
+<span class="keyword">print</span>(f<span class="string">"Original: {t.shape}"</span>)             <span class="comment"># [3, 1, 4]</span>
+<span class="keyword">print</span>(f<span class="string">"Squeeze: {t.squeeze(1).shape}"</span>)    <span class="comment"># [3, 4] - enleve dim de taille 1</span>
+
+t = torch.rand(<span class="number">3</span>, <span class="number">4</span>)
+<span class="keyword">print</span>(f<span class="string">"Unsqueeze(0): {t.unsqueeze(0).shape}"</span>)  <span class="comment"># [1, 3, 4]</span>
+<span class="keyword">print</span>(f<span class="string">"Unsqueeze(1): {t.unsqueeze(1).shape}"</span>)  <span class="comment"># [3, 1, 4]</span>
+
+<span class="comment"># Transpose et permute</span>
+t = torch.rand(<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>)
+<span class="keyword">print</span>(f<span class="string">"Transpose(1,2): {t.transpose(1, 2).shape}"</span>)  <span class="comment"># [2, 4, 3]</span>
+<span class="keyword">print</span>(f<span class="string">"Permute: {t.permute(2, 0, 1).shape}"</span>)       <span class="comment"># [4, 2, 3]</span>
+
+<span class="comment"># Concatenation et stack</span>
+a = torch.rand(<span class="number">2</span>, <span class="number">3</span>)
+b = torch.rand(<span class="number">2</span>, <span class="number">3</span>)
+cat_0 = torch.cat([a, b], dim=<span class="number">0</span>)    <span class="comment"># [4, 3]</span>
+cat_1 = torch.cat([a, b], dim=<span class="number">1</span>)    <span class="comment"># [2, 6]</span>
+stacked = torch.stack([a, b])       <span class="comment"># [2, 2, 3] - nouvelle dimension</span>
+
+<span class="comment"># --- Slicing (comme NumPy) ---</span>
+t = torch.arange(<span class="number">20</span>).view(<span class="number">4</span>, <span class="number">5</span>).float()
+<span class="keyword">print</span>(t[<span class="number">0</span>])           <span class="comment"># Premiere ligne</span>
+<span class="keyword">print</span>(t[:, <span class="number">0</span>])        <span class="comment"># Premiere colonne</span>
+<span class="keyword">print</span>(t[<span class="number">1</span>:<span class="number">3</span>, <span class="number">2</span>:<span class="number">4</span>])   <span class="comment"># Sous-matrice lignes 1-2, colonnes 2-3</span>
+<span class="keyword">print</span>(t[t > <span class="number">10</span>])      <span class="comment"># Masquage booleen</span></div>
+
+    <div class="output-block">Original: torch.Size([3, 1, 4])
+Squeeze: torch.Size([3, 4])
+Unsqueeze(0): torch.Size([1, 3, 4])
+Unsqueeze(1): torch.Size([3, 1, 4])</div>
+
+    <h3>2.5 GPU et gestion du device</h3>
+
+    <div class="code-block"><span class="comment"># --- Gestion CPU/GPU ---</span>
+device = torch.device(<span class="string">"cuda"</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">"cpu"</span>)
+<span class="keyword">print</span>(f<span class="string">"Device disponible: {device}"</span>)
+
+<span class="comment"># Creer directement sur GPU</span>
+t_gpu = torch.rand(<span class="number">3</span>, <span class="number">3</span>, device=device)
+
+<span class="comment"># Transferer CPU -> GPU</span>
+t_cpu = torch.rand(<span class="number">3</span>, <span class="number">3</span>)
+t_gpu = t_cpu.to(device)           <span class="comment"># Methode recommandee</span>
+t_gpu = t_cpu.cuda()               <span class="comment"># Equivalent si CUDA disponible</span>
+
+<span class="comment"># Transferer GPU -> CPU</span>
+t_back = t_gpu.cpu()
+numpy_array = t_gpu.cpu().numpy()  <span class="comment"># Pour convertir en NumPy</span>
+
+<span class="comment"># Verifier le device</span>
+<span class="keyword">print</span>(f<span class="string">"Device: {t_gpu.device}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Sur GPU: {t_gpu.is_cuda}"</span>)</div>
+
+    <div class="warning">Toutes les operations entre tensors doivent se faire sur le meme device. Tenter de multiplier un tensor CPU avec un tensor GPU produit une erreur. Utilisez .to(device) de maniere coherente.</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================================ -->
+    <h2>3. Autograd - Differentiation automatique</h2>
+
+    <p>L'autograd est le moteur de differentiation automatique de PyTorch. Il calcule automatiquement les gradients necessaires a la retropropagation, eliminant le besoin de calculs manuels de derivees.</p>
+
+    <div class="definition">
+        <strong>Autograd</strong> est un systeme de differentiation automatique qui enregistre toutes les operations effectuees sur des tensors avec <code>requires_grad=True</code>, construisant un graphe de calcul dynamique. Lors de l'appel a <code>.backward()</code>, il parcourt ce graphe en sens inverse pour calculer tous les gradients via la regle de la chaine.
+    </div>
+
+    <h3>3.1 Bases de l'autograd</h3>
+
+    <div class="code-block"><span class="comment"># --- requires_grad active le tracking ---</span>
+x = torch.tensor([<span class="number">2.0</span>, <span class="number">3.0</span>], requires_grad=<span class="keyword">True</span>)
+y = torch.tensor([<span class="number">4.0</span>, <span class="number">5.0</span>], requires_grad=<span class="keyword">True</span>)
+
+<span class="comment"># Operations trackes automatiquement</span>
+z = x * y + x ** <span class="number">2</span>
+<span class="keyword">print</span>(f<span class="string">"z = {z}"</span>)
+<span class="keyword">print</span>(f<span class="string">"z.grad_fn = {z.grad_fn}"</span>)  <span class="comment"># Montre l'operation qui a cree z</span>
+
+<span class="comment"># Calculer les gradients</span>
+loss = z.sum()
+loss.backward()
+
+<span class="comment"># dz/dx = y + 2x</span>
+<span class="keyword">print</span>(f<span class="string">"x.grad = {x.grad}"</span>)  <span class="comment"># [4+4, 5+6] = [8, 11]</span>
+<span class="keyword">print</span>(f<span class="string">"y.grad = {y.grad}"</span>)  <span class="comment"># [2, 3] = x</span></div>
+
+    <div class="output-block">z = tensor([12., 24.], grad_fn=&lt;AddBackward0&gt;)
+z.grad_fn = &lt;AddBackward0&gt;
+x.grad = tensor([ 8., 11.])
+y.grad = tensor([2., 3.])</div>
+
+    <h3>3.2 Le graphe de calcul</h3>
+
+    <div class="analogy">
+        <h4>Analogie : le fil d'Ariane</h4>
+        <p>Imaginez que chaque operation laisse un fil invisible reliant le resultat a ses operandes. Quand on appelle <code>.backward()</code>, PyTorch remonte ces fils en sens inverse, calculant le gradient a chaque noeud. C'est exactement la regle de la chaine du calcul differentiel, automatisee.</p>
+    </div>
+
+    <h3>3.3 Controle du gradient</h3>
+
+    <div class="code-block"><span class="comment"># --- Desactiver le calcul de gradient ---</span>
+
+<span class="comment"># Methode 1 : torch.no_grad() (pour l'inference)</span>
+<span class="keyword">with</span> torch.no_grad():
+    pred = model(input_data)  <span class="comment"># Pas de graphe construit</span>
+
+<span class="comment"># Methode 2 : detach() (couper du graphe)</span>
+z = x * y
+z_detached = z.detach()  <span class="comment"># Copie sans historique de gradient</span>
+
+<span class="comment"># Methode 3 : requires_grad_(False)</span>
+x.requires_grad_(<span class="keyword">False</span>)  <span class="comment"># In-place, stoppe le tracking</span>
+
+<span class="comment"># --- Remettre les gradients a zero ---</span>
+x = torch.tensor([<span class="number">2.0</span>], requires_grad=<span class="keyword">True</span>)
+y = x ** <span class="number">2</span>
+y.backward()
+<span class="keyword">print</span>(f<span class="string">"Gradient apres 1er backward: {x.grad}"</span>)
+
+y = x ** <span class="number">2</span>
+y.backward()
+<span class="keyword">print</span>(f<span class="string">"Gradient ACCUMULE (probleme!): {x.grad}"</span>)
+
+<span class="comment"># Solution : remettre a zero</span>
+x.grad.zero_()
+y = x ** <span class="number">2</span>
+y.backward()
+<span class="keyword">print</span>(f<span class="string">"Gradient apres zero_grad: {x.grad}"</span>)</div>
+
+    <div class="output-block">Gradient apres 1er backward: tensor([4.])
+Gradient ACCUMULE (probleme!): tensor([8.])
+Gradient apres zero_grad: tensor([4.])</div>
+
+    <div class="warning">Les gradients s'accumulent par defaut dans PyTorch ! Il faut imperativement appeler <code>optimizer.zero_grad()</code> ou <code>tensor.grad.zero_()</code> avant chaque nouveau calcul de gradient. Oublier cette etape est l'une des erreurs les plus frequentes des debutants.</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================================ -->
+    <h2>4. nn.Module - Definir des modeles</h2>
+
+    <p>Tous les modeles PyTorch heritent de <code>nn.Module</code>. Cette classe de base fournit une interface standard pour definir, entrainer et deployer des reseaux de neurones.</p>
+
+    <h3>4.1 Structure de base</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="keyword">class</span> <span class="function">SimpleClassifier</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_dim, hidden_dim, num_classes):
+        <span class="keyword">super</span>().__init__()  <span class="comment"># Toujours appeler super().__init__() !</span>
+
+        <span class="comment"># Definir les couches dans __init__</span>
+        self.layer1 = nn.Linear(input_dim, hidden_dim)
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(<span class="number">0.3</span>)
+        self.layer2 = nn.Linear(hidden_dim, hidden_dim)
+        self.layer3 = nn.Linear(hidden_dim, num_classes)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="string">"""Definir le forward pass."""</span>
+        x = self.relu(self.layer1(x))
+        x = self.dropout(x)
+        x = self.relu(self.layer2(x))
+        x = self.layer3(x)  <span class="comment"># Pas de softmax ici (inclu dans CrossEntropyLoss)</span>
+        <span class="keyword">return</span> x
+
+<span class="comment"># Instanciation</span>
+model = SimpleClassifier(input_dim=<span class="number">784</span>, hidden_dim=<span class="number">256</span>, num_classes=<span class="number">10</span>)
+
+<span class="comment"># Tester avec une entree aleatoire</span>
+x = torch.randn(<span class="number">32</span>, <span class="number">784</span>)  <span class="comment"># Batch de 32, 784 features</span>
+output = model(x)
+<span class="keyword">print</span>(f<span class="string">"Output shape: {output.shape}"</span>)
+<span class="keyword">print</span>(f<span class="string">"Nombre de parametres: {sum(p.numel() for p in model.parameters())}"</span>)</div>
+
+    <div class="output-block">Output shape: torch.Size([32, 10])
+Nombre de parametres: 269322</div>
+
+    <h3>4.2 nn.Sequential pour les modeles simples</h3>
+
+    <div class="code-block"><span class="comment"># Pour les architectures sequentielles sans logique conditionnelle</span>
+model_seq = nn.Sequential(
+    nn.Linear(<span class="number">784</span>, <span class="number">256</span>),
+    nn.ReLU(),
+    nn.Dropout(<span class="number">0.3</span>),
+    nn.Linear(<span class="number">256</span>, <span class="number">128</span>),
+    nn.ReLU(),
+    nn.Dropout(<span class="number">0.3</span>),
+    nn.Linear(<span class="number">128</span>, <span class="number">10</span>)
+)
+
+<span class="comment"># Equivalent mais plus compact</span>
+<span class="keyword">print</span>(model_seq)</div>
+
+    <div class="output-block">Sequential(
+  (0): Linear(in_features=784, out_features=256, bias=True)
+  (1): ReLU()
+  (2): Dropout(p=0.3, inplace=False)
+  (3): Linear(in_features=256, out_features=128, bias=True)
+  (4): ReLU()
+  (5): Dropout(p=0.3, inplace=False)
+  (6): Linear(in_features=128, out_features=10, bias=True)
+)</div>
+
+    <h3>4.3 CNN avec nn.Module</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">CNN</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, num_classes=<span class="number">10</span>):
+        <span class="keyword">super</span>().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(<span class="number">1</span>, <span class="number">32</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.BatchNorm2d(<span class="number">32</span>),
+            nn.ReLU(),
+            nn.MaxPool2d(<span class="number">2</span>),                      <span class="comment"># 28x28 -> 14x14</span>
+
+            nn.Conv2d(<span class="number">32</span>, <span class="number">64</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.BatchNorm2d(<span class="number">64</span>),
+            nn.ReLU(),
+            nn.MaxPool2d(<span class="number">2</span>),                      <span class="comment"># 14x14 -> 7x7</span>
+        )
+        self.classifier = nn.Sequential(
+            nn.Flatten(),                          <span class="comment"># [B, 64, 7, 7] -> [B, 3136]</span>
+            nn.Linear(<span class="number">64</span> * <span class="number">7</span> * <span class="number">7</span>, <span class="number">128</span>),
+            nn.ReLU(),
+            nn.Dropout(<span class="number">0.5</span>),
+            nn.Linear(<span class="number">128</span>, num_classes)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        x = self.features(x)
+        x = self.classifier(x)
+        <span class="keyword">return</span> x
+
+model = CNN()
+x = torch.randn(<span class="number">8</span>, <span class="number">1</span>, <span class="number">28</span>, <span class="number">28</span>)
+<span class="keyword">print</span>(f<span class="string">"Output: {model(x).shape}"</span>)</div>
+
+    <div class="output-block">Output: torch.Size([8, 10])</div>
+
+    <div class="prof-note">
+        La convention PyTorch est de separer les <code>features</code> (couches convolutives) du <code>classifier</code> (couches denses). Cela facilite le transfer learning : on peut geler les features et ne re-entrainer que le classifier.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================================ -->
+    <h2>5. Datasets et DataLoaders</h2>
+
+    <p>PyTorch fournit un systeme elegant pour charger et pre-traiter les donnees via les classes <code>Dataset</code> et <code>DataLoader</code>.</p>
+
+    <h3>5.1 torch.utils.data.Dataset</h3>
+
+    <div class="definition">
+        Un <strong>Dataset</strong> est un objet qui represente un jeu de donnees. Il doit implementer deux methodes : <code>__len__()</code> qui retourne le nombre d'echantillons, et <code>__getitem__(idx)</code> qui retourne l'echantillon a l'index donne.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> Dataset, DataLoader
+
+<span class="keyword">class</span> <span class="function">CustomDataset</span>(Dataset):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, data, labels, transform=<span class="keyword">None</span>):
+        self.data = data
+        self.labels = labels
+        self.transform = transform
+
+    <span class="keyword">def</span> <span class="function">__len__</span>(self):
+        <span class="keyword">return</span> len(self.data)
+
+    <span class="keyword">def</span> <span class="function">__getitem__</span>(self, idx):
+        sample = self.data[idx]
+        label = self.labels[idx]
+        <span class="keyword">if</span> self.transform:
+            sample = self.transform(sample)
+        <span class="keyword">return</span> sample, label
+
+<span class="comment"># Exemple avec des donnees synthetiques</span>
+X = torch.randn(<span class="number">1000</span>, <span class="number">784</span>)
+y = torch.randint(<span class="number">0</span>, <span class="number">10</span>, (<span class="number">1000</span>,))
+dataset = CustomDataset(X, y)
+
+<span class="keyword">print</span>(f<span class="string">"Taille du dataset: {len(dataset)}"</span>)
+sample, label = dataset[<span class="number">0</span>]
+<span class="keyword">print</span>(f<span class="string">"Shape d'un echantillon: {sample.shape}, Label: {label}"</span>)</div>
+
+    <div class="output-block">Taille du dataset: 1000
+Shape d'un echantillon: torch.Size([784]), Label: 7</div>
+
+    <h3>5.2 DataLoader</h3>
+
+    <div class="code-block"><span class="comment"># Le DataLoader gere le batching, shuffling et le chargement parallele</span>
+loader = DataLoader(
+    dataset,
+    batch_size=<span class="number">64</span>,         <span class="comment"># Taille du batch</span>
+    shuffle=<span class="keyword">True</span>,           <span class="comment"># Melanger les donnees a chaque epoch</span>
+    num_workers=<span class="number">4</span>,          <span class="comment"># Threads paralleles pour le chargement</span>
+    pin_memory=<span class="keyword">True</span>,        <span class="comment"># Accelere le transfert CPU->GPU</span>
+    drop_last=<span class="keyword">True</span>          <span class="comment"># Ignore le dernier batch incomplet</span>
+)
+
+<span class="comment"># Iterer sur les batches</span>
+<span class="keyword">for</span> batch_idx, (data, targets) <span class="keyword">in</span> enumerate(loader):
+    <span class="keyword">print</span>(f<span class="string">"Batch {batch_idx}: data={data.shape}, targets={targets.shape}"</span>)
+    <span class="keyword">if</span> batch_idx >= <span class="number">2</span>:
+        <span class="keyword">break</span></div>
+
+    <div class="output-block">Batch 0: data=torch.Size([64, 784]), targets=torch.Size([64])
+Batch 1: data=torch.Size([64, 784]), targets=torch.Size([64])
+Batch 2: data=torch.Size([64, 784]), targets=torch.Size([64])</div>
+
+    <h3>5.3 Datasets pre-integres</h3>
+
+    <div class="code-block"><span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms
+
+<span class="comment"># MNIST</span>
+train_dataset = datasets.MNIST(
+    root=<span class="string">"./data"</span>,
+    train=<span class="keyword">True</span>,
+    download=<span class="keyword">True</span>,
+    transform=transforms.ToTensor()
+)
+
+<span class="comment"># CIFAR-10</span>
+cifar_dataset = datasets.CIFAR10(
+    root=<span class="string">"./data"</span>,
+    train=<span class="keyword">True</span>,
+    download=<span class="keyword">True</span>,
+    transform=transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((<span class="number">0.4914</span>, <span class="number">0.4822</span>, <span class="number">0.4465</span>),
+                             (<span class="number">0.2470</span>, <span class="number">0.2435</span>, <span class="number">0.2616</span>))
+    ])
+)
+
+<span class="comment"># ImageFolder (pour vos propres images organisees en dossiers)</span>
+<span class="comment"># Structure attendue : root/class_name/xxx.png</span>
+<span class="comment"># custom_dataset = datasets.ImageFolder("./my_images", transform=...)</span>
+
+<span class="keyword">print</span>(f<span class="string">"MNIST: {len(train_dataset)} echantillons"</span>)
+<span class="keyword">print</span>(f<span class="string">"CIFAR-10: {len(cifar_dataset)} echantillons"</span>)</div>
+
+    <div class="output-block">MNIST: 60000 echantillons
+CIFAR-10: 50000 echantillons</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================================ -->
+    <h2>6. Transforms et data augmentation</h2>
+
+    <p>Les transforms permettent de pre-traiter les donnees et d'appliquer des augmentations qui ameliorent la generalisation du modele.</p>
+
+    <h3>6.1 Transforms courants</h3>
+
+    <div class="code-block"><span class="keyword">from</span> torchvision <span class="keyword">import</span> transforms
+
+<span class="comment"># Pipeline de transforms pour l'entrainement (avec augmentation)</span>
+train_transform = transforms.Compose([
+    transforms.RandomResizedCrop(<span class="number">224</span>, scale=(<span class="number">0.8</span>, <span class="number">1.0</span>)),
+    transforms.RandomHorizontalFlip(p=<span class="number">0.5</span>),
+    transforms.RandomRotation(degrees=<span class="number">15</span>),
+    transforms.ColorJitter(
+        brightness=<span class="number">0.2</span>,
+        contrast=<span class="number">0.2</span>,
+        saturation=<span class="number">0.2</span>,
+        hue=<span class="number">0.1</span>
+    ),
+    transforms.RandomGrayscale(p=<span class="number">0.1</span>),
+    transforms.ToTensor(),  <span class="comment"># PIL Image -> Tensor [0, 1]</span>
+    transforms.Normalize(
+        mean=[<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],  <span class="comment"># ImageNet mean</span>
+        std=[<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>]    <span class="comment"># ImageNet std</span>
+    )
+])
+
+<span class="comment"># Pipeline pour la validation (PAS d'augmentation)</span>
+val_transform = transforms.Compose([
+    transforms.Resize(<span class="number">256</span>),
+    transforms.CenterCrop(<span class="number">224</span>),
+    transforms.ToTensor(),
+    transforms.Normalize(
+        mean=[<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],
+        std=[<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>]
+    )
+])</div>
+
+    <div class="warning">L'augmentation de donnees ne doit etre appliquee que sur les donnees d'entrainement, jamais sur la validation ou le test. Le pipeline de validation ne contient que le redimensionnement, le crop et la normalisation.</div>
+
+    <h3>6.2 Custom transform</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">AddGaussianNoise</span>:
+    <span class="string">"""Transform personnalise qui ajoute du bruit gaussien."""</span>
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, mean=<span class="number">0.0</span>, std=<span class="number">0.1</span>):
+        self.mean = mean
+        self.std = std
+
+    <span class="keyword">def</span> <span class="function">__call__</span>(self, tensor):
+        noise = torch.randn_like(tensor) * self.std + self.mean
+        <span class="keyword">return</span> tensor + noise
+
+<span class="comment"># Utilisation dans un Compose</span>
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    AddGaussianNoise(std=<span class="number">0.05</span>),
+    transforms.Normalize([<span class="number">0.5</span>], [<span class="number">0.5</span>])
+])</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================================ -->
+    <h2>7. Fonctions de perte (Loss Functions)</h2>
+
+    <p>Le choix de la fonction de perte est determinant. Chaque tache a sa loss appropriee.</p>
+
+    <h3>7.1 Les losses principales</h3>
+
+    <table>
+        <tr><th>Loss</th><th>Tache</th><th>Entree attendue</th><th>Cible</th></tr>
+        <tr><td><strong>nn.CrossEntropyLoss</strong></td><td>Classification multi-classe</td><td>Logits bruts [B, C]</td><td>Indices de classes [B]</td></tr>
+        <tr><td><strong>nn.BCEWithLogitsLoss</strong></td><td>Classification binaire/multi-label</td><td>Logits bruts [B] ou [B, C]</td><td>Probas 0/1 meme shape</td></tr>
+        <tr><td><strong>nn.MSELoss</strong></td><td>Regression</td><td>Predictions [B, *]</td><td>Valeurs cibles meme shape</td></tr>
+        <tr><td><strong>nn.L1Loss</strong></td><td>Regression (robuste)</td><td>Predictions [B, *]</td><td>Valeurs cibles meme shape</td></tr>
+        <tr><td><strong>nn.NLLLoss</strong></td><td>Classification (avec log_softmax)</td><td>Log-probabilites [B, C]</td><td>Indices de classes [B]</td></tr>
+        <tr><td><strong>nn.SmoothL1Loss</strong></td><td>Regression (tres robuste)</td><td>Predictions [B, *]</td><td>Valeurs cibles meme shape</td></tr>
+    </table>
+
+    <h3>7.2 Exemples pratiques</h3>
+
+    <div class="code-block"><span class="comment"># --- Classification multi-classe avec CrossEntropyLoss ---</span>
+criterion = nn.CrossEntropyLoss()
+
+<span class="comment"># Le modele produit des logits BRUTS (pas de softmax!)</span>
+logits = torch.randn(<span class="number">4</span>, <span class="number">10</span>)   <span class="comment"># Batch de 4, 10 classes</span>
+targets = torch.tensor([<span class="number">3</span>, <span class="number">7</span>, <span class="number">1</span>, <span class="number">9</span>])  <span class="comment"># Classes cibles (indices)</span>
+
+loss = criterion(logits, targets)
+<span class="keyword">print</span>(f<span class="string">"CrossEntropy Loss: {loss.item():.4f}"</span>)
+
+<span class="comment"># --- Regression avec MSELoss ---</span>
+mse = nn.MSELoss()
+predictions = torch.tensor([<span class="number">2.5</span>, <span class="number">3.2</span>, <span class="number">4.1</span>])
+ground_truth = torch.tensor([<span class="number">2.0</span>, <span class="number">3.0</span>, <span class="number">4.0</span>])
+
+loss_mse = mse(predictions, ground_truth)
+<span class="keyword">print</span>(f<span class="string">"MSE Loss: {loss_mse.item():.4f}"</span>)
+
+<span class="comment"># --- Classification binaire avec BCEWithLogitsLoss ---</span>
+bce = nn.BCEWithLogitsLoss()
+logits_bin = torch.tensor([<span class="number">0.8</span>, -<span class="number">0.5</span>, <span class="number">1.2</span>, -<span class="number">0.3</span>])
+targets_bin = torch.tensor([<span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">0.0</span>])
+
+loss_bce = bce(logits_bin, targets_bin)
+<span class="keyword">print</span>(f<span class="string">"BCE Loss: {loss_bce.item():.4f}"</span>)</div>
+
+    <div class="output-block">CrossEntropy Loss: 2.4876
+MSE Loss: 0.1000
+BCE Loss: 0.4613</div>
+
+    <div class="prof-note">
+        L'erreur la plus frequente est d'appliquer un softmax avant CrossEntropyLoss. Cette loss integre deja le log_softmax en interne pour des raisons de stabilite numerique. Si vous ajoutez un softmax dans votre forward, vous obtiendrez un double softmax et de mauvais resultats.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================================ -->
+    <h2>8. Boucle d'entrainement complete</h2>
+
+    <p>Voici la boucle d'entrainement standard en PyTorch, expliquee etape par etape. C'est le patron de conception le plus important a maitriser.</p>
+
+    <h3>8.1 Les 5 etapes sacrees</h3>
+
+    <div class="step-box"><strong>1. optimizer.zero_grad()</strong> - Remettre les gradients a zero</div>
+    <div class="step-box"><strong>2. output = model(input)</strong> - Forward pass</div>
+    <div class="step-box"><strong>3. loss = criterion(output, target)</strong> - Calculer la perte</div>
+    <div class="step-box"><strong>4. loss.backward()</strong> - Calculer les gradients (backpropagation)</div>
+    <div class="step-box"><strong>5. optimizer.step()</strong> - Mettre a jour les parametres</div>
+
+    <h3>8.2 Implementation complete avec validation et early stopping</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader, random_split
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms
+
+<span class="comment"># ============================================</span>
+<span class="comment">#  CONFIGURATION</span>
+<span class="comment"># ============================================</span>
+device = torch.device(<span class="string">"cuda"</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">"cpu"</span>)
+EPOCHS = <span class="number">20</span>
+BATCH_SIZE = <span class="number">128</span>
+LR = <span class="number">1e-3</span>
+PATIENCE = <span class="number">5</span>  <span class="comment"># Early stopping</span>
+
+<span class="comment"># ============================================</span>
+<span class="comment">#  DONNEES</span>
+<span class="comment"># ============================================</span>
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.1307</span>,), (<span class="number">0.3081</span>,))
+])
+
+full_train = datasets.MNIST(<span class="string">"./data"</span>, train=<span class="keyword">True</span>, download=<span class="keyword">True</span>, transform=transform)
+test_dataset = datasets.MNIST(<span class="string">"./data"</span>, train=<span class="keyword">False</span>, transform=transform)
+
+<span class="comment"># Split train/validation (90/10)</span>
+train_size = int(<span class="number">0.9</span> * len(full_train))
+val_size = len(full_train) - train_size
+train_dataset, val_dataset = random_split(full_train, [train_size, val_size])
+
+train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=<span class="keyword">True</span>)
+val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=<span class="keyword">False</span>)
+test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=<span class="keyword">False</span>)
+
+<span class="comment"># ============================================</span>
+<span class="comment">#  MODELE</span>
+<span class="comment"># ============================================</span>
+model = CNN(num_classes=<span class="number">10</span>).to(device)
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer, mode=<span class="string">"min"</span>, patience=<span class="number">3</span>, factor=<span class="number">0.5</span>
+)</div>
+
+    <h3>8.3 Les fonctions train et evaluate</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">train_one_epoch</span>(model, loader, criterion, optimizer, device):
+    <span class="string">"""Entraine le modele pendant une epoch."""</span>
+    model.train()  <span class="comment"># Active dropout, batchnorm en mode train</span>
+    running_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">for</span> data, targets <span class="keyword">in</span> loader:
+        data, targets = data.to(device), targets.to(device)
+
+        <span class="comment"># Les 5 etapes sacrees</span>
+        optimizer.zero_grad()          <span class="comment"># 1. Reset gradients</span>
+        outputs = model(data)          <span class="comment"># 2. Forward pass</span>
+        loss = criterion(outputs, targets)  <span class="comment"># 3. Calculer la loss</span>
+        loss.backward()                <span class="comment"># 4. Backpropagation</span>
+        optimizer.step()               <span class="comment"># 5. Mise a jour des poids</span>
+
+        <span class="comment"># Statistiques</span>
+        running_loss += loss.item() * data.size(<span class="number">0</span>)
+        _, predicted = outputs.max(<span class="number">1</span>)
+        total += targets.size(<span class="number">0</span>)
+        correct += predicted.eq(targets).sum().item()
+
+    epoch_loss = running_loss / total
+    epoch_acc = <span class="number">100.0</span> * correct / total
+    <span class="keyword">return</span> epoch_loss, epoch_acc
+
+
+<span class="keyword">@torch.no_grad</span>()
+<span class="keyword">def</span> <span class="function">evaluate</span>(model, loader, criterion, device):
+    <span class="string">"""Evalue le modele sur un dataset."""</span>
+    model.eval()  <span class="comment"># Desactive dropout, batchnorm en mode eval</span>
+    running_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">for</span> data, targets <span class="keyword">in</span> loader:
+        data, targets = data.to(device), targets.to(device)
+        outputs = model(data)
+        loss = criterion(outputs, targets)
+
+        running_loss += loss.item() * data.size(<span class="number">0</span>)
+        _, predicted = outputs.max(<span class="number">1</span>)
+        total += targets.size(<span class="number">0</span>)
+        correct += predicted.eq(targets).sum().item()
+
+    epoch_loss = running_loss / total
+    epoch_acc = <span class="number">100.0</span> * correct / total
+    <span class="keyword">return</span> epoch_loss, epoch_acc</div>
+
+    <h3>8.4 Boucle principale avec early stopping</h3>
+
+    <div class="code-block"><span class="comment"># ============================================</span>
+<span class="comment">#  BOUCLE D'ENTRAINEMENT</span>
+<span class="comment"># ============================================</span>
+best_val_loss = float(<span class="string">"inf"</span>)
+patience_counter = <span class="number">0</span>
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(EPOCHS):
+    <span class="comment"># Entrainement</span>
+    train_loss, train_acc = train_one_epoch(
+        model, train_loader, criterion, optimizer, device
+    )
+
+    <span class="comment"># Validation</span>
+    val_loss, val_acc = evaluate(model, val_loader, criterion, device)
+
+    <span class="comment"># Learning rate scheduling</span>
+    scheduler.step(val_loss)
+
+    <span class="comment"># Affichage</span>
+    current_lr = optimizer.param_groups[<span class="number">0</span>][<span class="string">"lr"</span>]
+    <span class="keyword">print</span>(f<span class="string">"Epoch {epoch+1:02d}/{EPOCHS} | "</span>
+          f<span class="string">"Train Loss: {train_loss:.4f} Acc: {train_acc:.2f}% | "</span>
+          f<span class="string">"Val Loss: {val_loss:.4f} Acc: {val_acc:.2f}% | "</span>
+          f<span class="string">"LR: {current_lr:.2e}"</span>)
+
+    <span class="comment"># Early stopping</span>
+    <span class="keyword">if</span> val_loss < best_val_loss:
+        best_val_loss = val_loss
+        patience_counter = <span class="number">0</span>
+        <span class="comment"># Sauvegarder le meilleur modele</span>
+        torch.save(model.state_dict(), <span class="string">"best_model.pth"</span>)
+        <span class="keyword">print</span>(<span class="string">"  -> Meilleur modele sauvegarde!"</span>)
+    <span class="keyword">else</span>:
+        patience_counter += <span class="number">1</span>
+        <span class="keyword">if</span> patience_counter >= PATIENCE:
+            <span class="keyword">print</span>(f<span class="string">"Early stopping apres {epoch+1} epochs."</span>)
+            <span class="keyword">break</span>
+
+<span class="comment"># Test final avec le meilleur modele</span>
+model.load_state_dict(torch.load(<span class="string">"best_model.pth"</span>))
+test_loss, test_acc = evaluate(model, test_loader, criterion, device)
+<span class="keyword">print</span>(f<span class="string">"\nTest Final | Loss: {test_loss:.4f} | Accuracy: {test_acc:.2f}%"</span>)</div>
+
+    <div class="output-block">Epoch 01/20 | Train Loss: 0.1823 Acc: 94.52% | Val Loss: 0.0654 Acc: 98.05% | LR: 1.00e-03
+  -> Meilleur modele sauvegarde!
+Epoch 02/20 | Train Loss: 0.0612 Acc: 98.13% | Val Loss: 0.0487 Acc: 98.52% | LR: 1.00e-03
+  -> Meilleur modele sauvegarde!
+...
+Epoch 12/20 | Train Loss: 0.0198 Acc: 99.38% | Val Loss: 0.0312 Acc: 99.15% | LR: 5.00e-04
+Early stopping apres 12 epochs.
+
+Test Final | Loss: 0.0289 | Accuracy: 99.21%</div>
+
+    <div class="effect">La combinaison early stopping + ReduceLROnPlateau + sauvegarde du meilleur modele est un patron de conception robuste qui previent le surapprentissage et garantit que vous conservez le meilleur modele rencontre pendant l'entrainement.</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================================ -->
+    <h2>9. Sauvegarder et charger des modeles</h2>
+
+    <p>Savoir correctement sauvegarder et charger des modeles est essentiel pour la reproductibilite et le deploiement.</p>
+
+    <h3>9.1 Sauvegarder le state_dict (recommande)</h3>
+
+    <div class="code-block"><span class="comment"># --- Methode recommandee : sauvegarder le state_dict ---</span>
+
+<span class="comment"># Sauvegarde</span>
+torch.save(model.state_dict(), <span class="string">"model_weights.pth"</span>)
+
+<span class="comment"># Chargement</span>
+model = CNN(num_classes=<span class="number">10</span>)  <span class="comment"># Recreer l'architecture</span>
+model.load_state_dict(torch.load(<span class="string">"model_weights.pth"</span>))
+model.eval()  <span class="comment"># Mettre en mode evaluation</span>
+
+<span class="comment"># --- Sauvegarder un checkpoint complet ---</span>
+checkpoint = {
+    <span class="string">"epoch"</span>: epoch,
+    <span class="string">"model_state_dict"</span>: model.state_dict(),
+    <span class="string">"optimizer_state_dict"</span>: optimizer.state_dict(),
+    <span class="string">"scheduler_state_dict"</span>: scheduler.state_dict(),
+    <span class="string">"best_val_loss"</span>: best_val_loss,
+    <span class="string">"train_loss"</span>: train_loss,
+}
+torch.save(checkpoint, <span class="string">"checkpoint.pth"</span>)
+
+<span class="comment"># Reprendre l'entrainement a partir du checkpoint</span>
+checkpoint = torch.load(<span class="string">"checkpoint.pth"</span>)
+model.load_state_dict(checkpoint[<span class="string">"model_state_dict"</span>])
+optimizer.load_state_dict(checkpoint[<span class="string">"optimizer_state_dict"</span>])
+scheduler.load_state_dict(checkpoint[<span class="string">"scheduler_state_dict"</span>])
+start_epoch = checkpoint[<span class="string">"epoch"</span>] + <span class="number">1</span>
+best_val_loss = checkpoint[<span class="string">"best_val_loss"</span>]
+<span class="keyword">print</span>(f<span class="string">"Reprise a l'epoch {start_epoch}"</span>)</div>
+
+    <h3>9.2 Sauvegarder le modele complet</h3>
+
+    <div class="code-block"><span class="comment"># --- Methode alternative : sauvegarder le modele entier ---</span>
+<span class="comment"># Plus simple mais moins flexible (lie au code source)</span>
+torch.save(model, <span class="string">"model_complet.pth"</span>)
+model = torch.load(<span class="string">"model_complet.pth"</span>)
+model.eval()</div>
+
+    <div class="warning">La methode <code>torch.save(model, ...)</code> utilise pickle et sauvegarde une reference au code source de la classe. Si vous modifiez la classe ou deplacez le fichier, le chargement echouera. Privilegiez toujours <code>state_dict()</code> pour la production.</div>
+
+    <h3>9.3 TorchScript pour l'export</h3>
+
+    <div class="code-block"><span class="comment"># --- TorchScript : export independant de Python ---</span>
+
+<span class="comment"># Methode 1 : torch.jit.trace (pour les modeles sans branchement)</span>
+model.eval()
+example_input = torch.randn(<span class="number">1</span>, <span class="number">1</span>, <span class="number">28</span>, <span class="number">28</span>)
+traced_model = torch.jit.trace(model, example_input)
+traced_model.save(<span class="string">"model_traced.pt"</span>)
+
+<span class="comment"># Methode 2 : torch.jit.script (pour les modeles avec controle de flux)</span>
+scripted_model = torch.jit.script(model)
+scripted_model.save(<span class="string">"model_scripted.pt"</span>)
+
+<span class="comment"># Chargement (meme sans le code Python original!)</span>
+loaded = torch.jit.load(<span class="string">"model_traced.pt"</span>)
+output = loaded(example_input)
+<span class="keyword">print</span>(f<span class="string">"Output TorchScript: {output.shape}"</span>)</div>
+
+    <div class="output-block">Output TorchScript: torch.Size([1, 10])</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================================ -->
+    <h2>10. Bonnes pratiques</h2>
+
+    <p>Ce chapitre regroupe les conseils essentiels pour un entrainement efficace et fiable.</p>
+
+    <h3>10.1 Entrainement GPU efficace</h3>
+
+    <div class="code-block"><span class="comment"># --- Mixed Precision Training (AMP) ---</span>
+<span class="comment"># Reduit la memoire et accelere l'entrainement de 2-3x</span>
+<span class="keyword">from</span> torch.cuda.amp <span class="keyword">import</span> autocast, GradScaler
+
+scaler = GradScaler()
+
+<span class="keyword">for</span> data, targets <span class="keyword">in</span> train_loader:
+    data, targets = data.to(device), targets.to(device)
+
+    optimizer.zero_grad()
+
+    <span class="comment"># Forward pass en mixed precision</span>
+    <span class="keyword">with</span> autocast():
+        outputs = model(data)
+        loss = criterion(outputs, targets)
+
+    <span class="comment"># Backward pass avec scaling</span>
+    scaler.scale(loss).backward()
+    scaler.step(optimizer)
+    scaler.update()</div>
+
+    <h3>10.2 Gradient Accumulation</h3>
+
+    <div class="concept-box blue">
+        <h4>Quand la memoire GPU est limitee</h4>
+        <p>Si votre batch size ideal est 256 mais votre GPU ne supporte que 64, vous pouvez accumuler les gradients sur 4 mini-batches pour simuler un batch de 256.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># --- Gradient Accumulation ---</span>
+ACCUMULATION_STEPS = <span class="number">4</span>  <span class="comment"># Effectif batch_size = 64 * 4 = 256</span>
+
+<span class="keyword">for</span> batch_idx, (data, targets) <span class="keyword">in</span> enumerate(train_loader):
+    data, targets = data.to(device), targets.to(device)
+
+    outputs = model(data)
+    loss = criterion(outputs, targets) / ACCUMULATION_STEPS  <span class="comment"># Normaliser!</span>
+    loss.backward()  <span class="comment"># Gradients s'accumulent</span>
+
+    <span class="keyword">if</span> (batch_idx + <span class="number">1</span>) % ACCUMULATION_STEPS == <span class="number">0</span>:
+        optimizer.step()        <span class="comment"># Mise a jour apres N batches</span>
+        optimizer.zero_grad()   <span class="comment"># Reset apres la mise a jour</span></div>
+
+    <h3>10.3 Reproductibilite</h3>
+
+    <div class="code-block"><span class="keyword">import</span> random
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="keyword">def</span> <span class="function">set_seed</span>(seed=<span class="number">42</span>):
+    <span class="string">"""Fixer toutes les graines pour la reproductibilite."""</span>
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    <span class="comment"># Pour un determinisme total (peut ralentir)</span>
+    torch.backends.cudnn.deterministic = <span class="keyword">True</span>
+    torch.backends.cudnn.benchmark = <span class="keyword">False</span>
+
+set_seed(<span class="number">42</span>)</div>
+
+    <h3>10.4 Gradient Clipping</h3>
+
+    <div class="code-block"><span class="comment"># Prevenir l'explosion de gradients (essentiel pour RNNs et Transformers)</span>
+loss.backward()
+torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">1.0</span>)
+optimizer.step()</div>
+
+    <h3>10.5 Checklist de debugging</h3>
+
+    <div class="concept-box">
+        <h4>Quand le modele n'apprend pas :</h4>
+        <ol>
+            <li><strong>Verifier les shapes</strong> : print(x.shape) a chaque etape du forward</li>
+            <li><strong>Overfit un seul batch</strong> : le modele doit atteindre 100% accuracy sur 1 batch</li>
+            <li><strong>Verifier la loss initiale</strong> : pour 10 classes, la loss initiale doit etre ~ln(10) = 2.3</li>
+            <li><strong>Verifier les gradients</strong> : aucun parametre ne doit avoir grad = None ou grad = 0</li>
+            <li><strong>Verifier le learning rate</strong> : commencer avec 1e-3 (Adam) ou 1e-2 (SGD)</li>
+            <li><strong>Verifier la normalisation</strong> : les donnees doivent etre normalisees</li>
+            <li><strong>Verifier train/eval</strong> : model.train() pour l'entrainement, model.eval() pour l'evaluation</li>
+            <li><strong>Verifier zero_grad</strong> : les gradients doivent etre remis a zero a chaque iteration</li>
+        </ol>
+    </div>
+
+    <div class="code-block"><span class="comment"># --- Overfit un seul batch (test de sante) ---</span>
+single_batch = next(iter(train_loader))
+data, targets = single_batch[<span class="number">0</span>].to(device), single_batch[<span class="number">1</span>].to(device)
+
+model.train()
+<span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">100</span>):
+    optimizer.zero_grad()
+    output = model(data)
+    loss = criterion(output, targets)
+    loss.backward()
+    optimizer.step()
+
+    <span class="keyword">if</span> (i + <span class="number">1</span>) % <span class="number">20</span> == <span class="number">0</span>:
+        _, pred = output.max(<span class="number">1</span>)
+        acc = pred.eq(targets).float().mean().item() * <span class="number">100</span>
+        <span class="keyword">print</span>(f<span class="string">"Step {i+1} | Loss: {loss.item():.4f} | Acc: {acc:.1f}%"</span>)</div>
+
+    <div class="output-block">Step 20 | Loss: 0.3421 | Acc: 89.1%
+Step 40 | Loss: 0.0234 | Acc: 100.0%
+Step 60 | Loss: 0.0045 | Acc: 100.0%
+Step 80 | Loss: 0.0012 | Acc: 100.0%
+Step 100 | Loss: 0.0003 | Acc: 100.0%</div>
+
+    <div class="prof-note">
+        Si votre modele ne peut pas overfit un seul batch en 100 iterations, il y a un bug dans votre code (shape incorrecte, loss mal configuree, zero_grad manquant, etc.). C'est le premier test a faire systematiquement.
+    </div>
+
+    <h3>10.6 Resume des patterns essentiels</h3>
+
+    <div class="concept-box green">
+        <h4>Les 10 regles d'or de PyTorch</h4>
+        <ol>
+            <li><strong>model.train()</strong> pendant l'entrainement, <strong>model.eval()</strong> et <strong>torch.no_grad()</strong> pendant l'evaluation</li>
+            <li><strong>optimizer.zero_grad()</strong> avant chaque forward pass</li>
+            <li>Pas de softmax dans le modele si vous utilisez <strong>CrossEntropyLoss</strong></li>
+            <li>Toujours <strong>normaliser</strong> les donnees d'entree</li>
+            <li>Utiliser <strong>pin_memory=True</strong> dans le DataLoader pour l'entrainement GPU</li>
+            <li>Sauvegarder le <strong>state_dict</strong>, pas le modele entier</li>
+            <li>Utiliser <strong>Mixed Precision</strong> pour accelerer et reduire la memoire</li>
+            <li>Tester d'abord en <strong>overfittant un seul batch</strong></li>
+            <li>Fixer les <strong>graines aleatoires</strong> pour la reproductibilite</li>
+            <li>Utiliser <strong>gradient clipping</strong> pour les architectures recurrentes et Transformers</li>
+        </ol>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_10_diffusion.html">&larr; Cours 10 : Modeles de Diffusion</a>
+        <a href="dl_12_production.html">Cours 12 : Deploiement et Production &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

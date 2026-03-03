@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 05 - CNN Avance</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 05 - CNN Avance</h1>
+    <p class="subtitle">Cours 5/12 - Transfer learning, detection d'objets et segmentation semantique</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================================ -->
+    <h2>1. Au-dela de la classification</h2>
+
+    <p>Dans le cours precedent, nous avons construit des CNN capables de classer une image entiere dans une categorie unique. Mais la vision par ordinateur ne se limite pas a dire "c'est un chat" ou "c'est un chien". En realite, les applications industrielles et scientifiques exigent des taches bien plus riches et complexes.</p>
+
+    <div class="definition">
+        La <strong>vision par ordinateur</strong> (Computer Vision) regroupe l'ensemble des techniques permettant a une machine d'extraire, analyser et comprendre des informations a partir d'images ou de videos numeriques.
+    </div>
+
+    <h3>1.1 Les grandes taches en vision par ordinateur</h3>
+
+    <p>Voici les quatre taches fondamentales que nous allons explorer dans ce cours :</p>
+
+    <ul>
+        <li><strong>Classification :</strong> attribuer une etiquette unique a une image entiere (resolu au cours 4)</li>
+        <li><strong>Detection d'objets :</strong> localiser et identifier chaque objet dans l'image avec une bounding box</li>
+        <li><strong>Segmentation semantique :</strong> classifier chaque pixel de l'image en une categorie</li>
+        <li><strong>Segmentation d'instance :</strong> distinguer chaque instance individuelle d'objet au niveau pixel</li>
+    </ul>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 280" width="900" height="280">
+            <!-- Classification -->
+            <rect x="10" y="20" width="200" height="150" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <rect x="30" y="50" width="160" height="100" rx="5" fill="#16213e"/>
+            <text x="60" y="100" fill="#e0e0e0" font-size="28">Chat</text>
+            <text x="110" y="195" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Classification</text>
+            <text x="110" y="215" fill="#aaa" font-size="11" text-anchor="middle">1 label / image</text>
+            <!-- Detection -->
+            <rect x="240" y="20" width="200" height="150" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <rect x="260" y="50" width="80" height="60" rx="3" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="5,3"/>
+            <text x="275" y="85" fill="#00ff88" font-size="14">Chat</text>
+            <rect x="350" y="70" width="70" height="80" rx="3" fill="none" stroke="#569cd6" stroke-width="2" stroke-dasharray="5,3"/>
+            <text x="360" y="115" fill="#569cd6" font-size="14">Chien</text>
+            <text x="340" y="195" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Detection</text>
+            <text x="340" y="215" fill="#aaa" font-size="11" text-anchor="middle">Bounding boxes + labels</text>
+            <!-- Segmentation semantique -->
+            <rect x="470" y="20" width="200" height="150" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <rect x="490" y="50" width="160" height="100" rx="5" fill="#16213e"/>
+            <rect x="500" y="60" width="60" height="50" rx="3" fill="rgba(0,255,136,0.3)"/>
+            <rect x="570" y="70" width="50" height="60" rx="3" fill="rgba(86,156,214,0.3)"/>
+            <rect x="490" y="110" width="160" height="35" rx="2" fill="rgba(255,107,53,0.2)"/>
+            <text x="570" y="195" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Seg. semantique</text>
+            <text x="570" y="215" fill="#aaa" font-size="11" text-anchor="middle">1 classe / pixel</text>
+            <!-- Segmentation d'instance -->
+            <rect x="700" y="20" width="200" height="150" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <rect x="720" y="50" width="160" height="100" rx="5" fill="#16213e"/>
+            <rect x="730" y="60" width="55" height="50" rx="3" fill="rgba(0,255,136,0.3)" stroke="#00ff88" stroke-width="1"/>
+            <rect x="800" y="55" width="55" height="55" rx="3" fill="rgba(0,200,100,0.3)" stroke="#00cc66" stroke-width="1"/>
+            <rect x="750" y="100" width="60" height="40" rx="3" fill="rgba(86,156,214,0.3)" stroke="#569cd6" stroke-width="1"/>
+            <text x="800" y="195" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Seg. d'instance</text>
+            <text x="800" y="215" fill="#aaa" font-size="11" text-anchor="middle">1 masque / objet</text>
+            <!-- Fleche de complexite -->
+            <line x1="50" y1="260" x2="860" y2="260" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+            <text x="450" y="275" fill="#aaa" font-size="12" text-anchor="middle">Complexite croissante</text>
+            <defs><marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker></defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Chacune de ces taches necessite une architecture specifique. On ne peut pas simplement prendre un ResNet et lui demander de detecter des objets. Il faut adapter la sortie du reseau a la nature de la tache.
+    </div>
+
+    <h3>1.2 Un probleme commun : le manque de donnees</h3>
+
+    <p>Entrainer un CNN performant depuis zero (from scratch) exige generalement des millions d'images etiquetees. Or, dans la plupart des cas pratiques, on dispose de quelques centaines ou milliers d'echantillons. C'est la que le <strong>transfer learning</strong> devient indispensable.</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================================ -->
+    <h2>2. Transfer Learning</h2>
+
+    <div class="definition">
+        Le <strong>transfer learning</strong> (apprentissage par transfert) consiste a reutiliser un modele pre-entraine sur un large jeu de donnees (ex : ImageNet, 1.2 million d'images, 1000 classes) comme point de depart pour resoudre une tache differente mais connexe.
+    </div>
+
+    <h3>2.1 Pourquoi ca marche ?</h3>
+
+    <p>Les premieres couches d'un CNN apprennent des caracteristiques generiques et universelles : contours, textures, formes geometriques simples. Ces features sont utiles pour <strong>n'importe quelle</strong> tache de vision. Les couches profondes, elles, capturent des patterns de plus en plus specifiques au dataset d'entrainement.</p>
+
+    <div class="analogy">
+        <h4>Analogie : apprendre une langue</h4>
+        <p>Imaginez que vous parlez couramment le francais et que vous voulez apprendre l'espagnol. Vous ne repartez pas de zero : votre connaissance de la grammaire, de l'alphabet latin, et des concepts linguistiques generaux <strong>se transfere</strong>. Vous n'avez qu'a apprendre les specificites de l'espagnol. Le transfer learning fonctionne exactement de la meme maniere pour les reseaux de neurones.</p>
+    </div>
+
+    <h3>2.2 Hierarchie des features dans un CNN</h3>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 800 220" width="800" height="220">
+            <!-- Couche 1 -->
+            <rect x="10" y="30" width="150" height="120" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="85" y="60" fill="#00ff88" font-size="13" text-anchor="middle" font-weight="bold">Couches 1-2</text>
+            <text x="85" y="85" fill="#e0e0e0" font-size="12" text-anchor="middle">Contours</text>
+            <text x="85" y="105" fill="#e0e0e0" font-size="12" text-anchor="middle">Textures</text>
+            <text x="85" y="125" fill="#e0e0e0" font-size="12" text-anchor="middle">Couleurs</text>
+            <text x="85" y="170" fill="#aaa" font-size="11" text-anchor="middle">Tres generiques</text>
+            <text x="85" y="187" fill="#00ff88" font-size="11" text-anchor="middle">Toujours transferables</text>
+            <!-- Fleche -->
+            <line x1="170" y1="90" x2="210" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+            <!-- Couche 2 -->
+            <rect x="220" y="30" width="150" height="120" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="295" y="60" fill="#569cd6" font-size="13" text-anchor="middle" font-weight="bold">Couches 3-4</text>
+            <text x="295" y="85" fill="#e0e0e0" font-size="12" text-anchor="middle">Formes</text>
+            <text x="295" y="105" fill="#e0e0e0" font-size="12" text-anchor="middle">Motifs repetes</text>
+            <text x="295" y="125" fill="#e0e0e0" font-size="12" text-anchor="middle">Parties d'objets</text>
+            <text x="295" y="170" fill="#aaa" font-size="11" text-anchor="middle">Semi-generiques</text>
+            <text x="295" y="187" fill="#569cd6" font-size="11" text-anchor="middle">Souvent transferables</text>
+            <!-- Fleche -->
+            <line x1="380" y1="90" x2="420" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+            <!-- Couche 3 -->
+            <rect x="430" y="30" width="150" height="120" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="505" y="60" fill="#ff8c42" font-size="13" text-anchor="middle" font-weight="bold">Couches 5-7</text>
+            <text x="505" y="85" fill="#e0e0e0" font-size="12" text-anchor="middle">Objets partiels</text>
+            <text x="505" y="105" fill="#e0e0e0" font-size="12" text-anchor="middle">Visages, roues</text>
+            <text x="505" y="125" fill="#e0e0e0" font-size="12" text-anchor="middle">Textures complexes</text>
+            <text x="505" y="170" fill="#aaa" font-size="11" text-anchor="middle">Specifiques au domaine</text>
+            <text x="505" y="187" fill="#ff8c42" font-size="11" text-anchor="middle">Parfois transferables</text>
+            <!-- Fleche -->
+            <line x1="590" y1="90" x2="630" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+            <!-- Classifieur -->
+            <rect x="640" y="30" width="150" height="120" rx="10" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="715" y="60" fill="#ff4444" font-size="13" text-anchor="middle" font-weight="bold">Classifieur (FC)</text>
+            <text x="715" y="85" fill="#e0e0e0" font-size="12" text-anchor="middle">Classes ImageNet</text>
+            <text x="715" y="105" fill="#e0e0e0" font-size="12" text-anchor="middle">1000 sorties</text>
+            <text x="715" y="125" fill="#e0e0e0" font-size="12" text-anchor="middle">Tres specifique</text>
+            <text x="715" y="170" fill="#aaa" font-size="11" text-anchor="middle">Specifiques a la tache</text>
+            <text x="715" y="187" fill="#ff4444" font-size="11" text-anchor="middle">A remplacer</text>
+            <defs><marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker></defs>
+        </svg>
+    </div>
+
+    <h3>2.3 Deux strategies principales</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#00ff88;">Feature Extraction</h4>
+            <p>On <strong>gele</strong> toutes les couches convolutives et on ne remplace que le classifieur final.</p>
+            <p style="color:#aaa; font-size:0.9rem;">Ideal quand on a peu de donnees et que la tache est proche d'ImageNet.</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Fine-Tuning</h4>
+            <p>On <strong>degele</strong> une partie des couches convolutives et on re-entraine tout avec un petit learning rate.</p>
+            <p style="color:#aaa; font-size:0.9rem;">Ideal quand on a plus de donnees ou que la tache est eloignee d'ImageNet.</p>
+        </div>
+    </div>
+
+    <div class="warning">
+        Lors du fine-tuning, utilisez toujours un learning rate tres petit (ex : 1e-5) pour les couches pre-entrainees. Un learning rate trop grand detruirait les poids appris sur ImageNet, ce qu'on appelle le <strong>catastrophic forgetting</strong>.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================================ -->
+    <h2>3. Transfer Learning en PyTorch</h2>
+
+    <h3>3.1 Modeles pre-entraines dans torchvision</h3>
+
+    <p>PyTorch fournit via <code>torchvision.models</code> de nombreux modeles pre-entraines sur ImageNet. Voici les plus utilises :</p>
+
+    <table>
+        <tr><th>Modele</th><th>Parametres</th><th>Top-1 Acc.</th><th>Utilisation typique</th></tr>
+        <tr><td>ResNet-18</td><td>11.7M</td><td>69.8%</td><td>Prototype rapide, ressources limitees</td></tr>
+        <tr><td>ResNet-50</td><td>25.6M</td><td>76.1%</td><td>Standard industriel, bon compromis</td></tr>
+        <tr><td>VGG-16</td><td>138M</td><td>71.6%</td><td>Feature extraction, pedagogie</td></tr>
+        <tr><td>EfficientNet-B0</td><td>5.3M</td><td>77.1%</td><td>Mobile, inference rapide</td></tr>
+        <tr><td>ViT-B/16</td><td>86M</td><td>81.1%</td><td>State-of-the-art, gros datasets</td></tr>
+    </table>
+
+    <h3>3.2 Feature Extraction avec ResNet-50</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> models, transforms, datasets
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+
+<span class="comment"># ============================================</span>
+<span class="comment"># Etape 1 : Charger le modele pre-entraine</span>
+<span class="comment"># ============================================</span>
+model = models.<span class="function">resnet50</span>(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+
+<span class="comment"># Etape 2 : Geler TOUTES les couches</span>
+<span class="keyword">for</span> param <span class="keyword">in</span> model.<span class="function">parameters</span>():
+    param.requires_grad = <span class="keyword">False</span>
+
+<span class="comment"># Etape 3 : Remplacer le classifieur final</span>
+<span class="comment"># ResNet-50 a un fc avec 2048 entrees et 1000 sorties (ImageNet)</span>
+num_features = model.fc.in_features  <span class="comment"># 2048</span>
+num_classes = <span class="number">10</span>  <span class="comment"># Notre nombre de classes</span>
+
+model.fc = nn.<span class="function">Sequential</span>(
+    nn.<span class="function">Dropout</span>(<span class="number">0.3</span>),
+    nn.<span class="function">Linear</span>(num_features, <span class="number">256</span>),
+    nn.<span class="function">ReLU</span>(),
+    nn.<span class="function">Dropout</span>(<span class="number">0.2</span>),
+    nn.<span class="function">Linear</span>(<span class="number">256</span>, num_classes)
+)
+
+<span class="comment"># Verification : seuls les poids du classifieur sont entraenables</span>
+trainable = <span class="function">sum</span>(p.<span class="function">numel</span>() <span class="keyword">for</span> p <span class="keyword">in</span> model.<span class="function">parameters</span>() <span class="keyword">if</span> p.requires_grad)
+total = <span class="function">sum</span>(p.<span class="function">numel</span>() <span class="keyword">for</span> p <span class="keyword">in</span> model.<span class="function">parameters</span>())
+<span class="function">print</span>(<span class="string">f"Parametres entraenables : {trainable:,} / {total:,}"</span>)</div>
+
+    <div class="output-block">Parametres entraenables : 526,090 / 23,994,442</div>
+
+    <div class="prof-note">
+        Remarquez que seulement 2.2% des parametres sont entraenables. C'est la force du feature extraction : on peut entrainer un classifieur puissant meme avec un petit GPU et peu de donnees.
+    </div>
+
+    <h3>3.3 Fine-Tuning progressif</h3>
+
+    <div class="code-block"><span class="comment"># ============================================</span>
+<span class="comment"># Fine-Tuning : degeler les dernieres couches</span>
+<span class="comment"># ============================================</span>
+model = models.<span class="function">resnet50</span>(weights=models.ResNet50_Weights.IMAGENET1K_V2)
+
+<span class="comment"># Geler tout d'abord</span>
+<span class="keyword">for</span> param <span class="keyword">in</span> model.<span class="function">parameters</span>():
+    param.requires_grad = <span class="keyword">False</span>
+
+<span class="comment"># Degeler layer4 (les derniers blocs convolutifs)</span>
+<span class="keyword">for</span> param <span class="keyword">in</span> model.layer4.<span class="function">parameters</span>():
+    param.requires_grad = <span class="keyword">True</span>
+
+<span class="comment"># Remplacer le classifieur</span>
+model.fc = nn.<span class="function">Sequential</span>(
+    nn.<span class="function">Linear</span>(model.fc.in_features, <span class="number">256</span>),
+    nn.<span class="function">ReLU</span>(),
+    nn.<span class="function">Linear</span>(<span class="number">256</span>, num_classes)
+)
+
+<span class="comment"># Learning rates differentiels</span>
+optimizer = optim.<span class="function">Adam</span>([
+    {<span class="string">'params'</span>: model.layer4.<span class="function">parameters</span>(), <span class="string">'lr'</span>: <span class="number">1e-5</span>},   <span class="comment"># Tres petit LR</span>
+    {<span class="string">'params'</span>: model.fc.<span class="function">parameters</span>(), <span class="string">'lr'</span>: <span class="number">1e-3</span>},       <span class="comment"># LR normal</span>
+])
+
+<span class="function">print</span>(<span class="string">"Fine-tuning configure avec learning rates differentiels"</span>)</div>
+
+    <div class="effect">
+        Le fine-tuning avec des learning rates differentiels est la meilleure pratique. Les couches pre-entrainees recoivent un LR 100x plus petit pour preserver les features apprises, tandis que le nouveau classifieur apprend rapidement.
+    </div>
+
+    <h3>3.4 Pipeline d'entrainement complet</h3>
+
+    <div class="code-block"><span class="comment"># ============================================</span>
+<span class="comment"># Pipeline complet de transfer learning</span>
+<span class="comment"># ============================================</span>
+
+<span class="comment"># Preprocessing identique a ImageNet</span>
+train_transforms = transforms.<span class="function">Compose</span>([
+    transforms.<span class="function">Resize</span>(<span class="number">256</span>),
+    transforms.<span class="function">RandomCrop</span>(<span class="number">224</span>),
+    transforms.<span class="function">RandomHorizontalFlip</span>(),
+    transforms.<span class="function">ToTensor</span>(),
+    transforms.<span class="function">Normalize</span>(mean=[<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],
+                         std=[<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>])
+])
+
+val_transforms = transforms.<span class="function">Compose</span>([
+    transforms.<span class="function">Resize</span>(<span class="number">256</span>),
+    transforms.<span class="function">CenterCrop</span>(<span class="number">224</span>),
+    transforms.<span class="function">ToTensor</span>(),
+    transforms.<span class="function">Normalize</span>(mean=[<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],
+                         std=[<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>])
+])
+
+<span class="comment"># Chargement des donnees</span>
+train_dataset = datasets.<span class="function">ImageFolder</span>(<span class="string">'data/train'</span>, transform=train_transforms)
+val_dataset = datasets.<span class="function">ImageFolder</span>(<span class="string">'data/val'</span>, transform=val_transforms)
+
+train_loader = <span class="function">DataLoader</span>(train_dataset, batch_size=<span class="number">32</span>, shuffle=<span class="keyword">True</span>)
+val_loader = <span class="function">DataLoader</span>(val_dataset, batch_size=<span class="number">32</span>, shuffle=<span class="keyword">False</span>)
+
+<span class="comment"># Entrainement</span>
+device = torch.<span class="function">device</span>(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.<span class="function">is_available</span>() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+model = model.<span class="function">to</span>(device)
+criterion = nn.<span class="function">CrossEntropyLoss</span>()
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+    model.<span class="function">train</span>()
+    running_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">for</span> images, labels <span class="keyword">in</span> train_loader:
+        images, labels = images.<span class="function">to</span>(device), labels.<span class="function">to</span>(device)
+
+        optimizer.<span class="function">zero_grad</span>()
+        outputs = <span class="function">model</span>(images)
+        loss = <span class="function">criterion</span>(outputs, labels)
+        loss.<span class="function">backward</span>()
+        optimizer.<span class="function">step</span>()
+
+        running_loss += loss.<span class="function">item</span>()
+        _, predicted = outputs.<span class="function">max</span>(<span class="number">1</span>)
+        total += labels.<span class="function">size</span>(<span class="number">0</span>)
+        correct += predicted.<span class="function">eq</span>(labels).<span class="function">sum</span>().<span class="function">item</span>()
+
+    train_acc = <span class="number">100.</span> * correct / total
+    <span class="function">print</span>(<span class="string">f"Epoch {epoch+1}/10 - Loss: {running_loss/len(train_loader):.4f} - Acc: {train_acc:.2f}%"</span>)</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================================ -->
+    <h2>4. Data Augmentation</h2>
+
+    <div class="definition">
+        La <strong>data augmentation</strong> consiste a appliquer des transformations aleatoires aux images d'entrainement pour augmenter artificiellement la taille et la diversite du dataset, ameliorant ainsi la generalisation du modele.
+    </div>
+
+    <h3>4.1 Transformations classiques en PyTorch</h3>
+
+    <div class="code-block"><span class="keyword">from</span> torchvision <span class="keyword">import</span> transforms
+
+<span class="comment"># Transformations geometriques</span>
+geometric = transforms.<span class="function">Compose</span>([
+    transforms.<span class="function">RandomHorizontalFlip</span>(p=<span class="number">0.5</span>),
+    transforms.<span class="function">RandomVerticalFlip</span>(p=<span class="number">0.1</span>),
+    transforms.<span class="function">RandomRotation</span>(degrees=<span class="number">15</span>),
+    transforms.<span class="function">RandomAffine</span>(degrees=<span class="number">0</span>, translate=(<span class="number">0.1</span>, <span class="number">0.1</span>), scale=(<span class="number">0.9</span>, <span class="number">1.1</span>)),
+    transforms.<span class="function">RandomPerspective</span>(distortion_scale=<span class="number">0.2</span>, p=<span class="number">0.3</span>),
+])
+
+<span class="comment"># Transformations de couleur</span>
+color = transforms.<span class="function">Compose</span>([
+    transforms.<span class="function">ColorJitter</span>(
+        brightness=<span class="number">0.3</span>,
+        contrast=<span class="number">0.3</span>,
+        saturation=<span class="number">0.3</span>,
+        hue=<span class="number">0.1</span>
+    ),
+    transforms.<span class="function">RandomGrayscale</span>(p=<span class="number">0.1</span>),
+    transforms.<span class="function">GaussianBlur</span>(kernel_size=<span class="number">3</span>, sigma=(<span class="number">0.1</span>, <span class="number">2.0</span>)),
+])
+
+<span class="comment"># Pipeline complet pour l'entrainement</span>
+train_augmentation = transforms.<span class="function">Compose</span>([
+    transforms.<span class="function">Resize</span>(<span class="number">256</span>),
+    transforms.<span class="function">RandomResizedCrop</span>(<span class="number">224</span>, scale=(<span class="number">0.8</span>, <span class="number">1.0</span>)),
+    transforms.<span class="function">RandomHorizontalFlip</span>(),
+    transforms.<span class="function">ColorJitter</span>(brightness=<span class="number">0.2</span>, contrast=<span class="number">0.2</span>),
+    transforms.<span class="function">RandomRotation</span>(<span class="number">10</span>),
+    transforms.<span class="function">ToTensor</span>(),
+    transforms.<span class="function">Normalize</span>([<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>], [<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>]),
+    transforms.<span class="function">RandomErasing</span>(p=<span class="number">0.2</span>),  <span class="comment"># CutOut equivalent</span>
+])</div>
+
+    <h3>4.2 Techniques avancees : CutOut et MixUp</h3>
+
+    <div class="concept-box">
+        <h4>CutOut / Random Erasing</h4>
+        <p><strong>CutOut</strong> masque aleatoirement une region rectangulaire de l'image, forcant le modele a ne pas se reposer sur une seule partie de l'objet. En PyTorch, <code>transforms.RandomErasing</code> implemente cette technique.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># ============================================</span>
+<span class="comment"># Implementation de MixUp</span>
+<span class="comment"># ============================================</span>
+
+<span class="keyword">def</span> <span class="function">mixup_data</span>(x, y, alpha=<span class="number">0.2</span>):
+    <span class="string">"""Applique MixUp : melange deux images et leurs labels."""</span>
+    <span class="keyword">if</span> alpha > <span class="number">0</span>:
+        lam = torch.distributions.<span class="function">Beta</span>(alpha, alpha).<span class="function">sample</span>()
+    <span class="keyword">else</span>:
+        lam = <span class="number">1.0</span>
+
+    batch_size = x.<span class="function">size</span>(<span class="number">0</span>)
+    index = torch.<span class="function">randperm</span>(batch_size).<span class="function">to</span>(x.device)
+
+    mixed_x = lam * x + (<span class="number">1</span> - lam) * x[index]
+    y_a, y_b = y, y[index]
+    <span class="keyword">return</span> mixed_x, y_a, y_b, lam
+
+<span class="keyword">def</span> <span class="function">mixup_criterion</span>(criterion, pred, y_a, y_b, lam):
+    <span class="string">"""Calcul de la loss avec MixUp."""</span>
+    <span class="keyword">return</span> lam * <span class="function">criterion</span>(pred, y_a) + (<span class="number">1</span> - lam) * <span class="function">criterion</span>(pred, y_b)
+
+<span class="comment"># Utilisation dans la boucle d'entrainement</span>
+<span class="keyword">for</span> images, labels <span class="keyword">in</span> train_loader:
+    images, labels = images.<span class="function">to</span>(device), labels.<span class="function">to</span>(device)
+    mixed_images, y_a, y_b, lam = <span class="function">mixup_data</span>(images, labels)
+    outputs = <span class="function">model</span>(mixed_images)
+    loss = <span class="function">mixup_criterion</span>(criterion, outputs, y_a, y_b, lam)
+    loss.<span class="function">backward</span>()
+    optimizer.<span class="function">step</span>()</div>
+
+    <div class="prof-note">
+        MixUp est particulierement utile quand vous avez peu de donnees. Il regularise le modele en creant des echantillons "intermediaires" entre les classes, ce qui lisse les frontieres de decision et reduit l'overfitting.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================================ -->
+    <h2>5. Detection d'objets - Introduction</h2>
+
+    <div class="definition">
+        La <strong>detection d'objets</strong> (object detection) consiste a localiser et classifier chaque objet present dans une image. Pour chaque objet, le modele predit une <strong>bounding box</strong> (x, y, largeur, hauteur) et une <strong>classe</strong>.
+    </div>
+
+    <h3>5.1 Bounding Boxes et format</h3>
+
+    <p>Une bounding box est generalement representee par quatre coordonnees. Deux formats principaux existent :</p>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#00ff88;">Format (x1, y1, x2, y2)</h4>
+            <p>Coin superieur gauche + Coin inferieur droit</p>
+            <p style="color:#aaa;">Utilise par Faster R-CNN, torchvision</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Format (cx, cy, w, h)</h4>
+            <p>Centre + Largeur + Hauteur</p>
+            <p style="color:#aaa;">Utilise par YOLO, SSD</p>
+        </div>
+    </div>
+
+    <h3>5.2 Intersection over Union (IoU)</h3>
+
+    <div class="definition">
+        L'<strong>IoU</strong> (Intersection over Union) mesure le chevauchement entre deux bounding boxes. C'est la metrique standard pour evaluer la qualite d'une detection : IoU = Aire(Intersection) / Aire(Union).
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">compute_iou</span>(box1, box2):
+    <span class="string">"""
+    Calcule l'IoU entre deux bounding boxes.
+    Format : (x1, y1, x2, y2)
+    """</span>
+    <span class="comment"># Coordonnees de l'intersection</span>
+    x1 = <span class="function">max</span>(box1[<span class="number">0</span>], box2[<span class="number">0</span>])
+    y1 = <span class="function">max</span>(box1[<span class="number">1</span>], box2[<span class="number">1</span>])
+    x2 = <span class="function">min</span>(box1[<span class="number">2</span>], box2[<span class="number">2</span>])
+    y2 = <span class="function">min</span>(box1[<span class="number">3</span>], box2[<span class="number">3</span>])
+
+    <span class="comment"># Aire de l'intersection</span>
+    inter_area = <span class="function">max</span>(<span class="number">0</span>, x2 - x1) * <span class="function">max</span>(<span class="number">0</span>, y2 - y1)
+
+    <span class="comment"># Aires des deux boxes</span>
+    area1 = (box1[<span class="number">2</span>] - box1[<span class="number">0</span>]) * (box1[<span class="number">3</span>] - box1[<span class="number">1</span>])
+    area2 = (box2[<span class="number">2</span>] - box2[<span class="number">0</span>]) * (box2[<span class="number">3</span>] - box2[<span class="number">1</span>])
+
+    <span class="comment"># IoU</span>
+    union_area = area1 + area2 - inter_area
+    iou = inter_area / union_area <span class="keyword">if</span> union_area > <span class="number">0</span> <span class="keyword">else</span> <span class="number">0</span>
+    <span class="keyword">return</span> iou
+
+<span class="comment"># Exemple</span>
+pred_box = (<span class="number">50</span>, <span class="number">50</span>, <span class="number">200</span>, <span class="number">200</span>)
+true_box = (<span class="number">60</span>, <span class="number">40</span>, <span class="number">210</span>, <span class="number">190</span>)
+<span class="function">print</span>(<span class="string">f"IoU = {compute_iou(pred_box, true_box):.4f}"</span>)</div>
+
+    <div class="output-block">IoU = 0.7045</div>
+
+    <h3>5.3 Non-Maximum Suppression (NMS)</h3>
+
+    <p>Un detecteur produit souvent plusieurs bounding boxes pour le meme objet. Le <strong>NMS</strong> supprime les detections redondantes en ne gardant que celle avec le score de confiance le plus eleve.</p>
+
+    <div class="step-box"><strong>Etape 1 :</strong> Trier toutes les detections par score de confiance decroissant.</div>
+    <div class="step-box"><strong>Etape 2 :</strong> Prendre la detection avec le score le plus eleve.</div>
+    <div class="step-box"><strong>Etape 3 :</strong> Calculer l'IoU avec toutes les detections restantes.</div>
+    <div class="step-box"><strong>Etape 4 :</strong> Supprimer celles dont l'IoU depasse un seuil (ex: 0.5).</div>
+    <div class="step-box"><strong>Etape 5 :</strong> Repeter jusqu'a ce qu'il ne reste plus de detections.</div>
+
+    <div class="code-block"><span class="keyword">from</span> torchvision.ops <span class="keyword">import</span> nms
+
+<span class="comment"># Exemple de NMS avec PyTorch</span>
+boxes = torch.<span class="function">tensor</span>([
+    [<span class="number">100</span>, <span class="number">100</span>, <span class="number">210</span>, <span class="number">210</span>],
+    [<span class="number">105</span>, <span class="number">98</span>, <span class="number">215</span>, <span class="number">208</span>],
+    [<span class="number">300</span>, <span class="number">150</span>, <span class="number">400</span>, <span class="number">300</span>],
+    [<span class="number">298</span>, <span class="number">155</span>, <span class="number">405</span>, <span class="number">295</span>],
+], dtype=torch.float32)
+
+scores = torch.<span class="function">tensor</span>([<span class="number">0.95</span>, <span class="number">0.90</span>, <span class="number">0.88</span>, <span class="number">0.75</span>])
+
+keep = <span class="function">nms</span>(boxes, scores, iou_threshold=<span class="number">0.5</span>)
+<span class="function">print</span>(<span class="string">f"Indices conserves : {keep}"</span>)
+<span class="function">print</span>(<span class="string">f"Boxes finales :\n{boxes[keep]}"</span>)</div>
+
+    <div class="output-block">Indices conserves : tensor([0, 2])
+Boxes finales :
+tensor([[100., 100., 210., 210.],
+        [300., 150., 400., 300.]])</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================================ -->
+    <h2>6. Evolution des architectures de detection</h2>
+
+    <p>L'histoire de la detection d'objets par deep learning peut se resumer en une course vers la vitesse et la precision. Voici les jalons majeurs :</p>
+
+    <h3>6.1 Chronologie des architectures</h3>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 850 320" width="850" height="320">
+            <!-- Timeline line -->
+            <line x1="50" y1="160" x2="810" y2="160" stroke="#ff6b35" stroke-width="3"/>
+            <!-- R-CNN -->
+            <circle cx="100" cy="160" r="8" fill="#ff6b35"/>
+            <rect x="50" y="30" width="130" height="110" rx="8" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="115" y="55" fill="#ff4444" font-size="14" text-anchor="middle" font-weight="bold">R-CNN</text>
+            <text x="115" y="75" fill="#aaa" font-size="10" text-anchor="middle">2014 - Girshick</text>
+            <text x="115" y="95" fill="#e0e0e0" font-size="10" text-anchor="middle">~2000 regions</text>
+            <text x="115" y="110" fill="#e0e0e0" font-size="10" text-anchor="middle">CNN par region</text>
+            <text x="115" y="125" fill="#ff4444" font-size="10" text-anchor="middle">47s / image</text>
+            <line x1="100" y1="140" x2="100" y2="152" stroke="#ff6b35" stroke-width="2"/>
+            <!-- Fast R-CNN -->
+            <circle cx="300" cy="160" r="8" fill="#ff6b35"/>
+            <rect x="235" y="30" width="130" height="110" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="300" y="55" fill="#ff8c42" font-size="14" text-anchor="middle" font-weight="bold">Fast R-CNN</text>
+            <text x="300" y="75" fill="#aaa" font-size="10" text-anchor="middle">2015 - Girshick</text>
+            <text x="300" y="95" fill="#e0e0e0" font-size="10" text-anchor="middle">1 seul CNN</text>
+            <text x="300" y="110" fill="#e0e0e0" font-size="10" text-anchor="middle">RoI Pooling</text>
+            <text x="300" y="125" fill="#ff8c42" font-size="10" text-anchor="middle">2s / image</text>
+            <line x1="300" y1="140" x2="300" y2="152" stroke="#ff6b35" stroke-width="2"/>
+            <!-- Faster R-CNN -->
+            <circle cx="500" cy="160" r="8" fill="#ff6b35"/>
+            <rect x="430" y="180" width="140" height="120" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="500" y="205" fill="#00ff88" font-size="14" text-anchor="middle" font-weight="bold">Faster R-CNN</text>
+            <text x="500" y="225" fill="#aaa" font-size="10" text-anchor="middle">2015 - Ren et al.</text>
+            <text x="500" y="245" fill="#e0e0e0" font-size="10" text-anchor="middle">RPN integre</text>
+            <text x="500" y="260" fill="#e0e0e0" font-size="10" text-anchor="middle">End-to-end</text>
+            <text x="500" y="280" fill="#00ff88" font-size="10" text-anchor="middle">0.2s / image</text>
+            <line x1="500" y1="168" x2="500" y2="180" stroke="#ff6b35" stroke-width="2"/>
+            <!-- YOLO -->
+            <circle cx="700" cy="160" r="8" fill="#ff6b35"/>
+            <rect x="630" y="180" width="140" height="120" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="700" y="205" fill="#569cd6" font-size="14" text-anchor="middle" font-weight="bold">YOLO</text>
+            <text x="700" y="225" fill="#aaa" font-size="10" text-anchor="middle">2016 - Redmon</text>
+            <text x="700" y="245" fill="#e0e0e0" font-size="10" text-anchor="middle">Detection en 1 passe</text>
+            <text x="700" y="260" fill="#e0e0e0" font-size="10" text-anchor="middle">Grid-based</text>
+            <text x="700" y="280" fill="#569cd6" font-size="10" text-anchor="middle">0.02s / image</text>
+            <line x1="700" y1="168" x2="700" y2="180" stroke="#ff6b35" stroke-width="2"/>
+        </svg>
+    </div>
+
+    <h3>6.2 Comparaison detaillee</h3>
+
+    <table>
+        <tr><th>Methode</th><th>Type</th><th>Vitesse</th><th>mAP (VOC)</th><th>Principe</th></tr>
+        <tr><td>R-CNN</td><td>Two-stage</td><td>~47s</td><td>58.5%</td><td>Selective Search + CNN individuel par region</td></tr>
+        <tr><td>Fast R-CNN</td><td>Two-stage</td><td>~2s</td><td>70.0%</td><td>CNN partage + RoI Pooling</td></tr>
+        <tr><td>Faster R-CNN</td><td>Two-stage</td><td>~0.2s</td><td>73.2%</td><td>Region Proposal Network integre</td></tr>
+        <tr><td>SSD</td><td>One-stage</td><td>~0.02s</td><td>74.3%</td><td>Multi-scale feature maps</td></tr>
+        <tr><td>YOLOv1</td><td>One-stage</td><td>~0.02s</td><td>63.4%</td><td>Grid-based, prediction directe</td></tr>
+        <tr><td>YOLOv3</td><td>One-stage</td><td>~0.03s</td><td>78.6%</td><td>Feature Pyramid + anchors</td></tr>
+    </table>
+
+    <div class="concept-box green">
+        <h4>Two-stage vs One-stage</h4>
+        <p>Les methodes <strong>two-stage</strong> (R-CNN, Faster R-CNN) proposent d'abord des regions d'interet puis les classifient. Elles sont precises mais lentes. Les methodes <strong>one-stage</strong> (YOLO, SSD) predisent directement les bounding boxes et les classes en une seule passe du reseau. Elles sont rapides mais historiquement moins precises (ecart qui s'est reduit avec YOLOv3+).</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================================ -->
+    <h2>7. YOLO en detail</h2>
+
+    <div class="definition">
+        <strong>YOLO</strong> (You Only Look Once) reformule la detection d'objets comme un probleme de regression unique. L'image est divisee en une grille S x S. Chaque cellule de la grille predit B bounding boxes, des scores de confiance et des probabilites de classe, le tout en une seule passe du reseau.
+    </div>
+
+    <h3>7.1 Principe de la grille</h3>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 700 380" width="700" height="380">
+            <!-- Grille image -->
+            <rect x="30" y="20" width="280" height="280" rx="5" fill="#16213e" stroke="#333" stroke-width="2"/>
+            <!-- Grille 7x7 simplifiee en 5x5 -->
+            <line x1="86" y1="20" x2="86" y2="300" stroke="#444" stroke-width="1"/>
+            <line x1="142" y1="20" x2="142" y2="300" stroke="#444" stroke-width="1"/>
+            <line x1="198" y1="20" x2="198" y2="300" stroke="#444" stroke-width="1"/>
+            <line x1="254" y1="20" x2="254" y2="300" stroke="#444" stroke-width="1"/>
+            <line x1="30" y1="76" x2="310" y2="76" stroke="#444" stroke-width="1"/>
+            <line x1="30" y1="132" x2="310" y2="132" stroke="#444" stroke-width="1"/>
+            <line x1="30" y1="188" x2="310" y2="188" stroke="#444" stroke-width="1"/>
+            <line x1="30" y1="244" x2="310" y2="244" stroke="#444" stroke-width="1"/>
+            <!-- Cellule active -->
+            <rect x="142" y="132" width="56" height="56" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <!-- BBox predite -->
+            <rect x="110" y="100" width="120" height="140" rx="3" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="170" y="95" fill="#00ff88" font-size="11" text-anchor="middle">voiture (0.92)</text>
+            <!-- Centre -->
+            <circle cx="170" cy="160" r="4" fill="#ff6b35"/>
+            <!-- Titre -->
+            <text x="170" y="340" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Image divisee en grille S x S</text>
+            <text x="170" y="360" fill="#aaa" font-size="11" text-anchor="middle">Chaque cellule predit B boxes</text>
+
+            <!-- Fleche -->
+            <line x1="330" y1="160" x2="380" y2="160" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow3)"/>
+
+            <!-- Sortie par cellule -->
+            <rect x="400" y="50" width="270" height="230" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="535" y="80" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Prediction par cellule</text>
+            <text x="535" y="110" fill="#e0e0e0" font-size="12" text-anchor="middle">Pour chaque box (B=2) :</text>
+            <text x="430" y="140" fill="#00ff88" font-size="12">x, y</text>
+            <text x="530" y="140" fill="#aaa" font-size="11">position du centre (relatif)</text>
+            <text x="430" y="165" fill="#00ff88" font-size="12">w, h</text>
+            <text x="530" y="165" fill="#aaa" font-size="11">largeur, hauteur (relatif)</text>
+            <text x="430" y="190" fill="#00ff88" font-size="12">conf</text>
+            <text x="530" y="190" fill="#aaa" font-size="11">P(objet) x IoU</text>
+            <text x="535" y="225" fill="#e0e0e0" font-size="12" text-anchor="middle">+ C probabilites de classe</text>
+            <text x="535" y="255" fill="#ff8c42" font-size="12" text-anchor="middle">Sortie : S x S x (5B + C)</text>
+            <text x="535" y="275" fill="#aaa" font-size="11" text-anchor="middle">Ex: 7 x 7 x (5x2 + 20) = 7x7x30</text>
+            <defs><marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker></defs>
+        </svg>
+    </div>
+
+    <h3>7.2 Anchor Boxes</h3>
+
+    <p>A partir de YOLOv2, le concept d'<strong>anchor boxes</strong> (ou prior boxes) est introduit. Plutot que de predire des dimensions absolues, le reseau predit des <strong>offsets</strong> par rapport a des boxes predefinies de tailles et proportions variees. Cela facilite grandement la convergence.</p>
+
+    <div class="concept-box blue">
+        <h4>Comment determiner les anchors ?</h4>
+        <p>On utilise l'algorithme <strong>K-Means</strong> sur les dimensions des bounding boxes du dataset d'entrainement. Pour YOLO, on utilise generalement K=5 ou K=9 anchors. La metrique de distance utilisee est <code>d(box, centroid) = 1 - IoU(box, centroid)</code> plutot que la distance euclidienne, car cette derniere favorise les grandes boxes.</p>
+    </div>
+
+    <h3>7.3 La loss function de YOLO</h3>
+
+    <p>La loss de YOLO combine trois composantes :</p>
+
+    <div class="param-box">
+        <h4>Loss = Loss_coord + Loss_conf + Loss_class</h4>
+        <ul>
+            <li><strong>Loss_coord :</strong> erreur de localisation (MSE sur x, y, sqrt(w), sqrt(h))</li>
+            <li><strong>Loss_conf :</strong> erreur de confiance (BCE, avec poids different pour obj/no-obj)</li>
+            <li><strong>Loss_class :</strong> erreur de classification (Cross-Entropy par cellule responsable)</li>
+        </ul>
+    </div>
+
+    <div class="warning">
+        La racine carree sur w et h dans la loss de localisation est une astuce importante de YOLOv1. Elle permet de penaliser davantage les erreurs sur les petits objets : une erreur de 10 pixels sur un objet de 30px est bien plus grave qu'une erreur de 10 pixels sur un objet de 300px.
+    </div>
+
+    <h3>7.4 Utilisation de YOLO avec PyTorch (torchvision)</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">from</span> torchvision.models.detection <span class="keyword">import</span> fasterrcnn_resnet50_fpn_v2
+<span class="keyword">from</span> torchvision.models.detection <span class="keyword">import</span> FasterRCNN_ResNet50_FPN_V2_Weights
+
+<span class="comment"># Charger un modele de detection pre-entraine</span>
+weights = FasterRCNN_ResNet50_FPN_V2_Weights.DEFAULT
+model = <span class="function">fasterrcnn_resnet50_fpn_v2</span>(weights=weights)
+model.<span class="function">eval</span>()
+
+<span class="comment"># Preprocessing</span>
+preprocess = weights.transforms()
+
+<span class="comment"># Charger et pretraiter une image</span>
+<span class="keyword">from</span> PIL <span class="keyword">import</span> Image
+image = Image.<span class="function">open</span>(<span class="string">"photo_rue.jpg"</span>)
+batch = [<span class="function">preprocess</span>(image)]
+
+<span class="comment"># Inference</span>
+<span class="keyword">with</span> torch.<span class="function">no_grad</span>():
+    predictions = <span class="function">model</span>(batch)
+
+<span class="comment"># Resultats</span>
+pred = predictions[<span class="number">0</span>]
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(pred[<span class="string">'boxes'</span>])):
+    score = pred[<span class="string">'scores'</span>][i].<span class="function">item</span>()
+    <span class="keyword">if</span> score > <span class="number">0.5</span>:
+        box = pred[<span class="string">'boxes'</span>][i].<span class="function">tolist</span>()
+        label = weights.meta[<span class="string">"categories"</span>][pred[<span class="string">'labels'</span>][i]]
+        <span class="function">print</span>(<span class="string">f"{label}: {score:.2f} - Box: {box}"</span>)</div>
+
+    <div class="output-block">car: 0.97 - Box: [120.5, 200.3, 450.1, 380.8]
+person: 0.94 - Box: [500.2, 50.1, 580.7, 350.4]
+traffic light: 0.88 - Box: [300.0, 10.5, 340.2, 80.3]</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================================ -->
+    <h2>8. Segmentation semantique</h2>
+
+    <div class="definition">
+        La <strong>segmentation semantique</strong> consiste a attribuer une classe a <strong>chaque pixel</strong> de l'image. Contrairement a la detection, il n'y a pas de bounding box : on obtient un masque dense ou chaque pixel est colore selon sa classe.
+    </div>
+
+    <h3>8.1 Fully Convolutional Networks (FCN)</h3>
+
+    <p>L'idee cle des FCN (Long et al., 2015) est de remplacer les couches fully-connected d'un CNN de classification par des couches convolutives 1x1. Cela permet de produire une carte de segmentation de taille spatiale quelconque, pas seulement un vecteur de classe.</p>
+
+    <div class="concept-box">
+        <h4>Probleme de la resolution</h4>
+        <p>Les CNN classiques reduisent progressivement la resolution spatiale (via pooling et strides). Pour la segmentation, il faut retrouver la resolution originale. Deux approches :</p>
+        <ul>
+            <li><strong>Upsampling / Deconvolution :</strong> on augmente progressivement la taille des feature maps</li>
+            <li><strong>Skip connections :</strong> on combine les features haute resolution des couches superficielles avec les features semantiques des couches profondes</li>
+        </ul>
+    </div>
+
+    <h3>8.2 Architecture U-Net</h3>
+
+    <p>U-Net (Ronneberger et al., 2015) est l'architecture de segmentation la plus influente. Sa forme en "U" est reconnaissable : un encodeur contractant suivi d'un decodeur expansif, relies par des skip connections symetriques.</p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 800 450" width="800" height="450">
+            <!-- Titre -->
+            <text x="400" y="25" fill="#ff6b35" font-size="16" text-anchor="middle" font-weight="bold">Architecture U-Net</text>
+            <!-- Encodeur (partie gauche) -->
+            <text x="130" y="55" fill="#569cd6" font-size="13" text-anchor="middle" font-weight="bold">Encodeur</text>
+            <rect x="50" y="65" width="160" height="40" rx="5" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="130" y="90" fill="#e0e0e0" font-size="11" text-anchor="middle">Conv 3x3 + ReLU (64)</text>
+            <text x="225" y="85" fill="#aaa" font-size="10">572x572</text>
+            <!-- Fleche bas -->
+            <line x1="130" y1="105" x2="130" y2="130" stroke="#569cd6" stroke-width="2"/>
+            <text x="155" y="122" fill="#569cd6" font-size="9">MaxPool</text>
+
+            <rect x="70" y="130" width="140" height="40" rx="5" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="140" y="155" fill="#e0e0e0" font-size="11" text-anchor="middle">Conv 3x3 + ReLU (128)</text>
+            <text x="225" y="150" fill="#aaa" font-size="10">284x284</text>
+            <line x1="140" y1="170" x2="140" y2="195" stroke="#569cd6" stroke-width="2"/>
+            <text x="165" y="187" fill="#569cd6" font-size="9">MaxPool</text>
+
+            <rect x="90" y="195" width="120" height="40" rx="5" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="150" y="220" fill="#e0e0e0" font-size="11" text-anchor="middle">Conv (256)</text>
+            <text x="225" y="215" fill="#aaa" font-size="10">140x140</text>
+            <line x1="150" y1="235" x2="150" y2="260" stroke="#569cd6" stroke-width="2"/>
+
+            <rect x="110" y="260" width="100" height="40" rx="5" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="160" y="285" fill="#e0e0e0" font-size="11" text-anchor="middle">Conv (512)</text>
+            <text x="225" y="280" fill="#aaa" font-size="10">68x68</text>
+            <line x1="160" y1="300" x2="160" y2="325" stroke="#569cd6" stroke-width="2"/>
+
+            <!-- Bottleneck -->
+            <rect x="200" y="340" width="200" height="50" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="3"/>
+            <text x="300" y="362" fill="#ff6b35" font-size="12" text-anchor="middle" font-weight="bold">Bottleneck (1024)</text>
+            <text x="300" y="380" fill="#aaa" font-size="10" text-anchor="middle">32x32</text>
+
+            <!-- Decodeur (partie droite) -->
+            <text x="530" y="55" fill="#00ff88" font-size="13" text-anchor="middle" font-weight="bold">Decodeur</text>
+
+            <line x1="400" y1="340" x2="440" y2="305" stroke="#00ff88" stroke-width="2"/>
+            <text x="430" y="327" fill="#00ff88" font-size="9">UpConv</text>
+            <rect x="440" y="260" width="100" height="40" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="490" y="285" fill="#e0e0e0" font-size="11" text-anchor="middle">Conv (512)</text>
+
+            <line x1="490" y1="260" x2="490" y2="240" stroke="#00ff88" stroke-width="2"/>
+            <rect x="460" y="195" width="120" height="40" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="520" y="220" fill="#e0e0e0" font-size="11" text-anchor="middle">Conv (256)</text>
+
+            <line x1="520" y1="195" x2="520" y2="175" stroke="#00ff88" stroke-width="2"/>
+            <rect x="470" y="130" width="140" height="40" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="540" y="155" fill="#e0e0e0" font-size="11" text-anchor="middle">Conv 3x3 + ReLU (128)</text>
+
+            <line x1="540" y1="130" x2="540" y2="110" stroke="#00ff88" stroke-width="2"/>
+            <rect x="480" y="65" width="160" height="40" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="560" y="90" fill="#e0e0e0" font-size="11" text-anchor="middle">Conv 3x3 + ReLU (64)</text>
+
+            <!-- Sortie -->
+            <line x1="640" y1="85" x2="690" y2="85" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow4)"/>
+            <rect x="695" y="70" width="80" height="30" rx="5" fill="#ff6b35"/>
+            <text x="735" y="90" fill="#fff" font-size="11" text-anchor="middle">Sortie</text>
+            <text x="735" y="115" fill="#aaa" font-size="10" text-anchor="middle">N classes</text>
+
+            <!-- Skip connections -->
+            <line x1="210" y1="85" x2="480" y2="85" stroke="#ff8c42" stroke-width="2" stroke-dasharray="6,3"/>
+            <line x1="210" y1="150" x2="470" y2="150" stroke="#ff8c42" stroke-width="2" stroke-dasharray="6,3"/>
+            <line x1="210" y1="215" x2="460" y2="215" stroke="#ff8c42" stroke-width="2" stroke-dasharray="6,3"/>
+            <line x1="210" y1="280" x2="440" y2="280" stroke="#ff8c42" stroke-width="2" stroke-dasharray="6,3"/>
+
+            <!-- Legende skip -->
+            <text x="350" y="430" fill="#ff8c42" font-size="11" text-anchor="middle">- - - Skip connections (concatenation)</text>
+            <defs><marker id="arrow4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker></defs>
+        </svg>
+    </div>
+
+    <h3>8.3 U-Net en PyTorch</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="keyword">class</span> <span class="function">DoubleConv</span>(nn.Module):
+    <span class="string">"""Bloc de base : Conv -> BN -> ReLU -> Conv -> BN -> ReLU"""</span>
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, in_ch, out_ch):
+        <span class="function">super</span>().__init__()
+        self.conv = nn.<span class="function">Sequential</span>(
+            nn.<span class="function">Conv2d</span>(in_ch, out_ch, <span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.<span class="function">BatchNorm2d</span>(out_ch),
+            nn.<span class="function">ReLU</span>(inplace=<span class="keyword">True</span>),
+            nn.<span class="function">Conv2d</span>(out_ch, out_ch, <span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.<span class="function">BatchNorm2d</span>(out_ch),
+            nn.<span class="function">ReLU</span>(inplace=<span class="keyword">True</span>),
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="keyword">return</span> self.<span class="function">conv</span>(x)
+
+
+<span class="keyword">class</span> <span class="function">UNet</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, in_channels=<span class="number">3</span>, num_classes=<span class="number">21</span>):
+        <span class="function">super</span>().__init__()
+        <span class="comment"># Encodeur</span>
+        self.enc1 = <span class="function">DoubleConv</span>(in_channels, <span class="number">64</span>)
+        self.enc2 = <span class="function">DoubleConv</span>(<span class="number">64</span>, <span class="number">128</span>)
+        self.enc3 = <span class="function">DoubleConv</span>(<span class="number">128</span>, <span class="number">256</span>)
+        self.enc4 = <span class="function">DoubleConv</span>(<span class="number">256</span>, <span class="number">512</span>)
+        self.pool = nn.<span class="function">MaxPool2d</span>(<span class="number">2</span>)
+
+        <span class="comment"># Bottleneck</span>
+        self.bottleneck = <span class="function">DoubleConv</span>(<span class="number">512</span>, <span class="number">1024</span>)
+
+        <span class="comment"># Decodeur</span>
+        self.up4 = nn.<span class="function">ConvTranspose2d</span>(<span class="number">1024</span>, <span class="number">512</span>, <span class="number">2</span>, stride=<span class="number">2</span>)
+        self.dec4 = <span class="function">DoubleConv</span>(<span class="number">1024</span>, <span class="number">512</span>)  <span class="comment"># 512+512 par skip</span>
+        self.up3 = nn.<span class="function">ConvTranspose2d</span>(<span class="number">512</span>, <span class="number">256</span>, <span class="number">2</span>, stride=<span class="number">2</span>)
+        self.dec3 = <span class="function">DoubleConv</span>(<span class="number">512</span>, <span class="number">256</span>)
+        self.up2 = nn.<span class="function">ConvTranspose2d</span>(<span class="number">256</span>, <span class="number">128</span>, <span class="number">2</span>, stride=<span class="number">2</span>)
+        self.dec2 = <span class="function">DoubleConv</span>(<span class="number">256</span>, <span class="number">128</span>)
+        self.up1 = nn.<span class="function">ConvTranspose2d</span>(<span class="number">128</span>, <span class="number">64</span>, <span class="number">2</span>, stride=<span class="number">2</span>)
+        self.dec1 = <span class="function">DoubleConv</span>(<span class="number">128</span>, <span class="number">64</span>)
+
+        <span class="comment"># Classifieur pixel-wise</span>
+        self.final = nn.<span class="function">Conv2d</span>(<span class="number">64</span>, num_classes, <span class="number">1</span>)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="comment"># Encodeur avec sauvegarde pour skip connections</span>
+        e1 = self.<span class="function">enc1</span>(x)
+        e2 = self.<span class="function">enc2</span>(self.<span class="function">pool</span>(e1))
+        e3 = self.<span class="function">enc3</span>(self.<span class="function">pool</span>(e2))
+        e4 = self.<span class="function">enc4</span>(self.<span class="function">pool</span>(e3))
+
+        <span class="comment"># Bottleneck</span>
+        b = self.<span class="function">bottleneck</span>(self.<span class="function">pool</span>(e4))
+
+        <span class="comment"># Decodeur avec skip connections</span>
+        d4 = self.<span class="function">dec4</span>(torch.<span class="function">cat</span>([self.<span class="function">up4</span>(b), e4], dim=<span class="number">1</span>))
+        d3 = self.<span class="function">dec3</span>(torch.<span class="function">cat</span>([self.<span class="function">up3</span>(d4), e3], dim=<span class="number">1</span>))
+        d2 = self.<span class="function">dec2</span>(torch.<span class="function">cat</span>([self.<span class="function">up2</span>(d3), e2], dim=<span class="number">1</span>))
+        d1 = self.<span class="function">dec1</span>(torch.<span class="function">cat</span>([self.<span class="function">up1</span>(d2), e1], dim=<span class="number">1</span>))
+
+        <span class="keyword">return</span> self.<span class="function">final</span>(d1)
+
+<span class="comment"># Test</span>
+model = <span class="function">UNet</span>(in_channels=<span class="number">3</span>, num_classes=<span class="number">21</span>)
+x = torch.<span class="function">randn</span>(<span class="number">1</span>, <span class="number">3</span>, <span class="number">256</span>, <span class="number">256</span>)
+output = <span class="function">model</span>(x)
+<span class="function">print</span>(<span class="string">f"Entree  : {x.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Sortie  : {output.shape}"</span>)</div>
+
+    <div class="output-block">Entree  : torch.Size([1, 3, 256, 256])
+Sortie  : torch.Size([1, 21, 256, 256])</div>
+
+    <div class="prof-note">
+        La sortie a la meme resolution spatiale que l'entree (256x256) mais avec 21 canaux, un par classe. Pour obtenir la segmentation finale, on applique <code>argmax</code> sur la dimension des canaux : chaque pixel recoit la classe avec le score le plus eleve.
+    </div>
+
+    <h3>8.4 Loss pour la segmentation</h3>
+
+    <div class="code-block"><span class="comment"># Cross-Entropy pixel-wise (la plus courante)</span>
+criterion = nn.<span class="function">CrossEntropyLoss</span>()  <span class="comment"># fonctionne directement sur les logits</span>
+
+<span class="comment"># Dice Loss (tres utilisee en segmentation medicale)</span>
+<span class="keyword">class</span> <span class="function">DiceLoss</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, smooth=<span class="number">1.0</span>):
+        <span class="function">super</span>().__init__()
+        self.smooth = smooth
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, pred, target):
+        pred = torch.<span class="function">softmax</span>(pred, dim=<span class="number">1</span>)
+        <span class="comment"># One-hot encode target</span>
+        target_oh = torch.nn.functional.<span class="function">one_hot</span>(
+            target, num_classes=pred.<span class="function">size</span>(<span class="number">1</span>)
+        ).<span class="function">permute</span>(<span class="number">0</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">2</span>).<span class="function">float</span>()
+
+        intersection = (pred * target_oh).<span class="function">sum</span>(dim=(<span class="number">2</span>, <span class="number">3</span>))
+        union = pred.<span class="function">sum</span>(dim=(<span class="number">2</span>, <span class="number">3</span>)) + target_oh.<span class="function">sum</span>(dim=(<span class="number">2</span>, <span class="number">3</span>))
+
+        dice = (<span class="number">2</span> * intersection + self.smooth) / (union + self.smooth)
+        <span class="keyword">return</span> <span class="number">1</span> - dice.<span class="function">mean</span>()</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================================ -->
+    <h2>9. Segmentation d'instance et panoptique</h2>
+
+    <div class="definition">
+        La <strong>segmentation d'instance</strong> combine la detection d'objets et la segmentation semantique : elle identifie chaque objet individuellement avec un masque pixel-precis. Chaque instance de "personne" ou de "voiture" recoit son propre masque distinct.
+    </div>
+
+    <h3>9.1 Mask R-CNN</h3>
+
+    <p>Mask R-CNN (He et al., 2017) etend Faster R-CNN en ajoutant une branche de segmentation parallele a la branche de classification et de regression des bounding boxes. Pour chaque region d'interet (RoI), le reseau predit simultanement :</p>
+
+    <ol>
+        <li>La <strong>classe</strong> de l'objet</li>
+        <li>La <strong>bounding box</strong> raffinee</li>
+        <li>Un <strong>masque binaire</strong> de segmentation (28x28 pixels par RoI)</li>
+    </ol>
+
+    <div class="concept-box green">
+        <h4>RoI Align vs RoI Pooling</h4>
+        <p>Une innovation cle de Mask R-CNN est le <strong>RoI Align</strong>, qui remplace le RoI Pooling de Faster R-CNN. Le RoI Pooling effectue des arrondis lors de la quantification des coordonnees, ce qui introduit un desalignement spatial prejudiciable pour la segmentation pixel-precis. RoI Align utilise l'<strong>interpolation bilineaire</strong> pour echantillonner les features a des positions exactes, evitant toute perte de precision.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> torchvision
+<span class="keyword">from</span> torchvision.models.detection <span class="keyword">import</span> maskrcnn_resnet50_fpn_v2
+<span class="keyword">from</span> torchvision.models.detection <span class="keyword">import</span> MaskRCNN_ResNet50_FPN_V2_Weights
+
+<span class="comment"># Charger Mask R-CNN pre-entraine</span>
+weights = MaskRCNN_ResNet50_FPN_V2_Weights.DEFAULT
+model = <span class="function">maskrcnn_resnet50_fpn_v2</span>(weights=weights)
+model.<span class="function">eval</span>()
+
+<span class="comment"># Inference</span>
+image = torch.<span class="function">randn</span>(<span class="number">3</span>, <span class="number">480</span>, <span class="number">640</span>)  <span class="comment"># Image simulee</span>
+<span class="keyword">with</span> torch.<span class="function">no_grad</span>():
+    predictions = <span class="function">model</span>([image])
+
+pred = predictions[<span class="number">0</span>]
+<span class="function">print</span>(<span class="string">f"Boxes detectees : {pred['boxes'].shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Labels          : {pred['labels'].shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Scores          : {pred['scores'].shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Masques         : {pred['masks'].shape}"</span>)</div>
+
+    <div class="output-block">Boxes detectees : torch.Size([12, 4])
+Labels          : torch.Size([12])
+Scores          : torch.Size([12])
+Masques         : torch.Size([12, 1, 480, 640])</div>
+
+    <h3>9.2 Segmentation panoptique</h3>
+
+    <p>La <strong>segmentation panoptique</strong> (Kirillov et al., 2019) unifie la segmentation semantique et la segmentation d'instance en un seul framework :</p>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#00ff88;">Stuff (decor)</h4>
+            <p>Regions amorphes : ciel, route, herbe</p>
+            <p style="color:#aaa;">Segmentation semantique classique</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Things (objets)</h4>
+            <p>Objets comptables : voiture, personne</p>
+            <p style="color:#aaa;">Segmentation d'instance</p>
+        </div>
+    </div>
+
+    <div class="prof-note">
+        La segmentation panoptique est aujourd'hui le standard dans les applications de conduite autonome. Chaque pixel de l'image recoit a la fois une classe semantique et, s'il appartient a un objet "countable", un identifiant d'instance unique.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================================ -->
+    <h2>10. Recapitulatif et applications pratiques</h2>
+
+    <h3>10.1 Resume des taches et architectures</h3>
+
+    <table>
+        <tr><th>Tache</th><th>Sortie</th><th>Architectures cles</th><th>Applications</th></tr>
+        <tr><td>Classification</td><td>1 label / image</td><td>ResNet, EfficientNet, ViT</td><td>Tri de photos, diagnostic medical</td></tr>
+        <tr><td>Detection</td><td>Boxes + labels</td><td>Faster R-CNN, YOLO, SSD</td><td>Surveillance, conduite autonome</td></tr>
+        <tr><td>Seg. semantique</td><td>1 classe / pixel</td><td>FCN, U-Net, DeepLab</td><td>Imagerie medicale, cartographie</td></tr>
+        <tr><td>Seg. d'instance</td><td>Masques par objet</td><td>Mask R-CNN, SOLO</td><td>Robotique, edition d'images</td></tr>
+        <tr><td>Seg. panoptique</td><td>Stuff + Things</td><td>Panoptic FPN, MaskFormer</td><td>Conduite autonome complete</td></tr>
+    </table>
+
+    <h3>10.2 Guide pratique : quelle strategie choisir ?</h3>
+
+    <div class="concept-box">
+        <h4>Decision flowchart</h4>
+        <ol>
+            <li><strong>Peu de donnees (&lt; 1000 images) :</strong> Transfer learning avec feature extraction. Ne touchez pas aux couches convolutives.</li>
+            <li><strong>Donnees moderees (1000 - 10 000) :</strong> Fine-tuning des dernieres couches + data augmentation agressive.</li>
+            <li><strong>Beaucoup de donnees (&gt; 50 000) :</strong> Entrainement from scratch possible, ou fine-tuning complet d'un modele pre-entraine.</li>
+            <li><strong>Domaine tres different d'ImageNet</strong> (imagerie medicale, satellite) : Fine-tuning profond necessaire, eventuellement from scratch.</li>
+        </ol>
+    </div>
+
+    <h3>10.3 Erreurs frequentes a eviter</h3>
+
+    <div class="warning">
+        <strong>1.</strong> Oublier de normaliser les images avec les memes statistiques qu'ImageNet (mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) lors du transfer learning.
+    </div>
+
+    <div class="warning">
+        <strong>2.</strong> Utiliser le meme learning rate pour les couches pre-entrainees et les nouvelles couches. Les couches gelees ont besoin d'un LR 10-100x plus petit.
+    </div>
+
+    <div class="warning">
+        <strong>3.</strong> Appliquer la data augmentation sur le set de validation. Les transformations aleatoires ne doivent etre appliquees que pendant l'entrainement.
+    </div>
+
+    <div class="warning">
+        <strong>4.</strong> Ne pas appeler <code>model.eval()</code> et <code>torch.no_grad()</code> pendant l'inference. Cela affecte le comportement du BatchNorm et du Dropout, et gaspille de la memoire.
+    </div>
+
+    <h3>10.4 Perspectives et tendances actuelles</h3>
+
+    <p>Le domaine evolue rapidement. Voici les tendances majeures :</p>
+
+    <ul>
+        <li><strong>Vision Transformers (ViT) :</strong> les Transformers remplacent progressivement les CNN pour la classification, et s'etendent a la detection (DETR) et la segmentation (SegFormer).</li>
+        <li><strong>Foundation Models :</strong> des modeles pre-entraines massifs (SAM, DINOv2) permettent la segmentation zero-shot sur n'importe quelle image.</li>
+        <li><strong>Modeles multimodaux :</strong> CLIP et ses descendants associent vision et langage, ouvrant la voie a la detection guidee par le texte.</li>
+        <li><strong>Efficience :</strong> distillation, quantification et NAS produisent des modeles deployables sur mobile et embarque.</li>
+    </ul>
+
+    <div class="prof-note">
+        Dans le prochain cours, nous quitterons la vision par ordinateur pour explorer les <strong>reseaux recurrents</strong> (RNN, LSTM, GRU), essentiels pour le traitement des donnees sequentielles comme le texte et les series temporelles. Ces architectures posent les bases pour comprendre les Transformers, que nous etudierons au cours 7.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_04_cnn.html">&larr; Cours 4 : CNN</a>
+        <a href="dl_06_rnn_lstm.html">Cours 6 : RNN, LSTM, GRU &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

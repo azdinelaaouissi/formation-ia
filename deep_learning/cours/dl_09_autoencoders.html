@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 09 - Autoencoders et VAE</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 09 - Autoencoders et VAE</h1>
+    <p class="subtitle">Cours 9/12 - Autoencoders, Variational Autoencoders, denoising et detection d'anomalies</p>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================ -->
+    <h2>1. L'Idee de l'Autoencoder</h2>
+
+    <h3>1.1 Compression et reconstruction</h3>
+
+    <p>Un autoencoder est un reseau de neurones entraine a reproduire son entree en sortie. Cela semble trivial, mais l'astuce est de forcer les donnees a passer par un <strong>goulot d'etranglement</strong> (bottleneck) de dimension bien inferieure a l'entree. Le reseau doit alors apprendre une representation comprimee mais suffisamment informative pour reconstruire l'original.</p>
+
+    <div class="definition">
+        Un <strong>autoencoder</strong> est un reseau de neurones compose de deux parties : un <strong>encodeur</strong> f qui comprime l'entree x en une representation latente z = f(x) de dimension reduite, et un <strong>decodeur</strong> g qui reconstruit l'entree a partir de z : x_hat = g(z) = g(f(x)). L'objectif est de minimiser l'erreur de reconstruction ||x - x_hat||^2.
+    </div>
+
+    <div class="analogy">
+        <h4>Analogie : Le Telegraphe</h4>
+        <p>Imaginez que vous devez envoyer une photographie detaillee par telegraphe (qui ne transmet que du texte court). Vous devez :</p>
+        <ul>
+            <li><strong>Encoder :</strong> Decrire la photographie en quelques mots cles essentiels ("femme, robe rouge, jardin, soleil couchant, sourire")</li>
+            <li><strong>Decoder :</strong> Le destinataire reconstitue l'image mentale a partir de ces mots cles</li>
+        </ul>
+        <p>L'autoencoder fait exactement cela : il apprend quels "mots cles" (features latentes) sont les plus importants pour decrire et reconstruire les donnees.</p>
+    </div>
+
+    <h3>1.2 Architecture de base</h3>
+
+    <div class="svg-container">
+        <svg width="750" height="300" viewBox="0 0 750 300">
+            <defs>
+                <marker id="arrAE" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#ff8c42"/>
+                </marker>
+            </defs>
+            <text x="375" y="25" fill="#ff6b35" text-anchor="middle" font-size="15" font-weight="bold">Architecture Autoencoder</text>
+            <!-- Input -->
+            <rect x="20" y="80" width="80" height="150" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="60" y="150" fill="#ff6b35" text-anchor="middle" font-size="11" font-weight="bold">Entree</text>
+            <text x="60" y="170" fill="#aaa" text-anchor="middle" font-size="10">x (784)</text>
+            <!-- Encoder layers -->
+            <rect x="135" y="100" width="60" height="110" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="165" y="155" fill="#ff8c42" text-anchor="middle" font-size="10">512</text>
+            <line x1="100" y1="155" x2="135" y2="155" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrAE)"/>
+            <rect x="225" y="115" width="50" height="80" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="250" y="155" fill="#ff8c42" text-anchor="middle" font-size="10">256</text>
+            <line x1="195" y1="155" x2="225" y2="155" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrAE)"/>
+            <!-- Latent -->
+            <rect x="310" y="130" width="55" height="50" rx="8" fill="#569cd6" opacity="0.3" stroke="#569cd6" stroke-width="2"/>
+            <text x="337" y="152" fill="#569cd6" text-anchor="middle" font-size="11" font-weight="bold">z</text>
+            <text x="337" y="170" fill="#569cd6" text-anchor="middle" font-size="10">(32)</text>
+            <line x1="275" y1="155" x2="310" y2="155" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrAE)"/>
+            <!-- Decoder layers -->
+            <rect x="400" y="115" width="50" height="80" rx="6" fill="#1a1a2e" stroke="#00cc66" stroke-width="1.5"/>
+            <text x="425" y="155" fill="#00cc66" text-anchor="middle" font-size="10">256</text>
+            <line x1="365" y1="155" x2="400" y2="155" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrAE)"/>
+            <rect x="480" y="100" width="60" height="110" rx="6" fill="#1a1a2e" stroke="#00cc66" stroke-width="1.5"/>
+            <text x="510" y="155" fill="#00cc66" text-anchor="middle" font-size="10">512</text>
+            <line x1="450" y1="155" x2="480" y2="155" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrAE)"/>
+            <!-- Output -->
+            <rect x="575" y="80" width="80" height="150" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="615" y="150" fill="#00ff88" text-anchor="middle" font-size="11" font-weight="bold">Sortie</text>
+            <text x="615" y="170" fill="#aaa" text-anchor="middle" font-size="10">x_hat (784)</text>
+            <line x1="540" y1="155" x2="575" y2="155" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrAE)"/>
+            <!-- Labels -->
+            <text x="190" y="60" fill="#ff8c42" text-anchor="middle" font-size="13" font-weight="bold">Encodeur f(x)</text>
+            <path d="M 110 65 L 270 65" stroke="#ff8c42" stroke-width="1" stroke-dasharray="3"/>
+            <text x="490" y="60" fill="#00cc66" text-anchor="middle" font-size="13" font-weight="bold">Decodeur g(z)</text>
+            <path d="M 400 65 L 560 65" stroke="#00cc66" stroke-width="1" stroke-dasharray="3"/>
+            <text x="337" y="205" fill="#569cd6" text-anchor="middle" font-size="11">Espace latent</text>
+            <!-- Bottleneck bracket -->
+            <text x="337" y="240" fill="#569cd6" text-anchor="middle" font-size="10">(goulot d'etranglement)</text>
+            <!-- Loss arrow -->
+            <path d="M 60 230 Q 60 275, 337 275 Q 615 275, 615 230" stroke="#ff4444" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
+            <text x="337" y="292" fill="#ff4444" text-anchor="middle" font-size="11">Loss = ||x - x_hat||^2</text>
+        </svg>
+    </div>
+
+    <h3>1.3 A quoi sert un autoencoder ?</h3>
+
+    <div class="concept-box">
+        <h4>Applications principales</h4>
+        <ul>
+            <li><strong>Reduction de dimensionnalite :</strong> Alternative non lineaire a PCA - la representation latente z capture les features les plus importantes</li>
+            <li><strong>Debruitage :</strong> Entrainer l'AE a reconstruire des donnees propres a partir de donnees bruitees</li>
+            <li><strong>Detection d'anomalies :</strong> Les donnees anormales sont mal reconstruites (haute erreur de reconstruction)</li>
+            <li><strong>Generation de donnees :</strong> Avec les VAE, on peut echantillonner dans l'espace latent pour generer de nouvelles donnees</li>
+            <li><strong>Pre-entrainement :</strong> L'encodeur apprend des representations utiles transferables a d'autres taches</li>
+            <li><strong>Compression :</strong> Stockage efficace de donnees en haute dimension</li>
+        </ul>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================ -->
+    <h2>2. Autoencoder Simple (Undercomplete)</h2>
+
+    <h3>2.1 Autoencoder undercomplete</h3>
+
+    <div class="definition">
+        Un autoencoder <strong>undercomplete</strong> est un autoencoder dont la dimension de l'espace latent est <strong>strictement inferieure</strong> a celle de l'entree : dim(z) &lt; dim(x). C'est la forme la plus simple et la plus courante. La contrainte de dimension force le reseau a apprendre une compression informative des donnees.
+    </div>
+
+    <div class="warning">
+        Si l'espace latent a la meme dimension que l'entree (ou plus grande), l'autoencoder peut simplement apprendre la fonction identite sans compression. Il faut toujours choisir une dimension latente significativement plus petite que l'entree pour forcer l'apprentissage de representations utiles.
+    </div>
+
+    <h3>2.2 Fonction de perte (Loss)</h3>
+
+    <p>La loss la plus courante pour les autoencoders est l'<strong>erreur quadratique moyenne</strong> (MSE) :</p>
+
+    <div class="concept-box blue">
+        <p style="text-align:center; font-size:1.1rem; margin:10px 0;">
+            <strong>L_reconstruction = (1/N) * sum_i ||x_i - g(f(x_i))||^2</strong>
+        </p>
+        <p>Pour les donnees binaires (images en noir et blanc), on utilise souvent la <strong>Binary Cross-Entropy</strong> (BCE) :</p>
+        <p style="text-align:center; font-size:1.05rem; margin:10px 0;">
+            <strong>L_BCE = -sum [x * log(x_hat) + (1-x) * log(1-x_hat)]</strong>
+        </p>
+    </div>
+
+    <h3>2.3 Implementation PyTorch d'un autoencoder simple</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="keyword">class</span> <span class="function">SimpleAutoencoder</span>(nn.Module):
+    <span class="string">"""Autoencoder simple fully-connected pour MNIST"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_dim=<span class="number">784</span>, latent_dim=<span class="number">32</span>):
+        <span class="function">super</span>().__init__()
+
+        <span class="comment"># Encodeur : 784 -> 512 -> 256 -> 32</span>
+        self.encoder = nn.Sequential(
+            nn.Linear(input_dim, <span class="number">512</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">512</span>, <span class="number">256</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">256</span>, latent_dim),
+            nn.ReLU()
+        )
+
+        <span class="comment"># Decodeur : 32 -> 256 -> 512 -> 784</span>
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, <span class="number">256</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">256</span>, <span class="number">512</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">512</span>, input_dim),
+            nn.Sigmoid()  <span class="comment"># Sortie entre [0, 1] pour images normalisees</span>
+        )
+
+    <span class="keyword">def</span> <span class="function">encode</span>(self, x):
+        <span class="keyword">return</span> self.encoder(x)
+
+    <span class="keyword">def</span> <span class="function">decode</span>(self, z):
+        <span class="keyword">return</span> self.decoder(z)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        z = self.encode(x)
+        x_hat = self.decode(z)
+        <span class="keyword">return</span> x_hat, z
+
+<span class="comment"># Test</span>
+ae = <span class="function">SimpleAutoencoder</span>(input_dim=<span class="number">784</span>, latent_dim=<span class="number">32</span>)
+x = torch.randn(<span class="number">16</span>, <span class="number">784</span>)
+x_hat, z = ae(x)
+<span class="function">print</span>(f<span class="string">"Entree: {x.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Espace latent: {z.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Reconstruction: {x_hat.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Compression: {784/32:.1f}x"</span>)</div>
+
+    <div class="output-block">Entree: torch.Size([16, 784])
+Espace latent: torch.Size([16, 32])
+Reconstruction: torch.Size([16, 784])
+Compression: 24.5x</div>
+
+    <h3>2.4 Entrainement de l'autoencoder</h3>
+
+    <div class="code-block"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms
+
+<span class="comment"># Chargement de MNIST</span>
+transform = transforms.Compose([
+    transforms.ToTensor(),
+])
+train_data = datasets.MNIST(root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>,
+                            transform=transform, download=<span class="keyword">True</span>)
+train_loader = DataLoader(train_data, batch_size=<span class="number">256</span>, shuffle=<span class="keyword">True</span>)
+
+<span class="comment"># Modele et optimiseur</span>
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+model = <span class="function">SimpleAutoencoder</span>(latent_dim=<span class="number">32</span>).to(device)
+optimizer = torch.optim.Adam(model.parameters(), lr=<span class="number">1e-3</span>)
+criterion = nn.MSELoss()
+
+<span class="comment"># Entrainement</span>
+NUM_EPOCHS = <span class="number">20</span>
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(NUM_EPOCHS):
+    total_loss = <span class="number">0</span>
+    <span class="keyword">for</span> batch_imgs, _ <span class="keyword">in</span> train_loader:
+        <span class="comment"># Aplatir les images 28x28 -> 784</span>
+        batch_imgs = batch_imgs.view(-<span class="number">1</span>, <span class="number">784</span>).to(device)
+
+        <span class="comment"># Forward pass</span>
+        x_hat, z = model(batch_imgs)
+        loss = criterion(x_hat, batch_imgs)
+
+        <span class="comment"># Backward pass</span>
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+
+    avg_loss = total_loss / len(train_loader)
+    <span class="function">print</span>(f<span class="string">"Epoch [{epoch+1}/{NUM_EPOCHS}], Loss: {avg_loss:.6f}"</span>)</div>
+
+    <div class="output-block">Epoch [1/20], Loss: 0.054321
+Epoch [2/20], Loss: 0.029876
+...
+Epoch [10/20], Loss: 0.012543
+...
+Epoch [20/20], Loss: 0.008912</div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================ -->
+    <h2>3. L'Espace Latent</h2>
+
+    <h3>3.1 Representation apprise</h3>
+
+    <p>L'espace latent est la representation comprimee apprise par l'encodeur. Chaque point dans cet espace correspond a une "description" compacte d'un exemple d'entree. Les dimensions de l'espace latent capturent les <strong>facteurs de variation</strong> les plus importants dans les donnees.</p>
+
+    <div class="concept-box">
+        <h4>Proprietes d'un bon espace latent</h4>
+        <ul>
+            <li><strong>Compacite :</strong> Les donnees sont representees avec un nombre minimal de dimensions</li>
+            <li><strong>Regularite :</strong> Les points proches dans l'espace latent correspondent a des donnees similaires</li>
+            <li><strong>Separabilite :</strong> Les differentes classes sont bien separees dans l'espace latent</li>
+            <li><strong>Continuite :</strong> Idealement, interpoler entre deux points produit des donnees coherentes</li>
+        </ul>
+    </div>
+
+    <h3>3.2 Visualisation de l'espace latent</h3>
+
+    <div class="code-block"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+
+<span class="keyword">def</span> <span class="function">visualize_latent_space</span>(model, data_loader, device):
+    <span class="string">"""Visualiser l'espace latent 2D"""</span>
+    model.eval()
+    latents = []
+    labels = []
+
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="keyword">for</span> imgs, lbls <span class="keyword">in</span> data_loader:
+            imgs = imgs.view(-<span class="number">1</span>, <span class="number">784</span>).to(device)
+            z = model.encode(imgs)
+            latents.append(z.cpu())
+            labels.append(lbls)
+
+    latents = torch.cat(latents, dim=<span class="number">0</span>).numpy()
+    labels = torch.cat(labels, dim=<span class="number">0</span>).numpy()
+
+    plt.figure(figsize=(<span class="number">10</span>, <span class="number">8</span>))
+    scatter = plt.scatter(latents[:, <span class="number">0</span>], latents[:, <span class="number">1</span>],
+                         c=labels, cmap=<span class="string">'tab10'</span>, alpha=<span class="number">0.5</span>, s=<span class="number">5</span>)
+    plt.colorbar(scatter, label=<span class="string">'Classe (chiffre)'</span>)
+    plt.xlabel(<span class="string">'Dimension latente 1'</span>)
+    plt.ylabel(<span class="string">'Dimension latente 2'</span>)
+    plt.title(<span class="string">'Espace latent 2D de l\'autoencoder'</span>)
+    plt.show()
+
+<span class="comment"># Utilisation avec un autoencoder a 2 dimensions latentes</span>
+ae_2d = <span class="function">SimpleAutoencoder</span>(latent_dim=<span class="number">2</span>).to(device)
+<span class="comment"># ... entrainement ...</span>
+<span class="comment"># visualize_latent_space(ae_2d, test_loader, device)</span></div>
+
+    <h3>3.3 Visualisation conceptuelle de l'espace latent</h3>
+
+    <div class="svg-container">
+        <svg width="550" height="400" viewBox="0 0 550 400">
+            <text x="275" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Espace Latent 2D (MNIST)</text>
+            <!-- Axes -->
+            <line x1="60" y1="370" x2="530" y2="370" stroke="#555" stroke-width="1"/>
+            <line x1="60" y1="370" x2="60" y2="40" stroke="#555" stroke-width="1"/>
+            <text x="295" y="395" fill="#aaa" font-size="11">z_1</text>
+            <text x="30" y="200" fill="#aaa" font-size="11" transform="rotate(-90, 30, 200)">z_2</text>
+            <!-- Cluster 0 -->
+            <ellipse cx="150" cy="300" rx="35" ry="25" fill="#ff6b35" opacity="0.2" stroke="#ff6b35" stroke-width="1"/>
+            <text x="150" y="305" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">0</text>
+            <!-- Cluster 1 -->
+            <ellipse cx="420" cy="100" rx="30" ry="30" fill="#569cd6" opacity="0.2" stroke="#569cd6" stroke-width="1"/>
+            <text x="420" y="105" fill="#569cd6" text-anchor="middle" font-size="14" font-weight="bold">1</text>
+            <!-- Cluster 2 -->
+            <ellipse cx="280" cy="150" rx="40" ry="28" fill="#00cc66" opacity="0.2" stroke="#00cc66" stroke-width="1"/>
+            <text x="280" y="155" fill="#00cc66" text-anchor="middle" font-size="14" font-weight="bold">2</text>
+            <!-- Cluster 3 -->
+            <ellipse cx="350" cy="280" rx="32" ry="35" fill="#ff8c42" opacity="0.2" stroke="#ff8c42" stroke-width="1"/>
+            <text x="350" y="285" fill="#ff8c42" text-anchor="middle" font-size="14" font-weight="bold">3</text>
+            <!-- Cluster 4 -->
+            <ellipse cx="200" cy="180" rx="28" ry="32" fill="#ce9178" opacity="0.2" stroke="#ce9178" stroke-width="1"/>
+            <text x="200" y="185" fill="#ce9178" text-anchor="middle" font-size="14" font-weight="bold">4</text>
+            <!-- Cluster 5 -->
+            <ellipse cx="130" cy="120" rx="30" ry="25" fill="#dcdcaa" opacity="0.2" stroke="#dcdcaa" stroke-width="1"/>
+            <text x="130" y="125" fill="#dcdcaa" text-anchor="middle" font-size="14" font-weight="bold">5</text>
+            <!-- Cluster 7 -->
+            <ellipse cx="480" cy="210" rx="30" ry="28" fill="#b5cea8" opacity="0.2" stroke="#b5cea8" stroke-width="1"/>
+            <text x="480" y="215" fill="#b5cea8" text-anchor="middle" font-size="14" font-weight="bold">7</text>
+            <!-- Cluster 8 -->
+            <ellipse cx="300" cy="320" rx="35" ry="25" fill="#6a9955" opacity="0.2" stroke="#6a9955" stroke-width="1"/>
+            <text x="300" y="325" fill="#6a9955" text-anchor="middle" font-size="14" font-weight="bold">8</text>
+            <!-- Cluster 9 -->
+            <ellipse cx="430" cy="340" rx="28" ry="22" fill="#ff4444" opacity="0.2" stroke="#ff4444" stroke-width="1"/>
+            <text x="430" y="345" fill="#ff4444" text-anchor="middle" font-size="14" font-weight="bold">9</text>
+            <!-- Cluster 6 -->
+            <ellipse cx="100" cy="230" rx="28" ry="30" fill="#4caf50" opacity="0.2" stroke="#4caf50" stroke-width="1"/>
+            <text x="100" y="235" fill="#4caf50" text-anchor="middle" font-size="14" font-weight="bold">6</text>
+            <!-- Scatter dots for effect -->
+            <circle cx="145" cy="295" r="2" fill="#ff6b35" opacity="0.6"/>
+            <circle cx="160" cy="310" r="2" fill="#ff6b35" opacity="0.6"/>
+            <circle cx="138" cy="288" r="2" fill="#ff6b35" opacity="0.6"/>
+            <circle cx="155" cy="302" r="2" fill="#ff6b35" opacity="0.6"/>
+            <circle cx="415" cy="95" r="2" fill="#569cd6" opacity="0.6"/>
+            <circle cx="425" cy="108" r="2" fill="#569cd6" opacity="0.6"/>
+            <circle cx="430" cy="92" r="2" fill="#569cd6" opacity="0.6"/>
+            <circle cx="275" cy="145" r="2" fill="#00cc66" opacity="0.6"/>
+            <circle cx="290" cy="158" r="2" fill="#00cc66" opacity="0.6"/>
+            <circle cx="268" cy="152" r="2" fill="#00cc66" opacity="0.6"/>
+        </svg>
+    </div>
+
+    <h3>3.4 Comparaison avec PCA</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff8c42;">PCA (lineaire)</h4>
+            <p>Projection lineaire sur les composantes principales</p>
+            <p>Capture uniquement les correlations <strong>lineaires</strong></p>
+            <p>Rapide, deterministe, solution analytique</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Autoencoder (non lineaire)</h4>
+            <p>Transformation non lineaire via reseau de neurones</p>
+            <p>Capture les <strong>varietes non lineaires</strong></p>
+            <p>Plus lent, necessite un entrainement, plus expressif</p>
+        </div>
+    </div>
+
+    <div class="prof-note">
+        Un autoencoder avec des activations lineaires et une loss MSE apprend essentiellement la meme chose que PCA. C'est la non-linearite (ReLU, etc.) qui donne aux autoencoders leur pouvoir expressif superieur. En pratique, pour les donnees simples et de faible dimension, PCA est souvent suffisant. Les autoencoders brillent sur les donnees complexes et haute dimension (images, sequences).
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================ -->
+    <h2>4. Types d'Autoencoders</h2>
+
+    <h3>4.1 Tableau comparatif</h3>
+
+    <table>
+        <tr><th>Type</th><th>Contrainte</th><th>Objectif</th><th>Cas d'usage</th></tr>
+        <tr><td>Undercomplete</td><td>dim(z) &lt; dim(x)</td><td>Compression</td><td>Reduction dimensionnalite</td></tr>
+        <tr><td>Sparse</td><td>Parcimonie sur z</td><td>Representations sparse</td><td>Feature extraction</td></tr>
+        <tr><td>Denoising</td><td>Entree corrompue</td><td>Robustesse au bruit</td><td>Debruitage, representations robustes</td></tr>
+        <tr><td>Contractive</td><td>Penalite jacobienne</td><td>Stabilite locale</td><td>Representations stables</td></tr>
+        <tr><td>Variational (VAE)</td><td>z ~ N(mu, sigma)</td><td>Espace latent structure</td><td>Generation, interpolation</td></tr>
+    </table>
+
+    <h3>4.2 Autoencoder Sparse</h3>
+
+    <div class="definition">
+        Un <strong>autoencoder sparse</strong> ajoute une penalite de parcimonie sur les activations latentes. L'objectif est que seul un petit nombre de neurones latents soient actifs pour chaque entree, encourageant le reseau a apprendre des features specialisees et interpretables.
+    </div>
+
+    <div class="code-block"><span class="comment"># Loss avec regularisation L1 pour la sparsity</span>
+<span class="keyword">def</span> <span class="function">sparse_ae_loss</span>(x, x_hat, z, lambda_sparse=<span class="number">1e-3</span>):
+    <span class="comment"># Loss de reconstruction</span>
+    recon_loss = nn.MSELoss()(x_hat, x)
+
+    <span class="comment"># Penalite de parcimonie L1 sur les activations latentes</span>
+    sparsity_loss = torch.mean(torch.abs(z))
+
+    <span class="keyword">return</span> recon_loss + lambda_sparse * sparsity_loss</div>
+
+    <h3>4.3 Autoencoder Contractive</h3>
+
+    <p>L'autoencoder contractive penalise la norme de Frobenius du <strong>Jacobien</strong> de l'encodeur par rapport a l'entree. Cela force les representations a etre insensibles aux petites perturbations de l'entree :</p>
+
+    <div class="step-box"><strong>L_contractive = L_reconstruction + lambda * ||J_f(x)||_F^2</strong><br>ou J_f(x) est la matrice jacobienne de l'encodeur.</div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================ -->
+    <h2>5. Denoising Autoencoder</h2>
+
+    <h3>5.1 Principe du debruitage</h3>
+
+    <div class="analogy">
+        <h4>Analogie : Le restaurateur d'art</h4>
+        <p>Imaginez un restaurateur d'art qui apprend a retrouver l'oeuvre originale a partir de versions endommagees (taches, craquelures, decolorations). A force de voir de nombreuses paires "oeuvre endommagee / oeuvre originale", il developpe une expertise pour reconstituer les details manquants ou corrompus.</p>
+        <p>Le denoising autoencoder fonctionne de la meme maniere : il apprend a reconstruire les donnees propres a partir de versions corrompues.</p>
+    </div>
+
+    <h3>5.2 Types de corruption</h3>
+
+    <div class="concept-box">
+        <h4>Methodes de corruption de l'entree</h4>
+        <ul>
+            <li><strong>Bruit gaussien :</strong> Ajouter x_noisy = x + epsilon, avec epsilon ~ N(0, sigma^2). Le plus courant.</li>
+            <li><strong>Masquage aleatoire :</strong> Mettre aleatoirement certains pixels a 0 (dropout de l'entree).</li>
+            <li><strong>Salt and pepper :</strong> Remplacer aleatoirement des pixels par 0 ou 1.</li>
+            <li><strong>Corruption structuree :</strong> Masquer des regions entieres (patches) de l'image.</li>
+        </ul>
+    </div>
+
+    <h3>5.3 Implementation PyTorch</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">DenoisingAutoencoder</span>(nn.Module):
+    <span class="string">"""Denoising Autoencoder convolutionnel"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        <span class="function">super</span>().__init__()
+
+        <span class="comment"># Encodeur convolutionnel</span>
+        self.encoder = nn.Sequential(
+            nn.Conv2d(<span class="number">1</span>, <span class="number">32</span>, <span class="number">3</span>, stride=<span class="number">2</span>, padding=<span class="number">1</span>),   <span class="comment"># (32, 14, 14)</span>
+            nn.ReLU(),
+            nn.Conv2d(<span class="number">32</span>, <span class="number">64</span>, <span class="number">3</span>, stride=<span class="number">2</span>, padding=<span class="number">1</span>),  <span class="comment"># (64, 7, 7)</span>
+            nn.ReLU(),
+            nn.Conv2d(<span class="number">64</span>, <span class="number">128</span>, <span class="number">7</span>),                       <span class="comment"># (128, 1, 1)</span>
+            nn.ReLU()
+        )
+
+        <span class="comment"># Decodeur convolutionnel</span>
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose2d(<span class="number">128</span>, <span class="number">64</span>, <span class="number">7</span>),               <span class="comment"># (64, 7, 7)</span>
+            nn.ReLU(),
+            nn.ConvTranspose2d(<span class="number">64</span>, <span class="number">32</span>, <span class="number">3</span>, stride=<span class="number">2</span>, padding=<span class="number">1</span>, output_padding=<span class="number">1</span>),
+            nn.ReLU(),                                     <span class="comment"># (32, 14, 14)</span>
+            nn.ConvTranspose2d(<span class="number">32</span>, <span class="number">1</span>, <span class="number">3</span>, stride=<span class="number">2</span>, padding=<span class="number">1</span>, output_padding=<span class="number">1</span>),
+            nn.Sigmoid()                                   <span class="comment"># (1, 28, 28)</span>
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        z = self.encoder(x)
+        x_hat = self.decoder(z)
+        <span class="keyword">return</span> x_hat
+
+<span class="keyword">def</span> <span class="function">add_noise</span>(images, noise_factor=<span class="number">0.3</span>):
+    <span class="string">"""Ajouter du bruit gaussien aux images"""</span>
+    noisy = images + noise_factor * torch.randn_like(images)
+    <span class="keyword">return</span> torch.clamp(noisy, <span class="number">0.0</span>, <span class="number">1.0</span>)
+
+<span class="comment"># Entrainement du denoising autoencoder</span>
+dae = <span class="function">DenoisingAutoencoder</span>().to(device)
+optimizer = torch.optim.Adam(dae.parameters(), lr=<span class="number">1e-3</span>)
+criterion = nn.MSELoss()
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(<span class="number">20</span>):
+    total_loss = <span class="number">0</span>
+    <span class="keyword">for</span> imgs, _ <span class="keyword">in</span> train_loader:
+        imgs = imgs.to(device)
+
+        <span class="comment"># Corrompre les images</span>
+        noisy_imgs = <span class="function">add_noise</span>(imgs, noise_factor=<span class="number">0.3</span>)
+
+        <span class="comment"># Reconstruire les images propres a partir des corrompues</span>
+        reconstructed = dae(noisy_imgs)
+        loss = criterion(reconstructed, imgs)  <span class="comment"># Loss vs images PROPRES</span>
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+
+    <span class="function">print</span>(f<span class="string">"Epoch {epoch+1}, Loss: {total_loss/len(train_loader):.6f}"</span>)</div>
+
+    <div class="output-block">Epoch 1, Loss: 0.043215
+Epoch 2, Loss: 0.021876
+...
+Epoch 20, Loss: 0.007432</div>
+
+    <div class="effect">
+        Le denoising autoencoder apprend des representations plus robustes qu'un autoencoder standard, car il doit "comprendre" la structure sous-jacente des donnees pour distinguer le signal du bruit. En pratique, les representations apprises par les denoising autoencoders sont souvent meilleures pour les taches en aval (classification, clustering).
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================ -->
+    <h2>6. Variational Autoencoder (VAE) en Detail</h2>
+
+    <h3>6.1 Le probleme de l'autoencoder classique pour la generation</h3>
+
+    <p>Un autoencoder classique apprend un espace latent <strong>non structure</strong>. Les points de l'espace latent n'ont pas de signification probabiliste : si on echantillonne un point aleatoire z dans cet espace, rien ne garantit que le decodeur produira une image coherente. L'espace latent peut contenir de vastes "zones mortes" ou le decodeur n'a jamais ete entraine.</p>
+
+    <div class="warning">
+        Avec un autoencoder classique, l'interpolation et la generation sont aleatoires : le decodeur peut produire des artefacts ou des images absurdes pour des points z qui ne correspondent a aucune donnee d'entrainement.
+    </div>
+
+    <h3>6.2 L'idee du VAE</h3>
+
+    <div class="definition">
+        Le <strong>Variational Autoencoder</strong> (Kingma &amp; Welling, 2013) resout ce probleme en forcant l'espace latent a suivre une <strong>distribution gaussienne</strong>. Au lieu d'encoder une entree vers un point fixe z, le VAE l'encode vers une <strong>distribution</strong> q(z|x) = N(mu, sigma^2), definie par une moyenne mu et une variance sigma^2.
+    </div>
+
+    <div class="concept-box green">
+        <h4>Differences cles : AE classique vs VAE</h4>
+        <ul>
+            <li><strong>Autoencoder :</strong> Encode x -> z (un point fixe dans l'espace latent)</li>
+            <li><strong>VAE :</strong> Encode x -> (mu, log_sigma^2), puis z est echantillonne depuis N(mu, sigma^2)</li>
+        </ul>
+        <p>La regularisation KL force les distributions q(z|x) a rester proches de N(0, I), ce qui structure l'espace latent : chaque region a une signification, l'interpolation est fluide, et on peut generer en echantillonnant z ~ N(0, I).</p>
+    </div>
+
+    <h3>6.3 Architecture du VAE</h3>
+
+    <div class="svg-container">
+        <svg width="750" height="360" viewBox="0 0 750 360">
+            <defs>
+                <marker id="arrVAE" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#ff8c42"/>
+                </marker>
+            </defs>
+            <text x="375" y="25" fill="#ff6b35" text-anchor="middle" font-size="15" font-weight="bold">Architecture VAE</text>
+            <!-- Input -->
+            <rect x="15" y="100" width="70" height="120" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="50" y="155" fill="#ff6b35" text-anchor="middle" font-size="11" font-weight="bold">x</text>
+            <text x="50" y="175" fill="#aaa" text-anchor="middle" font-size="9">Entree</text>
+            <!-- Encoder -->
+            <rect x="120" y="110" width="100" height="100" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="170" y="150" fill="#ff8c42" text-anchor="middle" font-size="12" font-weight="bold">Encodeur</text>
+            <text x="170" y="170" fill="#aaa" text-anchor="middle" font-size="10">q(z|x)</text>
+            <line x1="85" y1="160" x2="120" y2="160" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrVAE)"/>
+            <!-- mu and sigma -->
+            <rect x="260" y="80" width="70" height="35" rx="6" fill="#569cd6" opacity="0.3" stroke="#569cd6" stroke-width="2"/>
+            <text x="295" y="103" fill="#569cd6" text-anchor="middle" font-size="12" font-weight="bold">mu</text>
+            <rect x="260" y="200" width="70" height="35" rx="6" fill="#ff8c42" opacity="0.3" stroke="#ff8c42" stroke-width="2"/>
+            <text x="295" y="223" fill="#ff8c42" text-anchor="middle" font-size="12" font-weight="bold">log var</text>
+            <line x1="220" y1="140" x2="260" y2="97" stroke="#569cd6" stroke-width="1.5" marker-end="url(#arrVAE)"/>
+            <line x1="220" y1="180" x2="260" y2="217" stroke="#ff8c42" stroke-width="1.5" marker-end="url(#arrVAE)"/>
+            <!-- Sampling box -->
+            <rect x="370" y="120" width="100" height="70" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="420" y="148" fill="#00ff88" text-anchor="middle" font-size="11" font-weight="bold">Sampling</text>
+            <text x="420" y="168" fill="#aaa" text-anchor="middle" font-size="9">z = mu + sig * eps</text>
+            <line x1="330" y1="97" x2="370" y2="140" stroke="#569cd6" stroke-width="1.5" marker-end="url(#arrVAE)"/>
+            <line x1="330" y1="217" x2="370" y2="170" stroke="#ff8c42" stroke-width="1.5" marker-end="url(#arrVAE)"/>
+            <!-- Epsilon -->
+            <rect x="385" y="225" width="65" height="30" rx="5" fill="#1a1a2e" stroke="#aaa" stroke-width="1" stroke-dasharray="3"/>
+            <text x="417" y="245" fill="#aaa" text-anchor="middle" font-size="10">eps ~ N(0,I)</text>
+            <line x1="417" y1="225" x2="417" y2="190" stroke="#aaa" stroke-width="1" stroke-dasharray="3"/>
+            <!-- z -->
+            <rect x="500" y="130" width="50" height="50" rx="8" fill="#569cd6" opacity="0.2" stroke="#569cd6" stroke-width="2"/>
+            <text x="525" y="160" fill="#569cd6" text-anchor="middle" font-size="13" font-weight="bold">z</text>
+            <line x1="470" y1="155" x2="500" y2="155" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrVAE)"/>
+            <!-- Decoder -->
+            <rect x="580" y="110" width="100" height="100" rx="10" fill="#1a1a2e" stroke="#00cc66" stroke-width="2"/>
+            <text x="630" y="150" fill="#00cc66" text-anchor="middle" font-size="12" font-weight="bold">Decodeur</text>
+            <text x="630" y="170" fill="#aaa" text-anchor="middle" font-size="10">p(x|z)</text>
+            <line x1="550" y1="155" x2="580" y2="155" stroke="#aaa" stroke-width="1.5" marker-end="url(#arrVAE)"/>
+            <!-- Output -->
+            <rect x="710" y="130" width="30" height="55" rx="5" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="725" y="162" fill="#00ff88" text-anchor="middle" font-size="10" font-weight="bold">x'</text>
+            <line x1="680" y1="160" x2="710" y2="160" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrVAE)"/>
+            <!-- Loss labels -->
+            <rect x="170" y="280" width="180" height="40" rx="8" fill="rgba(255,68,68,0.1)" stroke="#ff4444" stroke-width="1"/>
+            <text x="260" y="305" fill="#ff4444" text-anchor="middle" font-size="11">KL(q(z|x) || N(0,I))</text>
+            <path d="M 260 280 L 260 235 L 295 235" stroke="#ff4444" stroke-width="1" fill="none" stroke-dasharray="3"/>
+            <rect x="460" y="280" width="180" height="40" rx="8" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1"/>
+            <text x="550" y="305" fill="#00ff88" text-anchor="middle" font-size="11">Reconstruction Loss</text>
+            <path d="M 550 280 L 550 250 L 630 210" stroke="#00ff88" stroke-width="1" fill="none" stroke-dasharray="3"/>
+            <!-- Total loss -->
+            <text x="400" y="350" fill="#ffab76" text-anchor="middle" font-size="12" font-weight="bold">L_VAE = Reconstruction + beta * KL</text>
+        </svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================ -->
+    <h2>7. La Loss du VAE</h2>
+
+    <h3>7.1 ELBO - Evidence Lower BOund</h3>
+
+    <p>La loss du VAE est derivee de la maximisation de l'<strong>ELBO</strong> (Evidence Lower Bound), qui est une borne inferieure de la log-vraisemblance des donnees :</p>
+
+    <div class="concept-box">
+        <h4>Derivation de la loss VAE</h4>
+        <p>On veut maximiser log p(x), la log-vraisemblance des donnees. En utilisant l'inference variationnelle :</p>
+        <p style="margin: 10px 0;"><strong>log p(x) >= E_q[log p(x|z)] - KL(q(z|x) || p(z)) = ELBO</strong></p>
+        <p>La loss a minimiser est donc :</p>
+        <p style="text-align:center; font-size:1.15rem; margin:15px 0;">
+            <strong>L_VAE = -E_q[log p(x|z)] + KL(q(z|x) || p(z))</strong>
+        </p>
+    </div>
+
+    <h3>7.2 Les deux termes de la loss</h3>
+
+    <div class="step-box"><strong>Terme 1 - Loss de reconstruction :</strong> -E_q[log p(x|z)]<br>
+        C'est l'erreur de reconstruction entre l'entree et la sortie. Pour des images, on utilise typiquement MSE ou BCE. Ce terme pousse le VAE a bien reconstruire les donnees.</div>
+
+    <div class="step-box"><strong>Terme 2 - Divergence KL :</strong> KL(q(z|x) || p(z))<br>
+        Mesure la "distance" entre la distribution apprise q(z|x) = N(mu, sigma^2) et le prior p(z) = N(0, I). Ce terme regularise l'espace latent pour le garder structure et continu.</div>
+
+    <h3>7.3 Formule fermee de la KL divergence</h3>
+
+    <p>Quand q(z|x) est gaussienne et le prior p(z) = N(0, I), la KL divergence a une formule fermee elegante :</p>
+
+    <div class="concept-box blue">
+        <p style="text-align:center; font-size:1.1rem; margin:10px 0;">
+            <strong>KL = -0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)</strong>
+        </p>
+        <p>En utilisant log_var = log(sigma^2) :</p>
+        <p style="text-align:center; font-size:1.1rem; margin:10px 0;">
+            <strong>KL = -0.5 * sum(1 + log_var - mu^2 - exp(log_var))</strong>
+        </p>
+    </div>
+
+    <h3>7.4 Le Reparameterization Trick</h3>
+
+    <div class="definition">
+        Le <strong>reparameterization trick</strong> est une astuce mathematique qui rend l'echantillonnage stochastique differentiable. Au lieu d'echantillonner directement z ~ N(mu, sigma^2), on ecrit :<br>
+        <strong>z = mu + sigma * epsilon</strong>, ou <strong>epsilon ~ N(0, I)</strong>.<br>
+        L'aleatoire est "externalise" dans epsilon, et les operations sur mu et sigma restent differentiables, permettant la retropropagation.
+    </div>
+
+    <div class="prof-note">
+        Sans le reparameterization trick, on ne pourrait pas retropropager le gradient a travers l'operation d'echantillonnage. C'est l'innovation technique cle qui rend le VAE entrainable par descente de gradient standard. L'astuce consiste a deplacer la source d'aleatoire hors du chemin de calcul.
+    </div>
+
+    <h3>7.5 Le compromis reconstruction vs regularisation</h3>
+
+    <div class="concept-box">
+        <h4>Balance entre les deux termes</h4>
+        <ul>
+            <li><strong>Si la reconstruction domine :</strong> Le VAE produit des reconstructions nettes mais l'espace latent est desorganise (comme un AE classique). La generation est mauvaise.</li>
+            <li><strong>Si la KL domine :</strong> L'espace latent est parfaitement gaussien mais les reconstructions sont floues. Le VAE "oublie" les details.</li>
+            <li><strong>beta-VAE :</strong> Introduit un facteur beta devant la KL : L = Recon + beta * KL. beta > 1 encourage un espace latent plus disentangled (chaque dimension controle un facteur de variation independant).</li>
+        </ul>
+    </div>
+
+    <div class="warning">
+        Les images generees par les VAE sont souvent plus floues que celles des GANs. Cela est du a la nature de la loss de reconstruction (MSE tend a moyenner les possibilites) et a la regularisation KL. Des techniques comme les VAE-GAN combinent les deux approches pour obtenir des images nettes avec un espace latent structure.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================ -->
+    <h2>8. Implementation VAE Complete en PyTorch</h2>
+
+    <h3>8.1 Architecture du VAE</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F
+
+<span class="keyword">class</span> <span class="function">VAE</span>(nn.Module):
+    <span class="string">"""Variational Autoencoder pour MNIST"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_dim=<span class="number">784</span>, hidden_dim=<span class="number">400</span>, latent_dim=<span class="number">20</span>):
+        <span class="function">super</span>().__init__()
+
+        <span class="comment"># ---- Encodeur ----</span>
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+
+        <span class="comment"># Deux sorties : mu et log_var</span>
+        self.fc_mu = nn.Linear(hidden_dim, latent_dim)
+        self.fc_logvar = nn.Linear(hidden_dim, latent_dim)
+
+        <span class="comment"># ---- Decodeur ----</span>
+        self.fc3 = nn.Linear(latent_dim, hidden_dim)
+        self.fc4 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc5 = nn.Linear(hidden_dim, input_dim)
+
+    <span class="keyword">def</span> <span class="function">encode</span>(self, x):
+        <span class="string">"""Encoder x vers (mu, log_var)"""</span>
+        h = F.relu(self.fc1(x))
+        h = F.relu(self.fc2(h))
+        mu = self.fc_mu(h)
+        log_var = self.fc_logvar(h)
+        <span class="keyword">return</span> mu, log_var
+
+    <span class="keyword">def</span> <span class="function">reparameterize</span>(self, mu, log_var):
+        <span class="string">"""Reparameterization trick : z = mu + sigma * epsilon"""</span>
+        std = torch.exp(<span class="number">0.5</span> * log_var)  <span class="comment"># sigma = exp(0.5 * log(sigma^2))</span>
+        eps = torch.randn_like(std)      <span class="comment"># epsilon ~ N(0, I)</span>
+        z = mu + std * eps
+        <span class="keyword">return</span> z
+
+    <span class="keyword">def</span> <span class="function">decode</span>(self, z):
+        <span class="string">"""Decoder z vers x_hat"""</span>
+        h = F.relu(self.fc3(z))
+        h = F.relu(self.fc4(h))
+        x_hat = torch.sigmoid(self.fc5(h))
+        <span class="keyword">return</span> x_hat
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        mu, log_var = self.encode(x)
+        z = self.reparameterize(mu, log_var)
+        x_hat = self.decode(z)
+        <span class="keyword">return</span> x_hat, mu, log_var
+
+<span class="comment"># Test de l'architecture</span>
+vae = <span class="function">VAE</span>(input_dim=<span class="number">784</span>, hidden_dim=<span class="number">400</span>, latent_dim=<span class="number">20</span>)
+x = torch.randn(<span class="number">32</span>, <span class="number">784</span>)
+x_hat, mu, log_var = vae(x)
+<span class="function">print</span>(f<span class="string">"Entree: {x.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"mu: {mu.shape}, log_var: {log_var.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Reconstruction: {x_hat.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Parametres: {sum(p.numel() for p in vae.parameters()):,}"</span>)</div>
+
+    <div class="output-block">Entree: torch.Size([32, 784])
+mu: torch.Size([32, 20]), log_var: torch.Size([32, 20])
+Reconstruction: torch.Size([32, 784])
+Parametres: 1,034,264</div>
+
+    <h3>8.2 Fonction de loss du VAE</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">vae_loss</span>(x, x_hat, mu, log_var, beta=<span class="number">1.0</span>):
+    <span class="string">"""
+    Loss du VAE = Reconstruction + beta * KL Divergence
+
+    Args:
+        x: images originales (batch, 784)
+        x_hat: images reconstruites (batch, 784)
+        mu: moyenne de q(z|x) (batch, latent_dim)
+        log_var: log-variance de q(z|x) (batch, latent_dim)
+        beta: coefficient pour la KL (1.0 = VAE standard, >1 = beta-VAE)
+    """</span>
+    <span class="comment"># Loss de reconstruction (BCE pour images binaires)</span>
+    recon_loss = F.binary_cross_entropy(x_hat, x, reduction=<span class="string">'sum'</span>)
+
+    <span class="comment"># KL Divergence : KL(N(mu, sigma^2) || N(0, I))</span>
+    <span class="comment"># = -0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)</span>
+    kl_loss = -<span class="number">0.5</span> * torch.sum(<span class="number">1</span> + log_var - mu.pow(<span class="number">2</span>) - log_var.exp())
+
+    <span class="comment"># Loss totale</span>
+    total_loss = recon_loss + beta * kl_loss
+
+    <span class="keyword">return</span> total_loss, recon_loss, kl_loss</div>
+
+    <h3>8.3 Boucle d'entrainement</h3>
+
+    <div class="code-block"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms
+
+<span class="comment"># Dataset</span>
+transform = transforms.ToTensor()
+train_data = datasets.MNIST(root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>,
+                            transform=transform, download=<span class="keyword">True</span>)
+train_loader = DataLoader(train_data, batch_size=<span class="number">128</span>, shuffle=<span class="keyword">True</span>)
+
+<span class="comment"># Modele</span>
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+vae = <span class="function">VAE</span>(latent_dim=<span class="number">20</span>).to(device)
+optimizer = torch.optim.Adam(vae.parameters(), lr=<span class="number">1e-3</span>)
+
+<span class="comment"># Entrainement</span>
+NUM_EPOCHS = <span class="number">30</span>
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(NUM_EPOCHS):
+    vae.train()
+    total_loss = <span class="number">0</span>
+    total_recon = <span class="number">0</span>
+    total_kl = <span class="number">0</span>
+
+    <span class="keyword">for</span> imgs, _ <span class="keyword">in</span> train_loader:
+        imgs = imgs.view(-<span class="number">1</span>, <span class="number">784</span>).to(device)
+
+        <span class="comment"># Forward</span>
+        x_hat, mu, log_var = vae(imgs)
+        loss, recon, kl = <span class="function">vae_loss</span>(imgs, x_hat, mu, log_var)
+
+        <span class="comment"># Normaliser par la taille du batch</span>
+        loss = loss / imgs.size(<span class="number">0</span>)
+
+        <span class="comment"># Backward</span>
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+        total_recon += recon.item() / imgs.size(<span class="number">0</span>)
+        total_kl += kl.item() / imgs.size(<span class="number">0</span>)
+
+    n = len(train_loader)
+    <span class="function">print</span>(f<span class="string">"Epoch [{epoch+1}/{NUM_EPOCHS}] "
+          f"Loss: {total_loss/n:.2f} | "
+          f"Recon: {total_recon/n:.2f} | "
+          f"KL: {total_kl/n:.2f}"</span>)</div>
+
+    <div class="output-block">Epoch [1/30] Loss: 182.45 | Recon: 170.21 | KL: 12.24
+Epoch [5/30] Loss: 112.32 | Recon: 100.18 | KL: 12.14
+Epoch [15/30] Loss: 98.56 | Recon: 86.78 | KL: 11.78
+Epoch [30/30] Loss: 95.12 | Recon: 83.45 | KL: 11.67</div>
+
+    <h3>8.4 Generation et interpolation</h3>
+
+    <div class="code-block"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">import</span> torchvision.utils <span class="keyword">as</span> vutils
+
+<span class="keyword">def</span> <span class="function">generate_images</span>(vae, n_images=<span class="number">64</span>, latent_dim=<span class="number">20</span>):
+    <span class="string">"""Generer des images en echantillonnant z ~ N(0, I)"""</span>
+    vae.eval()
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="comment"># Echantillonner depuis le prior</span>
+        z = torch.randn(n_images, latent_dim).to(device)
+        generated = vae.decode(z)
+        generated = generated.view(-<span class="number">1</span>, <span class="number">1</span>, <span class="number">28</span>, <span class="number">28</span>)
+
+    grid = vutils.make_grid(generated, nrow=<span class="number">8</span>, padding=<span class="number">2</span>)
+    plt.figure(figsize=(<span class="number">10</span>, <span class="number">10</span>))
+    plt.imshow(grid.permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>).cpu().numpy(), cmap=<span class="string">'gray'</span>)
+    plt.title(<span class="string">'Images generees par le VAE'</span>)
+    plt.axis(<span class="string">'off'</span>)
+    plt.show()
+
+<span class="keyword">def</span> <span class="function">interpolate_vae</span>(vae, x1, x2, n_steps=<span class="number">10</span>):
+    <span class="string">"""Interpoler entre deux images dans l'espace latent"""</span>
+    vae.eval()
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="comment"># Encoder les deux images vers mu (pas d'echantillonnage)</span>
+        mu1, _ = vae.encode(x1.view(<span class="number">1</span>, -<span class="number">1</span>).to(device))
+        mu2, _ = vae.encode(x2.view(<span class="number">1</span>, -<span class="number">1</span>).to(device))
+
+        <span class="comment"># Interpolation lineaire dans l'espace latent</span>
+        interpolated = []
+        <span class="keyword">for</span> alpha <span class="keyword">in</span> torch.linspace(<span class="number">0</span>, <span class="number">1</span>, n_steps):
+            z = (<span class="number">1</span> - alpha) * mu1 + alpha * mu2
+            img = vae.decode(z)
+            interpolated.append(img.view(<span class="number">1</span>, <span class="number">28</span>, <span class="number">28</span>))
+
+        all_imgs = torch.cat(interpolated).unsqueeze(<span class="number">1</span>)
+        grid = vutils.make_grid(all_imgs, nrow=n_steps, padding=<span class="number">2</span>)
+
+    plt.figure(figsize=(<span class="number">15</span>, <span class="number">3</span>))
+    plt.imshow(grid.permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>).cpu().numpy(), cmap=<span class="string">'gray'</span>)
+    plt.title(<span class="string">'Interpolation dans l\'espace latent du VAE'</span>)
+    plt.axis(<span class="string">'off'</span>)
+    plt.show()
+
+<span class="comment"># Generer des images</span>
+<span class="function">generate_images</span>(vae, n_images=<span class="number">64</span>, latent_dim=<span class="number">20</span>)</div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================ -->
+    <h2>9. Applications des Autoencoders</h2>
+
+    <h3>9.1 Generation d'images</h3>
+
+    <p>Avec les VAE, on peut generer de nouvelles images en echantillonnant dans l'espace latent. Les images generees sont moins nettes que celles des GANs mais beneficient d'un espace latent structure et interpretable.</p>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff8c42;">VAE pour la generation</h4>
+            <p>Avantage : Espace latent continu et interpole bien</p>
+            <p>Inconvenient : Images legrement floues</p>
+            <p>Mesure : ELBO (borne sur la vraisemblance)</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">GAN pour la generation</h4>
+            <p>Avantage : Images tres nettes et realistes</p>
+            <p>Inconvenient : Mode collapse, espace latent non structure</p>
+            <p>Mesure : FID, IS (pas de vraisemblance)</p>
+        </div>
+    </div>
+
+    <h3>9.2 Interpolation dans l'espace latent</h3>
+
+    <p>L'une des applications les plus fascinantes des VAE est l'interpolation fluide entre des images. Grace a la regularisation KL, le deplacement continu dans l'espace latent produit des transitions visuellement coherentes :</p>
+
+    <div class="concept-box green">
+        <h4>Types d'interpolation</h4>
+        <ul>
+            <li><strong>Interpolation lineaire :</strong> z_interp = (1-t) * z1 + t * z2 pour t dans [0, 1]. Simple mais peut traverser des zones de basse probabilite.</li>
+            <li><strong>Interpolation spherique (slerp) :</strong> Interpole le long du grand cercle reliant z1 et z2 sur la sphere. Meilleur pour les distributions gaussiennes car reste dans les zones de haute probabilite.</li>
+        </ul>
+    </div>
+
+    <h3>9.3 Compression de donnees</h3>
+
+    <p>Un autoencoder peut servir de compresseur lossy : l'encodeur comprime les donnees en un vecteur latent compact, et le decodeur les reconstruit. Le ratio de compression est dim(x) / dim(z).</p>
+
+    <div class="metric-card">
+        <h4>Exemples de compression</h4>
+        <ul>
+            <li>Image MNIST 28x28 (784 pixels) -> z de 32 dimensions = <strong>compression 24.5x</strong></li>
+            <li>Image 128x128x3 (49152 pixels) -> z de 256 dimensions = <strong>compression 192x</strong></li>
+            <li>Spectre audio (16000 points) -> z de 64 dimensions = <strong>compression 250x</strong></li>
+        </ul>
+    </div>
+
+    <h3>9.4 Pre-entrainement non supervise</h3>
+
+    <p>L'encodeur d'un autoencoder pre-entraine peut servir d'extracteur de features pour une tache supervisee en aval. Cette approche est particulierement utile quand :</p>
+
+    <ul>
+        <li>On dispose de beaucoup de donnees non etiquetees mais peu de donnees etiquetees</li>
+        <li>On veut initialiser un reseau avec des representations significatives au lieu de poids aleatoires</li>
+        <li>On cherche des representations generiques transferables entre taches</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================ -->
+    <h2>10. Detection d'Anomalies avec Autoencoders</h2>
+
+    <h3>10.1 Le principe</h3>
+
+    <div class="definition">
+        La <strong>detection d'anomalies par autoencoder</strong> repose sur une idee simple : un autoencoder entraine sur des donnees normales reconstruira bien les donnees normales mais mal les donnees anormales (jamais vues pendant l'entrainement). L'<strong>erreur de reconstruction</strong> sert donc de score d'anomalie.
+    </div>
+
+    <div class="analogy">
+        <h4>Analogie : Le copiste</h4>
+        <p>Imaginez un copiste qui a passe sa vie a reproduire des paysages. Si on lui montre un nouveau paysage, il le reproduira fidelement car il a appris les "regles" des paysages. Mais si on lui montre un portrait, sa reproduction sera mauvaise car il n'a jamais appris a copier des visages. L'ecart entre l'original et la copie revele l'anomalie.</p>
+    </div>
+
+    <h3>10.2 Pipeline de detection</h3>
+
+    <div class="step-box"><strong>Etape 1 - Entrainement :</strong> Entrainer l'autoencoder uniquement sur des donnees normales.</div>
+    <div class="step-box"><strong>Etape 2 - Inference :</strong> Pour chaque nouvelle donnee, calculer l'erreur de reconstruction : score = ||x - AE(x)||^2.</div>
+    <div class="step-box"><strong>Etape 3 - Seuil :</strong> Definir un seuil tau (typiquement le percentile 95 ou 99 des erreurs sur les donnees d'entrainement).</div>
+    <div class="step-box"><strong>Etape 4 - Classification :</strong> Si score > tau, la donnee est classee comme anomalie.</div>
+
+    <h3>10.3 Implementation PyTorch complete</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="keyword">class</span> <span class="function">AnomalyDetectorAE</span>(nn.Module):
+    <span class="string">"""Autoencoder pour la detection d'anomalies"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_dim, latent_dim=<span class="number">16</span>):
+        <span class="function">super</span>().__init__()
+        self.encoder = nn.Sequential(
+            nn.Linear(input_dim, <span class="number">128</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">128</span>, <span class="number">64</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">64</span>, latent_dim),
+            nn.ReLU()
+        )
+        self.decoder = nn.Sequential(
+            nn.Linear(latent_dim, <span class="number">64</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">64</span>, <span class="number">128</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">128</span>, input_dim),
+            nn.Sigmoid()
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        z = self.encoder(x)
+        x_hat = self.decoder(z)
+        <span class="keyword">return</span> x_hat
+
+<span class="keyword">class</span> <span class="function">AnomalyDetector</span>:
+    <span class="string">"""Systeme complet de detection d'anomalies"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_dim, latent_dim=<span class="number">16</span>, threshold_percentile=<span class="number">95</span>):
+        self.model = <span class="function">AnomalyDetectorAE</span>(input_dim, latent_dim)
+        self.threshold = <span class="keyword">None</span>
+        self.threshold_percentile = threshold_percentile
+        self.device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+        self.model.to(self.device)
+
+    <span class="keyword">def</span> <span class="function">train</span>(self, normal_data, epochs=<span class="number">50</span>, lr=<span class="number">1e-3</span>):
+        <span class="string">"""Entrainer sur les donnees normales uniquement"""</span>
+        self.model.train()
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
+        criterion = nn.MSELoss(reduction=<span class="string">'none'</span>)
+
+        <span class="keyword">for</span> epoch <span class="keyword">in</span> range(epochs):
+            x = normal_data.to(self.device)
+            x_hat = self.model(x)
+            loss = criterion(x_hat, x).mean()
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">10</span> == <span class="number">0</span>:
+                <span class="function">print</span>(f<span class="string">"Epoch {epoch+1}/{epochs}, Loss: {loss.item():.6f}"</span>)
+
+        <span class="comment"># Calculer le seuil sur les donnees d'entrainement</span>
+        self._compute_threshold(normal_data)
+
+    <span class="keyword">def</span> <span class="function">_compute_threshold</span>(self, normal_data):
+        <span class="string">"""Calculer le seuil d'anomalie"""</span>
+        self.model.eval()
+        <span class="keyword">with</span> torch.no_grad():
+            x = normal_data.to(self.device)
+            x_hat = self.model(x)
+            <span class="comment"># Erreur par echantillon</span>
+            errors = ((x - x_hat) ** <span class="number">2</span>).mean(dim=<span class="number">1</span>).cpu().numpy()
+
+        self.threshold = np.percentile(errors, self.threshold_percentile)
+        <span class="function">print</span>(f<span class="string">"Seuil d'anomalie (percentile {self.threshold_percentile}): {self.threshold:.6f}"</span>)
+
+    <span class="keyword">def</span> <span class="function">predict</span>(self, data):
+        <span class="string">"""Detecter les anomalies. Retourne (is_anomaly, scores)"""</span>
+        self.model.eval()
+        <span class="keyword">with</span> torch.no_grad():
+            x = data.to(self.device)
+            x_hat = self.model(x)
+            scores = ((x - x_hat) ** <span class="number">2</span>).mean(dim=<span class="number">1</span>).cpu().numpy()
+
+        is_anomaly = scores > self.threshold
+        <span class="keyword">return</span> is_anomaly, scores
+
+<span class="comment"># Exemple d'utilisation</span>
+<span class="comment"># Donnees normales (chiffre 0 dans MNIST)</span>
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms
+train_data = datasets.MNIST(<span class="string">'./data'</span>, train=<span class="keyword">True</span>, transform=transforms.ToTensor(), download=<span class="keyword">True</span>)
+
+<span class="comment"># Extraire uniquement les 0 (donnees "normales")</span>
+normal_indices = (train_data.targets == <span class="number">0</span>).nonzero().squeeze()
+normal_imgs = train_data.data[normal_indices].float() / <span class="number">255.0</span>
+normal_imgs = normal_imgs.view(-<span class="number">1</span>, <span class="number">784</span>)
+
+<span class="comment"># Entrainer le detecteur</span>
+detector = <span class="function">AnomalyDetector</span>(input_dim=<span class="number">784</span>, latent_dim=<span class="number">16</span>, threshold_percentile=<span class="number">95</span>)
+detector.train(normal_imgs, epochs=<span class="number">50</span>)
+
+<span class="comment"># Tester sur des donnees mixtes (0 = normal, autres = anomalies)</span>
+test_data = datasets.MNIST(<span class="string">'./data'</span>, train=<span class="keyword">False</span>, transform=transforms.ToTensor())
+test_imgs = test_data.data.float().view(-<span class="number">1</span>, <span class="number">784</span>) / <span class="number">255.0</span>
+test_labels = test_data.targets
+
+is_anomaly, scores = detector.predict(test_imgs[:100])
+<span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">10</span>):
+    status = <span class="string">"ANOMALIE"</span> <span class="keyword">if</span> is_anomaly[i] <span class="keyword">else</span> <span class="string">"Normal"</span>
+    <span class="function">print</span>(f<span class="string">"Image {i} (chiffre={test_labels[i]}): score={scores[i]:.4f} -> {status}"</span>)</div>
+
+    <div class="output-block">Epoch 10/50, Loss: 0.012345
+Epoch 20/50, Loss: 0.008765
+Epoch 30/50, Loss: 0.006543
+Epoch 40/50, Loss: 0.005678
+Epoch 50/50, Loss: 0.005123
+Seuil d'anomalie (percentile 95): 0.009876
+Image 0 (chiffre=7): score=0.034521 -> ANOMALIE
+Image 1 (chiffre=2): score=0.028934 -> ANOMALIE
+Image 2 (chiffre=1): score=0.041256 -> ANOMALIE
+Image 3 (chiffre=0): score=0.003421 -> Normal
+Image 4 (chiffre=4): score=0.025678 -> ANOMALIE
+Image 5 (chiffre=1): score=0.038912 -> ANOMALIE
+Image 6 (chiffre=4): score=0.031245 -> ANOMALIE
+Image 7 (chiffre=9): score=0.029876 -> ANOMALIE
+Image 8 (chiffre=5): score=0.026543 -> ANOMALIE
+Image 9 (chiffre=9): score=0.033210 -> ANOMALIE</div>
+
+    <h3>10.4 Cas d'usage industriels</h3>
+
+    <div class="metric-card">
+        <h4>Applications de la detection d'anomalies par autoencoder</h4>
+        <ul>
+            <li><strong>Controle qualite :</strong> Detecter les defauts de fabrication sur les lignes de production (pieces defectueuses, rayures, deformations)</li>
+            <li><strong>Cybersecurite :</strong> Identifier les comportements reseau anormaux (intrusions, attaques DDoS, exfiltration de donnees)</li>
+            <li><strong>Sante :</strong> Detecter les anomalies dans les images medicales (tumeurs, lesions, arythmies cardiaques sur ECG)</li>
+            <li><strong>Finance :</strong> Detection de fraude sur les transactions bancaires</li>
+            <li><strong>IoT / Maintenance predictive :</strong> Detecter les pannes imminentes a partir des capteurs de machines industrielles</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        L'avantage majeur de la detection d'anomalies par autoencoder est qu'elle ne necessite que des donnees normales pour l'entrainement. C'est un apprentissage <strong>semi-supervise</strong> qui est tres pratique en industrie, ou les anomalies sont rares et couteuses a obtenir. Cependant, le choix du seuil et de la dimension latente reste critique et necessite un travail de validation soigneux.
+    </div>
+
+    <div class="concept-box green">
+        <h4>Resume : Points cles des Autoencoders et VAE</h4>
+        <ul>
+            <li>Les autoencoders apprennent des representations comprimees en reconstruisant leur entree a travers un goulot d'etranglement</li>
+            <li>L'espace latent capture les facteurs de variation les plus importants des donnees</li>
+            <li>Les denoising autoencoders apprennent des representations plus robustes grace a la corruption de l'entree</li>
+            <li>Les VAE structurent l'espace latent avec une regularisation gaussienne, permettant la generation</li>
+            <li>La loss du VAE combine reconstruction + KL divergence (ELBO)</li>
+            <li>Le reparameterization trick rend l'echantillonnage differentiable</li>
+            <li>La detection d'anomalies par autoencoder exploite l'erreur de reconstruction comme score d'anomalie</li>
+            <li>Les autoencoders sont utilises en compression, generation, debruitage, pre-entrainement et detection d'anomalies</li>
+        </ul>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_08_gan.html">&larr; Cours precedent : Reseaux Generatifs Adversariaux (GAN)</a>
+        <a href="dl_10_diffusion.html">Cours suivant : Modeles de Diffusion &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

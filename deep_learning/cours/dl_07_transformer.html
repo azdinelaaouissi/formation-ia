@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 07 - L'Architecture Transformer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 07 - L'Architecture Transformer</h1>
+    <p class="subtitle">Cours 7/12 - Self-attention, positional encoding et l'architecture qui a revolutionne l'IA</p>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================ -->
+    <h2>1. De la Sequence au Transformer</h2>
+
+    <p>Avant l'apparition des Transformers en 2017, les reseaux recurrents (RNN, LSTM, GRU) dominaient le traitement des sequences. Cependant, ces architectures souffraient de limitations fondamentales qui freinaient leur mise a l'echelle et leurs performances sur les longues sequences.</p>
+
+    <h3>1.1 Les limites des RNN</h3>
+
+    <div class="concept-box">
+        <h4>Problemes fondamentaux des architectures recurrentes</h4>
+        <ul>
+            <li><strong>Traitement sequentiel :</strong> Chaque token doit attendre le traitement du precedent, rendant la parallelisation impossible pendant l'entrainement.</li>
+            <li><strong>Vanishing/exploding gradients :</strong> Malgre les ameliorations LSTM/GRU, les dependances a tres longue portee restent difficiles a capturer.</li>
+            <li><strong>Goulet d'etranglement :</strong> Dans les modeles seq2seq, toute l'information de la sequence source doit etre comprimee dans un seul vecteur de contexte.</li>
+            <li><strong>Temps d'entrainement :</strong> La nature sequentielle empeche d'exploiter pleinement les GPU modernes concus pour le calcul parallele.</li>
+        </ul>
+    </div>
+
+    <h3>1.2 L'article fondateur</h3>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2017</span>
+        <div>
+            <strong>"Attention Is All You Need"</strong> - Vaswani et al. (Google Brain / Google Research). Cet article propose une architecture basee <em>uniquement</em> sur des mecanismes d'attention, eliminant completement la recurrence. Le Transformer est ne.
+        </div>
+    </div>
+
+    <div class="prof-note">
+        Le titre de l'article est volontairement provocateur : "L'Attention est tout ce dont vous avez besoin". Il affirme que la recurrence n'est pas necessaire et que l'attention seule suffit pour modeliser les dependances sequentielles. Cette affirmation s'est revelee prophettique : aujourd'hui, quasiment tous les modeles de pointe (GPT, BERT, T5, LLaMA) sont bases sur le Transformer.
+    </div>
+
+    <h3>1.3 Pourquoi le Transformer a tout change</h3>
+
+    <table>
+        <tr><th>Critere</th><th>RNN / LSTM</th><th>Transformer</th></tr>
+        <tr><td>Parallelisation</td><td>Impossible (sequentiel)</td><td>Totale (attention sur toute la sequence)</td></tr>
+        <tr><td>Complexite par couche</td><td>O(n) operations sequentielles</td><td>O(1) operations sequentielles</td></tr>
+        <tr><td>Longueur max des dependances</td><td>O(n) chemins a traverser</td><td>O(1) connexion directe</td></tr>
+        <tr><td>Complexite computationnelle</td><td>O(n * d^2)</td><td>O(n^2 * d)</td></tr>
+        <tr><td>Scalabilite GPU</td><td>Faible</td><td>Excellente</td></tr>
+    </table>
+
+    <div class="warning">
+        La complexite O(n^2) du Transformer par rapport a la longueur de la sequence est son talon d'Achille. Pour des sequences tres longues (n > 10 000), des variantes comme Longformer, Linformer ou Flash Attention ont ete developpees.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================ -->
+    <h2>2. Le Mecanisme d'Attention</h2>
+
+    <h3>2.1 Intuition : Query, Key, Value</h3>
+
+    <div class="definition">
+        Le <strong>mecanisme d'attention</strong> permet a chaque element d'une sequence d'examiner tous les autres elements et de decider lesquels sont les plus pertinents pour sa propre representation. Il fonctionne via trois composantes : la Query (question), la Key (cle) et la Value (valeur).
+    </div>
+
+    <div class="analogy">
+        <h4>Analogie : La Bibliotheque</h4>
+        <p>Imaginez que vous etes dans une bibliotheque a la recherche d'informations sur un sujet precis :</p>
+        <ul>
+            <li><strong>Query (Q)</strong> = Votre question : "Je cherche des informations sur les reseaux de neurones"</li>
+            <li><strong>Key (K)</strong> = Les titres des livres sur les etageres. Vous les parcourez pour trouver ceux qui correspondent a votre question.</li>
+            <li><strong>Value (V)</strong> = Le contenu des livres. Une fois que vous avez identifie les livres pertinents (via les titres/cles), vous lisez leur contenu (valeurs).</li>
+        </ul>
+        <p>Le score d'attention = a quel point le titre (Key) correspond a votre question (Query). Plus le score est eleve, plus vous accordez d'importance au contenu (Value) de ce livre.</p>
+    </div>
+
+    <h3>2.2 Self-Attention vs Cross-Attention</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff8c42;">Self-Attention</h4>
+            <p>Q, K, V proviennent de la <strong>meme</strong> sequence. Chaque mot regarde tous les autres mots de la meme phrase.</p>
+            <p><em>Utilise dans l'encodeur et le decodeur</em></p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Cross-Attention</h4>
+            <p>Q provient du <strong>decodeur</strong>, K et V proviennent de l'<strong>encodeur</strong>. Le decodeur interroge la representation de la source.</p>
+            <p><em>Utilise dans le decodeur uniquement</em></p>
+        </div>
+    </div>
+
+    <h3>2.3 Schema conceptuel de l'attention</h3>
+
+    <div class="svg-container">
+        <svg width="700" height="320" viewBox="0 0 700 320">
+            <!-- Input tokens -->
+            <rect x="50" y="250" width="80" height="40" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="90" y="275" fill="#e0e0e0" text-anchor="middle" font-size="13">Token 1</text>
+            <rect x="180" y="250" width="80" height="40" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="220" y="275" fill="#e0e0e0" text-anchor="middle" font-size="13">Token 2</text>
+            <rect x="310" y="250" width="80" height="40" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="350" y="275" fill="#e0e0e0" text-anchor="middle" font-size="13">Token 3</text>
+            <!-- Q K V boxes -->
+            <rect x="430" y="40" width="70" height="35" rx="6" fill="#ff6b35" opacity="0.8"/>
+            <text x="465" y="63" fill="#fff" text-anchor="middle" font-size="13" font-weight="bold">Query</text>
+            <rect x="520" y="40" width="70" height="35" rx="6" fill="#569cd6" opacity="0.8"/>
+            <text x="555" y="63" fill="#fff" text-anchor="middle" font-size="13" font-weight="bold">Key</text>
+            <rect x="610" y="40" width="70" height="35" rx="6" fill="#00cc66" opacity="0.8"/>
+            <text x="645" y="63" fill="#fff" text-anchor="middle" font-size="13" font-weight="bold">Value</text>
+            <!-- Attention block -->
+            <rect x="430" y="100" width="250" height="50" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="555" y="130" fill="#ff8c42" text-anchor="middle" font-size="14" font-weight="bold">Attention(Q, K, V)</text>
+            <!-- Arrows from QKV to attention -->
+            <line x1="465" y1="75" x2="500" y2="100" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="555" y1="75" x2="555" y2="100" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="645" y1="75" x2="610" y2="100" stroke="#00cc66" stroke-width="2" marker-end="url(#arrow)"/>
+            <!-- Output -->
+            <rect x="480" y="180" width="150" height="40" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="555" y="205" fill="#00ff88" text-anchor="middle" font-size="13">Sortie Attention</text>
+            <line x1="555" y1="150" x2="555" y2="180" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow)"/>
+            <!-- Arrows from tokens to QKV -->
+            <path d="M 130 250 Q 200 150 465 75" stroke="#ff6b35" stroke-width="1.5" fill="none" stroke-dasharray="4,4"/>
+            <path d="M 220 250 Q 350 120 555 75" stroke="#569cd6" stroke-width="1.5" fill="none" stroke-dasharray="4,4"/>
+            <path d="M 350 250 Q 450 140 645 75" stroke="#00cc66" stroke-width="1.5" fill="none" stroke-dasharray="4,4"/>
+            <!-- Labels -->
+            <text x="90" y="310" fill="#aaa" text-anchor="middle" font-size="11">Projection W_Q</text>
+            <text x="220" y="310" fill="#aaa" text-anchor="middle" font-size="11">Projection W_K</text>
+            <text x="350" y="310" fill="#aaa" text-anchor="middle" font-size="11">Projection W_V</text>
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================ -->
+    <h2>3. Scaled Dot-Product Attention</h2>
+
+    <h3>3.1 La formule fondamentale</h3>
+
+    <div class="concept-box">
+        <h4>Formule de l'attention par produit scalaire mis a l'echelle</h4>
+        <p style="text-align:center; font-size:1.3rem; margin:15px 0;">
+            <strong>Attention(Q, K, V) = softmax( Q * K^T / sqrt(d_k) ) * V</strong>
+        </p>
+        <p>Ou :</p>
+        <ul>
+            <li><strong>Q</strong> (Query) : matrice de taille (n, d_k) - les "questions" de chaque token</li>
+            <li><strong>K</strong> (Key) : matrice de taille (m, d_k) - les "cles" de chaque token</li>
+            <li><strong>V</strong> (Value) : matrice de taille (m, d_v) - les "valeurs" de chaque token</li>
+            <li><strong>d_k</strong> : dimension des cles (et des queries)</li>
+            <li><strong>sqrt(d_k)</strong> : facteur de mise a l'echelle</li>
+        </ul>
+    </div>
+
+    <h3>3.2 Pourquoi le facteur sqrt(d_k) ?</h3>
+
+    <div class="definition">
+        Le <strong>scaling factor</strong> sqrt(d_k) empeche les produits scalaires de devenir trop grands en haute dimension. Sans ce facteur, les valeurs du softmax seraient concentrees sur un seul element (softmax sature), produisant des gradients quasi-nuls.
+    </div>
+
+    <p>Demonstration intuitive : si Q et K ont des composantes independantes de moyenne 0 et variance 1, alors le produit scalaire Q * K^T a une variance de d_k. En divisant par sqrt(d_k), on ramene la variance a 1, maintenant les valeurs dans la zone de sensibilite du softmax.</p>
+
+    <div class="effect">
+        Sans le scaling : les gradients deviennent negligeables, l'entrainement stagne. Avec le scaling : la distribution softmax reste douce et informative, les gradients circulent correctement.
+    </div>
+
+    <h3>3.3 Etapes du calcul</h3>
+
+    <div class="step-box"><strong>Etape 1 :</strong> Calculer les scores d'attention bruts : S = Q * K^T (matrice n x m)</div>
+    <div class="step-box"><strong>Etape 2 :</strong> Mettre a l'echelle : S_scaled = S / sqrt(d_k)</div>
+    <div class="step-box"><strong>Etape 3 :</strong> Appliquer un masque optionnel (pour le decodeur) : S_masked</div>
+    <div class="step-box"><strong>Etape 4 :</strong> Normaliser avec softmax : A = softmax(S_scaled) (chaque ligne somme a 1)</div>
+    <div class="step-box"><strong>Etape 5 :</strong> Calculer la moyenne ponderee des valeurs : Output = A * V</div>
+
+    <h3>3.4 Diagramme Scaled Dot-Product Attention</h3>
+
+    <div class="svg-container">
+        <svg width="300" height="420" viewBox="0 0 300 420">
+            <!-- Q and K inputs -->
+            <rect x="30" y="10" width="60" height="35" rx="6" fill="#ff6b35"/>
+            <text x="60" y="33" fill="#fff" text-anchor="middle" font-size="14" font-weight="bold">Q</text>
+            <rect x="210" y="10" width="60" height="35" rx="6" fill="#569cd6"/>
+            <text x="240" y="33" fill="#fff" text-anchor="middle" font-size="14" font-weight="bold">K^T</text>
+            <!-- MatMul -->
+            <rect x="90" y="70" width="120" height="35" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="150" y="93" fill="#ff8c42" text-anchor="middle" font-size="13">MatMul</text>
+            <line x1="60" y1="45" x2="120" y2="70" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="240" y1="45" x2="180" y2="70" stroke="#569cd6" stroke-width="2"/>
+            <!-- Scale -->
+            <rect x="90" y="130" width="120" height="35" rx="6" fill="#1a1a2e" stroke="#ffab76" stroke-width="2"/>
+            <text x="150" y="153" fill="#ffab76" text-anchor="middle" font-size="13">/ sqrt(d_k)</text>
+            <line x1="150" y1="105" x2="150" y2="130" stroke="#aaa" stroke-width="2"/>
+            <!-- Mask (optional) -->
+            <rect x="90" y="190" width="120" height="35" rx="6" fill="#1a1a2e" stroke="#ff4444" stroke-width="1" stroke-dasharray="4"/>
+            <text x="150" y="213" fill="#ff4444" text-anchor="middle" font-size="12">Mask (opt.)</text>
+            <line x1="150" y1="165" x2="150" y2="190" stroke="#aaa" stroke-width="2"/>
+            <!-- Softmax -->
+            <rect x="90" y="250" width="120" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="150" y="273" fill="#00ff88" text-anchor="middle" font-size="13">Softmax</text>
+            <line x1="150" y1="225" x2="150" y2="250" stroke="#aaa" stroke-width="2"/>
+            <!-- V input -->
+            <rect x="230" y="290" width="60" height="35" rx="6" fill="#00cc66"/>
+            <text x="260" y="313" fill="#fff" text-anchor="middle" font-size="14" font-weight="bold">V</text>
+            <!-- MatMul 2 -->
+            <rect x="90" y="340" width="120" height="35" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="150" y="363" fill="#ff8c42" text-anchor="middle" font-size="13">MatMul</text>
+            <line x1="150" y1="285" x2="150" y2="340" stroke="#aaa" stroke-width="2"/>
+            <line x1="240" y1="325" x2="180" y2="340" stroke="#00cc66" stroke-width="2"/>
+            <!-- Output -->
+            <rect x="100" y="390" width="100" height="25" rx="5" fill="#00ff88" opacity="0.3" stroke="#00ff88"/>
+            <text x="150" y="407" fill="#00ff88" text-anchor="middle" font-size="12" font-weight="bold">Sortie</text>
+            <line x1="150" y1="375" x2="150" y2="390" stroke="#00ff88" stroke-width="2"/>
+        </svg>
+    </div>
+
+    <h3>3.5 Implementation PyTorch</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F
+
+<span class="keyword">def</span> <span class="function">scaled_dot_product_attention</span>(Q, K, V, mask=<span class="keyword">None</span>):
+    <span class="string">"""
+    Q: (batch, n_heads, seq_len, d_k)
+    K: (batch, n_heads, seq_len, d_k)
+    V: (batch, n_heads, seq_len, d_v)
+    """</span>
+    d_k = Q.size(-<span class="number">1</span>)
+
+    <span class="comment"># Etape 1-2 : scores = Q * K^T / sqrt(d_k)</span>
+    scores = torch.matmul(Q, K.transpose(-<span class="number">2</span>, -<span class="number">1</span>)) / (d_k ** <span class="number">0.5</span>)
+
+    <span class="comment"># Etape 3 : masque optionnel</span>
+    <span class="keyword">if</span> mask <span class="keyword">is not None</span>:
+        scores = scores.masked_fill(mask == <span class="number">0</span>, float(<span class="string">'-inf'</span>))
+
+    <span class="comment"># Etape 4 : normalisation softmax</span>
+    attention_weights = F.softmax(scores, dim=-<span class="number">1</span>)
+
+    <span class="comment"># Etape 5 : moyenne ponderee des valeurs</span>
+    output = torch.matmul(attention_weights, V)
+
+    <span class="keyword">return</span> output, attention_weights
+
+<span class="comment"># Test avec des dimensions realistes</span>
+batch_size, n_heads, seq_len, d_k = <span class="number">2</span>, <span class="number">8</span>, <span class="number">10</span>, <span class="number">64</span>
+Q = torch.randn(batch_size, n_heads, seq_len, d_k)
+K = torch.randn(batch_size, n_heads, seq_len, d_k)
+V = torch.randn(batch_size, n_heads, seq_len, d_k)
+
+output, weights = <span class="function">scaled_dot_product_attention</span>(Q, K, V)
+<span class="function">print</span>(f<span class="string">"Sortie: {output.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Poids d'attention: {weights.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Somme des poids (doit etre 1.0): {weights[0, 0, 0].sum().item():.4f}"</span>)</div>
+
+    <div class="output-block">Sortie: torch.Size([2, 8, 10, 64])
+Poids d'attention: torch.Size([2, 8, 10, 10])
+Somme des poids (doit etre 1.0): 1.0000</div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================ -->
+    <h2>4. Multi-Head Attention</h2>
+
+    <h3>4.1 Pourquoi plusieurs tetes ?</h3>
+
+    <p>Une seule tete d'attention apprend une seule "perspective" sur les relations entre tokens. En utilisant plusieurs tetes en parallele, le modele peut capturer simultanement differents types de relations :</p>
+
+    <div class="concept-box green">
+        <ul>
+            <li><strong>Tete 1</strong> pourrait apprendre les relations syntaxiques (sujet-verbe)</li>
+            <li><strong>Tete 2</strong> pourrait capturer les co-references (pronoms et antecedents)</li>
+            <li><strong>Tete 3</strong> pourrait se concentrer sur la proximite locale</li>
+            <li><strong>Tete 4</strong> pourrait apprendre les dependances semantiques longue distance</li>
+        </ul>
+        <p style="margin-top:10px;">Chaque tete opere dans un sous-espace de dimension d_k = d_model / h, ou h est le nombre de tetes.</p>
+    </div>
+
+    <h3>4.2 Formule du Multi-Head Attention</h3>
+
+    <div class="concept-box">
+        <p style="text-align:center; font-size:1.1rem; margin:10px 0;">
+            <strong>MultiHead(Q, K, V) = Concat(head_1, ..., head_h) * W_O</strong>
+        </p>
+        <p style="text-align:center; margin:10px 0;">
+            ou <strong>head_i = Attention(Q * W_Q_i, K * W_K_i, V * W_V_i)</strong>
+        </p>
+        <p>Avec les matrices de projection :</p>
+        <ul>
+            <li>W_Q_i de taille (d_model, d_k)</li>
+            <li>W_K_i de taille (d_model, d_k)</li>
+            <li>W_V_i de taille (d_model, d_v)</li>
+            <li>W_O de taille (h * d_v, d_model)</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Dans l'article original, d_model = 512 et h = 8 tetes, donc d_k = d_v = 512 / 8 = 64. Le cout total est similaire a une seule tete d'attention avec la dimension complete, car chaque tete opere dans un espace reduit.
+    </div>
+
+    <h3>4.3 Diagramme Multi-Head Attention</h3>
+
+    <div class="svg-container">
+        <svg width="650" height="380" viewBox="0 0 650 380">
+            <!-- Input -->
+            <rect x="250" y="330" width="150" height="35" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="325" y="353" fill="#ff6b35" text-anchor="middle" font-size="13" font-weight="bold">Entree (d_model)</text>
+            <!-- Linear projections -->
+            <rect x="50" y="250" width="100" height="30" rx="6" fill="#ff6b35" opacity="0.7"/>
+            <text x="100" y="270" fill="#fff" text-anchor="middle" font-size="11">Proj. Q</text>
+            <rect x="200" y="250" width="100" height="30" rx="6" fill="#569cd6" opacity="0.7"/>
+            <text x="250" y="270" fill="#fff" text-anchor="middle" font-size="11">Proj. K</text>
+            <rect x="350" y="250" width="100" height="30" rx="6" fill="#00cc66" opacity="0.7"/>
+            <text x="400" y="270" fill="#fff" text-anchor="middle" font-size="11">Proj. V</text>
+            <!-- Arrows from input to projections -->
+            <line x1="280" y1="330" x2="100" y2="280" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="325" y1="330" x2="250" y2="280" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="370" y1="330" x2="400" y2="280" stroke="#aaa" stroke-width="1.5"/>
+            <!-- Attention heads -->
+            <rect x="30" y="160" width="90" height="35" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="75" y="182" fill="#ff8c42" text-anchor="middle" font-size="11">Head 1</text>
+            <rect x="140" y="160" width="90" height="35" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="185" y="182" fill="#ff8c42" text-anchor="middle" font-size="11">Head 2</text>
+            <rect x="250" y="160" width="90" height="35" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="295" y="182" fill="#ff8c42" text-anchor="middle" font-size="11">Head ...</text>
+            <rect x="360" y="160" width="90" height="35" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="405" y="182" fill="#ff8c42" text-anchor="middle" font-size="11">Head h</text>
+            <!-- Arrows from projections to heads -->
+            <line x1="100" y1="250" x2="75" y2="195" stroke="#ff6b35" stroke-width="1.5"/>
+            <line x1="250" y1="250" x2="185" y2="195" stroke="#569cd6" stroke-width="1.5"/>
+            <line x1="250" y1="250" x2="295" y2="195" stroke="#569cd6" stroke-width="1.5"/>
+            <line x1="400" y1="250" x2="405" y2="195" stroke="#00cc66" stroke-width="1.5"/>
+            <!-- Concat -->
+            <rect x="130" y="95" width="230" height="35" rx="8" fill="#1a1a2e" stroke="#ffab76" stroke-width="2"/>
+            <text x="245" y="118" fill="#ffab76" text-anchor="middle" font-size="13">Concat</text>
+            <line x1="75" y1="160" x2="200" y2="130" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="185" y1="160" x2="220" y2="130" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="295" y1="160" x2="270" y2="130" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="405" y1="160" x2="310" y2="130" stroke="#aaa" stroke-width="1.5"/>
+            <!-- Linear W_O -->
+            <rect x="170" y="35" width="150" height="35" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="245" y="58" fill="#00ff88" text-anchor="middle" font-size="13">Lineaire W_O</text>
+            <line x1="245" y1="95" x2="245" y2="70" stroke="#aaa" stroke-width="2"/>
+            <!-- Output -->
+            <text x="245" y="20" fill="#00ff88" text-anchor="middle" font-size="13" font-weight="bold">Sortie (d_model)</text>
+        </svg>
+    </div>
+
+    <h3>4.4 Implementation PyTorch du Multi-Head Attention</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="keyword">class</span> <span class="function">MultiHeadAttention</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, d_model, n_heads):
+        <span class="function">super</span>().__init__()
+        <span class="keyword">assert</span> d_model % n_heads == <span class="number">0</span>
+
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.d_k = d_model // n_heads
+
+        <span class="comment"># Projections lineaires pour Q, K, V et sortie</span>
+        self.W_Q = nn.Linear(d_model, d_model)
+        self.W_K = nn.Linear(d_model, d_model)
+        self.W_V = nn.Linear(d_model, d_model)
+        self.W_O = nn.Linear(d_model, d_model)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, Q, K, V, mask=<span class="keyword">None</span>):
+        batch_size = Q.size(<span class="number">0</span>)
+
+        <span class="comment"># Projections lineaires et reshape pour les tetes</span>
+        Q = self.W_Q(Q).view(batch_size, -<span class="number">1</span>, self.n_heads, self.d_k).transpose(<span class="number">1</span>, <span class="number">2</span>)
+        K = self.W_K(K).view(batch_size, -<span class="number">1</span>, self.n_heads, self.d_k).transpose(<span class="number">1</span>, <span class="number">2</span>)
+        V = self.W_V(V).view(batch_size, -<span class="number">1</span>, self.n_heads, self.d_k).transpose(<span class="number">1</span>, <span class="number">2</span>)
+
+        <span class="comment"># Attention par produit scalaire</span>
+        scores = torch.matmul(Q, K.transpose(-<span class="number">2</span>, -<span class="number">1</span>)) / (self.d_k ** <span class="number">0.5</span>)
+        <span class="keyword">if</span> mask <span class="keyword">is not None</span>:
+            scores = scores.masked_fill(mask == <span class="number">0</span>, float(<span class="string">'-inf'</span>))
+        attn_weights = torch.softmax(scores, dim=-<span class="number">1</span>)
+
+        <span class="comment"># Multiplication par les valeurs</span>
+        context = torch.matmul(attn_weights, V)
+
+        <span class="comment"># Concatenation et projection de sortie</span>
+        context = context.transpose(<span class="number">1</span>, <span class="number">2</span>).contiguous().view(batch_size, -<span class="number">1</span>, self.d_model)
+        output = self.W_O(context)
+
+        <span class="keyword">return</span> output, attn_weights
+
+<span class="comment"># Test</span>
+mha = <span class="function">MultiHeadAttention</span>(d_model=<span class="number">512</span>, n_heads=<span class="number">8</span>)
+x = torch.randn(<span class="number">2</span>, <span class="number">10</span>, <span class="number">512</span>)  <span class="comment"># (batch, seq_len, d_model)</span>
+out, weights = mha(x, x, x)  <span class="comment"># Self-attention</span>
+<span class="function">print</span>(f<span class="string">"Sortie MHA: {out.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Poids: {weights.shape}"</span>)</div>
+
+    <div class="output-block">Sortie MHA: torch.Size([2, 10, 512])
+Poids: torch.Size([2, 8, 10, 10])</div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================ -->
+    <h2>5. Positional Encoding</h2>
+
+    <h3>5.1 Le probleme de l'ordre</h3>
+
+    <div class="definition">
+        Le mecanisme d'attention est <strong>invariant a l'ordre</strong> : il ne connait pas la position des tokens dans la sequence. Pour encoder l'information de position, on ajoute un vecteur de <strong>positional encoding</strong> a chaque embedding de token.
+    </div>
+
+    <div class="warning">
+        Sans positional encoding, "Le chat mange la souris" et "La souris mange le chat" produiraient la meme representation ! L'encodage positionnel est donc absolument essentiel.
+    </div>
+
+    <h3>5.2 Encodage sinusoidal</h3>
+
+    <p>L'article original propose un encodage base sur des fonctions sinus et cosinus a differentes frequences :</p>
+
+    <div class="concept-box blue">
+        <p style="text-align:center; font-size:1.1rem; margin:10px 0;">
+            <strong>PE(pos, 2i) = sin(pos / 10000^(2i/d_model))</strong>
+        </p>
+        <p style="text-align:center; font-size:1.1rem; margin:10px 0;">
+            <strong>PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model))</strong>
+        </p>
+        <p>Ou <strong>pos</strong> est la position du token et <strong>i</strong> est l'indice de la dimension.</p>
+    </div>
+
+    <h3>5.3 Pourquoi sin/cos ?</h3>
+
+    <div class="analogy">
+        <h4>Analogie : L'Horloge</h4>
+        <p>Pensez a une horloge : l'aiguille des secondes tourne vite (haute frequence), celle des minutes plus lentement, et celle des heures encore plus lentement. A tout instant, la combinaison des trois aiguilles donne une position unique.</p>
+        <p>De meme, les differentes frequences de sin/cos permettent d'encoder chaque position de maniere unique. Les basses dimensions utilisent des hautes frequences (details locaux) et les hautes dimensions des basses frequences (structure globale).</p>
+    </div>
+
+    <p><strong>Avantages du positional encoding sinusoidal :</strong></p>
+    <ul>
+        <li>Chaque position a un encodage unique</li>
+        <li>Le modele peut generaliser a des sequences plus longues que celles vues a l'entrainement</li>
+        <li>La distance relative entre deux positions est representee de maniere coherente (PE(pos+k) est une transformation lineaire de PE(pos))</li>
+        <li>Les valeurs sont bornees entre -1 et 1</li>
+    </ul>
+
+    <h3>5.4 Visualisation des ondes positionnelles</h3>
+
+    <div class="svg-container">
+        <svg width="700" height="280" viewBox="0 0 700 280">
+            <text x="350" y="20" fill="#ff8c42" text-anchor="middle" font-size="14" font-weight="bold">Encodage Positionnel Sinusoidal</text>
+            <!-- Axes -->
+            <line x1="60" y1="60" x2="60" y2="250" stroke="#555" stroke-width="1"/>
+            <line x1="60" y1="155" x2="660" y2="155" stroke="#555" stroke-width="1"/>
+            <text x="25" y="65" fill="#aaa" font-size="10">+1</text>
+            <text x="30" y="160" fill="#aaa" font-size="10">0</text>
+            <text x="25" y="250" fill="#aaa" font-size="10">-1</text>
+            <text x="360" y="270" fill="#aaa" font-size="11">Position dans la sequence</text>
+            <!-- High frequency wave (dim 0) -->
+            <path d="M 60 155 Q 80 75, 100 155 Q 120 235, 140 155 Q 160 75, 180 155 Q 200 235, 220 155 Q 240 75, 260 155 Q 280 235, 300 155 Q 320 75, 340 155 Q 360 235, 380 155 Q 400 75, 420 155 Q 440 235, 460 155 Q 480 75, 500 155 Q 520 235, 540 155 Q 560 75, 580 155 Q 600 235, 620 155 Q 640 75, 660 155" stroke="#ff6b35" stroke-width="2" fill="none"/>
+            <!-- Medium frequency wave (dim 4) -->
+            <path d="M 60 155 Q 120 85, 180 155 Q 240 225, 300 155 Q 360 85, 420 155 Q 480 225, 540 155 Q 600 85, 660 155" stroke="#569cd6" stroke-width="2" fill="none"/>
+            <!-- Low frequency wave (dim 8) -->
+            <path d="M 60 155 Q 210 75, 360 155 Q 510 235, 660 155" stroke="#00ff88" stroke-width="2" fill="none"/>
+            <!-- Legend -->
+            <line x1="80" y1="40" x2="110" y2="40" stroke="#ff6b35" stroke-width="2"/>
+            <text x="115" y="44" fill="#ff6b35" font-size="11">dim 0 (haute freq.)</text>
+            <line x1="280" y1="40" x2="310" y2="40" stroke="#569cd6" stroke-width="2"/>
+            <text x="315" y="44" fill="#569cd6" font-size="11">dim 4 (moy. freq.)</text>
+            <line x1="480" y1="40" x2="510" y2="40" stroke="#00ff88" stroke-width="2"/>
+            <text x="515" y="44" fill="#00ff88" font-size="11">dim 8 (basse freq.)</text>
+        </svg>
+    </div>
+
+    <h3>5.5 Implementation PyTorch</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> math
+
+<span class="keyword">class</span> <span class="function">PositionalEncoding</span>(torch.nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, d_model, max_len=<span class="number">5000</span>):
+        <span class="function">super</span>().__init__()
+
+        <span class="comment"># Creer la matrice de positional encoding</span>
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(<span class="number">0</span>, max_len).unsqueeze(<span class="number">1</span>).float()
+        div_term = torch.exp(
+            torch.arange(<span class="number">0</span>, d_model, <span class="number">2</span>).float() * (-math.log(<span class="number">10000.0</span>) / d_model)
+        )
+
+        pe[:, <span class="number">0</span>::<span class="number">2</span>] = torch.sin(position * div_term)  <span class="comment"># dimensions paires</span>
+        pe[:, <span class="number">1</span>::<span class="number">2</span>] = torch.cos(position * div_term)  <span class="comment"># dimensions impaires</span>
+
+        pe = pe.unsqueeze(<span class="number">0</span>)  <span class="comment"># (1, max_len, d_model)</span>
+        self.register_buffer(<span class="string">'pe'</span>, pe)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="comment"># x: (batch, seq_len, d_model)</span>
+        <span class="keyword">return</span> x + self.pe[:, :x.size(<span class="number">1</span>)]
+
+<span class="comment"># Test</span>
+pe = <span class="function">PositionalEncoding</span>(d_model=<span class="number">512</span>)
+x = torch.randn(<span class="number">2</span>, <span class="number">20</span>, <span class="number">512</span>)
+out = pe(x)
+<span class="function">print</span>(f<span class="string">"Entree: {x.shape} -> Sortie: {out.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"PE position 0, dims 0-5: {pe.pe[0, 0, :5].tolist()}"</span>)</div>
+
+    <div class="output-block">Entree: torch.Size([2, 20, 512]) -> Sortie: torch.Size([2, 20, 512])
+PE position 0, dims 0-5: [0.0, 1.0, 0.0, 1.0, 0.0]</div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================ -->
+    <h2>6. L'Architecture Encoder</h2>
+
+    <h3>6.1 Structure d'un bloc encodeur</h3>
+
+    <p>L'encodeur est compose de N blocs identiques empiles (N=6 dans l'article original). Chaque bloc contient deux sous-couches principales, chacune suivie d'une connexion residuelle et d'une normalisation de couche.</p>
+
+    <div class="concept-box">
+        <h4>Composants d'un bloc encodeur</h4>
+        <ol>
+            <li><strong>Multi-Head Self-Attention :</strong> Chaque token attend a toutes les positions de la sequence d'entree.</li>
+            <li><strong>Add &amp; Norm :</strong> Connexion residuelle + Layer Normalization apres l'attention.</li>
+            <li><strong>Feed-Forward Network (FFN) :</strong> Deux couches lineaires avec une activation ReLU entre elles. FFN(x) = max(0, x*W1 + b1) * W2 + b2. La dimension interne est generalement 4 * d_model (2048 pour d_model=512).</li>
+            <li><strong>Add &amp; Norm :</strong> Connexion residuelle + Layer Normalization apres le FFN.</li>
+        </ol>
+    </div>
+
+    <h3>6.2 Connexions residuelles</h3>
+
+    <div class="definition">
+        Une <strong>connexion residuelle</strong> (ou skip connection) ajoute l'entree d'une sous-couche directement a sa sortie : output = LayerNorm(x + Sublayer(x)). Elle facilite l'apprentissage en permettant aux gradients de circuler directement vers les couches anterieures.
+    </div>
+
+    <h3>6.3 Layer Normalization</h3>
+
+    <p>Contrairement au Batch Normalization utilise en vision, le Transformer utilise la <strong>Layer Normalization</strong> qui normalise sur la dimension des features (et non du batch) :</p>
+
+    <div class="concept-box blue">
+        <p style="text-align:center;">
+            <strong>LayerNorm(x) = gamma * (x - mean) / sqrt(var + epsilon) + beta</strong>
+        </p>
+        <p>La moyenne et la variance sont calculees sur la derniere dimension (d_model) independamment pour chaque token. Cela rend la normalisation independante de la taille du batch.</p>
+    </div>
+
+    <h3>6.4 Diagramme d'un bloc encodeur</h3>
+
+    <div class="svg-container">
+        <svg width="400" height="500" viewBox="0 0 400 500">
+            <!-- Input -->
+            <rect x="130" y="450" width="140" height="35" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="200" y="473" fill="#ff6b35" text-anchor="middle" font-size="12" font-weight="bold">Entree (+ PE)</text>
+            <!-- MHA -->
+            <rect x="100" y="370" width="200" height="40" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="200" y="395" fill="#ff8c42" text-anchor="middle" font-size="12">Multi-Head Self-Attention</text>
+            <line x1="200" y1="450" x2="200" y2="410" stroke="#aaa" stroke-width="2"/>
+            <!-- Residual 1 -->
+            <circle cx="200" cy="340" r="12" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="200" y="345" fill="#00ff88" text-anchor="middle" font-size="16">+</text>
+            <line x1="200" y1="370" x2="200" y2="352" stroke="#aaa" stroke-width="2"/>
+            <!-- Skip connection 1 -->
+            <path d="M 330 470 L 350 470 L 350 340 L 212 340" stroke="#00ff88" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
+            <!-- LayerNorm 1 -->
+            <rect x="130" y="290" width="140" height="30" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="200" y="310" fill="#569cd6" text-anchor="middle" font-size="11">Layer Norm</text>
+            <line x1="200" y1="328" x2="200" y2="320" stroke="#aaa" stroke-width="2"/>
+            <!-- FFN -->
+            <rect x="100" y="225" width="200" height="40" rx="8" fill="#1a1a2e" stroke="#ffab76" stroke-width="2"/>
+            <text x="200" y="250" fill="#ffab76" text-anchor="middle" font-size="12">Feed-Forward Network</text>
+            <line x1="200" y1="290" x2="200" y2="265" stroke="#aaa" stroke-width="2"/>
+            <!-- Residual 2 -->
+            <circle cx="200" cy="195" r="12" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="200" y="200" fill="#00ff88" text-anchor="middle" font-size="16">+</text>
+            <line x1="200" y1="225" x2="200" y2="207" stroke="#aaa" stroke-width="2"/>
+            <!-- Skip connection 2 -->
+            <path d="M 330 305 L 360 305 L 360 195 L 212 195" stroke="#00ff88" stroke-width="1.5" fill="none" stroke-dasharray="4"/>
+            <!-- LayerNorm 2 -->
+            <rect x="130" y="145" width="140" height="30" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="200" y="165" fill="#569cd6" text-anchor="middle" font-size="11">Layer Norm</text>
+            <line x1="200" y1="183" x2="200" y2="175" stroke="#aaa" stroke-width="2"/>
+            <!-- Output -->
+            <rect x="130" y="90" width="140" height="35" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="200" y="113" fill="#00ff88" text-anchor="middle" font-size="12" font-weight="bold">Sortie Encodeur</text>
+            <line x1="200" y1="145" x2="200" y2="125" stroke="#aaa" stroke-width="2"/>
+            <!-- Nx label -->
+            <rect x="15" y="200" width="60" height="30" rx="6" fill="#ff6b35" opacity="0.3" stroke="#ff6b35"/>
+            <text x="45" y="220" fill="#ff6b35" text-anchor="middle" font-size="12" font-weight="bold">x N</text>
+            <!-- Bounding box -->
+            <rect x="85" y="130" width="230" height="345" rx="10" fill="none" stroke="#ff6b35" stroke-width="1" stroke-dasharray="6"/>
+        </svg>
+    </div>
+
+    <h3>6.5 Implementation du bloc encodeur</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">EncoderBlock</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, d_model, n_heads, d_ff, dropout=<span class="number">0.1</span>):
+        <span class="function">super</span>().__init__()
+        self.self_attn = <span class="function">MultiHeadAttention</span>(d_model, n_heads)
+        self.ffn = nn.Sequential(
+            nn.Linear(d_model, d_ff),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(d_ff, d_model)
+        )
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x, mask=<span class="keyword">None</span>):
+        <span class="comment"># Self-attention + residual + norm</span>
+        attn_out, _ = self.self_attn(x, x, x, mask)
+        x = self.norm1(x + self.dropout(attn_out))
+
+        <span class="comment"># Feed-forward + residual + norm</span>
+        ffn_out = self.ffn(x)
+        x = self.norm2(x + self.dropout(ffn_out))
+
+        <span class="keyword">return</span> x
+
+<span class="comment"># Test du bloc encodeur</span>
+encoder_block = <span class="function">EncoderBlock</span>(d_model=<span class="number">512</span>, n_heads=<span class="number">8</span>, d_ff=<span class="number">2048</span>)
+x = torch.randn(<span class="number">2</span>, <span class="number">10</span>, <span class="number">512</span>)
+out = encoder_block(x)
+<span class="function">print</span>(f<span class="string">"Entree: {x.shape} -> Sortie: {out.shape}"</span>)</div>
+
+    <div class="output-block">Entree: torch.Size([2, 10, 512]) -> Sortie: torch.Size([2, 10, 512])</div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================ -->
+    <h2>7. L'Architecture Decoder</h2>
+
+    <h3>7.1 Differences avec l'encodeur</h3>
+
+    <p>Le decodeur est similaire a l'encodeur mais ajoute des composants specifiques pour la generation autoregressive. Chaque bloc decodeur contient <strong>trois</strong> sous-couches au lieu de deux :</p>
+
+    <div class="concept-box">
+        <h4>Les trois sous-couches du decodeur</h4>
+        <ol>
+            <li><strong>Masked Multi-Head Self-Attention :</strong> Identique a l'encodeur mais avec un masque causal qui empeche chaque position de voir les positions futures.</li>
+            <li><strong>Multi-Head Cross-Attention :</strong> Les queries proviennent du decodeur, les keys et values proviennent de la sortie de l'encodeur. C'est ici que le decodeur "consulte" l'information source.</li>
+            <li><strong>Feed-Forward Network :</strong> Identique a l'encodeur.</li>
+        </ol>
+    </div>
+
+    <h3>7.2 Le masque causal (Masked Attention)</h3>
+
+    <div class="definition">
+        Le <strong>masque causal</strong> est une matrice triangulaire inferieure qui, appliquee aux scores d'attention avant le softmax, met a -inf les positions futures. Cela garantit que la prediction du token a la position t ne depend que des tokens aux positions 0, 1, ..., t-1.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">create_causal_mask</span>(seq_len):
+    <span class="string">"""Cree un masque triangulaire inferieur"""</span>
+    mask = torch.tril(torch.ones(seq_len, seq_len))
+    <span class="keyword">return</span> mask  <span class="comment"># 1 = autorise, 0 = masque</span>
+
+mask = <span class="function">create_causal_mask</span>(<span class="number">5</span>)
+<span class="function">print</span>(<span class="string">"Masque causal 5x5 :"</span>)
+<span class="function">print</span>(mask)</div>
+
+    <div class="output-block">Masque causal 5x5 :
+tensor([[1., 0., 0., 0., 0.],
+        [1., 1., 0., 0., 0.],
+        [1., 1., 1., 0., 0.],
+        [1., 1., 1., 1., 0.],
+        [1., 1., 1., 1., 1.]])</div>
+
+    <h3>7.3 Cross-Attention : le pont encodeur-decodeur</h3>
+
+    <p>La cross-attention est le mecanisme qui connecte l'encodeur et le decodeur. Dans cette couche :</p>
+
+    <div class="step-box"><strong>Query (Q) :</strong> provient de la couche precedente du decodeur (la representation partielle generee jusqu'ici).</div>
+    <div class="step-box"><strong>Key (K) et Value (V) :</strong> proviennent de la sortie finale de l'encodeur (la representation complete de la sequence source).</div>
+
+    <div class="prof-note">
+        La cross-attention permet au decodeur de "chercher" dans la representation de la source les informations pertinentes pour generer le prochain token. C'est l'equivalent ameliore du mecanisme d'attention de Bahdanau dans les modeles seq2seq classiques, mais en parallele et multi-tete.
+    </div>
+
+    <h3>7.4 Generation autoregressive</h3>
+
+    <p>Le decodeur genere les tokens un par un, de gauche a droite. A chaque etape, le token genere est ajoute a la sequence d'entree du decodeur pour l'etape suivante :</p>
+
+    <div class="step-box"><strong>t=0 :</strong> Entree = [&lt;SOS&gt;] -> Prediction du premier mot</div>
+    <div class="step-box"><strong>t=1 :</strong> Entree = [&lt;SOS&gt;, mot1] -> Prediction du deuxieme mot</div>
+    <div class="step-box"><strong>t=2 :</strong> Entree = [&lt;SOS&gt;, mot1, mot2] -> Prediction du troisieme mot</div>
+    <div class="step-box"><strong>...</strong> jusqu'a la generation du token &lt;EOS&gt; ou atteinte de la longueur maximale.</div>
+
+    <h3>7.5 Implementation du bloc decodeur</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">DecoderBlock</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, d_model, n_heads, d_ff, dropout=<span class="number">0.1</span>):
+        <span class="function">super</span>().__init__()
+        <span class="comment"># Sous-couche 1 : masked self-attention</span>
+        self.masked_self_attn = <span class="function">MultiHeadAttention</span>(d_model, n_heads)
+        <span class="comment"># Sous-couche 2 : cross-attention</span>
+        self.cross_attn = <span class="function">MultiHeadAttention</span>(d_model, n_heads)
+        <span class="comment"># Sous-couche 3 : feed-forward</span>
+        self.ffn = nn.Sequential(
+            nn.Linear(d_model, d_ff),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(d_ff, d_model)
+        )
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+        self.norm3 = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x, encoder_output, src_mask=<span class="keyword">None</span>, tgt_mask=<span class="keyword">None</span>):
+        <span class="comment"># 1. Masked self-attention</span>
+        attn_out, _ = self.masked_self_attn(x, x, x, tgt_mask)
+        x = self.norm1(x + self.dropout(attn_out))
+
+        <span class="comment"># 2. Cross-attention (Q=decoder, K=V=encoder)</span>
+        cross_out, _ = self.cross_attn(x, encoder_output, encoder_output, src_mask)
+        x = self.norm2(x + self.dropout(cross_out))
+
+        <span class="comment"># 3. Feed-forward</span>
+        ffn_out = self.ffn(x)
+        x = self.norm3(x + self.dropout(ffn_out))
+
+        <span class="keyword">return</span> x</div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================ -->
+    <h2>8. L'Architecture Complete</h2>
+
+    <h3>8.1 Vue d'ensemble Encodeur-Decodeur</h3>
+
+    <p>Le Transformer original est un modele encodeur-decodeur concu pour la traduction automatique. L'encodeur traite la phrase source et produit des representations contextuelles. Le decodeur genere la traduction mot par mot en se referant a la representation de l'encodeur.</p>
+
+    <div class="svg-container">
+        <svg width="700" height="550" viewBox="0 0 700 550">
+            <!-- Title -->
+            <text x="350" y="25" fill="#ff6b35" text-anchor="middle" font-size="16" font-weight="bold">Architecture Transformer Complete</text>
+            <!-- ENCODER SIDE -->
+            <rect x="40" y="40" width="280" height="480" rx="15" fill="none" stroke="#ff6b35" stroke-width="2"/>
+            <text x="180" y="65" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">ENCODEUR</text>
+            <!-- Input Embedding -->
+            <rect x="80" y="440" width="200" height="30" rx="6" fill="#1a1a2e" stroke="#ffab76" stroke-width="1.5"/>
+            <text x="180" y="460" fill="#ffab76" text-anchor="middle" font-size="11">Input Embedding + PE</text>
+            <!-- Input -->
+            <text x="180" y="505" fill="#aaa" text-anchor="middle" font-size="11">Entree source</text>
+            <line x1="180" y1="490" x2="180" y2="470" stroke="#aaa" stroke-width="1.5"/>
+            <!-- Encoder blocks -->
+            <rect x="60" y="80" width="240" height="340" rx="10" fill="none" stroke="#ff8c42" stroke-width="1" stroke-dasharray="4"/>
+            <text x="80" y="100" fill="#ff8c42" font-size="11">x N</text>
+            <!-- Self-attention -->
+            <rect x="85" y="340" width="190" height="30" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="180" y="360" fill="#ff8c42" text-anchor="middle" font-size="10">Multi-Head Self-Attention</text>
+            <!-- Add & Norm -->
+            <rect x="105" y="295" width="150" height="25" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="180" y="312" fill="#569cd6" text-anchor="middle" font-size="10">Add &amp; Norm</text>
+            <!-- FFN -->
+            <rect x="85" y="240" width="190" height="30" rx="6" fill="#1a1a2e" stroke="#ffab76" stroke-width="1.5"/>
+            <text x="180" y="260" fill="#ffab76" text-anchor="middle" font-size="10">Feed Forward</text>
+            <!-- Add & Norm 2 -->
+            <rect x="105" y="195" width="150" height="25" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="180" y="212" fill="#569cd6" text-anchor="middle" font-size="10">Add &amp; Norm</text>
+            <!-- Connections encoder -->
+            <line x1="180" y1="440" x2="180" y2="370" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="180" y1="340" x2="180" y2="320" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="180" y1="295" x2="180" y2="270" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="180" y1="240" x2="180" y2="220" stroke="#aaa" stroke-width="1.5"/>
+
+            <!-- DECODER SIDE -->
+            <rect x="380" y="40" width="280" height="480" rx="15" fill="none" stroke="#569cd6" stroke-width="2"/>
+            <text x="520" y="65" fill="#569cd6" text-anchor="middle" font-size="14" font-weight="bold">DECODEUR</text>
+            <!-- Output Embedding -->
+            <rect x="420" y="440" width="200" height="30" rx="6" fill="#1a1a2e" stroke="#ffab76" stroke-width="1.5"/>
+            <text x="520" y="460" fill="#ffab76" text-anchor="middle" font-size="11">Output Embedding + PE</text>
+            <!-- Output -->
+            <text x="520" y="505" fill="#aaa" text-anchor="middle" font-size="11">Sortie (decalee)</text>
+            <line x1="520" y1="490" x2="520" y2="470" stroke="#aaa" stroke-width="1.5"/>
+            <!-- Decoder blocks -->
+            <rect x="400" y="80" width="240" height="340" rx="10" fill="none" stroke="#569cd6" stroke-width="1" stroke-dasharray="4"/>
+            <text x="420" y="100" fill="#569cd6" font-size="11">x N</text>
+            <!-- Masked self-attention -->
+            <rect x="425" y="370" width="190" height="26" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="520" y="388" fill="#ff8c42" text-anchor="middle" font-size="9">Masked Multi-Head Self-Attn</text>
+            <!-- Add & Norm -->
+            <rect x="445" y="335" width="150" height="22" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="520" y="350" fill="#569cd6" text-anchor="middle" font-size="9">Add &amp; Norm</text>
+            <!-- Cross-attention -->
+            <rect x="425" y="295" width="190" height="26" rx="6" fill="#1a1a2e" stroke="#00cc66" stroke-width="1.5"/>
+            <text x="520" y="313" fill="#00cc66" text-anchor="middle" font-size="9">Multi-Head Cross-Attention</text>
+            <!-- Arrow from encoder to cross-attention -->
+            <path d="M 300 195 L 340 195 L 340 308 L 425 308" stroke="#00ff88" stroke-width="2" fill="none" marker-end="url(#arrow2)"/>
+            <text x="345" y="250" fill="#00ff88" font-size="10" writing-mode="tb">K, V</text>
+            <!-- Add & Norm -->
+            <rect x="445" y="260" width="150" height="22" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="520" y="275" fill="#569cd6" text-anchor="middle" font-size="9">Add &amp; Norm</text>
+            <!-- FFN -->
+            <rect x="425" y="222" width="190" height="26" rx="6" fill="#1a1a2e" stroke="#ffab76" stroke-width="1.5"/>
+            <text x="520" y="240" fill="#ffab76" text-anchor="middle" font-size="9">Feed Forward</text>
+            <!-- Add & Norm -->
+            <rect x="445" y="190" width="150" height="22" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="520" y="205" fill="#569cd6" text-anchor="middle" font-size="9">Add &amp; Norm</text>
+            <!-- Connections decoder -->
+            <line x1="520" y1="440" x2="520" y2="396" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="520" y1="370" x2="520" y2="357" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="520" y1="335" x2="520" y2="321" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="520" y1="295" x2="520" y2="282" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="520" y1="260" x2="520" y2="248" stroke="#aaa" stroke-width="1.5"/>
+            <line x1="520" y1="222" x2="520" y2="212" stroke="#aaa" stroke-width="1.5"/>
+            <!-- Linear + Softmax -->
+            <rect x="440" y="130" width="160" height="30" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="520" y="150" fill="#00ff88" text-anchor="middle" font-size="11">Linear + Softmax</text>
+            <line x1="520" y1="190" x2="520" y2="160" stroke="#aaa" stroke-width="1.5"/>
+            <!-- Output probs -->
+            <text x="520" y="118" fill="#00ff88" text-anchor="middle" font-size="12" font-weight="bold">Probabilites</text>
+            <defs>
+                <marker id="arrow2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>8.2 Hyperparametres du Transformer original</h3>
+
+    <div class="param-box">
+        <h4>Configuration "Attention Is All You Need"</h4>
+        <table>
+            <tr><th>Parametre</th><th>Valeur</th><th>Description</th></tr>
+            <tr><td>N</td><td>6</td><td>Nombre de blocs encodeur et decodeur</td></tr>
+            <tr><td>d_model</td><td>512</td><td>Dimension des embeddings et representations</td></tr>
+            <tr><td>h</td><td>8</td><td>Nombre de tetes d'attention</td></tr>
+            <tr><td>d_k = d_v</td><td>64</td><td>Dimension par tete (512 / 8)</td></tr>
+            <tr><td>d_ff</td><td>2048</td><td>Dimension interne du FFN</td></tr>
+            <tr><td>Dropout</td><td>0.1</td><td>Applique apres chaque sous-couche</td></tr>
+        </table>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================ -->
+    <h2>9. Variantes du Transformer</h2>
+
+    <h3>9.1 Les trois familles</h3>
+
+    <p>Depuis 2017, trois familles d'architectures ont emerge, chacune utilisant une partie differente du Transformer original :</p>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff8c42;">Encoder-Only</h4>
+            <p>Utilise uniquement l'encodeur. Specialise dans la <strong>comprehension</strong> du texte.</p>
+            <p><em>Exemples : BERT, RoBERTa, ALBERT</em></p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Decoder-Only</h4>
+            <p>Utilise uniquement le decodeur (sans cross-attention). Specialise dans la <strong>generation</strong> de texte.</p>
+            <p><em>Exemples : GPT, LLaMA, Claude</em></p>
+        </div>
+    </div>
+
+    <div class="concept-box green" style="text-align:center;">
+        <h4>Encoder-Decoder</h4>
+        <p>Utilise l'architecture complete. Specialise dans les taches de <strong>transduction</strong> (sequence a sequence).</p>
+        <p><em>Exemples : T5, BART, mBART</em></p>
+    </div>
+
+    <h3>9.2 Tableau comparatif des variantes</h3>
+
+    <table>
+        <tr><th>Modele</th><th>Type</th><th>Annee</th><th>Parametres</th><th>Taches principales</th></tr>
+        <tr><td>BERT</td><td>Encoder-only</td><td>2018</td><td>110M - 340M</td><td>Classification, NER, QA</td></tr>
+        <tr><td>GPT-2</td><td>Decoder-only</td><td>2019</td><td>117M - 1.5B</td><td>Generation de texte</td></tr>
+        <tr><td>T5</td><td>Encoder-Decoder</td><td>2019</td><td>60M - 11B</td><td>Traduction, resume, QA</td></tr>
+        <tr><td>GPT-3</td><td>Decoder-only</td><td>2020</td><td>175B</td><td>Few-shot learning</td></tr>
+        <tr><td>LLaMA 2</td><td>Decoder-only</td><td>2023</td><td>7B - 70B</td><td>Generation polyvalente</td></tr>
+    </table>
+
+    <h3>9.3 BERT vs GPT : deux philosophies</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff8c42;">BERT (Bidirectionnel)</h4>
+            <p>Pre-entraine avec le <strong>Masked Language Model</strong> : predire les mots masques en utilisant le contexte gauche ET droit.</p>
+            <p>Ideal pour la <strong>comprehension</strong> : classification, extraction d'information.</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">GPT (Autoregressif)</h4>
+            <p>Pre-entraine avec la <strong>modelisation causale</strong> : predire le prochain token en utilisant uniquement le contexte gauche.</p>
+            <p>Ideal pour la <strong>generation</strong> : texte, code, dialogue.</p>
+        </div>
+    </div>
+
+    <div class="prof-note">
+        La tendance actuelle est aux modeles decoder-only tres grands (GPT-4, Claude, LLaMA, Mistral). Ces modeles montrent des capacites emergentes (raisonnement, planification) qui apparaissent avec l'augmentation de la taille. Cependant, les modeles encoder-only comme BERT restent excellents et beaucoup plus economiques pour les taches de classification.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================ -->
+    <h2>10. Implementation Complete en PyTorch</h2>
+
+    <h3>10.1 Transformer complet</h3>
+
+    <p>Voici l'implementation complete d'un mini-Transformer en assemblant tous les composants vus precedemment :</p>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> math
+
+<span class="keyword">class</span> <span class="function">TransformerModel</span>(nn.Module):
+    <span class="string">"""Transformer complet encoder-decoder"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, src_vocab, tgt_vocab, d_model=<span class="number">256</span>,
+                 n_heads=<span class="number">8</span>, n_layers=<span class="number">4</span>, d_ff=<span class="number">1024</span>, dropout=<span class="number">0.1</span>):
+        <span class="function">super</span>().__init__()
+        self.d_model = d_model
+
+        <span class="comment"># Embeddings</span>
+        self.src_embedding = nn.Embedding(src_vocab, d_model)
+        self.tgt_embedding = nn.Embedding(tgt_vocab, d_model)
+        self.pos_encoding = <span class="function">PositionalEncoding</span>(d_model)
+
+        <span class="comment"># Encoder : N blocs empiles</span>
+        self.encoder_layers = nn.ModuleList([
+            <span class="function">EncoderBlock</span>(d_model, n_heads, d_ff, dropout)
+            <span class="keyword">for</span> _ <span class="keyword">in</span> range(n_layers)
+        ])
+
+        <span class="comment"># Decoder : N blocs empiles</span>
+        self.decoder_layers = nn.ModuleList([
+            <span class="function">DecoderBlock</span>(d_model, n_heads, d_ff, dropout)
+            <span class="keyword">for</span> _ <span class="keyword">in</span> range(n_layers)
+        ])
+
+        <span class="comment"># Couche de sortie</span>
+        self.output_projection = nn.Linear(d_model, tgt_vocab)
+        self.dropout = nn.Dropout(dropout)
+
+    <span class="keyword">def</span> <span class="function">encode</span>(self, src, src_mask=<span class="keyword">None</span>):
+        x = self.dropout(self.pos_encoding(
+            self.src_embedding(src) * math.sqrt(self.d_model)
+        ))
+        <span class="keyword">for</span> layer <span class="keyword">in</span> self.encoder_layers:
+            x = layer(x, src_mask)
+        <span class="keyword">return</span> x
+
+    <span class="keyword">def</span> <span class="function">decode</span>(self, tgt, encoder_output, src_mask=<span class="keyword">None</span>, tgt_mask=<span class="keyword">None</span>):
+        x = self.dropout(self.pos_encoding(
+            self.tgt_embedding(tgt) * math.sqrt(self.d_model)
+        ))
+        <span class="keyword">for</span> layer <span class="keyword">in</span> self.decoder_layers:
+            x = layer(x, encoder_output, src_mask, tgt_mask)
+        <span class="keyword">return</span> self.output_projection(x)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, src, tgt, src_mask=<span class="keyword">None</span>, tgt_mask=<span class="keyword">None</span>):
+        encoder_output = self.encode(src, src_mask)
+        output = self.decode(tgt, encoder_output, src_mask, tgt_mask)
+        <span class="keyword">return</span> output
+
+<span class="comment"># Instanciation et test</span>
+model = <span class="function">TransformerModel</span>(
+    src_vocab=<span class="number">10000</span>, tgt_vocab=<span class="number">8000</span>,
+    d_model=<span class="number">256</span>, n_heads=<span class="number">8</span>, n_layers=<span class="number">4</span>, d_ff=<span class="number">1024</span>
+)
+
+<span class="comment"># Donnees factices</span>
+src = torch.randint(<span class="number">0</span>, <span class="number">10000</span>, (<span class="number">2</span>, <span class="number">20</span>))  <span class="comment"># batch=2, seq_len=20</span>
+tgt = torch.randint(<span class="number">0</span>, <span class="number">8000</span>, (<span class="number">2</span>, <span class="number">15</span>))   <span class="comment"># batch=2, seq_len=15</span>
+
+<span class="comment"># Masque causal pour le decodeur</span>
+tgt_mask = torch.tril(torch.ones(<span class="number">15</span>, <span class="number">15</span>)).unsqueeze(<span class="number">0</span>).unsqueeze(<span class="number">0</span>)
+
+output = model(src, tgt, tgt_mask=tgt_mask)
+<span class="function">print</span>(f<span class="string">"Source: {src.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Cible: {tgt.shape}"</span>)
+<span class="function">print</span>(f<span class="string">"Sortie: {output.shape}"</span>)
+
+<span class="comment"># Compter les parametres</span>
+total_params = sum(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+<span class="function">print</span>(f<span class="string">"Parametres totaux: {total_params:,}"</span>)</div>
+
+    <div class="output-block">Source: torch.Size([2, 20])
+Cible: torch.Size([2, 15])
+Sortie: torch.Size([2, 15, 8000])
+Parametres totaux: 12,638,720</div>
+
+    <h3>10.2 Boucle d'entrainement simplifiee</h3>
+
+    <div class="code-block"><span class="comment"># Configuration de l'entrainement</span>
+optimizer = torch.optim.Adam(model.parameters(), lr=<span class="number">1e-4</span>, betas=(<span class="number">0.9</span>, <span class="number">0.98</span>), eps=<span class="number">1e-9</span>)
+criterion = nn.CrossEntropyLoss(ignore_index=<span class="number">0</span>)  <span class="comment"># ignorer le padding</span>
+
+<span class="keyword">def</span> <span class="function">train_step</span>(model, src, tgt, optimizer, criterion):
+    model.train()
+    optimizer.zero_grad()
+
+    <span class="comment"># Entree decodeur : tous les tokens sauf le dernier</span>
+    tgt_input = tgt[:, :-<span class="number">1</span>]
+    <span class="comment"># Labels : tous les tokens sauf le premier</span>
+    tgt_labels = tgt[:, <span class="number">1</span>:]
+
+    <span class="comment"># Masque causal</span>
+    seq_len = tgt_input.size(<span class="number">1</span>)
+    tgt_mask = torch.tril(torch.ones(seq_len, seq_len)).unsqueeze(<span class="number">0</span>).unsqueeze(<span class="number">0</span>)
+
+    <span class="comment"># Forward pass</span>
+    output = model(src, tgt_input, tgt_mask=tgt_mask)
+
+    <span class="comment"># Calcul de la loss</span>
+    output = output.reshape(-<span class="number">1</span>, output.size(-<span class="number">1</span>))
+    tgt_labels = tgt_labels.reshape(-<span class="number">1</span>)
+    loss = criterion(output, tgt_labels)
+
+    <span class="comment"># Backward pass</span>
+    loss.backward()
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">1.0</span>)
+    optimizer.step()
+
+    <span class="keyword">return</span> loss.item()
+
+<span class="comment"># Exemple d'entrainement (donnees factices)</span>
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(<span class="number">3</span>):
+    loss = <span class="function">train_step</span>(model, src, tgt, optimizer, criterion)
+    <span class="function">print</span>(f<span class="string">"Epoch {epoch+1}, Loss: {loss:.4f}"</span>)</div>
+
+    <div class="output-block">Epoch 1, Loss: 8.9872
+Epoch 2, Loss: 8.9401
+Epoch 3, Loss: 8.8935</div>
+
+    <div class="concept-box green">
+        <h4>Resume : Points cles du Transformer</h4>
+        <ul>
+            <li>L'attention est le seul mecanisme de modelisation des dependances - pas de recurrence</li>
+            <li>Le multi-head attention capture differents types de relations simultanement</li>
+            <li>Le positional encoding injecte l'information de position dans un modele invariant a l'ordre</li>
+            <li>Les connexions residuelles et la layer normalization stabilisent l'entrainement profond</li>
+            <li>Les trois variantes (encoder-only, decoder-only, encoder-decoder) couvrent toutes les taches NLP</li>
+            <li>La parallelisation complete permet un entrainement beaucoup plus rapide que les RNN</li>
+        </ul>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_06_rnn_lstm.html">&larr; Cours precedent : RNN et LSTM</a>
+        <a href="dl_08_gan.html">Cours suivant : Reseaux Generatifs Adversariaux &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

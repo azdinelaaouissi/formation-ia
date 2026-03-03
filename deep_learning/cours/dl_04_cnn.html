@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 04 - Reseaux de Neurones Convolutifs (CNN)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 04 - Reseaux de Neurones Convolutifs (CNN)</h1>
+    <p class="subtitle">Cours 4/12 - Convolution, pooling, architectures classiques de LeNet a ResNet</p>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================================= -->
+    <h2>1. Intuition de la convolution</h2>
+
+    <div class="analogy">
+        <h4>Analogie : les filtres photo</h4>
+        <p>Vous connaissez les filtres Instagram qui peuvent rendre une photo plus nette, flouter l'arriere-plan, ou detecter les contours ? Une <strong>convolution</strong> fait exactement la meme chose, mais au lieu d'utiliser des filtres predefinis, le reseau <strong>apprend ses propres filtres</strong> a partir des donnees. Chaque filtre appris detecte un motif specifique : bord horizontal, coin, texture, etc.</p>
+    </div>
+
+    <h3>1.1 Pourquoi pas un MLP pour les images ?</h3>
+    <p>Considerons une image de 224x224 pixels en couleur (3 canaux RGB). Aplatie en vecteur, elle donne 224 x 224 x 3 = <strong>150 528</strong> entrees. Si la premiere couche cachee a 1000 neurones, cela fait 150 528 x 1000 = <strong>150 millions de parametres</strong> pour une seule couche ! C'est impraticable.</p>
+
+    <div class="concept-box">
+        <h4>Les trois principes cles des CNN</h4>
+        <ul>
+            <li><strong>Connectivite locale</strong> : chaque neurone ne regarde qu'une petite region de l'image (le champ recepteur), pas l'image entiere</li>
+            <li><strong>Partage des poids</strong> : le meme filtre est applique a toute l'image, reduisant drastiquement le nombre de parametres</li>
+            <li><strong>Invariance par translation</strong> : un chat est un chat, qu'il soit en haut a gauche ou en bas a droite de l'image</li>
+        </ul>
+    </div>
+
+    <h3>1.2 Detection hierarchique de features</h3>
+    <p>Les CNN apprennent des representations hierarchiques :</p>
+    <div class="step-box"><strong>Couches 1-2 :</strong> Detection de features simples (bords, coins, gradients de couleur)</div>
+    <div class="step-box"><strong>Couches 3-5 :</strong> Combinaison en motifs plus complexes (textures, parties d'objets)</div>
+    <div class="step-box"><strong>Couches 6-8 :</strong> Detection de structures semantiques (visages, roues, fenetres)</div>
+    <div class="step-box"><strong>Couches finales :</strong> Representations de haut niveau (voiture, chat, avion)</div>
+
+    <div class="prof-note">
+        Cette hierarchie de features est l'une des decouvertes les plus importantes du Deep Learning. Elle rappelle l'organisation du cortex visuel humain, ou les neurones des couches V1 detectent des bords simples, puis les couches V2, V4, etc. combinent ces informations en representations de plus en plus abstraites.
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================================= -->
+    <h2>2. L'operation de convolution</h2>
+
+    <div class="definition">
+        En traitement d'images, la <strong>convolution</strong> (en realite une correlation croisee) est l'operation qui consiste a faire glisser un petit filtre (kernel) sur l'image d'entree et a calculer le produit scalaire entre le filtre et chaque region de l'image.
+    </div>
+
+    <h3>2.1 Formule mathematique</h3>
+    <div class="code-block"><span class="comment"># Convolution 2D discrete :</span>
+
+(I * K)(i, j) = &sum;&sum; I(i + m, j + n) * K(m, n)
+                m  n
+
+ou :
+  - I : l'image d'entree (matrice 2D)
+  - K : le kernel/filtre (petite matrice, ex: 3x3)
+  - (i,j) : position dans l'image de sortie
+  - (m,n) : position dans le kernel</div>
+
+    <h3>2.2 Exemple concret pas a pas</h3>
+    <div class="svg-container">
+        <svg width="700" height="350" viewBox="0 0 700 350">
+            <text x="350" y="25" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Convolution 2D : etape par etape</text>
+            <!-- Input matrix 5x5 -->
+            <text x="100" y="55" fill="#aaa" font-size="12" text-anchor="middle">Image d'entree (5x5)</text>
+            <!-- Grid -->
+            <rect x="30" y="65" width="140" height="140" fill="none" stroke="#555" stroke-width="1"/>
+            <!-- Row 1 -->
+            <rect x="30" y="65" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="44" y="84" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="58" y="65" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="72" y="84" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <rect x="86" y="65" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="100" y="84" fill="#e0e0e0" font-size="11" text-anchor="middle">2</text>
+            <rect x="114" y="65" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="128" y="84" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="142" y="65" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="156" y="84" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <!-- Row 2 -->
+            <rect x="30" y="93" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="44" y="112" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <rect x="58" y="93" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="72" y="112" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="86" y="93" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="100" y="112" fill="#e0e0e0" font-size="11" text-anchor="middle">3</text>
+            <rect x="114" y="93" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="128" y="112" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="142" y="93" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="156" y="112" fill="#e0e0e0" font-size="11" text-anchor="middle">2</text>
+            <!-- Row 3 -->
+            <rect x="30" y="121" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="44" y="140" fill="#e0e0e0" font-size="11" text-anchor="middle">2</text>
+            <rect x="58" y="121" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="72" y="140" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="86" y="121" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="100" y="140" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <rect x="114" y="121" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="128" y="140" fill="#e0e0e0" font-size="11" text-anchor="middle">2</text>
+            <rect x="142" y="121" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="156" y="140" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <!-- Row 4 -->
+            <rect x="30" y="149" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="44" y="168" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="58" y="149" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="72" y="168" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <rect x="86" y="149" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="100" y="168" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="114" y="149" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="128" y="168" fill="#e0e0e0" font-size="11" text-anchor="middle">3</text>
+            <rect x="142" y="149" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="156" y="168" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <!-- Row 5 -->
+            <rect x="30" y="177" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="44" y="196" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <rect x="58" y="177" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="72" y="196" fill="#e0e0e0" font-size="11" text-anchor="middle">2</text>
+            <rect x="86" y="177" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="100" y="196" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="114" y="177" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="128" y="196" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <rect x="142" y="177" width="28" height="28" fill="#1a1a2e" stroke="#555"/><text x="156" y="196" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <!-- Highlight top-left 3x3 -->
+            <rect x="30" y="65" width="84" height="84" fill="none" stroke="#ff6b35" stroke-width="3"/>
+            <!-- Kernel 3x3 -->
+            <text x="310" y="55" fill="#aaa" font-size="12" text-anchor="middle">Kernel (3x3)</text>
+            <rect x="268" y="65" width="28" height="28" fill="#16213e" stroke="#ff6b35"/><text x="282" y="84" fill="#ff6b35" font-size="11" text-anchor="middle">1</text>
+            <rect x="296" y="65" width="28" height="28" fill="#16213e" stroke="#ff6b35"/><text x="310" y="84" fill="#ff6b35" font-size="11" text-anchor="middle">0</text>
+            <rect x="324" y="65" width="28" height="28" fill="#16213e" stroke="#ff6b35"/><text x="338" y="84" fill="#ff6b35" font-size="11" text-anchor="middle">-1</text>
+            <rect x="268" y="93" width="28" height="28" fill="#16213e" stroke="#ff6b35"/><text x="282" y="112" fill="#ff6b35" font-size="11" text-anchor="middle">1</text>
+            <rect x="296" y="93" width="28" height="28" fill="#16213e" stroke="#ff6b35"/><text x="310" y="112" fill="#ff6b35" font-size="11" text-anchor="middle">0</text>
+            <rect x="324" y="93" width="28" height="28" fill="#16213e" stroke="#ff6b35"/><text x="338" y="112" fill="#ff6b35" font-size="11" text-anchor="middle">-1</text>
+            <rect x="268" y="121" width="28" height="28" fill="#16213e" stroke="#ff6b35"/><text x="282" y="140" fill="#ff6b35" font-size="11" text-anchor="middle">1</text>
+            <rect x="296" y="121" width="28" height="28" fill="#16213e" stroke="#ff6b35"/><text x="310" y="140" fill="#ff6b35" font-size="11" text-anchor="middle">0</text>
+            <rect x="324" y="121" width="28" height="28" fill="#16213e" stroke="#ff6b35"/><text x="338" y="140" fill="#ff6b35" font-size="11" text-anchor="middle">-1</text>
+            <!-- Multiplication symbol -->
+            <text x="230" y="115" fill="#ff8c42" font-size="24" text-anchor="middle">*</text>
+            <!-- Arrow -->
+            <line x1="370" y1="110" x2="440" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker></defs>
+            <!-- Output -->
+            <text x="560" y="55" fill="#aaa" font-size="12" text-anchor="middle">Feature Map (3x3)</text>
+            <rect x="508" y="65" width="34" height="34" fill="#0d3320" stroke="#00ff88" stroke-width="2"/><text x="525" y="88" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">-1</text>
+            <rect x="542" y="65" width="34" height="34" fill="#16213e" stroke="#555"/><text x="559" y="88" fill="#e0e0e0" font-size="12" text-anchor="middle">?</text>
+            <rect x="576" y="65" width="34" height="34" fill="#16213e" stroke="#555"/><text x="593" y="88" fill="#e0e0e0" font-size="12" text-anchor="middle">?</text>
+            <rect x="508" y="99" width="34" height="34" fill="#16213e" stroke="#555"/><text x="525" y="122" fill="#e0e0e0" font-size="12" text-anchor="middle">?</text>
+            <rect x="542" y="99" width="34" height="34" fill="#16213e" stroke="#555"/><text x="559" y="122" fill="#e0e0e0" font-size="12" text-anchor="middle">?</text>
+            <rect x="576" y="99" width="34" height="34" fill="#16213e" stroke="#555"/><text x="593" y="122" fill="#e0e0e0" font-size="12" text-anchor="middle">?</text>
+            <rect x="508" y="133" width="34" height="34" fill="#16213e" stroke="#555"/><text x="525" y="156" fill="#e0e0e0" font-size="12" text-anchor="middle">?</text>
+            <rect x="542" y="133" width="34" height="34" fill="#16213e" stroke="#555"/><text x="559" y="156" fill="#e0e0e0" font-size="12" text-anchor="middle">?</text>
+            <rect x="576" y="133" width="34" height="34" fill="#16213e" stroke="#555"/><text x="593" y="156" fill="#e0e0e0" font-size="12" text-anchor="middle">?</text>
+            <!-- Calculation -->
+            <text x="350" y="240" fill="#e0e0e0" font-size="11" text-anchor="middle">Calcul position (0,0) :</text>
+            <text x="350" y="260" fill="#ff8c42" font-size="11" text-anchor="middle">1*1 + 0*0 + 2*(-1) + 0*1 + 1*0 + 3*(-1) + 2*1 + 1*0 + 0*(-1)</text>
+            <text x="350" y="280" fill="#ff8c42" font-size="11" text-anchor="middle">= 1 + 0 - 2 + 0 + 0 - 3 + 2 + 0 + 0 = <tspan fill="#00ff88" font-weight="bold">-2</tspan></text>
+            <text x="350" y="310" fill="#aaa" font-size="10" text-anchor="middle">(Ce filtre detecte les bords verticaux)</text>
+        </svg>
+    </div>
+
+    <h3>2.3 Stride et Padding</h3>
+
+    <div class="param-box">
+        <h4>Stride (pas)</h4>
+        <p>Le <strong>stride</strong> est le nombre de pixels dont le filtre se deplace a chaque pas. Un stride de 1 deplace le filtre pixel par pixel. Un stride de 2 saute un pixel a chaque fois, reduisant la taille de sortie de moitie.</p>
+    </div>
+
+    <div class="param-box">
+        <h4>Padding (rembourrage)</h4>
+        <p>Le <strong>padding</strong> ajoute des pixels (generalement des zeros) autour de l'image avant la convolution. Le padding "same" preserve les dimensions spatiales de l'entree. Sans padding ("valid"), les bords de l'image sont perdus.</p>
+    </div>
+
+    <h3>2.4 Formule de la taille de sortie</h3>
+    <div class="definition">
+        La taille spatiale de la feature map de sortie se calcule avec la formule :
+        <strong>O = (I - K + 2P) / S + 1</strong>
+        ou I = taille d'entree, K = taille du kernel, P = padding, S = stride.
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemples de calcul :</span>
+
+<span class="comment"># Image 32x32, kernel 3x3, padding 0, stride 1</span>
+O = (32 - 3 + 2*0) / 1 + 1 = 30
+
+<span class="comment"># Image 32x32, kernel 3x3, padding 1, stride 1 (same padding)</span>
+O = (32 - 3 + 2*1) / 1 + 1 = 32    <span class="comment"># Taille preservee !</span>
+
+<span class="comment"># Image 32x32, kernel 3x3, padding 1, stride 2</span>
+O = (32 - 3 + 2*1) / 2 + 1 = 16    <span class="comment"># Taille divisee par 2</span>
+
+<span class="comment"># Image 224x224, kernel 7x7, padding 3, stride 2</span>
+O = (224 - 7 + 2*3) / 2 + 1 = 112  <span class="comment"># Utilise dans ResNet</span></div>
+
+    <div class="prof-note">
+        Retenez cette formule par coeur ! En examen, on vous demandera souvent de calculer les dimensions de sortie couche par couche. Le piege classique : oublier que le resultat doit etre un entier. Si ce n'est pas le cas, la combinaison (I, K, P, S) est invalide.
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================================= -->
+    <h2>3. Les couches CNN en detail</h2>
+
+    <h3>3.1 Conv2d en PyTorch</h3>
+    <div class="code-block"><span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="comment"># Couche de convolution 2D</span>
+conv = nn.Conv2d(
+    in_channels=<span class="number">3</span>,       <span class="comment"># Nombre de canaux d'entree (3 pour RGB)</span>
+    out_channels=<span class="number">64</span>,     <span class="comment"># Nombre de filtres (= nombre de feature maps de sortie)</span>
+    kernel_size=<span class="number">3</span>,       <span class="comment"># Taille du filtre (3x3)</span>
+    stride=<span class="number">1</span>,            <span class="comment"># Pas du filtre</span>
+    padding=<span class="number">1</span>,           <span class="comment"># Padding (1 pour "same" avec kernel 3x3)</span>
+    bias=<span class="keyword">True</span>            <span class="comment"># Ajouter un biais (souvent False avec BatchNorm)</span>
+)
+
+<span class="comment"># Entree : tensor de shape (batch, channels, hauteur, largeur)</span>
+x = torch.randn(<span class="number">16</span>, <span class="number">3</span>, <span class="number">32</span>, <span class="number">32</span>)    <span class="comment"># Batch de 16 images 32x32 RGB</span>
+out = conv(x)
+print(out.shape)  <span class="comment"># torch.Size([16, 64, 32, 32])</span></div>
+    <div class="output-block">torch.Size([16, 64, 32, 32])</div>
+
+    <h3>3.2 Feature Maps</h3>
+    <p>Chaque filtre produit une <strong>feature map</strong> (carte de caracteristiques). Si l'on a 64 filtres, on obtient 64 feature maps. Chaque feature map est le resultat de la convolution d'un filtre specifique sur l'image entiere.</p>
+
+    <div class="concept-box blue">
+        <h4>Intuition des feature maps</h4>
+        <p>Pensez a chaque feature map comme une "carte de chaleur" qui montre ou un certain motif apparait dans l'image. Le filtre detecteur de bords horizontaux produira une feature map avec des valeurs elevees la ou il y a des bords horizontaux, et des valeurs proches de zero partout ailleurs.</p>
+    </div>
+
+    <h3>3.3 Calcul du nombre de parametres</h3>
+    <div class="definition">
+        Pour une couche Conv2d : <strong>Parametres = (K x K x C_in + 1) x C_out</strong> ou K est la taille du kernel, C_in les canaux d'entree, C_out les canaux de sortie, et +1 pour le biais.
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemple : Conv2d(3, 64, kernel_size=3)</span>
+<span class="comment"># Parametres = (3 * 3 * 3 + 1) * 64 = 28 * 64 = 1 792</span>
+
+<span class="comment"># Comparaison avec un MLP sur la meme image (32x32x3 = 3072 entrees, 64 neurones)</span>
+<span class="comment"># Parametres MLP = (3072 + 1) * 64 = 196 672</span>
+
+<span class="comment"># Le CNN utilise 100x moins de parametres !</span>
+
+<span class="comment"># Verification en PyTorch :</span>
+conv = nn.Conv2d(<span class="number">3</span>, <span class="number">64</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>)
+total_params = sum(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> conv.parameters())
+print(<span class="string">f"Parametres Conv2d: {total_params}"</span>)</div>
+    <div class="output-block">Parametres Conv2d: 1792</div>
+
+    <h3>3.4 Convolution multi-canaux</h3>
+    <p>Quand l'entree a plusieurs canaux (ex: 3 pour RGB, ou 64 feature maps de la couche precedente), chaque filtre est un volume 3D de taille K x K x C_in. Le filtre fait un produit scalaire sur toute la profondeur, produisant une seule valeur de sortie par position.</p>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================================= -->
+    <h2>4. Pooling (sous-echantillonnage)</h2>
+
+    <div class="definition">
+        Le <strong>pooling</strong> reduit les dimensions spatiales des feature maps tout en preservant les informations les plus importantes. Il rend le reseau plus robuste aux petites translations et reduit le nombre de calculs.
+    </div>
+
+    <h3>4.1 Max Pooling</h3>
+    <p>Prend la valeur <strong>maximale</strong> dans chaque fenetre :</p>
+
+    <div class="svg-container">
+        <svg width="550" height="220" viewBox="0 0 550 220">
+            <text x="275" y="20" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Max Pooling 2x2, stride 2</text>
+            <!-- Input 4x4 -->
+            <text x="100" y="50" fill="#aaa" font-size="11" text-anchor="middle">Entree (4x4)</text>
+            <!-- Row 1 -->
+            <rect x="40" y="60" width="30" height="30" fill="#2a1a1a" stroke="#555"/><text x="55" y="80" fill="#ff8c42" font-size="11" text-anchor="middle">1</text>
+            <rect x="70" y="60" width="30" height="30" fill="#2a1a1a" stroke="#555"/><text x="85" y="80" fill="#ff4444" font-size="12" text-anchor="middle" font-weight="bold">3</text>
+            <rect x="100" y="60" width="30" height="30" fill="#1a2a1a" stroke="#555"/><text x="115" y="80" fill="#e0e0e0" font-size="11" text-anchor="middle">2</text>
+            <rect x="130" y="60" width="30" height="30" fill="#1a2a1a" stroke="#555"/><text x="145" y="80" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">5</text>
+            <!-- Row 2 -->
+            <rect x="40" y="90" width="30" height="30" fill="#2a1a1a" stroke="#555"/><text x="55" y="110" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <rect x="70" y="90" width="30" height="30" fill="#2a1a1a" stroke="#555"/><text x="85" y="110" fill="#e0e0e0" font-size="11" text-anchor="middle">2</text>
+            <rect x="100" y="90" width="30" height="30" fill="#1a2a1a" stroke="#555"/><text x="115" y="110" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="130" y="90" width="30" height="30" fill="#1a2a1a" stroke="#555"/><text x="145" y="110" fill="#e0e0e0" font-size="11" text-anchor="middle">4</text>
+            <!-- Row 3 -->
+            <rect x="40" y="120" width="30" height="30" fill="#1a1a2a" stroke="#555"/><text x="55" y="140" fill="#569cd6" font-size="12" text-anchor="middle" font-weight="bold">4</text>
+            <rect x="70" y="120" width="30" height="30" fill="#1a1a2a" stroke="#555"/><text x="85" y="140" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="100" y="120" width="30" height="30" fill="#2a2a1a" stroke="#555"/><text x="115" y="140" fill="#e0e0e0" font-size="11" text-anchor="middle">3</text>
+            <rect x="130" y="120" width="30" height="30" fill="#2a2a1a" stroke="#555"/><text x="145" y="140" fill="#ffaa00" font-size="12" text-anchor="middle" font-weight="bold">6</text>
+            <!-- Row 4 -->
+            <rect x="40" y="150" width="30" height="30" fill="#1a1a2a" stroke="#555"/><text x="55" y="170" fill="#e0e0e0" font-size="11" text-anchor="middle">2</text>
+            <rect x="70" y="150" width="30" height="30" fill="#1a1a2a" stroke="#555"/><text x="85" y="170" fill="#e0e0e0" font-size="11" text-anchor="middle">0</text>
+            <rect x="100" y="150" width="30" height="30" fill="#2a2a1a" stroke="#555"/><text x="115" y="170" fill="#e0e0e0" font-size="11" text-anchor="middle">1</text>
+            <rect x="130" y="150" width="30" height="30" fill="#2a2a1a" stroke="#555"/><text x="145" y="170" fill="#e0e0e0" font-size="11" text-anchor="middle">2</text>
+            <!-- Quadrant borders -->
+            <rect x="40" y="60" width="60" height="60" fill="none" stroke="#ff4444" stroke-width="2"/>
+            <rect x="100" y="60" width="60" height="60" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <rect x="40" y="120" width="60" height="60" fill="none" stroke="#569cd6" stroke-width="2"/>
+            <rect x="100" y="120" width="60" height="60" fill="none" stroke="#ffaa00" stroke-width="2"/>
+            <!-- Arrow -->
+            <text x="220" y="125" fill="#ff6b35" font-size="20">&#8594;</text>
+            <text x="220" y="145" fill="#aaa" font-size="10" text-anchor="middle">max</text>
+            <!-- Output 2x2 -->
+            <text x="340" y="85" fill="#aaa" font-size="11" text-anchor="middle">Sortie (2x2)</text>
+            <rect x="300" y="95" width="40" height="40" fill="#2a1a1a" stroke="#ff4444" stroke-width="2"/><text x="320" y="120" fill="#ff4444" font-size="14" text-anchor="middle" font-weight="bold">3</text>
+            <rect x="340" y="95" width="40" height="40" fill="#1a2a1a" stroke="#00ff88" stroke-width="2"/><text x="360" y="120" fill="#00ff88" font-size="14" text-anchor="middle" font-weight="bold">5</text>
+            <rect x="300" y="135" width="40" height="40" fill="#1a1a2a" stroke="#569cd6" stroke-width="2"/><text x="320" y="160" fill="#569cd6" font-size="14" text-anchor="middle" font-weight="bold">4</text>
+            <rect x="340" y="135" width="40" height="40" fill="#2a2a1a" stroke="#ffaa00" stroke-width="2"/><text x="360" y="160" fill="#ffaa00" font-size="14" text-anchor="middle" font-weight="bold">6</text>
+            <!-- Note -->
+            <text x="340" y="200" fill="#aaa" font-size="10" text-anchor="middle">Taille reduite de moitie</text>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># Max Pooling en PyTorch</span>
+pool = nn.MaxPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>)
+
+x = torch.randn(<span class="number">1</span>, <span class="number">64</span>, <span class="number">32</span>, <span class="number">32</span>)
+out = pool(x)
+print(out.shape)  <span class="comment"># torch.Size([1, 64, 16, 16])</span></div>
+    <div class="output-block">torch.Size([1, 64, 16, 16])</div>
+
+    <h3>4.2 Average Pooling</h3>
+    <p>Prend la <strong>moyenne</strong> des valeurs dans chaque fenetre. Moins utilise que le Max Pooling car il lisse trop les features discriminantes.</p>
+    <div class="code-block">avg_pool = nn.AvgPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>)</div>
+
+    <h3>4.3 Global Average Pooling (GAP)</h3>
+    <div class="definition">
+        Le <strong>Global Average Pooling</strong> calcule la moyenne de chaque feature map entiere, reduisant chaque carte HxW a une seule valeur. Il remplace avantageusement les couches fully-connected finales, eliminant des millions de parametres.
+    </div>
+    <div class="code-block"><span class="comment"># Global Average Pooling</span>
+gap = nn.AdaptiveAvgPool2d(output_size=(<span class="number">1</span>, <span class="number">1</span>))
+
+x = torch.randn(<span class="number">1</span>, <span class="number">512</span>, <span class="number">7</span>, <span class="number">7</span>)  <span class="comment"># 512 feature maps de 7x7</span>
+out = gap(x)                        <span class="comment"># 512 valeurs scalaires</span>
+print(out.shape)                    <span class="comment"># torch.Size([1, 512, 1, 1])</span>
+out = out.view(out.size(<span class="number">0</span>), -<span class="number">1</span>)     <span class="comment"># Reshape en [1, 512]</span></div>
+    <div class="output-block">torch.Size([1, 512, 1, 1])</div>
+
+    <div class="prof-note">
+        Le Global Average Pooling est utilise dans presque toutes les architectures CNN modernes (a partir de GoogLeNet/Inception en 2014). Il a deux avantages majeurs : (1) il elimine des millions de parametres par rapport aux couches FC, et (2) il agit comme une forme de regularisation naturelle.
+    </div>
+
+    <table>
+        <tr><th>Type de Pooling</th><th>Operation</th><th>Utilisation</th><th>Parametres appris</th></tr>
+        <tr><td>Max Pooling</td><td>Maximum dans la fenetre</td><td>Entre les blocs conv</td><td>0</td></tr>
+        <tr><td>Average Pooling</td><td>Moyenne dans la fenetre</td><td>Moins courant</td><td>0</td></tr>
+        <tr><td>Global Avg Pooling</td><td>Moyenne de toute la feature map</td><td>Avant le classifieur final</td><td>0</td></tr>
+    </table>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================================= -->
+    <h2>5. Architecture CNN complete</h2>
+
+    <p>L'architecture typique d'un CNN suit le schema : empilement de blocs <strong>Conv &rarr; ReLU &rarr; Pool</strong>, suivi de couches <strong>Fully-Connected</strong> pour la classification.</p>
+
+    <div class="svg-container">
+        <svg width="800" height="280" viewBox="0 0 800 280">
+            <text x="400" y="20" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Architecture CNN typique pour la classification d'images</text>
+            <!-- Input image -->
+            <rect x="20" y="80" width="60" height="60" fill="#16213e" stroke="#ff6b35" stroke-width="2" rx="4"/>
+            <text x="50" y="115" fill="#ff6b35" font-size="9" text-anchor="middle">Image</text>
+            <text x="50" y="160" fill="#aaa" font-size="8" text-anchor="middle">32x32x3</text>
+            <!-- Conv1 + ReLU -->
+            <rect x="110" y="60" width="50" height="100" fill="#1a2a1a" stroke="#00ff88" stroke-width="2" rx="4"/>
+            <text x="135" y="105" fill="#00ff88" font-size="8" text-anchor="middle">Conv1</text>
+            <text x="135" y="118" fill="#00ff88" font-size="8" text-anchor="middle">+ReLU</text>
+            <text x="135" y="180" fill="#aaa" font-size="8" text-anchor="middle">32x32x32</text>
+            <!-- Pool1 -->
+            <rect x="180" y="75" width="35" height="70" fill="#2a1a1a" stroke="#ff4444" stroke-width="2" rx="4"/>
+            <text x="197" y="115" fill="#ff4444" font-size="8" text-anchor="middle">Pool</text>
+            <text x="197" y="165" fill="#aaa" font-size="8" text-anchor="middle">16x16x32</text>
+            <!-- Conv2 + ReLU -->
+            <rect x="240" y="70" width="50" height="80" fill="#1a2a1a" stroke="#00ff88" stroke-width="2" rx="4"/>
+            <text x="265" y="105" fill="#00ff88" font-size="8" text-anchor="middle">Conv2</text>
+            <text x="265" y="118" fill="#00ff88" font-size="8" text-anchor="middle">+ReLU</text>
+            <text x="265" y="170" fill="#aaa" font-size="8" text-anchor="middle">16x16x64</text>
+            <!-- Pool2 -->
+            <rect x="310" y="85" width="35" height="50" fill="#2a1a1a" stroke="#ff4444" stroke-width="2" rx="4"/>
+            <text x="327" y="115" fill="#ff4444" font-size="8" text-anchor="middle">Pool</text>
+            <text x="327" y="155" fill="#aaa" font-size="8" text-anchor="middle">8x8x64</text>
+            <!-- Conv3 + ReLU -->
+            <rect x="370" y="80" width="50" height="60" fill="#1a2a1a" stroke="#00ff88" stroke-width="2" rx="4"/>
+            <text x="395" y="105" fill="#00ff88" font-size="8" text-anchor="middle">Conv3</text>
+            <text x="395" y="118" fill="#00ff88" font-size="8" text-anchor="middle">+ReLU</text>
+            <text x="395" y="160" fill="#aaa" font-size="8" text-anchor="middle">8x8x128</text>
+            <!-- Pool3 -->
+            <rect x="440" y="90" width="35" height="40" fill="#2a1a1a" stroke="#ff4444" stroke-width="2" rx="4"/>
+            <text x="457" y="115" fill="#ff4444" font-size="8" text-anchor="middle">Pool</text>
+            <text x="457" y="150" fill="#aaa" font-size="8" text-anchor="middle">4x4x128</text>
+            <!-- Flatten -->
+            <rect x="500" y="95" width="40" height="30" fill="#1a1a2e" stroke="#ffaa00" stroke-width="2" rx="4"/>
+            <text x="520" y="114" fill="#ffaa00" font-size="8" text-anchor="middle">Flatten</text>
+            <text x="520" y="145" fill="#aaa" font-size="8" text-anchor="middle">2048</text>
+            <!-- FC1 -->
+            <rect x="565" y="90" width="50" height="40" fill="#16213e" stroke="#569cd6" stroke-width="2" rx="4"/>
+            <text x="590" y="114" fill="#569cd6" font-size="8" text-anchor="middle">FC+ReLU</text>
+            <text x="590" y="150" fill="#aaa" font-size="8" text-anchor="middle">512</text>
+            <!-- FC2 (output) -->
+            <rect x="640" y="95" width="50" height="30" fill="#16213e" stroke="#569cd6" stroke-width="2" rx="4"/>
+            <text x="665" y="114" fill="#569cd6" font-size="8" text-anchor="middle">FC</text>
+            <text x="665" y="145" fill="#aaa" font-size="8" text-anchor="middle">10</text>
+            <!-- Softmax -->
+            <rect x="715" y="95" width="50" height="30" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2" rx="4"/>
+            <text x="740" y="114" fill="#ff6b35" font-size="8" text-anchor="middle">Softmax</text>
+            <text x="740" y="145" fill="#aaa" font-size="8" text-anchor="middle">Classes</text>
+            <!-- Arrows -->
+            <line x1="80" y1="110" x2="108" y2="110" stroke="#555" stroke-width="1.5"/>
+            <line x1="160" y1="110" x2="178" y2="110" stroke="#555" stroke-width="1.5"/>
+            <line x1="215" y1="110" x2="238" y2="110" stroke="#555" stroke-width="1.5"/>
+            <line x1="290" y1="110" x2="308" y2="110" stroke="#555" stroke-width="1.5"/>
+            <line x1="345" y1="110" x2="368" y2="110" stroke="#555" stroke-width="1.5"/>
+            <line x1="420" y1="110" x2="438" y2="110" stroke="#555" stroke-width="1.5"/>
+            <line x1="475" y1="110" x2="498" y2="110" stroke="#555" stroke-width="1.5"/>
+            <line x1="540" y1="110" x2="563" y2="110" stroke="#555" stroke-width="1.5"/>
+            <line x1="615" y1="110" x2="638" y2="110" stroke="#555" stroke-width="1.5"/>
+            <line x1="690" y1="110" x2="713" y2="110" stroke="#555" stroke-width="1.5"/>
+            <!-- Labels -->
+            <text x="225" y="230" fill="#00ff88" font-size="11" text-anchor="middle">Extraction de features</text>
+            <line x1="50" y1="220" x2="470" y2="220" stroke="#00ff88" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="640" y="230" fill="#569cd6" font-size="11" text-anchor="middle">Classification</text>
+            <line x1="530" y1="220" x2="750" y2="220" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,4"/>
+        </svg>
+    </div>
+
+    <div class="concept-box">
+        <h4>Pattern typique d'un CNN</h4>
+        <p>Au fur et a mesure que l'on avance dans le reseau, les <strong>dimensions spatiales diminuent</strong> (32 &rarr; 16 &rarr; 8 &rarr; 4) tandis que le <strong>nombre de canaux augmente</strong> (3 &rarr; 32 &rarr; 64 &rarr; 128). On passe d'une representation "large et peu profonde" (pixels) a une representation "etroite et profonde" (features abstraites).</p>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================================= -->
+    <h2>6. LeNet-5 (1998) - La premiere architecture CNN</h2>
+
+    <div class="timeline-item">
+        <span class="timeline-year">1998</span>
+        <div>
+            <strong>LeNet-5</strong> par Yann LeCun et al. - Le premier CNN a succes, concu pour la reconnaissance de chiffres manuscrits (code postal). Architecture simple mais fondatrice.
+        </div>
+    </div>
+
+    <h3>6.1 Architecture de LeNet-5</h3>
+    <table>
+        <tr><th>Couche</th><th>Type</th><th>Sortie</th><th>Parametres</th></tr>
+        <tr><td>Entree</td><td>Image</td><td>1 x 32 x 32</td><td>0</td></tr>
+        <tr><td>C1</td><td>Conv 5x5, 6 filtres</td><td>6 x 28 x 28</td><td>156</td></tr>
+        <tr><td>S2</td><td>Avg Pool 2x2</td><td>6 x 14 x 14</td><td>0</td></tr>
+        <tr><td>C3</td><td>Conv 5x5, 16 filtres</td><td>16 x 10 x 10</td><td>2 416</td></tr>
+        <tr><td>S4</td><td>Avg Pool 2x2</td><td>16 x 5 x 5</td><td>0</td></tr>
+        <tr><td>C5</td><td>Conv 5x5, 120 filtres</td><td>120 x 1 x 1</td><td>48 120</td></tr>
+        <tr><td>F6</td><td>Fully Connected</td><td>84</td><td>10 164</td></tr>
+        <tr><td>Sortie</td><td>Fully Connected</td><td>10</td><td>850</td></tr>
+        <tr><td colspan="3"><strong>Total</strong></td><td><strong>~61 706</strong></td></tr>
+    </table>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="keyword">class</span> <span class="function">LeNet5</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(<span class="number">1</span>, <span class="number">6</span>, kernel_size=<span class="number">5</span>),       <span class="comment"># C1: 1x32x32 -> 6x28x28</span>
+            nn.Tanh(),
+            nn.AvgPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>), <span class="comment"># S2: 6x28x28 -> 6x14x14</span>
+            nn.Conv2d(<span class="number">6</span>, <span class="number">16</span>, kernel_size=<span class="number">5</span>),      <span class="comment"># C3: 6x14x14 -> 16x10x10</span>
+            nn.Tanh(),
+            nn.AvgPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>), <span class="comment"># S4: 16x10x10 -> 16x5x5</span>
+            nn.Conv2d(<span class="number">16</span>, <span class="number">120</span>, kernel_size=<span class="number">5</span>),    <span class="comment"># C5: 16x5x5 -> 120x1x1</span>
+            nn.Tanh()
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(<span class="number">120</span>, <span class="number">84</span>),                    <span class="comment"># F6</span>
+            nn.Tanh(),
+            nn.Linear(<span class="number">84</span>, <span class="number">10</span>)                       <span class="comment"># Sortie</span>
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        x = self.features(x)
+        x = x.view(x.size(<span class="number">0</span>), -<span class="number">1</span>)                  <span class="comment"># Flatten</span>
+        x = self.classifier(x)
+        <span class="keyword">return</span> x
+
+model = LeNet5()
+print(<span class="string">f"Parametres: {sum(p.numel() for p in model.parameters()):,}"</span>)</div>
+    <div class="output-block">Parametres: 61,706</div>
+
+    <div class="prof-note">
+        LeNet-5 utilise encore des activations Tanh et Average Pooling car ReLU et Max Pooling n'avaient pas encore ete popularises. L'architecture est historiquement fondatrice mais depassee par les standards modernes.
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================================= -->
+    <h2>7. AlexNet (2012) - La revolution ImageNet</h2>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2012</span>
+        <div>
+            <strong>AlexNet</strong> par Alex Krizhevsky, Ilya Sutskever et Geoffrey Hinton - A remporte ImageNet LSVRC 2012 avec une erreur top-5 de 15.3%, ecrasant la deuxieme place (26.2%). Ce moment a marque le debut de l'ere du Deep Learning.
+        </div>
+    </div>
+
+    <h3>7.1 Innovations d'AlexNet</h3>
+    <div class="concept-box green">
+        <h4>Les innovations cles d'AlexNet</h4>
+        <ul>
+            <li><strong>ReLU</strong> au lieu de tanh/sigmoid : entrainement 6x plus rapide</li>
+            <li><strong>Dropout</strong> (p=0.5) dans les couches FC : premiere utilisation a grande echelle</li>
+            <li><strong>Data Augmentation</strong> : crops aleatoires, miroir horizontal, perturbations de couleur</li>
+            <li><strong>Entrainement sur GPU</strong> : utilisation de 2 GPU NVIDIA GTX 580 en parallele</li>
+            <li><strong>Local Response Normalization</strong> (LRN) : remplacee depuis par BatchNorm</li>
+            <li><strong>Overlapping pooling</strong> : kernels de pooling 3x3 avec stride 2</li>
+        </ul>
+    </div>
+
+    <h3>7.2 Architecture d'AlexNet</h3>
+    <table>
+        <tr><th>Couche</th><th>Configuration</th><th>Sortie</th><th>Parametres</th></tr>
+        <tr><td>Entree</td><td>Image RGB</td><td>3 x 227 x 227</td><td>0</td></tr>
+        <tr><td>Conv1</td><td>96 filtres 11x11, stride 4</td><td>96 x 55 x 55</td><td>34 944</td></tr>
+        <tr><td>Pool1</td><td>Max Pool 3x3, stride 2</td><td>96 x 27 x 27</td><td>0</td></tr>
+        <tr><td>Conv2</td><td>256 filtres 5x5, pad 2</td><td>256 x 27 x 27</td><td>614 656</td></tr>
+        <tr><td>Pool2</td><td>Max Pool 3x3, stride 2</td><td>256 x 13 x 13</td><td>0</td></tr>
+        <tr><td>Conv3</td><td>384 filtres 3x3, pad 1</td><td>384 x 13 x 13</td><td>885 120</td></tr>
+        <tr><td>Conv4</td><td>384 filtres 3x3, pad 1</td><td>384 x 13 x 13</td><td>1 327 488</td></tr>
+        <tr><td>Conv5</td><td>256 filtres 3x3, pad 1</td><td>256 x 13 x 13</td><td>884 992</td></tr>
+        <tr><td>Pool5</td><td>Max Pool 3x3, stride 2</td><td>256 x 6 x 6</td><td>0</td></tr>
+        <tr><td>FC6</td><td>4096 neurones + Dropout</td><td>4096</td><td>37 752 832</td></tr>
+        <tr><td>FC7</td><td>4096 neurones + Dropout</td><td>4096</td><td>16 781 312</td></tr>
+        <tr><td>FC8</td><td>1000 classes (Softmax)</td><td>1000</td><td>4 097 000</td></tr>
+        <tr><td colspan="3"><strong>Total</strong></td><td><strong>~62 millions</strong></td></tr>
+    </table>
+
+    <div class="warning">
+        Notez que plus de 90% des parametres sont dans les couches FC (FC6, FC7, FC8). C'est un enorme gaspillage ! Les architectures modernes (VGG, ResNet) ont resolu ce probleme avec le Global Average Pooling.
+    </div>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">AlexNet</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, num_classes=<span class="number">1000</span>):
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(<span class="number">3</span>, <span class="number">96</span>, kernel_size=<span class="number">11</span>, stride=<span class="number">4</span>, padding=<span class="number">2</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.MaxPool2d(kernel_size=<span class="number">3</span>, stride=<span class="number">2</span>),
+            nn.Conv2d(<span class="number">96</span>, <span class="number">256</span>, kernel_size=<span class="number">5</span>, padding=<span class="number">2</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.MaxPool2d(kernel_size=<span class="number">3</span>, stride=<span class="number">2</span>),
+            nn.Conv2d(<span class="number">256</span>, <span class="number">384</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Conv2d(<span class="number">384</span>, <span class="number">384</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Conv2d(<span class="number">384</span>, <span class="number">256</span>, kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.MaxPool2d(kernel_size=<span class="number">3</span>, stride=<span class="number">2</span>),
+        )
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=<span class="number">0.5</span>),
+            nn.Linear(<span class="number">256</span> * <span class="number">6</span> * <span class="number">6</span>, <span class="number">4096</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Dropout(p=<span class="number">0.5</span>),
+            nn.Linear(<span class="number">4096</span>, <span class="number">4096</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Linear(<span class="number">4096</span>, num_classes),
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        x = self.features(x)
+        x = x.view(x.size(<span class="number">0</span>), <span class="number">256</span> * <span class="number">6</span> * <span class="number">6</span>)
+        x = self.classifier(x)
+        <span class="keyword">return</span> x</div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================================= -->
+    <h2>8. VGG (2014) - La simplicite profonde</h2>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2014</span>
+        <div>
+            <strong>VGGNet</strong> par Karen Simonyan et Andrew Zisserman (Visual Geometry Group, Oxford) - A demontre que la <strong>profondeur</strong> du reseau est cruciale pour la performance. Utilise uniquement des filtres 3x3, ce qui simplifie enormement le design.
+        </div>
+    </div>
+
+    <h3>8.1 Philosophie de VGG</h3>
+    <div class="concept-box">
+        <h4>Principe fondamental de VGG</h4>
+        <p>Un empilement de deux couches Conv 3x3 a le meme <strong>champ recepteur</strong> qu'une seule couche Conv 5x5, mais avec moins de parametres et plus de non-linearites. Trois couches Conv 3x3 equivalent a une Conv 7x7.</p>
+        <ul>
+            <li>Conv 5x5 : 25 parametres par filtre</li>
+            <li>2 x Conv 3x3 : 2 x 9 = 18 parametres (28% de moins !)</li>
+            <li>Conv 7x7 : 49 parametres par filtre</li>
+            <li>3 x Conv 3x3 : 3 x 9 = 27 parametres (45% de moins !)</li>
+        </ul>
+    </div>
+
+    <h3>8.2 Architecture VGG-16</h3>
+    <table>
+        <tr><th>Bloc</th><th>Couches</th><th>Sortie</th><th>Parametres</th></tr>
+        <tr><td>Entree</td><td>Image RGB</td><td>3 x 224 x 224</td><td>-</td></tr>
+        <tr><td>Bloc 1</td><td>2 x Conv 3x3, 64 + MaxPool</td><td>64 x 112 x 112</td><td>38 720</td></tr>
+        <tr><td>Bloc 2</td><td>2 x Conv 3x3, 128 + MaxPool</td><td>128 x 56 x 56</td><td>221 440</td></tr>
+        <tr><td>Bloc 3</td><td>3 x Conv 3x3, 256 + MaxPool</td><td>256 x 28 x 28</td><td>1 475 328</td></tr>
+        <tr><td>Bloc 4</td><td>3 x Conv 3x3, 512 + MaxPool</td><td>512 x 14 x 14</td><td>5 899 776</td></tr>
+        <tr><td>Bloc 5</td><td>3 x Conv 3x3, 512 + MaxPool</td><td>512 x 7 x 7</td><td>7 079 424</td></tr>
+        <tr><td>FC6</td><td>4096 neurones</td><td>4096</td><td>102 764 544</td></tr>
+        <tr><td>FC7</td><td>4096 neurones</td><td>4096</td><td>16 781 312</td></tr>
+        <tr><td>FC8</td><td>1000 neurones</td><td>1000</td><td>4 097 000</td></tr>
+        <tr><td colspan="3"><strong>Total VGG-16</strong></td><td><strong>~138 millions</strong></td></tr>
+    </table>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">make_vgg_block</span>(in_channels, out_channels, num_convs):
+    <span class="string">"""Cree un bloc VGG avec num_convs couches de convolution"""</span>
+    layers = []
+    <span class="keyword">for</span> _ <span class="keyword">in</span> range(num_convs):
+        layers.append(nn.Conv2d(in_channels, out_channels,
+                                kernel_size=<span class="number">3</span>, padding=<span class="number">1</span>))
+        layers.append(nn.BatchNorm2d(out_channels))  <span class="comment"># Ajout moderne</span>
+        layers.append(nn.ReLU(inplace=<span class="keyword">True</span>))
+        in_channels = out_channels
+    layers.append(nn.MaxPool2d(kernel_size=<span class="number">2</span>, stride=<span class="number">2</span>))
+    <span class="keyword">return</span> nn.Sequential(*layers)
+
+<span class="keyword">class</span> <span class="function">VGG16</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, num_classes=<span class="number">1000</span>):
+        super().__init__()
+        self.features = nn.Sequential(
+            make_vgg_block(<span class="number">3</span>, <span class="number">64</span>, <span class="number">2</span>),     <span class="comment"># Bloc 1</span>
+            make_vgg_block(<span class="number">64</span>, <span class="number">128</span>, <span class="number">2</span>),    <span class="comment"># Bloc 2</span>
+            make_vgg_block(<span class="number">128</span>, <span class="number">256</span>, <span class="number">3</span>),   <span class="comment"># Bloc 3</span>
+            make_vgg_block(<span class="number">256</span>, <span class="number">512</span>, <span class="number">3</span>),   <span class="comment"># Bloc 4</span>
+            make_vgg_block(<span class="number">512</span>, <span class="number">512</span>, <span class="number">3</span>),   <span class="comment"># Bloc 5</span>
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(<span class="number">512</span> * <span class="number">7</span> * <span class="number">7</span>, <span class="number">4096</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Dropout(<span class="number">0.5</span>),
+            nn.Linear(<span class="number">4096</span>, <span class="number">4096</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+            nn.Dropout(<span class="number">0.5</span>),
+            nn.Linear(<span class="number">4096</span>, num_classes),
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        x = self.features(x)
+        x = x.view(x.size(<span class="number">0</span>), -<span class="number">1</span>)
+        x = self.classifier(x)
+        <span class="keyword">return</span> x</div>
+
+    <div class="prof-note">
+        VGG-16 a 138 millions de parametres, ce qui est enorme. Elle est encore tres utilisee comme feature extractor (transfer learning) grace a ses representations de features tres generalisables. Les poids pre-entraines de VGG sont disponibles directement dans <code>torchvision.models</code>.
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================================= -->
+    <h2>9. ResNet (2015) - Les connexions residuelles</h2>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2015</span>
+        <div>
+            <strong>ResNet</strong> par Kaiming He et al. (Microsoft Research) - A remporte ImageNet 2015 avec une erreur top-5 de 3.57%, <strong>surpassant les performances humaines</strong> (~5%). L'innovation cle : les connexions residuelles (skip connections).
+        </div>
+    </div>
+
+    <h3>9.1 Le probleme de la degradation</h3>
+    <p>Paradoxalement, ajouter plus de couches a un reseau profond peut <strong>degrader</strong> les performances, meme sur les donnees d'entrainement ! Ce n'est pas du surapprentissage (qui n'affecte que la validation), c'est un probleme d'optimisation : le reseau n'arrive pas a apprendre la fonction identite a travers ses couches supplementaires.</p>
+
+    <div class="analogy">
+        <h4>Analogie : copier un document</h4>
+        <p>Imaginez que vous demandiez a 100 personnes de recopier un document a la chaine (chaque personne recopie la version de la precedente). Le document final sera certainement degrade. Mais si chaque personne a le droit d'ecrire : "meme chose que avant + petites modifications", le resultat sera bien meilleur. C'est exactement l'idee des connexions residuelles !</p>
+    </div>
+
+    <h3>9.2 La connexion residuelle</h3>
+    <div class="definition">
+        Au lieu d'apprendre une transformation directe H(x), un bloc residuel apprend le <strong>residu</strong> F(x) = H(x) - x, puis la sortie est <strong>y = F(x) + x</strong>. Le reseau n'a qu'a apprendre la difference par rapport a l'identite, ce qui est beaucoup plus facile.
+    </div>
+
+    <div class="svg-container">
+        <svg width="600" height="280" viewBox="0 0 600 280">
+            <text x="300" y="25" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Bloc Residuel (Skip Connection)</text>
+            <!-- Input -->
+            <text x="90" y="70" fill="#aaa" font-size="12" text-anchor="middle">x (entree)</text>
+            <rect x="60" y="80" width="60" height="30" fill="#16213e" stroke="#ff6b35" stroke-width="2" rx="6"/>
+            <text x="90" y="100" fill="#ff6b35" font-size="11" text-anchor="middle">x</text>
+            <!-- Arrow down -->
+            <line x1="90" y1="110" x2="90" y2="130" stroke="#555" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <!-- Conv1 + BN + ReLU -->
+            <rect x="30" y="130" width="120" height="30" fill="#1a2a1a" stroke="#00ff88" stroke-width="2" rx="6"/>
+            <text x="90" y="150" fill="#00ff88" font-size="10" text-anchor="middle">Conv 3x3 + BN + ReLU</text>
+            <!-- Arrow -->
+            <line x1="90" y1="160" x2="90" y2="180" stroke="#555" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <!-- Conv2 + BN -->
+            <rect x="30" y="180" width="120" height="30" fill="#1a2a1a" stroke="#00ff88" stroke-width="2" rx="6"/>
+            <text x="90" y="200" fill="#00ff88" font-size="10" text-anchor="middle">Conv 3x3 + BN</text>
+            <!-- Arrow down to addition -->
+            <line x1="90" y1="210" x2="90" y2="230" stroke="#555" stroke-width="2"/>
+            <!-- Skip connection (curve around) -->
+            <path d="M120,95 L200,95 L200,240 L120,240" stroke="#ff6b35" stroke-width="2.5" fill="none" stroke-dasharray="6,3"/>
+            <text x="215" y="170" fill="#ff6b35" font-size="11" text-anchor="middle" font-weight="bold">Skip</text>
+            <text x="215" y="185" fill="#ff6b35" font-size="11" text-anchor="middle" font-weight="bold">Connection</text>
+            <!-- Addition circle -->
+            <circle cx="90" cy="240" r="12" fill="none" stroke="#ff8c42" stroke-width="2"/>
+            <text x="90" y="245" fill="#ff8c42" font-size="16" text-anchor="middle" font-weight="bold">+</text>
+            <!-- Arrow to ReLU -->
+            <line x1="90" y1="252" x2="90" y2="265" stroke="#555" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <!-- Output -->
+            <text x="90" y="278" fill="#aaa" font-size="11" text-anchor="middle">ReLU(F(x) + x)</text>
+            <!-- Right side: formulas -->
+            <rect x="320" y="80" width="240" height="160" fill="#1a1a2e" stroke="#333" rx="10"/>
+            <text x="440" y="110" fill="#ff6b35" font-size="13" text-anchor="middle" font-weight="bold">Formule</text>
+            <text x="440" y="140" fill="#e0e0e0" font-size="12" text-anchor="middle">y = F(x) + x</text>
+            <text x="440" y="170" fill="#aaa" font-size="11" text-anchor="middle">F(x) = W2 * ReLU(BN(W1 * x))</text>
+            <text x="440" y="200" fill="#00ff88" font-size="11" text-anchor="middle">Gradient : dy/dx = dF/dx + 1</text>
+            <text x="440" y="225" fill="#00ff88" font-size="10" text-anchor="middle">Le gradient ne peut pas disparaitre !</text>
+        </svg>
+    </div>
+
+    <h3>9.3 Types de blocs residuels</h3>
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff8c42;">Basic Block</h4>
+            <p>Utilise dans ResNet-18 et ResNet-34</p>
+            <p>2 couches Conv 3x3</p>
+            <p>Moins de parametres</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Bottleneck Block</h4>
+            <p>Utilise dans ResNet-50, 101, 152</p>
+            <p>Conv 1x1 &rarr; Conv 3x3 &rarr; Conv 1x1</p>
+            <p>Plus efficace en parametres</p>
+        </div>
+    </div>
+
+    <h3>9.4 Implementation PyTorch du bloc residuel</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">BasicBlock</span>(nn.Module):
+    <span class="string">"""Bloc residuel basique (ResNet-18/34)"""</span>
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, in_channels, out_channels, stride=<span class="number">1</span>):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels,
+                               kernel_size=<span class="number">3</span>, stride=stride,
+                               padding=<span class="number">1</span>, bias=<span class="keyword">False</span>)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.relu = nn.ReLU(inplace=<span class="keyword">True</span>)
+        self.conv2 = nn.Conv2d(out_channels, out_channels,
+                               kernel_size=<span class="number">3</span>, stride=<span class="number">1</span>,
+                               padding=<span class="number">1</span>, bias=<span class="keyword">False</span>)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+
+        <span class="comment"># Skip connection avec projection si dimensions differentes</span>
+        self.shortcut = nn.Sequential()
+        <span class="keyword">if</span> stride != <span class="number">1</span> <span class="keyword">or</span> in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels,
+                          kernel_size=<span class="number">1</span>, stride=stride, bias=<span class="keyword">False</span>),
+                nn.BatchNorm2d(out_channels)
+            )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        identity = self.shortcut(x)     <span class="comment"># Skip connection</span>
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        out += identity                  <span class="comment"># Addition residuelle</span>
+        out = self.relu(out)
+        <span class="keyword">return</span> out</div>
+
+    <h3>9.5 Bottleneck Block</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">BottleneckBlock</span>(nn.Module):
+    <span class="string">"""Bloc bottleneck (ResNet-50/101/152)"""</span>
+    expansion = <span class="number">4</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, in_channels, mid_channels, stride=<span class="number">1</span>):
+        super().__init__()
+        out_channels = mid_channels * self.expansion
+
+        <span class="comment"># 1x1 convolution : reduit les dimensions (bottleneck)</span>
+        self.conv1 = nn.Conv2d(in_channels, mid_channels,
+                               kernel_size=<span class="number">1</span>, bias=<span class="keyword">False</span>)
+        self.bn1 = nn.BatchNorm2d(mid_channels)
+
+        <span class="comment"># 3x3 convolution : traitement spatial</span>
+        self.conv2 = nn.Conv2d(mid_channels, mid_channels,
+                               kernel_size=<span class="number">3</span>, stride=stride,
+                               padding=<span class="number">1</span>, bias=<span class="keyword">False</span>)
+        self.bn2 = nn.BatchNorm2d(mid_channels)
+
+        <span class="comment"># 1x1 convolution : restaure les dimensions</span>
+        self.conv3 = nn.Conv2d(mid_channels, out_channels,
+                               kernel_size=<span class="number">1</span>, bias=<span class="keyword">False</span>)
+        self.bn3 = nn.BatchNorm2d(out_channels)
+
+        self.relu = nn.ReLU(inplace=<span class="keyword">True</span>)
+
+        self.shortcut = nn.Sequential()
+        <span class="keyword">if</span> stride != <span class="number">1</span> <span class="keyword">or</span> in_channels != out_channels:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels,
+                          kernel_size=<span class="number">1</span>, stride=stride, bias=<span class="keyword">False</span>),
+                nn.BatchNorm2d(out_channels)
+            )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        identity = self.shortcut(x)
+        out = self.relu(self.bn1(self.conv1(x)))
+        out = self.relu(self.bn2(self.conv2(out)))
+        out = self.bn3(self.conv3(out))
+        out += identity
+        out = self.relu(out)
+        <span class="keyword">return</span> out</div>
+
+    <h3>9.6 Famille ResNet</h3>
+    <table>
+        <tr><th>Modele</th><th>Couches</th><th>Bloc</th><th>Config par stage</th><th>Parametres</th><th>Top-5 Erreur</th></tr>
+        <tr><td>ResNet-18</td><td>18</td><td>Basic</td><td>[2, 2, 2, 2]</td><td>11.7M</td><td>10.92%</td></tr>
+        <tr><td>ResNet-34</td><td>34</td><td>Basic</td><td>[3, 4, 6, 3]</td><td>21.8M</td><td>9.46%</td></tr>
+        <tr><td>ResNet-50</td><td>50</td><td>Bottleneck</td><td>[3, 4, 6, 3]</td><td>25.6M</td><td>7.48%</td></tr>
+        <tr><td>ResNet-101</td><td>101</td><td>Bottleneck</td><td>[3, 4, 23, 3]</td><td>44.5M</td><td>6.58%</td></tr>
+        <tr><td>ResNet-152</td><td>152</td><td>Bottleneck</td><td>[3, 8, 36, 3]</td><td>60.2M</td><td>6.16%</td></tr>
+    </table>
+
+    <div class="prof-note">
+        ResNet-50 est devenue l'architecture de reference pour la vision par ordinateur. Avec seulement 25.6M de parametres (vs 138M pour VGG-16), elle est a la fois plus performante et plus efficace. En pratique, c'est le modele par defaut pour le transfer learning en vision.
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================================= -->
+    <h2>10. Implementation complete : CNN pour CIFAR-10</h2>
+
+    <p>Voici une implementation complete d'un CNN personnalise avec toutes les bonnes pratiques, entraine sur le dataset CIFAR-10 (10 classes d'images 32x32 en couleur).</p>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 1. HYPERPARAMETRES</span>
+<span class="comment"># ============================================</span>
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+EPOCHS = <span class="number">100</span>
+BATCH_SIZE = <span class="number">128</span>
+LR = <span class="number">0.1</span>
+WEIGHT_DECAY = <span class="number">5e-4</span>
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 2. DATA AUGMENTATION + CHARGEMENT</span>
+<span class="comment"># ============================================</span>
+train_transform = transforms.Compose([
+    transforms.RandomCrop(<span class="number">32</span>, padding=<span class="number">4</span>),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.4914</span>, <span class="number">0.4822</span>, <span class="number">0.4465</span>),
+                         (<span class="number">0.2023</span>, <span class="number">0.1994</span>, <span class="number">0.2010</span>)),
+])
+
+test_transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.4914</span>, <span class="number">0.4822</span>, <span class="number">0.4465</span>),
+                         (<span class="number">0.2023</span>, <span class="number">0.1994</span>, <span class="number">0.2010</span>)),
+])
+
+train_set = datasets.CIFAR10(<span class="string">'./data'</span>, train=<span class="keyword">True</span>,
+                              download=<span class="keyword">True</span>, transform=train_transform)
+test_set = datasets.CIFAR10(<span class="string">'./data'</span>, train=<span class="keyword">False</span>,
+                             transform=test_transform)
+
+train_loader = DataLoader(train_set, batch_size=BATCH_SIZE,
+                          shuffle=<span class="keyword">True</span>, num_workers=<span class="number">2</span>)
+test_loader = DataLoader(test_set, batch_size=BATCH_SIZE,
+                         shuffle=<span class="keyword">False</span>, num_workers=<span class="number">2</span>)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 3. MODELE CNN AVEC BLOCS RESIDUELS</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">class</span> <span class="function">ResBlock</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, in_ch, out_ch, stride=<span class="number">1</span>):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_ch, out_ch, <span class="number">3</span>, stride, <span class="number">1</span>, bias=<span class="keyword">False</span>)
+        self.bn1 = nn.BatchNorm2d(out_ch)
+        self.conv2 = nn.Conv2d(out_ch, out_ch, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>, bias=<span class="keyword">False</span>)
+        self.bn2 = nn.BatchNorm2d(out_ch)
+        self.relu = nn.ReLU(inplace=<span class="keyword">True</span>)
+
+        self.shortcut = nn.Sequential()
+        <span class="keyword">if</span> stride != <span class="number">1</span> <span class="keyword">or</span> in_ch != out_ch:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_ch, out_ch, <span class="number">1</span>, stride, bias=<span class="keyword">False</span>),
+                nn.BatchNorm2d(out_ch)
+            )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        out = self.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x)
+        <span class="keyword">return</span> self.relu(out)
+
+<span class="keyword">class</span> <span class="function">SimpleCNN</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, num_classes=<span class="number">10</span>):
+        super().__init__()
+        <span class="comment"># Premiere convolution</span>
+        self.conv1 = nn.Conv2d(<span class="number">3</span>, <span class="number">64</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">1</span>, bias=<span class="keyword">False</span>)
+        self.bn1 = nn.BatchNorm2d(<span class="number">64</span>)
+        self.relu = nn.ReLU(inplace=<span class="keyword">True</span>)
+
+        <span class="comment"># Blocs residuels</span>
+        self.layer1 = self._make_layer(<span class="number">64</span>, <span class="number">64</span>, <span class="number">2</span>, stride=<span class="number">1</span>)   <span class="comment"># 32x32</span>
+        self.layer2 = self._make_layer(<span class="number">64</span>, <span class="number">128</span>, <span class="number">2</span>, stride=<span class="number">2</span>)  <span class="comment"># 16x16</span>
+        self.layer3 = self._make_layer(<span class="number">128</span>, <span class="number">256</span>, <span class="number">2</span>, stride=<span class="number">2</span>) <span class="comment"># 8x8</span>
+        self.layer4 = self._make_layer(<span class="number">256</span>, <span class="number">512</span>, <span class="number">2</span>, stride=<span class="number">2</span>) <span class="comment"># 4x4</span>
+
+        <span class="comment"># Global Average Pooling + classifieur</span>
+        self.gap = nn.AdaptiveAvgPool2d((<span class="number">1</span>, <span class="number">1</span>))
+        self.fc = nn.Linear(<span class="number">512</span>, num_classes)
+
+    <span class="keyword">def</span> <span class="function">_make_layer</span>(self, in_ch, out_ch, num_blocks, stride):
+        layers = [ResBlock(in_ch, out_ch, stride)]
+        <span class="keyword">for</span> _ <span class="keyword">in</span> range(<span class="number">1</span>, num_blocks):
+            layers.append(ResBlock(out_ch, out_ch, <span class="number">1</span>))
+        <span class="keyword">return</span> nn.Sequential(*layers)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        x = self.relu(self.bn1(self.conv1(x)))
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+        x = self.gap(x)
+        x = x.view(x.size(<span class="number">0</span>), -<span class="number">1</span>)
+        x = self.fc(x)
+        <span class="keyword">return</span> x
+
+model = SimpleCNN().to(device)
+total_params = sum(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+print(<span class="string">f"Nombre de parametres: {total_params:,}"</span>)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 4. OPTIMISEUR + SCHEDULER</span>
+<span class="comment"># ============================================</span>
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(model.parameters(), lr=LR,
+                      momentum=<span class="number">0.9</span>, weight_decay=WEIGHT_DECAY, nesterov=<span class="keyword">True</span>)
+scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 5. FONCTIONS D'ENTRAINEMENT ET EVALUATION</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">def</span> <span class="function">train_one_epoch</span>(model, loader, criterion, optimizer):
+    model.train()
+    running_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">for</span> inputs, targets <span class="keyword">in</span> loader:
+        inputs, targets = inputs.to(device), targets.to(device)
+
+        optimizer.zero_grad()
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">5.0</span>)
+        optimizer.step()
+
+        running_loss += loss.item() * inputs.size(<span class="number">0</span>)
+        _, predicted = outputs.max(<span class="number">1</span>)
+        total += targets.size(<span class="number">0</span>)
+        correct += predicted.eq(targets).sum().item()
+
+    <span class="keyword">return</span> running_loss / total, <span class="number">100.</span> * correct / total
+
+<span class="keyword">def</span> <span class="function">evaluate</span>(model, loader, criterion):
+    model.eval()
+    running_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="keyword">for</span> inputs, targets <span class="keyword">in</span> loader:
+            inputs, targets = inputs.to(device), targets.to(device)
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+
+            running_loss += loss.item() * inputs.size(<span class="number">0</span>)
+            _, predicted = outputs.max(<span class="number">1</span>)
+            total += targets.size(<span class="number">0</span>)
+            correct += predicted.eq(targets).sum().item()
+
+    <span class="keyword">return</span> running_loss / total, <span class="number">100.</span> * correct / total
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 6. BOUCLE D'ENTRAINEMENT PRINCIPALE</span>
+<span class="comment"># ============================================</span>
+best_acc = <span class="number">0.0</span>
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> range(EPOCHS):
+    train_loss, train_acc = train_one_epoch(model, train_loader,
+                                            criterion, optimizer)
+    val_loss, val_acc = evaluate(model, test_loader, criterion)
+    scheduler.step()
+
+    <span class="keyword">if</span> val_acc > best_acc:
+        best_acc = val_acc
+        torch.save(model.state_dict(), <span class="string">'best_cnn_cifar10.pth'</span>)
+
+    lr = optimizer.param_groups[<span class="number">0</span>][<span class="string">'lr'</span>]
+    print(<span class="string">f'Epoch [{epoch+1}/{EPOCHS}] '</span>
+          <span class="string">f'Train: {train_acc:.2f}% (loss={train_loss:.4f}) | '</span>
+          <span class="string">f'Val: {val_acc:.2f}% (loss={val_loss:.4f}) | '</span>
+          <span class="string">f'LR: {lr:.4f}'</span>)
+
+print(<span class="string">f'\nMeilleure accuracy: {best_acc:.2f}%'</span>)</div>
+
+    <div class="output-block">Nombre de parametres: 6,577,866
+Epoch [1/100] Train: 42.31% (loss=1.5823) | Val: 48.56% (loss=1.3912) | LR: 0.0999
+Epoch [2/100] Train: 58.74% (loss=1.1245) | Val: 61.23% (loss=1.0854) | LR: 0.0998
+...
+Epoch [50/100] Train: 96.82% (loss=0.0912) | Val: 92.45% (loss=0.2845) | LR: 0.0500
+...
+Epoch [100/100] Train: 99.54% (loss=0.0156) | Val: 93.87% (loss=0.2534) | LR: 0.0000
+
+Meilleure accuracy: 93.87%</div>
+
+    <div class="concept-box green">
+        <h4>Recapitulatif des architectures CNN</h4>
+        <table>
+            <tr><th>Architecture</th><th>Annee</th><th>Profondeur</th><th>Innovation cle</th><th>Parametres</th></tr>
+            <tr><td>LeNet-5</td><td>1998</td><td>5</td><td>Premiere architecture CNN</td><td>60K</td></tr>
+            <tr><td>AlexNet</td><td>2012</td><td>8</td><td>ReLU, Dropout, GPU</td><td>62M</td></tr>
+            <tr><td>VGG-16</td><td>2014</td><td>16</td><td>Filtres 3x3 uniformes</td><td>138M</td></tr>
+            <tr><td>GoogLeNet</td><td>2014</td><td>22</td><td>Modules Inception</td><td>7M</td></tr>
+            <tr><td>ResNet-50</td><td>2015</td><td>50</td><td>Skip connections</td><td>25M</td></tr>
+            <tr><td>ResNet-152</td><td>2015</td><td>152</td><td>Reseaux tres profonds</td><td>60M</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Pour aller plus loin, le prochain cours couvrira les architectures CNN avancees : GoogLeNet/Inception, DenseNet, EfficientNet, ainsi que les techniques de transfer learning et fine-tuning qui sont essentielles en pratique. En effet, entrainer un CNN from scratch est rarement la meilleure approche : utiliser un modele pre-entraine sur ImageNet et l'adapter a votre tache est presque toujours plus performant et plus rapide.
+    </div>
+
+    <div class="warning">
+        Ne confondez pas la profondeur (nombre de couches) avec la performance. Un reseau trop profond sans skip connections divergera. La vraie innovation de ResNet n'est pas la profondeur en elle-meme, mais la capacite a entrainer efficacement des reseaux profonds grace aux connexions residuelles.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_03_optimisation.html">&larr; Cours precedent : Optimisation et Entrainement</a>
+        <a href="dl_05_cnn_avance.html">Cours suivant : CNN Avance &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

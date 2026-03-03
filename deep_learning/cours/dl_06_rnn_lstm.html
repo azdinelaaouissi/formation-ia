@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 06 - Reseaux Recurrents (RNN, LSTM, GRU)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 06 - Reseaux Recurrents (RNN, LSTM, GRU)</h1>
+    <p class="subtitle">Cours 6/12 - Traitement des sequences : series temporelles, texte et au-dela</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================================ -->
+    <h2>1. Pourquoi les sequences ?</h2>
+
+    <p>Jusqu'a present, nous avons traite des donnees statiques : une image, un vecteur de features. Mais une grande partie des donnees du monde reel sont <strong>sequentielles</strong> : elles ont un ordre temporel ou positionnel qui porte une information essentielle.</p>
+
+    <h3>1.1 Exemples de donnees sequentielles</h3>
+
+    <table>
+        <tr><th>Domaine</th><th>Type de sequence</th><th>Exemple</th></tr>
+        <tr><td>Finance</td><td>Serie temporelle</td><td>Prix d'une action jour par jour</td></tr>
+        <tr><td>NLP</td><td>Texte</td><td>Sequence de mots dans une phrase</td></tr>
+        <tr><td>Audio</td><td>Signal temporel</td><td>Forme d'onde d'une voix humaine</td></tr>
+        <tr><td>Biologie</td><td>Sequence moleculaire</td><td>Suite de nucleotides dans l'ADN</td></tr>
+        <tr><td>Video</td><td>Sequence d'images</td><td>Frames successives d'une video</td></tr>
+        <tr><td>Meteo</td><td>Serie temporelle</td><td>Temperature heure par heure</td></tr>
+    </table>
+
+    <h3>1.2 Limitations des MLP pour les sequences</h3>
+
+    <p>Pourquoi ne pas simplement aplatir une sequence et la donner a un MLP classique ? Trois raisons fondamentales :</p>
+
+    <div class="concept-box">
+        <h4>Probleme 1 : Taille fixe</h4>
+        <p>Un MLP exige un vecteur d'entree de taille fixe. Or, les sequences ont des longueurs variables : une phrase peut avoir 5 mots ou 50 mots. Il faudrait padding et troncature, ce qui est sous-optimal.</p>
+
+        <h4>Probleme 2 : Pas de partage de parametres</h4>
+        <p>Un MLP traite chaque position d'entree avec des poids differents. Il ne peut pas apprendre qu'un pattern "je suis" a la meme signification au debut ou a la fin d'une phrase. Les poids ne sont pas partages dans le temps.</p>
+
+        <h4>Probleme 3 : Pas de memoire</h4>
+        <p>Un MLP traite chaque entree de maniere independante. Il ne conserve aucune "memoire" des elements precedents. Pour comprendre "il" dans "Jean mange une pomme. Il la trouve delicieuse", il faut se souvenir de "Jean" et "pomme".</p>
+    </div>
+
+    <div class="analogy">
+        <h4>Analogie : lire un livre</h4>
+        <p>Un MLP, c'est comme si vous lisiez chaque page d'un livre independamment, sans vous souvenir des pages precedentes. Vous ne pourriez jamais comprendre l'intrigue. Un RNN, c'est comme un lecteur humain qui maintient en memoire le contexte au fur et a mesure de la lecture, accumulant les informations pour comprendre le sens global.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================================ -->
+    <h2>2. RNN - Reseaux Recurrents</h2>
+
+    <div class="definition">
+        Un <strong>Reseau de Neurones Recurrent</strong> (RNN) est un reseau qui traite les elements d'une sequence un par un, en maintenant un <strong>etat cache</strong> (hidden state) qui sert de "memoire" et qui est mis a jour a chaque pas de temps. Le meme jeu de poids est partage a travers tous les pas de temps.
+    </div>
+
+    <h3>2.1 Architecture et equations</h3>
+
+    <p>A chaque pas de temps t, le RNN recoit deux entrees : l'element courant x_t et l'etat cache precedent h_{t-1}. Il produit un nouvel etat cache h_t :</p>
+
+    <div class="param-box">
+        <h4>Equations du RNN vanilla</h4>
+        <p><strong>h_t = tanh(W_hh * h_{t-1} + W_xh * x_t + b_h)</strong></p>
+        <p><strong>y_t = W_hy * h_t + b_y</strong></p>
+        <p>Ou :</p>
+        <ul>
+            <li><strong>x_t</strong> : entree au temps t (vecteur de dimension d_input)</li>
+            <li><strong>h_t</strong> : etat cache au temps t (vecteur de dimension d_hidden)</li>
+            <li><strong>W_xh</strong> : matrice de poids entree -> cache (d_hidden x d_input)</li>
+            <li><strong>W_hh</strong> : matrice de poids cache -> cache (d_hidden x d_hidden)</li>
+            <li><strong>W_hy</strong> : matrice de poids cache -> sortie (d_output x d_hidden)</li>
+            <li><strong>b_h, b_y</strong> : biais</li>
+        </ul>
+    </div>
+
+    <h3>2.2 Depliement dans le temps (Unfolding)</h3>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 850 350" width="850" height="350">
+            <!-- Titre -->
+            <text x="425" y="25" fill="#ff6b35" font-size="16" text-anchor="middle" font-weight="bold">RNN deplie dans le temps</text>
+
+            <!-- Version repliee (gauche) -->
+            <rect x="30" y="120" width="100" height="80" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="80" y="155" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">RNN</text>
+            <text x="80" y="175" fill="#aaa" font-size="11" text-anchor="middle">W_xh, W_hh</text>
+            <!-- Entree -->
+            <line x1="80" y1="220" x2="80" y2="200" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+            <text x="80" y="240" fill="#00ff88" font-size="12" text-anchor="middle">x_t</text>
+            <!-- Sortie -->
+            <line x1="80" y1="120" x2="80" y2="90" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowB)"/>
+            <text x="80" y="80" fill="#569cd6" font-size="12" text-anchor="middle">y_t</text>
+            <!-- Boucle recurrente -->
+            <path d="M 130 140 C 160 140 160 180 130 180" fill="none" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowO)"/>
+            <text x="170" y="165" fill="#ff8c42" font-size="11">h_t</text>
+
+            <!-- Fleche depliement -->
+            <text x="230" y="165" fill="#aaa" font-size="25">=</text>
+
+            <!-- Version depliee -->
+            <!-- t-1 -->
+            <rect x="280" y="120" width="90" height="70" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="325" y="160" fill="#ff6b35" font-size="13" text-anchor="middle">RNN</text>
+            <line x1="325" y1="210" x2="325" y2="190" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+            <text x="325" y="228" fill="#00ff88" font-size="12" text-anchor="middle">x_{t-1}</text>
+            <line x1="325" y1="120" x2="325" y2="90" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowB)"/>
+            <text x="325" y="80" fill="#569cd6" font-size="12" text-anchor="middle">y_{t-1}</text>
+
+            <!-- h de t-2 vers t-1 -->
+            <line x1="250" y1="155" x2="280" y2="155" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowO)"/>
+            <text x="265" y="148" fill="#ff8c42" font-size="10" text-anchor="middle">h_{t-2}</text>
+
+            <!-- t -->
+            <rect x="430" y="120" width="90" height="70" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="475" y="160" fill="#ff6b35" font-size="13" text-anchor="middle">RNN</text>
+            <line x1="475" y1="210" x2="475" y2="190" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+            <text x="475" y="228" fill="#00ff88" font-size="12" text-anchor="middle">x_t</text>
+            <line x1="475" y1="120" x2="475" y2="90" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowB)"/>
+            <text x="475" y="80" fill="#569cd6" font-size="12" text-anchor="middle">y_t</text>
+
+            <!-- h de t-1 vers t -->
+            <line x1="370" y1="155" x2="430" y2="155" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowO)"/>
+            <text x="400" y="148" fill="#ff8c42" font-size="10" text-anchor="middle">h_{t-1}</text>
+
+            <!-- t+1 -->
+            <rect x="580" y="120" width="90" height="70" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="625" y="160" fill="#ff6b35" font-size="13" text-anchor="middle">RNN</text>
+            <line x1="625" y1="210" x2="625" y2="190" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+            <text x="625" y="228" fill="#00ff88" font-size="12" text-anchor="middle">x_{t+1}</text>
+            <line x1="625" y1="120" x2="625" y2="90" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowB)"/>
+            <text x="625" y="80" fill="#569cd6" font-size="12" text-anchor="middle">y_{t+1}</text>
+
+            <!-- h de t vers t+1 -->
+            <line x1="520" y1="155" x2="580" y2="155" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowO)"/>
+            <text x="550" y="148" fill="#ff8c42" font-size="10" text-anchor="middle">h_t</text>
+
+            <!-- h de t+1 vers futur -->
+            <line x1="670" y1="155" x2="720" y2="155" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowO)"/>
+            <text x="700" y="148" fill="#ff8c42" font-size="10" text-anchor="middle">h_{t+1}</text>
+
+            <!-- Legende -->
+            <text x="425" y="280" fill="#aaa" font-size="12" text-anchor="middle">Les poids W_xh, W_hh, W_hy sont partages a chaque pas de temps</text>
+            <rect x="280" y="300" width="15" height="3" fill="#00ff88"/>
+            <text x="305" y="305" fill="#aaa" font-size="10">Entrees</text>
+            <rect x="380" y="300" width="15" height="3" fill="#ff8c42"/>
+            <text x="410" y="305" fill="#aaa" font-size="10">Etats caches</text>
+            <rect x="480" y="300" width="15" height="3" fill="#569cd6"/>
+            <text x="505" y="305" fill="#aaa" font-size="10">Sorties</text>
+
+            <defs>
+                <marker id="arrowG" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#00ff88"/></marker>
+                <marker id="arrowB" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#569cd6"/></marker>
+                <marker id="arrowO" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ff8c42"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>2.3 Implementation d'un RNN from scratch</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="keyword">class</span> <span class="function">RNNFromScratch</span>(nn.Module):
+    <span class="string">"""RNN vanilla implemente manuellement pour comprendre le mecanisme."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_size, hidden_size, output_size):
+        <span class="function">super</span>().__init__()
+        self.hidden_size = hidden_size
+
+        <span class="comment"># Poids partages dans le temps</span>
+        self.W_xh = nn.<span class="function">Linear</span>(input_size, hidden_size)    <span class="comment"># entree -> cache</span>
+        self.W_hh = nn.<span class="function">Linear</span>(hidden_size, hidden_size)   <span class="comment"># cache -> cache</span>
+        self.W_hy = nn.<span class="function">Linear</span>(hidden_size, output_size)   <span class="comment"># cache -> sortie</span>
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="string">"""
+        x : (batch_size, seq_len, input_size)
+        Retourne : outputs (batch, seq_len, output_size), h_final
+        """</span>
+        batch_size, seq_len, _ = x.shape
+        h = torch.<span class="function">zeros</span>(batch_size, self.hidden_size).<span class="function">to</span>(x.device)
+
+        outputs = []
+        <span class="keyword">for</span> t <span class="keyword">in</span> <span class="function">range</span>(seq_len):
+            <span class="comment"># Equation fondamentale du RNN</span>
+            h = torch.<span class="function">tanh</span>(self.<span class="function">W_xh</span>(x[:, t, :]) + self.<span class="function">W_hh</span>(h))
+            y = self.<span class="function">W_hy</span>(h)
+            outputs.<span class="function">append</span>(y.<span class="function">unsqueeze</span>(<span class="number">1</span>))
+
+        outputs = torch.<span class="function">cat</span>(outputs, dim=<span class="number">1</span>)
+        <span class="keyword">return</span> outputs, h
+
+<span class="comment"># Test</span>
+rnn = <span class="function">RNNFromScratch</span>(input_size=<span class="number">10</span>, hidden_size=<span class="number">32</span>, output_size=<span class="number">5</span>)
+x = torch.<span class="function">randn</span>(<span class="number">4</span>, <span class="number">20</span>, <span class="number">10</span>)  <span class="comment"># batch=4, seq_len=20, features=10</span>
+out, h_final = <span class="function">rnn</span>(x)
+<span class="function">print</span>(<span class="string">f"Entree    : {x.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Sorties   : {out.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"h_final   : {h_final.shape}"</span>)</div>
+
+    <div class="output-block">Entree    : torch.Size([4, 20, 10])
+Sorties   : torch.Size([4, 20, 5])
+h_final   : torch.Size([4, 32])</div>
+
+    <div class="prof-note">
+        Cette implementation manuelle est pedagogique. En pratique, on utilise <code>nn.RNN</code> de PyTorch qui est optimisee avec des operations CUDA et du calcul parallele. Mais comprendre la boucle explicite est essentiel pour apprehender les architectures plus complexes.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================================ -->
+    <h2>3. Entrainement des RNN</h2>
+
+    <h3>3.1 BPTT - Backpropagation Through Time</h3>
+
+    <div class="definition">
+        Le <strong>BPTT</strong> (Backpropagation Through Time) est l'algorithme d'entrainement des RNN. On "deplie" le reseau dans le temps et on applique la retropropagation standard sur le graphe deplie. Les gradients se propagent a rebours dans le temps, de t=T jusqu'a t=0.
+    </div>
+
+    <p>Le probleme fondamental est que les gradients doivent traverser de nombreuses multiplications matricielles (une par pas de temps). Selon les valeurs propres de W_hh, deux scenarios problematiques emergent :</p>
+
+    <h3>3.2 Vanishing Gradient (gradient qui s'evanouit)</h3>
+
+    <div class="concept-box">
+        <h4>Le probleme</h4>
+        <p>Si les valeurs propres de W_hh sont inferieures a 1, les gradients decroissent exponentiellement au fur et a mesure qu'ils remontent dans le temps. Apres quelques dizaines de pas, le gradient est si proche de zero que les premiers elements de la sequence n'ont <strong>aucune influence</strong> sur la mise a jour des poids.</p>
+
+        <p>Mathematiquement : si on note le gradient du loss L par rapport a h_t :</p>
+        <p><strong>dL/dh_1 = dL/dh_T * (W_hh)^(T-1) * produit des derivees de tanh</strong></p>
+        <p>Puisque la derivee de tanh est dans [0, 1] et que les valeurs propres de W_hh sont typiquement &lt; 1, ce produit converge vers 0 exponentiellement.</p>
+    </div>
+
+    <div class="effect">
+        Le RNN vanilla ne peut pas capturer les dependances a long terme. Dans la phrase "Le chat, que j'ai adopte il y a trois ans dans un refuge pres de Lyon, <strong>dort</strong> sur le canape", le RNN a du mal a lier "chat" au verbe "dort" a cause des dizaines de mots entre les deux.
+    </div>
+
+    <h3>3.3 Exploding Gradient (gradient qui explose)</h3>
+
+    <p>A l'inverse, si les valeurs propres de W_hh sont superieures a 1, les gradients croissent exponentiellement. Les poids subissent des mises a jour enormes qui destabilisent completement l'entrainement.</p>
+
+    <div class="code-block"><span class="comment"># Solution : Gradient Clipping</span>
+<span class="comment"># Limite la norme du gradient a une valeur maximale</span>
+
+optimizer.<span class="function">zero_grad</span>()
+loss.<span class="function">backward</span>()
+
+<span class="comment"># Clip le gradient a une norme maximale de 1.0</span>
+torch.nn.utils.<span class="function">clip_grad_norm_</span>(model.<span class="function">parameters</span>(), max_norm=<span class="number">1.0</span>)
+
+optimizer.<span class="function">step</span>()</div>
+
+    <div class="warning">
+        Le gradient clipping est une rustine necessaire mais pas une solution au vanishing gradient. C'est pour resoudre ce probleme fondamental que le LSTM a ete invente.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================================ -->
+    <h2>4. LSTM en detail</h2>
+
+    <div class="definition">
+        Le <strong>LSTM</strong> (Long Short-Term Memory), propose par Hochreiter et Schmidhuber en 1997, est une variante de RNN specialement concue pour capturer les dependances a long terme. Sa structure introduit un <strong>cell state</strong> (etat de cellule) qui agit comme un "tapis roulant d'information", ainsi que trois <strong>portes</strong> (gates) qui controlent le flux d'information.
+    </div>
+
+    <h3>4.1 Architecture de la cellule LSTM</h3>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 800 520" width="800" height="520">
+            <!-- Titre -->
+            <text x="400" y="25" fill="#ff6b35" font-size="16" text-anchor="middle" font-weight="bold">Cellule LSTM - Architecture detaillee</text>
+
+            <!-- Cellule principale -->
+            <rect x="100" y="50" width="600" height="420" rx="15" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+
+            <!-- Cell state (ligne horizontale en haut) -->
+            <line x1="50" y1="100" x2="120" y2="100" stroke="#ff8c42" stroke-width="3"/>
+            <line x1="120" y1="100" x2="680" y2="100" stroke="#ff8c42" stroke-width="3"/>
+            <line x1="680" y1="100" x2="750" y2="100" stroke="#ff8c42" stroke-width="3" marker-end="url(#arrowO2)"/>
+            <text x="50" y="90" fill="#ff8c42" font-size="12" font-weight="bold">C_{t-1}</text>
+            <text x="755" y="90" fill="#ff8c42" font-size="12" font-weight="bold">C_t</text>
+            <text x="400" y="80" fill="#aaa" font-size="11" text-anchor="middle">Cell State (memoire a long terme)</text>
+
+            <!-- Hidden state (ligne horizontale en bas) -->
+            <line x1="50" y1="380" x2="120" y2="380" stroke="#569cd6" stroke-width="3"/>
+            <line x1="120" y1="380" x2="680" y2="380" stroke="#569cd6" stroke-width="3"/>
+            <line x1="680" y1="380" x2="750" y2="380" stroke="#569cd6" stroke-width="3" marker-end="url(#arrowB2)"/>
+            <text x="50" y="395" fill="#569cd6" font-size="12" font-weight="bold">h_{t-1}</text>
+            <text x="755" y="395" fill="#569cd6" font-size="12" font-weight="bold">h_t</text>
+
+            <!-- Entree x_t -->
+            <line x1="400" y1="500" x2="400" y2="440" stroke="#00ff88" stroke-width="2"/>
+            <text x="400" y="515" fill="#00ff88" font-size="14" text-anchor="middle" font-weight="bold">x_t</text>
+
+            <!-- ========== Forget Gate ========== -->
+            <rect x="160" y="200" width="120" height="50" rx="25" fill="#ff4444" opacity="0.2" stroke="#ff4444" stroke-width="2"/>
+            <text x="220" y="230" fill="#ff4444" font-size="13" text-anchor="middle" font-weight="bold">Forget Gate</text>
+            <text x="220" y="270" fill="#aaa" font-size="10" text-anchor="middle">f_t = sigma(W_f[h,x]+b)</text>
+            <!-- Multiplication sur cell state -->
+            <circle cx="220" cy="100" r="12" fill="none" stroke="#ff4444" stroke-width="2"/>
+            <text x="220" y="105" fill="#ff4444" font-size="14" text-anchor="middle">x</text>
+            <line x1="220" y1="200" x2="220" y2="112" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+            <!-- ========== Input Gate ========== -->
+            <rect x="340" y="200" width="120" height="50" rx="25" fill="#00ff88" opacity="0.2" stroke="#00ff88" stroke-width="2"/>
+            <text x="400" y="230" fill="#00ff88" font-size="13" text-anchor="middle" font-weight="bold">Input Gate</text>
+            <text x="400" y="270" fill="#aaa" font-size="10" text-anchor="middle">i_t = sigma(W_i[h,x]+b)</text>
+            <!-- Candidats -->
+            <rect x="340" y="290" width="120" height="35" rx="5" fill="rgba(255,171,118,0.1)" stroke="#ffab76" stroke-width="1"/>
+            <text x="400" y="312" fill="#ffab76" font-size="10" text-anchor="middle">c_tilde = tanh(W_c[h,x]+b)</text>
+            <!-- Addition sur cell state -->
+            <circle cx="400" cy="100" r="12" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="400" y="106" fill="#00ff88" font-size="16" text-anchor="middle">+</text>
+            <line x1="400" y1="200" x2="400" y2="112" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+            <!-- ========== Output Gate ========== -->
+            <rect x="520" y="200" width="120" height="50" rx="25" fill="#569cd6" opacity="0.2" stroke="#569cd6" stroke-width="2"/>
+            <text x="580" y="230" fill="#569cd6" font-size="13" text-anchor="middle" font-weight="bold">Output Gate</text>
+            <text x="580" y="270" fill="#aaa" font-size="10" text-anchor="middle">o_t = sigma(W_o[h,x]+b)</text>
+            <!-- tanh sur cell state -->
+            <rect x="560" y="130" width="50" height="25" rx="12" fill="none" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="585" y="147" fill="#ff8c42" font-size="10" text-anchor="middle">tanh</text>
+            <!-- Multiplication pour h_t -->
+            <circle cx="640" cy="380" r="12" fill="none" stroke="#569cd6" stroke-width="2"/>
+            <text x="640" y="385" fill="#569cd6" font-size="14" text-anchor="middle">x</text>
+            <line x1="580" y1="250" x2="640" y2="368" stroke="#569cd6" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <line x1="585" y1="155" x2="640" y2="368" stroke="#ff8c42" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+            <!-- Legende -->
+            <text x="400" y="480" fill="#aaa" font-size="11" text-anchor="middle">sigma = sigmoid (valeurs entre 0 et 1, agit comme un "robinet")</text>
+
+            <defs>
+                <marker id="arrowO2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ff8c42"/></marker>
+                <marker id="arrowB2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#569cd6"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>4.2 Les trois portes en detail</h3>
+
+    <div class="param-box">
+        <h4>1. Forget Gate (Porte d'oubli) - "Que doit-on oublier ?"</h4>
+        <p><strong>f_t = sigmoid(W_f * [h_{t-1}, x_t] + b_f)</strong></p>
+        <p>Produit un vecteur de valeurs entre 0 et 1. Une valeur proche de 0 signifie "oublie cette information du cell state", une valeur proche de 1 signifie "conserve cette information".</p>
+    </div>
+
+    <div class="param-box">
+        <h4>2. Input Gate (Porte d'entree) - "Que doit-on memoriser ?"</h4>
+        <p><strong>i_t = sigmoid(W_i * [h_{t-1}, x_t] + b_i)</strong></p>
+        <p><strong>c_tilde_t = tanh(W_c * [h_{t-1}, x_t] + b_c)</strong></p>
+        <p>L'input gate decide quelles valeurs mettre a jour. Les candidats c_tilde sont les nouvelles informations potentielles. Le produit i_t * c_tilde determine ce qui sera effectivement ajoute au cell state.</p>
+    </div>
+
+    <div class="param-box">
+        <h4>3. Output Gate (Porte de sortie) - "Que doit-on communiquer ?"</h4>
+        <p><strong>o_t = sigmoid(W_o * [h_{t-1}, x_t] + b_o)</strong></p>
+        <p><strong>h_t = o_t * tanh(C_t)</strong></p>
+        <p>L'output gate determine quelle partie du cell state mis a jour sera exposee comme hidden state (sortie de la cellule). Le cell state est d'abord passe par tanh (valeurs entre -1 et 1), puis filtre par la porte de sortie.</p>
+    </div>
+
+    <h3>4.3 Mise a jour du Cell State</h3>
+
+    <div class="concept-box green">
+        <h4>L'equation cle</h4>
+        <p><strong>C_t = f_t * C_{t-1} + i_t * c_tilde_t</strong></p>
+        <p>C'est cette equation qui resout le vanishing gradient. Le cell state est mis a jour par des operations <strong>additives</strong>, pas multiplicatives. L'information peut circuler le long du cell state sans etre multipliee de maniere repetee, preservant ainsi les gradients sur de longues sequences.</p>
+    </div>
+
+    <div class="analogy">
+        <h4>Analogie : le carnet de notes</h4>
+        <p>Imaginez que le cell state est un <strong>carnet de notes</strong> que vous tenez en lisant un long roman :</p>
+        <ul>
+            <li><strong>Forget gate :</strong> vous rayez les informations devenues obsoletes ("le personnage A est vivant" -> raye quand il meurt)</li>
+            <li><strong>Input gate :</strong> vous ecrivez de nouvelles informations importantes ("nouveau personnage B introduit")</li>
+            <li><strong>Output gate :</strong> quand on vous pose une question, vous ne lisez que les notes pertinentes a la question, pas tout le carnet</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================================ -->
+    <h2>5. GRU - Gated Recurrent Unit</h2>
+
+    <div class="definition">
+        Le <strong>GRU</strong> (Gated Recurrent Unit), propose par Cho et al. en 2014, est une version simplifiee du LSTM. Il fusionne le cell state et le hidden state en un seul etat, et n'utilise que <strong>deux portes</strong> au lieu de trois : la porte de reset et la porte de mise a jour.
+    </div>
+
+    <h3>5.1 Architecture du GRU</h3>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 700 400" width="700" height="400">
+            <!-- Titre -->
+            <text x="350" y="25" fill="#ff6b35" font-size="16" text-anchor="middle" font-weight="bold">Cellule GRU</text>
+
+            <!-- Cellule principale -->
+            <rect x="80" y="50" width="540" height="300" rx="15" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+
+            <!-- Hidden state entree -->
+            <line x1="30" y1="200" x2="100" y2="200" stroke="#569cd6" stroke-width="3"/>
+            <text x="30" y="190" fill="#569cd6" font-size="12" font-weight="bold">h_{t-1}</text>
+
+            <!-- Hidden state sortie -->
+            <line x1="600" y1="200" x2="670" y2="200" stroke="#569cd6" stroke-width="3" marker-end="url(#arrowB3)"/>
+            <text x="670" y="190" fill="#569cd6" font-size="12" font-weight="bold">h_t</text>
+
+            <!-- Entree -->
+            <line x1="350" y1="380" x2="350" y2="350" stroke="#00ff88" stroke-width="2"/>
+            <text x="350" y="395" fill="#00ff88" font-size="14" text-anchor="middle" font-weight="bold">x_t</text>
+
+            <!-- Reset Gate -->
+            <rect x="140" y="120" width="130" height="45" rx="22" fill="rgba(255,68,68,0.15)" stroke="#ff4444" stroke-width="2"/>
+            <text x="205" y="148" fill="#ff4444" font-size="12" text-anchor="middle" font-weight="bold">Reset Gate (r_t)</text>
+            <text x="205" y="185" fill="#aaa" font-size="10" text-anchor="middle">r_t = sigma(W_r[h,x]+b)</text>
+
+            <!-- Update Gate -->
+            <rect x="140" y="240" width="130" height="45" rx="22" fill="rgba(86,156,214,0.15)" stroke="#569cd6" stroke-width="2"/>
+            <text x="205" y="268" fill="#569cd6" font-size="12" text-anchor="middle" font-weight="bold">Update Gate (z_t)</text>
+            <text x="205" y="305" fill="#aaa" font-size="10" text-anchor="middle">z_t = sigma(W_z[h,x]+b)</text>
+
+            <!-- Candidat -->
+            <rect x="350" y="120" width="200" height="45" rx="8" fill="rgba(255,171,118,0.1)" stroke="#ffab76" stroke-width="1.5"/>
+            <text x="450" y="148" fill="#ffab76" font-size="11" text-anchor="middle">h_tilde = tanh(W[r*h, x]+b)</text>
+
+            <!-- Equation finale -->
+            <rect x="350" y="240" width="220" height="45" rx="8" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="460" y="268" fill="#00ff88" font-size="11" text-anchor="middle">h_t = (1-z_t)*h_{t-1} + z_t*h_tilde</text>
+
+            <defs>
+                <marker id="arrowB3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#569cd6"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>5.2 Les deux portes du GRU</h3>
+
+    <div class="param-box">
+        <h4>Reset Gate (r_t) - "Combien du passe ignorer ?"</h4>
+        <p><strong>r_t = sigmoid(W_r * [h_{t-1}, x_t] + b_r)</strong></p>
+        <p>Quand r_t est proche de 0, le candidat h_tilde est calcule en ignorant presque completement l'etat cache precedent. Cela permet au reseau de "repartir de zero" si necessaire.</p>
+    </div>
+
+    <div class="param-box">
+        <h4>Update Gate (z_t) - "Combien du nouveau garder ?"</h4>
+        <p><strong>z_t = sigmoid(W_z * [h_{t-1}, x_t] + b_z)</strong></p>
+        <p>Joue un double role : elle combine les fonctions du forget gate et de l'input gate du LSTM. Quand z_t est proche de 1, on adopte le candidat (nouvelle info). Quand z_t est proche de 0, on conserve l'ancien h_{t-1}.</p>
+    </div>
+
+    <h3>5.3 LSTM vs GRU</h3>
+
+    <table>
+        <tr><th>Critere</th><th>LSTM</th><th>GRU</th></tr>
+        <tr><td>Nombre de portes</td><td>3 (forget, input, output)</td><td>2 (reset, update)</td></tr>
+        <tr><td>Etats</td><td>Cell state + Hidden state</td><td>Hidden state uniquement</td></tr>
+        <tr><td>Parametres</td><td>~4x plus que RNN vanilla</td><td>~3x plus que RNN vanilla</td></tr>
+        <tr><td>Vitesse</td><td>Plus lent</td><td>Plus rapide (~20-30%)</td></tr>
+        <tr><td>Longues sequences</td><td>Generalement meilleur</td><td>Comparable sur seq. courtes</td></tr>
+        <tr><td>Quantite de donnees</td><td>Besoin de plus de donnees</td><td>Converge avec moins de donnees</td></tr>
+    </table>
+
+    <div class="prof-note">
+        En pratique, la difference de performance entre LSTM et GRU est souvent marginale. Le GRU est prefere quand la vitesse d'entrainement est critique ou quand on a peu de donnees. Le LSTM reste le choix par defaut pour les sequences tres longues ou les taches exigeant une grande capacite memorielle.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================================ -->
+    <h2>6. Architectures avancees</h2>
+
+    <h3>6.1 Bidirectional RNN</h3>
+
+    <div class="definition">
+        Un <strong>RNN bidirectionnel</strong> traite la sequence dans les deux sens : de gauche a droite et de droite a gauche. Les deux hidden states sont concatenes, ce qui donne au reseau acces au contexte passe <strong>et</strong> futur a chaque position.
+    </div>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 750 300" width="750" height="300">
+            <text x="375" y="25" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">RNN Bidirectionnel</text>
+
+            <!-- Couche Forward -->
+            <text x="70" y="80" fill="#00ff88" font-size="12" font-weight="bold">Forward</text>
+            <rect x="120" y="65" width="70" height="40" rx="5" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="155" y="90" fill="#00ff88" font-size="10" text-anchor="middle">RNN</text>
+            <rect x="250" y="65" width="70" height="40" rx="5" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="285" y="90" fill="#00ff88" font-size="10" text-anchor="middle">RNN</text>
+            <rect x="380" y="65" width="70" height="40" rx="5" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="415" y="90" fill="#00ff88" font-size="10" text-anchor="middle">RNN</text>
+            <rect x="510" y="65" width="70" height="40" rx="5" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="545" y="90" fill="#00ff88" font-size="10" text-anchor="middle">RNN</text>
+            <!-- Fleches forward -->
+            <line x1="190" y1="85" x2="250" y2="85" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrowG2)"/>
+            <line x1="320" y1="85" x2="380" y2="85" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrowG2)"/>
+            <line x1="450" y1="85" x2="510" y2="85" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrowG2)"/>
+            <line x1="580" y1="85" x2="640" y2="85" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrowG2)"/>
+
+            <!-- Couche Backward -->
+            <text x="60" y="200" fill="#ff4444" font-size="12" font-weight="bold">Backward</text>
+            <rect x="120" y="185" width="70" height="40" rx="5" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="155" y="210" fill="#ff4444" font-size="10" text-anchor="middle">RNN</text>
+            <rect x="250" y="185" width="70" height="40" rx="5" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="285" y="210" fill="#ff4444" font-size="10" text-anchor="middle">RNN</text>
+            <rect x="380" y="185" width="70" height="40" rx="5" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="415" y="210" fill="#ff4444" font-size="10" text-anchor="middle">RNN</text>
+            <rect x="510" y="185" width="70" height="40" rx="5" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="545" y="210" fill="#ff4444" font-size="10" text-anchor="middle">RNN</text>
+            <!-- Fleches backward -->
+            <line x1="250" y1="205" x2="190" y2="205" stroke="#ff4444" stroke-width="1.5" marker-end="url(#arrowR)"/>
+            <line x1="380" y1="205" x2="320" y2="205" stroke="#ff4444" stroke-width="1.5" marker-end="url(#arrowR)"/>
+            <line x1="510" y1="205" x2="450" y2="205" stroke="#ff4444" stroke-width="1.5" marker-end="url(#arrowR)"/>
+            <line x1="120" y1="205" x2="70" y2="205" stroke="#ff4444" stroke-width="1.5" marker-end="url(#arrowR)"/>
+
+            <!-- Entrees -->
+            <text x="155" y="275" fill="#e0e0e0" font-size="12" text-anchor="middle">x_1</text>
+            <text x="285" y="275" fill="#e0e0e0" font-size="12" text-anchor="middle">x_2</text>
+            <text x="415" y="275" fill="#e0e0e0" font-size="12" text-anchor="middle">x_3</text>
+            <text x="545" y="275" fill="#e0e0e0" font-size="12" text-anchor="middle">x_4</text>
+            <line x1="155" y1="260" x2="155" y2="225" stroke="#aaa" stroke-width="1"/>
+            <line x1="155" y1="260" x2="155" y2="225" stroke="#aaa" stroke-width="1"/>
+            <line x1="155" y1="145" x2="155" y2="105" stroke="#aaa" stroke-width="1"/>
+            <line x1="285" y1="260" x2="285" y2="225" stroke="#aaa" stroke-width="1"/>
+            <line x1="285" y1="145" x2="285" y2="105" stroke="#aaa" stroke-width="1"/>
+            <line x1="415" y1="260" x2="415" y2="225" stroke="#aaa" stroke-width="1"/>
+            <line x1="415" y1="145" x2="415" y2="105" stroke="#aaa" stroke-width="1"/>
+            <line x1="545" y1="260" x2="545" y2="225" stroke="#aaa" stroke-width="1"/>
+            <line x1="545" y1="145" x2="545" y2="105" stroke="#aaa" stroke-width="1"/>
+
+            <!-- Concat -->
+            <text x="660" y="145" fill="#ff8c42" font-size="11" font-weight="bold">Concat</text>
+            <text x="660" y="162" fill="#aaa" font-size="10">[h_fwd, h_bwd]</text>
+
+            <defs>
+                <marker id="arrowG2" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#00ff88"/></marker>
+                <marker id="arrowR" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0, 7 2.5, 0 5" fill="#ff4444"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># RNN Bidirectionnel en PyTorch</span>
+bilstm = nn.<span class="function">LSTM</span>(
+    input_size=<span class="number">100</span>,
+    hidden_size=<span class="number">128</span>,
+    num_layers=<span class="number">2</span>,
+    bidirectional=<span class="keyword">True</span>,  <span class="comment"># Active le mode bidirectionnel</span>
+    batch_first=<span class="keyword">True</span>,
+    dropout=<span class="number">0.3</span>
+)
+
+x = torch.<span class="function">randn</span>(<span class="number">8</span>, <span class="number">50</span>, <span class="number">100</span>)  <span class="comment"># batch=8, seq=50, features=100</span>
+output, (h_n, c_n) = <span class="function">bilstm</span>(x)
+
+<span class="function">print</span>(<span class="string">f"Output : {output.shape}"</span>)     <span class="comment"># (8, 50, 256) - 128*2 car bidirectionnel</span>
+<span class="function">print</span>(<span class="string">f"h_n    : {h_n.shape}"</span>)        <span class="comment"># (4, 8, 128) - 2 layers * 2 directions</span>
+<span class="function">print</span>(<span class="string">f"c_n    : {c_n.shape}"</span>)</div>
+
+    <div class="output-block">Output : torch.Size([8, 50, 256])
+h_n    : torch.Size([4, 8, 128])
+c_n    : torch.Size([4, 8, 128])</div>
+
+    <h3>6.2 Deep RNN (Stacked LSTM)</h3>
+
+    <p>On peut empiler plusieurs couches de LSTM. La sortie de la premiere couche sert d'entree a la deuxieme, et ainsi de suite. Cela permet au reseau d'apprendre des representations hierarchiques des sequences.</p>
+
+    <div class="concept-box blue">
+        <h4>Nombre de couches recommande</h4>
+        <ul>
+            <li><strong>1 couche :</strong> suffisant pour la plupart des taches simples</li>
+            <li><strong>2 couches :</strong> standard pour les taches NLP moderees</li>
+            <li><strong>3-4 couches :</strong> traduction automatique, synthese vocale</li>
+            <li><strong>6+ couches :</strong> rare pour les RNN, plus courant avec les Transformers</li>
+        </ul>
+        <p>Au-dela de 3-4 couches, le rendement decroissant s'installe rapidement pour les RNN. Le dropout entre les couches est essentiel pour eviter l'overfitting.</p>
+    </div>
+
+    <h3>6.3 Preview : le mecanisme d'attention</h3>
+
+    <p>Le mecanisme d'<strong>attention</strong> (Bahdanau et al., 2015) est une innovation majeure qui permet au decodeur d'un reseau sequence-to-sequence de "regarder" toutes les positions de la sequence d'entree a chaque pas de decodage, plutot que de se fier uniquement au dernier hidden state.</p>
+
+    <div class="effect">
+        L'attention a resolu le goulot d'etranglement de l'encodeur : toute l'information de la sequence source n'a plus besoin d'etre compressee dans un seul vecteur. C'est cette idee qui, poussee a son extreme, donnera naissance aux <strong>Transformers</strong> (cours 7).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================================ -->
+    <h2>7. Applications pratiques</h2>
+
+    <h3>7.1 Classification de texte</h3>
+
+    <p>L'une des applications les plus courantes des RNN/LSTM est la classification de texte : analyse de sentiment, detection de spam, categorisation de documents.</p>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="keyword">class</span> <span class="function">TextClassifier</span>(nn.Module):
+    <span class="string">"""Classifieur de texte base sur un LSTM bidirectionnel."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, vocab_size, embed_dim, hidden_dim, num_classes,
+                 num_layers=<span class="number">2</span>, dropout=<span class="number">0.3</span>):
+        <span class="function">super</span>().__init__()
+
+        <span class="comment"># Couche d'embedding : transforme les indices de mots en vecteurs denses</span>
+        self.embedding = nn.<span class="function">Embedding</span>(vocab_size, embed_dim, padding_idx=<span class="number">0</span>)
+
+        <span class="comment"># LSTM bidirectionnel</span>
+        self.lstm = nn.<span class="function">LSTM</span>(
+            input_size=embed_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            bidirectional=<span class="keyword">True</span>,
+            batch_first=<span class="keyword">True</span>,
+            dropout=dropout
+        )
+
+        <span class="comment"># Classifieur</span>
+        self.classifier = nn.<span class="function">Sequential</span>(
+            nn.<span class="function">Dropout</span>(dropout),
+            nn.<span class="function">Linear</span>(hidden_dim * <span class="number">2</span>, <span class="number">128</span>),  <span class="comment"># *2 car bidirectionnel</span>
+            nn.<span class="function">ReLU</span>(),
+            nn.<span class="function">Dropout</span>(dropout),
+            nn.<span class="function">Linear</span>(<span class="number">128</span>, num_classes)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="comment"># x : (batch, seq_len) - indices de mots</span>
+        embedded = self.<span class="function">embedding</span>(x)            <span class="comment"># (batch, seq_len, embed_dim)</span>
+        lstm_out, (h_n, _) = self.<span class="function">lstm</span>(embedded) <span class="comment"># lstm_out: (batch, seq, hidden*2)</span>
+
+        <span class="comment"># Concatener les derniers hidden states des deux directions</span>
+        <span class="comment"># h_n[-2] : derniere couche, direction forward</span>
+        <span class="comment"># h_n[-1] : derniere couche, direction backward</span>
+        hidden = torch.<span class="function">cat</span>([h_n[-<span class="number">2</span>], h_n[-<span class="number">1</span>]], dim=<span class="number">1</span>)  <span class="comment"># (batch, hidden*2)</span>
+
+        <span class="keyword">return</span> self.<span class="function">classifier</span>(hidden)
+
+<span class="comment"># Instanciation</span>
+model = <span class="function">TextClassifier</span>(
+    vocab_size=<span class="number">20000</span>,
+    embed_dim=<span class="number">128</span>,
+    hidden_dim=<span class="number">256</span>,
+    num_classes=<span class="number">3</span>  <span class="comment"># positif, negatif, neutre</span>
+)
+
+<span class="comment"># Test avec un batch de phrases tokenisees</span>
+fake_input = torch.<span class="function">randint</span>(<span class="number">0</span>, <span class="number">20000</span>, (<span class="number">16</span>, <span class="number">100</span>))  <span class="comment"># 16 phrases de 100 tokens</span>
+logits = <span class="function">model</span>(fake_input)
+<span class="function">print</span>(<span class="string">f"Logits : {logits.shape}"</span>)</div>
+
+    <div class="output-block">Logits : torch.Size([16, 3])</div>
+
+    <h3>7.2 Generation de texte</h3>
+
+    <p>Les RNN/LSTM peuvent generer du texte caractere par caractere ou mot par mot. A chaque pas, le modele predit le prochain token en se basant sur l'historique genere jusqu'ici.</p>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">CharGenerator</span>(nn.Module):
+    <span class="string">"""Generateur de texte caractere par caractere."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, vocab_size, embed_dim, hidden_dim, num_layers=<span class="number">2</span>):
+        <span class="function">super</span>().__init__()
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        self.embedding = nn.<span class="function">Embedding</span>(vocab_size, embed_dim)
+        self.lstm = nn.<span class="function">LSTM</span>(embed_dim, hidden_dim, num_layers,
+                            batch_first=<span class="keyword">True</span>, dropout=<span class="number">0.2</span>)
+        self.fc = nn.<span class="function">Linear</span>(hidden_dim, vocab_size)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x, hidden=<span class="keyword">None</span>):
+        embedded = self.<span class="function">embedding</span>(x)
+        output, hidden = self.<span class="function">lstm</span>(embedded, hidden)
+        logits = self.<span class="function">fc</span>(output)
+        <span class="keyword">return</span> logits, hidden
+
+    <span class="keyword">def</span> <span class="function">generate</span>(self, start_token, max_len=<span class="number">200</span>, temperature=<span class="number">0.8</span>):
+        <span class="string">"""Generation autoregressive avec temperature."""</span>
+        self.<span class="function">eval</span>()
+        hidden = <span class="keyword">None</span>
+        current = start_token.<span class="function">unsqueeze</span>(<span class="number">0</span>).<span class="function">unsqueeze</span>(<span class="number">0</span>)  <span class="comment"># (1, 1)</span>
+        generated = [start_token.<span class="function">item</span>()]
+
+        <span class="keyword">with</span> torch.<span class="function">no_grad</span>():
+            <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(max_len):
+                logits, hidden = self.<span class="function">forward</span>(current, hidden)
+                <span class="comment"># Appliquer la temperature</span>
+                logits = logits[<span class="number">0</span>, -<span class="number">1</span>] / temperature
+                probs = torch.<span class="function">softmax</span>(logits, dim=-<span class="number">1</span>)
+                <span class="comment"># Echantillonner le prochain caractere</span>
+                next_token = torch.<span class="function">multinomial</span>(probs, <span class="number">1</span>)
+                generated.<span class="function">append</span>(next_token.<span class="function">item</span>())
+                current = next_token.<span class="function">unsqueeze</span>(<span class="number">0</span>)
+
+        <span class="keyword">return</span> generated</div>
+
+    <div class="prof-note">
+        La <strong>temperature</strong> controle la creativite de la generation. T=1.0 donne la distribution originale. T&lt;1.0 rend le modele plus conservateur (choisit les tokens les plus probables). T&gt;1.0 le rend plus "creatif" mais aussi plus incoherent. En pratique, T entre 0.7 et 0.9 donne les meilleurs resultats.
+    </div>
+
+    <h3>7.3 Named Entity Recognition (NER)</h3>
+
+    <p>Le NER est une tache sequence-to-sequence ou chaque token recoit un label (personne, organisation, lieu, etc.). C'est un cas typique ou le RNN bidirectionnel excelle, car il faut du contexte gauche ET droit.</p>
+
+    <div class="step-box"><strong>Entree :</strong> "Jean travaille chez Google a Paris"</div>
+    <div class="step-box"><strong>Sortie :</strong> [PER, O, O, ORG, O, LOC]</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================================ -->
+    <h2>8. Implementation PyTorch complete</h2>
+
+    <h3>8.1 nn.LSTM et nn.GRU - Interface PyTorch</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="comment"># ============================================</span>
+<span class="comment"># Comparaison des interfaces RNN, LSTM, GRU</span>
+<span class="comment"># ============================================</span>
+
+batch_size = <span class="number">8</span>
+seq_len = <span class="number">50</span>
+input_size = <span class="number">64</span>
+hidden_size = <span class="number">128</span>
+
+x = torch.<span class="function">randn</span>(batch_size, seq_len, input_size)
+
+<span class="comment"># --- RNN vanilla ---</span>
+rnn = nn.<span class="function">RNN</span>(input_size, hidden_size, num_layers=<span class="number">1</span>, batch_first=<span class="keyword">True</span>)
+output_rnn, h_n_rnn = <span class="function">rnn</span>(x)
+<span class="function">print</span>(<span class="string">f"RNN   - output: {output_rnn.shape}, h_n: {h_n_rnn.shape}"</span>)
+
+<span class="comment"># --- LSTM ---</span>
+lstm = nn.<span class="function">LSTM</span>(input_size, hidden_size, num_layers=<span class="number">2</span>, batch_first=<span class="keyword">True</span>, dropout=<span class="number">0.3</span>)
+output_lstm, (h_n_lstm, c_n_lstm) = <span class="function">lstm</span>(x)
+<span class="function">print</span>(<span class="string">f"LSTM  - output: {output_lstm.shape}, h_n: {h_n_lstm.shape}, c_n: {c_n_lstm.shape}"</span>)
+
+<span class="comment"># --- GRU ---</span>
+gru = nn.<span class="function">GRU</span>(input_size, hidden_size, num_layers=<span class="number">2</span>, batch_first=<span class="keyword">True</span>, dropout=<span class="number">0.3</span>)
+output_gru, h_n_gru = <span class="function">gru</span>(x)
+<span class="function">print</span>(<span class="string">f"GRU   - output: {output_gru.shape}, h_n: {h_n_gru.shape}"</span>)</div>
+
+    <div class="output-block">RNN   - output: torch.Size([8, 50, 128]), h_n: torch.Size([1, 8, 128])
+LSTM  - output: torch.Size([8, 50, 128]), h_n: torch.Size([2, 8, 128]), c_n: torch.Size([2, 8, 128])
+GRU   - output: torch.Size([8, 50, 128]), h_n: torch.Size([2, 8, 128])</div>
+
+    <h3>8.2 Padding et Packing pour les sequences de longueurs variables</h3>
+
+    <p>En pratique, les sequences d'un batch n'ont pas toutes la meme longueur. PyTorch fournit des utilitaires pour gerer cela efficacement :</p>
+
+    <div class="code-block"><span class="keyword">from</span> torch.nn.utils.rnn <span class="keyword">import</span> pad_sequence, pack_padded_sequence, pad_packed_sequence
+
+<span class="comment"># Sequences de longueurs differentes</span>
+seq1 = torch.<span class="function">randn</span>(<span class="number">10</span>, <span class="number">64</span>)  <span class="comment"># longueur 10</span>
+seq2 = torch.<span class="function">randn</span>(<span class="number">7</span>, <span class="number">64</span>)   <span class="comment"># longueur 7</span>
+seq3 = torch.<span class="function">randn</span>(<span class="number">15</span>, <span class="number">64</span>)  <span class="comment"># longueur 15</span>
+seq4 = torch.<span class="function">randn</span>(<span class="number">4</span>, <span class="number">64</span>)   <span class="comment"># longueur 4</span>
+
+<span class="comment"># Etape 1 : Padding (ajouter des zeros pour egaliser les longueurs)</span>
+sequences = [seq3, seq1, seq2, seq4]  <span class="comment"># Triees par longueur decroissante</span>
+lengths = torch.<span class="function">tensor</span>([<span class="number">15</span>, <span class="number">10</span>, <span class="number">7</span>, <span class="number">4</span>])
+padded = <span class="function">pad_sequence</span>(sequences, batch_first=<span class="keyword">True</span>)  <span class="comment"># (4, 15, 64)</span>
+<span class="function">print</span>(<span class="string">f"Padded batch : {padded.shape}"</span>)
+
+<span class="comment"># Etape 2 : Packing (compresser pour ignorer les zeros lors du calcul)</span>
+packed = <span class="function">pack_padded_sequence</span>(padded, lengths, batch_first=<span class="keyword">True</span>, enforce_sorted=<span class="keyword">True</span>)
+
+<span class="comment"># Etape 3 : Passer par le LSTM</span>
+lstm = nn.<span class="function">LSTM</span>(<span class="number">64</span>, <span class="number">128</span>, batch_first=<span class="keyword">True</span>)
+packed_output, (h_n, c_n) = <span class="function">lstm</span>(packed)
+
+<span class="comment"># Etape 4 : Decompresser (unpack)</span>
+output, output_lengths = <span class="function">pad_packed_sequence</span>(packed_output, batch_first=<span class="keyword">True</span>)
+<span class="function">print</span>(<span class="string">f"Output apres unpack : {output.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Longueurs reelles   : {output_lengths}"</span>)</div>
+
+    <div class="output-block">Padded batch : torch.Size([4, 15, 64])
+Output apres unpack : torch.Size([4, 15, 128])
+Longueurs reelles   : tensor([15, 10, 7, 4])</div>
+
+    <div class="warning">
+        Le packing est important pour la performance ET la correction. Sans packing, le LSTM traite les tokens de padding comme de vrais tokens, ce qui pollue les hidden states et degrade les performances. Avec le packing, PyTorch saute automatiquement les positions paddees.
+    </div>
+
+    <h3>8.3 Collate function personnalisee</h3>
+
+    <div class="code-block"><span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> Dataset, DataLoader
+
+<span class="keyword">class</span> <span class="function">TextDataset</span>(Dataset):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, texts, labels):
+        self.texts = texts    <span class="comment"># Liste de tenseurs de longueurs variables</span>
+        self.labels = labels  <span class="comment"># Liste de labels</span>
+
+    <span class="keyword">def</span> <span class="function">__len__</span>(self):
+        <span class="keyword">return</span> <span class="function">len</span>(self.texts)
+
+    <span class="keyword">def</span> <span class="function">__getitem__</span>(self, idx):
+        <span class="keyword">return</span> self.texts[idx], self.labels[idx]
+
+
+<span class="keyword">def</span> <span class="function">collate_fn</span>(batch):
+    <span class="string">"""Fonction de collation pour gerer les longueurs variables."""</span>
+    texts, labels = <span class="function">zip</span>(*batch)
+
+    <span class="comment"># Trier par longueur decroissante (requis pour pack_padded_sequence)</span>
+    lengths = torch.<span class="function">tensor</span>([<span class="function">len</span>(t) <span class="keyword">for</span> t <span class="keyword">in</span> texts])
+    sorted_indices = lengths.<span class="function">argsort</span>(descending=<span class="keyword">True</span>)
+
+    sorted_texts = [texts[i] <span class="keyword">for</span> i <span class="keyword">in</span> sorted_indices]
+    sorted_labels = torch.<span class="function">tensor</span>([labels[i] <span class="keyword">for</span> i <span class="keyword">in</span> sorted_indices])
+    sorted_lengths = lengths[sorted_indices]
+
+    <span class="comment"># Padding</span>
+    padded = <span class="function">pad_sequence</span>(sorted_texts, batch_first=<span class="keyword">True</span>, padding_value=<span class="number">0</span>)
+
+    <span class="keyword">return</span> padded, sorted_labels, sorted_lengths
+
+<span class="comment"># Utilisation</span>
+<span class="comment"># loader = DataLoader(dataset, batch_size=32, collate_fn=collate_fn)</span></div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================================ -->
+    <h2>9. Prediction de series temporelles</h2>
+
+    <p>La prediction de series temporelles est une application naturelle des LSTM. Voici un exemple complet de bout en bout.</p>
+
+    <h3>9.1 Preparation des donnees</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> Dataset, DataLoader
+
+<span class="comment"># ============================================</span>
+<span class="comment"># Generation d'une serie temporelle synthetique</span>
+<span class="comment"># ============================================</span>
+np.random.<span class="function">seed</span>(<span class="number">42</span>)
+t = np.<span class="function">arange</span>(<span class="number">0</span>, <span class="number">1000</span>, <span class="number">0.1</span>)
+<span class="comment"># Signal = tendance + saisonnalite + bruit</span>
+signal = <span class="number">0.005</span> * t + np.<span class="function">sin</span>(<span class="number">0.1</span> * t) + <span class="number">0.5</span> * np.<span class="function">sin</span>(<span class="number">0.03</span> * t) + np.random.<span class="function">normal</span>(<span class="number">0</span>, <span class="number">0.1</span>, <span class="function">len</span>(t))
+
+<span class="comment"># Normalisation</span>
+mean_val = signal.<span class="function">mean</span>()
+std_val = signal.<span class="function">std</span>()
+signal_norm = (signal - mean_val) / std_val
+
+<span class="comment"># Creation des fenetres glissantes</span>
+<span class="keyword">def</span> <span class="function">create_sequences</span>(data, seq_length, pred_length=<span class="number">1</span>):
+    <span class="string">"""Cree des paires (sequence, cible) avec une fenetre glissante."""</span>
+    xs, ys = [], []
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(data) - seq_length - pred_length + <span class="number">1</span>):
+        x = data[i : i + seq_length]
+        y = data[i + seq_length : i + seq_length + pred_length]
+        xs.<span class="function">append</span>(x)
+        ys.<span class="function">append</span>(y)
+    <span class="keyword">return</span> np.<span class="function">array</span>(xs), np.<span class="function">array</span>(ys)
+
+SEQ_LEN = <span class="number">50</span>
+PRED_LEN = <span class="number">1</span>
+X, Y = <span class="function">create_sequences</span>(signal_norm, SEQ_LEN, PRED_LEN)
+
+<span class="comment"># Split train/val/test</span>
+n = <span class="function">len</span>(X)
+train_size = <span class="function">int</span>(n * <span class="number">0.7</span>)
+val_size = <span class="function">int</span>(n * <span class="number">0.15</span>)
+
+X_train, Y_train = X[:train_size], Y[:train_size]
+X_val, Y_val = X[train_size:train_size+val_size], Y[train_size:train_size+val_size]
+X_test, Y_test = X[train_size+val_size:], Y[train_size+val_size:]
+
+<span class="comment"># Conversion en tenseurs</span>
+X_train = torch.<span class="function">FloatTensor</span>(X_train).<span class="function">unsqueeze</span>(-<span class="number">1</span>)  <span class="comment"># (N, 50, 1)</span>
+Y_train = torch.<span class="function">FloatTensor</span>(Y_train)
+X_val = torch.<span class="function">FloatTensor</span>(X_val).<span class="function">unsqueeze</span>(-<span class="number">1</span>)
+Y_val = torch.<span class="function">FloatTensor</span>(Y_val)
+
+<span class="function">print</span>(<span class="string">f"Train : {X_train.shape} -> {Y_train.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Val   : {X_val.shape} -> {Y_val.shape}"</span>)</div>
+
+    <div class="output-block">Train : torch.Size([6965, 50, 1]) -> torch.Size([6965, 1])
+Val   : torch.Size([1492, 50, 1]) -> torch.Size([1492, 1])</div>
+
+    <h3>9.2 Modele LSTM pour series temporelles</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">TimeSeriesLSTM</span>(nn.Module):
+    <span class="string">"""Modele LSTM pour la prediction de series temporelles."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_size=<span class="number">1</span>, hidden_size=<span class="number">64</span>, num_layers=<span class="number">2</span>,
+                 output_size=<span class="number">1</span>, dropout=<span class="number">0.2</span>):
+        <span class="function">super</span>().__init__()
+        self.lstm = nn.<span class="function">LSTM</span>(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=<span class="keyword">True</span>,
+            dropout=dropout
+        )
+        self.fc = nn.<span class="function">Sequential</span>(
+            nn.<span class="function">Linear</span>(hidden_size, <span class="number">32</span>),
+            nn.<span class="function">ReLU</span>(),
+            nn.<span class="function">Linear</span>(<span class="number">32</span>, output_size)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="comment"># x : (batch, seq_len, input_size)</span>
+        lstm_out, _ = self.<span class="function">lstm</span>(x)
+        <span class="comment"># Prendre uniquement le dernier hidden state</span>
+        last_output = lstm_out[:, -<span class="number">1</span>, :]  <span class="comment"># (batch, hidden_size)</span>
+        prediction = self.<span class="function">fc</span>(last_output)
+        <span class="keyword">return</span> prediction</div>
+
+    <h3>9.3 Boucle d'entrainement</h3>
+
+    <div class="code-block"><span class="comment"># ============================================</span>
+<span class="comment"># Entrainement complet</span>
+<span class="comment"># ============================================</span>
+
+device = torch.<span class="function">device</span>(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.<span class="function">is_available</span>() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+model = <span class="function">TimeSeriesLSTM</span>(input_size=<span class="number">1</span>, hidden_size=<span class="number">64</span>, num_layers=<span class="number">2</span>).<span class="function">to</span>(device)
+criterion = nn.<span class="function">MSELoss</span>()
+optimizer = torch.optim.<span class="function">Adam</span>(model.<span class="function">parameters</span>(), lr=<span class="number">1e-3</span>)
+scheduler = torch.optim.lr_scheduler.<span class="function">ReduceLROnPlateau</span>(
+    optimizer, mode=<span class="string">'min'</span>, patience=<span class="number">5</span>, factor=<span class="number">0.5</span>
+)
+
+<span class="comment"># DataLoaders</span>
+train_dataset = torch.utils.data.<span class="function">TensorDataset</span>(X_train, Y_train)
+val_dataset = torch.utils.data.<span class="function">TensorDataset</span>(X_val, Y_val)
+train_loader = <span class="function">DataLoader</span>(train_dataset, batch_size=<span class="number">64</span>, shuffle=<span class="keyword">True</span>)
+val_loader = <span class="function">DataLoader</span>(val_dataset, batch_size=<span class="number">64</span>)
+
+EPOCHS = <span class="number">30</span>
+best_val_loss = <span class="function">float</span>(<span class="string">'inf'</span>)
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(EPOCHS):
+    <span class="comment"># === Phase d'entrainement ===</span>
+    model.<span class="function">train</span>()
+    train_loss = <span class="number">0.0</span>
+    <span class="keyword">for</span> batch_x, batch_y <span class="keyword">in</span> train_loader:
+        batch_x = batch_x.<span class="function">to</span>(device)
+        batch_y = batch_y.<span class="function">to</span>(device)
+
+        optimizer.<span class="function">zero_grad</span>()
+        pred = <span class="function">model</span>(batch_x)
+        loss = <span class="function">criterion</span>(pred, batch_y)
+        loss.<span class="function">backward</span>()
+        torch.nn.utils.<span class="function">clip_grad_norm_</span>(model.<span class="function">parameters</span>(), max_norm=<span class="number">1.0</span>)
+        optimizer.<span class="function">step</span>()
+        train_loss += loss.<span class="function">item</span>()
+
+    train_loss /= <span class="function">len</span>(train_loader)
+
+    <span class="comment"># === Phase de validation ===</span>
+    model.<span class="function">eval</span>()
+    val_loss = <span class="number">0.0</span>
+    <span class="keyword">with</span> torch.<span class="function">no_grad</span>():
+        <span class="keyword">for</span> batch_x, batch_y <span class="keyword">in</span> val_loader:
+            batch_x = batch_x.<span class="function">to</span>(device)
+            batch_y = batch_y.<span class="function">to</span>(device)
+            pred = <span class="function">model</span>(batch_x)
+            val_loss += <span class="function">criterion</span>(pred, batch_y).<span class="function">item</span>()
+    val_loss /= <span class="function">len</span>(val_loader)
+
+    scheduler.<span class="function">step</span>(val_loss)
+
+    <span class="comment"># Sauvegarde du meilleur modele</span>
+    <span class="keyword">if</span> val_loss < best_val_loss:
+        best_val_loss = val_loss
+        torch.<span class="function">save</span>(model.<span class="function">state_dict</span>(), <span class="string">'best_model.pt'</span>)
+
+    <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">5</span> == <span class="number">0</span>:
+        <span class="function">print</span>(<span class="string">f"Epoch {epoch+1}/{EPOCHS} - Train: {train_loss:.6f} - Val: {val_loss:.6f}"</span>)</div>
+
+    <div class="output-block">Epoch 5/30 - Train: 0.014523 - Val: 0.012187
+Epoch 10/30 - Train: 0.008341 - Val: 0.007652
+Epoch 15/30 - Train: 0.005218 - Val: 0.005891
+Epoch 20/30 - Train: 0.003472 - Val: 0.004125
+Epoch 25/30 - Train: 0.002891 - Val: 0.003567
+Epoch 30/30 - Train: 0.002534 - Val: 0.003201</div>
+
+    <div class="prof-note">
+        Notez trois pratiques essentielles dans cette boucle : (1) le gradient clipping pour stabiliser l'entrainement du LSTM, (2) le scheduler ReduceLROnPlateau qui reduit le learning rate quand la validation stagne, et (3) la sauvegarde du meilleur modele basee sur la loss de validation, pas la loss d'entrainement.
+    </div>
+
+    <h3>9.4 Metriques pour les series temporelles</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">evaluate_timeseries</span>(model, test_loader, device):
+    <span class="string">"""Evalue le modele avec plusieurs metriques."""</span>
+    model.<span class="function">eval</span>()
+    all_preds = []
+    all_targets = []
+
+    <span class="keyword">with</span> torch.<span class="function">no_grad</span>():
+        <span class="keyword">for</span> batch_x, batch_y <span class="keyword">in</span> test_loader:
+            pred = <span class="function">model</span>(batch_x.<span class="function">to</span>(device))
+            all_preds.<span class="function">append</span>(pred.<span class="function">cpu</span>())
+            all_targets.<span class="function">append</span>(batch_y)
+
+    preds = torch.<span class="function">cat</span>(all_preds)
+    targets = torch.<span class="function">cat</span>(all_targets)
+
+    <span class="comment"># MSE</span>
+    mse = torch.<span class="function">mean</span>((preds - targets) ** <span class="number">2</span>).<span class="function">item</span>()
+    <span class="comment"># MAE</span>
+    mae = torch.<span class="function">mean</span>(torch.<span class="function">abs</span>(preds - targets)).<span class="function">item</span>()
+    <span class="comment"># RMSE</span>
+    rmse = mse ** <span class="number">0.5</span>
+
+    <span class="function">print</span>(<span class="string">f"MSE  : {mse:.6f}"</span>)
+    <span class="function">print</span>(<span class="string">f"MAE  : {mae:.6f}"</span>)
+    <span class="function">print</span>(<span class="string">f"RMSE : {rmse:.6f}"</span>)
+    <span class="keyword">return</span> preds, targets</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================================ -->
+    <h2>10. Recapitulatif et transition vers les Transformers</h2>
+
+    <h3>10.1 Synthese des architectures recurrentes</h3>
+
+    <table>
+        <tr><th>Architecture</th><th>Portes</th><th>Avantages</th><th>Inconvenients</th></tr>
+        <tr><td>RNN vanilla</td><td>0</td><td>Simple, rapide</td><td>Vanishing gradient, memoire courte</td></tr>
+        <tr><td>LSTM</td><td>3</td><td>Memoire longue, tres etudie</td><td>Lent, beaucoup de parametres</td></tr>
+        <tr><td>GRU</td><td>2</td><td>Plus rapide que LSTM, efficace</td><td>Memoire parfois insuffisante</td></tr>
+        <tr><td>BiLSTM</td><td>3 x2</td><td>Contexte bidirectionnel</td><td>Pas pour la generation</td></tr>
+    </table>
+
+    <h3>10.2 Quand utiliser quoi ?</h3>
+
+    <div class="concept-box">
+        <h4>Guide de decision</h4>
+        <ul>
+            <li><strong>Series temporelles simples :</strong> LSTM ou GRU unidirectionnel</li>
+            <li><strong>Classification de texte :</strong> BiLSTM avec attention</li>
+            <li><strong>Generation de texte :</strong> LSTM unidirectionnel (autoregressive)</li>
+            <li><strong>NER / Tagging :</strong> BiLSTM-CRF</li>
+            <li><strong>Traduction :</strong> Encoder BiLSTM + Decoder LSTM + Attention</li>
+            <li><strong>Sequences tres longues (>500 tokens) :</strong> preferer les Transformers</li>
+        </ul>
+    </div>
+
+    <h3>10.3 Les limites des RNN</h3>
+
+    <p>Malgre leurs succes, les RNN souffrent de limitations fondamentales qui ont motive le developpement des Transformers :</p>
+
+    <div class="warning">
+        <strong>Traitement sequentiel :</strong> un RNN traite les tokens un par un. Impossible de paralleliser le calcul sur une sequence. Sur un GPU moderne, les Transformers sont 10-100x plus rapides a entrainer.
+    </div>
+
+    <div class="warning">
+        <strong>Memoire limitee en pratique :</strong> meme le LSTM peine sur des sequences de plus de 500-1000 tokens. Le mecanisme d'attention des Transformers n'a pas cette limitation (mais a un cout quadratique en memoire).
+    </div>
+
+    <div class="warning">
+        <strong>Difficulte a capturer les dependances tres longues :</strong> malgre le cell state, l'information se degrade progressivement. Les Transformers, avec leur attention directe entre toutes les positions, resolvent ce probleme elegamment.
+    </div>
+
+    <h3>10.4 Vers les Transformers</h3>
+
+    <div class="concept-box green">
+        <h4>La grande idee</h4>
+        <p>Et si on se debarrassait completement de la recurrence ? Et si, au lieu de traiter les tokens un par un, on permettait a <strong>chaque token de "regarder" directement tous les autres tokens</strong> de la sequence ? C'est exactement ce que fait le mecanisme de <strong>Self-Attention</strong>, coeur des Transformers.</p>
+        <p>Le papier "Attention Is All You Need" (Vaswani et al., 2017) a montre qu'un modele base uniquement sur l'attention, sans aucune recurrence ni convolution, pouvait surpasser les LSTM sur la traduction automatique tout en etant bien plus rapide a entrainer. C'est cette revolution que nous etudierons au prochain cours.</p>
+    </div>
+
+    <div class="analogy">
+        <h4>Analogie : la reunion d'equipe</h4>
+        <p>Le RNN, c'est comme un <strong>telephone arabe</strong> : chaque personne chuchote le message a la suivante. L'information se degrade inevitablement. Le Transformer, c'est comme une <strong>reunion de travail</strong> ou tout le monde est dans la meme salle : chacun peut directement s'adresser a n'importe qui, sans intermediaire. L'information circule sans perte.</p>
+    </div>
+
+    <div class="prof-note">
+        Les RNN ne sont pas "morts" pour autant. Ils restent pertinents pour le deploiement sur appareils a ressources limitees, pour les series temporelles courtes, et pour les applications ou la latence d'inference est critique (un RNN peut generer token par token avec un etat cache constant). Les Transformers, eux, brillent quand on dispose de ressources de calcul importantes et de grandes quantites de donnees. Rendez-vous au cours 7 pour decouvrir cette architecture revolutionnaire.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_05_cnn_avance.html">&larr; Cours 5 : CNN Avance</a>
+        <a href="dl_07_transformer.html">Cours 7 : Transformers &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

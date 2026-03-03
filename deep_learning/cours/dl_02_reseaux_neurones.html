@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 02 - Reseaux de Neurones en Profondeur</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Reseaux de Neurones en Profondeur</h1>
+    <p class="subtitle">Cours 2/12 - Du perceptron au MLP : forward propagation et backpropagation detaillees</p>
+
+    <p>Dans ce deuxieme cours, nous allons plonger au coeur des reseaux de neurones artificiels. Nous partirons de l'unite fondamentale -- le neurone artificiel -- pour construire progressivement des architectures plus complexes capables de resoudre des problemes non lineaires. Nous detaillerons les mecanismes mathematiques de la propagation avant (forward propagation) et de la retropropagation du gradient (backpropagation), avant d'implementer le tout en PyTorch.</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 1 : Le neurone biologique vs artificiel              -->
+    <!-- ============================================================ -->
+    <h2>1. Le neurone biologique vs artificiel</h2>
+
+    <p>Pour comprendre les reseaux de neurones artificiels, il est instructif de revenir a leur source d'inspiration : le cerveau humain. Le cerveau contient environ 86 milliards de neurones interconnectes par des synapses, formant un reseau massif de traitement de l'information.</p>
+
+    <div class="analogy">
+        <h4>Analogie : Le neurone biologique</h4>
+        <p>Imaginez un neurone biologique comme un employe dans une grande entreprise. Il recoit des messages (signaux) de ses collegues via differents canaux (dendrites). Chaque message a un poids d'importance different. L'employe fait la somme de toutes ces informations (soma), et si le total depasse un certain seuil de decision, il envoie a son tour un message (axone) a d'autres collegues. C'est exactement ce que fait un neurone artificiel avec des nombres.</p>
+    </div>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#4caf50;">Neurone biologique</h4>
+            <ul style="text-align:left;">
+                <li><strong>Dendrites</strong> : recoivent les signaux</li>
+                <li><strong>Soma</strong> : integre les signaux</li>
+                <li><strong>Axone hillock</strong> : seuil de declenchement</li>
+                <li><strong>Axone</strong> : transmet le signal</li>
+                <li><strong>Synapses</strong> : connexions ponderees</li>
+            </ul>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Neurone artificiel</h4>
+            <ul style="text-align:left;">
+                <li><strong>Entrees x_i</strong> : valeurs numeriques</li>
+                <li><strong>Somme ponderee</strong> : z = sum(w_i * x_i) + b</li>
+                <li><strong>Fonction d'activation</strong> : seuil non lineaire</li>
+                <li><strong>Sortie</strong> : valeur calculee</li>
+                <li><strong>Poids w_i</strong> : force des connexions</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="300" viewBox="0 0 700 300">
+            <defs>
+                <marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#aaa"/>
+                </marker>
+            </defs>
+            <text x="350" y="25" text-anchor="middle" fill="#aaa" font-size="14" font-weight="bold">Schema d'un neurone artificiel</text>
+            <!-- Entrees -->
+            <circle cx="80" cy="60" r="25" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="65" text-anchor="middle" fill="#569cd6" font-size="14">x1</text>
+            <circle cx="80" cy="150" r="25" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="155" text-anchor="middle" fill="#569cd6" font-size="14">x2</text>
+            <circle cx="80" cy="240" r="25" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="245" text-anchor="middle" fill="#569cd6" font-size="14">x3</text>
+            <!-- Fleches avec poids -->
+            <line x1="105" y1="60" x2="280" y2="130" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <text x="180" y="80" fill="#ff8c42" font-size="12">w1</text>
+            <line x1="105" y1="150" x2="280" y2="150" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <text x="180" y="140" fill="#ff8c42" font-size="12">w2</text>
+            <line x1="105" y1="240" x2="280" y2="170" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <text x="180" y="225" fill="#ff8c42" font-size="12">w3</text>
+            <!-- Neurone (soma) -->
+            <circle cx="310" cy="150" r="40" fill="#1a1a2e" stroke="#ff6b35" stroke-width="3"/>
+            <text x="310" y="143" text-anchor="middle" fill="#fff" font-size="11">Somme</text>
+            <text x="310" y="163" text-anchor="middle" fill="#ff8c42" font-size="11">+ biais</text>
+            <!-- Fonction d'activation -->
+            <rect x="400" y="120" width="80" height="60" rx="10" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="440" y="155" text-anchor="middle" fill="#00ff88" font-size="12">f(z)</text>
+            <line x1="350" y1="150" x2="400" y2="150" stroke="#aaa" stroke-width="2" marker-end="url(#arrow1)"/>
+            <!-- Sortie -->
+            <line x1="480" y1="150" x2="580" y2="150" stroke="#aaa" stroke-width="2" marker-end="url(#arrow1)"/>
+            <circle cx="610" cy="150" r="25" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="610" y="155" text-anchor="middle" fill="#00ff88" font-size="14">y</text>
+            <!-- Biais -->
+            <circle cx="310" cy="260" r="18" fill="#16213e" stroke="#ffab76" stroke-width="2"/>
+            <text x="310" y="265" text-anchor="middle" fill="#ffab76" font-size="12">b</text>
+            <line x1="310" y1="242" x2="310" y2="190" stroke="#ffab76" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow1)"/>
+        </svg>
+    </div>
+
+    <div class="definition">
+        Un <strong>neurone artificiel</strong> est une unite de calcul qui recoit un vecteur d'entrees x = (x1, x2, ..., xn), applique une somme ponderee z = w1*x1 + w2*x2 + ... + wn*xn + b, puis passe le resultat a travers une fonction d'activation non lineaire f pour produire une sortie y = f(z).
+    </div>
+
+    <div class="prof-note">
+        L'analogie biologique a ses limites. Les neurones artificiels sont des simplifications extremes. Un vrai neurone biologique est bien plus complexe -- il possede des dynamiques temporelles, des neurotransmetteurs differents, et un comportement stochastique. Neanmoins, cette inspiration a mene a des resultats remarquables en pratique.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 2 : Le perceptron                                   -->
+    <!-- ============================================================ -->
+    <h2>2. Le perceptron</h2>
+
+    <p>Le perceptron, propose par Frank Rosenblatt en 1958, est le modele le plus simple de neurone artificiel. C'est un classifieur binaire lineaire qui constitue la brique elementaire des reseaux de neurones modernes.</p>
+
+    <h3>2.1 Formulation mathematique</h3>
+
+    <div class="concept-box">
+        <h4>Equation du perceptron</h4>
+        <p>Pour un vecteur d'entree <strong>x</strong> = (x1, x2, ..., xn) :</p>
+        <p>1. Calcul de la somme ponderee : <strong>z = w^T * x + b = sum(wi * xi) + b</strong></p>
+        <p>2. Application de la fonction seuil : <strong>y = 1 si z &gt;= 0, sinon y = 0</strong></p>
+        <p>3. Regle de mise a jour : <strong>w_i = w_i + alpha * (y_reel - y_pred) * x_i</strong></p>
+        <p>ou <strong>alpha</strong> est le taux d'apprentissage.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="comment"># Implementation d'un perceptron simple en PyTorch</span>
+<span class="keyword">class</span> <span class="function">Perceptron</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, n_entrees):
+        <span class="function">super</span>().__init__()
+        self.lineaire = nn.<span class="function">Linear</span>(n_entrees, <span class="number">1</span>)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        z = self.<span class="function">lineaire</span>(x)
+        <span class="keyword">return</span> (z >= <span class="number">0</span>).<span class="function">float</span>()
+
+<span class="comment"># Exemple : porte logique AND</span>
+X = torch.<span class="function">tensor</span>([[<span class="number">0.0</span>, <span class="number">0.0</span>],
+                  [<span class="number">0.0</span>, <span class="number">1.0</span>],
+                  [<span class="number">1.0</span>, <span class="number">0.0</span>],
+                  [<span class="number">1.0</span>, <span class="number">1.0</span>]])
+y_and = torch.<span class="function">tensor</span>([[<span class="number">0.0</span>], [<span class="number">0.0</span>], [<span class="number">0.0</span>], [<span class="number">1.0</span>]])
+
+modele = <span class="function">Perceptron</span>(<span class="number">2</span>)
+<span class="function">print</span>(<span class="string">"Perceptron cree avec"</span>, <span class="function">sum</span>(p.<span class="function">numel</span>() <span class="keyword">for</span> p <span class="keyword">in</span> modele.<span class="function">parameters</span>()), <span class="string">"parametres"</span>)</div>
+
+    <div class="output-block">Perceptron cree avec 3 parametres</div>
+
+    <h3>2.2 Limitation fondamentale : le probleme XOR</h3>
+
+    <p>En 1969, Minsky et Papert ont demontre dans leur livre <em>"Perceptrons"</em> qu'un perceptron simple ne peut pas resoudre le probleme XOR, car celui-ci n'est pas lineairement separable. Cette limitation a provoque le premier "hiver de l'IA".</p>
+
+    <div class="warning">
+        Le perceptron ne peut modeliser que des fonctions lineairement separables. La porte logique XOR necessite au minimum une couche cachee pour etre resolue. C'est cette limitation qui a conduit au developpement des reseaux multicouches (MLP).
+    </div>
+
+    <div class="code-block"><span class="comment"># Demonstration : le XOR n'est pas lineairement separable</span>
+X_xor = torch.<span class="function">tensor</span>([[<span class="number">0.0</span>, <span class="number">0.0</span>],
+                      [<span class="number">0.0</span>, <span class="number">1.0</span>],
+                      [<span class="number">1.0</span>, <span class="number">0.0</span>],
+                      [<span class="number">1.0</span>, <span class="number">1.0</span>]])
+y_xor = torch.<span class="function">tensor</span>([[<span class="number">0.0</span>], [<span class="number">1.0</span>], [<span class="number">1.0</span>], [<span class="number">0.0</span>]])
+
+<span class="comment"># Un perceptron simple ne converge JAMAIS sur XOR</span>
+perceptron_xor = nn.<span class="function">Linear</span>(<span class="number">2</span>, <span class="number">1</span>)
+optimiseur = torch.optim.<span class="function">SGD</span>(perceptron_xor.<span class="function">parameters</span>(), lr=<span class="number">0.1</span>)
+critere = nn.<span class="function">MSELoss</span>()
+
+<span class="keyword">for</span> epoque <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1000</span>):
+    pred = torch.<span class="function">sigmoid</span>(perceptron_xor(X_xor))
+    perte = <span class="function">critere</span>(pred, y_xor)
+    perte.<span class="function">backward</span>()
+    optimiseur.<span class="function">step</span>()
+    optimiseur.<span class="function">zero_grad</span>()
+
+<span class="function">print</span>(<span class="string">f"Perte finale (perceptron sur XOR) : {perte.item():.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Predictions : {torch.sigmoid(perceptron_xor(X_xor)).detach().round().flatten().tolist()}"</span>)</div>
+
+    <div class="output-block">Perte finale (perceptron sur XOR) : 0.2500
+Predictions : [0.0, 1.0, 0.0, 1.0]  # Ne converge pas vers la bonne solution</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 3 : Les fonctions d'activation                      -->
+    <!-- ============================================================ -->
+    <h2>3. Les fonctions d'activation</h2>
+
+    <p>Les fonctions d'activation introduisent la <strong>non-linearite</strong> dans le reseau. Sans elles, un empilement de couches lineaires resterait une transformation lineaire globale. Elles sont donc essentielles pour que les reseaux puissent apprendre des representations complexes.</p>
+
+    <div class="definition">
+        Une <strong>fonction d'activation</strong> est une fonction non lineaire appliquee a la sortie de chaque neurone. Elle determine si le neurone doit etre "active" (transmettre l'information) ou non, et dans quelle mesure.
+    </div>
+
+    <h3>3.1 Sigmoid</h3>
+    <div class="concept-box">
+        <p><strong>Formule :</strong> sigma(z) = 1 / (1 + exp(-z))</p>
+        <p><strong>Plage de sortie :</strong> (0, 1)</p>
+        <p><strong>Derivee :</strong> sigma'(z) = sigma(z) * (1 - sigma(z))</p>
+        <p><strong>Avantages :</strong> Sortie interpretable comme probabilite, derivee simple a calculer.</p>
+        <p><strong>Inconvenients :</strong> Probleme du gradient evanescent pour |z| grand, sortie non centree sur zero.</p>
+    </div>
+
+    <h3>3.2 Tanh (tangente hyperbolique)</h3>
+    <div class="concept-box">
+        <p><strong>Formule :</strong> tanh(z) = (exp(z) - exp(-z)) / (exp(z) + exp(-z))</p>
+        <p><strong>Plage de sortie :</strong> (-1, 1)</p>
+        <p><strong>Derivee :</strong> tanh'(z) = 1 - tanh(z)^2</p>
+        <p><strong>Avantages :</strong> Centree sur zero, gradients plus forts que sigmoid dans la region active.</p>
+        <p><strong>Inconvenients :</strong> Gradient evanescent persiste pour les valeurs |z| elevees.</p>
+    </div>
+
+    <h3>3.3 ReLU (Rectified Linear Unit)</h3>
+    <div class="concept-box green">
+        <p><strong>Formule :</strong> ReLU(z) = max(0, z)</p>
+        <p><strong>Plage de sortie :</strong> [0, +infini)</p>
+        <p><strong>Derivee :</strong> ReLU'(z) = 1 si z &gt; 0, sinon 0</p>
+        <p><strong>Avantages :</strong> Calcul extremement rapide, pas de saturation pour z &gt; 0, activation creuse (sparsity).</p>
+        <p><strong>Inconvenients :</strong> Probleme des neurones morts (dying ReLU) quand z &lt; 0 en permanence.</p>
+    </div>
+
+    <h3>3.4 Leaky ReLU</h3>
+    <div class="concept-box">
+        <p><strong>Formule :</strong> LeakyReLU(z) = z si z &gt; 0, sinon alpha * z (alpha = 0.01 typiquement)</p>
+        <p><strong>Plage de sortie :</strong> (-infini, +infini)</p>
+        <p><strong>Derivee :</strong> 1 si z &gt; 0, sinon alpha</p>
+        <p><strong>Avantages :</strong> Resout le probleme des neurones morts en permettant un petit gradient negatif.</p>
+    </div>
+
+    <h3>3.5 ELU (Exponential Linear Unit)</h3>
+    <div class="concept-box">
+        <p><strong>Formule :</strong> ELU(z) = z si z &gt; 0, sinon alpha * (exp(z) - 1)</p>
+        <p><strong>Plage de sortie :</strong> (-alpha, +infini)</p>
+        <p><strong>Derivee :</strong> 1 si z &gt; 0, sinon alpha * exp(z)</p>
+        <p><strong>Avantages :</strong> Sorties moyennes proches de zero, convergence souvent plus rapide que ReLU.</p>
+    </div>
+
+    <h3>3.6 GELU (Gaussian Error Linear Unit)</h3>
+    <div class="concept-box blue">
+        <p><strong>Formule :</strong> GELU(z) = z * Phi(z), ou Phi est la CDF de la loi normale standard N(0,1)</p>
+        <p><strong>Approximation :</strong> GELU(z) ~ 0.5 * z * (1 + tanh(sqrt(2/pi) * (z + 0.044715 * z^3)))</p>
+        <p><strong>Derivee :</strong> Phi(z) + z * phi(z), ou phi est la PDF de la loi normale standard</p>
+        <p><strong>Avantages :</strong> Utilisee dans BERT et GPT, combine les avantages de ReLU et de la regularisation stochastique.</p>
+    </div>
+
+    <h3>3.7 Swish (SiLU)</h3>
+    <div class="concept-box">
+        <p><strong>Formule :</strong> Swish(z) = z * sigma(z) = z / (1 + exp(-z))</p>
+        <p><strong>Plage de sortie :</strong> (~-0.278, +infini)</p>
+        <p><strong>Derivee :</strong> sigma(z) + z * sigma(z) * (1 - sigma(z)) = sigma(z) * (1 + z * (1 - sigma(z)))</p>
+        <p><strong>Avantages :</strong> Non monotone, auto-regulee, performante dans les reseaux profonds. Proposee par Google Brain en 2017.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F
+
+z = torch.<span class="function">linspace</span>(-<span class="number">3</span>, <span class="number">3</span>, <span class="number">7</span>)
+<span class="function">print</span>(<span class="string">"z         :"</span>, z.<span class="function">tolist</span>())
+<span class="function">print</span>(<span class="string">"Sigmoid   :"</span>, torch.<span class="function">sigmoid</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
+<span class="function">print</span>(<span class="string">"Tanh      :"</span>, torch.<span class="function">tanh</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
+<span class="function">print</span>(<span class="string">"ReLU      :"</span>, F.<span class="function">relu</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
+<span class="function">print</span>(<span class="string">"LeakyReLU :"</span>, F.<span class="function">leaky_relu</span>(z, <span class="number">0.01</span>).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
+<span class="function">print</span>(<span class="string">"ELU       :"</span>, F.<span class="function">elu</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
+<span class="function">print</span>(<span class="string">"GELU      :"</span>, F.<span class="function">gelu</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
+<span class="function">print</span>(<span class="string">"Swish/SiLU:"</span>, F.<span class="function">silu</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())</div>
+
+    <div class="output-block">z         : [-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0]
+Sigmoid   : [0.047, 0.119, 0.269, 0.5, 0.731, 0.881, 0.953]
+Tanh      : [-0.995, -0.964, -0.762, 0.0, 0.762, 0.964, 0.995]
+ReLU      : [0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0]
+LeakyReLU : [-0.03, -0.02, -0.01, 0.0, 1.0, 2.0, 3.0]
+ELU       : [-0.95, -0.865, -0.632, 0.0, 1.0, 2.0, 3.0]
+GELU      : [-0.004, -0.045, -0.159, 0.0, 0.841, 1.955, 2.996]
+Swish/SiLU: [-0.143, -0.238, -0.269, 0.0, 0.731, 1.762, 2.858]</div>
+
+    <div class="prof-note">
+        En pratique, commencez toujours par <strong>ReLU</strong>. Si vous observez beaucoup de neurones morts, passez a <strong>Leaky ReLU</strong> ou <strong>ELU</strong>. Pour les architectures de type Transformer, <strong>GELU</strong> est le choix standard. Swish (aussi appelee SiLU en PyTorch) est excellente pour les reseaux convolutionnels profonds comme EfficientNet.
+    </div>
+
+    <table>
+        <tr><th>Fonction</th><th>Plage</th><th>Usage typique</th><th>PyTorch</th></tr>
+        <tr><td>Sigmoid</td><td>(0, 1)</td><td>Sortie binaire, portes LSTM</td><td>torch.sigmoid()</td></tr>
+        <tr><td>Tanh</td><td>(-1, 1)</td><td>Couches cachees RNN</td><td>torch.tanh()</td></tr>
+        <tr><td>ReLU</td><td>[0, +inf)</td><td>Choix par defaut (CNN, MLP)</td><td>F.relu()</td></tr>
+        <tr><td>Leaky ReLU</td><td>(-inf, +inf)</td><td>Alternative a ReLU</td><td>F.leaky_relu()</td></tr>
+        <tr><td>ELU</td><td>(-alpha, +inf)</td><td>Reseaux profonds</td><td>F.elu()</td></tr>
+        <tr><td>GELU</td><td>~(-0.17, +inf)</td><td>Transformers (BERT, GPT)</td><td>F.gelu()</td></tr>
+        <tr><td>Swish/SiLU</td><td>~(-0.28, +inf)</td><td>EfficientNet, reseaux modernes</td><td>F.silu()</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 4 : Multi-Layer Perceptron                          -->
+    <!-- ============================================================ -->
+    <h2>4. Multi-Layer Perceptron (MLP)</h2>
+
+    <p>Un Multi-Layer Perceptron est un reseau de neurones a propagation avant (feedforward) compose de plusieurs couches de neurones entierement connectees. C'est l'architecture qui resout les limitations du perceptron simple en introduisant des <strong>couches cachees</strong>.</p>
+
+    <div class="definition">
+        Un <strong>MLP (Multi-Layer Perceptron)</strong> est un reseau de neurones compose d'au moins trois types de couches : une couche d'entree, une ou plusieurs couches cachees avec fonctions d'activation non lineaires, et une couche de sortie. Chaque neurone d'une couche est connecte a tous les neurones de la couche suivante (couches denses ou fully connected).
+    </div>
+
+    <h3>4.1 Architecture</h3>
+
+    <div class="svg-container">
+        <svg width="750" height="380" viewBox="0 0 750 380">
+            <text x="375" y="25" text-anchor="middle" fill="#aaa" font-size="14" font-weight="bold">Architecture MLP : 3 entrees - 4 caches - 4 caches - 2 sorties</text>
+            <!-- Couche d'entree -->
+            <text x="80" y="55" text-anchor="middle" fill="#569cd6" font-size="12">Entree</text>
+            <circle cx="80" cy="100" r="22" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="105" text-anchor="middle" fill="#569cd6" font-size="13">x1</text>
+            <circle cx="80" cy="190" r="22" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="195" text-anchor="middle" fill="#569cd6" font-size="13">x2</text>
+            <circle cx="80" cy="280" r="22" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="285" text-anchor="middle" fill="#569cd6" font-size="13">x3</text>
+            <!-- Couche cachee 1 -->
+            <text x="270" y="55" text-anchor="middle" fill="#ff8c42" font-size="12">Cachee 1</text>
+            <circle cx="270" cy="80" r="22" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="270" y="85" text-anchor="middle" fill="#ff8c42" font-size="11">h1</text>
+            <circle cx="270" cy="155" r="22" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="270" y="160" text-anchor="middle" fill="#ff8c42" font-size="11">h2</text>
+            <circle cx="270" cy="230" r="22" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="270" y="235" text-anchor="middle" fill="#ff8c42" font-size="11">h3</text>
+            <circle cx="270" cy="305" r="22" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="270" y="310" text-anchor="middle" fill="#ff8c42" font-size="11">h4</text>
+            <!-- Couche cachee 2 -->
+            <text x="460" y="55" text-anchor="middle" fill="#ff8c42" font-size="12">Cachee 2</text>
+            <circle cx="460" cy="80" r="22" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="460" y="85" text-anchor="middle" fill="#ff8c42" font-size="11">h5</text>
+            <circle cx="460" cy="155" r="22" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="460" y="160" text-anchor="middle" fill="#ff8c42" font-size="11">h6</text>
+            <circle cx="460" cy="230" r="22" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="460" y="235" text-anchor="middle" fill="#ff8c42" font-size="11">h7</text>
+            <circle cx="460" cy="305" r="22" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="460" y="310" text-anchor="middle" fill="#ff8c42" font-size="11">h8</text>
+            <!-- Couche de sortie -->
+            <text x="650" y="55" text-anchor="middle" fill="#00ff88" font-size="12">Sortie</text>
+            <circle cx="650" cy="145" r="22" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="650" y="150" text-anchor="middle" fill="#00ff88" font-size="13">y1</text>
+            <circle cx="650" cy="235" r="22" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="650" y="240" text-anchor="middle" fill="#00ff88" font-size="13">y2</text>
+            <!-- Connexions entree -> cachee 1 -->
+            <g stroke="#444" stroke-width="0.7" opacity="0.5">
+                <line x1="102" y1="100" x2="248" y2="80"/><line x1="102" y1="100" x2="248" y2="155"/>
+                <line x1="102" y1="100" x2="248" y2="230"/><line x1="102" y1="100" x2="248" y2="305"/>
+                <line x1="102" y1="190" x2="248" y2="80"/><line x1="102" y1="190" x2="248" y2="155"/>
+                <line x1="102" y1="190" x2="248" y2="230"/><line x1="102" y1="190" x2="248" y2="305"/>
+                <line x1="102" y1="280" x2="248" y2="80"/><line x1="102" y1="280" x2="248" y2="155"/>
+                <line x1="102" y1="280" x2="248" y2="230"/><line x1="102" y1="280" x2="248" y2="305"/>
+            </g>
+            <!-- Connexions cachee 1 -> cachee 2 -->
+            <g stroke="#555" stroke-width="0.7" opacity="0.5">
+                <line x1="292" y1="80" x2="438" y2="80"/><line x1="292" y1="80" x2="438" y2="155"/>
+                <line x1="292" y1="80" x2="438" y2="230"/><line x1="292" y1="80" x2="438" y2="305"/>
+                <line x1="292" y1="155" x2="438" y2="80"/><line x1="292" y1="155" x2="438" y2="155"/>
+                <line x1="292" y1="155" x2="438" y2="230"/><line x1="292" y1="155" x2="438" y2="305"/>
+                <line x1="292" y1="230" x2="438" y2="80"/><line x1="292" y1="230" x2="438" y2="155"/>
+                <line x1="292" y1="230" x2="438" y2="230"/><line x1="292" y1="230" x2="438" y2="305"/>
+                <line x1="292" y1="305" x2="438" y2="80"/><line x1="292" y1="305" x2="438" y2="155"/>
+                <line x1="292" y1="305" x2="438" y2="230"/><line x1="292" y1="305" x2="438" y2="305"/>
+            </g>
+            <!-- Connexions cachee 2 -> sortie -->
+            <g stroke="#444" stroke-width="0.7" opacity="0.5">
+                <line x1="482" y1="80" x2="628" y2="145"/><line x1="482" y1="80" x2="628" y2="235"/>
+                <line x1="482" y1="155" x2="628" y2="145"/><line x1="482" y1="155" x2="628" y2="235"/>
+                <line x1="482" y1="230" x2="628" y2="145"/><line x1="482" y1="230" x2="628" y2="235"/>
+                <line x1="482" y1="305" x2="628" y2="145"/><line x1="482" y1="305" x2="628" y2="235"/>
+            </g>
+            <!-- Nombre de parametres -->
+            <text x="175" y="360" text-anchor="middle" fill="#666" font-size="11">3x4+4 = 16</text>
+            <text x="365" y="360" text-anchor="middle" fill="#666" font-size="11">4x4+4 = 20</text>
+            <text x="555" y="360" text-anchor="middle" fill="#666" font-size="11">4x2+2 = 10</text>
+            <text x="375" y="375" text-anchor="middle" fill="#aaa" font-size="11">Total : 46 parametres apprenables</text>
+        </svg>
+    </div>
+
+    <h3>4.2 Theoreme d'approximation universelle</h3>
+
+    <div class="concept-box green">
+        <h4>Theoreme (Cybenko, 1989 ; Hornik, 1991)</h4>
+        <p>Un reseau de neurones a propagation avant avec une seule couche cachee contenant un nombre fini de neurones peut approximer toute fonction continue sur un compact de R^n, a condition que la fonction d'activation soit non constante, bornee et continue (Cybenko) ou non polynomiale (version de Hornik).</p>
+        <p style="margin-top:10px;">En d'autres termes : <strong>un MLP avec une seule couche cachee suffisamment large est un approximateur universel</strong>.</p>
+    </div>
+
+    <div class="prof-note">
+        Le theoreme d'approximation universelle est un resultat d'existence : il dit qu'un tel reseau existe, mais ne dit pas comment le trouver ni combien de neurones sont necessaires. En pratique, les reseaux profonds (plusieurs couches) sont souvent plus efficaces que les reseaux larges (une seule couche tres large), car ils apprennent des representations hierarchiques avec moins de parametres au total.
+    </div>
+
+    <h3>4.3 Resolution du XOR avec un MLP</h3>
+
+    <div class="code-block"><span class="comment"># Resolution du XOR avec un MLP a une couche cachee</span>
+<span class="keyword">class</span> <span class="function">MLP_XOR</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        <span class="function">super</span>().__init__()
+        self.couche1 = nn.<span class="function">Linear</span>(<span class="number">2</span>, <span class="number">4</span>)    <span class="comment"># 2 entrees -> 4 neurones caches</span>
+        self.couche2 = nn.<span class="function">Linear</span>(<span class="number">4</span>, <span class="number">1</span>)    <span class="comment"># 4 neurones caches -> 1 sortie</span>
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        x = torch.<span class="function">relu</span>(self.<span class="function">couche1</span>(x))
+        x = torch.<span class="function">sigmoid</span>(self.<span class="function">couche2</span>(x))
+        <span class="keyword">return</span> x
+
+modele_xor = <span class="function">MLP_XOR</span>()
+optimiseur = torch.optim.<span class="function">Adam</span>(modele_xor.<span class="function">parameters</span>(), lr=<span class="number">0.01</span>)
+critere = nn.<span class="function">BCELoss</span>()
+
+<span class="keyword">for</span> epoque <span class="keyword">in</span> <span class="function">range</span>(<span class="number">2000</span>):
+    pred = <span class="function">modele_xor</span>(X_xor)
+    perte = <span class="function">critere</span>(pred, y_xor)
+    perte.<span class="function">backward</span>()
+    optimiseur.<span class="function">step</span>()
+    optimiseur.<span class="function">zero_grad</span>()
+    <span class="keyword">if</span> (epoque + <span class="number">1</span>) % <span class="number">500</span> == <span class="number">0</span>:
+        <span class="function">print</span>(<span class="string">f"Epoque {epoque+1}, Perte : {perte.item():.4f}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nPredictions finales :"</span>)
+<span class="keyword">with</span> torch.<span class="function">no_grad</span>():
+    pred_finale = <span class="function">modele_xor</span>(X_xor)
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">4</span>):
+        <span class="function">print</span>(<span class="string">f"  {X_xor[i].tolist()} -> {pred_finale[i].item():.4f} (attendu : {y_xor[i].item():.0f})"</span>)</div>
+
+    <div class="output-block">Epoque 500, Perte : 0.1203
+Epoque 1000, Perte : 0.0089
+Epoque 1500, Perte : 0.0024
+Epoque 2000, Perte : 0.0010
+
+Predictions finales :
+  [0.0, 0.0] -> 0.0214 (attendu : 0)
+  [0.0, 1.0] -> 0.9782 (attendu : 1)
+  [1.0, 0.0] -> 0.9791 (attendu : 1)
+  [1.0, 1.0] -> 0.0308 (attendu : 0)</div>
+
+    <div class="effect">
+        Le MLP resout le probleme XOR grace a la couche cachee qui cree un espace de representation intermediaire ou les donnees deviennent lineairement separables. La couche cachee effectue une transformation non lineaire de l'espace d'entree.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 5 : Forward Propagation                             -->
+    <!-- ============================================================ -->
+    <h2>5. Forward Propagation (propagation avant)</h2>
+
+    <p>La forward propagation est le processus par lequel les donnees d'entree traversent le reseau couche par couche pour produire une prediction en sortie. C'est un enchainement de transformations lineaires suivies de non-linearites.</p>
+
+    <h3>5.1 Calcul matriciel</h3>
+
+    <div class="concept-box">
+        <h4>Propagation couche par couche</h4>
+        <p>Pour un reseau a L couches :</p>
+        <p><strong>Couche l (l = 1, 2, ..., L) :</strong></p>
+        <p>1. Pre-activation : <strong>z^(l) = W^(l) * a^(l-1) + b^(l)</strong></p>
+        <p>2. Activation : <strong>a^(l) = f^(l)(z^(l))</strong></p>
+        <p>avec a^(0) = x (les entrees), W^(l) la matrice de poids de la couche l, b^(l) le vecteur de biais, et f^(l) la fonction d'activation de la couche l.</p>
+    </div>
+
+    <div class="analogy">
+        <h4>Analogie : La chaine de montage</h4>
+        <p>La forward propagation fonctionne comme une chaine de montage dans une usine. Chaque poste de travail (couche) recoit le produit semi-fini du poste precedent, le transforme selon ses instructions (poids et biais), puis le passe au poste suivant. A la fin de la chaine, on obtient le produit fini (la prediction). Si le produit final ne correspond pas aux specifications (la cible), on remonte la chaine pour ajuster les reglages de chaque poste (backpropagation).</p>
+    </div>
+
+    <h3>5.2 Exemple numerique detaille</h3>
+
+    <p>Prenons un reseau simple : 2 entrees, 2 neurones caches (ReLU), 1 sortie (sigmoid).</p>
+
+    <div class="step-box">
+        <strong>Etape 1 :</strong> Donnees et parametres initiaux<br>
+        Entree : x = [1.0, 0.5]<br>
+        Poids couche 1 : W1 = [[0.3, -0.2], [0.7, 0.1]], biais b1 = [0.1, -0.1]<br>
+        Poids couche 2 : W2 = [[0.5], [0.8]], biais b2 = [-0.3]
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 2 :</strong> Pre-activation couche cachee<br>
+        z1 = W1 * x + b1<br>
+        z1[0] = 0.3 * 1.0 + (-0.2) * 0.5 + 0.1 = 0.3 - 0.1 + 0.1 = <strong>0.3</strong><br>
+        z1[1] = 0.7 * 1.0 + 0.1 * 0.5 + (-0.1) = 0.7 + 0.05 - 0.1 = <strong>0.65</strong>
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 3 :</strong> Activation ReLU<br>
+        a1 = ReLU(z1) = [max(0, 0.3), max(0, 0.65)] = <strong>[0.3, 0.65]</strong>
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 4 :</strong> Pre-activation couche de sortie<br>
+        z2 = W2^T * a1 + b2<br>
+        z2 = 0.5 * 0.3 + 0.8 * 0.65 + (-0.3) = 0.15 + 0.52 - 0.3 = <strong>0.37</strong>
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 5 :</strong> Activation Sigmoid (sortie finale)<br>
+        y_pred = sigma(0.37) = 1 / (1 + exp(-0.37)) = <strong>0.5914</strong>
+    </div>
+
+    <div class="code-block"><span class="comment"># Verification de l'exemple numerique avec PyTorch</span>
+<span class="keyword">import</span> torch
+
+x = torch.<span class="function">tensor</span>([<span class="number">1.0</span>, <span class="number">0.5</span>])
+
+<span class="comment"># Couche cachee</span>
+W1 = torch.<span class="function">tensor</span>([[<span class="number">0.3</span>, -<span class="number">0.2</span>],
+                   [<span class="number">0.7</span>,  <span class="number">0.1</span>]])
+b1 = torch.<span class="function">tensor</span>([<span class="number">0.1</span>, -<span class="number">0.1</span>])
+
+z1 = W1 @ x + b1
+<span class="function">print</span>(<span class="string">f"z1 (pre-activation)  : {z1.tolist()}"</span>)
+
+a1 = torch.<span class="function">relu</span>(z1)
+<span class="function">print</span>(<span class="string">f"a1 (apres ReLU)      : {a1.tolist()}"</span>)
+
+<span class="comment"># Couche de sortie</span>
+W2 = torch.<span class="function">tensor</span>([[<span class="number">0.5</span>], [<span class="number">0.8</span>]])
+b2 = torch.<span class="function">tensor</span>([-<span class="number">0.3</span>])
+
+z2 = W2.T @ a1 + b2
+<span class="function">print</span>(<span class="string">f"z2 (pre-activation)  : {z2.item():.4f}"</span>)
+
+y_pred = torch.<span class="function">sigmoid</span>(z2)
+<span class="function">print</span>(<span class="string">f"y_pred (sortie)      : {y_pred.item():.4f}"</span>)</div>
+
+    <div class="output-block">z1 (pre-activation)  : [0.3, 0.65]
+a1 (apres ReLU)      : [0.3, 0.65]
+z2 (pre-activation)  : 0.3700
+y_pred (sortie)      : 0.5914</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 6 : Fonction de cout                                -->
+    <!-- ============================================================ -->
+    <h2>6. La fonction de cout</h2>
+
+    <p>La fonction de cout (ou fonction de perte) mesure l'ecart entre la prediction du reseau et la valeur reelle attendue. C'est cette fonction que l'algorithme d'entrainement cherche a minimiser.</p>
+
+    <div class="definition">
+        La <strong>fonction de cout</strong> J(theta) est une fonction scalaire qui quantifie la qualite des predictions du modele. L'objectif de l'entrainement est de trouver les parametres theta* = argmin J(theta).
+    </div>
+
+    <h3>6.1 MSE (Mean Squared Error) - pour la regression</h3>
+
+    <div class="concept-box">
+        <h4>Erreur quadratique moyenne</h4>
+        <p><strong>Formule :</strong> MSE = (1/N) * sum_i((y_i - y_pred_i)^2) pour i = 1 a N</p>
+        <p><strong>Derivee par rapport a y_pred :</strong> dMSE/dy_pred_i = (2/N) * (y_pred_i - y_i)</p>
+        <p><strong>Usage :</strong> Regression (prediction de valeurs continues)</p>
+        <p><strong>Propriete :</strong> Penalise fortement les grandes erreurs (effet quadratique), sensible aux valeurs aberrantes.</p>
+    </div>
+
+    <h3>6.2 Binary Cross-Entropy - pour la classification binaire</h3>
+
+    <div class="concept-box green">
+        <h4>Entropie croisee binaire (BCE)</h4>
+        <p><strong>Formule :</strong> BCE = -(1/N) * sum_i(y_i * log(y_pred_i) + (1 - y_i) * log(1 - y_pred_i))</p>
+        <p><strong>Derivee :</strong> dBCE/dy_pred_i = -(y_i / y_pred_i) + (1 - y_i) / (1 - y_pred_i)</p>
+        <p><strong>Usage :</strong> Classification binaire (avec sigmoid en sortie)</p>
+    </div>
+
+    <h3>6.3 Categorical Cross-Entropy - pour la classification multi-classes</h3>
+
+    <div class="concept-box blue">
+        <h4>Entropie croisee categorielle</h4>
+        <p><strong>Formule :</strong> CE = -(1/N) * sum_i(sum_c(y_ic * log(y_pred_ic))) pour C classes</p>
+        <p><strong>Usage :</strong> Classification multi-classes (avec softmax en sortie)</p>
+        <p><strong>Remarque :</strong> En PyTorch, <code>nn.CrossEntropyLoss</code> combine softmax + log + NLLLoss en interne.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="comment"># --- MSE pour la regression ---</span>
+y_reel = torch.<span class="function">tensor</span>([<span class="number">2.5</span>, <span class="number">0.0</span>, <span class="number">2.1</span>, <span class="number">1.5</span>])
+y_pred = torch.<span class="function">tensor</span>([<span class="number">3.0</span>, -<span class="number">0.5</span>, <span class="number">2.0</span>, <span class="number">1.8</span>])
+
+mse = nn.<span class="function">MSELoss</span>()
+perte_mse = <span class="function">mse</span>(y_pred, y_reel)
+<span class="function">print</span>(<span class="string">f"MSE : {perte_mse.item():.4f}"</span>)
+
+<span class="comment"># --- Binary Cross-Entropy pour la classification binaire ---</span>
+y_reel_bin = torch.<span class="function">tensor</span>([<span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">0.0</span>])
+y_pred_bin = torch.<span class="function">tensor</span>([<span class="number">0.9</span>, <span class="number">0.1</span>, <span class="number">0.8</span>, <span class="number">0.3</span>])
+
+bce = nn.<span class="function">BCELoss</span>()
+perte_bce = <span class="function">bce</span>(y_pred_bin, y_reel_bin)
+<span class="function">print</span>(<span class="string">f"BCE : {perte_bce.item():.4f}"</span>)
+
+<span class="comment"># --- Cross-Entropy pour la classification multi-classes ---</span>
+y_reel_multi = torch.<span class="function">tensor</span>([<span class="number">2</span>, <span class="number">0</span>, <span class="number">1</span>])  <span class="comment"># indices des classes</span>
+y_pred_logits = torch.<span class="function">tensor</span>([[<span class="number">0.1</span>, <span class="number">0.2</span>, <span class="number">2.5</span>],  <span class="comment"># classe 2 favorisee</span>
+                              [<span class="number">2.0</span>, <span class="number">0.3</span>, <span class="number">0.1</span>],  <span class="comment"># classe 0 favorisee</span>
+                              [<span class="number">0.1</span>, <span class="number">1.8</span>, <span class="number">0.2</span>]]) <span class="comment"># classe 1 favorisee</span>
+
+ce = nn.<span class="function">CrossEntropyLoss</span>()
+perte_ce = <span class="function">ce</span>(y_pred_logits, y_reel_multi)
+<span class="function">print</span>(<span class="string">f"Cross-Entropy : {perte_ce.item():.4f}"</span>)</div>
+
+    <div class="output-block">MSE : 0.1975
+BCE : 0.2014
+Cross-Entropy : 0.2139</div>
+
+    <div class="warning">
+        Ne confondez pas <code>nn.BCELoss</code> (attend des probabilites entre 0 et 1 en entree) et <code>nn.BCEWithLogitsLoss</code> (attend des logits bruts et applique sigmoid en interne). Cette derniere est numeriquement plus stable. De meme, <code>nn.CrossEntropyLoss</code> applique softmax en interne : ne mettez jamais de softmax dans votre couche de sortie si vous utilisez cette fonction de cout.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 7 : Backpropagation                                 -->
+    <!-- ============================================================ -->
+    <h2>7. Backpropagation (retropropagation du gradient)</h2>
+
+    <p>La backpropagation est l'algorithme central de l'entrainement des reseaux de neurones. Il calcule efficacement les gradients de la fonction de cout par rapport a chaque parametre du reseau, en utilisant la <strong>regle de la chaine</strong> (chain rule) du calcul differentiel.</p>
+
+    <div class="definition">
+        La <strong>backpropagation</strong> (Rumelhart, Hinton, Williams, 1986) est un algorithme qui propage le signal d'erreur de la sortie vers l'entree du reseau, couche par couche, en calculant les derivees partielles de la fonction de cout par rapport a chaque poids et biais. Sa complexite est O(N) ou N est le nombre de parametres, ce qui est optimal.
+    </div>
+
+    <h3>7.1 La regle de la chaine</h3>
+
+    <div class="concept-box">
+        <h4>Regle de la chaine (Chain Rule)</h4>
+        <p>Si y = f(g(x)), alors : <strong>dy/dx = (dy/dg) * (dg/dx)</strong></p>
+        <p>Pour un reseau a L couches, le gradient de la perte J par rapport aux poids W^(l) de la couche l est :</p>
+        <p><strong>dJ/dW^(l) = dJ/da^(L) * da^(L)/dz^(L) * dz^(L)/da^(L-1) * ... * da^(l)/dz^(l) * dz^(l)/dW^(l)</strong></p>
+        <p>Chaque terme de ce produit est local et calculable couche par couche en sens inverse.</p>
+    </div>
+
+    <h3>7.2 Exemple numerique complet</h3>
+
+    <p>Reprenons notre exemple numerique de la section 5.2 avec une cible y_reel = 1 et la perte MSE simple (y_pred - y_reel)^2 :</p>
+
+    <div class="step-box">
+        <strong>Rappel de la forward pass :</strong><br>
+        x = [1.0, 0.5], z1 = [0.3, 0.65], a1 = [0.3, 0.65], z2 = 0.37, y_pred = sigma(0.37) = 0.5914
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 1 :</strong> Gradient de la perte par rapport a y_pred<br>
+        J = (y_pred - y_reel)^2 = (0.5914 - 1)^2 = 0.1670<br>
+        dJ/dy_pred = 2 * (y_pred - y_reel) = 2 * (0.5914 - 1) = <strong>-0.8172</strong>
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 2 :</strong> Gradient a travers la sigmoid<br>
+        dy_pred/dz2 = sigma(z2) * (1 - sigma(z2)) = 0.5914 * 0.4086 = <strong>0.2417</strong><br>
+        dJ/dz2 = dJ/dy_pred * dy_pred/dz2 = -0.8172 * 0.2417 = <strong>-0.1975</strong>
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 3 :</strong> Gradients de la couche de sortie (W2, b2)<br>
+        dJ/dW2[0] = dJ/dz2 * a1[0] = -0.1975 * 0.3 = <strong>-0.0593</strong><br>
+        dJ/dW2[1] = dJ/dz2 * a1[1] = -0.1975 * 0.65 = <strong>-0.1284</strong><br>
+        dJ/db2 = dJ/dz2 = <strong>-0.1975</strong>
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 4 :</strong> Propagation vers la couche cachee<br>
+        dJ/da1[0] = W2[0] * dJ/dz2 = 0.5 * (-0.1975) = <strong>-0.0988</strong><br>
+        dJ/da1[1] = W2[1] * dJ/dz2 = 0.8 * (-0.1975) = <strong>-0.1580</strong><br>
+        dJ/dz1 = dJ/da1 * ReLU'(z1) = [-0.0988, -0.1580] * [1, 1] = <strong>[-0.0988, -0.1580]</strong><br>
+        (car z1 = [0.3, 0.65] &gt; 0 donc ReLU'(z1) = [1, 1])
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 5 :</strong> Gradients de la couche cachee (W1, b1)<br>
+        dJ/dW1 = dJ/dz1 (vecteur colonne) * x^T (vecteur ligne)<br>
+        dJ/dW1 = <strong>[[-0.0988, -0.0494], [-0.1580, -0.0790]]</strong><br>
+        dJ/db1 = dJ/dz1 = <strong>[-0.0988, -0.1580]</strong>
+    </div>
+
+    <h3>7.3 Verification avec PyTorch autograd</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+
+<span class="comment"># Parametres avec suivi des gradients</span>
+x = torch.<span class="function">tensor</span>([<span class="number">1.0</span>, <span class="number">0.5</span>])
+y_reel = torch.<span class="function">tensor</span>([<span class="number">1.0</span>])
+
+W1 = torch.<span class="function">tensor</span>([[<span class="number">0.3</span>, -<span class="number">0.2</span>], [<span class="number">0.7</span>, <span class="number">0.1</span>]], requires_grad=<span class="keyword">True</span>)
+b1 = torch.<span class="function">tensor</span>([<span class="number">0.1</span>, -<span class="number">0.1</span>], requires_grad=<span class="keyword">True</span>)
+W2 = torch.<span class="function">tensor</span>([[<span class="number">0.5</span>], [<span class="number">0.8</span>]], requires_grad=<span class="keyword">True</span>)
+b2 = torch.<span class="function">tensor</span>([-<span class="number">0.3</span>], requires_grad=<span class="keyword">True</span>)
+
+<span class="comment"># Forward pass</span>
+z1 = W1 @ x + b1
+a1 = torch.<span class="function">relu</span>(z1)
+z2 = W2.T @ a1 + b2
+y_pred = torch.<span class="function">sigmoid</span>(z2)
+
+<span class="comment"># Calcul de la perte et backpropagation</span>
+perte = (y_pred - y_reel) ** <span class="number">2</span>
+perte.<span class="function">backward</span>()
+
+<span class="function">print</span>(<span class="string">"=== Gradients calcules par PyTorch autograd ==="</span>)
+<span class="function">print</span>(<span class="string">f"dJ/dW2 : {W2.grad.flatten().tolist()}"</span>)
+<span class="function">print</span>(<span class="string">f"dJ/db2 : {b2.grad.tolist()}"</span>)
+<span class="function">print</span>(<span class="string">f"dJ/dW1 :"</span>)
+<span class="keyword">for</span> ligne <span class="keyword">in</span> W1.grad.<span class="function">tolist</span>():
+    <span class="function">print</span>(<span class="string">f"  {[round(v, 4) for v in ligne]}"</span>)
+<span class="function">print</span>(<span class="string">f"dJ/db1 : {[round(v, 4) for v in b1.grad.tolist()]}"</span>)</div>
+
+    <div class="output-block">=== Gradients calcules par PyTorch autograd ===
+dJ/dW2 : [-0.0593, -0.1284]
+dJ/db2 : [-0.1975]
+dJ/dW1 :
+  [-0.0988, -0.0494]
+  [-0.158, -0.079]
+dJ/db1 : [-0.0988, -0.158]</div>
+
+    <div class="effect">
+        Les gradients calcules manuellement correspondent exactement a ceux de PyTorch autograd. C'est la magie de la differentiation automatique : PyTorch construit un graphe de calcul dynamique pendant la forward pass et le parcourt en sens inverse pour calculer tous les gradients automatiquement.
+    </div>
+
+    <div class="prof-note">
+        En pratique, vous n'aurez jamais a calculer les gradients a la main. PyTorch le fait pour vous grace a <code>autograd</code>. Cependant, comprendre le mecanisme de backpropagation est essentiel pour diagnostiquer les problemes d'entrainement (gradient evanescent, explosion des gradients) et concevoir des architectures efficaces. Quand un reseau ne converge pas, la premiere chose a verifier est la norme des gradients dans chaque couche.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 8 : Implementation PyTorch                          -->
+    <!-- ============================================================ -->
+    <h2>8. Implementation complete en PyTorch</h2>
+
+    <p>Maintenant que nous comprenons la theorie, implementons un MLP complet en PyTorch pour un probleme de classification non lineaire. Nous allons utiliser les classes <code>nn.Module</code> et <code>nn.Linear</code> ainsi qu'une boucle d'entrainement standard.</p>
+
+    <h3>8.1 Definir le modele avec nn.Module</h3>
+
+    <div class="concept-box blue">
+        <h4>Les briques fondamentales de PyTorch</h4>
+        <ul>
+            <li><strong>nn.Module</strong> : Classe de base pour tous les modeles. Gere automatiquement les parametres et definit la methode forward().</li>
+            <li><strong>nn.Linear(in, out)</strong> : Couche dense (fully connected). Applique y = x * W^T + b.</li>
+            <li><strong>nn.ReLU(), nn.Sigmoid()</strong> : Fonctions d'activation utilisables comme modules dans Sequential.</li>
+            <li><strong>nn.Sequential()</strong> : Conteneur pour enchainer des couches de maniere lineaire.</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader, TensorDataset
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># --- Generation de donnees : cercles concentriques (2 classes) ---</span>
+np.random.<span class="function">seed</span>(<span class="number">42</span>)
+torch.<span class="function">manual_seed</span>(<span class="number">42</span>)
+
+n_echantillons = <span class="number">500</span>
+bruit = <span class="number">0.1</span>
+
+<span class="comment"># Classe 0 : cercle interieur</span>
+theta_0 = np.random.<span class="function">uniform</span>(<span class="number">0</span>, <span class="number">2</span> * np.pi, n_echantillons // <span class="number">2</span>)
+r_0 = <span class="number">0.5</span> + np.random.<span class="function">randn</span>(n_echantillons // <span class="number">2</span>) * bruit
+X_0 = np.<span class="function">column_stack</span>([r_0 * np.<span class="function">cos</span>(theta_0), r_0 * np.<span class="function">sin</span>(theta_0)])
+
+<span class="comment"># Classe 1 : cercle exterieur</span>
+theta_1 = np.random.<span class="function">uniform</span>(<span class="number">0</span>, <span class="number">2</span> * np.pi, n_echantillons // <span class="number">2</span>)
+r_1 = <span class="number">1.5</span> + np.random.<span class="function">randn</span>(n_echantillons // <span class="number">2</span>) * bruit
+X_1 = np.<span class="function">column_stack</span>([r_1 * np.<span class="function">cos</span>(theta_1), r_1 * np.<span class="function">sin</span>(theta_1)])
+
+X = torch.<span class="function">tensor</span>(np.<span class="function">vstack</span>([X_0, X_1]), dtype=torch.float32)
+y = torch.<span class="function">tensor</span>(np.<span class="function">array</span>([<span class="number">0</span>] * (n_echantillons // <span class="number">2</span>) + [<span class="number">1</span>] * (n_echantillons // <span class="number">2</span>)),
+                 dtype=torch.float32).<span class="function">unsqueeze</span>(<span class="number">1</span>)
+
+<span class="function">print</span>(<span class="string">f"Donnees : {X.shape[0]} echantillons, {X.shape[1]} features"</span>)
+<span class="function">print</span>(<span class="string">f"Classes : {int(y.sum().item())} positifs, {int((1-y).sum().item())} negatifs"</span>)</div>
+
+    <div class="output-block">Donnees : 500 echantillons, 2 features
+Classes : 250 positifs, 250 negatifs</div>
+
+    <h3>8.2 Architecture du MLP</h3>
+
+    <div class="code-block"><span class="comment"># Methode 1 : Classe personnalisee (recommandee pour la flexibilite)</span>
+<span class="keyword">class</span> <span class="function">ClassifieurMLP</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, dim_entree, dim_cachee1, dim_cachee2, dim_sortie):
+        <span class="function">super</span>().__init__()
+        self.couche1 = nn.<span class="function">Linear</span>(dim_entree, dim_cachee1)
+        self.couche2 = nn.<span class="function">Linear</span>(dim_cachee1, dim_cachee2)
+        self.couche3 = nn.<span class="function">Linear</span>(dim_cachee2, dim_sortie)
+        self.relu = nn.<span class="function">ReLU</span>()
+        self.sigmoid = nn.<span class="function">Sigmoid</span>()
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        x = self.<span class="function">relu</span>(self.<span class="function">couche1</span>(x))
+        x = self.<span class="function">relu</span>(self.<span class="function">couche2</span>(x))
+        x = self.<span class="function">sigmoid</span>(self.<span class="function">couche3</span>(x))
+        <span class="keyword">return</span> x
+
+<span class="comment"># Methode 2 : nn.Sequential (plus concise, moins flexible)</span>
+modele_seq = nn.<span class="function">Sequential</span>(
+    nn.<span class="function">Linear</span>(<span class="number">2</span>, <span class="number">32</span>),
+    nn.<span class="function">ReLU</span>(),
+    nn.<span class="function">Linear</span>(<span class="number">32</span>, <span class="number">16</span>),
+    nn.<span class="function">ReLU</span>(),
+    nn.<span class="function">Linear</span>(<span class="number">16</span>, <span class="number">1</span>),
+    nn.<span class="function">Sigmoid</span>()
+)
+
+<span class="comment"># Utilisons la classe personnalisee</span>
+modele = <span class="function">ClassifieurMLP</span>(dim_entree=<span class="number">2</span>, dim_cachee1=<span class="number">32</span>, dim_cachee2=<span class="number">16</span>, dim_sortie=<span class="number">1</span>)
+
+<span class="comment"># Compter les parametres</span>
+n_params = <span class="function">sum</span>(p.<span class="function">numel</span>() <span class="keyword">for</span> p <span class="keyword">in</span> modele.<span class="function">parameters</span>())
+<span class="function">print</span>(<span class="string">f"\nArchitecture du modele :\n{modele}"</span>)
+<span class="function">print</span>(<span class="string">f"\nNombre total de parametres : {n_params}"</span>)
+<span class="function">print</span>(<span class="string">f"  - couche1 : 2*32 + 32 = {2*32 + 32} (poids + biais)"</span>)
+<span class="function">print</span>(<span class="string">f"  - couche2 : 32*16 + 16 = {32*16 + 16} (poids + biais)"</span>)
+<span class="function">print</span>(<span class="string">f"  - couche3 : 16*1 + 1 = {16*1 + 1} (poids + biais)"</span>)</div>
+
+    <div class="output-block">Architecture du modele :
+ClassifieurMLP(
+  (couche1): Linear(in_features=2, out_features=32, bias=True)
+  (couche2): Linear(in_features=32, out_features=16, bias=True)
+  (couche3): Linear(in_features=16, out_features=1, bias=True)
+  (relu): ReLU()
+  (sigmoid): Sigmoid()
+)
+
+Nombre total de parametres : 625
+  - couche1 : 2*32 + 32 = 96 (poids + biais)
+  - couche2 : 32*16 + 16 = 528 (poids + biais)
+  - couche3 : 16*1 + 1 = 17 (poids + biais)</div>
+
+    <h3>8.3 Boucle d'entrainement complete</h3>
+
+    <div class="code-block"><span class="comment"># Configuration de l'entrainement</span>
+critere = nn.<span class="function">BCELoss</span>()
+optimiseur = optim.<span class="function">Adam</span>(modele.<span class="function">parameters</span>(), lr=<span class="number">0.01</span>)
+
+<span class="comment"># DataLoader pour le mini-batch</span>
+dataset = <span class="function">TensorDataset</span>(X, y)
+chargeur = <span class="function">DataLoader</span>(dataset, batch_size=<span class="number">32</span>, shuffle=<span class="keyword">True</span>)
+
+<span class="comment"># Historique pour la visualisation</span>
+historique = {<span class="string">"perte"</span>: [], <span class="string">"precision"</span>: []}
+
+<span class="comment"># Boucle d'entrainement</span>
+n_epoques = <span class="number">100</span>
+<span class="keyword">for</span> epoque <span class="keyword">in</span> <span class="function">range</span>(n_epoques):
+    perte_totale = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    modele.<span class="function">train</span>()  <span class="comment"># Mode entrainement</span>
+    <span class="keyword">for</span> X_batch, y_batch <span class="keyword">in</span> chargeur:
+        <span class="comment"># 1. Forward pass</span>
+        predictions = <span class="function">modele</span>(X_batch)
+
+        <span class="comment"># 2. Calcul de la perte</span>
+        perte = <span class="function">critere</span>(predictions, y_batch)
+
+        <span class="comment"># 3. Backward pass (backpropagation)</span>
+        optimiseur.<span class="function">zero_grad</span>()  <span class="comment"># RAZ des gradients accumules</span>
+        perte.<span class="function">backward</span>()          <span class="comment"># Calcul des gradients</span>
+        optimiseur.<span class="function">step</span>()           <span class="comment"># Mise a jour des poids</span>
+
+        <span class="comment"># Statistiques du batch</span>
+        perte_totale += perte.<span class="function">item</span>() * X_batch.<span class="function">size</span>(<span class="number">0</span>)
+        pred_classes = (predictions >= <span class="number">0.5</span>).<span class="function">float</span>()
+        correct += (pred_classes == y_batch).<span class="function">sum</span>().<span class="function">item</span>()
+        total += y_batch.<span class="function">size</span>(<span class="number">0</span>)
+
+    <span class="comment"># Metriques de l'epoque</span>
+    perte_moy = perte_totale / total
+    precision = correct / total
+    historique[<span class="string">"perte"</span>].<span class="function">append</span>(perte_moy)
+    historique[<span class="string">"precision"</span>].<span class="function">append</span>(precision)
+
+    <span class="keyword">if</span> (epoque + <span class="number">1</span>) % <span class="number">20</span> == <span class="number">0</span>:
+        <span class="function">print</span>(<span class="string">f"Epoque {epoque+1:3d}/{n_epoques} | Perte : {perte_moy:.4f} | Precision : {precision:.2%}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\n--- Entrainement termine ---"</span>)
+<span class="function">print</span>(<span class="string">f"Perte finale    : {historique['perte'][-1]:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Precision finale : {historique['precision'][-1]:.2%}"</span>)</div>
+
+    <div class="output-block">Epoque  20/100 | Perte : 0.2847 | Precision : 88.40%
+Epoque  40/100 | Perte : 0.0612 | Precision : 97.80%
+Epoque  60/100 | Perte : 0.0198 | Precision : 99.60%
+Epoque  80/100 | Perte : 0.0094 | Precision : 100.00%
+Epoque 100/100 | Perte : 0.0058 | Precision : 100.00%
+
+--- Entrainement termine ---
+Perte finale    : 0.0058
+Precision finale : 100.00%</div>
+
+    <div class="prof-note">
+        La boucle d'entrainement en PyTorch suit toujours le meme schema en 5 etapes : (1) forward pass, (2) calcul de la perte, (3) <code>zero_grad()</code>, (4) <code>backward()</code>, (5) <code>step()</code>. L'ordre est crucial. Si vous oubliez <code>zero_grad()</code>, les gradients s'accumuleront d'un batch a l'autre et l'entrainement deviendra instable ou divergera.
+    </div>
+
+    <h3>8.4 Evaluation du modele</h3>
+
+    <div class="code-block"><span class="comment"># Evaluation : matrice de confusion et metriques</span>
+modele.<span class="function">eval</span>()
+<span class="keyword">with</span> torch.<span class="function">no_grad</span>():
+    pred_classes = (<span class="function">modele</span>(X) >= <span class="number">0.5</span>).<span class="function">float</span>()
+    vp = ((pred_classes == <span class="number">1</span>) & (y == <span class="number">1</span>)).<span class="function">sum</span>().<span class="function">item</span>()
+    vn = ((pred_classes == <span class="number">0</span>) & (y == <span class="number">0</span>)).<span class="function">sum</span>().<span class="function">item</span>()
+    fp = ((pred_classes == <span class="number">1</span>) & (y == <span class="number">0</span>)).<span class="function">sum</span>().<span class="function">item</span>()
+    fn = ((pred_classes == <span class="number">0</span>) & (y == <span class="number">1</span>)).<span class="function">sum</span>().<span class="function">item</span>()
+    <span class="function">print</span>(<span class="string">f"VP={int(vp)} FP={int(fp)} FN={int(fn)} VN={int(vn)}"</span>)
+    <span class="function">print</span>(<span class="string">f"Precision : {vp/(vp+fp):.4f} | Rappel : {vp/(vp+fn):.4f} | F1 : {2*vp/(2*vp+fp+fn):.4f}"</span>)</div>
+
+    <div class="output-block">VP=250 FP=0 FN=0 VN=250
+Precision : 1.0000 | Rappel : 1.0000 | F1 : 1.0000</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 9 : Visualisation de l'apprentissage                -->
+    <!-- ============================================================ -->
+    <h2>9. Visualisation de l'apprentissage</h2>
+
+    <p>Visualiser les frontieres de decision et l'evolution de la perte est essentiel pour comprendre comment le reseau apprend et detecter d'eventuels problemes (sous-apprentissage, sur-apprentissage).</p>
+
+    <h3>9.1 Courbes d'apprentissage</h3>
+
+    <div class="code-block"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+
+fig, (ax1, ax2) = plt.<span class="function">subplots</span>(<span class="number">1</span>, <span class="number">2</span>, figsize=(<span class="number">14</span>, <span class="number">5</span>))
+ax1.<span class="function">plot</span>(historique[<span class="string">"perte"</span>], color=<span class="string">"#ff6b35"</span>, linewidth=<span class="number">2</span>)
+ax1.<span class="function">set_xlabel</span>(<span class="string">"Epoque"</span>); ax1.<span class="function">set_ylabel</span>(<span class="string">"Perte (BCE)"</span>)
+ax1.<span class="function">set_title</span>(<span class="string">"Evolution de la perte"</span>); ax1.<span class="function">grid</span>(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+ax2.<span class="function">plot</span>(historique[<span class="string">"precision"</span>], color=<span class="string">"#00ff88"</span>, linewidth=<span class="number">2</span>)
+ax2.<span class="function">set_xlabel</span>(<span class="string">"Epoque"</span>); ax2.<span class="function">set_ylabel</span>(<span class="string">"Precision"</span>)
+ax2.<span class="function">set_title</span>(<span class="string">"Evolution de la precision"</span>); ax2.<span class="function">grid</span>(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.<span class="function">tight_layout</span>(); plt.<span class="function">savefig</span>(<span class="string">"courbes_apprentissage.png"</span>, dpi=<span class="number">150</span>); plt.<span class="function">show</span>()</div>
+
+    <h3>9.2 Frontieres de decision</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">tracer_frontiere</span>(modele, X, y, titre=<span class="string">"Frontiere de decision"</span>):
+    xx, yy = np.<span class="function">meshgrid</span>(np.<span class="function">linspace</span>(X[:,<span class="number">0</span>].<span class="function">min</span>()-<span class="number">.5</span>, X[:,<span class="number">0</span>].<span class="function">max</span>()+<span class="number">.5</span>, <span class="number">200</span>),
+                          np.<span class="function">linspace</span>(X[:,<span class="number">1</span>].<span class="function">min</span>()-<span class="number">.5</span>, X[:,<span class="number">1</span>].<span class="function">max</span>()+<span class="number">.5</span>, <span class="number">200</span>))
+    grille = torch.<span class="function">tensor</span>(np.<span class="function">c_</span>[xx.<span class="function">ravel</span>(), yy.<span class="function">ravel</span>()], dtype=torch.float32)
+    modele.<span class="function">eval</span>()
+    <span class="keyword">with</span> torch.<span class="function">no_grad</span>():
+        Z = <span class="function">modele</span>(grille).<span class="function">numpy</span>().<span class="function">reshape</span>(xx.shape)
+    plt.<span class="function">figure</span>(figsize=(<span class="number">8</span>, <span class="number">8</span>))
+    plt.<span class="function">contourf</span>(xx, yy, Z, levels=<span class="number">50</span>, cmap=<span class="string">"RdYlBu_r"</span>, alpha=<span class="number">0.8</span>)
+    plt.<span class="function">colorbar</span>(label=<span class="string">"Probabilite classe 1"</span>)
+    y_np = y.<span class="function">squeeze</span>().<span class="function">numpy</span>()
+    plt.<span class="function">scatter</span>(X[y_np==<span class="number">0</span>,<span class="number">0</span>], X[y_np==<span class="number">0</span>,<span class="number">1</span>], c=<span class="string">"blue"</span>, edgecolors=<span class="string">"white"</span>, s=<span class="number">30</span>, label=<span class="string">"Classe 0"</span>)
+    plt.<span class="function">scatter</span>(X[y_np==<span class="number">1</span>,<span class="number">0</span>], X[y_np==<span class="number">1</span>,<span class="number">1</span>], c=<span class="string">"red"</span>, edgecolors=<span class="string">"white"</span>, s=<span class="number">30</span>, label=<span class="string">"Classe 1"</span>)
+    plt.<span class="function">title</span>(titre); plt.<span class="function">legend</span>(); plt.<span class="function">show</span>()
+
+<span class="function">tracer_frontiere</span>(modele, X, y, <span class="string">"MLP - Frontiere de decision (cercles concentriques)"</span>)</div>
+
+    <h3>9.3 Evolution des frontieres pendant l'entrainement</h3>
+
+    <div class="code-block"><span class="keyword">import</span> copy
+
+<span class="comment"># Capturer le modele a differentes epoques pour visualiser l'evolution</span>
+<span class="keyword">def</span> <span class="function">entrainer_avec_snapshots</span>(X, y, epoques_capture=[<span class="number">1</span>, <span class="number">5</span>, <span class="number">20</span>, <span class="number">50</span>, <span class="number">100</span>]):
+    modele = <span class="function">ClassifieurMLP</span>(<span class="number">2</span>, <span class="number">32</span>, <span class="number">16</span>, <span class="number">1</span>)
+    optimiseur = optim.<span class="function">Adam</span>(modele.<span class="function">parameters</span>(), lr=<span class="number">0.01</span>)
+    critere = nn.<span class="function">BCELoss</span>()
+    snapshots = {}
+    <span class="keyword">for</span> epoque <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">max</span>(epoques_capture) + <span class="number">1</span>):
+        modele.<span class="function">train</span>()
+        pred = <span class="function">modele</span>(X)
+        perte = <span class="function">critere</span>(pred, y)
+        optimiseur.<span class="function">zero_grad</span>(); perte.<span class="function">backward</span>(); optimiseur.<span class="function">step</span>()
+        <span class="keyword">if</span> epoque <span class="keyword">in</span> epoques_capture:
+            snapshots[epoque] = copy.<span class="function">deepcopy</span>(modele)
+            acc = ((pred >= <span class="number">0.5</span>).<span class="function">float</span>() == y).<span class="function">float</span>().<span class="function">mean</span>()
+            <span class="function">print</span>(<span class="string">f"Epoque {epoque:3d} | Perte : {perte.item():.4f} | Precision : {acc:.2%}"</span>)
+    <span class="keyword">return</span> snapshots
+
+snapshots = <span class="function">entrainer_avec_snapshots</span>(X, y)
+
+<span class="comment"># Tracer les frontieres a chaque etape (reutilise tracer_frontiere)</span>
+fig, axes = plt.<span class="function">subplots</span>(<span class="number">1</span>, <span class="number">5</span>, figsize=(<span class="number">25</span>, <span class="number">5</span>))
+<span class="keyword">for</span> ax, (ep, mod) <span class="keyword">in</span> <span class="function">zip</span>(axes, snapshots.<span class="function">items</span>()):
+    <span class="comment"># Generer grille et predire pour chaque snapshot</span>
+    xx, yy = np.<span class="function">meshgrid</span>(np.<span class="function">linspace</span>(-<span class="number">2.5</span>, <span class="number">2.5</span>, <span class="number">100</span>), np.<span class="function">linspace</span>(-<span class="number">2.5</span>, <span class="number">2.5</span>, <span class="number">100</span>))
+    grille = torch.<span class="function">tensor</span>(np.<span class="function">c_</span>[xx.<span class="function">ravel</span>(), yy.<span class="function">ravel</span>()], dtype=torch.float32)
+    mod.<span class="function">eval</span>()
+    <span class="keyword">with</span> torch.<span class="function">no_grad</span>(): Z = <span class="function">mod</span>(grille).<span class="function">numpy</span>().<span class="function">reshape</span>(xx.shape)
+    ax.<span class="function">contourf</span>(xx, yy, Z, levels=<span class="number">20</span>, cmap=<span class="string">"RdYlBu_r"</span>, alpha=<span class="number">0.8</span>)
+    y_np = y.<span class="function">squeeze</span>().<span class="function">numpy</span>()
+    ax.<span class="function">scatter</span>(X[y_np==<span class="number">0</span>,<span class="number">0</span>], X[y_np==<span class="number">0</span>,<span class="number">1</span>], c=<span class="string">"blue"</span>, s=<span class="number">5</span>)
+    ax.<span class="function">scatter</span>(X[y_np==<span class="number">1</span>,<span class="number">0</span>], X[y_np==<span class="number">1</span>,<span class="number">1</span>], c=<span class="string">"red"</span>, s=<span class="number">5</span>)
+    ax.<span class="function">set_title</span>(<span class="string">f"Epoque {ep}"</span>)
+plt.<span class="function">suptitle</span>(<span class="string">"Evolution des frontieres de decision"</span>)
+plt.<span class="function">tight_layout</span>(); plt.<span class="function">show</span>()</div>
+
+    <div class="output-block">Epoque   1 | Perte : 0.7023 | Precision : 49.80%
+Epoque   5 | Perte : 0.6415 | Precision : 56.20%
+Epoque  20 | Perte : 0.2731 | Precision : 90.60%
+Epoque  50 | Perte : 0.0304 | Precision : 99.20%
+Epoque 100 | Perte : 0.0058 | Precision : 100.00%</div>
+
+    <div class="analogy">
+        <h4>Analogie : L'apprentissage d'un sculpteur</h4>
+        <p>L'evolution des frontieres de decision ressemble au travail d'un sculpteur. Au debut (epoque 1), la forme est grossiere -- un simple plan qui coupe l'espace au hasard. Apres quelques coups de ciseau (epoque 5-20), la forme commence a apparaitre mais reste approximative. Progressivement, les details se raffinent (epoque 50) jusqu'a obtenir une frontiere parfaitement ajustee aux donnees (epoque 100). Chaque epoque d'entrainement correspond a un coup de ciseau de plus en plus precis.</p>
+    </div>
+
+    <div class="prof-note">
+        Les frontieres de decision revelent la puissance du MLP. Un perceptron simple ne peut tracer qu'une droite (hyperplan). Avec une couche cachee, le MLP peut tracer des frontieres convexes. Avec deux couches cachees ou plus, il peut tracer des frontieres de forme absolument quelconque, y compris des regions non connexes. C'est exactement ce qu'on observe ici avec les cercles concentriques : le MLP apprend une frontiere circulaire.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 10 : Recapitulatif                                  -->
+    <!-- ============================================================ -->
+    <h2>10. Recapitulatif</h2>
+
+    <div class="concept-box">
+        <h4>Points cles de ce cours</h4>
+        <ol>
+            <li><strong>Le neurone artificiel</strong> est inspire du neurone biologique : il recoit des entrees ponderees, les somme, et applique une fonction d'activation non lineaire.</li>
+            <li><strong>Le perceptron</strong> (Rosenblatt, 1958) est un classifieur lineaire qui ne peut resoudre que les problemes lineairement separables.</li>
+            <li><strong>Les fonctions d'activation</strong> (ReLU, sigmoid, tanh, GELU, Swish...) introduisent la non-linearite necessaire a l'apprentissage de representations complexes. ReLU est le choix par defaut.</li>
+            <li><strong>Le MLP</strong> empile des couches denses avec des non-linearites. Le theoreme d'approximation universelle garantit qu'il peut approximer toute fonction continue.</li>
+            <li><strong>La forward propagation</strong> est le calcul sequentiel de la sortie, couche par couche : z = W*a + b puis a = f(z).</li>
+            <li><strong>La fonction de cout</strong> mesure l'ecart entre prediction et realite : MSE pour la regression, Cross-Entropy pour la classification.</li>
+            <li><strong>La backpropagation</strong> utilise la regle de la chaine pour calculer efficacement les gradients de la perte par rapport a chaque parametre.</li>
+            <li><strong>PyTorch</strong> automatise le calcul des gradients avec <code>autograd</code>. La boucle standard est : forward, loss, zero_grad, backward, step.</li>
+        </ol>
+    </div>
+
+    <table>
+        <tr><th>Concept</th><th>Formule / Element cle</th><th>A retenir</th></tr>
+        <tr><td>Neurone</td><td>y = f(w^T * x + b)</td><td>Unite de calcul non lineaire</td></tr>
+        <tr><td>Perceptron</td><td>y = seuil(w^T * x + b)</td><td>Limite aux frontieres lineaires</td></tr>
+        <tr><td>ReLU</td><td>max(0, z)</td><td>Choix par defaut en pratique</td></tr>
+        <tr><td>GELU</td><td>z * Phi(z)</td><td>Standard pour les Transformers</td></tr>
+        <tr><td>Forward</td><td>z = Wa + b, a = f(z)</td><td>De l'entree vers la sortie</td></tr>
+        <tr><td>MSE</td><td>(1/N) * sum(y - y_pred)^2</td><td>Regression</td></tr>
+        <tr><td>Cross-Entropy</td><td>-sum(y * log(y_pred))</td><td>Classification</td></tr>
+        <tr><td>Backprop</td><td>dJ/dW via chain rule</td><td>Gradients couche par couche</td></tr>
+        <tr><td>PyTorch</td><td>zero_grad -> backward -> step</td><td>Boucle d'entrainement</td></tr>
+    </table>
+
+    <div class="warning">
+        Les erreurs les plus frequentes des debutants : (1) Oublier <code>zero_grad()</code> avant <code>backward()</code> -- les gradients s'accumulent. (2) Mettre un softmax explicite avant <code>CrossEntropyLoss</code> qui l'inclut deja -- double softmax. (3) Ne pas mettre le modele en mode <code>eval()</code> pour l'inference. (4) Oublier <code>torch.no_grad()</code> pendant l'evaluation, gaspillant memoire et calcul.
+    </div>
+
+    <div class="prof-note">
+        Dans le prochain cours, nous etudierons les algorithmes d'<strong>optimisation</strong> (SGD, Momentum, Adam, AdamW, etc.) qui determinent comment les poids sont mis a jour a partir des gradients calcules par backpropagation. Nous verrons aussi les techniques de regularisation (Dropout, Batch Normalization, Weight Decay) indispensables pour eviter le sur-apprentissage. La backpropagation calcule les gradients ; l'optimiseur decide quoi en faire.
+    </div>
+
+    <div class="concept-box green">
+        <h4>Exercices recommandes</h4>
+        <ul>
+            <li>Implementer un perceptron a la main (sans nn.Module) et l'entrainer sur les portes AND, OR et NAND.</li>
+            <li>Comparer les fonctions d'activation (ReLU vs sigmoid vs tanh vs GELU) sur le probleme XOR en mesurant la vitesse de convergence.</li>
+            <li>Calculer manuellement la forward et backward pass pour un reseau 2-3-1 avec des valeurs numeriques de votre choix.</li>
+            <li>Varier la taille des couches cachees (4, 8, 16, 32, 64) sur les cercles concentriques et observer l'impact sur les frontieres de decision et la vitesse de convergence.</li>
+            <li>Implementer un MLP pour classifier les chiffres manuscrits MNIST (784 entrees, 10 sorties avec CrossEntropyLoss).</li>
+            <li>Visualiser les gradients dans chaque couche pendant l'entrainement pour observer le phenomene de gradient evanescent avec sigmoid vs ReLU.</li>
+        </ul>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_01_introduction.html">&larr; Cours 1 : Introduction au Deep Learning</a>
+        <a href="dl_03_optimisation.html">Cours 3 : Optimisation et Regularisation &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

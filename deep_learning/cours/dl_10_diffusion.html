@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DL 10 - Modeles de Diffusion</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>DL 10 - Modeles de Diffusion</h1>
+    <p class="subtitle">Cours 10/12 - DDPM, Stable Diffusion, DALL-E et la revolution de la generation d'images</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================================ -->
+    <h2>1. Introduction aux modeles de diffusion</h2>
+
+    <p>Les modeles de diffusion representent l'une des avancees les plus marquantes du Deep Learning ces dernieres annees. Ils ont revolutionne la generation d'images, surpassant les GANs sur de nombreux benchmarks tant en qualite qu'en diversite des echantillons generes.</p>
+
+    <div class="definition">
+        Un <strong>modele de diffusion</strong> est un modele generatif qui apprend a generer des donnees en inversant un processus de bruitage progressif. L'idee fondamentale est de detruire systematiquement la structure des donnees par l'ajout incremental de bruit, puis d'apprendre a reconstruire cette structure etape par etape.
+    </div>
+
+    <h3>1.1 Chronologie historique</h3>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2014</span>
+        <div>Les <strong>GANs</strong> (Goodfellow et al.) revolutionnent la generation d'images avec l'idee d'un generateur et d'un discriminateur en competition.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2015</span>
+        <div><strong>Deep Unsupervised Learning using Nonequilibrium Thermodynamics</strong> (Sohl-Dickstein et al.) pose les bases theoriques des modeles de diffusion inspires de la thermodynamique.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2020</span>
+        <div><strong>DDPM</strong> (Ho et al.) demontre que les modeles de diffusion peuvent produire des images de haute qualite, rivalisant avec les GANs.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2021</span>
+        <div><strong>Diffusion beats GANs</strong> (Dhariwal &amp; Nichol) montre formellement la superiorite sur ImageNet. <strong>DALL-E</strong> (OpenAI) genere des images a partir de texte.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2022</span>
+        <div><strong>Stable Diffusion</strong> (Stability AI / CompVis) democratise la generation d'images open-source. <strong>DALL-E 2</strong> et <strong>Midjourney</strong> emergent.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2023</span>
+        <div><strong>DALL-E 3</strong>, <strong>SDXL</strong>, integration dans les produits grand public. Les modeles de diffusion deviennent la norme industrielle.</div>
+    </div>
+
+    <h3>1.2 Pourquoi les modeles de diffusion surpassent les GANs ?</h3>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff4444;">GANs - Limitations</h4>
+            <ul style="text-align:left;">
+                <li>Entrainement instable (mode collapse)</li>
+                <li>Equilibre fragile G/D</li>
+                <li>Difficulte a couvrir toute la distribution</li>
+                <li>Hyperparametres sensibles</li>
+                <li>Pas de vraisemblance exacte</li>
+            </ul>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#00ff88;">Diffusion - Avantages</h4>
+            <ul style="text-align:left;">
+                <li>Entrainement stable (objectif de regression)</li>
+                <li>Meilleure couverture des modes</li>
+                <li>Haute diversite et fidelite</li>
+                <li>Conditionnement flexible (texte, image)</li>
+                <li>Fondements mathematiques solides</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="prof-note">
+        Le principal inconvenient des modeles de diffusion par rapport aux GANs est la vitesse d'inference : un GAN genere en un seul forward pass, tandis qu'un modele de diffusion necessite typiquement 20 a 1000 etapes de debruitage. C'est le prix a payer pour la stabilite et la qualite.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================================ -->
+    <h2>2. L'intuition derriere la diffusion</h2>
+
+    <p>Avant de plonger dans les mathematiques, construisons une intuition solide de ce que fait un modele de diffusion.</p>
+
+    <div class="analogy">
+        <h4>Analogie : l'encre dans l'eau</h4>
+        <p>Imaginez une goutte d'encre tombant dans un verre d'eau. Au debut, la goutte a une forme precise et reconnaissable. Progressivement, l'encre se diffuse dans l'eau, perdant sa structure initiale jusqu'a ce que l'eau devienne uniformement coloree.</p>
+        <p>Le <strong>forward process</strong> est cette diffusion naturelle : on detruit progressivement la structure. Le <strong>reverse process</strong> est comme si on pouvait rembobiner le temps et reconcentrer l'encre diffuse en une goutte precise. C'est exactement ce que le reseau de neurones apprend a faire.</p>
+    </div>
+
+    <h3>2.1 Les deux processus fondamentaux</h3>
+
+    <div class="concept-box">
+        <h4>Forward Process (bruitage)</h4>
+        <p>On part d'une image reelle <strong>x_0</strong> et on ajoute progressivement du bruit gaussien a chaque etape t = 1, 2, ..., T. Apres T etapes (typiquement T = 1000), l'image est devenue du bruit pur, indistinguable d'une distribution gaussienne N(0, I).</p>
+    </div>
+
+    <div class="concept-box green">
+        <h4>Reverse Process (debruitage)</h4>
+        <p>On part de bruit pur <strong>x_T ~ N(0, I)</strong> et on enleve progressivement le bruit etape par etape, t = T, T-1, ..., 1, 0. A la fin, on obtient une image propre et realiste <strong>x_0</strong>. C'est ce processus que le reseau de neurones apprend.</p>
+    </div>
+
+    <h3>2.2 Visualisation du processus</h3>
+
+    <div class="svg-container">
+        <svg width="900" height="320" viewBox="0 0 900 320">
+            <!-- Forward Process Arrow -->
+            <defs>
+                <marker id="arrowRight" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrowLeft" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                    <polygon points="10 0, 0 3.5, 10 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+
+            <!-- Title -->
+            <text x="450" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Forward Process (bruitage progressif)</text>
+
+            <!-- Image boxes -->
+            <rect x="30" y="50" width="90" height="90" rx="8" fill="#2a2a4a" stroke="#ff6b35" stroke-width="2"/>
+            <text x="75" y="90" fill="#fff" font-size="11" text-anchor="middle">Image</text>
+            <text x="75" y="105" fill="#fff" font-size="11" text-anchor="middle">x_0</text>
+            <text x="75" y="155" fill="#aaa" font-size="10" text-anchor="middle">t = 0</text>
+
+            <rect x="200" y="50" width="90" height="90" rx="8" fill="#2a2a4a" stroke="#ff8c42" stroke-width="1"/>
+            <text x="245" y="90" fill="#ccc" font-size="11" text-anchor="middle">Leger</text>
+            <text x="245" y="105" fill="#ccc" font-size="11" text-anchor="middle">bruit</text>
+            <text x="245" y="155" fill="#aaa" font-size="10" text-anchor="middle">t = 250</text>
+
+            <rect x="370" y="50" width="90" height="90" rx="8" fill="#2a2a4a" stroke="#666" stroke-width="1"/>
+            <text x="415" y="90" fill="#888" font-size="11" text-anchor="middle">Bruit</text>
+            <text x="415" y="105" fill="#888" font-size="11" text-anchor="middle">moyen</text>
+            <text x="415" y="155" fill="#aaa" font-size="10" text-anchor="middle">t = 500</text>
+
+            <rect x="540" y="50" width="90" height="90" rx="8" fill="#2a2a4a" stroke="#444" stroke-width="1"/>
+            <text x="585" y="90" fill="#666" font-size="11" text-anchor="middle">Fort</text>
+            <text x="585" y="105" fill="#666" font-size="11" text-anchor="middle">bruit</text>
+            <text x="585" y="155" fill="#aaa" font-size="10" text-anchor="middle">t = 750</text>
+
+            <rect x="710" y="50" width="90" height="90" rx="8" fill="#2a2a4a" stroke="#333" stroke-width="1"/>
+            <text x="755" y="90" fill="#555" font-size="11" text-anchor="middle">Bruit</text>
+            <text x="755" y="105" fill="#555" font-size="11" text-anchor="middle">pur</text>
+            <text x="755" y="155" fill="#aaa" font-size="10" text-anchor="middle">t = 1000</text>
+
+            <!-- Forward arrows -->
+            <line x1="125" y1="95" x2="195" y2="95" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowRight)"/>
+            <line x1="295" y1="95" x2="365" y2="95" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowRight)"/>
+            <line x1="465" y1="95" x2="535" y2="95" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowRight)"/>
+            <line x1="635" y1="95" x2="705" y2="95" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowRight)"/>
+
+            <text x="160" y="85" fill="#ff6b35" font-size="9" text-anchor="middle">+bruit</text>
+            <text x="330" y="85" fill="#ff6b35" font-size="9" text-anchor="middle">+bruit</text>
+            <text x="500" y="85" fill="#ff6b35" font-size="9" text-anchor="middle">+bruit</text>
+            <text x="670" y="85" fill="#ff6b35" font-size="9" text-anchor="middle">+bruit</text>
+
+            <!-- Reverse Process -->
+            <text x="450" y="200" fill="#00ff88" font-size="16" font-weight="bold" text-anchor="middle">Reverse Process (debruitage appris)</text>
+
+            <line x1="705" y1="270" x2="635" y2="270" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowLeft)"/>
+            <line x1="535" y1="270" x2="465" y2="270" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowLeft)"/>
+            <line x1="365" y1="270" x2="295" y2="270" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowLeft)"/>
+            <line x1="195" y1="270" x2="125" y2="270" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowLeft)"/>
+
+            <text x="670" y="260" fill="#00ff88" font-size="9" text-anchor="middle">-bruit</text>
+            <text x="500" y="260" fill="#00ff88" font-size="9" text-anchor="middle">-bruit</text>
+            <text x="330" y="260" fill="#00ff88" font-size="9" text-anchor="middle">-bruit</text>
+            <text x="160" y="260" fill="#00ff88" font-size="9" text-anchor="middle">-bruit</text>
+
+            <!-- Labels -->
+            <rect x="710" y="230" width="90" height="50" rx="6" fill="#1a2e1a" stroke="#00ff88" stroke-width="1"/>
+            <text x="755" y="260" fill="#00ff88" font-size="10" text-anchor="middle">x_T ~ N(0,I)</text>
+
+            <rect x="30" y="230" width="90" height="50" rx="6" fill="#1a2e1a" stroke="#00ff88" stroke-width="2"/>
+            <text x="75" y="260" fill="#00ff88" font-size="10" text-anchor="middle">x_0 genere!</text>
+
+            <text x="450" y="310" fill="#aaa" font-size="12" text-anchor="middle">Le reseau de neurones theta apprend a predire le bruit a retirer a chaque etape</text>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================================ -->
+    <h2>3. Le Forward Process en detail</h2>
+
+    <p>Le forward process est un processus de Markov fixe (non appris) qui ajoute du bruit gaussien a chaque etape selon un schedule predetermine.</p>
+
+    <h3>3.1 Formulation mathematique</h3>
+
+    <div class="concept-box">
+        <h4>Distribution conditionnelle a chaque etape</h4>
+        <p>A chaque etape t, on definit :</p>
+        <p><strong>q(x_t | x_{t-1}) = N(x_t ; sqrt(1 - beta_t) * x_{t-1}, beta_t * I)</strong></p>
+        <p>Ou <strong>beta_t</strong> est la variance du bruit ajoute a l'etape t, selon un schedule predetermine. Typiquement, beta_1 = 0.0001 et beta_T = 0.02, avec une progression lineaire ou cosine entre les deux.</p>
+    </div>
+
+    <h3>3.2 Le schedule beta</h3>
+
+    <p>Le choix du schedule beta est crucial pour la qualite de generation :</p>
+
+    <table>
+        <tr><th>Schedule</th><th>Formule</th><th>Proprietes</th></tr>
+        <tr><td><strong>Lineaire</strong></td><td>beta_t = beta_1 + (beta_T - beta_1) * t/T</td><td>Simple, utilise dans DDPM original</td></tr>
+        <tr><td><strong>Cosine</strong></td><td>base sur cos(pi/2 * t/T)</td><td>Bruitage plus progressif, meilleurs resultats</td></tr>
+        <tr><td><strong>Quadratique</strong></td><td>beta_t = (beta_1^0.5 + t/T * (beta_T^0.5 - beta_1^0.5))^2</td><td>Compromis entre lineaire et cosine</td></tr>
+    </table>
+
+    <h3>3.3 Le reparameterization trick</h3>
+
+    <div class="concept-box blue">
+        <h4>Astuce fondamentale : echantillonnage direct a n'importe quelle etape</h4>
+        <p>Definissons <strong>alpha_t = 1 - beta_t</strong> et <strong>alpha_bar_t = produit(alpha_s, s=1..t)</strong>.</p>
+        <p>Grace aux proprietes de la gaussienne, on peut echantillonner directement x_t a partir de x_0 sans passer par toutes les etapes intermediaires :</p>
+        <p><strong>q(x_t | x_0) = N(x_t ; sqrt(alpha_bar_t) * x_0, (1 - alpha_bar_t) * I)</strong></p>
+        <p>Ce qui s'ecrit avec le reparameterization trick :</p>
+        <p><strong>x_t = sqrt(alpha_bar_t) * x_0 + sqrt(1 - alpha_bar_t) * epsilon</strong></p>
+        <p>avec <strong>epsilon ~ N(0, I)</strong></p>
+    </div>
+
+    <div class="prof-note">
+        Cette propriete est absolument essentielle pour l'entrainement ! Sans elle, il faudrait simuler les T etapes sequentiellement pour chaque echantillon d'entrainement, ce qui serait prohibitivement couteux. Ici, on peut directement sauter a n'importe quelle etape t.
+    </div>
+
+    <h3>3.4 Implementation du forward process</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+
+<span class="keyword">def</span> <span class="function">linear_beta_schedule</span>(timesteps, beta_start=<span class="number">1e-4</span>, beta_end=<span class="number">0.02</span>):
+    <span class="string">"""Schedule lineaire classique du DDPM original."""</span>
+    <span class="keyword">return</span> torch.linspace(beta_start, beta_end, timesteps)
+
+<span class="keyword">def</span> <span class="function">cosine_beta_schedule</span>(timesteps, s=<span class="number">0.008</span>):
+    <span class="string">"""Schedule cosine (Nichol & Dhariwal, 2021) - meilleur en pratique."""</span>
+    steps = timesteps + <span class="number">1</span>
+    t = torch.linspace(<span class="number">0</span>, timesteps, steps) / timesteps
+    alphas_cumprod = torch.cos((t + s) / (<span class="number">1</span> + s) * torch.pi * <span class="number">0.5</span>) ** <span class="number">2</span>
+    alphas_cumprod = alphas_cumprod / alphas_cumprod[<span class="number">0</span>]
+    betas = <span class="number">1</span> - (alphas_cumprod[<span class="number">1</span>:] / alphas_cumprod[:-<span class="number">1</span>])
+    <span class="keyword">return</span> torch.clip(betas, <span class="number">0.0001</span>, <span class="number">0.9999</span>)
+
+<span class="comment"># Configuration</span>
+T = <span class="number">1000</span>
+betas = linear_beta_schedule(T)
+alphas = <span class="number">1.0</span> - betas
+alphas_cumprod = torch.cumprod(alphas, dim=<span class="number">0</span>)
+
+<span class="keyword">def</span> <span class="function">forward_diffusion</span>(x_0, t, noise=<span class="keyword">None</span>):
+    <span class="string">"""
+    Applique le forward process : x_0 -> x_t en une seule etape.
+    x_0 : image originale [B, C, H, W]
+    t   : timestep [B]
+    """</span>
+    <span class="keyword">if</span> noise <span class="keyword">is None</span>:
+        noise = torch.randn_like(x_0)
+
+    sqrt_alpha_bar = torch.sqrt(alphas_cumprod[t])[:, <span class="keyword">None</span>, <span class="keyword">None</span>, <span class="keyword">None</span>]
+    sqrt_one_minus = torch.sqrt(<span class="number">1.0</span> - alphas_cumprod[t])[:, <span class="keyword">None</span>, <span class="keyword">None</span>, <span class="keyword">None</span>]
+
+    <span class="comment"># x_t = sqrt(alpha_bar_t) * x_0 + sqrt(1 - alpha_bar_t) * epsilon</span>
+    x_t = sqrt_alpha_bar * x_0 + sqrt_one_minus * noise
+    <span class="keyword">return</span> x_t, noise</div>
+
+    <div class="effect">A mesure que t augmente, alpha_bar_t diminue, ce qui signifie que le signal (x_0) est de plus en plus attenue tandis que le bruit (epsilon) domine. Pour t = T, alpha_bar_T est proche de 0 et x_T est essentiellement du bruit pur.</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================================ -->
+    <h2>4. Le Reverse Process</h2>
+
+    <p>Le reverse process est la cle de la generation. Il s'agit d'apprendre a inverser le processus de bruitage, c'est-a-dire deduire x_{t-1} a partir de x_t.</p>
+
+    <h3>4.1 La distribution reverse</h3>
+
+    <div class="concept-box">
+        <h4>Distribution conditionnelle inverse</h4>
+        <p>On cherche a approximer la vraie distribution inverse <strong>q(x_{t-1} | x_t)</strong> par un modele parametre :</p>
+        <p><strong>p_theta(x_{t-1} | x_t) = N(x_{t-1} ; mu_theta(x_t, t), sigma_t^2 * I)</strong></p>
+        <p>Le reseau de neurones theta doit predire la moyenne mu_theta. La variance sigma_t^2 peut etre fixee (DDPM) ou apprise (Improved DDPM).</p>
+    </div>
+
+    <h3>4.2 Trois parametrisations possibles</h3>
+
+    <p>Le reseau peut etre entraine pour predire differentes quantites. Toutes sont mathematiquement equivalentes :</p>
+
+    <table>
+        <tr><th>Parametrisation</th><th>Le reseau predit</th><th>Utilise dans</th></tr>
+        <tr><td><strong>Prediction du bruit (epsilon)</strong></td><td>Le bruit epsilon ajoute a l'image</td><td>DDPM, Stable Diffusion 1.x</td></tr>
+        <tr><td><strong>Prediction de x_0</strong></td><td>L'image originale x_0 directement</td><td>Certains travaux recents</td></tr>
+        <tr><td><strong>Prediction de v (velocity)</strong></td><td>v = sqrt(alpha_bar) * epsilon - sqrt(1-alpha_bar) * x_0</td><td>Stable Diffusion 2.x, Imagen</td></tr>
+    </table>
+
+    <h3>4.3 Formule de mu_theta</h3>
+
+    <div class="concept-box green">
+        <p>Avec la parametrisation epsilon (la plus courante), la moyenne est :</p>
+        <p><strong>mu_theta(x_t, t) = (1/sqrt(alpha_t)) * (x_t - (beta_t / sqrt(1 - alpha_bar_t)) * epsilon_theta(x_t, t))</strong></p>
+        <p>Ou <strong>epsilon_theta(x_t, t)</strong> est la prediction du bruit par le reseau de neurones.</p>
+    </div>
+
+    <h3>4.4 Algorithme de sampling</h3>
+
+    <div class="step-box"><strong>Etape 1 :</strong> Echantillonner x_T ~ N(0, I) (bruit pur)</div>
+    <div class="step-box"><strong>Etape 2 :</strong> Pour t = T, T-1, ..., 1 :</div>
+    <div class="step-box" style="margin-left:30px;">- Predire le bruit : epsilon_pred = epsilon_theta(x_t, t)</div>
+    <div class="step-box" style="margin-left:30px;">- Calculer mu_theta a partir de x_t et epsilon_pred</div>
+    <div class="step-box" style="margin-left:30px;">- Echantillonner x_{t-1} ~ N(mu_theta, sigma_t^2 * I)</div>
+    <div class="step-box"><strong>Etape 3 :</strong> Retourner x_0 comme image generee</div>
+
+    <div class="warning">Le sampling est sequentiel : il faut passer par chaque etape une a une. Avec T=1000, cela signifie 1000 forward pass du reseau ! Des methodes comme DDIM permettent de reduire a 50-100 etapes sans trop perdre en qualite.</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================================ -->
+    <h2>5. DDPM - Denoising Diffusion Probabilistic Models</h2>
+
+    <p>Le papier DDPM de Ho et al. (2020) a rendu les modeles de diffusion pratiques en simplifiant drastiquement l'objectif d'entrainement.</p>
+
+    <h3>5.1 La loss simplifiee</h3>
+
+    <div class="definition">
+        La loss du DDPM est remarquablement simple : c'est un <strong>Mean Squared Error</strong> entre le bruit reel ajoute et le bruit predit par le reseau :
+        <p style="margin-top:10px;"><strong>L_simple = E_{t, x_0, epsilon} [ || epsilon - epsilon_theta(x_t, t) ||^2 ]</strong></p>
+        <p>C'est une regression ! Le reseau apprend simplement a predire quel bruit a ete ajoute a l'image.</p>
+    </div>
+
+    <h3>5.2 Algorithme d'entrainement (pseudocode)</h3>
+
+    <div class="code-block"><span class="comment"># Algorithme d'entrainement DDPM</span>
+<span class="comment"># Repeter jusqu'a convergence :</span>
+
+<span class="comment"># 1. Echantillonner une image reelle x_0 du dataset</span>
+x_0 = next(dataloader)
+
+<span class="comment"># 2. Echantillonner un timestep aleatoire</span>
+t = torch.randint(<span class="number">0</span>, T, (batch_size,))
+
+<span class="comment"># 3. Echantillonner du bruit gaussien</span>
+epsilon = torch.randn_like(x_0)
+
+<span class="comment"># 4. Calculer x_t par le forward process</span>
+x_t = sqrt(alpha_bar[t]) * x_0 + sqrt(<span class="number">1</span> - alpha_bar[t]) * epsilon
+
+<span class="comment"># 5. Predire le bruit avec le reseau</span>
+epsilon_pred = model(x_t, t)
+
+<span class="comment"># 6. Calculer la loss MSE</span>
+loss = F.mse_loss(epsilon_pred, epsilon)
+
+<span class="comment"># 7. Backpropagation et mise a jour</span>
+loss.backward()
+optimizer.step()</div>
+
+    <div class="prof-note">
+        La beaute de cet algorithme est sa simplicite. On echantillonne un t aleatoire a chaque iteration, donc le reseau voit tous les niveaux de bruit pendant l'entrainement. L'objectif de regression MSE est extremement stable compare aux losses adversariales des GANs.
+    </div>
+
+    <h3>5.3 Implementation PyTorch complete de l'entrainement</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F
+
+<span class="keyword">class</span> <span class="function">DDPMTrainer</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, model, T=<span class="number">1000</span>, beta_start=<span class="number">1e-4</span>, beta_end=<span class="number">0.02</span>):
+        self.model = model
+        self.T = T
+
+        <span class="comment"># Precalcul des constantes</span>
+        self.betas = torch.linspace(beta_start, beta_end, T)
+        self.alphas = <span class="number">1.0</span> - self.betas
+        self.alphas_cumprod = torch.cumprod(self.alphas, dim=<span class="number">0</span>)
+        self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
+        self.sqrt_one_minus_alphas_cumprod = torch.sqrt(<span class="number">1.0</span> - self.alphas_cumprod)
+
+    <span class="keyword">def</span> <span class="function">train_step</span>(self, x_0, optimizer):
+        <span class="string">"""Une etape d'entrainement DDPM."""</span>
+        batch_size = x_0.shape[<span class="number">0</span>]
+        device = x_0.device
+
+        <span class="comment"># Timestep aleatoire pour chaque image du batch</span>
+        t = torch.randint(<span class="number">0</span>, self.T, (batch_size,), device=device)
+
+        <span class="comment"># Bruit aleatoire</span>
+        noise = torch.randn_like(x_0)
+
+        <span class="comment"># Forward process : ajouter du bruit</span>
+        sqrt_ab = self.sqrt_alphas_cumprod[t][:, <span class="keyword">None</span>, <span class="keyword">None</span>, <span class="keyword">None</span>].to(device)
+        sqrt_1_ab = self.sqrt_one_minus_alphas_cumprod[t][:, <span class="keyword">None</span>, <span class="keyword">None</span>, <span class="keyword">None</span>].to(device)
+        x_t = sqrt_ab * x_0 + sqrt_1_ab * noise
+
+        <span class="comment"># Prediction du bruit</span>
+        noise_pred = self.model(x_t, t)
+
+        <span class="comment"># Loss MSE simple</span>
+        loss = F.mse_loss(noise_pred, noise)
+
+        <span class="comment"># Backpropagation</span>
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        <span class="keyword">return</span> loss.item()</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================================ -->
+    <h2>6. Le reseau U-Net</h2>
+
+    <p>Le coeur d'un modele de diffusion est l'architecture U-Net modifiee qui predit le bruit. Cette architecture est particulierement bien adaptee car elle traite des images et combine des informations a differentes echelles.</p>
+
+    <h3>6.1 Architecture generale</h3>
+
+    <div class="definition">
+        Le <strong>U-Net</strong> pour la diffusion est un reseau encoder-decoder avec des <strong>skip connections</strong>, augmente de <strong>timestep embeddings</strong> et de blocs d'<strong>attention</strong>. Le "U" vient de la forme en U du diagramme de l'architecture.
+    </div>
+
+    <div class="svg-container">
+        <svg width="800" height="420" viewBox="0 0 800 420">
+            <!-- Title -->
+            <text x="400" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Architecture U-Net pour la Diffusion</text>
+
+            <!-- Encoder blocks (left side, going down) -->
+            <rect x="50" y="50" width="140" height="45" rx="6" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="120" y="70" fill="#ff6b35" font-size="11" text-anchor="middle">ResBlock + Attn</text>
+            <text x="120" y="85" fill="#aaa" font-size="9" text-anchor="middle">64 x 64 x 128</text>
+
+            <rect x="80" y="120" width="140" height="45" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="150" y="140" fill="#ff8c42" font-size="11" text-anchor="middle">ResBlock + Attn</text>
+            <text x="150" y="155" fill="#aaa" font-size="9" text-anchor="middle">32 x 32 x 256</text>
+
+            <rect x="110" y="190" width="140" height="45" rx="6" fill="#1a1a2e" stroke="#ffab76" stroke-width="2"/>
+            <text x="180" y="210" fill="#ffab76" font-size="11" text-anchor="middle">ResBlock + Attn</text>
+            <text x="180" y="225" fill="#aaa" font-size="9" text-anchor="middle">16 x 16 x 512</text>
+
+            <rect x="140" y="260" width="140" height="45" rx="6" fill="#1a1a2e" stroke="#ce9178" stroke-width="2"/>
+            <text x="210" y="280" fill="#ce9178" font-size="11" text-anchor="middle">ResBlock + Attn</text>
+            <text x="210" y="295" fill="#aaa" font-size="9" text-anchor="middle">8 x 8 x 1024</text>
+
+            <!-- Bottleneck -->
+            <rect x="280" y="330" width="240" height="55" rx="8" fill="#2a1a2e" stroke="#569cd6" stroke-width="3"/>
+            <text x="400" y="355" fill="#569cd6" font-size="13" font-weight="bold" text-anchor="middle">Bottleneck</text>
+            <text x="400" y="375" fill="#aaa" font-size="10" text-anchor="middle">ResBlock + Self-Attention + ResBlock</text>
+
+            <!-- Decoder blocks (right side, going up) -->
+            <rect x="520" y="260" width="140" height="45" rx="6" fill="#1a1a2e" stroke="#ce9178" stroke-width="2"/>
+            <text x="590" y="280" fill="#ce9178" font-size="11" text-anchor="middle">ResBlock + Attn</text>
+            <text x="590" y="295" fill="#aaa" font-size="9" text-anchor="middle">8 x 8 x 1024</text>
+
+            <rect x="550" y="190" width="140" height="45" rx="6" fill="#1a1a2e" stroke="#ffab76" stroke-width="2"/>
+            <text x="620" y="210" fill="#ffab76" font-size="11" text-anchor="middle">ResBlock + Attn</text>
+            <text x="620" y="225" fill="#aaa" font-size="9" text-anchor="middle">16 x 16 x 512</text>
+
+            <rect x="580" y="120" width="140" height="45" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="650" y="140" fill="#ff8c42" font-size="11" text-anchor="middle">ResBlock + Attn</text>
+            <text x="650" y="155" fill="#aaa" font-size="9" text-anchor="middle">32 x 32 x 256</text>
+
+            <rect x="610" y="50" width="140" height="45" rx="6" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="680" y="70" fill="#ff6b35" font-size="11" text-anchor="middle">ResBlock + Attn</text>
+            <text x="680" y="85" fill="#aaa" font-size="9" text-anchor="middle">64 x 64 x 128</text>
+
+            <!-- Skip connections (dashed arrows) -->
+            <line x1="190" y1="72" x2="610" y2="72" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,5"/>
+            <line x1="220" y1="142" x2="580" y2="142" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,5"/>
+            <line x1="250" y1="212" x2="550" y2="212" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,5"/>
+            <line x1="280" y1="282" x2="520" y2="282" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,5"/>
+
+            <text x="400" y="65" fill="#00ff88" font-size="9" text-anchor="middle">skip connection (concat)</text>
+            <text x="400" y="135" fill="#00ff88" font-size="9" text-anchor="middle">skip connection</text>
+            <text x="400" y="205" fill="#00ff88" font-size="9" text-anchor="middle">skip connection</text>
+            <text x="400" y="275" fill="#00ff88" font-size="9" text-anchor="middle">skip connection</text>
+
+            <!-- Down arrows -->
+            <text x="80" y="112" fill="#ff6b35" font-size="10">Downsample</text>
+            <text x="110" y="182" fill="#ff6b35" font-size="10">Downsample</text>
+            <text x="140" y="252" fill="#ff6b35" font-size="10">Downsample</text>
+
+            <!-- Up arrows -->
+            <text x="630" y="252" fill="#ff8c42" font-size="10">Upsample</text>
+            <text x="660" y="182" fill="#ff8c42" font-size="10">Upsample</text>
+            <text x="690" y="112" fill="#ff8c42" font-size="10">Upsample</text>
+
+            <!-- Input/Output labels -->
+            <text x="120" y="45" fill="#aaa" font-size="10" text-anchor="middle">x_t (image bruitee)</text>
+            <text x="680" y="45" fill="#aaa" font-size="10" text-anchor="middle">epsilon_pred (bruit predit)</text>
+
+            <!-- Timestep embedding -->
+            <rect x="310" y="395" width="180" height="25" rx="5" fill="#16213e" stroke="#569cd6" stroke-width="1"/>
+            <text x="400" y="412" fill="#569cd6" font-size="10" text-anchor="middle">Timestep embedding t</text>
+            <text x="400" y="420" fill="#666" font-size="8" text-anchor="middle">(sinusoidal + MLP, injecte dans chaque ResBlock)</text>
+        </svg>
+    </div>
+
+    <h3>6.2 Le Timestep Embedding</h3>
+
+    <div class="concept-box blue">
+        <p>Le reseau doit savoir a quelle etape t il se trouve pour adapter son comportement de debruitage. On utilise un <strong>embedding sinusoidal</strong> (similaire aux positional encodings des Transformers) :</p>
+        <p><strong>PE(t, 2i) = sin(t / 10000^(2i/d))</strong></p>
+        <p><strong>PE(t, 2i+1) = cos(t / 10000^(2i/d))</strong></p>
+        <p>Cet embedding est ensuite projete par un MLP et ajoute (ou injecte via FiLM) a chaque bloc residuel du U-Net.</p>
+    </div>
+
+    <h3>6.3 Implementation simplifiee d'un bloc U-Net</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> math
+
+<span class="keyword">class</span> <span class="function">SinusoidalPositionEmbedding</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, dim):
+        <span class="keyword">super</span>().__init__()
+        self.dim = dim
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, t):
+        device = t.device
+        half_dim = self.dim // <span class="number">2</span>
+        emb = math.log(<span class="number">10000</span>) / (half_dim - <span class="number">1</span>)
+        emb = torch.exp(torch.arange(half_dim, device=device) * -emb)
+        emb = t[:, <span class="keyword">None</span>] * emb[<span class="keyword">None</span>, :]
+        emb = torch.cat([emb.sin(), emb.cos()], dim=-<span class="number">1</span>)
+        <span class="keyword">return</span> emb
+
+<span class="keyword">class</span> <span class="function">ResidualBlock</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, in_ch, out_ch, time_emb_dim):
+        <span class="keyword">super</span>().__init__()
+        self.conv1 = nn.Sequential(
+            nn.GroupNorm(<span class="number">8</span>, in_ch),
+            nn.SiLU(),
+            nn.Conv2d(in_ch, out_ch, <span class="number">3</span>, padding=<span class="number">1</span>)
+        )
+        self.time_mlp = nn.Sequential(
+            nn.SiLU(),
+            nn.Linear(time_emb_dim, out_ch)
+        )
+        self.conv2 = nn.Sequential(
+            nn.GroupNorm(<span class="number">8</span>, out_ch),
+            nn.SiLU(),
+            nn.Conv2d(out_ch, out_ch, <span class="number">3</span>, padding=<span class="number">1</span>)
+        )
+        self.shortcut = nn.Conv2d(in_ch, out_ch, <span class="number">1</span>) <span class="keyword">if</span> in_ch != out_ch <span class="keyword">else</span> nn.Identity()
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x, t_emb):
+        h = self.conv1(x)
+        <span class="comment"># Injecter le timestep embedding</span>
+        h = h + self.time_mlp(t_emb)[:, :, <span class="keyword">None</span>, <span class="keyword">None</span>]
+        h = self.conv2(h)
+        <span class="keyword">return</span> h + self.shortcut(x)</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================================ -->
+    <h2>7. Stable Diffusion - La Diffusion Latente</h2>
+
+    <p>Stable Diffusion (Rombach et al., 2022) est l'avancee cle qui a rendu les modeles de diffusion pratiques pour la generation d'images haute resolution. L'idee : operer la diffusion dans un espace latent compresse plutot que dans l'espace pixel.</p>
+
+    <h3>7.1 Le probleme de la resolution</h3>
+
+    <div class="warning">Appliquer DDPM directement sur des images 512x512x3 est extremement couteux en calcul et en memoire. Une image 512x512 contient 786 432 pixels. Avec T=1000 etapes, le cout devient prohibitif meme sur des GPU modernes.</div>
+
+    <h3>7.2 L'idee de la diffusion latente</h3>
+
+    <div class="concept-box">
+        <h4>Latent Diffusion Model (LDM)</h4>
+        <p>Au lieu d'operer dans l'espace pixel (512x512x3), on compresse d'abord l'image dans un espace latent beaucoup plus petit (64x64x4) via un <strong>VAE (Variational Autoencoder)</strong>, puis on applique la diffusion dans cet espace latent.</p>
+        <p>Le facteur de compression est typiquement <strong>8x</strong> en resolution spatiale, ce qui reduit le cout de calcul d'un facteur ~64.</p>
+    </div>
+
+    <h3>7.3 Les composants de Stable Diffusion</h3>
+
+    <div class="svg-container">
+        <svg width="880" height="350" viewBox="0 0 880 350">
+            <text x="440" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Pipeline Stable Diffusion</text>
+
+            <!-- Text Input -->
+            <rect x="20" y="50" width="130" height="50" rx="8" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="85" y="72" fill="#569cd6" font-size="11" text-anchor="middle">"Un chat sur</text>
+            <text x="85" y="88" fill="#569cd6" font-size="11" text-anchor="middle">la lune"</text>
+
+            <!-- CLIP Text Encoder -->
+            <rect x="180" y="45" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="245" y="72" fill="#569cd6" font-size="12" font-weight="bold" text-anchor="middle">CLIP Text</text>
+            <text x="245" y="88" fill="#569cd6" font-size="12" font-weight="bold" text-anchor="middle">Encoder</text>
+            <text x="245" y="120" fill="#aaa" font-size="9" text-anchor="middle">77 x 768</text>
+
+            <!-- Arrow text to CLIP -->
+            <line x1="150" y1="75" x2="175" y2="75" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowRight)"/>
+
+            <!-- Noise -->
+            <rect x="360" y="45" width="100" height="40" rx="6" fill="#2a2a4a" stroke="#aaa" stroke-width="1"/>
+            <text x="410" y="70" fill="#aaa" font-size="11" text-anchor="middle">z_T ~ N(0,I)</text>
+            <text x="410" y="100" fill="#666" font-size="9" text-anchor="middle">64 x 64 x 4</text>
+
+            <!-- U-Net block -->
+            <rect x="310" y="140" width="200" height="80" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="3"/>
+            <text x="410" y="168" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">U-Net</text>
+            <text x="410" y="188" fill="#aaa" font-size="10" text-anchor="middle">+ Cross-Attention</text>
+            <text x="410" y="205" fill="#aaa" font-size="10" text-anchor="middle">+ Timestep Emb</text>
+
+            <!-- Arrow noise to U-Net -->
+            <line x1="410" y1="90" x2="410" y2="135" stroke="#aaa" stroke-width="2" marker-end="url(#arrowRight)"/>
+
+            <!-- Arrow CLIP to U-Net -->
+            <line x1="310" y1="75" x2="310" y2="160" stroke="#569cd6" stroke-width="2"/>
+            <line x1="310" y1="160" x2="305" y2="160" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowRight)"/>
+            <text x="295" y="125" fill="#569cd6" font-size="9" text-anchor="middle" transform="rotate(-90, 295, 125)">conditioning</text>
+
+            <!-- Iterative loop -->
+            <rect x="555" y="140" width="120" height="80" rx="8" fill="#1a2e1a" stroke="#00ff88" stroke-width="2"/>
+            <text x="615" y="168" fill="#00ff88" font-size="11" text-anchor="middle">Debruitage</text>
+            <text x="615" y="185" fill="#00ff88" font-size="11" text-anchor="middle">iteratif</text>
+            <text x="615" y="205" fill="#aaa" font-size="9" text-anchor="middle">T -> 0 etapes</text>
+
+            <!-- Arrow U-Net to denoising -->
+            <line x1="515" y1="180" x2="550" y2="180" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowRight)"/>
+
+            <!-- Latent z_0 -->
+            <rect x="580" y="250" width="70" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1"/>
+            <text x="615" y="272" fill="#00ff88" font-size="10" text-anchor="middle">z_0 latent</text>
+
+            <!-- Arrow denoising to z_0 -->
+            <line x1="615" y1="225" x2="615" y2="245" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowRight)"/>
+
+            <!-- VAE Decoder -->
+            <rect x="700" y="240" width="130" height="55" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="765" y="265" fill="#ff8c42" font-size="12" font-weight="bold" text-anchor="middle">VAE Decoder</text>
+            <text x="765" y="280" fill="#aaa" font-size="9" text-anchor="middle">64x64x4 -> 512x512x3</text>
+
+            <!-- Arrow z_0 to VAE -->
+            <line x1="655" y1="267" x2="695" y2="267" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowRight)"/>
+
+            <!-- Output image -->
+            <rect x="720" y="310" width="90" height="30" rx="6" fill="#2a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="765" y="330" fill="#ff6b35" font-size="11" text-anchor="middle">Image 512x512</text>
+
+            <line x1="765" y1="298" x2="765" y2="307" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowRight)"/>
+        </svg>
+    </div>
+
+    <h3>7.4 Le role du Cross-Attention</h3>
+
+    <div class="concept-box blue">
+        <h4>Conditionnement par le texte via Cross-Attention</h4>
+        <p>Le mecanisme de <strong>cross-attention</strong> permet au U-Net de "consulter" le texte a chaque couche. Concretement :</p>
+        <ul>
+            <li><strong>Query (Q)</strong> : provient des features de l'image latente (sortie des ResBlocks)</li>
+            <li><strong>Key (K) et Value (V)</strong> : proviennent de l'embedding texte CLIP (77 tokens x 768 dimensions)</li>
+        </ul>
+        <p>Attention(Q, K, V) = softmax(Q * K^T / sqrt(d)) * V</p>
+        <p>Cela permet a chaque position spatiale de l'image d'attention aux mots pertinents du prompt.</p>
+    </div>
+
+    <h3>7.5 Le VAE</h3>
+
+    <p>Le VAE (Variational Autoencoder) de Stable Diffusion compresse les images :</p>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff6b35;">Encodeur VAE</h4>
+            <p>Image 512x512x3</p>
+            <p>--> Latent 64x64x4</p>
+            <p style="color:#aaa; font-size:0.85rem;">Compression x48</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#00ff88;">Decodeur VAE</h4>
+            <p>Latent 64x64x4</p>
+            <p>--> Image 512x512x3</p>
+            <p style="color:#aaa; font-size:0.85rem;">Reconstruction fidele</p>
+        </div>
+    </div>
+
+    <div class="prof-note">
+        Le VAE est pre-entraine separement et fige pendant l'entrainement du modele de diffusion. Sa qualite de reconstruction est cruciale : tout detail perdu par le VAE ne pourra jamais etre recupere par le U-Net.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================================ -->
+    <h2>8. DALL-E et les grands modeles text-to-image</h2>
+
+    <p>Plusieurs systemes majeurs de generation d'images a partir de texte ont emerge, chacun avec des approches distinctes.</p>
+
+    <h3>8.1 DALL-E 2 (OpenAI, 2022)</h3>
+
+    <div class="concept-box">
+        <h4>Architecture de DALL-E 2</h4>
+        <ul>
+            <li><strong>CLIP</strong> pour l'encodage texte et image dans un espace commun</li>
+            <li>Un <strong>prior</strong> qui convertit l'embedding texte CLIP en embedding image CLIP</li>
+            <li>Un <strong>decodeur de diffusion</strong> (base sur GLIDE) qui genere l'image a partir de l'embedding image</li>
+            <li>Deux etapes d'<strong>upscaling</strong> par diffusion : 64x64 -> 256x256 -> 1024x1024</li>
+        </ul>
+    </div>
+
+    <h3>8.2 DALL-E 3 (OpenAI, 2023)</h3>
+
+    <p>DALL-E 3 apporte des ameliorations majeures :</p>
+    <ul>
+        <li><strong>Meilleur suivi du prompt</strong> grace a des descriptions d'entrainement reecrites par un LLM</li>
+        <li><strong>Integration avec ChatGPT</strong> pour la generation et l'affinage des prompts</li>
+        <li>Qualite artistique et coherence textuelle superieures</li>
+        <li>Meilleure gestion de la composition spatiale complexe</li>
+    </ul>
+
+    <h3>8.3 Comparaison des systemes</h3>
+
+    <table>
+        <tr><th>Modele</th><th>Annee</th><th>Architecture</th><th>Open Source</th><th>Resolution</th></tr>
+        <tr><td>DALL-E 2</td><td>2022</td><td>CLIP + Diffusion cascade</td><td>Non</td><td>1024x1024</td></tr>
+        <tr><td>Stable Diffusion</td><td>2022</td><td>Latent Diffusion (LDM)</td><td>Oui</td><td>512x512 (v1)</td></tr>
+        <tr><td>Midjourney</td><td>2022</td><td>Architecture proprietaire</td><td>Non</td><td>1024x1024</td></tr>
+        <tr><td>Imagen</td><td>2022</td><td>T5 + Cascade Diffusion</td><td>Non</td><td>1024x1024</td></tr>
+        <tr><td>DALL-E 3</td><td>2023</td><td>Non divulguee</td><td>Non</td><td>1024x1024</td></tr>
+        <tr><td>SDXL</td><td>2023</td><td>LDM ameliore</td><td>Oui</td><td>1024x1024</td></tr>
+    </table>
+
+    <div class="prof-note">
+        L'aspect open-source de Stable Diffusion a ete un catalyseur majeur pour la recherche et l'industrie. La communaute a developpe des milliers d'extensions : ControlNet pour le controle spatial, LoRA pour le fine-tuning efficace, et de nombreux modeles specialises.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================================ -->
+    <h2>9. Guidance : controler la generation</h2>
+
+    <p>La <strong>guidance</strong> est un mecanisme crucial qui permet de controler la qualite et la fidelite des images generees par rapport au conditionnement (texte, classe, etc.).</p>
+
+    <h3>9.1 Classifier Guidance</h3>
+
+    <div class="definition">
+        La <strong>classifier guidance</strong> (Dhariwal &amp; Nichol, 2021) utilise un classificateur pre-entraine pour guider le processus de debruitage vers une classe cible. Le gradient du classificateur est utilise pour modifier la direction du debruitage.
+    </div>
+
+    <p>La prediction modifiee devient :</p>
+    <p><strong>epsilon_guided = epsilon_theta(x_t, t) - s * sqrt(1 - alpha_bar_t) * grad_x log p(y | x_t)</strong></p>
+    <p>Ou <strong>s</strong> est l'echelle de guidance et <strong>p(y | x_t)</strong> la probabilite de la classe y donnee par le classificateur.</p>
+
+    <h3>9.2 Classifier-Free Guidance (CFG)</h3>
+
+    <div class="concept-box green">
+        <h4>La methode la plus utilisee en pratique</h4>
+        <p>La <strong>classifier-free guidance</strong> (Ho &amp; Salimans, 2022) elimine le besoin d'un classificateur separe. Pendant l'entrainement, le conditionnement (texte) est aleatoirement supprime (remplace par un embedding vide) avec une certaine probabilite (typiquement 10%).</p>
+        <p>Au moment du sampling, on combine les predictions conditionnelle et inconditionnelle :</p>
+        <p><strong>epsilon_guided = epsilon_uncond + w * (epsilon_cond - epsilon_uncond)</strong></p>
+        <p>Ou <strong>w</strong> (souvent appele CFG scale) controle la force de la guidance.</p>
+    </div>
+
+    <h3>9.3 Impact du CFG scale</h3>
+
+    <table>
+        <tr><th>CFG Scale (w)</th><th>Effet</th><th>Qualite</th></tr>
+        <tr><td><strong>w = 1</strong></td><td>Pas de guidance (conditionnel pur)</td><td>Diverse mais peut etre floue</td></tr>
+        <tr><td><strong>w = 3-5</strong></td><td>Guidance legere</td><td>Bon equilibre diversite/fidelite</td></tr>
+        <tr><td><strong>w = 7-8</strong></td><td>Guidance standard (defaut SD)</td><td>Bonne fidelite au prompt</td></tr>
+        <tr><td><strong>w = 10-15</strong></td><td>Guidance forte</td><td>Tres fidele mais couleurs saturees</td></tr>
+        <tr><td><strong>w > 20</strong></td><td>Guidance extreme</td><td>Artefacts, sur-saturation</td></tr>
+    </table>
+
+    <div class="warning">Un CFG scale trop eleve produit des images sur-saturees et avec des artefacts. Un CFG trop bas donne des images floues et peu fideles au prompt. La valeur optimale depend du modele et du cas d'usage. Pour Stable Diffusion 1.5, w=7.5 est le defaut recommande.</div>
+
+    <h3>9.4 Implementation de la classifier-free guidance</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">sample_with_cfg</span>(model, text_embedding, cfg_scale=<span class="number">7.5</span>,
+                       num_steps=<span class="number">50</span>, shape=(<span class="number">1</span>, <span class="number">4</span>, <span class="number">64</span>, <span class="number">64</span>)):
+    <span class="string">"""Sampling avec classifier-free guidance."""</span>
+    device = text_embedding.device
+
+    <span class="comment"># Embedding vide pour la prediction inconditionnelle</span>
+    uncond_embedding = torch.zeros_like(text_embedding)
+
+    <span class="comment"># Partir du bruit pur</span>
+    x_t = torch.randn(shape, device=device)
+
+    <span class="keyword">for</span> t <span class="keyword">in</span> reversed(range(num_steps)):
+        t_tensor = torch.tensor([t], device=device)
+
+        <span class="comment"># Prediction conditionnelle</span>
+        noise_cond = model(x_t, t_tensor, text_embedding)
+
+        <span class="comment"># Prediction inconditionnelle</span>
+        noise_uncond = model(x_t, t_tensor, uncond_embedding)
+
+        <span class="comment"># Combiner avec le CFG scale</span>
+        noise_pred = noise_uncond + cfg_scale * (noise_cond - noise_uncond)
+
+        <span class="comment"># Etape de debruitage (simplifiee)</span>
+        x_t = denoise_step(x_t, noise_pred, t)
+
+    <span class="keyword">return</span> x_t</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================================ -->
+    <h2>10. Implementation PyTorch simplifiee</h2>
+
+    <p>Mettons tout ensemble avec une implementation complete et fonctionnelle d'un modele de diffusion simplifie en PyTorch.</p>
+
+    <h3>10.1 Noise schedule complet</h3>
+
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> datasets, transforms
+
+<span class="keyword">class</span> <span class="function">NoiseSchedule</span>:
+    <span class="string">"""Gestion complete du noise schedule pour DDPM."""</span>
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, T=<span class="number">1000</span>, beta_start=<span class="number">1e-4</span>, beta_end=<span class="number">0.02</span>, device=<span class="string">"cpu"</span>):
+        self.T = T
+        self.betas = torch.linspace(beta_start, beta_end, T).to(device)
+        self.alphas = (<span class="number">1.0</span> - self.betas).to(device)
+        self.alphas_cumprod = torch.cumprod(self.alphas, dim=<span class="number">0</span>).to(device)
+        self.alphas_cumprod_prev = torch.cat([
+            torch.tensor([<span class="number">1.0</span>], device=device),
+            self.alphas_cumprod[:-<span class="number">1</span>]
+        ])
+
+        <span class="comment"># Precalcul pour le forward process</span>
+        self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
+        self.sqrt_one_minus_alphas_cumprod = torch.sqrt(<span class="number">1.0</span> - self.alphas_cumprod)
+
+        <span class="comment"># Precalcul pour le reverse process</span>
+        self.sqrt_recip_alphas = torch.sqrt(<span class="number">1.0</span> / self.alphas)
+        self.posterior_variance = (
+            self.betas * (<span class="number">1.0</span> - self.alphas_cumprod_prev) /
+            (<span class="number">1.0</span> - self.alphas_cumprod)
+        )</div>
+
+    <h3>10.2 Le modele de debruitage simplifie</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">SimpleUNet</span>(nn.Module):
+    <span class="string">"""U-Net simplifie pour MNIST (28x28)."""</span>
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, in_ch=<span class="number">1</span>, time_dim=<span class="number">256</span>):
+        <span class="keyword">super</span>().__init__()
+        <span class="comment"># Timestep embedding</span>
+        self.time_mlp = nn.Sequential(
+            SinusoidalPositionEmbedding(time_dim),
+            nn.Linear(time_dim, time_dim),
+            nn.GELU(),
+            nn.Linear(time_dim, time_dim)
+        )
+
+        <span class="comment"># Encoder (downsampling)</span>
+        self.enc1 = self._block(in_ch, <span class="number">64</span>)
+        self.enc2 = self._block(<span class="number">64</span>, <span class="number">128</span>)
+        self.pool = nn.MaxPool2d(<span class="number">2</span>)
+
+        <span class="comment"># Bottleneck</span>
+        self.bot = self._block(<span class="number">128</span>, <span class="number">256</span>)
+        self.time_proj = nn.Linear(time_dim, <span class="number">256</span>)
+
+        <span class="comment"># Decoder (upsampling)</span>
+        self.up2 = nn.ConvTranspose2d(<span class="number">256</span>, <span class="number">128</span>, <span class="number">2</span>, stride=<span class="number">2</span>)
+        self.dec2 = self._block(<span class="number">256</span>, <span class="number">128</span>)  <span class="comment"># 256 car concat skip</span>
+        self.up1 = nn.ConvTranspose2d(<span class="number">128</span>, <span class="number">64</span>, <span class="number">2</span>, stride=<span class="number">2</span>)
+        self.dec1 = self._block(<span class="number">128</span>, <span class="number">64</span>)   <span class="comment"># 128 car concat skip</span>
+
+        <span class="comment"># Sortie : predire le bruit (meme nombre de canaux que l'entree)</span>
+        self.out = nn.Conv2d(<span class="number">64</span>, in_ch, <span class="number">1</span>)
+
+    <span class="keyword">def</span> <span class="function">_block</span>(self, in_ch, out_ch):
+        <span class="keyword">return</span> nn.Sequential(
+            nn.Conv2d(in_ch, out_ch, <span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.GroupNorm(<span class="number">8</span>, out_ch),
+            nn.GELU(),
+            nn.Conv2d(out_ch, out_ch, <span class="number">3</span>, padding=<span class="number">1</span>),
+            nn.GroupNorm(<span class="number">8</span>, out_ch),
+            nn.GELU()
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x, t):
+        <span class="comment"># Timestep embedding</span>
+        t_emb = self.time_mlp(t)
+
+        <span class="comment"># Encoder</span>
+        e1 = self.enc1(x)           <span class="comment"># [B, 64, 28, 28]</span>
+        e2 = self.enc2(self.pool(e1)) <span class="comment"># [B, 128, 14, 14]</span>
+
+        <span class="comment"># Bottleneck + injection timestep</span>
+        b = self.bot(self.pool(e2))  <span class="comment"># [B, 256, 7, 7]</span>
+        b = b + self.time_proj(t_emb)[:, :, <span class="keyword">None</span>, <span class="keyword">None</span>]
+
+        <span class="comment"># Decoder avec skip connections</span>
+        d2 = self.up2(b)             <span class="comment"># [B, 128, 14, 14]</span>
+        d2 = self.dec2(torch.cat([d2, e2], dim=<span class="number">1</span>))
+        d1 = self.up1(d2)            <span class="comment"># [B, 64, 28, 28]</span>
+        d1 = self.dec1(torch.cat([d1, e1], dim=<span class="number">1</span>))
+
+        <span class="keyword">return</span> self.out(d1)</div>
+
+    <h3>10.3 Boucle d'entrainement complete</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">train_diffusion</span>(epochs=<span class="number">10</span>, batch_size=<span class="number">128</span>, lr=<span class="number">2e-4</span>):
+    device = torch.device(<span class="string">"cuda"</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">"cpu"</span>)
+
+    <span class="comment"># Dataset MNIST</span>
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize([<span class="number">0.5</span>], [<span class="number">0.5</span>])  <span class="comment"># Normaliser entre -1 et 1</span>
+    ])
+    dataset = datasets.MNIST(root=<span class="string">"./data"</span>, train=<span class="keyword">True</span>,
+                              transform=transform, download=<span class="keyword">True</span>)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=<span class="keyword">True</span>)
+
+    <span class="comment"># Modele et schedule</span>
+    model = SimpleUNet(in_ch=<span class="number">1</span>).to(device)
+    schedule = NoiseSchedule(T=<span class="number">1000</span>, device=device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    <span class="keyword">for</span> epoch <span class="keyword">in</span> range(epochs):
+        total_loss = <span class="number">0</span>
+        <span class="keyword">for</span> batch_idx, (images, _) <span class="keyword">in</span> enumerate(loader):
+            images = images.to(device)
+            batch_size_actual = images.shape[<span class="number">0</span>]
+
+            <span class="comment"># 1. Timestep aleatoire</span>
+            t = torch.randint(<span class="number">0</span>, schedule.T, (batch_size_actual,), device=device)
+
+            <span class="comment"># 2. Bruit aleatoire</span>
+            noise = torch.randn_like(images)
+
+            <span class="comment"># 3. Forward process</span>
+            sqrt_ab = schedule.sqrt_alphas_cumprod[t][:, <span class="keyword">None</span>, <span class="keyword">None</span>, <span class="keyword">None</span>]
+            sqrt_1_ab = schedule.sqrt_one_minus_alphas_cumprod[t][:, <span class="keyword">None</span>, <span class="keyword">None</span>, <span class="keyword">None</span>]
+            x_noisy = sqrt_ab * images + sqrt_1_ab * noise
+
+            <span class="comment"># 4. Prediction du bruit</span>
+            noise_pred = model(x_noisy, t)
+
+            <span class="comment"># 5. Loss MSE simple</span>
+            loss = F.mse_loss(noise_pred, noise)
+
+            <span class="comment"># 6. Optimisation</span>
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
+
+        avg_loss = total_loss / len(loader)
+        <span class="keyword">print</span>(f<span class="string">"Epoch {epoch+1}/{epochs} | Loss: {avg_loss:.4f}"</span>)</div>
+
+    <div class="output-block">Epoch 1/10 | Loss: 0.4523
+Epoch 2/10 | Loss: 0.1287
+Epoch 3/10 | Loss: 0.0834
+...
+Epoch 10/10 | Loss: 0.0312</div>
+
+    <h3>10.4 Algorithme de sampling</h3>
+
+    <div class="code-block"><span class="keyword">@torch.no_grad</span>()
+<span class="keyword">def</span> <span class="function">sample</span>(model, schedule, n_samples=<span class="number">16</span>, img_size=<span class="number">28</span>, channels=<span class="number">1</span>):
+    <span class="string">"""Generer des images par reverse diffusion."""</span>
+    device = next(model.parameters()).device
+    model.eval()
+
+    <span class="comment"># Partir du bruit pur</span>
+    x = torch.randn(n_samples, channels, img_size, img_size, device=device)
+
+    <span class="keyword">for</span> t <span class="keyword">in</span> reversed(range(schedule.T)):
+        t_batch = torch.full((n_samples,), t, device=device, dtype=torch.long)
+
+        <span class="comment"># Predire le bruit</span>
+        noise_pred = model(x, t_batch)
+
+        <span class="comment"># Parametres pour cette etape</span>
+        alpha = schedule.alphas[t]
+        alpha_bar = schedule.alphas_cumprod[t]
+        beta = schedule.betas[t]
+
+        <span class="comment"># Calculer la moyenne</span>
+        x = (<span class="number">1</span> / torch.sqrt(alpha)) * (
+            x - (beta / torch.sqrt(<span class="number">1</span> - alpha_bar)) * noise_pred
+        )
+
+        <span class="comment"># Ajouter du bruit (sauf a la derniere etape)</span>
+        <span class="keyword">if</span> t > <span class="number">0</span>:
+            noise = torch.randn_like(x)
+            sigma = torch.sqrt(schedule.posterior_variance[t])
+            x = x + sigma * noise
+
+    <span class="comment"># Denormaliser de [-1, 1] vers [0, 1]</span>
+    x = (x + <span class="number">1</span>) / <span class="number">2</span>
+    x = x.clamp(<span class="number">0</span>, <span class="number">1</span>)
+
+    model.train()
+    <span class="keyword">return</span> x
+
+<span class="comment"># Generer 16 images</span>
+generated = sample(model, schedule, n_samples=<span class="number">16</span>)
+<span class="keyword">print</span>(f<span class="string">"Shape des images generees: {generated.shape}"</span>)</div>
+
+    <div class="output-block">Shape des images generees: torch.Size([16, 1, 28, 28])</div>
+
+    <div class="prof-note">
+        Cette implementation est volontairement simplifiee pour illustrer les concepts. En pratique, un modele de diffusion performant utiliserait : un U-Net beaucoup plus profond avec des blocs d'attention, un cosine schedule, le sampling DDIM pour accelerer la generation, et s'entrainerait pendant des centaines de milliers d'iterations sur des GPU puissants.
+    </div>
+
+    <h3>10.5 Resume des concepts cles</h3>
+
+    <div class="concept-box">
+        <h4>Ce qu'il faut retenir</h4>
+        <ul>
+            <li><strong>Forward process</strong> : ajout de bruit gaussien progressif (fixe, non appris)</li>
+            <li><strong>Reverse process</strong> : debruitage iteratif (appris par le reseau)</li>
+            <li><strong>Loss simple</strong> : MSE entre le bruit reel et le bruit predit</li>
+            <li><strong>U-Net</strong> : architecture encoder-decoder avec skip connections et timestep embedding</li>
+            <li><strong>Latent Diffusion</strong> : operer dans l'espace latent d'un VAE pour l'efficacite</li>
+            <li><strong>Classifier-Free Guidance</strong> : controle de la fidelite au conditionnement</li>
+            <li><strong>Reparameterization trick</strong> : permet de sauter a n'importe quelle etape du forward process</li>
+        </ul>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="dl_09_autoencoders.html">&larr; Cours 9 : Autoencoders</a>
+        <a href="dl_11_pytorch.html">Cours 11 : PyTorch en Pratique &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

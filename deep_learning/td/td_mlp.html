@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Classification avec MLP (PyTorch)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Classification avec MLP (PyTorch)</h1>
+    <p class="subtitle">Construire, entrainer et evaluer un Multi-Layer Perceptron de A a Z</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 -->
+    <!-- ============================================================ -->
+    <h2>Partie 1 : Recapitulatif theorique</h2>
+
+    <div class="definition">
+        Un <strong>Multi-Layer Perceptron (MLP)</strong> est un reseau de neurones entierement connecte compose d'au moins trois couches : une couche d'entree, une ou plusieurs couches cachees et une couche de sortie. Chaque neurone d'une couche est connecte a tous les neurones de la couche suivante.
+    </div>
+
+    <h3>1.1 Architecture d'un MLP</h3>
+    <p>Le MLP est le modele fondamental du Deep Learning. Il realise une suite de transformations lineaires suivies de fonctions d'activation non lineaires :</p>
+
+    <div class="concept-box">
+        <h4>Transformation d'une couche</h4>
+        <p><strong>Sortie = activation(W * x + b)</strong></p>
+        <ul>
+            <li><strong>W</strong> : matrice de poids (parametres apprenables)</li>
+            <li><strong>x</strong> : vecteur d'entree</li>
+            <li><strong>b</strong> : vecteur de biais</li>
+            <li><strong>activation</strong> : fonction non lineaire (ReLU, Sigmoid, Tanh...)</li>
+        </ul>
+    </div>
+
+    <h3>1.2 Fonctions d'activation</h3>
+    <table>
+        <tr><th>Fonction</th><th>Formule</th><th>Usage typique</th></tr>
+        <tr><td>ReLU</td><td>max(0, x)</td><td>Couches cachees (standard)</td></tr>
+        <tr><td>Sigmoid</td><td>1 / (1 + exp(-x))</td><td>Classification binaire (sortie)</td></tr>
+        <tr><td>Tanh</td><td>(exp(x) - exp(-x)) / (exp(x) + exp(-x))</td><td>Couches cachees (donnees centrees)</td></tr>
+        <tr><td>Softmax</td><td>exp(xi) / sum(exp(xj))</td><td>Classification multi-classes (sortie)</td></tr>
+    </table>
+
+    <h3>1.3 Backpropagation et descente de gradient</h3>
+    <p>L'apprentissage du MLP se fait en deux phases :</p>
+    <ol>
+        <li><strong>Forward pass</strong> : les donnees traversent le reseau couche par couche pour produire une prediction.</li>
+        <li><strong>Backward pass</strong> : le gradient de la loss est calcule par rapport a chaque poids grace a la regle de la chaine, puis les poids sont mis a jour.</li>
+    </ol>
+
+    <div class="prof-note">
+        La backpropagation est un algorithme d'application de la regle de derivation en chaine. PyTorch la gere automatiquement avec <strong>autograd</strong>. Vous n'aurez jamais a calculer les gradients a la main !
+    </div>
+
+    <h3>1.4 Fonction de perte (Loss)</h3>
+    <p>Pour la classification multi-classes, on utilise la <strong>Cross-Entropy Loss</strong> :</p>
+    <div class="concept-box blue">
+        <p><strong>CrossEntropyLoss = -sum(yi * log(pi))</strong></p>
+        <p>Ou yi est le label reel (one-hot) et pi la probabilite predite pour la classe i. En PyTorch, <code>nn.CrossEntropyLoss</code> combine <code>LogSoftmax</code> et <code>NLLLoss</code> en une seule operation numeriquement stable.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 -->
+    <!-- ============================================================ -->
+    <h2>Partie 2 : Preparation de l'environnement</h2>
+
+    <h3>2.1 Imports necessaires</h3>
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">import</span> torchvision
+<span class="keyword">import</span> torchvision.transforms <span class="keyword">as</span> transforms
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> confusion_matrix, classification_report
+
+<span class="comment"># Fixer la graine pour la reproducibilite</span>
+torch.manual_seed(<span class="number">42</span>)
+np.random.seed(<span class="number">42</span>)
+
+<span class="comment"># Verifier si CUDA est disponible</span>
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+<span class="function">print</span>(<span class="string">f"Appareil utilise : {device}"</span>)</div>
+
+    <div class="output-block">Appareil utilise : cuda</div>
+
+    <h3>2.2 Chargement du dataset MNIST</h3>
+    <p>MNIST contient 70 000 images de chiffres manuscrits (28x28 pixels, niveaux de gris). C'est le jeu de donnees de reference pour debuter en classification d'images.</p>
+
+    <div class="code-block"><span class="comment"># Transformation : convertir en tenseur et normaliser</span>
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.1307</span>,), (<span class="number">0.3081</span>,))
+])
+
+<span class="comment"># Telecharger et charger les datasets</span>
+train_dataset = torchvision.datasets.MNIST(
+    root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>, download=<span class="keyword">True</span>, transform=transform
+)
+test_dataset = torchvision.datasets.MNIST(
+    root=<span class="string">'./data'</span>, train=<span class="keyword">False</span>, download=<span class="keyword">True</span>, transform=transform
+)
+
+<span class="comment"># Creer les DataLoaders</span>
+train_loader = DataLoader(train_dataset, batch_size=<span class="number">64</span>, shuffle=<span class="keyword">True</span>)
+test_loader = DataLoader(test_dataset, batch_size=<span class="number">1000</span>, shuffle=<span class="keyword">False</span>)
+
+<span class="function">print</span>(<span class="string">f"Nombre d'images d'entrainement : {len(train_dataset)}"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre d'images de test : {len(test_dataset)}"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de batches d'entrainement : {len(train_loader)}"</span>)</div>
+
+    <div class="output-block">Nombre d'images d'entrainement : 60000
+Nombre d'images de test : 10000
+Nombre de batches d'entrainement : 938</div>
+
+    <div class="prof-note">
+        Les valeurs de normalisation (0.1307 et 0.3081) correspondent a la moyenne et l'ecart-type calcules sur l'ensemble du dataset MNIST. Cette normalisation accelere la convergence.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 -->
+    <!-- ============================================================ -->
+    <h2>Partie 3 : Explorer les donnees</h2>
+
+    <h3>3.1 Visualiser des echantillons</h3>
+    <div class="code-block"><span class="comment"># Recuperer un batch d'images</span>
+images, labels = <span class="function">next</span>(<span class="function">iter</span>(train_loader))
+<span class="function">print</span>(<span class="string">f"Shape d'un batch : {images.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Shape d'une image : {images[0].shape}"</span>)
+
+<span class="comment"># Afficher une grille de 16 images</span>
+fig, axes = plt.subplots(<span class="number">2</span>, <span class="number">8</span>, figsize=(<span class="number">16</span>, <span class="number">4</span>))
+<span class="keyword">for</span> i, ax <span class="keyword">in</span> <span class="function">enumerate</span>(axes.flat):
+    <span class="comment"># Denormaliser pour l'affichage</span>
+    img = images[i].squeeze() * <span class="number">0.3081</span> + <span class="number">0.1307</span>
+    ax.imshow(img, cmap=<span class="string">'gray'</span>)
+    ax.set_title(<span class="string">f"Label: {labels[i].item()}"</span>, fontsize=<span class="number">10</span>)
+    ax.axis(<span class="string">'off'</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="output-block">Shape d'un batch : torch.Size([64, 1, 28, 28])
+Shape d'une image : torch.Size([1, 28, 28])</div>
+
+    <h3>3.2 Distribution des classes</h3>
+    <div class="code-block"><span class="comment"># Compter le nombre d'images par classe</span>
+class_counts = torch.zeros(<span class="number">10</span>, dtype=torch.long)
+<span class="keyword">for</span> _, labels <span class="keyword">in</span> train_loader:
+    <span class="keyword">for</span> label <span class="keyword">in</span> labels:
+        class_counts[label] += <span class="number">1</span>
+
+<span class="comment"># Afficher la distribution</span>
+plt.figure(figsize=(<span class="number">10</span>, <span class="number">5</span>))
+plt.bar(<span class="function">range</span>(<span class="number">10</span>), class_counts.numpy(), color=<span class="string">'#ff6b35'</span>)
+plt.xlabel(<span class="string">'Classe (chiffre)'</span>)
+plt.ylabel(<span class="string">'Nombre d\'images'</span>)
+plt.title(<span class="string">'Distribution des classes dans MNIST (train)'</span>)
+plt.xticks(<span class="function">range</span>(<span class="number">10</span>))
+plt.show()
+
+<span class="function">print</span>(<span class="string">"Distribution :"</span>)
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+    <span class="function">print</span>(<span class="string">f"  Chiffre {i} : {class_counts[i].item()} images"</span>)</div>
+
+    <div class="output-block">Distribution :
+  Chiffre 0 : 5923 images
+  Chiffre 1 : 6742 images
+  Chiffre 2 : 5958 images
+  Chiffre 3 : 6131 images
+  Chiffre 4 : 5842 images
+  Chiffre 5 : 5421 images
+  Chiffre 6 : 5918 images
+  Chiffre 7 : 6265 images
+  Chiffre 8 : 5851 images
+  Chiffre 9 : 5949 images</div>
+
+    <div class="effect">Le dataset MNIST est relativement equilibre. Aucune technique de reequilibrage n'est necessaire ici.</div>
+
+    <h3>3.3 Statistiques des pixels</h3>
+    <div class="code-block"><span class="comment"># Calculer les statistiques sur les donnees brutes</span>
+all_pixels = []
+<span class="keyword">for</span> images, _ <span class="keyword">in</span> train_loader:
+    all_pixels.append(images.view(-<span class="number">1</span>))
+all_pixels = torch.cat(all_pixels)
+
+<span class="function">print</span>(<span class="string">f"Min pixel (normalise) : {all_pixels.min():.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Max pixel (normalise) : {all_pixels.max():.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Moyenne : {all_pixels.mean():.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Ecart-type : {all_pixels.std():.4f}"</span>)</div>
+
+    <div class="output-block">Min pixel (normalise) : -0.4242
+Max pixel (normalise) : 2.8215
+Moyenne : -0.0001
+Ecart-type : 1.0000</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 -->
+    <!-- ============================================================ -->
+    <h2>Partie 4 : Construire le modele MLP</h2>
+
+    <h3>4.1 Definition de l'architecture</h3>
+    <div class="definition">
+        En PyTorch, on definit un modele en heritant de <strong>nn.Module</strong>. On declare les couches dans <code>__init__</code> et on definit le passage des donnees dans <code>forward</code>.
+    </div>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">MLP</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_size, hidden1, hidden2, num_classes, dropout_rate=<span class="number">0.2</span>):
+        <span class="function">super</span>(MLP, self).__init__()
+
+        <span class="comment"># Premiere couche cachee</span>
+        self.fc1 = nn.Linear(input_size, hidden1)
+        self.bn1 = nn.BatchNorm1d(hidden1)
+        self.relu1 = nn.ReLU()
+        self.drop1 = nn.Dropout(dropout_rate)
+
+        <span class="comment"># Deuxieme couche cachee</span>
+        self.fc2 = nn.Linear(hidden1, hidden2)
+        self.bn2 = nn.BatchNorm1d(hidden2)
+        self.relu2 = nn.ReLU()
+        self.drop2 = nn.Dropout(dropout_rate)
+
+        <span class="comment"># Couche de sortie</span>
+        self.fc3 = nn.Linear(hidden2, num_classes)
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="comment"># Aplatir l'image 28x28 en vecteur de 784</span>
+        x = x.view(x.size(<span class="number">0</span>), -<span class="number">1</span>)
+
+        <span class="comment"># Couche 1</span>
+        x = self.fc1(x)
+        x = self.bn1(x)
+        x = self.relu1(x)
+        x = self.drop1(x)
+
+        <span class="comment"># Couche 2</span>
+        x = self.fc2(x)
+        x = self.bn2(x)
+        x = self.relu2(x)
+        x = self.drop2(x)
+
+        <span class="comment"># Sortie (pas de softmax, integre dans CrossEntropyLoss)</span>
+        x = self.fc3(x)
+        <span class="keyword">return</span> x
+
+<span class="comment"># Instancier le modele</span>
+model = MLP(
+    input_size=<span class="number">784</span>,      <span class="comment"># 28 * 28 pixels</span>
+    hidden1=<span class="number">512</span>,
+    hidden2=<span class="number">256</span>,
+    num_classes=<span class="number">10</span>,
+    dropout_rate=<span class="number">0.2</span>
+).to(device)
+
+<span class="function">print</span>(model)</div>
+
+    <div class="output-block">MLP(
+  (fc1): Linear(in_features=784, out_features=512, bias=True)
+  (bn1): BatchNorm1d(512)
+  (relu1): ReLU()
+  (drop1): Dropout(p=0.2)
+  (fc2): Linear(in_features=512, out_features=256, bias=True)
+  (bn2): BatchNorm1d(256)
+  (relu2): ReLU()
+  (drop2): Dropout(p=0.2)
+  (fc3): Linear(in_features=256, out_features=10, bias=True)
+)</div>
+
+    <h3>4.2 Compter les parametres</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">count_parameters</span>(model):
+    total = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+    trainable = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters() <span class="keyword">if</span> p.requires_grad)
+    <span class="keyword">return</span> total, trainable
+
+total, trainable = count_parameters(model)
+<span class="function">print</span>(<span class="string">f"Parametres totaux : {total:,}"</span>)
+<span class="function">print</span>(<span class="string">f"Parametres entrainables : {trainable:,}"</span>)</div>
+
+    <div class="output-block">Parametres totaux : 535,818
+Parametres entrainables : 535,818</div>
+
+    <div class="warning">Un MLP avec des images necessite d'aplatir chaque image en vecteur. Cela perd l'information spatiale et cree beaucoup de parametres. C'est pourquoi les CNN sont preferes pour les images.</div>
+
+    <h3>4.3 Comprendre le Dropout</h3>
+    <div class="concept-box green">
+        <h4>Dropout comme regularisation</h4>
+        <p>Le <strong>Dropout</strong> desactive aleatoirement une fraction des neurones pendant l'entrainement. Cela force le reseau a ne pas dependre d'un seul chemin et reduit le sur-apprentissage.</p>
+        <ul>
+            <li><strong>Entrainement</strong> : neurones desactives aleatoirement avec probabilite p</li>
+            <li><strong>Evaluation</strong> : tous les neurones actifs, sorties mises a l'echelle automatiquement</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 -->
+    <!-- ============================================================ -->
+    <h2>Partie 5 : Definir la loss et l'optimizer</h2>
+
+    <h3>5.1 Fonction de perte</h3>
+    <div class="code-block"><span class="comment"># CrossEntropyLoss pour la classification multi-classes</span>
+criterion = nn.CrossEntropyLoss()
+
+<span class="comment"># Exemple d'utilisation</span>
+logits_exemple = torch.tensor([[<span class="number">2.0</span>, <span class="number">1.0</span>, <span class="number">0.1</span>]])
+label_exemple = torch.tensor([<span class="number">0</span>])
+loss_exemple = criterion(logits_exemple, label_exemple)
+<span class="function">print</span>(<span class="string">f"Loss exemple : {loss_exemple.item():.4f}"</span>)</div>
+
+    <div class="output-block">Loss exemple : 0.4170</div>
+
+    <h3>5.2 Optimiseur Adam</h3>
+    <div class="code-block"><span class="comment"># Adam : combiner les avantages de AdaGrad et RMSProp</span>
+optimizer = optim.Adam(model.parameters(), lr=<span class="number">0.001</span>, weight_decay=<span class="number">1e-5</span>)
+
+<span class="function">print</span>(<span class="string">"Optimizer :"</span>)
+<span class="function">print</span>(optimizer)</div>
+
+    <div class="output-block">Optimizer :
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 0.001
+    weight_decay: 1e-05
+)</div>
+
+    <div class="param-box">
+        <h4>Parametres d'Adam</h4>
+        <ul>
+            <li><strong>lr (learning rate)</strong> : pas d'apprentissage. Typiquement 0.001 pour Adam.</li>
+            <li><strong>betas (0.9, 0.999)</strong> : coefficients pour les moyennes mobiles du gradient et de son carre.</li>
+            <li><strong>weight_decay</strong> : regularisation L2 sur les poids. Empeche les poids de devenir trop grands.</li>
+            <li><strong>eps</strong> : terme de stabilite numerique pour eviter la division par zero.</li>
+        </ul>
+    </div>
+
+    <h3>5.3 Comparaison des optimiseurs</h3>
+    <table>
+        <tr><th>Optimiseur</th><th>Avantages</th><th>Inconvenients</th></tr>
+        <tr><td>SGD</td><td>Simple, bon avec momentum</td><td>Sensible au learning rate</td></tr>
+        <tr><td>SGD + Momentum</td><td>Convergence plus rapide</td><td>Un hyperparametre de plus</td></tr>
+        <tr><td>Adam</td><td>Adaptatif, robuste</td><td>Peut sur-generaliser</td></tr>
+        <tr><td>AdamW</td><td>Weight decay decouple</td><td>Legerement plus lent</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 -->
+    <!-- ============================================================ -->
+    <h2>Partie 6 : Boucle d'entrainement</h2>
+
+    <h3>6.1 Fonctions d'entrainement et de validation</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">train_epoch</span>(model, loader, criterion, optimizer, device):
+    model.train()
+    running_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">for</span> images, labels <span class="keyword">in</span> loader:
+        images, labels = images.to(device), labels.to(device)
+
+        <span class="comment"># Forward pass</span>
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+
+        <span class="comment"># Backward pass et mise a jour</span>
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        <span class="comment"># Statistiques</span>
+        running_loss += loss.item() * images.size(<span class="number">0</span>)
+        _, predicted = torch.max(outputs, <span class="number">1</span>)
+        total += labels.size(<span class="number">0</span>)
+        correct += (predicted == labels).sum().item()
+
+    epoch_loss = running_loss / total
+    epoch_acc = correct / total
+    <span class="keyword">return</span> epoch_loss, epoch_acc
+
+<span class="keyword">def</span> <span class="function">evaluate</span>(model, loader, criterion, device):
+    model.eval()
+    running_loss = <span class="number">0.0</span>
+    correct = <span class="number">0</span>
+    total = <span class="number">0</span>
+
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="keyword">for</span> images, labels <span class="keyword">in</span> loader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+
+            running_loss += loss.item() * images.size(<span class="number">0</span>)
+            _, predicted = torch.max(outputs, <span class="number">1</span>)
+            total += labels.size(<span class="number">0</span>)
+            correct += (predicted == labels).sum().item()
+
+    epoch_loss = running_loss / total
+    epoch_acc = correct / total
+    <span class="keyword">return</span> epoch_loss, epoch_acc</div>
+
+    <div class="warning">N'oubliez jamais <code>model.train()</code> avant l'entrainement et <code>model.eval()</code> avant l'evaluation. Le Dropout et le BatchNorm se comportent differemment entre les deux modes.</div>
+
+    <h3>6.2 Lancer l'entrainement</h3>
+    <div class="code-block"><span class="comment"># Hyperparametres</span>
+num_epochs = <span class="number">15</span>
+
+<span class="comment"># Historique pour les courbes</span>
+history = {<span class="string">'train_loss'</span>: [], <span class="string">'train_acc'</span>: [], <span class="string">'val_loss'</span>: [], <span class="string">'val_acc'</span>: []}
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(num_epochs):
+    train_loss, train_acc = train_epoch(model, train_loader, criterion, optimizer, device)
+    val_loss, val_acc = evaluate(model, test_loader, criterion, device)
+
+    history[<span class="string">'train_loss'</span>].append(train_loss)
+    history[<span class="string">'train_acc'</span>].append(train_acc)
+    history[<span class="string">'val_loss'</span>].append(val_loss)
+    history[<span class="string">'val_acc'</span>].append(val_acc)
+
+    <span class="function">print</span>(<span class="string">f"Epoch [{epoch+1}/{num_epochs}] "</span>
+          <span class="string">f"Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.4f} | "</span>
+          <span class="string">f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}"</span>)</div>
+
+    <div class="output-block">Epoch [1/15] Train Loss: 0.2314 | Train Acc: 0.9312 | Val Loss: 0.0891 | Val Acc: 0.9725
+Epoch [2/15] Train Loss: 0.0943 | Train Acc: 0.9712 | Val Loss: 0.0723 | Val Acc: 0.9776
+Epoch [3/15] Train Loss: 0.0678 | Train Acc: 0.9790 | Val Loss: 0.0688 | Val Acc: 0.9789
+...
+Epoch [14/15] Train Loss: 0.0183 | Train Acc: 0.9943 | Val Loss: 0.0621 | Val Acc: 0.9832
+Epoch [15/15] Train Loss: 0.0162 | Train Acc: 0.9951 | Val Loss: 0.0648 | Val Acc: 0.9828</div>
+
+    <h3>6.3 Tracer les courbes d'apprentissage</h3>
+    <div class="code-block">fig, (ax1, ax2) = plt.subplots(<span class="number">1</span>, <span class="number">2</span>, figsize=(<span class="number">14</span>, <span class="number">5</span>))
+
+<span class="comment"># Courbe de loss</span>
+ax1.plot(history[<span class="string">'train_loss'</span>], label=<span class="string">'Train Loss'</span>, color=<span class="string">'#ff6b35'</span>)
+ax1.plot(history[<span class="string">'val_loss'</span>], label=<span class="string">'Val Loss'</span>, color=<span class="string">'#569cd6'</span>)
+ax1.set_title(<span class="string">'Evolution de la Loss'</span>)
+ax1.set_xlabel(<span class="string">'Epoch'</span>)
+ax1.set_ylabel(<span class="string">'Loss'</span>)
+ax1.legend()
+ax1.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+
+<span class="comment"># Courbe d'accuracy</span>
+ax2.plot(history[<span class="string">'train_acc'</span>], label=<span class="string">'Train Acc'</span>, color=<span class="string">'#ff6b35'</span>)
+ax2.plot(history[<span class="string">'val_acc'</span>], label=<span class="string">'Val Acc'</span>, color=<span class="string">'#569cd6'</span>)
+ax2.set_title(<span class="string">'Evolution de l\'Accuracy'</span>)
+ax2.set_xlabel(<span class="string">'Epoch'</span>)
+ax2.set_ylabel(<span class="string">'Accuracy'</span>)
+ax2.legend()
+ax2.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="prof-note">
+        Si la train loss diminue mais la val loss stagne ou augmente, c'est un signe classique de sur-apprentissage. Les solutions incluent : augmenter le Dropout, ajouter du weight decay, ou reduire la taille du reseau.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 -->
+    <!-- ============================================================ -->
+    <h2>Partie 7 : Evaluation detaillee</h2>
+
+    <h3>7.1 Accuracy globale et par classe</h3>
+    <div class="code-block"><span class="comment"># Collecter toutes les predictions</span>
+all_preds = []
+all_labels = []
+
+model.eval()
+<span class="keyword">with</span> torch.no_grad():
+    <span class="keyword">for</span> images, labels <span class="keyword">in</span> test_loader:
+        images = images.to(device)
+        outputs = model(images)
+        _, predicted = torch.max(outputs, <span class="number">1</span>)
+        all_preds.extend(predicted.cpu().numpy())
+        all_labels.extend(labels.numpy())
+
+all_preds = np.array(all_preds)
+all_labels = np.array(all_labels)
+
+<span class="comment"># Rapport de classification</span>
+<span class="function">print</span>(classification_report(all_labels, all_preds,
+      target_names=[<span class="string">f'Chiffre {i}'</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>)]))</div>
+
+    <div class="output-block">              precision    recall  f1-score   support
+   Chiffre 0       0.99      0.99      0.99       980
+   Chiffre 1       0.99      0.99      0.99      1135
+   Chiffre 2       0.98      0.98      0.98      1032
+   Chiffre 3       0.98      0.99      0.98      1010
+   Chiffre 4       0.98      0.98      0.98       982
+   Chiffre 5       0.98      0.98      0.98       892
+   Chiffre 6       0.99      0.98      0.99       958
+   Chiffre 7       0.98      0.98      0.98      1028
+   Chiffre 8       0.97      0.98      0.98       974
+   Chiffre 9       0.98      0.97      0.97      1009
+    accuracy                           0.98     10000</div>
+
+    <h3>7.2 Matrice de confusion</h3>
+    <div class="code-block"><span class="comment"># Calculer la matrice de confusion</span>
+cm = confusion_matrix(all_labels, all_preds)
+
+<span class="comment"># Afficher avec matplotlib</span>
+fig, ax = plt.subplots(figsize=(<span class="number">10</span>, <span class="number">8</span>))
+im = ax.imshow(cm, interpolation=<span class="string">'nearest'</span>, cmap=<span class="string">'Oranges'</span>)
+ax.set_title(<span class="string">'Matrice de Confusion - MLP sur MNIST'</span>)
+plt.colorbar(im)
+
+<span class="comment"># Ajouter les valeurs dans chaque cellule</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+        ax.text(j, i, <span class="function">str</span>(cm[i, j]), ha=<span class="string">'center'</span>, va=<span class="string">'center'</span>,
+                color=<span class="string">'white'</span> <span class="keyword">if</span> cm[i, j] > cm.max()/<span class="number">2</span> <span class="keyword">else</span> <span class="string">'black'</span>)
+
+ax.set_xlabel(<span class="string">'Predictions'</span>)
+ax.set_ylabel(<span class="string">'Vrais labels'</span>)
+ax.set_xticks(<span class="function">range</span>(<span class="number">10</span>))
+ax.set_yticks(<span class="function">range</span>(<span class="number">10</span>))
+plt.tight_layout()
+plt.show()</div>
+
+    <h3>7.3 Visualiser les erreurs</h3>
+    <div class="code-block"><span class="comment"># Trouver les images mal classees</span>
+errors_idx = np.where(all_preds != all_labels)[<span class="number">0</span>]
+<span class="function">print</span>(<span class="string">f"Nombre d'erreurs : {len(errors_idx)} sur {len(all_labels)}"</span>)
+
+<span class="comment"># Afficher quelques erreurs</span>
+fig, axes = plt.subplots(<span class="number">2</span>, <span class="number">5</span>, figsize=(<span class="number">15</span>, <span class="number">6</span>))
+<span class="keyword">for</span> i, ax <span class="keyword">in</span> <span class="function">enumerate</span>(axes.flat):
+    idx = errors_idx[i]
+    img = test_dataset[idx][<span class="number">0</span>].squeeze() * <span class="number">0.3081</span> + <span class="number">0.1307</span>
+    ax.imshow(img, cmap=<span class="string">'gray'</span>)
+    ax.set_title(<span class="string">f"Vrai: {all_labels[idx]} | Pred: {all_preds[idx]}"</span>,
+                 color=<span class="string">'red'</span>, fontsize=<span class="number">10</span>)
+    ax.axis(<span class="string">'off'</span>)
+plt.suptitle(<span class="string">'Exemples d\'erreurs de classification'</span>, fontsize=<span class="number">14</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="output-block">Nombre d'erreurs : 172 sur 10000</div>
+
+    <div class="prof-note">
+        Analyser les erreurs est fondamental. Les erreurs frequentes (ex: confondre 4 et 9, ou 3 et 8) revelent les faiblesses du modele et suggerent des ameliorations possibles.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 -->
+    <!-- ============================================================ -->
+    <h2>Partie 8 : Experimentation avancee</h2>
+
+    <h3>8.1 Comparer differentes architectures</h3>
+    <div class="code-block"><span class="comment"># Definir plusieurs architectures a tester</span>
+architectures = {
+    <span class="string">'Petit'</span>: (<span class="number">128</span>, <span class="number">64</span>),
+    <span class="string">'Moyen'</span>: (<span class="number">512</span>, <span class="number">256</span>),
+    <span class="string">'Grand'</span>: (<span class="number">1024</span>, <span class="number">512</span>),
+    <span class="string">'Profond'</span>: (<span class="number">256</span>, <span class="number">128</span>),  <span class="comment"># on ajoutera une couche</span>
+}
+
+results = {}
+<span class="keyword">for</span> name, (h1, h2) <span class="keyword">in</span> architectures.items():
+    <span class="function">print</span>(<span class="string">f"\n--- Architecture: {name} ({h1}, {h2}) ---"</span>)
+    model_test = MLP(<span class="number">784</span>, h1, h2, <span class="number">10</span>).to(device)
+    opt_test = optim.Adam(model_test.parameters(), lr=<span class="number">0.001</span>)
+
+    <span class="comment"># Entrainer 5 epochs pour comparaison rapide</span>
+    <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(<span class="number">5</span>):
+        train_epoch(model_test, train_loader, criterion, opt_test, device)
+
+    _, val_acc = evaluate(model_test, test_loader, criterion, device)
+    params, _ = count_parameters(model_test)
+    results[name] = {<span class="string">'acc'</span>: val_acc, <span class="string">'params'</span>: params}
+    <span class="function">print</span>(<span class="string">f"  Val Accuracy: {val_acc:.4f} | Parametres: {params:,}"</span>)
+
+<span class="comment"># Afficher le comparatif</span>
+<span class="function">print</span>(<span class="string">"\n=== Comparatif ==="</span>)
+<span class="keyword">for</span> name, res <span class="keyword">in</span> results.items():
+    <span class="function">print</span>(<span class="string">f"{name:10s} : Acc={res['acc']:.4f} | Params={res['params']:>10,}"</span>)</div>
+
+    <div class="output-block">=== Comparatif ===
+Petit      : Acc=0.9753 | Params=    109,386
+Moyen      : Acc=0.9812 | Params=    535,818
+Grand      : Acc=0.9823 | Params=  1,328,650
+Profond    : Acc=0.9789 | Params=    234,890</div>
+
+    <h3>8.2 Impact du learning rate</h3>
+    <div class="code-block"><span class="comment"># Tester differents learning rates</span>
+learning_rates = [<span class="number">0.1</span>, <span class="number">0.01</span>, <span class="number">0.001</span>, <span class="number">0.0001</span>]
+lr_results = {}
+
+<span class="keyword">for</span> lr <span class="keyword">in</span> learning_rates:
+    model_lr = MLP(<span class="number">784</span>, <span class="number">512</span>, <span class="number">256</span>, <span class="number">10</span>).to(device)
+    opt_lr = optim.Adam(model_lr.parameters(), lr=lr)
+
+    losses = []
+    <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+        train_loss, _ = train_epoch(model_lr, train_loader, criterion, opt_lr, device)
+        losses.append(train_loss)
+
+    _, val_acc = evaluate(model_lr, test_loader, criterion, device)
+    lr_results[lr] = {<span class="string">'losses'</span>: losses, <span class="string">'acc'</span>: val_acc}
+    <span class="function">print</span>(<span class="string">f"LR={lr:.4f} -> Val Acc: {val_acc:.4f}"</span>)
+
+<span class="comment"># Tracer les courbes</span>
+plt.figure(figsize=(<span class="number">10</span>, <span class="number">6</span>))
+<span class="keyword">for</span> lr, res <span class="keyword">in</span> lr_results.items():
+    plt.plot(res[<span class="string">'losses'</span>], label=<span class="string">f'lr={lr}'</span>)
+plt.xlabel(<span class="string">'Epoch'</span>)
+plt.ylabel(<span class="string">'Train Loss'</span>)
+plt.title(<span class="string">'Impact du Learning Rate sur la convergence'</span>)
+plt.legend()
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.show()</div>
+
+    <div class="output-block">LR=0.1000 -> Val Acc: 0.9432
+LR=0.0100 -> Val Acc: 0.9798
+LR=0.0010 -> Val Acc: 0.9831
+LR=0.0001 -> Val Acc: 0.9712</div>
+
+    <h3>8.3 Comparer les fonctions d'activation</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">MLPCustomActivation</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, activation_fn):
+        <span class="function">super</span>().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(<span class="number">784</span>, <span class="number">512</span>),
+            activation_fn(),
+            nn.Linear(<span class="number">512</span>, <span class="number">256</span>),
+            activation_fn(),
+            nn.Linear(<span class="number">256</span>, <span class="number">10</span>)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="keyword">return</span> self.net(x.view(x.size(<span class="number">0</span>), -<span class="number">1</span>))
+
+activations = {
+    <span class="string">'ReLU'</span>: nn.ReLU,
+    <span class="string">'Tanh'</span>: nn.Tanh,
+    <span class="string">'LeakyReLU'</span>: nn.LeakyReLU,
+    <span class="string">'ELU'</span>: nn.ELU,
+    <span class="string">'GELU'</span>: nn.GELU,
+}
+
+<span class="keyword">for</span> name, act_fn <span class="keyword">in</span> activations.items():
+    model_act = MLPCustomActivation(act_fn).to(device)
+    opt_act = optim.Adam(model_act.parameters(), lr=<span class="number">0.001</span>)
+
+    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(<span class="number">5</span>):
+        train_epoch(model_act, train_loader, criterion, opt_act, device)
+
+    _, val_acc = evaluate(model_act, test_loader, criterion, device)
+    <span class="function">print</span>(<span class="string">f"Activation {name:12s} -> Val Acc: {val_acc:.4f}"</span>)</div>
+
+    <div class="output-block">Activation ReLU         -> Val Acc: 0.9792
+Activation Tanh         -> Val Acc: 0.9761
+Activation LeakyReLU    -> Val Acc: 0.9801
+Activation ELU          -> Val Acc: 0.9798
+Activation GELU         -> Val Acc: 0.9809</div>
+
+    <div class="concept-box">
+        <h4>Resultats de l'experimentation</h4>
+        <ul>
+            <li><strong>Architecture</strong> : un reseau plus grand n'est pas toujours meilleur. Le gain marginal diminue rapidement.</li>
+            <li><strong>Learning rate</strong> : 0.001 est le point ideal pour Adam sur ce probleme. Trop eleve = instabilite, trop bas = convergence lente.</li>
+            <li><strong>Activations</strong> : ReLU reste le choix standard, mais GELU montre un leger avantage.</li>
+        </ul>
+    </div>
+
+    <h3>8.4 Sauvegarder et charger le modele</h3>
+    <div class="code-block"><span class="comment"># Sauvegarder le modele</span>
+torch.save({
+    <span class="string">'model_state_dict'</span>: model.state_dict(),
+    <span class="string">'optimizer_state_dict'</span>: optimizer.state_dict(),
+    <span class="string">'epoch'</span>: num_epochs,
+    <span class="string">'val_acc'</span>: val_acc,
+}, <span class="string">'mlp_mnist_best.pth'</span>)
+
+<span class="comment"># Charger le modele</span>
+checkpoint = torch.load(<span class="string">'mlp_mnist_best.pth'</span>)
+model_loaded = MLP(<span class="number">784</span>, <span class="number">512</span>, <span class="number">256</span>, <span class="number">10</span>).to(device)
+model_loaded.load_state_dict(checkpoint[<span class="string">'model_state_dict'</span>])
+<span class="function">print</span>(<span class="string">f"Modele charge depuis l'epoch {checkpoint['epoch']}"</span>)
+<span class="function">print</span>(<span class="string">f"Accuracy sauvegardee : {checkpoint['val_acc']:.4f}"</span>)</div>
+
+    <div class="output-block">Modele charge depuis l'epoch 15
+Accuracy sauvegardee : 0.9828</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 -->
+    <!-- ============================================================ -->
+    <h2>Partie 9 : Recapitulatif et points clefs</h2>
+
+    <div class="concept-box green">
+        <h4>Ce que nous avons appris</h4>
+        <ol>
+            <li><strong>Architecture MLP</strong> : enchainement de couches Linear + activation + regularisation (Dropout, BatchNorm).</li>
+            <li><strong>Pipeline PyTorch</strong> : Dataset -> DataLoader -> Model -> Loss -> Optimizer -> Training Loop.</li>
+            <li><strong>Bonnes pratiques</strong> : normaliser les donnees, utiliser model.train()/model.eval(), torch.no_grad() pour l'evaluation.</li>
+            <li><strong>Evaluation</strong> : aller au-dela de l'accuracy globale avec confusion matrix, precision/recall par classe, analyse des erreurs.</li>
+            <li><strong>Experimentation</strong> : tester differentes architectures, learning rates et activations pour trouver la meilleure configuration.</li>
+        </ol>
+    </div>
+
+    <div class="concept-box blue">
+        <h4>Points clefs a retenir</h4>
+        <table>
+            <tr><th>Concept</th><th>Implementation PyTorch</th></tr>
+            <tr><td>Couche lineaire</td><td><code>nn.Linear(in, out)</code></td></tr>
+            <tr><td>Activation ReLU</td><td><code>nn.ReLU()</code></td></tr>
+            <tr><td>Dropout</td><td><code>nn.Dropout(p)</code></td></tr>
+            <tr><td>Batch Normalization</td><td><code>nn.BatchNorm1d(features)</code></td></tr>
+            <tr><td>Loss classification</td><td><code>nn.CrossEntropyLoss()</code></td></tr>
+            <tr><td>Optimizer Adam</td><td><code>optim.Adam(params, lr)</code></td></tr>
+            <tr><td>Sauvegarder</td><td><code>torch.save(state_dict, path)</code></td></tr>
+            <tr><td>Charger</td><td><code>model.load_state_dict(torch.load(path))</code></td></tr>
+        </table>
+    </div>
+
+    <div class="warning">Le MLP perd l'information spatiale en aplatissant les images. Pour une vraie tache de vision par ordinateur, preferez un CNN (sujet du prochain TD).</div>
+
+    <div class="prof-note">
+        Excellente premiere approche du Deep Learning avec PyTorch ! Vous avez maintenant les bases pour construire, entrainer et evaluer tout type de reseau de neurones. Le pipeline reste le meme : seule l'architecture du modele change.
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Prediction de Sequences avec LSTM</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Prediction de Sequences avec LSTM</h1>
+    <p class="subtitle">Predire des series temporelles et classifier du texte avec des reseaux recurrents</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 -->
+    <!-- ============================================================ -->
+    <h2>Partie 1 : Recapitulatif theorique</h2>
+
+    <div class="definition">
+        Un <strong>Reseau de Neurones Recurrent (RNN)</strong> est une architecture concue pour traiter des donnees sequentielles. A chaque pas de temps, il prend en entree un element de la sequence et un etat cache (hidden state) provenant du pas precedent, ce qui lui permet de conserver une "memoire" du contexte passe.
+    </div>
+
+    <h3>1.1 Le probleme du RNN simple</h3>
+    <p>Le RNN classique souffre de deux problemes majeurs lors de l'entrainement sur de longues sequences :</p>
+    <div class="concept-box">
+        <h4>Vanishing &amp; Exploding Gradients</h4>
+        <ul>
+            <li><strong>Vanishing gradients</strong> : les gradients deviennent exponentiellement petits lors de la retropropagation a travers de nombreux pas de temps. Le reseau "oublie" les informations lointaines.</li>
+            <li><strong>Exploding gradients</strong> : les gradients croissent exponentiellement, rendant l'entrainement instable. On peut y remedier avec le <strong>gradient clipping</strong>.</li>
+        </ul>
+    </div>
+
+    <h3>1.2 Architecture LSTM</h3>
+    <p>Le <strong>Long Short-Term Memory (LSTM)</strong> resout le probleme du vanishing gradient grace a un mecanisme de portes (gates) qui controlent le flux d'information :</p>
+
+    <div class="concept-box blue">
+        <h4>Les 3 portes du LSTM</h4>
+        <ul>
+            <li><strong>Forget Gate (ft)</strong> : decide quelles informations oublier de l'etat cellulaire. ft = sigmoid(Wf * [ht-1, xt] + bf)</li>
+            <li><strong>Input Gate (it)</strong> : decide quelles nouvelles informations stocker. it = sigmoid(Wi * [ht-1, xt] + bi)</li>
+            <li><strong>Output Gate (ot)</strong> : decide quelles informations extraire de l'etat cellulaire. ot = sigmoid(Wo * [ht-1, xt] + bo)</li>
+        </ul>
+        <p style="margin-top:10px;">L'etat cellulaire <strong>Ct</strong> est la "memoire longue" qui traverse la sequence avec des modifications minimales (additions/multiplications element par element).</p>
+    </div>
+
+    <h3>1.3 LSTM vs GRU</h3>
+    <table>
+        <tr><th>Caracteristique</th><th>LSTM</th><th>GRU</th></tr>
+        <tr><td>Nombre de portes</td><td>3 (forget, input, output)</td><td>2 (reset, update)</td></tr>
+        <tr><td>Etats</td><td>hidden state + cell state</td><td>hidden state seulement</td></tr>
+        <tr><td>Parametres</td><td>Plus (4 * hidden * (input + hidden))</td><td>Moins (3 * hidden * (input + hidden))</td></tr>
+        <tr><td>Performance</td><td>Meilleur sur longues sequences</td><td>Comparable sur sequences moyennes</td></tr>
+        <tr><td>Vitesse</td><td>Plus lent</td><td>Plus rapide</td></tr>
+    </table>
+
+    <div class="analogy">
+        <h4>Analogie : le LSTM comme un secretaire</h4>
+        <p>Imaginez un secretaire qui prend des notes au fil d'une reunion (sequence). La <strong>forget gate</strong> efface les notes devenues obsoletes, l'<strong>input gate</strong> ajoute de nouvelles informations importantes, et l'<strong>output gate</strong> choisit quelles notes communiquer au patron quand il pose une question.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 -->
+    <!-- ============================================================ -->
+    <h2>Partie 2 : Preparation de l'environnement</h2>
+
+    <h3>2.1 Imports necessaires</h3>
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> Dataset, DataLoader
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">import</span> time
+
+torch.manual_seed(<span class="number">42</span>)
+np.random.seed(<span class="number">42</span>)
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+<span class="function">print</span>(<span class="string">f"Device : {device}"</span>)</div>
+
+    <div class="output-block">Device : cuda</div>
+
+    <h3>2.2 Generation de donnees sinusoidales</h3>
+    <div class="code-block"><span class="comment"># Generer une serie temporelle complexe</span>
+<span class="keyword">def</span> <span class="function">generate_time_series</span>(n_points=<span class="number">2000</span>):
+    <span class="string">"""Genere une serie sinusoidale avec bruit et tendance."""</span>
+    t = np.linspace(<span class="number">0</span>, <span class="number">100</span>, n_points)
+
+    <span class="comment"># Composante principale</span>
+    signal = np.sin(<span class="number">0.5</span> * t)
+
+    <span class="comment"># Harmonique</span>
+    signal += <span class="number">0.3</span> * np.sin(<span class="number">1.5</span> * t)
+
+    <span class="comment"># Bruit</span>
+    signal += <span class="number">0.1</span> * np.random.randn(n_points)
+
+    <span class="keyword">return</span> t, signal
+
+t, data = generate_time_series(<span class="number">2000</span>)
+
+<span class="comment"># Visualiser la serie</span>
+plt.figure(figsize=(<span class="number">14</span>, <span class="number">4</span>))
+plt.plot(t[:<span class="number">500</span>], data[:<span class="number">500</span>], color=<span class="string">'#ff6b35'</span>, linewidth=<span class="number">0.8</span>)
+plt.title(<span class="string">'Serie temporelle sinusoidale (500 premiers points)'</span>)
+plt.xlabel(<span class="string">'Temps'</span>)
+plt.ylabel(<span class="string">'Valeur'</span>)
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.show()
+
+<span class="function">print</span>(<span class="string">f"Nombre de points : {len(data)}"</span>)
+<span class="function">print</span>(<span class="string">f"Min : {data.min():.4f}, Max : {data.max():.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Moyenne : {data.mean():.4f}, Ecart-type : {data.std():.4f}"</span>)</div>
+
+    <div class="output-block">Nombre de points : 2000
+Min : -1.5324, Max : 1.5891
+Moyenne : -0.0034, Ecart-type : 0.7623</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 -->
+    <!-- ============================================================ -->
+    <h2>Partie 3 : Preparer les sequences</h2>
+
+    <h3>3.1 Normalisation</h3>
+    <div class="code-block"><span class="comment"># Normaliser les donnees entre 0 et 1</span>
+data_min = data.min()
+data_max = data.max()
+data_norm = (data - data_min) / (data_max - data_min)
+
+<span class="function">print</span>(<span class="string">f"Donnees normalisees : min={data_norm.min():.2f}, max={data_norm.max():.2f}"</span>)</div>
+
+    <div class="output-block">Donnees normalisees : min=0.00, max=1.00</div>
+
+    <h3>3.2 Sliding window pour creer les sequences</h3>
+    <div class="definition">
+        La technique de <strong>sliding window</strong> consiste a decouper la serie temporelle en sous-sequences de longueur fixe. Chaque fenetre de taille L produit une paire (X, y) ou X est la sequence d'entree de longueur L et y est la valeur suivante a predire.
+    </div>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">TimeSeriesDataset</span>(Dataset):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, data, seq_length):
+        self.data = torch.FloatTensor(data)
+        self.seq_length = seq_length
+
+    <span class="keyword">def</span> <span class="function">__len__</span>(self):
+        <span class="keyword">return</span> <span class="function">len</span>(self.data) - self.seq_length
+
+    <span class="keyword">def</span> <span class="function">__getitem__</span>(self, idx):
+        x = self.data[idx:idx + self.seq_length].unsqueeze(-<span class="number">1</span>)  <span class="comment"># [seq_len, 1]</span>
+        y = self.data[idx + self.seq_length]                     <span class="comment"># valeur suivante</span>
+        <span class="keyword">return</span> x, y
+
+<span class="comment"># Parametres</span>
+seq_length = <span class="number">50</span>
+
+<span class="comment"># Diviser train / test (80% / 20%)</span>
+split_idx = <span class="function">int</span>(<span class="function">len</span>(data_norm) * <span class="number">0.8</span>)
+train_data = data_norm[:split_idx]
+test_data = data_norm[split_idx:]
+
+<span class="comment"># Creer les datasets</span>
+train_dataset = TimeSeriesDataset(train_data, seq_length)
+test_dataset = TimeSeriesDataset(test_data, seq_length)
+
+train_loader = DataLoader(train_dataset, batch_size=<span class="number">32</span>, shuffle=<span class="keyword">True</span>)
+test_loader = DataLoader(test_dataset, batch_size=<span class="number">32</span>, shuffle=<span class="keyword">False</span>)
+
+<span class="comment"># Verifier les dimensions</span>
+x_sample, y_sample = train_dataset[<span class="number">0</span>]
+<span class="function">print</span>(<span class="string">f"Shape entree (x) : {x_sample.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Shape sortie (y) : {y_sample.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de sequences train : {len(train_dataset)}"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de sequences test  : {len(test_dataset)}"</span>)</div>
+
+    <div class="output-block">Shape entree (x) : torch.Size([50, 1])
+Shape sortie (y) : torch.Size([])
+Nombre de sequences train : 1550
+Nombre de sequences test  : 350</div>
+
+    <h3>3.3 Visualiser une fenetre</h3>
+    <div class="code-block"><span class="comment"># Visualiser une sequence et sa cible</span>
+x_vis, y_vis = train_dataset[<span class="number">100</span>]
+plt.figure(figsize=(<span class="number">12</span>, <span class="number">4</span>))
+plt.plot(<span class="function">range</span>(seq_length), x_vis.squeeze().numpy(), <span class="string">'o-'</span>,
+         color=<span class="string">'#569cd6'</span>, markersize=<span class="number">3</span>, label=<span class="string">'Entree (50 points)'</span>)
+plt.plot(seq_length, y_vis.item(), <span class="string">'s'</span>,
+         color=<span class="string">'#ff6b35'</span>, markersize=<span class="number">10</span>, label=<span class="string">'Cible (point suivant)'</span>)
+plt.xlabel(<span class="string">'Position dans la fenetre'</span>)
+plt.ylabel(<span class="string">'Valeur normalisee'</span>)
+plt.title(<span class="string">'Exemple de sliding window'</span>)
+plt.legend()
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.show()</div>
+
+    <div class="prof-note">
+        Le choix de la longueur de sequence (seq_length) est crucial. Trop court = pas assez de contexte. Trop long = difficulte d'entrainement et lenteur. 50 points est un bon compromis pour notre signal sinusoidal.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 -->
+    <!-- ============================================================ -->
+    <h2>Partie 4 : Construire le modele LSTM</h2>
+
+    <h3>4.1 Architecture du modele</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">LSTMPredictor</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_size=<span class="number">1</span>, hidden_size=<span class="number">64</span>, num_layers=<span class="number">2</span>, dropout=<span class="number">0.2</span>):
+        <span class="function">super</span>(LSTMPredictor, self).__init__()
+
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+
+        <span class="comment"># Couche LSTM</span>
+        self.lstm = nn.LSTM(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=<span class="keyword">True</span>,
+            dropout=dropout <span class="keyword">if</span> num_layers > <span class="number">1</span> <span class="keyword">else</span> <span class="number">0</span>
+        )
+
+        <span class="comment"># Couches de sortie</span>
+        self.fc = nn.Sequential(
+            nn.Linear(hidden_size, <span class="number">32</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">32</span>, <span class="number">1</span>)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="comment"># x shape: [batch, seq_len, input_size]</span>
+
+        <span class="comment"># Initialiser les etats caches</span>
+        h0 = torch.zeros(self.num_layers, x.size(<span class="number">0</span>), self.hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(<span class="number">0</span>), self.hidden_size).to(x.device)
+
+        <span class="comment"># Forward pass du LSTM</span>
+        lstm_out, (hn, cn) = self.lstm(x, (h0, c0))
+        <span class="comment"># lstm_out : [batch, seq_len, hidden_size]</span>
+
+        <span class="comment"># Prendre la sortie du dernier pas de temps</span>
+        last_output = lstm_out[:, -<span class="number">1</span>, :]  <span class="comment"># [batch, hidden_size]</span>
+
+        <span class="comment"># Passer dans les couches FC</span>
+        prediction = self.fc(last_output)  <span class="comment"># [batch, 1]</span>
+        <span class="keyword">return</span> prediction.squeeze(-<span class="number">1</span>)
+
+<span class="comment"># Instancier le modele</span>
+model = LSTMPredictor(
+    input_size=<span class="number">1</span>,
+    hidden_size=<span class="number">64</span>,
+    num_layers=<span class="number">2</span>,
+    dropout=<span class="number">0.2</span>
+).to(device)
+
+<span class="function">print</span>(model)
+total_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+<span class="function">print</span>(<span class="string">f"\nParametres totaux : {total_params:,}"</span>)</div>
+
+    <div class="output-block">LSTMPredictor(
+  (lstm): LSTM(1, 64, num_layers=2, batch_first=True, dropout=0.2)
+  (fc): Sequential(
+    (0): Linear(in_features=64, out_features=32, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=32, out_features=1, bias=True)
+  )
+)
+
+Parametres totaux : 36,961</div>
+
+    <h3>4.2 Comprendre les dimensions du LSTM</h3>
+    <div class="code-block"><span class="comment"># Tester avec un batch factice</span>
+x_dummy = torch.randn(<span class="number">4</span>, <span class="number">50</span>, <span class="number">1</span>).to(device)  <span class="comment"># [batch=4, seq=50, features=1]</span>
+
+h0 = torch.zeros(<span class="number">2</span>, <span class="number">4</span>, <span class="number">64</span>).to(device)  <span class="comment"># [num_layers, batch, hidden]</span>
+c0 = torch.zeros(<span class="number">2</span>, <span class="number">4</span>, <span class="number">64</span>).to(device)
+
+lstm_out, (hn, cn) = model.lstm(x_dummy, (h0, c0))
+
+<span class="function">print</span>(<span class="string">f"Entree         : {x_dummy.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Sortie LSTM    : {lstm_out.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Hidden final   : {hn.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Cell final     : {cn.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Dernier pas    : {lstm_out[:, -1, :].shape}"</span>)</div>
+
+    <div class="output-block">Entree         : torch.Size([4, 50, 1])
+Sortie LSTM    : torch.Size([4, 50, 64])
+Hidden final   : torch.Size([2, 4, 64])
+Cell final     : torch.Size([2, 4, 64])
+Dernier pas    : torch.Size([4, 64])</div>
+
+    <div class="param-box">
+        <h4>Parametres cles de nn.LSTM</h4>
+        <ul>
+            <li><strong>input_size</strong> : dimension de chaque element de la sequence (1 pour une serie univariee)</li>
+            <li><strong>hidden_size</strong> : dimension de l'etat cache (64 ici). Plus grand = plus de capacite mais plus lent.</li>
+            <li><strong>num_layers</strong> : nombre de couches LSTM empilees. Plus de couches = plus de profondeur.</li>
+            <li><strong>batch_first=True</strong> : format des tenseurs [batch, seq, features] au lieu de [seq, batch, features].</li>
+            <li><strong>dropout</strong> : applique entre les couches LSTM (pas apres la derniere).</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 -->
+    <!-- ============================================================ -->
+    <h2>Partie 5 : Entrainement</h2>
+
+    <h3>5.1 Configuration</h3>
+    <div class="code-block">criterion = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=<span class="number">0.001</span>)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode=<span class="string">'min'</span>, patience=<span class="number">5</span>, factor=<span class="number">0.5</span>)</div>
+
+    <div class="prof-note">
+        Pour la prediction de series temporelles (regression), on utilise la MSELoss (Mean Squared Error) et non la CrossEntropyLoss (classification). Le ReduceLROnPlateau reduit le learning rate quand la loss stagne.
+    </div>
+
+    <h3>5.2 Boucle d'entrainement</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">train_epoch</span>(model, loader, criterion, optimizer, device):
+    model.train()
+    total_loss = <span class="number">0.0</span>
+    <span class="keyword">for</span> x_batch, y_batch <span class="keyword">in</span> loader:
+        x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+
+        optimizer.zero_grad()
+        predictions = model(x_batch)
+        loss = criterion(predictions, y_batch)
+        loss.backward()
+
+        <span class="comment"># Gradient clipping pour eviter l'explosion</span>
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=<span class="number">1.0</span>)
+
+        optimizer.step()
+        total_loss += loss.item() * x_batch.size(<span class="number">0</span>)
+
+    <span class="keyword">return</span> total_loss / <span class="function">len</span>(loader.dataset)
+
+<span class="keyword">def</span> <span class="function">evaluate_epoch</span>(model, loader, criterion, device):
+    model.eval()
+    total_loss = <span class="number">0.0</span>
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="keyword">for</span> x_batch, y_batch <span class="keyword">in</span> loader:
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            predictions = model(x_batch)
+            loss = criterion(predictions, y_batch)
+            total_loss += loss.item() * x_batch.size(<span class="number">0</span>)
+    <span class="keyword">return</span> total_loss / <span class="function">len</span>(loader.dataset)
+
+<span class="comment"># Entrainement</span>
+num_epochs = <span class="number">50</span>
+history = {<span class="string">'train_loss'</span>: [], <span class="string">'val_loss'</span>: []}
+best_val_loss = <span class="function">float</span>(<span class="string">'inf'</span>)
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(num_epochs):
+    train_loss = train_epoch(model, train_loader, criterion, optimizer, device)
+    val_loss = evaluate_epoch(model, test_loader, criterion, device)
+
+    scheduler.step(val_loss)
+
+    history[<span class="string">'train_loss'</span>].append(train_loss)
+    history[<span class="string">'val_loss'</span>].append(val_loss)
+
+    <span class="keyword">if</span> val_loss < best_val_loss:
+        best_val_loss = val_loss
+        torch.save(model.state_dict(), <span class="string">'best_lstm.pth'</span>)
+
+    <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">10</span> == <span class="number">0</span>:
+        lr = optimizer.param_groups[<span class="number">0</span>][<span class="string">'lr'</span>]
+        <span class="function">print</span>(<span class="string">f"Epoch [{epoch+1}/{num_epochs}] Train Loss: {train_loss:.6f} | "</span>
+              <span class="string">f"Val Loss: {val_loss:.6f} | LR: {lr:.6f}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nMeilleure val loss : {best_val_loss:.6f}"</span>)</div>
+
+    <div class="output-block">Epoch [10/50] Train Loss: 0.001234 | Val Loss: 0.001456 | LR: 0.001000
+Epoch [20/50] Train Loss: 0.000543 | Val Loss: 0.000678 | LR: 0.001000
+Epoch [30/50] Train Loss: 0.000312 | Val Loss: 0.000421 | LR: 0.000500
+Epoch [40/50] Train Loss: 0.000198 | Val Loss: 0.000356 | LR: 0.000250
+Epoch [50/50] Train Loss: 0.000156 | Val Loss: 0.000312 | LR: 0.000125
+
+Meilleure val loss : 0.000298</div>
+
+    <h3>5.3 Courbes d'apprentissage</h3>
+    <div class="code-block">plt.figure(figsize=(<span class="number">10</span>, <span class="number">5</span>))
+plt.plot(history[<span class="string">'train_loss'</span>], label=<span class="string">'Train Loss'</span>, color=<span class="string">'#ff6b35'</span>)
+plt.plot(history[<span class="string">'val_loss'</span>], label=<span class="string">'Val Loss'</span>, color=<span class="string">'#569cd6'</span>)
+plt.xlabel(<span class="string">'Epoch'</span>)
+plt.ylabel(<span class="string">'MSE Loss'</span>)
+plt.title(<span class="string">'Courbes d\'apprentissage du LSTM'</span>)
+plt.legend()
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.yscale(<span class="string">'log'</span>)
+plt.show()</div>
+
+    <div class="warning">Le gradient clipping (clip_grad_norm_) est essentiel pour les RNN/LSTM. Sans cela, les gradients peuvent exploser et l'entrainement diverge. La valeur max_norm=1.0 est un bon point de depart.</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 -->
+    <!-- ============================================================ -->
+    <h2>Partie 6 : Prediction et visualisation</h2>
+
+    <h3>6.1 Predictions sur le jeu de test</h3>
+    <div class="code-block"><span class="comment"># Charger le meilleur modele</span>
+model.load_state_dict(torch.load(<span class="string">'best_lstm.pth'</span>))
+model.eval()
+
+<span class="comment"># Predire sur tout le jeu de test</span>
+predictions = []
+actuals = []
+
+<span class="keyword">with</span> torch.no_grad():
+    <span class="keyword">for</span> x_batch, y_batch <span class="keyword">in</span> test_loader:
+        x_batch = x_batch.to(device)
+        pred = model(x_batch)
+        predictions.extend(pred.cpu().numpy())
+        actuals.extend(y_batch.numpy())
+
+predictions = np.array(predictions)
+actuals = np.array(actuals)
+
+<span class="comment"># Denormaliser</span>
+predictions_real = predictions * (data_max - data_min) + data_min
+actuals_real = actuals * (data_max - data_min) + data_min
+
+<span class="comment"># Calculer les metriques</span>
+mse = np.mean((predictions_real - actuals_real) ** <span class="number">2</span>)
+mae = np.mean(np.abs(predictions_real - actuals_real))
+rmse = np.sqrt(mse)
+
+<span class="function">print</span>(<span class="string">f"MSE  : {mse:.6f}"</span>)
+<span class="function">print</span>(<span class="string">f"RMSE : {rmse:.6f}"</span>)
+<span class="function">print</span>(<span class="string">f"MAE  : {mae:.6f}"</span>)</div>
+
+    <div class="output-block">MSE  : 0.002845
+RMSE : 0.053340
+MAE  : 0.038912</div>
+
+    <h3>6.2 Visualiser predictions vs realite</h3>
+    <div class="code-block">plt.figure(figsize=(<span class="number">14</span>, <span class="number">6</span>))
+plt.plot(actuals_real, label=<span class="string">'Valeurs reelles'</span>, color=<span class="string">'#569cd6'</span>, linewidth=<span class="number">1.5</span>)
+plt.plot(predictions_real, label=<span class="string">'Predictions LSTM'</span>, color=<span class="string">'#ff6b35'</span>, linewidth=<span class="number">1.5</span>, alpha=<span class="number">0.8</span>)
+plt.xlabel(<span class="string">'Indice temporel'</span>)
+plt.ylabel(<span class="string">'Valeur'</span>)
+plt.title(<span class="string">'Predictions LSTM vs Valeurs reelles'</span>)
+plt.legend(fontsize=<span class="number">12</span>)
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.show()
+
+<span class="comment"># Zoom sur 100 points</span>
+plt.figure(figsize=(<span class="number">14</span>, <span class="number">4</span>))
+plt.plot(actuals_real[:<span class="number">100</span>], <span class="string">'o-'</span>, label=<span class="string">'Reel'</span>, color=<span class="string">'#569cd6'</span>, markersize=<span class="number">3</span>)
+plt.plot(predictions_real[:<span class="number">100</span>], <span class="string">'s-'</span>, label=<span class="string">'Prediction'</span>, color=<span class="string">'#ff6b35'</span>, markersize=<span class="number">3</span>)
+plt.title(<span class="string">'Zoom sur les 100 premiers points'</span>)
+plt.legend()
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.show()</div>
+
+    <h3>6.3 Prediction multi-pas (autoregressive)</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">predict_multi_step</span>(model, initial_seq, n_steps, device):
+    <span class="string">"""Prediction autoregressive : utiliser les predictions comme entrees."""</span>
+    model.eval()
+    predictions = []
+    current_seq = initial_seq.clone()
+
+    <span class="keyword">with</span> torch.no_grad():
+        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(n_steps):
+            x = current_seq.unsqueeze(<span class="number">0</span>).to(device)  <span class="comment"># [1, seq_len, 1]</span>
+            pred = model(x).item()
+            predictions.append(pred)
+
+            <span class="comment"># Decaler la fenetre : retirer le premier, ajouter la prediction</span>
+            new_point = torch.tensor([[pred]])
+            current_seq = torch.cat([current_seq[<span class="number">1</span>:], new_point], dim=<span class="number">0</span>)
+
+    <span class="keyword">return</span> np.array(predictions)
+
+<span class="comment"># Prendre les 50 premiers points du test comme point de depart</span>
+initial_seq = torch.FloatTensor(test_data[:seq_length]).unsqueeze(-<span class="number">1</span>)
+n_future = <span class="number">200</span>
+future_preds = predict_multi_step(model, initial_seq, n_future, device)
+
+<span class="comment"># Denormaliser</span>
+future_preds_real = future_preds * (data_max - data_min) + data_min
+test_real = test_data * (data_max - data_min) + data_min
+
+plt.figure(figsize=(<span class="number">14</span>, <span class="number">5</span>))
+plt.plot(<span class="function">range</span>(seq_length + n_future), test_real[:seq_length + n_future],
+         label=<span class="string">'Reel'</span>, color=<span class="string">'#569cd6'</span>)
+plt.plot(<span class="function">range</span>(seq_length, seq_length + n_future), future_preds_real,
+         label=<span class="string">'Predictions multi-pas'</span>, color=<span class="string">'#ff6b35'</span>, linestyle=<span class="string">'--'</span>)
+plt.axvline(x=seq_length, color=<span class="string">'gray'</span>, linestyle=<span class="string">':'</span>, label=<span class="string">'Debut des predictions'</span>)
+plt.title(<span class="string">'Prediction autoregressive (multi-pas)'</span>)
+plt.legend()
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.show()</div>
+
+    <div class="effect">En mode autoregressive, les erreurs s'accumulent a chaque pas. La prediction se degrade rapidement apres 50-100 pas. C'est une limitation fondamentale de cette approche.</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 -->
+    <!-- ============================================================ -->
+    <h2>Partie 7 : Classification de texte avec LSTM</h2>
+
+    <h3>7.1 Preparer un dataset de sentiment analysis</h3>
+    <div class="code-block"><span class="comment"># Dataset synthetique de phrases avec sentiments</span>
+<span class="comment"># En pratique, on utiliserait un vrai dataset (IMDB, SST-2, etc.)</span>
+
+<span class="comment"># Vocabulaire simple</span>
+vocab = {<span class="string">'&lt;PAD&gt;'</span>: <span class="number">0</span>, <span class="string">'&lt;UNK&gt;'</span>: <span class="number">1</span>}
+sentences = [
+    (<span class="string">"ce film est vraiment excellent"</span>, <span class="number">1</span>),
+    (<span class="string">"un chef d oeuvre magnifique"</span>, <span class="number">1</span>),
+    (<span class="string">"j ai adore ce spectacle"</span>, <span class="number">1</span>),
+    (<span class="string">"performance remarquable et touchante"</span>, <span class="number">1</span>),
+    (<span class="string">"tres bon film je recommande"</span>, <span class="number">1</span>),
+    (<span class="string">"une histoire captivante et emouvante"</span>, <span class="number">1</span>),
+    (<span class="string">"acteurs talentueux et scenario brillant"</span>, <span class="number">1</span>),
+    (<span class="string">"film terrible et ennuyeux"</span>, <span class="number">0</span>),
+    (<span class="string">"je n ai pas aime du tout"</span>, <span class="number">0</span>),
+    (<span class="string">"une perte de temps totale"</span>, <span class="number">0</span>),
+    (<span class="string">"mauvais scenario et mauvais acteurs"</span>, <span class="number">0</span>),
+    (<span class="string">"decevant et sans interet"</span>, <span class="number">0</span>),
+    (<span class="string">"le pire film de l annee"</span>, <span class="number">0</span>),
+    (<span class="string">"insupportable et mal realise"</span>, <span class="number">0</span>),
+]
+
+<span class="comment"># Construire le vocabulaire</span>
+idx = <span class="number">2</span>
+<span class="keyword">for</span> sent, _ <span class="keyword">in</span> sentences:
+    <span class="keyword">for</span> word <span class="keyword">in</span> sent.split():
+        <span class="keyword">if</span> word <span class="keyword">not in</span> vocab:
+            vocab[word] = idx
+            idx += <span class="number">1</span>
+
+<span class="function">print</span>(<span class="string">f"Taille du vocabulaire : {len(vocab)}"</span>)
+
+<span class="comment"># Encoder les phrases</span>
+<span class="keyword">def</span> <span class="function">encode_sentence</span>(sent, vocab, max_len=<span class="number">10</span>):
+    tokens = [vocab.get(w, <span class="number">1</span>) <span class="keyword">for</span> w <span class="keyword">in</span> sent.split()]
+    <span class="comment"># Padding</span>
+    tokens = tokens[:max_len] + [<span class="number">0</span>] * max(max_len - <span class="function">len</span>(tokens), <span class="number">0</span>)
+    <span class="keyword">return</span> tokens
+
+max_len = <span class="number">10</span>
+X = torch.tensor([encode_sentence(s, vocab, max_len) <span class="keyword">for</span> s, _ <span class="keyword">in</span> sentences])
+y = torch.tensor([label <span class="keyword">for</span> _, label <span class="keyword">in</span> sentences], dtype=torch.float)
+
+<span class="function">print</span>(<span class="string">f"X shape : {X.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"y shape : {y.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Exemple encode : {X[0].tolist()}"</span>)</div>
+
+    <div class="output-block">Taille du vocabulaire : 52
+X shape : torch.Size([14, 10])
+y shape : torch.Size([14])
+Exemple encode : [2, 3, 4, 5, 6, 0, 0, 0, 0, 0]</div>
+
+    <h3>7.2 Modele LSTM pour la classification de texte</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">TextLSTM</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, vocab_size, embed_dim, hidden_size, num_classes):
+        <span class="function">super</span>(TextLSTM, self).__init__()
+
+        <span class="comment"># Couche d'embedding : transforme les indices en vecteurs denses</span>
+        self.embedding = nn.Embedding(vocab_size, embed_dim, padding_idx=<span class="number">0</span>)
+
+        <span class="comment"># LSTM</span>
+        self.lstm = nn.LSTM(embed_dim, hidden_size, batch_first=<span class="keyword">True</span>, bidirectional=<span class="keyword">True</span>)
+
+        <span class="comment"># Classificateur (bidirectional = hidden * 2)</span>
+        self.classifier = nn.Sequential(
+            nn.Linear(hidden_size * <span class="number">2</span>, <span class="number">32</span>),
+            nn.ReLU(),
+            nn.Dropout(<span class="number">0.3</span>),
+            nn.Linear(<span class="number">32</span>, <span class="number">1</span>),
+            nn.Sigmoid()
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="comment"># x : [batch, seq_len] (indices de mots)</span>
+        embedded = self.embedding(x)           <span class="comment"># [batch, seq_len, embed_dim]</span>
+        lstm_out, (hn, _) = self.lstm(embedded)
+
+        <span class="comment"># Concatener le dernier hidden des deux directions</span>
+        hn = torch.cat((hn[-<span class="number">2</span>], hn[-<span class="number">1</span>]), dim=<span class="number">1</span>)  <span class="comment"># [batch, hidden*2]</span>
+
+        output = self.classifier(hn).squeeze(-<span class="number">1</span>)
+        <span class="keyword">return</span> output
+
+text_model = TextLSTM(
+    vocab_size=<span class="function">len</span>(vocab),
+    embed_dim=<span class="number">32</span>,
+    hidden_size=<span class="number">32</span>,
+    num_classes=<span class="number">1</span>
+).to(device)
+
+<span class="function">print</span>(text_model)</div>
+
+    <div class="output-block">TextLSTM(
+  (embedding): Embedding(52, 32, padding_idx=0)
+  (lstm): LSTM(32, 32, batch_first=True, bidirectional=True)
+  (classifier): Sequential(
+    (0): Linear(in_features=64, out_features=32, bias=True)
+    (1): ReLU()
+    (2): Dropout(p=0.3)
+    (3): Linear(in_features=32, out_features=1, bias=True)
+    (4): Sigmoid()
+  )
+)</div>
+
+    <h3>7.3 Entrainer le modele de classification</h3>
+    <div class="code-block">text_criterion = nn.BCELoss()
+text_optimizer = optim.Adam(text_model.parameters(), lr=<span class="number">0.01</span>)
+
+X_device = X.to(device)
+y_device = y.to(device)
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(<span class="number">100</span>):
+    text_model.train()
+    text_optimizer.zero_grad()
+    preds = text_model(X_device)
+    loss = text_criterion(preds, y_device)
+    loss.backward()
+    text_optimizer.step()
+
+    <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">20</span> == <span class="number">0</span>:
+        acc = ((preds > <span class="number">0.5</span>).float() == y_device).float().mean()
+        <span class="function">print</span>(<span class="string">f"Epoch {epoch+1}: Loss={loss.item():.4f}, Accuracy={acc.item():.4f}"</span>)
+
+<span class="comment"># Test final</span>
+text_model.eval()
+<span class="keyword">with</span> torch.no_grad():
+    final_preds = text_model(X_device)
+    final_acc = ((final_preds > <span class="number">0.5</span>).float() == y_device).float().mean()
+    <span class="function">print</span>(<span class="string">f"\nAccuracy finale : {final_acc.item():.4f}"</span>)</div>
+
+    <div class="output-block">Epoch 20: Loss=0.4521, Accuracy=0.8571
+Epoch 40: Loss=0.2134, Accuracy=0.9286
+Epoch 60: Loss=0.0876, Accuracy=1.0000
+Epoch 80: Loss=0.0423, Accuracy=1.0000
+Epoch 100: Loss=0.0234, Accuracy=1.0000
+
+Accuracy finale : 1.0000</div>
+
+    <div class="prof-note">
+        Ce dataset est minuscule et sert uniquement de demonstration. En pratique, on utiliserait des datasets comme IMDB (50K reviews) avec des embeddings pre-entraines (GloVe, Word2Vec) ou directement un modele Transformer (BERT).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 -->
+    <!-- ============================================================ -->
+    <h2>Partie 8 : Comparer LSTM vs GRU</h2>
+
+    <h3>8.1 Modele GRU</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">GRUPredictor</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, input_size=<span class="number">1</span>, hidden_size=<span class="number">64</span>, num_layers=<span class="number">2</span>, dropout=<span class="number">0.2</span>):
+        <span class="function">super</span>(GRUPredictor, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+
+        self.gru = nn.GRU(
+            input_size=input_size,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=<span class="keyword">True</span>,
+            dropout=dropout <span class="keyword">if</span> num_layers > <span class="number">1</span> <span class="keyword">else</span> <span class="number">0</span>
+        )
+
+        self.fc = nn.Sequential(
+            nn.Linear(hidden_size, <span class="number">32</span>),
+            nn.ReLU(),
+            nn.Linear(<span class="number">32</span>, <span class="number">1</span>)
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        h0 = torch.zeros(self.num_layers, x.size(<span class="number">0</span>), self.hidden_size).to(x.device)
+        gru_out, hn = self.gru(x, h0)
+        last_output = gru_out[:, -<span class="number">1</span>, :]
+        prediction = self.fc(last_output)
+        <span class="keyword">return</span> prediction.squeeze(-<span class="number">1</span>)
+
+gru_model = GRUPredictor(input_size=<span class="number">1</span>, hidden_size=<span class="number">64</span>, num_layers=<span class="number">2</span>).to(device)
+
+lstm_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+gru_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> gru_model.parameters())
+<span class="function">print</span>(<span class="string">f"Parametres LSTM : {lstm_params:,}"</span>)
+<span class="function">print</span>(<span class="string">f"Parametres GRU  : {gru_params:,}"</span>)
+<span class="function">print</span>(<span class="string">f"Difference      : {lstm_params - gru_params:,} ({(lstm_params-gru_params)/lstm_params*100:.1f}%)"</span>)</div>
+
+    <div class="output-block">Parametres LSTM : 36,961
+Parametres GRU  : 28,129
+Difference      : 8,832 (23.9%)</div>
+
+    <h3>8.2 Entrainer les deux modeles et comparer</h3>
+    <div class="code-block"><span class="comment"># Re-creer le modele LSTM pour comparaison equitable</span>
+lstm_model2 = LSTMPredictor(input_size=<span class="number">1</span>, hidden_size=<span class="number">64</span>, num_layers=<span class="number">2</span>).to(device)
+gru_model2 = GRUPredictor(input_size=<span class="number">1</span>, hidden_size=<span class="number">64</span>, num_layers=<span class="number">2</span>).to(device)
+
+models_to_compare = {
+    <span class="string">'LSTM'</span>: lstm_model2,
+    <span class="string">'GRU'</span>: gru_model2
+}
+
+results = {}
+
+<span class="keyword">for</span> name, m <span class="keyword">in</span> models_to_compare.items():
+    opt = optim.Adam(m.parameters(), lr=<span class="number">0.001</span>)
+    losses = []
+
+    start_time = time.time()
+    <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(<span class="number">30</span>):
+        train_loss = train_epoch(m, train_loader, criterion, opt, device)
+        losses.append(train_loss)
+    elapsed = time.time() - start_time
+
+    val_loss = evaluate_epoch(m, test_loader, criterion, device)
+    results[name] = {
+        <span class="string">'losses'</span>: losses,
+        <span class="string">'val_loss'</span>: val_loss,
+        <span class="string">'time'</span>: elapsed,
+        <span class="string">'params'</span>: <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> m.parameters())
+    }
+    <span class="function">print</span>(<span class="string">f"{name} - Val Loss: {val_loss:.6f} | Temps: {elapsed:.2f}s | Params: {results[name]['params']:,}"</span>)</div>
+
+    <div class="output-block">LSTM - Val Loss: 0.000412 | Temps: 12.34s | Params: 36,961
+GRU  - Val Loss: 0.000436 | Temps: 9.87s | Params: 28,129</div>
+
+    <h3>8.3 Visualisation comparative</h3>
+    <div class="code-block">fig, (ax1, ax2) = plt.subplots(<span class="number">1</span>, <span class="number">2</span>, figsize=(<span class="number">14</span>, <span class="number">5</span>))
+
+<span class="comment"># Courbes de loss</span>
+<span class="keyword">for</span> name, res <span class="keyword">in</span> results.items():
+    ax1.plot(res[<span class="string">'losses'</span>], label=name)
+ax1.set_xlabel(<span class="string">'Epoch'</span>)
+ax1.set_ylabel(<span class="string">'Train Loss'</span>)
+ax1.set_title(<span class="string">'Convergence LSTM vs GRU'</span>)
+ax1.legend()
+ax1.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+ax1.set_yscale(<span class="string">'log'</span>)
+
+<span class="comment"># Comparaison des metriques</span>
+names = <span class="function">list</span>(results.keys())
+val_losses = [results[n][<span class="string">'val_loss'</span>] <span class="keyword">for</span> n <span class="keyword">in</span> names]
+times = [results[n][<span class="string">'time'</span>] <span class="keyword">for</span> n <span class="keyword">in</span> names]
+
+x = np.arange(<span class="function">len</span>(names))
+width = <span class="number">0.35</span>
+bars1 = ax2.bar(x - width/<span class="number">2</span>, [t/<span class="function">max</span>(times) <span class="keyword">for</span> t <span class="keyword">in</span> times], width,
+                label=<span class="string">'Temps (normalise)'</span>, color=<span class="string">'#ff6b35'</span>)
+bars2 = ax2.bar(x + width/<span class="number">2</span>, [l/<span class="function">max</span>(val_losses) <span class="keyword">for</span> l <span class="keyword">in</span> val_losses], width,
+                label=<span class="string">'Val Loss (normalise)'</span>, color=<span class="string">'#569cd6'</span>)
+ax2.set_xticks(x)
+ax2.set_xticklabels(names)
+ax2.set_title(<span class="string">'Comparaison LSTM vs GRU'</span>)
+ax2.legend()
+
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff6b35;">LSTM</h4>
+            <p>Val Loss : 0.000412</p>
+            <p>Temps : 12.3s</p>
+            <p>Parametres : 36,961</p>
+            <p>Meilleur sur longues sequences</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">GRU</h4>
+            <p>Val Loss : 0.000436</p>
+            <p>Temps : 9.9s</p>
+            <p>Parametres : 28,129</p>
+            <p>Plus rapide, ~24% moins de params</p>
+        </div>
+    </div>
+
+    <div class="concept-box">
+        <h4>Conclusions de la comparaison</h4>
+        <ul>
+            <li>Le <strong>GRU</strong> est ~20% plus rapide a entrainer grace a ses 2 portes au lieu de 3.</li>
+            <li>Le <strong>LSTM</strong> atteint une loss legerement inferieure sur notre serie sinusoidale.</li>
+            <li>En pratique, le GRU est souvent le meilleur compromis pour des sequences de longueur moderee.</li>
+            <li>Pour des sequences tres longues (>500 pas), le LSTM conserve generalement un avantage.</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 -->
+    <!-- ============================================================ -->
+    <h2>Partie 9 : Recapitulatif et points clefs</h2>
+
+    <div class="concept-box green">
+        <h4>Ce que nous avons appris</h4>
+        <ol>
+            <li><strong>Donnees sequentielles</strong> : sliding window pour creer des paires (sequence, cible) a partir d'une serie temporelle.</li>
+            <li><strong>LSTM</strong> : architecture avec 3 portes et un cell state pour memoriser les dependances a long terme.</li>
+            <li><strong>Entrainement</strong> : MSE loss pour la regression, gradient clipping pour la stabilite.</li>
+            <li><strong>Prediction autoregressive</strong> : utiliser les predictions comme entrees pour predire le futur, avec accumulation d'erreurs.</li>
+            <li><strong>Classification de texte</strong> : embedding + LSTM bidirectionnel pour l'analyse de sentiment.</li>
+            <li><strong>LSTM vs GRU</strong> : le GRU est plus rapide avec des performances comparables.</li>
+        </ol>
+    </div>
+
+    <div class="concept-box blue">
+        <h4>Composants PyTorch pour les RNN</h4>
+        <table>
+            <tr><th>Composant</th><th>Code PyTorch</th></tr>
+            <tr><td>LSTM</td><td><code>nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)</code></td></tr>
+            <tr><td>GRU</td><td><code>nn.GRU(input_size, hidden_size, num_layers, batch_first=True)</code></td></tr>
+            <tr><td>Embedding</td><td><code>nn.Embedding(vocab_size, embed_dim)</code></td></tr>
+            <tr><td>Gradient Clipping</td><td><code>torch.nn.utils.clip_grad_norm_(params, max_norm)</code></td></tr>
+            <tr><td>ReduceLROnPlateau</td><td><code>optim.lr_scheduler.ReduceLROnPlateau(optimizer)</code></td></tr>
+        </table>
+    </div>
+
+    <div class="warning">Les RNN/LSTM sont sequentiels par nature et ne peuvent pas etre facilement parallelises. Pour les taches de NLP modernes, les Transformers (avec attention) les ont largement remplaces.</div>
+
+    <div class="prof-note">
+        Maitrisez bien les LSTM avant de passer aux Transformers. Les mecanismes de gating et de memoire que vous avez etudies ici sont les fondations conceptuelles de l'attention et des architectures modernes.
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

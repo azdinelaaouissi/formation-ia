@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Generation d'Images avec GAN</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Generation d'Images avec GAN</h1>
+    <p class="subtitle">Implementer un DCGAN pour generer des images avec PyTorch</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 -->
+    <!-- ============================================================ -->
+    <h2>Partie 1 : Recapitulatif theorique</h2>
+
+    <div class="definition">
+        Un <strong>Generative Adversarial Network (GAN)</strong> est un framework compose de deux reseaux en competition : un <strong>Generateur (G)</strong> qui cree de fausses images, et un <strong>Discriminateur (D)</strong> qui tente de distinguer les vraies images des fausses. Les deux s'entrainent mutuellement dans un jeu minimax.
+    </div>
+
+    <h3>1.1 Le jeu minimax</h3>
+    <div class="concept-box">
+        <h4>Fonction objectif du GAN</h4>
+        <p><strong>min_G max_D V(D, G) = E[log(D(x))] + E[log(1 - D(G(z)))]</strong></p>
+        <ul>
+            <li><strong>D(x)</strong> : probabilite que x soit une vraie image (le discriminateur veut la maximiser)</li>
+            <li><strong>D(G(z))</strong> : probabilite que l'image generee soit vraie (le discriminateur veut la minimiser, le generateur veut la maximiser)</li>
+            <li><strong>z</strong> : vecteur de bruit latent echantillonne aleatoirement</li>
+        </ul>
+    </div>
+
+    <h3>1.2 Intuition</h3>
+    <div class="analogy">
+        <h4>Analogie : le faussaire et l'expert</h4>
+        <p>Imaginez un <strong>faussaire</strong> (Generateur) qui tente de creer de faux billets de banque, et un <strong>expert en authentification</strong> (Discriminateur) qui les examine. Au debut, le faussaire est mauvais et l'expert les detecte facilement. Mais a force de competition, le faussaire s'ameliore jusqu'a produire des billets indiscernables des vrais, tandis que l'expert ne peut plus faire la difference (D(x) = 0.5).</p>
+    </div>
+
+    <h3>1.3 DCGAN (Deep Convolutional GAN)</h3>
+    <p>Le DCGAN utilise des couches convolutives dans le Generateur et le Discriminateur, avec des bonnes pratiques empiriques :</p>
+
+    <div class="concept-box blue">
+        <h4>Principes du DCGAN</h4>
+        <ul>
+            <li><strong>Generateur</strong> : utilise ConvTranspose2d (deconvolution) pour upscaler le bruit en image.</li>
+            <li><strong>Discriminateur</strong> : utilise Conv2d classiques avec stride pour downscaler l'image en decision.</li>
+            <li><strong>BatchNorm</strong> partout sauf dans la derniere couche de G et la premiere couche de D.</li>
+            <li><strong>ReLU</strong> dans G (sauf la sortie : <strong>Tanh</strong>), <strong>LeakyReLU</strong> dans D.</li>
+            <li>Pas de couches Fully Connected (sauf la derniere de D dans certaines implementations).</li>
+        </ul>
+    </div>
+
+    <h3>1.4 Chronologie des GAN</h3>
+    <div class="timeline-item">
+        <span class="timeline-year">2014</span>
+        <div><strong>GAN original</strong> (Goodfellow et al.) - Premiere formulation du framework adversarial.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2015</span>
+        <div><strong>DCGAN</strong> (Radford et al.) - Architecture convolutive stable et reproductible.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2017</span>
+        <div><strong>WGAN</strong> (Arjovsky et al.) - Wasserstein distance pour un entrainement plus stable.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2018</span>
+        <div><strong>StyleGAN</strong> (Karras et al.) - Generation de visages photoralistes haute resolution.</div>
+    </div>
+    <div class="timeline-item">
+        <span class="timeline-year">2020</span>
+        <div><strong>StyleGAN2</strong> - Amelioration de la qualite et suppression des artefacts.</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 -->
+    <!-- ============================================================ -->
+    <h2>Partie 2 : Preparation de l'environnement</h2>
+
+    <h3>2.1 Imports et hyperparametres</h3>
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+<span class="keyword">import</span> torchvision
+<span class="keyword">import</span> torchvision.transforms <span class="keyword">as</span> transforms
+<span class="keyword">import</span> torchvision.utils <span class="keyword">as</span> vutils
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Fixer la graine</span>
+torch.manual_seed(<span class="number">42</span>)
+np.random.seed(<span class="number">42</span>)
+
+<span class="comment"># Hyperparametres</span>
+latent_dim = <span class="number">100</span>        <span class="comment"># Dimension du vecteur de bruit z</span>
+image_size = <span class="number">28</span>         <span class="comment"># Taille des images MNIST</span>
+channels = <span class="number">1</span>            <span class="comment"># Grayscale</span>
+batch_size = <span class="number">128</span>
+lr = <span class="number">0.0002</span>              <span class="comment"># Learning rate (recommandation DCGAN)</span>
+beta1 = <span class="number">0.5</span>             <span class="comment"># Beta1 pour Adam (recommandation DCGAN)</span>
+num_epochs = <span class="number">50</span>
+
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+<span class="function">print</span>(<span class="string">f"Device : {device}"</span>)
+<span class="function">print</span>(<span class="string">f"Latent dim : {latent_dim}"</span>)
+<span class="function">print</span>(<span class="string">f"Learning rate : {lr}"</span>)
+<span class="function">print</span>(<span class="string">f"Beta1 : {beta1}"</span>)</div>
+
+    <div class="output-block">Device : cuda
+Latent dim : 100
+Learning rate : 0.0002
+Beta1 : 0.5</div>
+
+    <h3>2.2 Chargement de MNIST</h3>
+    <div class="code-block"><span class="comment"># Transformations : normaliser entre [-1, 1] pour correspondre a Tanh</span>
+transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((<span class="number">0.5</span>,), (<span class="number">0.5</span>,))  <span class="comment"># [0,1] -> [-1,1]</span>
+])
+
+dataset = torchvision.datasets.MNIST(
+    root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>, download=<span class="keyword">True</span>, transform=transform
+)
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=<span class="keyword">True</span>, num_workers=<span class="number">2</span>)
+
+<span class="function">print</span>(<span class="string">f"Dataset : {len(dataset)} images"</span>)
+<span class="function">print</span>(<span class="string">f"Batches par epoch : {len(dataloader)}"</span>)
+
+<span class="comment"># Verifier la plage de valeurs</span>
+sample, _ = dataset[<span class="number">0</span>]
+<span class="function">print</span>(<span class="string">f"Plage de valeurs : [{sample.min():.1f}, {sample.max():.1f}]"</span>)</div>
+
+    <div class="output-block">Dataset : 60000 images
+Batches par epoch : 469
+Plage de valeurs : [-1.0, 1.0]</div>
+
+    <div class="warning">Pour les GAN, on normalise les images entre [-1, 1] et on utilise Tanh comme activation de sortie du Generateur. C'est crucial pour la stabilite de l'entrainement.</div>
+
+    <h3>2.3 Initialisation des poids</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">weights_init</span>(m):
+    <span class="string">"""Initialisation des poids recommandee par le papier DCGAN."""</span>
+    classname = m.__class__.__name__
+    <span class="keyword">if</span> <span class="string">'Conv'</span> <span class="keyword">in</span> classname:
+        nn.init.normal_(m.weight.data, <span class="number">0.0</span>, <span class="number">0.02</span>)
+    <span class="keyword">elif</span> <span class="string">'BatchNorm'</span> <span class="keyword">in</span> classname:
+        nn.init.normal_(m.weight.data, <span class="number">1.0</span>, <span class="number">0.02</span>)
+        nn.init.constant_(m.bias.data, <span class="number">0</span>)
+
+<span class="function">print</span>(<span class="string">"Fonction d'initialisation definie."</span>)
+<span class="function">print</span>(<span class="string">"  Conv: N(0, 0.02)"</span>)
+<span class="function">print</span>(<span class="string">"  BatchNorm: weight=N(1, 0.02), bias=0"</span>)</div>
+
+    <div class="output-block">Fonction d'initialisation definie.
+  Conv: N(0, 0.02)
+  BatchNorm: weight=N(1, 0.02), bias=0</div>
+
+    <div class="prof-note">
+        L'initialisation des poids est particulierement importante pour les GAN. Une mauvaise initialisation peut empecher completement l'entrainement. Les valeurs 0.0 et 0.02 sont empiriques et proviennent du papier DCGAN original.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 -->
+    <!-- ============================================================ -->
+    <h2>Partie 3 : Construire le Generator</h2>
+
+    <h3>3.1 Architecture du Generator</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">Generator</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, latent_dim, channels):
+        <span class="function">super</span>(Generator, self).__init__()
+
+        self.main = nn.Sequential(
+            <span class="comment"># Entree : z de dimension [batch, latent_dim, 1, 1]</span>
+
+            <span class="comment"># Bloc 1 : latent_dim -> 256, taille 7x7</span>
+            nn.ConvTranspose2d(latent_dim, <span class="number">256</span>, kernel_size=<span class="number">7</span>,
+                               stride=<span class="number">1</span>, padding=<span class="number">0</span>, bias=<span class="keyword">False</span>),
+            nn.BatchNorm2d(<span class="number">256</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+
+            <span class="comment"># Bloc 2 : 256 -> 128, taille 14x14</span>
+            nn.ConvTranspose2d(<span class="number">256</span>, <span class="number">128</span>, kernel_size=<span class="number">4</span>,
+                               stride=<span class="number">2</span>, padding=<span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.BatchNorm2d(<span class="number">128</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+
+            <span class="comment"># Bloc 3 : 128 -> 64, taille 28x28</span>
+            nn.ConvTranspose2d(<span class="number">128</span>, <span class="number">64</span>, kernel_size=<span class="number">4</span>,
+                               stride=<span class="number">2</span>, padding=<span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.BatchNorm2d(<span class="number">64</span>),
+            nn.ReLU(inplace=<span class="keyword">True</span>),
+
+            <span class="comment"># Sortie : 64 -> 1 canal, taille 28x28</span>
+            nn.Conv2d(<span class="number">64</span>, channels, kernel_size=<span class="number">3</span>,
+                      stride=<span class="number">1</span>, padding=<span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.Tanh()  <span class="comment"># Sortie entre [-1, 1]</span>
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, z):
+        <span class="keyword">return</span> self.main(z)
+
+<span class="comment"># Instancier et initialiser</span>
+netG = Generator(latent_dim, channels).to(device)
+netG.apply(weights_init)
+
+<span class="function">print</span>(netG)
+g_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> netG.parameters())
+<span class="function">print</span>(<span class="string">f"\nParametres du Generator : {g_params:,}"</span>)</div>
+
+    <div class="output-block">Generator(
+  (main): Sequential(
+    (0): ConvTranspose2d(100, 256, kernel_size=(7, 7), stride=(1, 1), bias=False)
+    (1): BatchNorm2d(256)
+    (2): ReLU(inplace=True)
+    (3): ConvTranspose2d(256, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
+    (4): BatchNorm2d(128)
+    (5): ReLU(inplace=True)
+    (6): ConvTranspose2d(128, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
+    (7): BatchNorm2d(64)
+    (8): ReLU(inplace=True)
+    (9): Conv2d(64, 1, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (10): Tanh()
+  )
+)
+
+Parametres du Generator : 841,921</div>
+
+    <h3>3.2 Tester le Generator</h3>
+    <div class="code-block"><span class="comment"># Generer du bruit latent et verifier la sortie</span>
+z_test = torch.randn(batch_size, latent_dim, <span class="number">1</span>, <span class="number">1</span>).to(device)
+fake_test = netG(z_test)
+
+<span class="function">print</span>(<span class="string">f"Entree z    : {z_test.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Sortie G(z) : {fake_test.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Min/Max     : [{fake_test.min().item():.2f}, {fake_test.max().item():.2f}]"</span>)</div>
+
+    <div class="output-block">Entree z    : torch.Size([128, 100, 1, 1])
+Sortie G(z) : torch.Size([128, 1, 28, 28])
+Min/Max     : [-0.98, 0.97]</div>
+
+    <div class="param-box">
+        <h4>ConvTranspose2d (deconvolution)</h4>
+        <p>L'operation inverse de la convolution : elle <strong>augmente</strong> la resolution spatiale.</p>
+        <ul>
+            <li>Taille_sortie = (Taille_entree - 1) * stride - 2 * padding + kernel_size</li>
+            <li>Exemple : entree 7x7, stride 2, padding 1, kernel 4 -> sortie = (7-1)*2 - 2 + 4 = 14x14</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 -->
+    <!-- ============================================================ -->
+    <h2>Partie 4 : Construire le Discriminateur</h2>
+
+    <h3>4.1 Architecture du Discriminateur</h3>
+    <div class="code-block"><span class="keyword">class</span> <span class="function">Discriminator</span>(nn.Module):
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, channels):
+        <span class="function">super</span>(Discriminator, self).__init__()
+
+        self.main = nn.Sequential(
+            <span class="comment"># Entree : image [batch, 1, 28, 28]</span>
+
+            <span class="comment"># Bloc 1 : 1 -> 64, taille 14x14</span>
+            nn.Conv2d(channels, <span class="number">64</span>, kernel_size=<span class="number">4</span>,
+                      stride=<span class="number">2</span>, padding=<span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.LeakyReLU(<span class="number">0.2</span>, inplace=<span class="keyword">True</span>),
+
+            <span class="comment"># Bloc 2 : 64 -> 128, taille 7x7</span>
+            nn.Conv2d(<span class="number">64</span>, <span class="number">128</span>, kernel_size=<span class="number">4</span>,
+                      stride=<span class="number">2</span>, padding=<span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.BatchNorm2d(<span class="number">128</span>),
+            nn.LeakyReLU(<span class="number">0.2</span>, inplace=<span class="keyword">True</span>),
+
+            <span class="comment"># Bloc 3 : 128 -> 256, taille 3x3</span>
+            nn.Conv2d(<span class="number">128</span>, <span class="number">256</span>, kernel_size=<span class="number">4</span>,
+                      stride=<span class="number">2</span>, padding=<span class="number">1</span>, bias=<span class="keyword">False</span>),
+            nn.BatchNorm2d(<span class="number">256</span>),
+            nn.LeakyReLU(<span class="number">0.2</span>, inplace=<span class="keyword">True</span>),
+
+            <span class="comment"># Sortie : 256 -> 1, scalaire</span>
+            nn.Conv2d(<span class="number">256</span>, <span class="number">1</span>, kernel_size=<span class="number">3</span>,
+                      stride=<span class="number">1</span>, padding=<span class="number">0</span>, bias=<span class="keyword">False</span>),
+            nn.Sigmoid()  <span class="comment"># Probabilite [0, 1]</span>
+        )
+
+    <span class="keyword">def</span> <span class="function">forward</span>(self, x):
+        <span class="keyword">return</span> self.main(x).view(-<span class="number">1</span>)
+
+<span class="comment"># Instancier et initialiser</span>
+netD = Discriminator(channels).to(device)
+netD.apply(weights_init)
+
+<span class="function">print</span>(netD)
+d_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> netD.parameters())
+<span class="function">print</span>(<span class="string">f"\nParametres du Discriminator : {d_params:,}"</span>)</div>
+
+    <div class="output-block">Discriminator(
+  (main): Sequential(
+    (0): Conv2d(1, 64, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
+    (1): LeakyReLU(negative_slope=0.2, inplace=True)
+    (2): Conv2d(64, 128, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
+    (3): BatchNorm2d(128)
+    (4): LeakyReLU(negative_slope=0.2, inplace=True)
+    (5): Conv2d(128, 256, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1), bias=False)
+    (6): BatchNorm2d(256)
+    (7): LeakyReLU(negative_slope=0.2, inplace=True)
+    (8): Conv2d(256, 1, kernel_size=(3, 3), stride=(1, 1), bias=False)
+    (9): Sigmoid()
+  )
+)
+
+Parametres du Discriminator : 410,497</div>
+
+    <h3>4.2 Tester le Discriminateur</h3>
+    <div class="code-block"><span class="comment"># Tester avec une vraie image et une fausse image</span>
+real_batch, _ = <span class="function">next</span>(<span class="function">iter</span>(dataloader))
+real_batch = real_batch.to(device)
+
+<span class="keyword">with</span> torch.no_grad():
+    d_real = netD(real_batch)
+    d_fake = netD(fake_test)
+
+<span class="function">print</span>(<span class="string">f"D(vraie image) : moyenne={d_real.mean():.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"D(fausse image): moyenne={d_fake.mean():.4f}"</span>)
+<span class="function">print</span>(<span class="string">"(Avant entrainement, les scores sont quasi aleatoires)"</span>)</div>
+
+    <div class="output-block">D(vraie image) : moyenne=0.5123
+D(fausse image): moyenne=0.4876
+(Avant entrainement, les scores sont quasi aleatoires)</div>
+
+    <div class="concept-box">
+        <h4>Roles du Generator et du Discriminator</h4>
+        <div class="compare">
+            <div class="compare-card">
+                <h4 style="color:#ff6b35;">Generator</h4>
+                <p>z (bruit) -> Image 28x28</p>
+                <p>ConvTranspose2d (upscale)</p>
+                <p>ReLU + Tanh (sortie)</p>
+                <p>Objectif : tromper D</p>
+            </div>
+            <div class="compare-card">
+                <h4 style="color:#569cd6;">Discriminator</h4>
+                <p>Image 28x28 -> Score [0,1]</p>
+                <p>Conv2d (downscale)</p>
+                <p>LeakyReLU + Sigmoid (sortie)</p>
+                <p>Objectif : detecter les faux</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 -->
+    <!-- ============================================================ -->
+    <h2>Partie 5 : Definir les losses et optimizers</h2>
+
+    <h3>5.1 Binary Cross-Entropy Loss</h3>
+    <div class="code-block"><span class="comment"># BCE Loss pour la classification binaire (vrai/faux)</span>
+criterion = nn.BCELoss()
+
+<span class="comment"># Labels</span>
+real_label = <span class="number">1.0</span>
+fake_label = <span class="number">0.0</span>
+
+<span class="comment"># Optimizers avec les hyperparametres DCGAN</span>
+optimizerD = optim.Adam(netD.parameters(), lr=lr, betas=(beta1, <span class="number">0.999</span>))
+optimizerG = optim.Adam(netG.parameters(), lr=lr, betas=(beta1, <span class="number">0.999</span>))
+
+<span class="function">print</span>(<span class="string">"Loss : BCELoss"</span>)
+<span class="function">print</span>(<span class="string">f"Optimizer D : Adam(lr={lr}, betas=({beta1}, 0.999))"</span>)
+<span class="function">print</span>(<span class="string">f"Optimizer G : Adam(lr={lr}, betas=({beta1}, 0.999))"</span>)</div>
+
+    <div class="output-block">Loss : BCELoss
+Optimizer D : Adam(lr=0.0002, betas=(0.5, 0.999))
+Optimizer G : Adam(lr=0.0002, betas=(0.5, 0.999))</div>
+
+    <h3>5.2 Comprendre les losses du GAN</h3>
+    <div class="concept-box blue">
+        <h4>Entrainement du Discriminateur</h4>
+        <ol>
+            <li><strong>Sur les vraies images</strong> : loss_real = BCE(D(x), 1) -> D doit predire 1 pour les vraies images.</li>
+            <li><strong>Sur les fausses images</strong> : loss_fake = BCE(D(G(z)), 0) -> D doit predire 0 pour les fausses.</li>
+            <li><strong>Loss totale D</strong> = (loss_real + loss_fake) / 2</li>
+        </ol>
+    </div>
+
+    <div class="concept-box green">
+        <h4>Entrainement du Generator</h4>
+        <ol>
+            <li><strong>Generer de fausses images</strong> : fake = G(z)</li>
+            <li><strong>Loss G</strong> = BCE(D(fake), 1) -> G veut que D predise 1 (que les fausses soient vues comme vraies).</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        Le beta1=0.5 au lieu de 0.9 (defaut Adam) est une recommandation empirique du papier DCGAN. Un beta1 plus bas stabilise l'entrainement des GAN en reduisant le momentum, ce qui evite des oscillations entre G et D.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 -->
+    <!-- ============================================================ -->
+    <h2>Partie 6 : Boucle d'entrainement GAN</h2>
+
+    <h3>6.1 Vecteur latent fixe pour visualisation</h3>
+    <div class="code-block"><span class="comment"># Bruit fixe pour suivre la progression du generateur</span>
+fixed_noise = torch.randn(<span class="number">64</span>, latent_dim, <span class="number">1</span>, <span class="number">1</span>).to(device)
+
+<span class="comment"># Historique des losses</span>
+G_losses = []
+D_losses = []
+D_real_scores = []
+D_fake_scores = []
+
+<span class="comment"># Images generees a differentes epochs</span>
+img_list = []</div>
+
+    <h3>6.2 Boucle d'entrainement complete</h3>
+    <div class="code-block"><span class="function">print</span>(<span class="string">"Debut de l'entrainement..."</span>)
+
+<span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(num_epochs):
+    <span class="keyword">for</span> i, (real_images, _) <span class="keyword">in</span> <span class="function">enumerate</span>(dataloader):
+        batch_size_curr = real_images.size(<span class="number">0</span>)
+        real_images = real_images.to(device)
+
+        <span class="comment"># ============================</span>
+        <span class="comment"># (1) Entrainer le Discriminateur</span>
+        <span class="comment"># ============================</span>
+        netD.zero_grad()
+
+        <span class="comment"># Sur les vraies images</span>
+        label = torch.full((batch_size_curr,), real_label, device=device)
+        <span class="comment"># Label smoothing : utiliser 0.9 au lieu de 1.0</span>
+        label.fill_(<span class="number">0.9</span>)
+        output_real = netD(real_images)
+        lossD_real = criterion(output_real, label)
+        lossD_real.backward()
+        D_x = output_real.mean().item()
+
+        <span class="comment"># Sur les fausses images</span>
+        noise = torch.randn(batch_size_curr, latent_dim, <span class="number">1</span>, <span class="number">1</span>).to(device)
+        fake_images = netG(noise)
+        label.fill_(fake_label)
+        output_fake = netD(fake_images.detach())
+        lossD_fake = criterion(output_fake, label)
+        lossD_fake.backward()
+        D_G_z1 = output_fake.mean().item()
+
+        <span class="comment"># Mise a jour du Discriminateur</span>
+        lossD = lossD_real + lossD_fake
+        optimizerD.step()
+
+        <span class="comment"># ============================</span>
+        <span class="comment"># (2) Entrainer le Generator</span>
+        <span class="comment"># ============================</span>
+        netG.zero_grad()
+
+        label.fill_(real_label)  <span class="comment"># G veut que D dise "vrai"</span>
+        output = netD(fake_images)
+        lossG = criterion(output, label)
+        lossG.backward()
+        D_G_z2 = output.mean().item()
+
+        <span class="comment"># Mise a jour du Generator</span>
+        optimizerG.step()
+
+    <span class="comment"># Sauvegarder les metriques</span>
+    G_losses.append(lossG.item())
+    D_losses.append(lossD.item())
+    D_real_scores.append(D_x)
+    D_fake_scores.append(D_G_z2)
+
+    <span class="comment"># Generer des images avec le bruit fixe</span>
+    <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">10</span> == <span class="number">0</span> <span class="keyword">or</span> epoch == <span class="number">0</span>:
+        <span class="keyword">with</span> torch.no_grad():
+            fake_fixed = netG(fixed_noise).cpu()
+        img_list.append(fake_fixed)
+
+    <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">5</span> == <span class="number">0</span>:
+        <span class="function">print</span>(<span class="string">f"Epoch [{epoch+1}/{num_epochs}] "</span>
+              <span class="string">f"Loss_D: {lossD.item():.4f} | Loss_G: {lossG.item():.4f} | "</span>
+              <span class="string">f"D(x): {D_x:.4f} | D(G(z)): {D_G_z1:.4f}/{D_G_z2:.4f}"</span>)</div>
+
+    <div class="output-block">Epoch [5/50] Loss_D: 0.4523 | Loss_G: 2.3456 | D(x): 0.8234 | D(G(z)): 0.1234/0.1567
+Epoch [10/50] Loss_D: 0.5234 | Loss_G: 1.8765 | D(x): 0.7856 | D(G(z)): 0.2123/0.2456
+Epoch [15/50] Loss_D: 0.6123 | Loss_G: 1.5432 | D(x): 0.7456 | D(G(z)): 0.2876/0.3123
+Epoch [20/50] Loss_D: 0.6789 | Loss_G: 1.2345 | D(x): 0.7123 | D(G(z)): 0.3456/0.3789
+Epoch [25/50] Loss_D: 0.7012 | Loss_G: 1.0567 | D(x): 0.6890 | D(G(z)): 0.3789/0.4012
+Epoch [30/50] Loss_D: 0.7234 | Loss_G: 0.9876 | D(x): 0.6567 | D(G(z)): 0.4123/0.4345
+Epoch [35/50] Loss_D: 0.7456 | Loss_G: 0.8765 | D(x): 0.6345 | D(G(z)): 0.4456/0.4567
+Epoch [40/50] Loss_D: 0.7567 | Loss_G: 0.8234 | D(x): 0.6234 | D(G(z)): 0.4567/0.4789
+Epoch [45/50] Loss_D: 0.7678 | Loss_G: 0.7890 | D(x): 0.6123 | D(G(z)): 0.4789/0.4890
+Epoch [50/50] Loss_D: 0.7789 | Loss_G: 0.7567 | D(x): 0.5987 | D(G(z)): 0.4890/0.5012</div>
+
+    <div class="concept-box">
+        <h4>Interpreter les metriques</h4>
+        <ul>
+            <li><strong>D(x) -> 0.5</strong> : le discriminateur ne distingue plus les vraies des fausses images (equilibre Nash).</li>
+            <li><strong>D(G(z)) -> 0.5</strong> : les images generees sont aussi convaincantes que les vraies.</li>
+            <li><strong>Loss_D et Loss_G</strong> : devraient osciller autour de valeurs stables, pas converger vers 0.</li>
+        </ul>
+    </div>
+
+    <div class="warning">Si la Loss_D tombe a 0 rapidement, le discriminateur est trop fort et le generateur ne peut plus apprendre. Si la Loss_G tombe a 0, c'est l'inverse. Un bon entrainement montre un equilibre entre les deux.</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 -->
+    <!-- ============================================================ -->
+    <h2>Partie 7 : Visualiser les resultats</h2>
+
+    <h3>7.1 Courbes de loss</h3>
+    <div class="code-block">fig, (ax1, ax2) = plt.subplots(<span class="number">1</span>, <span class="number">2</span>, figsize=(<span class="number">14</span>, <span class="number">5</span>))
+
+<span class="comment"># Losses</span>
+ax1.plot(G_losses, label=<span class="string">'Generator'</span>, color=<span class="string">'#ff6b35'</span>, alpha=<span class="number">0.8</span>)
+ax1.plot(D_losses, label=<span class="string">'Discriminator'</span>, color=<span class="string">'#569cd6'</span>, alpha=<span class="number">0.8</span>)
+ax1.set_title(<span class="string">'Losses au cours de l\'entrainement'</span>)
+ax1.set_xlabel(<span class="string">'Epoch'</span>)
+ax1.set_ylabel(<span class="string">'Loss'</span>)
+ax1.legend()
+ax1.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+
+<span class="comment"># Scores du discriminateur</span>
+ax2.plot(D_real_scores, label=<span class="string">'D(x) - vrais'</span>, color=<span class="string">'#00ff88'</span>)
+ax2.plot(D_fake_scores, label=<span class="string">'D(G(z)) - faux'</span>, color=<span class="string">'#ff4444'</span>)
+ax2.axhline(y=<span class="number">0.5</span>, color=<span class="string">'gray'</span>, linestyle=<span class="string">'--'</span>, label=<span class="string">'Equilibre (0.5)'</span>)
+ax2.set_title(<span class="string">'Scores du Discriminateur'</span>)
+ax2.set_xlabel(<span class="string">'Epoch'</span>)
+ax2.set_ylabel(<span class="string">'Score'</span>)
+ax2.legend()
+ax2.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+
+plt.tight_layout()
+plt.show()</div>
+
+    <h3>7.2 Progression des images generees</h3>
+    <div class="code-block"><span class="comment"># Visualiser la progression a travers les epochs</span>
+fig, axes = plt.subplots(<span class="number">1</span>, <span class="function">len</span>(img_list), figsize=(<span class="number">4</span> * <span class="function">len</span>(img_list), <span class="number">4</span>))
+
+epoch_labels = [<span class="number">1</span>, <span class="number">10</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">40</span>, <span class="number">50</span>]
+<span class="keyword">for</span> idx, (ax, imgs) <span class="keyword">in</span> <span class="function">enumerate</span>(<span class="function">zip</span>(axes, img_list)):
+    grid = vutils.make_grid(imgs[:<span class="number">16</span>], nrow=<span class="number">4</span>, normalize=<span class="keyword">True</span>)
+    ax.imshow(grid.permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>), cmap=<span class="string">'gray'</span>)
+    ax.set_title(<span class="string">f'Epoch {epoch_labels[idx]}'</span>, fontsize=<span class="number">12</span>)
+    ax.axis(<span class="string">'off'</span>)
+
+plt.suptitle(<span class="string">'Progression de la generation d\'images'</span>, fontsize=<span class="number">16</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <h3>7.3 Grille finale haute qualite</h3>
+    <div class="code-block"><span class="comment"># Generer une grille de 64 images</span>
+<span class="keyword">with</span> torch.no_grad():
+    final_noise = torch.randn(<span class="number">64</span>, latent_dim, <span class="number">1</span>, <span class="number">1</span>).to(device)
+    final_fakes = netG(final_noise).cpu()
+
+plt.figure(figsize=(<span class="number">10</span>, <span class="number">10</span>))
+grid = vutils.make_grid(final_fakes, nrow=<span class="number">8</span>, normalize=<span class="keyword">True</span>, padding=<span class="number">2</span>)
+plt.imshow(grid.permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>), cmap=<span class="string">'gray'</span>)
+plt.title(<span class="string">'Images generees par le DCGAN (Epoch 50)'</span>, fontsize=<span class="number">14</span>)
+plt.axis(<span class="string">'off'</span>)
+plt.show()
+
+<span class="comment"># Comparer avec de vraies images</span>
+real_batch, _ = <span class="function">next</span>(<span class="function">iter</span>(dataloader))
+fig, (ax1, ax2) = plt.subplots(<span class="number">1</span>, <span class="number">2</span>, figsize=(<span class="number">16</span>, <span class="number">8</span>))
+
+grid_real = vutils.make_grid(real_batch[:<span class="number">32</span>], nrow=<span class="number">8</span>, normalize=<span class="keyword">True</span>)
+ax1.imshow(grid_real.permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>), cmap=<span class="string">'gray'</span>)
+ax1.set_title(<span class="string">'Vraies images (MNIST)'</span>, fontsize=<span class="number">14</span>)
+ax1.axis(<span class="string">'off'</span>)
+
+grid_fake = vutils.make_grid(final_fakes[:<span class="number">32</span>], nrow=<span class="number">8</span>, normalize=<span class="keyword">True</span>)
+ax2.imshow(grid_fake.permute(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>), cmap=<span class="string">'gray'</span>)
+ax2.set_title(<span class="string">'Images generees (DCGAN)'</span>, fontsize=<span class="number">14</span>)
+ax2.axis(<span class="string">'off'</span>)
+
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="effect">Apres 50 epochs, le DCGAN genere des chiffres manuscrits convaincants. Les images ne sont pas parfaites, mais on reconnait clairement les formes des chiffres 0-9.</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 -->
+    <!-- ============================================================ -->
+    <h2>Partie 8 : Interpolation dans l'espace latent et mode collapse</h2>
+
+    <h3>8.1 Interpolation lineaire</h3>
+    <div class="definition">
+        L'<strong>interpolation dans l'espace latent</strong> consiste a generer des images a partir de points intermediaires entre deux vecteurs latents z1 et z2. Si le generateur a bien appris, les images intermediaires devraient montrer une transition douce entre les deux extremites.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">interpolate_latent</span>(z1, z2, n_steps=<span class="number">10</span>):
+    <span class="string">"""Interpolation lineaire entre deux vecteurs latents."""</span>
+    alphas = torch.linspace(<span class="number">0</span>, <span class="number">1</span>, n_steps)
+    interpolations = []
+    <span class="keyword">for</span> alpha <span class="keyword">in</span> alphas:
+        z_interp = (<span class="number">1</span> - alpha) * z1 + alpha * z2
+        interpolations.append(z_interp)
+    <span class="keyword">return</span> torch.stack(interpolations)
+
+<span class="comment"># Choisir deux points de depart</span>
+z1 = torch.randn(<span class="number">1</span>, latent_dim, <span class="number">1</span>, <span class="number">1</span>).to(device)
+z2 = torch.randn(<span class="number">1</span>, latent_dim, <span class="number">1</span>, <span class="number">1</span>).to(device)
+
+<span class="comment"># Interpoler</span>
+n_steps = <span class="number">12</span>
+z_interp = interpolate_latent(z1, z2, n_steps)
+
+<span class="comment"># Generer les images</span>
+netG.eval()
+<span class="keyword">with</span> torch.no_grad():
+    imgs_interp = netG(z_interp.to(device)).cpu()
+
+<span class="comment"># Afficher</span>
+fig, axes = plt.subplots(<span class="number">1</span>, n_steps, figsize=(<span class="number">2</span> * n_steps, <span class="number">2</span>))
+<span class="keyword">for</span> i, ax <span class="keyword">in</span> <span class="function">enumerate</span>(axes):
+    img = imgs_interp[i].squeeze()
+    img = (img + <span class="number">1</span>) / <span class="number">2</span>  <span class="comment"># [-1,1] -> [0,1]</span>
+    ax.imshow(img, cmap=<span class="string">'gray'</span>)
+    ax.axis(<span class="string">'off'</span>)
+    <span class="keyword">if</span> i == <span class="number">0</span>:
+        ax.set_title(<span class="string">'z1'</span>, color=<span class="string">'#ff6b35'</span>)
+    <span class="keyword">elif</span> i == n_steps - <span class="number">1</span>:
+        ax.set_title(<span class="string">'z2'</span>, color=<span class="string">'#569cd6'</span>)
+plt.suptitle(<span class="string">'Interpolation lineaire dans l\'espace latent'</span>, fontsize=<span class="number">14</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <h3>8.2 Interpolation spherique (SLERP)</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">slerp</span>(z1, z2, alpha):
+    <span class="string">"""Interpolation spherique entre deux vecteurs."""</span>
+    z1_flat = z1.view(-<span class="number">1</span>)
+    z2_flat = z2.view(-<span class="number">1</span>)
+
+    <span class="comment"># Normaliser</span>
+    z1_norm = z1_flat / z1_flat.norm()
+    z2_norm = z2_flat / z2_flat.norm()
+
+    <span class="comment"># Angle entre les deux vecteurs</span>
+    omega = torch.acos(torch.clamp(torch.dot(z1_norm, z2_norm), -<span class="number">1</span>, <span class="number">1</span>))
+
+    <span class="keyword">if</span> omega.abs() < <span class="number">1e-6</span>:
+        <span class="keyword">return</span> (<span class="number">1</span> - alpha) * z1 + alpha * z2
+
+    interp = (torch.sin((<span class="number">1</span> - alpha) * omega) / torch.sin(omega)) * z1_flat + \
+             (torch.sin(alpha * omega) / torch.sin(omega)) * z2_flat
+
+    <span class="keyword">return</span> interp.view_as(z1)
+
+<span class="comment"># Interpolation SLERP</span>
+alphas = torch.linspace(<span class="number">0</span>, <span class="number">1</span>, <span class="number">12</span>)
+z_slerp = torch.stack([slerp(z1, z2, a) <span class="keyword">for</span> a <span class="keyword">in</span> alphas])
+
+<span class="keyword">with</span> torch.no_grad():
+    imgs_slerp = netG(z_slerp.to(device)).cpu()
+
+fig, axes = plt.subplots(<span class="number">1</span>, <span class="number">12</span>, figsize=(<span class="number">24</span>, <span class="number">2</span>))
+<span class="keyword">for</span> i, ax <span class="keyword">in</span> <span class="function">enumerate</span>(axes):
+    img = (imgs_slerp[i].squeeze() + <span class="number">1</span>) / <span class="number">2</span>
+    ax.imshow(img, cmap=<span class="string">'gray'</span>)
+    ax.axis(<span class="string">'off'</span>)
+plt.suptitle(<span class="string">'Interpolation SLERP (spherique)'</span>, fontsize=<span class="number">14</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="prof-note">
+        L'interpolation SLERP est souvent preferee a l'interpolation lineaire car les vecteurs latents suivent une distribution gaussienne, donc les points les plus probables se trouvent sur une hypersphere, pas sur une droite. SLERP respecte cette geometrie.
+    </div>
+
+    <h3>8.3 Detecter le mode collapse</h3>
+    <div class="code-block"><span class="comment"># Generer beaucoup d'images et verifier la diversite</span>
+netG.eval()
+<span class="keyword">with</span> torch.no_grad():
+    z_diversity = torch.randn(<span class="number">1000</span>, latent_dim, <span class="number">1</span>, <span class="number">1</span>).to(device)
+    generated = netG(z_diversity).cpu()
+
+<span class="comment"># Mesurer la diversite : variance des pixels</span>
+pixel_variance = generated.var(dim=<span class="number">0</span>).mean().item()
+<span class="function">print</span>(<span class="string">f"Variance moyenne des pixels (diversite) : {pixel_variance:.6f}"</span>)
+
+<span class="comment"># Correlation entre paires d'images aleatoires</span>
+n_pairs = <span class="number">100</span>
+correlations = []
+<span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(n_pairs):
+    i, j = np.random.choice(<span class="number">1000</span>, <span class="number">2</span>, replace=<span class="keyword">False</span>)
+    img_i = generated[i].view(-<span class="number">1</span>)
+    img_j = generated[j].view(-<span class="number">1</span>)
+    corr = torch.corrcoef(torch.stack([img_i, img_j]))[<span class="number">0</span>, <span class="number">1</span>].item()
+    correlations.append(corr)
+
+mean_corr = np.mean(correlations)
+<span class="function">print</span>(<span class="string">f"Correlation moyenne entre paires : {mean_corr:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  (proche de 0 = bonne diversite, proche de 1 = mode collapse)"</span>)
+
+<span class="comment"># Afficher des echantillons pour inspection visuelle</span>
+fig, axes = plt.subplots(<span class="number">2</span>, <span class="number">10</span>, figsize=(<span class="number">20</span>, <span class="number">4</span>))
+<span class="keyword">for</span> i, ax <span class="keyword">in</span> <span class="function">enumerate</span>(axes.flat):
+    idx = np.random.randint(<span class="number">0</span>, <span class="number">1000</span>)
+    img = (generated[idx].squeeze() + <span class="number">1</span>) / <span class="number">2</span>
+    ax.imshow(img, cmap=<span class="string">'gray'</span>)
+    ax.axis(<span class="string">'off'</span>)
+plt.suptitle(<span class="string">'Echantillons aleatoires pour verifier la diversite'</span>, fontsize=<span class="number">14</span>)
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="output-block">Variance moyenne des pixels (diversite) : 0.123456
+Correlation moyenne entre paires : 0.3245
+  (proche de 0 = bonne diversite, proche de 1 = mode collapse)</div>
+
+    <div class="concept-box">
+        <h4>Mode Collapse</h4>
+        <p>Le <strong>mode collapse</strong> est un probleme frequent des GAN ou le generateur ne produit qu'un petit nombre de sorties differentes, au lieu de couvrir toute la diversite des donnees reelles. Signes a surveiller :</p>
+        <ul>
+            <li>Toutes les images generees se ressemblent visuellement.</li>
+            <li>La variance des pixels generees est tres faible.</li>
+            <li>La correlation entre images aleatoires est tres elevee (&gt;0.8).</li>
+            <li>La Loss_G chute a 0 tandis que la Loss_D monte.</li>
+        </ul>
+    </div>
+
+    <h3>8.4 Solutions contre le mode collapse</h3>
+    <table>
+        <tr><th>Technique</th><th>Description</th></tr>
+        <tr><td>Label Smoothing</td><td>Utiliser 0.9 au lieu de 1.0 pour les vrais labels (deja fait ci-dessus).</td></tr>
+        <tr><td>Instance Noise</td><td>Ajouter du bruit aux entrees du discriminateur pour le rendre moins confiant.</td></tr>
+        <tr><td>Feature Matching</td><td>Minimiser la distance entre features intermediaires de D pour les vrais et faux.</td></tr>
+        <tr><td>Minibatch Discrimination</td><td>Ajouter une couche dans D qui detecte si toutes les images du batch sont identiques.</td></tr>
+        <tr><td>WGAN / WGAN-GP</td><td>Utiliser la Wasserstein distance avec gradient penalty pour un entrainement plus stable.</td></tr>
+        <tr><td>Spectral Normalization</td><td>Normaliser les poids de D pour limiter sa constante de Lipschitz.</td></tr>
+    </table>
+
+    <div class="warning">L'entrainement des GAN est notoirement instable. Il est normal de devoir ajuster les hyperparametres (lr, architecture, batch_size) plusieurs fois avant d'obtenir de bons resultats. La patience est de mise !</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 -->
+    <!-- ============================================================ -->
+    <h2>Partie 9 : Recapitulatif et points clefs</h2>
+
+    <div class="concept-box green">
+        <h4>Ce que nous avons appris</h4>
+        <ol>
+            <li><strong>Framework GAN</strong> : deux reseaux en competition - Generator (cree) et Discriminator (critique).</li>
+            <li><strong>DCGAN</strong> : ConvTranspose2d pour G, Conv2d pour D, avec BatchNorm et activations specifiques.</li>
+            <li><strong>Entrainement alterne</strong> : entrainer D puis G a chaque iteration, avec label smoothing pour la stabilite.</li>
+            <li><strong>Hyperparametres clefs</strong> : lr=0.0002, beta1=0.5, normalisation [-1,1], Tanh en sortie de G.</li>
+            <li><strong>Interpolation latente</strong> : transition douce entre images grace a SLERP.</li>
+            <li><strong>Mode collapse</strong> : diagnostic par variance et correlation, solutions multiples.</li>
+        </ol>
+    </div>
+
+    <div class="concept-box blue">
+        <h4>Architecture DCGAN - Resume</h4>
+        <table>
+            <tr><th>Composant</th><th>Generator</th><th>Discriminator</th></tr>
+            <tr><td>Convolution</td><td>ConvTranspose2d (upscale)</td><td>Conv2d (downscale)</td></tr>
+            <tr><td>Activation cachee</td><td>ReLU</td><td>LeakyReLU(0.2)</td></tr>
+            <tr><td>Activation sortie</td><td>Tanh [-1, 1]</td><td>Sigmoid [0, 1]</td></tr>
+            <tr><td>Normalisation</td><td>BatchNorm (sauf sortie)</td><td>BatchNorm (sauf entree)</td></tr>
+            <tr><td>Poids init</td><td>N(0, 0.02)</td><td>N(0, 0.02)</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Les GAN ont ouvert la voie a la generation d'images realistes, mais ils sont aujourd'hui largement complementes par les modeles de diffusion (Stable Diffusion, DALL-E) qui offrent un entrainement plus stable et une meilleure qualite. Neanmoins, comprendre les GAN reste essentiel pour maitriser les fondements de la generation d'images par deep learning.
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

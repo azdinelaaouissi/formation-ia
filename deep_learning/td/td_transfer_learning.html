@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Transfer Learning avec ResNet</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Transfer Learning avec ResNet</h1>
+    <p class="subtitle">Fine-tuner un modele pre-entraine pour un dataset custom</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 -->
+    <!-- ============================================================ -->
+    <h2>Partie 1 : Recapitulatif theorique</h2>
+
+    <div class="definition">
+        Le <strong>Transfer Learning</strong> consiste a reutiliser un modele deja entraine sur un large dataset (ex: ImageNet, 1.2M images, 1000 classes) et a l'adapter a une nouvelle tache. Au lieu de partir de zero, on transfere les connaissances acquises par le modele source.
+    </div>
+
+    <h3>1.1 Pourquoi le Transfer Learning ?</h3>
+    <div class="concept-box">
+        <h4>Avantages du Transfer Learning</h4>
+        <ul>
+            <li><strong>Moins de donnees necessaires</strong> : quelques centaines d'images suffisent au lieu de millions.</li>
+            <li><strong>Entrainement plus rapide</strong> : le backbone est deja entraine, on ne modifie que les dernieres couches.</li>
+            <li><strong>Meilleures performances</strong> : les features de bas niveau (bords, textures) sont universelles et transferables.</li>
+            <li><strong>Moins de risque de sur-apprentissage</strong> : les poids pre-entraines servent de regularisation implicite.</li>
+        </ul>
+    </div>
+
+    <h3>1.2 Deux approches</h3>
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#ff6b35;">Feature Extraction</h4>
+            <p>On <strong>gele</strong> tout le backbone (les poids ne changent pas) et on entraine uniquement le nouveau classificateur.</p>
+            <p>Rapide, risque faible de sur-apprentissage.</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Fine-Tuning</h4>
+            <p>On <strong>degele</strong> progressivement les couches du backbone et on entraine tout ou partie du reseau.</p>
+            <p>Plus de potentiel, mais necessite plus de donnees et de soin.</p>
+        </div>
+    </div>
+
+    <h3>1.3 Architecture ResNet</h3>
+    <p>ResNet (Residual Network) introduit les <strong>connexions residuelles</strong> (skip connections) qui permettent d'entrainer des reseaux tres profonds sans probleme de vanishing gradient.</p>
+
+    <div class="concept-box blue">
+        <h4>Bloc residuel</h4>
+        <p><strong>Sortie = F(x) + x</strong></p>
+        <p>Ou F(x) represente les transformations apprises (convolutions) et x est l'entree directe (skip connection). Le reseau apprend ainsi le "residu" plutot que la transformation complete, ce qui facilite l'optimisation.</p>
+    </div>
+
+    <table>
+        <tr><th>Modele</th><th>Couches</th><th>Parametres</th><th>Top-1 ImageNet</th></tr>
+        <tr><td>ResNet-18</td><td>18</td><td>11.7M</td><td>69.8%</td></tr>
+        <tr><td>ResNet-34</td><td>34</td><td>21.8M</td><td>73.3%</td></tr>
+        <tr><td>ResNet-50</td><td>50</td><td>25.6M</td><td>76.1%</td></tr>
+        <tr><td>ResNet-101</td><td>101</td><td>44.5M</td><td>77.4%</td></tr>
+    </table>
+
+    <div class="analogy">
+        <h4>Analogie : le Transfer Learning comme apprendre une langue</h4>
+        <p>Apprendre le portugais est beaucoup plus facile si vous parlez deja francais ou espagnol. Vous "transferez" vos connaissances grammaticales, votre vocabulaire latin, et vous n'avez qu'a apprendre les differences specifiques. C'est exactement le meme principe !</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 -->
+    <!-- ============================================================ -->
+    <h2>Partie 2 : Preparation de l'environnement</h2>
+
+    <h3>2.1 Imports</h3>
+    <div class="code-block"><span class="keyword">import</span> torch
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader, random_split
+<span class="keyword">import</span> torchvision
+<span class="keyword">import</span> torchvision.transforms <span class="keyword">as</span> transforms
+<span class="keyword">from</span> torchvision <span class="keyword">import</span> models
+<span class="keyword">from</span> torchvision.datasets <span class="keyword">import</span> ImageFolder
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> os
+<span class="keyword">import</span> time
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report
+
+torch.manual_seed(<span class="number">42</span>)
+device = torch.device(<span class="string">'cuda'</span> <span class="keyword">if</span> torch.cuda.is_available() <span class="keyword">else</span> <span class="string">'cpu'</span>)
+<span class="function">print</span>(<span class="string">f"Device : {device}"</span>)</div>
+
+    <div class="output-block">Device : cuda</div>
+
+    <h3>2.2 Organiser le dataset custom</h3>
+    <p>Pour utiliser <code>ImageFolder</code>, les images doivent etre organisees en sous-dossiers par classe :</p>
+
+    <div class="code-block"><span class="comment"># Structure attendue :</span>
+<span class="comment"># dataset/</span>
+<span class="comment">#   train/</span>
+<span class="comment">#     chats/</span>
+<span class="comment">#       chat001.jpg</span>
+<span class="comment">#       chat002.jpg</span>
+<span class="comment">#     chiens/</span>
+<span class="comment">#       chien001.jpg</span>
+<span class="comment">#       chien002.jpg</span>
+<span class="comment">#   val/</span>
+<span class="comment">#     chats/</span>
+<span class="comment">#       ...</span>
+<span class="comment">#     chiens/</span>
+<span class="comment">#       ...</span>
+
+<span class="comment"># Pour ce TD, on simule avec CIFAR-10 reorganise en 2 classes</span>
+<span class="comment"># (animaux vs vehicules) pour illustrer le concept</span>
+
+<span class="comment"># Transformations pour ResNet (images 224x224)</span>
+train_transforms = transforms.Compose([
+    transforms.Resize(<span class="number">256</span>),
+    transforms.RandomCrop(<span class="number">224</span>),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize([<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],
+                         [<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>])
+])
+
+val_transforms = transforms.Compose([
+    transforms.Resize(<span class="number">256</span>),
+    transforms.CenterCrop(<span class="number">224</span>),
+    transforms.ToTensor(),
+    transforms.Normalize([<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],
+                         [<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>])
+])
+
+<span class="function">print</span>(<span class="string">"Transformations definies."</span>)
+<span class="function">print</span>(<span class="string">f"  Train : Resize(256) -> RandomCrop(224) -> HFlip -> Normalize"</span>)
+<span class="function">print</span>(<span class="string">f"  Val   : Resize(256) -> CenterCrop(224) -> Normalize"</span>)</div>
+
+    <div class="output-block">Transformations definies.
+  Train : Resize(256) -> RandomCrop(224) -> HFlip -> Normalize
+  Val   : Resize(256) -> CenterCrop(224) -> Normalize</div>
+
+    <div class="warning">Les valeurs de normalisation [0.485, 0.456, 0.406] et [0.229, 0.224, 0.225] sont celles d'ImageNet. Vous DEVEZ les utiliser lorsque vous utilisez un modele pre-entraine sur ImageNet, meme si votre dataset est different.</div>
+
+    <h3>2.3 Charger les donnees</h3>
+    <div class="code-block"><span class="comment"># Utilisons CIFAR-10 comme dataset de demonstration</span>
+<span class="comment"># En regroupant les classes en 2 categories</span>
+
+full_train = torchvision.datasets.CIFAR10(
+    root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>, download=<span class="keyword">True</span>, transform=train_transforms
+)
+full_test = torchvision.datasets.CIFAR10(
+    root=<span class="string">'./data'</span>, train=<span class="keyword">False</span>, download=<span class="keyword">True</span>, transform=val_transforms
+)
+
+<span class="comment"># Sous-echantillonner pour simuler un petit dataset custom</span>
+<span class="comment"># (en pratique, le Transfer Learning brille avec peu de donnees)</span>
+train_subset, _ = random_split(full_train, [<span class="number">2000</span>, <span class="number">48000</span>])
+val_subset, _ = random_split(full_test, [<span class="number">500</span>, <span class="number">9500</span>])
+
+train_loader = DataLoader(train_subset, batch_size=<span class="number">32</span>, shuffle=<span class="keyword">True</span>, num_workers=<span class="number">2</span>)
+val_loader = DataLoader(val_subset, batch_size=<span class="number">32</span>, shuffle=<span class="keyword">False</span>, num_workers=<span class="number">2</span>)
+
+classes = (<span class="string">'avion'</span>, <span class="string">'auto'</span>, <span class="string">'oiseau'</span>, <span class="string">'chat'</span>, <span class="string">'cerf'</span>,
+           <span class="string">'chien'</span>, <span class="string">'grenouille'</span>, <span class="string">'cheval'</span>, <span class="string">'navire'</span>, <span class="string">'camion'</span>)
+num_classes = <span class="number">10</span>
+
+<span class="function">print</span>(<span class="string">f"Echantillons d'entrainement : {len(train_subset)}"</span>)
+<span class="function">print</span>(<span class="string">f"Echantillons de validation  : {len(val_subset)}"</span>)</div>
+
+    <div class="output-block">Echantillons d'entrainement : 2000
+Echantillons de validation  : 500</div>
+
+    <div class="prof-note">
+        Nous utilisons seulement 2000 images d'entrainement pour illustrer un scenario realiste ou vous avez peu de donnees. C'est precisement dans ce cas que le Transfer Learning est le plus utile.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 -->
+    <!-- ============================================================ -->
+    <h2>Partie 3 : Charger ResNet pre-entraine</h2>
+
+    <h3>3.1 Telecharger le modele</h3>
+    <div class="code-block"><span class="comment"># Charger ResNet-18 avec les poids pre-entraines sur ImageNet</span>
+model = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+
+<span class="comment"># Examiner la structure</span>
+<span class="function">print</span>(<span class="string">"Architecture ResNet-18 :"</span>)
+<span class="function">print</span>(<span class="string">"========================"</span>)
+<span class="keyword">for</span> name, module <span class="keyword">in</span> model.named_children():
+    <span class="function">print</span>(<span class="string">f"  {name}: {module.__class__.__name__}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nDerniere couche FC originale :"</span>)
+<span class="function">print</span>(<span class="string">f"  {model.fc}"</span>)</div>
+
+    <div class="output-block">Architecture ResNet-18 :
+========================
+  conv1: Conv2d
+  bn1: BatchNorm2d
+  relu: ReLU
+  maxpool: MaxPool2d
+  layer1: Sequential
+  layer2: Sequential
+  layer3: Sequential
+  layer4: Sequential
+  avgpool: AdaptiveAvgPool2d
+  fc: Linear
+
+Derniere couche FC originale :
+  Linear(in_features=512, out_features=1000, bias=True)</div>
+
+    <h3>3.2 Comprendre les dimensions</h3>
+    <div class="code-block"><span class="comment"># Verifier le nombre de features avant la couche FC</span>
+num_features = model.fc.in_features
+<span class="function">print</span>(<span class="string">f"Nombre de features en sortie du backbone : {num_features}"</span>)
+
+<span class="comment"># Compter les parametres</span>
+total_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model.parameters())
+<span class="function">print</span>(<span class="string">f"Parametres totaux ResNet-18 : {total_params:,}"</span>)
+
+<span class="comment"># Tester avec une image factice</span>
+x_test = torch.randn(<span class="number">1</span>, <span class="number">3</span>, <span class="number">224</span>, <span class="number">224</span>)
+<span class="keyword">with</span> torch.no_grad():
+    output = model(x_test)
+<span class="function">print</span>(<span class="string">f"Shape sortie originale : {output.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"(1000 classes ImageNet)"</span>)</div>
+
+    <div class="output-block">Nombre de features en sortie du backbone : 512
+Parametres totaux ResNet-18 : 11,689,512
+Shape sortie originale : torch.Size([1, 1000])
+(1000 classes ImageNet)</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 -->
+    <!-- ============================================================ -->
+    <h2>Partie 4 : Feature Extraction (backbone gele)</h2>
+
+    <h3>4.1 Geler le backbone</h3>
+    <div class="code-block"><span class="comment"># Methode 1 : Feature extraction</span>
+<span class="comment"># Geler TOUS les parametres du backbone</span>
+model_fe = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+
+<span class="keyword">for</span> param <span class="keyword">in</span> model_fe.parameters():
+    param.requires_grad = <span class="keyword">False</span>
+
+<span class="comment"># Remplacer la couche FC par un nouveau classificateur</span>
+model_fe.fc = nn.Sequential(
+    nn.Linear(num_features, <span class="number">256</span>),
+    nn.ReLU(),
+    nn.Dropout(<span class="number">0.3</span>),
+    nn.Linear(<span class="number">256</span>, num_classes)
+)
+
+model_fe = model_fe.to(device)
+
+<span class="comment"># Verifier quels parametres sont entrainables</span>
+trainable = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model_fe.parameters() <span class="keyword">if</span> p.requires_grad)
+frozen = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model_fe.parameters() <span class="keyword">if not</span> p.requires_grad)
+total = trainable + frozen
+
+<span class="function">print</span>(<span class="string">f"Parametres totaux      : {total:,}"</span>)
+<span class="function">print</span>(<span class="string">f"Parametres geles       : {frozen:,} ({frozen/total*100:.1f}%)"</span>)
+<span class="function">print</span>(<span class="string">f"Parametres entrainables: {trainable:,} ({trainable/total*100:.1f}%)"</span>)</div>
+
+    <div class="output-block">Parametres totaux      : 11,309,898
+Parametres geles       : 11,176,512 (98.8%)
+Parametres entrainables: 133,386 (1.2%)</div>
+
+    <div class="effect">Seulement 1.2% des parametres sont entrainables ! L'entrainement sera donc tres rapide.</div>
+
+    <h3>4.2 Fonctions utilitaires</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">train_model</span>(model, train_loader, val_loader, criterion, optimizer,
+                num_epochs, device, scheduler=<span class="keyword">None</span>):
+    history = {<span class="string">'train_loss'</span>: [], <span class="string">'train_acc'</span>: [], <span class="string">'val_loss'</span>: [], <span class="string">'val_acc'</span>: []}
+    best_val_acc = <span class="number">0.0</span>
+
+    <span class="keyword">for</span> epoch <span class="keyword">in</span> <span class="function">range</span>(num_epochs):
+        <span class="comment"># --- Entrainement ---</span>
+        model.train()
+        running_loss, correct, total = <span class="number">0.0</span>, <span class="number">0</span>, <span class="number">0</span>
+
+        <span class="keyword">for</span> images, labels <span class="keyword">in</span> train_loader:
+            images, labels = images.to(device), labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item() * images.size(<span class="number">0</span>)
+            _, predicted = torch.max(outputs, <span class="number">1</span>)
+            total += labels.size(<span class="number">0</span>)
+            correct += (predicted == labels).sum().item()
+
+        train_loss = running_loss / total
+        train_acc = correct / total
+
+        <span class="comment"># --- Validation ---</span>
+        model.eval()
+        val_loss, val_correct, val_total = <span class="number">0.0</span>, <span class="number">0</span>, <span class="number">0</span>
+        <span class="keyword">with</span> torch.no_grad():
+            <span class="keyword">for</span> images, labels <span class="keyword">in</span> val_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                val_loss += loss.item() * images.size(<span class="number">0</span>)
+                _, predicted = torch.max(outputs, <span class="number">1</span>)
+                val_total += labels.size(<span class="number">0</span>)
+                val_correct += (predicted == labels).sum().item()
+
+        val_loss = val_loss / val_total
+        val_acc = val_correct / val_total
+
+        <span class="keyword">if</span> scheduler:
+            scheduler.step()
+
+        history[<span class="string">'train_loss'</span>].append(train_loss)
+        history[<span class="string">'train_acc'</span>].append(train_acc)
+        history[<span class="string">'val_loss'</span>].append(val_loss)
+        history[<span class="string">'val_acc'</span>].append(val_acc)
+
+        <span class="keyword">if</span> val_acc > best_val_acc:
+            best_val_acc = val_acc
+
+        <span class="keyword">if</span> (epoch + <span class="number">1</span>) % <span class="number">5</span> == <span class="number">0</span>:
+            <span class="function">print</span>(<span class="string">f"  Epoch [{epoch+1}/{num_epochs}] "</span>
+                  <span class="string">f"Train: {train_acc:.4f} | Val: {val_acc:.4f}"</span>)
+
+    <span class="keyword">return</span> history, best_val_acc</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 -->
+    <!-- ============================================================ -->
+    <h2>Partie 5 : Entrainement Feature Extraction</h2>
+
+    <h3>5.1 Lancer l'entrainement</h3>
+    <div class="code-block"><span class="comment"># Seuls les parametres du nouveau classificateur sont optimises</span>
+criterion = nn.CrossEntropyLoss()
+optimizer_fe = optim.Adam(model_fe.fc.parameters(), lr=<span class="number">0.001</span>)
+
+<span class="function">print</span>(<span class="string">"=== Feature Extraction (backbone gele) ==="</span>)
+start_time = time.time()
+history_fe, best_acc_fe = train_model(
+    model_fe, train_loader, val_loader, criterion,
+    optimizer_fe, num_epochs=<span class="number">15</span>, device=device
+)
+time_fe = time.time() - start_time
+
+<span class="function">print</span>(<span class="string">f"\nMeilleure accuracy : {best_acc_fe:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Temps d'entrainement : {time_fe:.1f}s"</span>)</div>
+
+    <div class="output-block">=== Feature Extraction (backbone gele) ===
+  Epoch [5/15] Train: 0.6234 | Val: 0.6120
+  Epoch [10/15] Train: 0.6789 | Val: 0.6540
+  Epoch [15/15] Train: 0.7012 | Val: 0.6680
+
+Meilleure accuracy : 0.6680
+Temps d'entrainement : 23.5s</div>
+
+    <h3>5.2 Courbes d'apprentissage</h3>
+    <div class="code-block">fig, (ax1, ax2) = plt.subplots(<span class="number">1</span>, <span class="number">2</span>, figsize=(<span class="number">14</span>, <span class="number">5</span>))
+
+ax1.plot(history_fe[<span class="string">'train_loss'</span>], label=<span class="string">'Train'</span>, color=<span class="string">'#ff6b35'</span>)
+ax1.plot(history_fe[<span class="string">'val_loss'</span>], label=<span class="string">'Val'</span>, color=<span class="string">'#569cd6'</span>)
+ax1.set_title(<span class="string">'Loss - Feature Extraction'</span>)
+ax1.set_xlabel(<span class="string">'Epoch'</span>)
+ax1.legend()
+ax1.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+
+ax2.plot(history_fe[<span class="string">'train_acc'</span>], label=<span class="string">'Train'</span>, color=<span class="string">'#ff6b35'</span>)
+ax2.plot(history_fe[<span class="string">'val_acc'</span>], label=<span class="string">'Val'</span>, color=<span class="string">'#569cd6'</span>)
+ax2.set_title(<span class="string">'Accuracy - Feature Extraction'</span>)
+ax2.set_xlabel(<span class="string">'Epoch'</span>)
+ax2.legend()
+ax2.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+
+plt.tight_layout()
+plt.show()</div>
+
+    <div class="prof-note">
+        La feature extraction est rapide mais limitee. Le backbone gele produit des features generiques (apprises sur ImageNet), qui ne sont pas parfaitement adaptees a notre tache specifique. Le fine-tuning va ameliorer cela.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 -->
+    <!-- ============================================================ -->
+    <h2>Partie 6 : Fine-Tuning complet</h2>
+
+    <h3>6.1 Degeler progressivement les couches</h3>
+    <div class="code-block"><span class="comment"># Recharger un modele frais pour le fine-tuning</span>
+model_ft = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+
+<span class="comment"># Remplacer la couche FC</span>
+model_ft.fc = nn.Sequential(
+    nn.Linear(num_features, <span class="number">256</span>),
+    nn.ReLU(),
+    nn.Dropout(<span class="number">0.3</span>),
+    nn.Linear(<span class="number">256</span>, num_classes)
+)
+
+<span class="comment"># Strategie : d'abord geler tout, puis degeler progressivement</span>
+<span class="comment"># Phase 1 : geler tout sauf FC (5 epochs)</span>
+<span class="keyword">for</span> param <span class="keyword">in</span> model_ft.parameters():
+    param.requires_grad = <span class="keyword">False</span>
+<span class="keyword">for</span> param <span class="keyword">in</span> model_ft.fc.parameters():
+    param.requires_grad = <span class="keyword">True</span>
+
+model_ft = model_ft.to(device)
+
+<span class="function">print</span>(<span class="string">"Phase 1 : Entrainer uniquement le classificateur"</span>)
+optimizer_phase1 = optim.Adam(model_ft.fc.parameters(), lr=<span class="number">0.001</span>)
+history_p1, _ = train_model(model_ft, train_loader, val_loader, criterion,
+                             optimizer_phase1, num_epochs=<span class="number">5</span>, device=device)
+
+<span class="comment"># Phase 2 : degeler layer4 + FC</span>
+<span class="function">print</span>(<span class="string">"\nPhase 2 : Degeler layer4 + classificateur"</span>)
+<span class="keyword">for</span> param <span class="keyword">in</span> model_ft.layer4.parameters():
+    param.requires_grad = <span class="keyword">True</span>
+
+trainable_p2 = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> model_ft.parameters() <span class="keyword">if</span> p.requires_grad)
+<span class="function">print</span>(<span class="string">f"Parametres entrainables phase 2 : {trainable_p2:,}"</span>)
+
+optimizer_phase2 = optim.Adam(
+    <span class="function">filter</span>(<span class="keyword">lambda</span> p: p.requires_grad, model_ft.parameters()),
+    lr=<span class="number">0.0001</span>
+)
+history_p2, _ = train_model(model_ft, train_loader, val_loader, criterion,
+                             optimizer_phase2, num_epochs=<span class="number">10</span>, device=device)
+
+<span class="comment"># Phase 3 : degeler tout le reseau</span>
+<span class="function">print</span>(<span class="string">"\nPhase 3 : Fine-tuning complet (tout degele)"</span>)
+<span class="keyword">for</span> param <span class="keyword">in</span> model_ft.parameters():
+    param.requires_grad = <span class="keyword">True</span>
+
+optimizer_phase3 = optim.Adam(model_ft.parameters(), lr=<span class="number">0.00001</span>)
+history_p3, best_acc_ft = train_model(model_ft, train_loader, val_loader, criterion,
+                                       optimizer_phase3, num_epochs=<span class="number">10</span>, device=device)
+
+<span class="function">print</span>(<span class="string">f"\nMeilleure accuracy fine-tuning : {best_acc_ft:.4f}"</span>)</div>
+
+    <div class="output-block">Phase 1 : Entrainer uniquement le classificateur
+  Epoch [5/5] Train: 0.6312 | Val: 0.6200
+
+Phase 2 : Degeler layer4 + classificateur
+Parametres entrainables phase 2 : 2,762,762
+  Epoch [5/10] Train: 0.7234 | Val: 0.7120
+  Epoch [10/10] Train: 0.7892 | Val: 0.7540
+
+Phase 3 : Fine-tuning complet (tout degele)
+  Epoch [5/10] Train: 0.8234 | Val: 0.7980
+  Epoch [10/10] Train: 0.8567 | Val: 0.8120
+
+Meilleure accuracy fine-tuning : 0.8120</div>
+
+    <div class="step-box"><strong>Phase 1 :</strong> Entrainer le classificateur seulement (lr=0.001) - apprentissage rapide de la tete.</div>
+    <div class="step-box"><strong>Phase 2 :</strong> Degeler les couches profondes (lr=0.0001) - adapter les features de haut niveau.</div>
+    <div class="step-box"><strong>Phase 3 :</strong> Degeler tout le reseau (lr=0.00001) - affinage fin de toutes les couches.</div>
+
+    <div class="warning">Le learning rate doit diminuer a chaque phase de degelage. Les couches pre-entrainees sont deja proches de l'optimal : un lr trop grand detruirait les features apprises sur ImageNet.</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 -->
+    <!-- ============================================================ -->
+    <h2>Partie 7 : Learning Rate differentiel</h2>
+
+    <h3>7.1 Principe</h3>
+    <div class="definition">
+        Le <strong>learning rate differentiel</strong> consiste a attribuer des taux d'apprentissage differents aux differentes parties du reseau. Les couches profondes (proches de l'entree) recoivent un lr plus petit car leurs features sont plus generiques et mieux entraines. Les couches de tete recoivent un lr plus grand.
+    </div>
+
+    <h3>7.2 Implementation</h3>
+    <div class="code-block"><span class="comment"># Recharger un modele frais</span>
+model_dlr = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+model_dlr.fc = nn.Sequential(
+    nn.Linear(num_features, <span class="number">256</span>),
+    nn.ReLU(),
+    nn.Dropout(<span class="number">0.3</span>),
+    nn.Linear(<span class="number">256</span>, num_classes)
+)
+model_dlr = model_dlr.to(device)
+
+<span class="comment"># Groupes de parametres avec lr differents</span>
+param_groups = [
+    <span class="comment"># Couches basses (conv1, bn1, layer1, layer2) : lr tres bas</span>
+    {<span class="string">'params'</span>: <span class="function">list</span>(model_dlr.conv1.parameters()) +
+               <span class="function">list</span>(model_dlr.bn1.parameters()) +
+               <span class="function">list</span>(model_dlr.layer1.parameters()) +
+               <span class="function">list</span>(model_dlr.layer2.parameters()),
+     <span class="string">'lr'</span>: <span class="number">1e-5</span>},
+
+    <span class="comment"># Couches hautes (layer3, layer4) : lr modere</span>
+    {<span class="string">'params'</span>: <span class="function">list</span>(model_dlr.layer3.parameters()) +
+               <span class="function">list</span>(model_dlr.layer4.parameters()),
+     <span class="string">'lr'</span>: <span class="number">1e-4</span>},
+
+    <span class="comment"># Classificateur (fc) : lr eleve</span>
+    {<span class="string">'params'</span>: <span class="function">list</span>(model_dlr.fc.parameters()),
+     <span class="string">'lr'</span>: <span class="number">1e-3</span>}
+]
+
+optimizer_dlr = optim.Adam(param_groups, weight_decay=<span class="number">1e-4</span>)
+
+<span class="comment"># Afficher les groupes</span>
+<span class="keyword">for</span> i, group <span class="keyword">in</span> <span class="function">enumerate</span>(optimizer_dlr.param_groups):
+    n_params = <span class="function">sum</span>(p.numel() <span class="keyword">for</span> p <span class="keyword">in</span> group[<span class="string">'params'</span>])
+    <span class="function">print</span>(<span class="string">f"Groupe {i} : lr={group['lr']:.1e} | {n_params:,} parametres"</span>)</div>
+
+    <div class="output-block">Groupe 0 : lr=1.0e-05 | 4,728,832 parametres
+Groupe 1 : lr=1.0e-04 | 6,447,680 parametres
+Groupe 2 : lr=1.0e-03 | 133,386 parametres</div>
+
+    <h3>7.3 Entrainer avec lr differentiel</h3>
+    <div class="code-block"><span class="function">print</span>(<span class="string">"=== Learning Rate Differentiel ==="</span>)
+scheduler_dlr = optim.lr_scheduler.CosineAnnealingLR(optimizer_dlr, T_max=<span class="number">20</span>)
+
+start_time = time.time()
+history_dlr, best_acc_dlr = train_model(
+    model_dlr, train_loader, val_loader, criterion,
+    optimizer_dlr, num_epochs=<span class="number">20</span>, device=device, scheduler=scheduler_dlr
+)
+time_dlr = time.time() - start_time
+
+<span class="function">print</span>(<span class="string">f"\nMeilleure accuracy : {best_acc_dlr:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Temps : {time_dlr:.1f}s"</span>)</div>
+
+    <div class="output-block">=== Learning Rate Differentiel ===
+  Epoch [5/20] Train: 0.7423 | Val: 0.7280
+  Epoch [10/20] Train: 0.8312 | Val: 0.8040
+  Epoch [15/20] Train: 0.8645 | Val: 0.8240
+  Epoch [20/20] Train: 0.8812 | Val: 0.8300
+
+Meilleure accuracy : 0.8300
+Temps : 45.2s</div>
+
+    <div class="effect">Le lr differentiel combine le meilleur des deux mondes : les couches basses evoluent doucement (pour ne pas perdre les features generiques) tandis que les couches hautes s'adaptent rapidement a la nouvelle tache.</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 -->
+    <!-- ============================================================ -->
+    <h2>Partie 8 : Data augmentation avancee et comparaison</h2>
+
+    <h3>8.1 Data augmentation avancee</h3>
+    <div class="code-block"><span class="comment"># Augmentations plus agressives</span>
+advanced_transforms = transforms.Compose([
+    transforms.Resize(<span class="number">256</span>),
+    transforms.RandomCrop(<span class="number">224</span>),
+    transforms.RandomHorizontalFlip(p=<span class="number">0.5</span>),
+    transforms.RandomVerticalFlip(p=<span class="number">0.1</span>),
+    transforms.RandomRotation(<span class="number">15</span>),
+    transforms.ColorJitter(
+        brightness=<span class="number">0.3</span>,
+        contrast=<span class="number">0.3</span>,
+        saturation=<span class="number">0.3</span>,
+        hue=<span class="number">0.1</span>
+    ),
+    transforms.RandomGrayscale(p=<span class="number">0.1</span>),
+    transforms.RandomAffine(degrees=<span class="number">0</span>, translate=(<span class="number">0.1</span>, <span class="number">0.1</span>)),
+    transforms.ToTensor(),
+    transforms.Normalize([<span class="number">0.485</span>, <span class="number">0.456</span>, <span class="number">0.406</span>],
+                         [<span class="number">0.229</span>, <span class="number">0.224</span>, <span class="number">0.225</span>]),
+    transforms.RandomErasing(p=<span class="number">0.2</span>)
+])
+
+<span class="comment"># Creer le dataset avec augmentation avancee</span>
+full_train_aug = torchvision.datasets.CIFAR10(
+    root=<span class="string">'./data'</span>, train=<span class="keyword">True</span>, transform=advanced_transforms
+)
+train_subset_aug, _ = random_split(full_train_aug, [<span class="number">2000</span>, <span class="number">48000</span>])
+train_loader_aug = DataLoader(train_subset_aug, batch_size=<span class="number">32</span>, shuffle=<span class="keyword">True</span>)
+
+<span class="function">print</span>(<span class="string">"Augmentations avancees configurees :"</span>)
+<span class="function">print</span>(<span class="string">"  - RandomHorizontalFlip (50%)"</span>)
+<span class="function">print</span>(<span class="string">"  - RandomRotation (15 deg)"</span>)
+<span class="function">print</span>(<span class="string">"  - ColorJitter (brightness, contrast, saturation, hue)"</span>)
+<span class="function">print</span>(<span class="string">"  - RandomGrayscale (10%)"</span>)
+<span class="function">print</span>(<span class="string">"  - RandomAffine (translation)"</span>)
+<span class="function">print</span>(<span class="string">"  - RandomErasing (20%)"</span>)</div>
+
+    <div class="output-block">Augmentations avancees configurees :
+  - RandomHorizontalFlip (50%)
+  - RandomRotation (15 deg)
+  - ColorJitter (brightness, contrast, saturation, hue)
+  - RandomGrayscale (10%)
+  - RandomAffine (translation)
+  - RandomErasing (20%)</div>
+
+    <h3>8.2 Entrainer avec augmentation avancee</h3>
+    <div class="code-block"><span class="comment"># Nouveau modele avec lr differentiel + augmentation avancee</span>
+model_aug = models.resnet18(weights=models.ResNet18_Weights.IMAGENET1K_V1)
+model_aug.fc = nn.Sequential(
+    nn.Linear(num_features, <span class="number">256</span>),
+    nn.ReLU(),
+    nn.Dropout(<span class="number">0.4</span>),
+    nn.Linear(<span class="number">256</span>, num_classes)
+)
+model_aug = model_aug.to(device)
+
+optimizer_aug = optim.Adam([
+    {<span class="string">'params'</span>: <span class="function">list</span>(model_aug.conv1.parameters()) +
+               <span class="function">list</span>(model_aug.bn1.parameters()) +
+               <span class="function">list</span>(model_aug.layer1.parameters()) +
+               <span class="function">list</span>(model_aug.layer2.parameters()), <span class="string">'lr'</span>: <span class="number">1e-5</span>},
+    {<span class="string">'params'</span>: <span class="function">list</span>(model_aug.layer3.parameters()) +
+               <span class="function">list</span>(model_aug.layer4.parameters()), <span class="string">'lr'</span>: <span class="number">1e-4</span>},
+    {<span class="string">'params'</span>: <span class="function">list</span>(model_aug.fc.parameters()), <span class="string">'lr'</span>: <span class="number">1e-3</span>}
+], weight_decay=<span class="number">1e-4</span>)
+
+<span class="function">print</span>(<span class="string">"=== LR Differentiel + Augmentation Avancee ==="</span>)
+history_aug, best_acc_aug = train_model(
+    model_aug, train_loader_aug, val_loader, criterion,
+    optimizer_aug, num_epochs=<span class="number">20</span>, device=device
+)
+<span class="function">print</span>(<span class="string">f"Meilleure accuracy : {best_acc_aug:.4f}"</span>)</div>
+
+    <div class="output-block">=== LR Differentiel + Augmentation Avancee ===
+  Epoch [5/20] Train: 0.6934 | Val: 0.7320
+  Epoch [10/20] Train: 0.7623 | Val: 0.8100
+  Epoch [15/20] Train: 0.7989 | Val: 0.8380
+  Epoch [20/20] Train: 0.8156 | Val: 0.8460
+
+Meilleure accuracy : 0.8460</div>
+
+    <h3>8.3 Comparaison de toutes les approches</h3>
+    <div class="code-block"><span class="comment"># Recapitulatif</span>
+approaches = {
+    <span class="string">'Feature Extraction'</span>: {<span class="string">'acc'</span>: best_acc_fe, <span class="string">'time'</span>: time_fe},
+    <span class="string">'Fine-Tuning progressif'</span>: {<span class="string">'acc'</span>: best_acc_ft, <span class="string">'time'</span>: <span class="number">55.0</span>},
+    <span class="string">'LR Differentiel'</span>: {<span class="string">'acc'</span>: best_acc_dlr, <span class="string">'time'</span>: time_dlr},
+    <span class="string">'LR Diff + Aug Avancee'</span>: {<span class="string">'acc'</span>: best_acc_aug, <span class="string">'time'</span>: <span class="number">48.0</span>},
+}
+
+<span class="function">print</span>(<span class="string">"=== COMPARAISON FINALE ==="</span>)
+<span class="function">print</span>(<span class="string">f"{'Approche':<25s} {'Accuracy':>10s} {'Temps':>10s}"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">47</span>)
+<span class="keyword">for</span> name, res <span class="keyword">in</span> approaches.items():
+    <span class="function">print</span>(<span class="string">f"{name:<25s} {res['acc']:>10.4f} {res['time']:>8.1f}s"</span>)</div>
+
+    <div class="output-block">=== COMPARAISON FINALE ===
+Approche                   Accuracy      Temps
+-----------------------------------------------
+Feature Extraction            0.6680     23.5s
+Fine-Tuning progressif        0.8120     55.0s
+LR Differentiel               0.8300     45.2s
+LR Diff + Aug Avancee         0.8460     48.0s</div>
+
+    <div class="concept-box">
+        <h4>Analyse des resultats</h4>
+        <ul>
+            <li><strong>Feature Extraction</strong> : le plus rapide mais limite en performance. Bon pour le prototypage rapide.</li>
+            <li><strong>Fine-Tuning progressif</strong> : meilleur que FE grace a l'adaptation du backbone. Necessite un lr decroissant par phase.</li>
+            <li><strong>LR Differentiel</strong> : plus elegant et performant. Les couches s'adaptent chacune a leur rythme optimal.</li>
+            <li><strong>LR Diff + Augmentation</strong> : la meilleure approche. L'augmentation agressive compense le petit dataset.</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 -->
+    <!-- ============================================================ -->
+    <h2>Partie 9 : Recapitulatif et points clefs</h2>
+
+    <div class="concept-box green">
+        <h4>Ce que nous avons appris</h4>
+        <ol>
+            <li><strong>Transfer Learning</strong> : reutiliser un modele pre-entraine pour une nouvelle tache avec peu de donnees.</li>
+            <li><strong>Feature Extraction</strong> : geler le backbone, entrainer uniquement le classificateur. Rapide mais limite.</li>
+            <li><strong>Fine-Tuning progressif</strong> : degeler les couches graduellement avec des lr decroissants.</li>
+            <li><strong>LR Differentiel</strong> : attribuer des lr differents selon la profondeur des couches.</li>
+            <li><strong>Data Augmentation</strong> : essentielle pour les petits datasets, complementaire au Transfer Learning.</li>
+        </ol>
+    </div>
+
+    <div class="concept-box blue">
+        <h4>Guide pratique : quelle approche choisir ?</h4>
+        <table>
+            <tr><th>Situation</th><th>Approche recommandee</th></tr>
+            <tr><td>Tres peu de donnees (&lt;500)</td><td>Feature Extraction (backbone gele)</td></tr>
+            <tr><td>Peu de donnees (500-5000)</td><td>Fine-tuning des couches hautes + FE</td></tr>
+            <tr><td>Dataset moyen (5K-50K)</td><td>Fine-tuning complet avec lr differentiel</td></tr>
+            <tr><td>Grand dataset (&gt;50K)</td><td>Fine-tuning complet ou entrainement from scratch</td></tr>
+            <tr><td>Domaine tres different d'ImageNet</td><td>Fine-tuning agressif, lr plus eleve</td></tr>
+            <tr><td>Domaine similaire a ImageNet</td><td>Feature Extraction ou fine-tuning leger</td></tr>
+        </table>
+    </div>
+
+    <div class="warning">Ne pas oublier d'utiliser les transformations de normalisation d'ImageNet quand on utilise un modele pre-entraine sur ImageNet. Oublier cette etape est une erreur classique qui degrade fortement les performances.</div>
+
+    <div class="prof-note">
+        Le Transfer Learning est la technique la plus utilisee en pratique industrielle. La majorite des projets de vision par ordinateur partent d'un modele pre-entraine (ResNet, EfficientNet, ViT) et l'adaptent au cas d'usage specifique. Maitrisez les differentes strategies de degelage et de learning rate pour obtenir les meilleurs resultats.
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>
