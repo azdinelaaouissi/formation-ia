@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Construire un Graphe Simple avec LangGraph</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Construire un Graphe Simple avec LangGraph</h1>
+    <p class="subtitle">Premier TD LangGraph -- Comprendre les StateGraph, les noeuds, les aretes et le flux d'execution</p>
+
+    <!-- ============================== SECTION 1 ============================== -->
+    <h2>1. Recapitulatif -- Concepts fondamentaux</h2>
+
+    <div class="definition">
+        <strong>LangGraph</strong> est un framework Python developpe par LangChain qui permet de construire des applications
+        basees sur des LLM sous forme de <strong>graphes orientes</strong>. Chaque noeud represente une action (fonction),
+        chaque arete definit le flux d'execution, et un <strong>etat partage</strong> (State) circule entre les noeuds.
+    </div>
+
+    <div class="concept-box">
+        <h3>Les 4 briques fondamentales</h3>
+        <table>
+            <tr><th>Concept</th><th>Description</th><th>Code</th></tr>
+            <tr><td><strong>State</strong></td><td>Dictionnaire type partage entre tous les noeuds</td><td><code>TypedDict</code></td></tr>
+            <tr><td><strong>Node</strong></td><td>Fonction qui lit et modifie l'etat</td><td><code>graph.add_node()</code></td></tr>
+            <tr><td><strong>Edge</strong></td><td>Connexion directe entre deux noeuds</td><td><code>graph.add_edge()</code></td></tr>
+            <tr><td><strong>Conditional Edge</strong></td><td>Arete qui choisit le noeud suivant selon une condition</td><td><code>graph.add_conditional_edges()</code></td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Pensez a un graphe LangGraph comme un organigramme : chaque boite est un noeud, chaque fleche est une arete,
+        et un dossier (l'etat) passe de boite en boite en se faisant enrichir a chaque etape.
+    </div>
+
+    <h3>Installation</h3>
+    <div class="code-block"><span class="comment"># Installation des dependances</span>
+<span class="function">pip install</span> langgraph langchain-openai langchain-core</div>
+
+    <!-- ============================== SECTION 2 ============================== -->
+    <h2>2. Principe -- Architecture d'un graphe simple</h2>
+
+    <p>Voici la structure type d'un graphe a 3 noeuds avec un branchement conditionnel :</p>
+
+    <div class="svg-container">
+        <svg width="700" height="400" viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">
+            <!-- Fond -->
+            <rect width="700" height="400" fill="#0f0f23" rx="12"/>
+
+            <!-- START -->
+            <circle cx="100" cy="80" r="30" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="100" y="85" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">START</text>
+
+            <!-- Noeud 1 -->
+            <rect x="200" y="55" width="140" height="50" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="270" y="85" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">Classifier</text>
+
+            <!-- Noeud 2a -->
+            <rect x="450" y="15" width="160" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="530" y="45" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Reponse Positive</text>
+
+            <!-- Noeud 2b -->
+            <rect x="450" y="95" width="160" height="50" rx="10" fill="#1a1a2e" stroke="#ce9178" stroke-width="2"/>
+            <text x="530" y="125" text-anchor="middle" fill="#ce9178" font-size="13" font-weight="bold">Reponse Negative</text>
+
+            <!-- END -->
+            <circle cx="530" cy="220" r="30" fill="none" stroke="#ff4444" stroke-width="2"/>
+            <text x="530" y="225" text-anchor="middle" fill="#ff4444" font-size="12" font-weight="bold">END</text>
+
+            <!-- Fleches -->
+            <line x1="130" y1="80" x2="198" y2="80" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow-green)"/>
+            <line x1="340" y1="70" x2="448" y2="40" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow-orange)" stroke-dasharray="6,3"/>
+            <line x1="340" y1="90" x2="448" y2="120" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow-orange)" stroke-dasharray="6,3"/>
+            <line x1="530" y1="65" x2="530" y2="188" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow-blue)"/>
+            <line x1="530" y1="145" x2="530" y2="188" stroke="#ce9178" stroke-width="2" marker-end="url(#arrow-red)"/>
+
+            <!-- Labels conditionnels -->
+            <text x="395" y="45" text-anchor="middle" fill="#6a9955" font-size="10" font-style="italic">sentiment=positif</text>
+            <text x="395" y="125" text-anchor="middle" fill="#6a9955" font-size="10" font-style="italic">sentiment=negatif</text>
+
+            <!-- Legende -->
+            <rect x="30" y="280" width="640" height="100" rx="8" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="50" y="305" fill="#aaa" font-size="12" font-weight="bold">Legende :</text>
+            <line x1="50" y1="325" x2="90" y2="325" stroke="#00ff88" stroke-width="2"/>
+            <text x="100" y="330" fill="#e0e0e0" font-size="11">Arete normale</text>
+            <line x1="50" y1="350" x2="90" y2="350" stroke="#ff6b35" stroke-width="2" stroke-dasharray="6,3"/>
+            <text x="100" y="355" fill="#e0e0e0" font-size="11">Arete conditionnelle</text>
+            <rect x="300" y="315" width="20" height="15" rx="3" fill="#1a1a2e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="330" y="327" fill="#e0e0e0" font-size="11">Noeud (fonction)</text>
+            <circle cx="310" cy="355" r="8" fill="none" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="330" y="360" fill="#e0e0e0" font-size="11">Point d'entree / sortie</text>
+
+            <!-- Markers -->
+            <defs>
+                <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#00ff88"/></marker>
+                <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#ff6b35"/></marker>
+                <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#569cd6"/></marker>
+                <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#ce9178"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="effect">
+        Le graphe ci-dessus illustre le patron de conception fondamental : un noeud de classification
+        route l'execution vers differents noeuds de traitement selon l'etat actuel.
+    </div>
+
+    <!-- ============================== EXERCICE 1 ============================== -->
+    <h2>3. Exercice 1 -- Definir un etat type (TypedDict)</h2>
+
+    <p>L'etat est la structure de donnees centrale de tout graphe LangGraph. Il est defini avec <code>TypedDict</code>
+    et circule entre chaque noeud. Chaque noeud recoit l'etat complet et retourne un dictionnaire partiel avec les cles a mettre a jour.</p>
+
+    <div class="concept-box blue">
+        <h3>Regles de l'etat</h3>
+        <ul>
+            <li>Definir l'etat avec <code>TypedDict</code> pour le typage statique</li>
+            <li>Chaque noeud recoit l'etat entier en parametre</li>
+            <li>Chaque noeud retourne un <strong>dictionnaire partiel</strong> : seules les cles retournees sont mises a jour</li>
+            <li>Les cles non retournees conservent leur valeur precedente</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># exercice1_state.py</span>
+<span class="comment"># Definir un etat type pour un graphe de traitement de texte</span>
+
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict
+
+<span class="keyword">class</span> <span class="function">GraphState</span>(TypedDict):
+    <span class="string">"""Etat partage entre tous les noeuds du graphe."""</span>
+    message: str           <span class="comment"># Le message d'entree de l'utilisateur</span>
+    sentiment: str         <span class="comment"># Le sentiment detecte (positif, negatif, neutre)</span>
+    reponse: str           <span class="comment"># La reponse generee</span>
+    nombre_mots: int       <span class="comment"># Le nombre de mots dans le message</span>
+
+<span class="comment"># Exemple d'etat initial</span>
+etat_initial: GraphState = {
+    <span class="string">"message"</span>: <span class="string">"Bonjour, je suis tres content !"</span>,
+    <span class="string">"sentiment"</span>: <span class="string">""</span>,
+    <span class="string">"reponse"</span>: <span class="string">""</span>,
+    <span class="string">"nombre_mots"</span>: <span class="number">0</span>
+}
+
+<span class="function">print</span>(<span class="string">"Etat initial :"</span>, etat_initial)
+<span class="function">print</span>(<span class="string">"Type :"</span>, <span class="function">type</span>(etat_initial))</div>
+
+    <div class="output-block">
+Etat initial : {'message': 'Bonjour, je suis tres content !', 'sentiment': '', 'reponse': '', 'nombre_mots': 0}
+Type : &lt;class 'dict'&gt;</div>
+
+    <div class="prof-note">
+        Le <code>TypedDict</code> n'est pas un veritable objet -- c'est un dictionnaire Python standard
+        avec des annotations de type. LangGraph l'utilise pour valider la structure de l'etat a la compilation du graphe.
+    </div>
+
+    <!-- ============================== EXERCICE 2 ============================== -->
+    <h2>4. Exercice 2 -- Creer un graphe a 2 noeuds (greet - respond)</h2>
+
+    <p>Construisons notre premier graphe fonctionnel. Il comporte deux noeuds : <code>greet</code> qui analyse le message
+    et <code>respond</code> qui genere une reponse.</p>
+
+    <div class="step-box"><strong>Etape 1</strong> : Definir l'etat</div>
+    <div class="step-box"><strong>Etape 2</strong> : Creer les fonctions noeuds</div>
+    <div class="step-box"><strong>Etape 3</strong> : Construire le graphe avec <code>StateGraph</code></div>
+    <div class="step-box"><strong>Etape 4</strong> : Ajouter les aretes et compiler</div>
+    <div class="step-box"><strong>Etape 5</strong> : Executer et observer l'etat</div>
+
+    <div class="code-block"><span class="comment"># exercice2_graphe_2_noeuds.py</span>
+
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+
+<span class="comment"># --- Etape 1 : Definir l'etat ---</span>
+<span class="keyword">class</span> <span class="function">State</span>(TypedDict):
+    message: str
+    greeting: str
+    reponse: str
+
+<span class="comment"># --- Etape 2 : Definir les fonctions noeuds ---</span>
+<span class="keyword">def</span> <span class="function">greet</span>(state: State) -> dict:
+    <span class="string">"""Noeud 1 : Analyse le message et cree une salutation."""</span>
+    msg = state[<span class="string">"message"</span>]
+    nb_mots = <span class="function">len</span>(msg.split())
+    greeting = <span class="string">f"Bonjour ! Vous avez envoye un message de {nb_mots} mots."</span>
+    <span class="function">print</span>(<span class="string">f"[greet] Message recu : '{msg}'"</span>)
+    <span class="function">print</span>(<span class="string">f"[greet] Salutation generee : '{greeting}'"</span>)
+    <span class="keyword">return</span> {<span class="string">"greeting"</span>: greeting}
+
+<span class="keyword">def</span> <span class="function">respond</span>(state: State) -> dict:
+    <span class="string">"""Noeud 2 : Genere une reponse basee sur la salutation."""</span>
+    greeting = state[<span class="string">"greeting"</span>]
+    reponse = <span class="string">f"{greeting} Merci pour votre message, nous allons le traiter."</span>
+    <span class="function">print</span>(<span class="string">f"[respond] Reponse finale : '{reponse}'"</span>)
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: reponse}
+
+<span class="comment"># --- Etape 3 : Construire le graphe ---</span>
+graph_builder = StateGraph(State)
+
+<span class="comment"># Ajouter les noeuds</span>
+graph_builder.<span class="function">add_node</span>(<span class="string">"greet"</span>, greet)
+graph_builder.<span class="function">add_node</span>(<span class="string">"respond"</span>, respond)
+
+<span class="comment"># --- Etape 4 : Definir les aretes ---</span>
+graph_builder.<span class="function">add_edge</span>(START, <span class="string">"greet"</span>)      <span class="comment"># START -> greet</span>
+graph_builder.<span class="function">add_edge</span>(<span class="string">"greet"</span>, <span class="string">"respond"</span>)  <span class="comment"># greet -> respond</span>
+graph_builder.<span class="function">add_edge</span>(<span class="string">"respond"</span>, END)       <span class="comment"># respond -> END</span>
+
+<span class="comment"># Compiler le graphe</span>
+graph = graph_builder.<span class="function">compile</span>()
+
+<span class="comment"># --- Etape 5 : Executer ---</span>
+resultat = graph.<span class="function">invoke</span>({
+    <span class="string">"message"</span>: <span class="string">"Bonjour, comment allez-vous aujourd'hui ?"</span>,
+    <span class="string">"greeting"</span>: <span class="string">""</span>,
+    <span class="string">"reponse"</span>: <span class="string">""</span>
+})
+
+<span class="function">print</span>(<span class="string">"\n--- Etat final ---"</span>)
+<span class="keyword">for</span> cle, valeur <span class="keyword">in</span> resultat.items():
+    <span class="function">print</span>(<span class="string">f"  {cle}: {valeur}"</span>)</div>
+
+    <div class="output-block">
+[greet] Message recu : 'Bonjour, comment allez-vous aujourd'hui ?'
+[greet] Salutation generee : 'Bonjour ! Vous avez envoye un message de 5 mots.'
+[respond] Reponse finale : 'Bonjour ! Vous avez envoye un message de 5 mots. Merci pour votre message, nous allons le traiter.'
+
+--- Etat final ---
+  message: Bonjour, comment allez-vous aujourd'hui ?
+  greeting: Bonjour ! Vous avez envoye un message de 5 mots.
+  reponse: Bonjour ! Vous avez envoye un message de 5 mots. Merci pour votre message, nous allons le traiter.</div>
+
+    <div class="effect">
+        Le graphe s'execute de maniere sequentielle : <code>START -> greet -> respond -> END</code>.
+        L'etat est enrichi a chaque etape. Le noeud <code>greet</code> ajoute la salutation, puis
+        <code>respond</code> utilise cette salutation pour construire la reponse finale.
+    </div>
+
+    <!-- ============================== EXERCICE 3 ============================== -->
+    <h2>5. Exercice 3 -- Ajouter une arete conditionnelle (routage par sentiment)</h2>
+
+    <p>Les aretes conditionnelles permettent de choisir dynamiquement le noeud suivant en fonction de l'etat.
+    Ici, nous allons router vers differents noeuds selon le sentiment detecte dans le message.</p>
+
+    <div class="svg-container">
+        <svg width="650" height="300" viewBox="0 0 650 300" xmlns="http://www.w3.org/2000/svg">
+            <rect width="650" height="300" fill="#0f0f23" rx="12"/>
+
+            <!-- START -->
+            <circle cx="60" cy="150" r="25" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="60" y="155" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">START</text>
+
+            <!-- Analyser -->
+            <rect x="130" y="125" width="130" height="50" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="195" y="155" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">analyser</text>
+
+            <!-- Losange de decision -->
+            <polygon points="365,120 415,150 365,180 315,150" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="365" y="155" text-anchor="middle" fill="#ff8c42" font-size="10">route?</text>
+
+            <!-- Positif -->
+            <rect x="480" y="60" width="140" height="45" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="550" y="87" text-anchor="middle" fill="#00ff88" font-size="12">repondre_positif</text>
+
+            <!-- Negatif -->
+            <rect x="480" y="190" width="140" height="45" rx="10" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="550" y="217" text-anchor="middle" fill="#ff4444" font-size="12">repondre_negatif</text>
+
+            <!-- Fleches -->
+            <line x1="85" y1="150" x2="128" y2="150" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow-green)"/>
+            <line x1="260" y1="150" x2="313" y2="150" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow-orange)"/>
+            <line x1="415" y1="135" x2="478" y2="85" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow-green)" stroke-dasharray="5,3"/>
+            <line x1="415" y1="165" x2="478" y2="210" stroke="#ff4444" stroke-width="2" marker-end="url(#arrow-red)" stroke-dasharray="5,3"/>
+
+            <text x="445" y="100" fill="#6a9955" font-size="10" font-style="italic">positif</text>
+            <text x="445" y="195" fill="#6a9955" font-size="10" font-style="italic">negatif</text>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># exercice3_conditional_edge.py</span>
+
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Literal
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+
+<span class="keyword">class</span> <span class="function">State</span>(TypedDict):
+    message: str
+    sentiment: str
+    reponse: str
+
+<span class="comment"># Mots-cles pour la detection de sentiment</span>
+MOTS_POSITIFS = [<span class="string">"content"</span>, <span class="string">"heureux"</span>, <span class="string">"super"</span>, <span class="string">"genial"</span>, <span class="string">"merci"</span>, <span class="string">"bien"</span>, <span class="string">"excellent"</span>]
+MOTS_NEGATIFS = [<span class="string">"triste"</span>, <span class="string">"decu"</span>, <span class="string">"mauvais"</span>, <span class="string">"probleme"</span>, <span class="string">"erreur"</span>, <span class="string">"nul"</span>, <span class="string">"horrible"</span>]
+
+<span class="keyword">def</span> <span class="function">analyser</span>(state: State) -> dict:
+    <span class="string">"""Analyse le sentiment du message."""</span>
+    msg = state[<span class="string">"message"</span>].lower()
+    score = <span class="number">0</span>
+    <span class="keyword">for</span> mot <span class="keyword">in</span> msg.split():
+        <span class="keyword">if</span> mot <span class="keyword">in</span> MOTS_POSITIFS:
+            score += <span class="number">1</span>
+        <span class="keyword">elif</span> mot <span class="keyword">in</span> MOTS_NEGATIFS:
+            score -= <span class="number">1</span>
+    sentiment = <span class="string">"positif"</span> <span class="keyword">if</span> score >= <span class="number">0</span> <span class="keyword">else</span> <span class="string">"negatif"</span>
+    <span class="function">print</span>(<span class="string">f"[analyser] Sentiment detecte : {sentiment} (score={score})"</span>)
+    <span class="keyword">return</span> {<span class="string">"sentiment"</span>: sentiment}
+
+<span class="keyword">def</span> <span class="function">router</span>(state: State) -> Literal[<span class="string">"repondre_positif"</span>, <span class="string">"repondre_negatif"</span>]:
+    <span class="string">"""Fonction de routage : retourne le nom du noeud suivant."""</span>
+    <span class="keyword">if</span> state[<span class="string">"sentiment"</span>] == <span class="string">"positif"</span>:
+        <span class="keyword">return</span> <span class="string">"repondre_positif"</span>
+    <span class="keyword">return</span> <span class="string">"repondre_negatif"</span>
+
+<span class="keyword">def</span> <span class="function">repondre_positif</span>(state: State) -> dict:
+    reponse = <span class="string">"Merci pour votre message positif ! Nous sommes ravis."</span>
+    <span class="function">print</span>(<span class="string">f"[repondre_positif] {reponse}"</span>)
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: reponse}
+
+<span class="keyword">def</span> <span class="function">repondre_negatif</span>(state: State) -> dict:
+    reponse = <span class="string">"Nous sommes desoles. Un agent va vous contacter rapidement."</span>
+    <span class="function">print</span>(<span class="string">f"[repondre_negatif] {reponse}"</span>)
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: reponse}
+
+<span class="comment"># Construction du graphe</span>
+builder = StateGraph(State)
+builder.<span class="function">add_node</span>(<span class="string">"analyser"</span>, analyser)
+builder.<span class="function">add_node</span>(<span class="string">"repondre_positif"</span>, repondre_positif)
+builder.<span class="function">add_node</span>(<span class="string">"repondre_negatif"</span>, repondre_negatif)
+
+<span class="comment"># Aretes</span>
+builder.<span class="function">add_edge</span>(START, <span class="string">"analyser"</span>)
+builder.<span class="function">add_conditional_edges</span>(
+    <span class="string">"analyser"</span>,       <span class="comment"># Noeud source</span>
+    router,            <span class="comment"># Fonction de routage</span>
+    {                  <span class="comment"># Mapping nom -> noeud</span>
+        <span class="string">"repondre_positif"</span>: <span class="string">"repondre_positif"</span>,
+        <span class="string">"repondre_negatif"</span>: <span class="string">"repondre_negatif"</span>,
+    }
+)
+builder.<span class="function">add_edge</span>(<span class="string">"repondre_positif"</span>, END)
+builder.<span class="function">add_edge</span>(<span class="string">"repondre_negatif"</span>, END)
+
+graph = builder.<span class="function">compile</span>()
+
+<span class="comment"># --- Test avec message positif ---</span>
+<span class="function">print</span>(<span class="string">"=== Test 1 : Message positif ==="</span>)
+r1 = graph.<span class="function">invoke</span>({<span class="string">"message"</span>: <span class="string">"Merci, c'est super genial !"</span>, <span class="string">"sentiment"</span>: <span class="string">""</span>, <span class="string">"reponse"</span>: <span class="string">""</span>})
+<span class="function">print</span>(<span class="string">f"Reponse : {r1['reponse']}\n"</span>)
+
+<span class="comment"># --- Test avec message negatif ---</span>
+<span class="function">print</span>(<span class="string">"=== Test 2 : Message negatif ==="</span>)
+r2 = graph.<span class="function">invoke</span>({<span class="string">"message"</span>: <span class="string">"J'ai un probleme, c'est horrible"</span>, <span class="string">"sentiment"</span>: <span class="string">""</span>, <span class="string">"reponse"</span>: <span class="string">""</span>})
+<span class="function">print</span>(<span class="string">f"Reponse : {r2['reponse']}"</span>)</div>
+
+    <div class="output-block">
+=== Test 1 : Message positif ===
+[analyser] Sentiment detecte : positif (score=2)
+[repondre_positif] Merci pour votre message positif ! Nous sommes ravis.
+Reponse : Merci pour votre message positif ! Nous sommes ravis.
+
+=== Test 2 : Message negatif ===
+[analyser] Sentiment detecte : negatif (score=-2)
+[repondre_negatif] Nous sommes desoles. Un agent va vous contacter rapidement.
+Reponse : Nous sommes desoles. Un agent va vous contacter rapidement.</div>
+
+    <div class="prof-note">
+        La fonction <code>router</code> retourne une <strong>chaine de caracteres</strong> correspondant au nom du noeud suivant.
+        Le dictionnaire passe a <code>add_conditional_edges</code> fait le mapping entre cette chaine et le noeud reel.
+        Utilisez <code>Literal</code> pour le typage strict des valeurs de retour.
+    </div>
+
+    <!-- ============================== EXERCICE 4 ============================== -->
+    <h2>6. Exercice 4 -- Graphe complet : classify - route - respond</h2>
+
+    <p>Construisons un graphe plus elabore a 3 niveaux : classification de l'intention, routage conditionnel,
+    et reponse adaptee. Ce patron est la base de tout chatbot intelligent.</p>
+
+    <div class="code-block"><span class="comment"># exercice4_graphe_complet.py</span>
+
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Literal
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+
+<span class="keyword">class</span> <span class="function">ServiceState</span>(TypedDict):
+    message: str
+    categorie: str        <span class="comment"># "technique", "commercial", "general"</span>
+    priorite: str         <span class="comment"># "haute", "normale", "basse"</span>
+    reponse: str
+
+<span class="comment"># --- Noeud 1 : Classifier ---</span>
+<span class="keyword">def</span> <span class="function">classifier</span>(state: ServiceState) -> dict:
+    <span class="string">"""Classifie le message en categorie et priorite."""</span>
+    msg = state[<span class="string">"message"</span>].lower()
+
+    <span class="comment"># Detection de categorie par mots-cles</span>
+    mots_techniques = [<span class="string">"bug"</span>, <span class="string">"erreur"</span>, <span class="string">"crash"</span>, <span class="string">"lent"</span>, <span class="string">"marche pas"</span>, <span class="string">"panne"</span>]
+    mots_commerciaux = [<span class="string">"prix"</span>, <span class="string">"tarif"</span>, <span class="string">"abonnement"</span>, <span class="string">"facture"</span>, <span class="string">"payer"</span>, <span class="string">"offre"</span>]
+
+    categorie = <span class="string">"general"</span>
+    <span class="keyword">for</span> mot <span class="keyword">in</span> mots_techniques:
+        <span class="keyword">if</span> mot <span class="keyword">in</span> msg:
+            categorie = <span class="string">"technique"</span>
+            <span class="keyword">break</span>
+    <span class="keyword">for</span> mot <span class="keyword">in</span> mots_commerciaux:
+        <span class="keyword">if</span> mot <span class="keyword">in</span> msg:
+            categorie = <span class="string">"commercial"</span>
+            <span class="keyword">break</span>
+
+    <span class="comment"># Detection de priorite</span>
+    mots_urgents = [<span class="string">"urgent"</span>, <span class="string">"bloque"</span>, <span class="string">"impossible"</span>, <span class="string">"critique"</span>]
+    priorite = <span class="string">"haute"</span> <span class="keyword">if</span> <span class="function">any</span>(m <span class="keyword">in</span> msg <span class="keyword">for</span> m <span class="keyword">in</span> mots_urgents) <span class="keyword">else</span> <span class="string">"normale"</span>
+
+    <span class="function">print</span>(<span class="string">f"[classifier] Categorie: {categorie}, Priorite: {priorite}"</span>)
+    <span class="keyword">return</span> {<span class="string">"categorie"</span>: categorie, <span class="string">"priorite"</span>: priorite}
+
+<span class="comment"># --- Fonction de routage ---</span>
+<span class="keyword">def</span> <span class="function">route_par_categorie</span>(state: ServiceState) -> Literal[<span class="string">"support_technique"</span>, <span class="string">"support_commercial"</span>, <span class="string">"support_general"</span>]:
+    mapping = {
+        <span class="string">"technique"</span>: <span class="string">"support_technique"</span>,
+        <span class="string">"commercial"</span>: <span class="string">"support_commercial"</span>,
+        <span class="string">"general"</span>: <span class="string">"support_general"</span>,
+    }
+    <span class="keyword">return</span> mapping[state[<span class="string">"categorie"</span>]]
+
+<span class="comment"># --- Noeuds de reponse ---</span>
+<span class="keyword">def</span> <span class="function">support_technique</span>(state: ServiceState) -> dict:
+    priorite = state[<span class="string">"priorite"</span>]
+    <span class="keyword">if</span> priorite == <span class="string">"haute"</span>:
+        rep = <span class="string">"[URGENT] Un technicien senior va prendre en charge votre probleme immediatement."</span>
+    <span class="keyword">else</span>:
+        rep = <span class="string">"Notre equipe technique va analyser votre probleme. Delai estime : 24h."</span>
+    <span class="function">print</span>(<span class="string">f"[support_technique] {rep}"</span>)
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: rep}
+
+<span class="keyword">def</span> <span class="function">support_commercial</span>(state: ServiceState) -> dict:
+    rep = <span class="string">"Un conseiller commercial va vous recontacter pour discuter de votre demande."</span>
+    <span class="function">print</span>(<span class="string">f"[support_commercial] {rep}"</span>)
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: rep}
+
+<span class="keyword">def</span> <span class="function">support_general</span>(state: ServiceState) -> dict:
+    rep = <span class="string">"Merci pour votre message. Notre equipe va vous repondre dans les plus brefs delais."</span>
+    <span class="function">print</span>(<span class="string">f"[support_general] {rep}"</span>)
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: rep}
+
+<span class="comment"># --- Construction du graphe ---</span>
+builder = StateGraph(ServiceState)
+
+builder.<span class="function">add_node</span>(<span class="string">"classifier"</span>, classifier)
+builder.<span class="function">add_node</span>(<span class="string">"support_technique"</span>, support_technique)
+builder.<span class="function">add_node</span>(<span class="string">"support_commercial"</span>, support_commercial)
+builder.<span class="function">add_node</span>(<span class="string">"support_general"</span>, support_general)
+
+builder.<span class="function">add_edge</span>(START, <span class="string">"classifier"</span>)
+builder.<span class="function">add_conditional_edges</span>(
+    <span class="string">"classifier"</span>,
+    route_par_categorie,
+    {
+        <span class="string">"support_technique"</span>: <span class="string">"support_technique"</span>,
+        <span class="string">"support_commercial"</span>: <span class="string">"support_commercial"</span>,
+        <span class="string">"support_general"</span>: <span class="string">"support_general"</span>,
+    }
+)
+builder.<span class="function">add_edge</span>(<span class="string">"support_technique"</span>, END)
+builder.<span class="function">add_edge</span>(<span class="string">"support_commercial"</span>, END)
+builder.<span class="function">add_edge</span>(<span class="string">"support_general"</span>, END)
+
+graph = builder.<span class="function">compile</span>()
+
+<span class="comment"># --- Tests ---</span>
+etat_vide = {<span class="string">"message"</span>: <span class="string">""</span>, <span class="string">"categorie"</span>: <span class="string">""</span>, <span class="string">"priorite"</span>: <span class="string">""</span>, <span class="string">"reponse"</span>: <span class="string">""</span>}
+
+<span class="function">print</span>(<span class="string">"=== Test 1 : Probleme technique urgent ==="</span>)
+r1 = graph.<span class="function">invoke</span>({**etat_vide, <span class="string">"message"</span>: <span class="string">"J'ai un bug urgent, l'appli crash !"</span>})
+<span class="function">print</span>(<span class="string">f"-> {r1['reponse']}\n"</span>)
+
+<span class="function">print</span>(<span class="string">"=== Test 2 : Question commerciale ==="</span>)
+r2 = graph.<span class="function">invoke</span>({**etat_vide, <span class="string">"message"</span>: <span class="string">"Quel est le tarif de l'abonnement pro ?"</span>})
+<span class="function">print</span>(<span class="string">f"-> {r2['reponse']}\n"</span>)
+
+<span class="function">print</span>(<span class="string">"=== Test 3 : Question generale ==="</span>)
+r3 = graph.<span class="function">invoke</span>({**etat_vide, <span class="string">"message"</span>: <span class="string">"Bonjour, quels sont vos horaires ?"</span>})
+<span class="function">print</span>(<span class="string">f"-> {r3['reponse']}"</span>)</div>
+
+    <div class="output-block">
+=== Test 1 : Probleme technique urgent ===
+[classifier] Categorie: technique, Priorite: haute
+[support_technique] [URGENT] Un technicien senior va prendre en charge votre probleme immediatement.
+-> [URGENT] Un technicien senior va prendre en charge votre probleme immediatement.
+
+=== Test 2 : Question commerciale ===
+[classifier] Categorie: commercial, Priorite: normale
+[support_commercial] Un conseiller commercial va vous recontacter pour discuter de votre demande.
+-> Un conseiller commercial va vous recontacter pour discuter de votre demande.
+
+=== Test 3 : Question generale ===
+[classifier] Categorie: general, Priorite: normale
+[support_general] Merci pour votre message. Notre equipe va vous repondre dans les plus brefs delais.
+-> Merci pour votre message. Notre equipe va vous repondre dans les plus brefs delais.</div>
+
+    <div class="effect">
+        Le graphe route automatiquement chaque message vers le bon service. La priorite est evaluee
+        en meme temps que la categorie, montrant comment un seul noeud peut mettre a jour plusieurs cles de l'etat.
+    </div>
+
+    <!-- ============================== EXERCICE 5 ============================== -->
+    <h2>7. Exercice 5 -- Utiliser MessagesState pour un etat conversationnel</h2>
+
+    <p>LangGraph fournit <code>MessagesState</code>, un etat preconstruit qui gere automatiquement
+    une liste de messages avec un <strong>reducer</strong> <code>add_messages</code> integre.
+    Au lieu d'ecraser la liste, chaque noeud ajoute ses messages a la suite.</p>
+
+    <div class="definition">
+        <strong>MessagesState</strong> est un TypedDict avec une seule cle <code>messages</code> annotee avec le reducer
+        <code>add_messages</code>. Ce reducer assure que les nouveaux messages sont <strong>ajoutes</strong> a la liste
+        existante au lieu de la remplacer.
+    </div>
+
+    <div class="code-block"><span class="comment"># exercice5_messages_state.py</span>
+
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END, MessagesState
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, AIMessage, SystemMessage
+
+<span class="keyword">def</span> <span class="function">accueillir</span>(state: MessagesState) -> dict:
+    <span class="string">"""Premier noeud : accueil du chatbot."""</span>
+    dernier_msg = state[<span class="string">"messages"</span>][-<span class="number">1</span>]
+    <span class="function">print</span>(<span class="string">f"[accueillir] Message recu : {dernier_msg.content}"</span>)
+    reponse = AIMessage(content=<span class="string">"Bonjour ! Je suis votre assistant. Comment puis-je vous aider ?"</span>)
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [reponse]}
+
+<span class="keyword">def</span> <span class="function">traiter</span>(state: MessagesState) -> dict:
+    <span class="string">"""Deuxieme noeud : traitement de la conversation."""</span>
+    tous_messages = state[<span class="string">"messages"</span>]
+    <span class="function">print</span>(<span class="string">f"[traiter] Nombre total de messages : {len(tous_messages)}"</span>)
+    <span class="keyword">for</span> i, msg <span class="keyword">in</span> <span class="function">enumerate</span>(tous_messages):
+        <span class="function">print</span>(<span class="string">f"  [{i}] {msg.__class__.__name__}: {msg.content}"</span>)
+    resume = AIMessage(content=<span class="string">f"J'ai bien note votre demande. Conversation de {len(tous_messages)} messages."</span>)
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [resume]}
+
+<span class="comment"># Construction du graphe</span>
+builder = StateGraph(MessagesState)
+builder.<span class="function">add_node</span>(<span class="string">"accueillir"</span>, accueillir)
+builder.<span class="function">add_node</span>(<span class="string">"traiter"</span>, traiter)
+
+builder.<span class="function">add_edge</span>(START, <span class="string">"accueillir"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"accueillir"</span>, <span class="string">"traiter"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"traiter"</span>, END)
+
+graph = builder.<span class="function">compile</span>()
+
+<span class="comment"># Execution</span>
+resultat = graph.<span class="function">invoke</span>({
+    <span class="string">"messages"</span>: [
+        SystemMessage(content=<span class="string">"Tu es un assistant serviable."</span>),
+        HumanMessage(content=<span class="string">"Bonjour, je cherche de l'aide pour LangGraph."</span>),
+    ]
+})
+
+<span class="function">print</span>(<span class="string">"\n--- Messages finaux ---"</span>)
+<span class="keyword">for</span> msg <span class="keyword">in</span> resultat[<span class="string">"messages"</span>]:
+    <span class="function">print</span>(<span class="string">f"  {msg.__class__.__name__}: {msg.content}"</span>)</div>
+
+    <div class="output-block">
+[accueillir] Message recu : Bonjour, je cherche de l'aide pour LangGraph.
+[traiter] Nombre total de messages : 3
+  [0] SystemMessage: Tu es un assistant serviable.
+  [1] HumanMessage: Bonjour, je cherche de l'aide pour LangGraph.
+  [2] AIMessage: Bonjour ! Je suis votre assistant. Comment puis-je vous aider ?
+
+--- Messages finaux ---
+  SystemMessage: Tu es un assistant serviable.
+  HumanMessage: Bonjour, je cherche de l'aide pour LangGraph.
+  AIMessage: Bonjour ! Je suis votre assistant. Comment puis-je vous aider ?
+  AIMessage: J'ai bien note votre demande. Conversation de 3 messages.</div>
+
+    <div class="prof-note">
+        Remarquez que chaque noeud retourne <code>{"messages": [nouveau_msg]}</code> et le reducer
+        <code>add_messages</code> les ajoute automatiquement a la liste. C'est le fondement de la memoire
+        conversationnelle dans LangGraph. Sans ce reducer, le dernier retour ecraserait la liste entiere.
+    </div>
+
+    <!-- ============================== EXERCICE 6 ============================== -->
+    <h2>8. Exercice 6 -- Streamer l'execution du graphe</h2>
+
+    <p>Le streaming permet d'observer l'execution <strong>noeud par noeud</strong> en temps reel.
+    LangGraph propose deux modes principaux : <code>values</code> (etat complet apres chaque noeud)
+    et <code>updates</code> (uniquement les modifications).</p>
+
+    <div class="concept-box green">
+        <h3>Modes de streaming</h3>
+        <table>
+            <tr><th>Mode</th><th>Description</th><th>Utilisation</th></tr>
+            <tr><td><code>"values"</code></td><td>Etat complet apres chaque noeud</td><td>Debug, monitoring</td></tr>
+            <tr><td><code>"updates"</code></td><td>Modifications uniquement (delta)</td><td>Production, bandwith</td></tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># exercice6_streaming.py</span>
+
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+
+<span class="keyword">class</span> <span class="function">PipelineState</span>(TypedDict):
+    texte: str
+    etape: str
+    resultat: str
+
+<span class="keyword">def</span> <span class="function">nettoyer</span>(state: PipelineState) -> dict:
+    <span class="string">"""Noeud 1 : Nettoyage du texte."""</span>
+    texte_propre = state[<span class="string">"texte"</span>].strip().lower()
+    <span class="keyword">return</span> {<span class="string">"texte"</span>: texte_propre, <span class="string">"etape"</span>: <span class="string">"nettoyage"</span>}
+
+<span class="keyword">def</span> <span class="function">analyser_longueur</span>(state: PipelineState) -> dict:
+    <span class="string">"""Noeud 2 : Analyse de la longueur."""</span>
+    nb = <span class="function">len</span>(state[<span class="string">"texte"</span>].split())
+    <span class="keyword">return</span> {<span class="string">"etape"</span>: <span class="string">"analyse"</span>, <span class="string">"resultat"</span>: <span class="string">f"Le texte contient {nb} mots"</span>}
+
+<span class="keyword">def</span> <span class="function">conclure</span>(state: PipelineState) -> dict:
+    <span class="string">"""Noeud 3 : Conclusion."""</span>
+    <span class="keyword">return</span> {<span class="string">"etape"</span>: <span class="string">"conclusion"</span>, <span class="string">"resultat"</span>: <span class="string">f"[FINAL] {state['resultat']} -- Traitement termine."</span>}
+
+<span class="comment"># Construction</span>
+builder = StateGraph(PipelineState)
+builder.<span class="function">add_node</span>(<span class="string">"nettoyer"</span>, nettoyer)
+builder.<span class="function">add_node</span>(<span class="string">"analyser_longueur"</span>, analyser_longueur)
+builder.<span class="function">add_node</span>(<span class="string">"conclure"</span>, conclure)
+
+builder.<span class="function">add_edge</span>(START, <span class="string">"nettoyer"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"nettoyer"</span>, <span class="string">"analyser_longueur"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"analyser_longueur"</span>, <span class="string">"conclure"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"conclure"</span>, END)
+
+graph = builder.<span class="function">compile</span>()
+
+<span class="comment"># --- Streaming mode "values" : etat complet ---</span>
+<span class="function">print</span>(<span class="string">"=== Streaming mode 'values' ==="</span>)
+<span class="keyword">for</span> etat <span class="keyword">in</span> graph.<span class="function">stream</span>(
+    {<span class="string">"texte"</span>: <span class="string">"  Bonjour le Monde, Ceci Est un TEST  "</span>, <span class="string">"etape"</span>: <span class="string">""</span>, <span class="string">"resultat"</span>: <span class="string">""</span>},
+    stream_mode=<span class="string">"values"</span>
+):
+    <span class="function">print</span>(<span class="string">f"  Etape='{etat.get('etape', '')}' | Texte='{etat.get('texte', '')[:40]}...' | Resultat='{etat.get('resultat', '')}'"</span>)
+
+<span class="function">print</span>()
+
+<span class="comment"># --- Streaming mode "updates" : deltas uniquement ---</span>
+<span class="function">print</span>(<span class="string">"=== Streaming mode 'updates' ==="</span>)
+<span class="keyword">for</span> update <span class="keyword">in</span> graph.<span class="function">stream</span>(
+    {<span class="string">"texte"</span>: <span class="string">"  Bonjour le Monde, Ceci Est un TEST  "</span>, <span class="string">"etape"</span>: <span class="string">""</span>, <span class="string">"resultat"</span>: <span class="string">""</span>},
+    stream_mode=<span class="string">"updates"</span>
+):
+    <span class="keyword">for</span> nom_noeud, delta <span class="keyword">in</span> update.items():
+        <span class="function">print</span>(<span class="string">f"  Noeud '{nom_noeud}' -> {delta}"</span>)</div>
+
+    <div class="output-block">
+=== Streaming mode 'values' ===
+  Etape='' | Texte='  Bonjour le Monde, Ceci Est un TEST  ...' | Resultat=''
+  Etape='nettoyage' | Texte='bonjour le monde, ceci est un test...' | Resultat=''
+  Etape='analyse' | Texte='bonjour le monde, ceci est un test...' | Resultat='Le texte contient 7 mots'
+  Etape='conclusion' | Texte='bonjour le monde, ceci est un test...' | Resultat='[FINAL] Le texte contient 7 mots -- Traitement termine.'
+
+=== Streaming mode 'updates' ===
+  Noeud 'nettoyer' -> {'texte': 'bonjour le monde, ceci est un test', 'etape': 'nettoyage'}
+  Noeud 'analyser_longueur' -> {'etape': 'analyse', 'resultat': 'Le texte contient 7 mots'}
+  Noeud 'conclure' -> {'etape': 'conclusion', 'resultat': '[FINAL] Le texte contient 7 mots -- Traitement termine.'}</div>
+
+    <div class="warning">
+        Le mode <code>"values"</code> emet aussi l'etat initial (avant le premier noeud). C'est pourquoi
+        vous voyez 4 lignes pour 3 noeuds. Le mode <code>"updates"</code> n'emet que les deltas de chaque noeud.
+    </div>
+
+    <!-- ============================== EXERCICE 7 ============================== -->
+    <h2>9. Exercice 7 -- Mini-chatbot avec noeud LLM</h2>
+
+    <p>Integrons maintenant un veritable LLM dans notre graphe. Ce mini-chatbot utilise <code>ChatOpenAI</code>
+    pour generer ses reponses, avec un noeud de pre-traitement qui enrichit le contexte.</p>
+
+    <div class="code-block"><span class="comment"># exercice7_chatbot_llm.py</span>
+
+<span class="keyword">import</span> os
+<span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END, MessagesState
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, SystemMessage
+
+<span class="comment"># Configuration du LLM</span>
+os.environ[<span class="string">"OPENAI_API_KEY"</span>] = <span class="string">"votre-cle-api"</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.7</span>)
+
+<span class="comment"># Etat personnalise qui herite du comportement MessagesState</span>
+<span class="keyword">class</span> <span class="function">ChatState</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+    contexte: str
+    langue: str
+
+<span class="keyword">def</span> <span class="function">preparer_contexte</span>(state: ChatState) -> dict:
+    <span class="string">"""Noeud 1 : Prepare le contexte de la conversation."""</span>
+    dernier_msg = state[<span class="string">"messages"</span>][-<span class="number">1</span>].content
+    <span class="comment"># Detection simple de la langue</span>
+    mots_francais = [<span class="string">"bonjour"</span>, <span class="string">"salut"</span>, <span class="string">"merci"</span>, <span class="string">"comment"</span>, <span class="string">"je"</span>, <span class="string">"suis"</span>]
+    est_francais = <span class="function">any</span>(m <span class="keyword">in</span> dernier_msg.lower() <span class="keyword">for</span> m <span class="keyword">in</span> mots_francais)
+    langue = <span class="string">"francais"</span> <span class="keyword">if</span> est_francais <span class="keyword">else</span> <span class="string">"anglais"</span>
+
+    contexte = <span class="string">f"L'utilisateur parle en {langue}. Repondre dans cette langue."</span>
+    <span class="function">print</span>(<span class="string">f"[preparer_contexte] Langue detectee : {langue}"</span>)
+    <span class="keyword">return</span> {<span class="string">"contexte"</span>: contexte, <span class="string">"langue"</span>: langue}
+
+<span class="keyword">def</span> <span class="function">generer_reponse</span>(state: ChatState) -> dict:
+    <span class="string">"""Noeud 2 : Genere la reponse avec le LLM."""</span>
+    contexte = state[<span class="string">"contexte"</span>]
+    messages = [
+        SystemMessage(content=<span class="string">f"Tu es un assistant pedagogique. {contexte}"</span>),
+        *state[<span class="string">"messages"</span>]
+    ]
+    <span class="function">print</span>(<span class="string">f"[generer_reponse] Envoi de {len(messages)} messages au LLM..."</span>)
+    reponse = llm.<span class="function">invoke</span>(messages)
+    <span class="function">print</span>(<span class="string">f"[generer_reponse] Reponse generee : {reponse.content[:80]}..."</span>)
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [reponse]}
+
+<span class="comment"># Construction du graphe</span>
+builder = StateGraph(ChatState)
+builder.<span class="function">add_node</span>(<span class="string">"preparer_contexte"</span>, preparer_contexte)
+builder.<span class="function">add_node</span>(<span class="string">"generer_reponse"</span>, generer_reponse)
+
+builder.<span class="function">add_edge</span>(START, <span class="string">"preparer_contexte"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"preparer_contexte"</span>, <span class="string">"generer_reponse"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"generer_reponse"</span>, END)
+
+graph = builder.<span class="function">compile</span>()
+
+<span class="comment"># --- Execution ---</span>
+resultat = graph.<span class="function">invoke</span>({
+    <span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Bonjour, peux-tu m'expliquer ce qu'est un graphe en informatique ?"</span>)],
+    <span class="string">"contexte"</span>: <span class="string">""</span>,
+    <span class="string">"langue"</span>: <span class="string">""</span>,
+})
+
+<span class="function">print</span>(<span class="string">"\n--- Conversation finale ---"</span>)
+<span class="keyword">for</span> msg <span class="keyword">in</span> resultat[<span class="string">"messages"</span>]:
+    role = <span class="string">"Utilisateur"</span> <span class="keyword">if</span> <span class="function">isinstance</span>(msg, HumanMessage) <span class="keyword">else</span> <span class="string">"Assistant"</span>
+    <span class="function">print</span>(<span class="string">f"  {role}: {msg.content}"</span>)</div>
+
+    <div class="output-block">
+[preparer_contexte] Langue detectee : francais
+[generer_reponse] Envoi de 3 messages au LLM...
+[generer_reponse] Reponse generee : Bonjour ! Un graphe en informatique est une structure de donnees co...
+
+--- Conversation finale ---
+  Utilisateur: Bonjour, peux-tu m'expliquer ce qu'est un graphe en informatique ?
+  Assistant: Bonjour ! Un graphe en informatique est une structure de donnees composee de
+  noeuds (ou sommets) relies par des aretes (ou arcs). On distingue les graphes
+  orientes (les aretes ont une direction) des graphes non-orientes. Les graphes
+  sont utilises partout : reseaux sociaux, GPS, bases de donnees, et meme dans
+  LangGraph pour orchestrer des agents IA !</div>
+
+    <div class="prof-note">
+        Ce patron a deux noeuds (pre-traitement + LLM) est tres puissant. Le noeud de pre-traitement
+        peut enrichir le contexte, detecter la langue, verifier les permissions, filtrer les contenus
+        inappropries, etc. Le noeud LLM se concentre uniquement sur la generation.
+    </div>
+
+    <!-- ============================== SECTION 10 ============================== -->
+    <h2>10. Erreurs Courantes</h2>
+
+    <div class="warning">
+        <strong>Oublier START ou END</strong> -- Chaque graphe doit avoir au moins une arete depuis <code>START</code>
+        et chaque branche doit mener a <code>END</code>. Sinon, le graphe ne compilera pas ou restera bloque.
+    </div>
+
+    <div class="warning">
+        <strong>Retourner l'etat entier au lieu d'un delta</strong> -- Un noeud doit retourner uniquement les cles
+        qu'il modifie, pas une copie complete de l'etat. Retourner toutes les cles ecrase les valeurs des
+        cles que vous ne vouliez pas modifier.
+    </div>
+
+    <div class="warning">
+        <strong>Mauvais nom de noeud dans add_edge</strong> -- Le nom passe a <code>add_edge</code> doit correspondre
+        exactement au nom utilise dans <code>add_node</code>. Une faute de frappe provoque une erreur a la compilation.
+    </div>
+
+    <div class="warning">
+        <strong>Oublier de compiler le graphe</strong> -- Appeler <code>builder.invoke()</code> au lieu de
+        <code>graph = builder.compile()</code> puis <code>graph.invoke()</code>. Le <code>StateGraph</code> (builder) n'est pas executable directement.
+    </div>
+
+    <div class="warning">
+        <strong>Fonction de routage qui retourne un nom invalide</strong> -- La valeur retournee par la fonction
+        de routage doit correspondre exactement a une cle du dictionnaire <code>path_map</code> passe a
+        <code>add_conditional_edges</code>. Sinon, LangGraph leve une <code>ValueError</code>.
+    </div>
+
+    <div class="warning">
+        <strong>Ne pas initialiser toutes les cles de l'etat</strong> -- Si votre <code>TypedDict</code> declare
+        des cles obligatoires, assurez-vous de les fournir dans l'etat initial. Les cles manquantes
+        provoqueront des <code>KeyError</code> dans les noeuds qui y accedent.
+    </div>
+
+    <!-- ============================== SECTION 11 ============================== -->
+    <h2>11. Resume -- Cheatsheet des Patrons</h2>
+
+    <div class="concept-box">
+        <h3>Patron 1 : Graphe lineaire</h3>
+        <div class="code-block"><span class="comment"># START -> A -> B -> C -> END</span>
+builder.<span class="function">add_edge</span>(START, <span class="string">"A"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"A"</span>, <span class="string">"B"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"B"</span>, <span class="string">"C"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"C"</span>, END)</div>
+    </div>
+
+    <div class="concept-box">
+        <h3>Patron 2 : Branchement conditionnel</h3>
+        <div class="code-block"><span class="comment"># START -> classifier --(condition)--> A ou B -> END</span>
+builder.<span class="function">add_edge</span>(START, <span class="string">"classifier"</span>)
+builder.<span class="function">add_conditional_edges</span>(<span class="string">"classifier"</span>, router_fn, {<span class="string">"choix_a"</span>: <span class="string">"A"</span>, <span class="string">"choix_b"</span>: <span class="string">"B"</span>})
+builder.<span class="function">add_edge</span>(<span class="string">"A"</span>, END)
+builder.<span class="function">add_edge</span>(<span class="string">"B"</span>, END)</div>
+    </div>
+
+    <div class="concept-box">
+        <h3>Patron 3 : MessagesState avec LLM</h3>
+        <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> MessagesState
+
+<span class="keyword">def</span> <span class="function">chatbot</span>(state: MessagesState) -> dict:
+    reponse = llm.<span class="function">invoke</span>(state[<span class="string">"messages"</span>])
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [reponse]}</div>
+    </div>
+
+    <div class="concept-box">
+        <h3>Patron 4 : Streaming</h3>
+        <div class="code-block"><span class="comment"># Observer chaque etape en temps reel</span>
+<span class="keyword">for</span> event <span class="keyword">in</span> graph.<span class="function">stream</span>(etat_initial, stream_mode=<span class="string">"updates"</span>):
+    <span class="function">print</span>(event)</div>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Recapitulatif des imports essentiels</h3>
+        <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END, MessagesState
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, AIMessage, SystemMessage
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Annotated, Literal</div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <span style="color: #666;">(Premier TD LangGraph)</span>
+        <a href="td_chatbot.html">TD suivant : Chatbot Multi-etapes &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

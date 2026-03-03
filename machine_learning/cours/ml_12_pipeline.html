@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML 12 - Pipeline ML Complet | Formation ML Complete</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100vh; background: #1a1a2e; border-right: 2px solid #ff6b35; overflow-y: auto; z-index: 100; padding: 20px 0; }
+        .sidebar h2 { color: #ff6b35; font-size: 1.1rem; padding: 0 20px 15px; border-bottom: 1px solid #333; }
+        .sidebar a { display: block; padding: 8px 20px; color: #aaa; text-decoration: none; font-size: 0.85rem; border-left: 3px solid transparent; transition: all 0.3s; }
+        .sidebar a:hover { color: #ff6b35; background: rgba(255,107,53,0.1); border-left-color: #ff6b35; }
+        .main-content { margin-left: 280px; padding: 40px 60px; max-width: 1100px; }
+        h1 { color: #ff6b35; font-size: 2.2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.6rem; margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.3rem; margin: 25px 0 15px; }
+        h4 { color: #ffaa70; font-size: 1.1rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.blue { border-color: #00d2ff; }
+        .concept-box.green { border-color: #00ff88; }
+        .analogy { background: rgba(255,107,53,0.1); border-left: 4px solid #ff6b35; padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .analogy::before { content: "Analogie : "; color: #ff6b35; font-weight: bold; }
+        .important { background: rgba(255,68,68,0.1); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .important::before { content: "Important : "; color: #ff4444; font-weight: bold; }
+        .tip { background: rgba(0,255,136,0.1); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .tip::before { content: "A retenir : "; color: #00ff88; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #ff6b35; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px 12px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        .svg-container { text-align: center; margin: 25px 0; }
+        .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .card { background: #1a1a2e; border: 1px solid #333; border-radius: 10px; padding: 20px; }
+        .card:hover { border-color: #ff6b35; }
+        .card h4 { margin-top: 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 8px; }
+        @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; padding: 20px; } .comparison-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <h2>12 - Pipeline ML</h2>
+    <a href="#ch1">1. Vue d'Ensemble du Pipeline</a>
+    <a href="#ch2">2. Definir le Probleme</a>
+    <a href="#ch3">3. Collecte des Donnees</a>
+    <a href="#ch4">4. Exploration (EDA)</a>
+    <a href="#ch5">5. Preparation des Donnees</a>
+    <a href="#ch6">6. Selection du Modele</a>
+    <a href="#ch7">7. Entrainement</a>
+    <a href="#ch8">8. Evaluation</a>
+    <a href="#ch9">9. Optimisation</a>
+    <a href="#ch10">10. Deploiement</a>
+    <a href="#ch11">11. Monitoring</a>
+    <a href="#ch12">12. MLOps</a>
+    <a href="#ch13">13. Pipeline RAG Complet</a>
+    <a href="#ch14">14. Outils de l'Ecosysteme</a>
+    <a href="#ch15">15. Carriere en ML</a>
+    <a href="#ch16">16. Conclusion de la Formation</a>
+</nav>
+
+<div class="main-content">
+
+    <h1>Chapitre 12 : Le Pipeline ML Complet</h1>
+    <p class="subtitle">De la question business a la production - Le workflow professionnel de bout en bout</p>
+
+    <div class="concept-box">
+        <p><strong>Objectif :</strong> Ce dernier chapitre assemble TOUTES les connaissances acquises dans les 11 chapitres precedents en un pipeline complet et professionnel. Vous verrez le workflow de bout en bout tel qu'il est pratique dans les entreprises, de la definition du probleme au deploiement en production.</p>
+    </div>
+
+    <!-- CHAPITRE 1 -->
+    <h2 id="ch1">Chapitre 1 : Vue d'Ensemble du Pipeline ML</h2>
+
+    <div class="svg-container">
+        <svg width="750" height="400" viewBox="0 0 750 400">
+            <rect width="750" height="400" fill="#0f0f23"/>
+            <text x="375" y="25" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Le Pipeline ML en 10 Etapes</text>
+
+            <!-- Step 1 -->
+            <rect x="20" y="50" width="140" height="50" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="90" y="70" text-anchor="middle" fill="white" font-size="10" font-weight="bold">1. PROBLEME</text>
+            <text x="90" y="85" text-anchor="middle" fill="#aaa" font-size="8">Quel objectif ?</text>
+
+            <text x="170" y="78" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Step 2 -->
+            <rect x="185" y="50" width="140" height="50" rx="8" fill="rgba(0,210,255,0.2)" stroke="#00d2ff" stroke-width="2"/>
+            <text x="255" y="70" text-anchor="middle" fill="white" font-size="10" font-weight="bold">2. DONNEES</text>
+            <text x="255" y="85" text-anchor="middle" fill="#aaa" font-size="8">Collecter, nettoyer</text>
+
+            <text x="335" y="78" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Step 3 -->
+            <rect x="350" y="50" width="140" height="50" rx="8" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="2"/>
+            <text x="420" y="70" text-anchor="middle" fill="white" font-size="10" font-weight="bold">3. EXPLORATION</text>
+            <text x="420" y="85" text-anchor="middle" fill="#aaa" font-size="8">EDA, visualiser</text>
+
+            <text x="500" y="78" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Step 4 -->
+            <rect x="515" y="50" width="140" height="50" rx="8" fill="rgba(255,170,0,0.2)" stroke="#ffaa00" stroke-width="2"/>
+            <text x="585" y="70" text-anchor="middle" fill="white" font-size="10" font-weight="bold">4. PREPARATION</text>
+            <text x="585" y="85" text-anchor="middle" fill="#aaa" font-size="8">Features, split</text>
+
+            <!-- Arrow down -->
+            <line x1="585" y1="100" x2="585" y2="130" stroke="#aaa" stroke-width="2"/>
+
+            <!-- Step 5 -->
+            <rect x="515" y="130" width="140" height="50" rx="8" fill="rgba(0,255,136,0.2)" stroke="#00ff88" stroke-width="2"/>
+            <text x="585" y="150" text-anchor="middle" fill="white" font-size="10" font-weight="bold">5. MODELISATION</text>
+            <text x="585" y="165" text-anchor="middle" fill="#aaa" font-size="8">Choisir l'algo</text>
+
+            <text x="505" y="158" fill="#aaa" font-size="12">&#8592;</text>
+
+            <!-- Step 6 -->
+            <rect x="350" y="130" width="140" height="50" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="420" y="150" text-anchor="middle" fill="white" font-size="10" font-weight="bold">6. ENTRAINEMENT</text>
+            <text x="420" y="165" text-anchor="middle" fill="#aaa" font-size="8">Fit le modele</text>
+
+            <text x="340" y="158" fill="#aaa" font-size="12">&#8592;</text>
+
+            <!-- Step 7 -->
+            <rect x="185" y="130" width="140" height="50" rx="8" fill="rgba(0,210,255,0.2)" stroke="#00d2ff" stroke-width="2"/>
+            <text x="255" y="150" text-anchor="middle" fill="white" font-size="10" font-weight="bold">7. EVALUATION</text>
+            <text x="255" y="165" text-anchor="middle" fill="#aaa" font-size="8">Metriques, K-Fold</text>
+
+            <text x="175" y="158" fill="#aaa" font-size="12">&#8592;</text>
+
+            <!-- Step 8 -->
+            <rect x="20" y="130" width="140" height="50" rx="8" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="2"/>
+            <text x="90" y="150" text-anchor="middle" fill="white" font-size="10" font-weight="bold">8. OPTIMISATION</text>
+            <text x="90" y="165" text-anchor="middle" fill="#aaa" font-size="8">Hyperparametres</text>
+
+            <!-- Arrow down -->
+            <line x1="90" y1="180" x2="90" y2="210" stroke="#aaa" stroke-width="2"/>
+
+            <!-- Step 9 -->
+            <rect x="20" y="210" width="140" height="50" rx="8" fill="rgba(0,255,136,0.2)" stroke="#00ff88" stroke-width="2"/>
+            <text x="90" y="230" text-anchor="middle" fill="white" font-size="10" font-weight="bold">9. DEPLOIEMENT</text>
+            <text x="90" y="245" text-anchor="middle" fill="#aaa" font-size="8">API, production</text>
+
+            <text x="170" y="238" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Step 10 -->
+            <rect x="185" y="210" width="140" height="50" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="255" y="230" text-anchor="middle" fill="white" font-size="10" font-weight="bold">10. MONITORING</text>
+            <text x="255" y="245" text-anchor="middle" fill="#aaa" font-size="8">Surveiller, re-entrainer</text>
+
+            <!-- Feedback loop -->
+            <path d="M 325,235 C 400,235 400,290 255,290 C 110,290 90,270 90,260" fill="none" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,5"/>
+            <text x="255" y="310" text-anchor="middle" fill="#ff4444" font-size="10">Boucle de feedback : re-entrainer si performance baisse</text>
+
+            <!-- Bottom summary -->
+            <rect x="100" y="335" width="550" height="50" rx="10" fill="rgba(0,255,136,0.1)" stroke="#00ff88"/>
+            <text x="375" y="355" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Le ML n'est pas un projet ponctuel, c'est un CYCLE CONTINU</text>
+            <text x="375" y="375" text-anchor="middle" fill="#aaa" font-size="10">Les donnees changent, le monde change, le modele doit s'adapter</text>
+        </svg>
+    </div>
+
+    <!-- CHAPITRE 2 -->
+    <h2 id="ch2">Chapitre 2 : Definir le Probleme</h2>
+
+    <div class="concept-box">
+        <h4>Les 5 questions a poser AVANT de coder :</h4>
+        <ol>
+            <li><strong>Quel est l'objectif business ?</strong> (ex: reduire le taux de fraude de 30%)</li>
+            <li><strong>C'est quel type de probleme ML ?</strong> (classification, regression, clustering, NLP ?)</li>
+            <li><strong>Quelle metrique de succes ?</strong> (precision, recall, RMSE, AUC ?)</li>
+            <li><strong>Quelles donnees sont disponibles ?</strong> (quantite, qualite, labels ?)</li>
+            <li><strong>Quelles sont les contraintes ?</strong> (temps reel, explicabilite, budget, confidentialite ?)</li>
+        </ol>
+    </div>
+
+    <div class="analogy">
+        Avant de construire une maison, l'architecte pose des questions : combien de personnes y vivront ? Quel budget ? Quel terrain ? Combien d'etages ? En ML, c'est pareil : la phase de cadrage est la plus importante et la plus souvent basclee.
+    </div>
+
+    <!-- CHAPITRE 3 -->
+    <h2 id="ch3">Chapitre 3 : Collecte des Donnees</h2>
+
+    <table>
+        <tr><th>Source</th><th>Exemples</th><th>Qualite typique</th></tr>
+        <tr><td><strong>Bases de donnees internes</strong></td><td>CRM, logs, transactions</td><td>Bonne mais necessite nettoyage</td></tr>
+        <tr><td><strong>APIs publiques</strong></td><td>Twitter, meteo, finance</td><td>Variable</td></tr>
+        <tr><td><strong>Web scraping</strong></td><td>Sites web, articles</td><td>Brute, beaucoup de nettoyage</td></tr>
+        <tr><td><strong>Jeux de donnees publics</strong></td><td>Kaggle, HuggingFace, UCI</td><td>Souvent propre</td></tr>
+        <tr><td><strong>Annotation manuelle</strong></td><td>Labelliser des images, du texte</td><td>Haute qualite mais couteux</td></tr>
+        <tr><td><strong>Donnees synthetiques</strong></td><td>Generees par des modeles</td><td>Utile pour augmenter les donnees</td></tr>
+    </table>
+
+    <div class="important">
+        80% du temps d'un projet ML est consacre aux donnees (collecte, nettoyage, preparation). Seulement 20% est consacre au modele lui-meme. Des donnees propres + un modele simple battent des donnees sales + un modele complexe.
+    </div>
+
+    <!-- CHAPITRE 4 -->
+    <h2 id="ch4">Chapitre 4 : Exploration (EDA)</h2>
+
+    <p>L'<strong>EDA</strong> (Exploratory Data Analysis) consiste a explorer visuellement les donnees pour comprendre leur structure, detecter les anomalies et formuler des hypotheses.</p>
+
+    <div class="concept-box blue">
+        <h4>Checklist EDA :</h4>
+        <ul>
+            <li>Taille des donnees (nombre de lignes et colonnes)</li>
+            <li>Types de features (numeriques, categoriques, texte, dates)</li>
+            <li>Valeurs manquantes (quel pourcentage ? quel pattern ?)</li>
+            <li>Distribution de chaque feature (histogrammes)</li>
+            <li>Distribution de la cible (equilibre des classes ? valeurs aberrantes ?)</li>
+            <li>Correlations entre features (heatmap)</li>
+            <li>Outliers (box plots)</li>
+            <li>Tendances temporelles si donnees temporelles</li>
+        </ul>
+    </div>
+
+    <!-- CHAPITRE 5 -->
+    <h2 id="ch5">Chapitre 5 : Preparation des Donnees</h2>
+
+    <table>
+        <tr><th>Etape</th><th>Actions</th><th>Cours de reference</th></tr>
+        <tr><td><strong>Nettoyage</strong></td><td>Gerer les valeurs manquantes, supprimer les doublons</td><td>ML 03 - Donnees</td></tr>
+        <tr><td><strong>Encodage</strong></td><td>Label Encoding, One-Hot Encoding des categories</td><td>ML 03 - Donnees</td></tr>
+        <tr><td><strong>Normalisation</strong></td><td>StandardScaler, MinMaxScaler</td><td>ML 03 - Donnees</td></tr>
+        <tr><td><strong>Feature Engineering</strong></td><td>Creer de nouvelles features utiles</td><td>ML 03 - Donnees</td></tr>
+        <tr><td><strong>Selection</strong></td><td>Garder les features les plus importantes</td><td>ML 11 - Evaluation</td></tr>
+        <tr><td><strong>Split</strong></td><td>Train / Validation / Test</td><td>ML 11 - Evaluation</td></tr>
+    </table>
+
+    <!-- CHAPITRE 6 -->
+    <h2 id="ch6">Chapitre 6 : Selection du Modele</h2>
+
+    <div class="svg-container">
+        <svg width="700" height="280" viewBox="0 0 700 280">
+            <rect width="700" height="280" fill="#0f0f23"/>
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Guide : Quel Modele Choisir ?</text>
+
+            <!-- Root -->
+            <rect x="250" y="40" width="200" height="35" rx="8" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="350" y="63" text-anchor="middle" fill="white" font-size="11">Quel type de probleme ?</text>
+
+            <!-- Regression -->
+            <line x1="280" y1="75" x2="120" y2="110" stroke="#00d2ff" stroke-width="1.5"/>
+            <rect x="20" y="110" width="200" height="70" rx="8" fill="rgba(0,210,255,0.1)" stroke="#00d2ff"/>
+            <text x="120" y="130" text-anchor="middle" fill="#00d2ff" font-size="11" font-weight="bold">REGRESSION</text>
+            <text x="120" y="148" text-anchor="middle" fill="#aaa" font-size="9">1. Linear Regression</text>
+            <text x="120" y="163" text-anchor="middle" fill="#aaa" font-size="9">2. Random Forest / XGBoost</text>
+            <text x="120" y="175" text-anchor="middle" fill="#aaa" font-size="9">3. Neural Network (gros data)</text>
+
+            <!-- Classification -->
+            <line x1="350" y1="75" x2="350" y2="110" stroke="#ff6b35" stroke-width="1.5"/>
+            <rect x="250" y="110" width="200" height="70" rx="8" fill="rgba(255,107,53,0.1)" stroke="#ff6b35"/>
+            <text x="350" y="130" text-anchor="middle" fill="#ff6b35" font-size="11" font-weight="bold">CLASSIFICATION</text>
+            <text x="350" y="148" text-anchor="middle" fill="#aaa" font-size="9">1. Logistic Regression</text>
+            <text x="350" y="163" text-anchor="middle" fill="#aaa" font-size="9">2. Random Forest / XGBoost</text>
+            <text x="350" y="175" text-anchor="middle" fill="#aaa" font-size="9">3. Neural Network (images, texte)</text>
+
+            <!-- Clustering -->
+            <line x1="420" y1="75" x2="580" y2="110" stroke="#00ff88" stroke-width="1.5"/>
+            <rect x="480" y="110" width="200" height="70" rx="8" fill="rgba(0,255,136,0.1)" stroke="#00ff88"/>
+            <text x="580" y="130" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">CLUSTERING / NLP</text>
+            <text x="580" y="148" text-anchor="middle" fill="#aaa" font-size="9">Clustering: K-Means, DBSCAN</text>
+            <text x="580" y="163" text-anchor="middle" fill="#aaa" font-size="9">NLP: BERT, GPT, Transformers</text>
+            <text x="580" y="175" text-anchor="middle" fill="#aaa" font-size="9">RAG: Embeddings + LLM</text>
+
+            <!-- Bottom tip -->
+            <rect x="100" y="210" width="500" height="55" rx="10" fill="rgba(255,170,0,0.1)" stroke="#ffaa00"/>
+            <text x="350" y="232" text-anchor="middle" fill="#ffaa00" font-size="11" font-weight="bold">Regle d'or : toujours commencer SIMPLE</text>
+            <text x="350" y="252" text-anchor="middle" fill="#aaa" font-size="10">Baseline simple &#8594; Random Forest/XGBoost &#8594; Deep Learning si necessaire</text>
+        </svg>
+    </div>
+
+    <!-- CHAPITRE 7-8-9 -->
+    <h2 id="ch7">Chapitre 7 : Entrainement</h2>
+    <p>Appliquer l'algorithme choisi aux donnees de train. Les poids/parametres sont ajustes pour minimiser la fonction de cout. Voir les cours ML 04 (Regression), ML 05 (Classification), ML 06 (Ensemble), ML 08 (Neurones) pour les details de chaque algorithme.</p>
+
+    <h2 id="ch8">Chapitre 8 : Evaluation</h2>
+    <p>Mesurer la performance sur le jeu de validation/test avec les metriques appropriees. Diagnostiquer overfitting/underfitting avec les courbes d'apprentissage. Voir ML 11 (Evaluation) pour tous les details.</p>
+
+    <h2 id="ch9">Chapitre 9 : Optimisation</h2>
+    <p>Affiner les hyperparametres avec Grid Search, Random Search ou Bayesian Optimization. Appliquer la regularisation si necessaire. Voir ML 11 (Evaluation) pour les techniques d'optimisation.</p>
+
+    <!-- CHAPITRE 10 -->
+    <h2 id="ch10">Chapitre 10 : Deploiement</h2>
+
+    <h3>10.1 De Jupyter au monde reel</h3>
+    <p>Un modele dans un notebook Jupyter ne sert a rien s'il ne peut pas etre utilise. Le <strong>deploiement</strong> consiste a rendre le modele accessible via une API ou une application.</p>
+
+    <table>
+        <tr><th>Methode</th><th>Description</th><th>Outils</th></tr>
+        <tr><td><strong>API REST</strong></td><td>Le modele est expose via une API web</td><td>FastAPI, Flask, Django</td></tr>
+        <tr><td><strong>Conteneurs</strong></td><td>Packager le modele dans un conteneur Docker</td><td>Docker, Kubernetes</td></tr>
+        <tr><td><strong>Cloud ML</strong></td><td>Deployer sur des services cloud manages</td><td>AWS SageMaker, GCP Vertex AI, Azure ML</td></tr>
+        <tr><td><strong>Edge / Mobile</strong></td><td>Deployer sur des appareils locaux</td><td>ONNX, TensorFlow Lite, Core ML</td></tr>
+        <tr><td><strong>Serverless</strong></td><td>Executer a la demande sans serveur</td><td>AWS Lambda, GCP Cloud Functions</td></tr>
+    </table>
+
+    <div class="analogy">
+        Creer un modele ML, c'est comme ecrire une recette. La deployer, c'est ouvrir un restaurant. Il faut la cuisine (serveur), les serveurs (API), le menu (documentation), et la capacite a servir 1000 clients en meme temps (scalabilite).
+    </div>
+
+    <!-- CHAPITRE 11 -->
+    <h2 id="ch11">Chapitre 11 : Monitoring</h2>
+
+    <h3>11.1 Pourquoi surveiller ?</h3>
+    <p>Un modele deploye peut se <strong>degrader</strong> avec le temps car les donnees du monde reel changent (concept drift). Le monitoring permet de detecter ces degradations et de re-entrainer le modele.</p>
+
+    <div class="concept-box">
+        <h4>Que surveiller ?</h4>
+        <table>
+            <tr><th>Aspect</th><th>Ce qu'on surveille</th></tr>
+            <tr><td><strong>Performance</strong></td><td>Les metriques baissent-elles ? (accuracy, F1...)</td></tr>
+            <tr><td><strong>Distribution des donnees</strong></td><td>Les nouvelles donnees ressemblent-elles aux donnees d'entrainement ? (data drift)</td></tr>
+            <tr><td><strong>Latence</strong></td><td>Le modele repond-il assez vite ?</td></tr>
+            <tr><td><strong>Erreurs</strong></td><td>Y a-t-il des erreurs techniques (timeout, OOM) ?</td></tr>
+            <tr><td><strong>Feedback utilisateurs</strong></td><td>Les utilisateurs sont-ils satisfaits des predictions ?</td></tr>
+        </table>
+    </div>
+
+    <!-- CHAPITRE 12 -->
+    <h2 id="ch12">Chapitre 12 : MLOps</h2>
+
+    <h3>12.1 Le DevOps du Machine Learning</h3>
+    <p><strong>MLOps</strong> = Machine Learning Operations. C'est l'ensemble des pratiques pour automatiser et fiabiliser le cycle de vie complet d'un modele ML : du developpement au deploiement, en passant par le monitoring et le re-entrainement.</p>
+
+    <table>
+        <tr><th>Composant MLOps</th><th>Outils populaires</th></tr>
+        <tr><td><strong>Versioning des donnees</strong></td><td>DVC, LakeFS</td></tr>
+        <tr><td><strong>Tracking d'experiences</strong></td><td>MLflow, Weights & Biases, LangSmith</td></tr>
+        <tr><td><strong>Pipelines automatises</strong></td><td>Airflow, Kubeflow, Prefect</td></tr>
+        <tr><td><strong>Serving de modeles</strong></td><td>TorchServe, TF Serving, BentoML</td></tr>
+        <tr><td><strong>Monitoring</strong></td><td>Evidently AI, Whylabs, Arize</td></tr>
+        <tr><td><strong>Feature Store</strong></td><td>Feast, Hopsworks</td></tr>
+    </table>
+
+    <!-- CHAPITRE 13 -->
+    <h2 id="ch13">Chapitre 13 : Le Pipeline RAG Complet</h2>
+
+    <div class="svg-container">
+        <svg width="750" height="350" viewBox="0 0 750 350">
+            <rect width="750" height="350" fill="#0f0f23"/>
+            <text x="375" y="25" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Pipeline RAG Professionnel - Vue Complete</text>
+
+            <!-- OFFLINE PHASE -->
+            <rect x="15" y="40" width="720" height="125" rx="12" fill="rgba(0,210,255,0.05)" stroke="#00d2ff" stroke-dasharray="5,5"/>
+            <text x="375" y="58" text-anchor="middle" fill="#00d2ff" font-size="11">PHASE OFFLINE (une seule fois, ou periodiquement)</text>
+
+            <!-- Steps offline -->
+            <rect x="30" y="70" width="110" height="40" rx="6" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="85" y="88" text-anchor="middle" fill="white" font-size="9">Documents</text>
+            <text x="85" y="100" text-anchor="middle" fill="#aaa" font-size="7">PDF, Web, DB</text>
+
+            <text x="150" y="93" fill="#aaa" font-size="10">&#8594;</text>
+
+            <rect x="160" y="70" width="110" height="40" rx="6" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="215" y="88" text-anchor="middle" fill="white" font-size="9">Chunking</text>
+            <text x="215" y="100" text-anchor="middle" fill="#aaa" font-size="7">Decouper en morceaux</text>
+
+            <text x="280" y="93" fill="#aaa" font-size="10">&#8594;</text>
+
+            <rect x="290" y="70" width="110" height="40" rx="6" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="345" y="88" text-anchor="middle" fill="white" font-size="9">Embeddings</text>
+            <text x="345" y="100" text-anchor="middle" fill="#aaa" font-size="7">BERT / Ada / BGE</text>
+
+            <text x="410" y="93" fill="#aaa" font-size="10">&#8594;</text>
+
+            <rect x="420" y="70" width="130" height="40" rx="6" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="485" y="88" text-anchor="middle" fill="white" font-size="9">Base Vectorielle</text>
+            <text x="485" y="100" text-anchor="middle" fill="#aaa" font-size="7">ChromaDB / Pinecone</text>
+
+            <text x="560" y="93" fill="#aaa" font-size="10">&#8594;</text>
+
+            <rect x="570" y="70" width="150" height="40" rx="6" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="645" y="88" text-anchor="middle" fill="white" font-size="9">Metadonnees + Index</text>
+            <text x="645" y="100" text-anchor="middle" fill="#aaa" font-size="7">Source, date, type</text>
+
+            <!-- Cours references -->
+            <text x="85" y="145" text-anchor="middle" fill="#00d2ff" font-size="7">Cours RAG</text>
+            <text x="215" y="145" text-anchor="middle" fill="#00d2ff" font-size="7">LangChain</text>
+            <text x="345" y="145" text-anchor="middle" fill="#00d2ff" font-size="7">ML 10 NLP</text>
+            <text x="485" y="145" text-anchor="middle" fill="#00d2ff" font-size="7">Infra (a venir)</text>
+
+            <!-- ONLINE PHASE -->
+            <rect x="15" y="175" width="720" height="125" rx="12" fill="rgba(255,107,53,0.05)" stroke="#ff6b35" stroke-dasharray="5,5"/>
+            <text x="375" y="193" text-anchor="middle" fill="#ff6b35" font-size="11">PHASE ONLINE (a chaque question utilisateur)</text>
+
+            <rect x="30" y="205" width="100" height="40" rx="6" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="80" y="223" text-anchor="middle" fill="white" font-size="9">Question</text>
+            <text x="80" y="235" text-anchor="middle" fill="#aaa" font-size="7">Utilisateur</text>
+
+            <text x="140" y="228" fill="#aaa" font-size="10">&#8594;</text>
+
+            <rect x="150" y="205" width="100" height="40" rx="6" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="200" y="223" text-anchor="middle" fill="white" font-size="9">Embedding Q</text>
+            <text x="200" y="235" text-anchor="middle" fill="#aaa" font-size="7">Vectoriser</text>
+
+            <text x="260" y="228" fill="#aaa" font-size="10">&#8594;</text>
+
+            <rect x="270" y="205" width="100" height="40" rx="6" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="320" y="223" text-anchor="middle" fill="white" font-size="9">Recherche</text>
+            <text x="320" y="235" text-anchor="middle" fill="#aaa" font-size="7">Top-K similaires</text>
+
+            <text x="380" y="228" fill="#aaa" font-size="10">&#8594;</text>
+
+            <rect x="390" y="205" width="100" height="40" rx="6" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="440" y="223" text-anchor="middle" fill="white" font-size="9">Reranking</text>
+            <text x="440" y="235" text-anchor="middle" fill="#aaa" font-size="7">Affiner les resultats</text>
+
+            <text x="500" y="228" fill="#aaa" font-size="10">&#8594;</text>
+
+            <rect x="510" y="205" width="100" height="40" rx="6" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="560" y="223" text-anchor="middle" fill="white" font-size="9">Prompt + Contexte</text>
+            <text x="560" y="235" text-anchor="middle" fill="#aaa" font-size="7">Assembler</text>
+
+            <text x="620" y="228" fill="#aaa" font-size="10">&#8594;</text>
+
+            <rect x="630" y="200" width="95" height="50" rx="8" fill="rgba(0,255,136,0.3)" stroke="#00ff88" stroke-width="2"/>
+            <text x="677" y="222" text-anchor="middle" fill="white" font-size="9" font-weight="bold">LLM</text>
+            <text x="677" y="237" text-anchor="middle" fill="#00ff88" font-size="8">Reponse !</text>
+
+            <!-- Evaluation -->
+            <rect x="200" y="310" width="350" height="30" rx="8" fill="rgba(168,85,247,0.15)" stroke="#a855f7"/>
+            <text x="375" y="330" text-anchor="middle" fill="#a855f7" font-size="10">EVALUATION : RAGAS + LangSmith + LLM-as-Judge (cours ML 11 + LangSmith)</text>
+        </svg>
+    </div>
+
+    <!-- CHAPITRE 14 -->
+    <h2 id="ch14">Chapitre 14 : Outils de l'Ecosysteme ML</h2>
+
+    <table>
+        <tr><th>Categorie</th><th>Outils</th><th>Cours de reference</th></tr>
+        <tr><td><strong>Langages</strong></td><td>Python (dominant), R, Julia</td><td>-</td></tr>
+        <tr><td><strong>Data Science</strong></td><td>Pandas, NumPy, Matplotlib, Seaborn</td><td>ML 03</td></tr>
+        <tr><td><strong>ML Classique</strong></td><td>Scikit-learn, XGBoost, LightGBM</td><td>ML 04-06</td></tr>
+        <tr><td><strong>Deep Learning</strong></td><td>PyTorch, TensorFlow, JAX</td><td>ML 08-09</td></tr>
+        <tr><td><strong>NLP / LLMs</strong></td><td>Hugging Face, LangChain, LlamaIndex</td><td>ML 10 + LangChain</td></tr>
+        <tr><td><strong>Orchestration</strong></td><td>LangGraph, CrewAI, AutoGen</td><td>LangGraph</td></tr>
+        <tr><td><strong>Evaluation</strong></td><td>LangSmith, RAGAS, Weights & Biases</td><td>ML 11 + LangSmith</td></tr>
+        <tr><td><strong>Bases vectorielles</strong></td><td>ChromaDB, Pinecone, Weaviate, FAISS</td><td>Cours a venir</td></tr>
+        <tr><td><strong>API / Deploiement</strong></td><td>FastAPI, Docker, Kubernetes</td><td>Cours a venir</td></tr>
+    </table>
+
+    <!-- CHAPITRE 15 -->
+    <h2 id="ch15">Chapitre 15 : Carriere en ML</h2>
+
+    <table>
+        <tr><th>Role</th><th>Focus</th><th>Competences cles</th></tr>
+        <tr><td><strong>Data Scientist</strong></td><td>Analyser les donnees, creer des modeles</td><td>Python, Stats, ML, Visualisation</td></tr>
+        <tr><td><strong>ML Engineer</strong></td><td>Deployer et maintenir les modeles en production</td><td>Python, MLOps, Docker, Cloud</td></tr>
+        <tr><td><strong>NLP Engineer</strong></td><td>Specialiste du traitement du langage</td><td>Transformers, LLMs, Embeddings</td></tr>
+        <tr><td><strong>AI/RAG Engineer</strong></td><td>Construire des systemes RAG et agents</td><td>LangChain, LLMs, Vectorielles, APIs</td></tr>
+        <tr><td><strong>Research Scientist</strong></td><td>Inventer de nouveaux algorithmes</td><td>Maths avancees, publications, PhD</td></tr>
+    </table>
+
+    <div class="tip">
+        Le role d'<strong>AI/RAG Engineer</strong> est le plus demande en 2025-2026. C'est exactement ce que cette formation vous prepare a devenir !
+    </div>
+
+    <!-- CHAPITRE 16 -->
+    <h2 id="ch16">Chapitre 16 : Conclusion de la Formation ML</h2>
+
+    <div class="concept-box green">
+        <h3 style="color:#00ff88; margin-top:0;">Felicitations ! Vous avez termine les 12 cours de Machine Learning !</h3>
+
+        <h4 style="color:#ff6b35;">Ce que vous maitrisez maintenant :</h4>
+        <table>
+            <tr><th>Cours</th><th>Competences acquises</th></tr>
+            <tr><td>ML 01 - Introduction</td><td>IA vs ML vs DL, types d'apprentissage, workflow ML</td></tr>
+            <tr><td>ML 02 - Maths Visuelles</td><td>Vecteurs, matrices, statistiques, gradient, cosinus</td></tr>
+            <tr><td>ML 03 - Donnees</td><td>Features, labels, nettoyage, normalisation, encoding</td></tr>
+            <tr><td>ML 04 - Regression</td><td>Lineaire, polynomiale, Ridge, Lasso, metriques</td></tr>
+            <tr><td>ML 05 - Classification</td><td>Logistique, KNN, SVM, Arbres, Confusion Matrix, ROC</td></tr>
+            <tr><td>ML 06 - Ensemble</td><td>Random Forest, XGBoost, LightGBM, Stacking, Boosting</td></tr>
+            <tr><td>ML 07 - Non Supervise</td><td>K-Means, DBSCAN, PCA, t-SNE, UMAP, anomalies</td></tr>
+            <tr><td>ML 08 - Neurones</td><td>Perceptron, activation, backpropagation, Adam, Dropout</td></tr>
+            <tr><td>ML 09 - Deep Learning</td><td>CNN, RNN, LSTM, Transformers, Attention, Transfer Learning</td></tr>
+            <tr><td>ML 10 - NLP</td><td>Tokenization, Embeddings, BERT, GPT, RAG vs Fine-tuning</td></tr>
+            <tr><td>ML 11 - Evaluation</td><td>K-Fold, metriques, hyperparametres, RAGAS</td></tr>
+            <tr><td>ML 12 - Pipeline</td><td>Workflow complet, deploiement, MLOps, carriere</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box" style="margin-top:30px;">
+        <h3 style="color:#ff6b35; margin-top:0;">Prochaine etape : Retour au RAG !</h3>
+        <p>Maintenant que vous avez les bases solides en Machine Learning, vous etes pret a approfondir le RAG avec une comprehension profonde de chaque composant :</p>
+        <ul>
+            <li><strong>Les LLMs</strong> (ML 09, 10) : vous comprenez maintenant comment fonctionnent GPT et Claude</li>
+            <li><strong>Les Embeddings</strong> (ML 10) : vous savez comment les mots deviennent des vecteurs</li>
+            <li><strong>La recherche semantique</strong> (ML 02, 10) : similarite cosinus, espaces vectoriels</li>
+            <li><strong>L'evaluation</strong> (ML 11) : RAGAS, metriques, LLM-as-Judge</li>
+        </ul>
+        <p style="margin-top:15px; color:#00ff88; font-weight:bold;">Direction les prochains cours : Bases Vectorielles, Preprocessing, FastAPI, et le Projet RAG Final !</p>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; margin-top:40px; padding:20px 0; border-top:1px solid #333;">
+        <a href="ml_11_evaluation.html" style="color:#ff6b35; text-decoration:none;">&larr; 11 - Evaluation</a>
+        <a href="00_PLAN_ML.html" style="color:#ff6b35; text-decoration:none;">Plan ML Complet &rarr;</a>
+    </div>
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML 06 - Methodes d'Ensemble | Formation ML Complete</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+            background: #1a1a2e; border-right: 2px solid #ff6b35;
+            overflow-y: auto; z-index: 100; padding: 20px 0;
+        }
+        .sidebar h2 { color: #ff6b35; font-size: 1.1rem; padding: 0 20px 15px; border-bottom: 1px solid #333; }
+        .sidebar a {
+            display: block; padding: 8px 20px; color: #aaa; text-decoration: none;
+            font-size: 0.85rem; border-left: 3px solid transparent; transition: all 0.3s;
+        }
+        .sidebar a:hover { color: #ff6b35; background: rgba(255,107,53,0.1); border-left-color: #ff6b35; }
+
+        /* Main */
+        .main-content { margin-left: 280px; padding: 40px 60px; max-width: 1100px; }
+
+        h1 { color: #ff6b35; font-size: 2.2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.6rem; margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.3rem; margin: 25px 0 15px; }
+        h4 { color: #ffaa70; font-size: 1.1rem; margin: 20px 0 10px; }
+
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+
+        p { margin-bottom: 15px; text-align: justify; }
+
+        .concept-box {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid #ff6b35; border-radius: 12px;
+            padding: 25px; margin: 20px 0;
+        }
+        .concept-box.blue { border-color: #00d2ff; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.purple { border-color: #a855f7; }
+        .concept-box.red { border-color: #ff4444; }
+
+        .analogy {
+            background: rgba(255,107,53,0.1); border-left: 4px solid #ff6b35;
+            padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0;
+        }
+        .analogy::before { content: "Analogie : "; color: #ff6b35; font-weight: bold; }
+
+        .important {
+            background: rgba(255,68,68,0.1); border-left: 4px solid #ff4444;
+            padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0;
+        }
+        .important::before { content: "Important : "; color: #ff4444; font-weight: bold; }
+
+        .tip {
+            background: rgba(0,255,136,0.1); border-left: 4px solid #00ff88;
+            padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0;
+        }
+        .tip::before { content: "A retenir : "; color: #00ff88; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #ff6b35; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px 12px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+
+        .svg-container { text-align: center; margin: 25px 0; }
+
+        .comparison-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 20px; margin: 20px 0;
+        }
+
+        .card {
+            background: #1a1a2e; border: 1px solid #333; border-radius: 10px;
+            padding: 20px; transition: border-color 0.3s;
+        }
+        .card:hover { border-color: #ff6b35; }
+        .card h4 { margin-top: 0; }
+
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 8px; }
+
+        .progress-bar {
+            background: #1a1a2e; border-radius: 10px; padding: 3px; margin: 10px 0;
+        }
+        .progress-fill {
+            height: 20px; border-radius: 8px; text-align: center;
+            font-size: 0.8rem; line-height: 20px; font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 20px; }
+            .comparison-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sidebar Navigation -->
+<nav class="sidebar">
+    <h2>06 - Ensemble</h2>
+    <a href="#ch1">1. Pourquoi les Ensembles ?</a>
+    <a href="#ch2">2. Bagging - Principe</a>
+    <a href="#ch3">3. Random Forest</a>
+    <a href="#ch4">4. Boosting - Principe</a>
+    <a href="#ch5">5. AdaBoost</a>
+    <a href="#ch6">6. Gradient Boosting</a>
+    <a href="#ch7">7. XGBoost</a>
+    <a href="#ch8">8. LightGBM</a>
+    <a href="#ch9">9. CatBoost</a>
+    <a href="#ch10">10. Bagging vs Boosting</a>
+    <a href="#ch11">11. Stacking</a>
+    <a href="#ch12">12. Voting</a>
+    <a href="#ch13">13. Importance des Features</a>
+    <a href="#ch14">14. Hyperparametres Cles</a>
+    <a href="#ch15">15. Quel Algo Choisir ?</a>
+    <a href="#ch16">16. Resume et Synthese</a>
+</nav>
+
+<!-- Main Content -->
+<div class="main-content">
+
+    <h1>Chapitre 6 : Les Methodes d'Ensemble</h1>
+    <p class="subtitle">La force du collectif - Comment combiner plusieurs modeles pour des predictions superieures</p>
+
+    <div class="concept-box">
+        <p><strong>Objectif de ce cours :</strong> Comprendre en profondeur les methodes d'ensemble, qui sont parmi les algorithmes les plus puissants et les plus utilises en Machine Learning. Nous verrons comment la combinaison de plusieurs modeles "faibles" peut creer un modele "fort" qui surpasse chacun d'eux individuellement. Tout cela sans une seule ligne de code - uniquement des schemas, analogies et explications visuelles.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 1 -->
+    <!-- ============================================ -->
+    <h2 id="ch1">Chapitre 1 : Pourquoi les Methodes d'Ensemble ?</h2>
+
+    <h3>1.1 Le probleme d'un modele unique</h3>
+    <p>Imaginez que vous devez prendre une decision importante - par exemple, acheter une maison. Si vous demandez l'avis d'une seule personne, cette personne peut avoir des biais, des connaissances limitees, ou simplement se tromper. Mais si vous demandez l'avis de 100 experts differents et prenez la decision majoritaire, vous avez beaucoup plus de chances de faire le bon choix.</p>
+
+    <p>C'est exactement le principe des methodes d'ensemble en Machine Learning : au lieu de faire confiance a un seul modele, on en combine plusieurs pour obtenir une prediction plus fiable et plus precise.</p>
+
+    <div class="analogy">
+        Le jury populaire en justice : plutot que de laisser un seul juge decider, on reunit 12 jures. Chaque jure a ses propres experiences et perspectives. La decision collective est generalement plus juste qu'une decision individuelle, car les erreurs individuelles se compensent mutuellement.
+    </div>
+
+    <h3>1.2 Les trois erreurs d'un modele</h3>
+    <p>Tout modele de Machine Learning souffre de trois types d'erreurs :</p>
+
+    <div class="concept-box">
+        <table>
+            <tr><th>Type d'erreur</th><th>Description</th><th>Analogie</th></tr>
+            <tr>
+                <td><strong style="color:#ff4444">Biais (Bias)</strong></td>
+                <td>Le modele est trop simple et ne capture pas la complexite des donnees. Il sous-apprend (underfitting).</td>
+                <td>Un etudiant qui n'a appris que les grandes lignes du cours</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#ff6b35">Variance</strong></td>
+                <td>Le modele est trop sensible aux donnees d'entrainement. Il sur-apprend (overfitting).</td>
+                <td>Un etudiant qui a memorise les reponses sans comprendre</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#ffaa00">Bruit (Noise)</strong></td>
+                <td>Erreurs irreductibles dans les donnees elles-memes.</td>
+                <td>Des fautes de frappe dans le sujet d'examen</td>
+            </tr>
+        </table>
+    </div>
+
+    <p>Les methodes d'ensemble permettent de <strong>reduire le biais, la variance, ou les deux</strong> selon la technique utilisee :</p>
+    <ul>
+        <li><strong>Bagging</strong> (Random Forest) : reduit principalement la <strong>variance</strong></li>
+        <li><strong>Boosting</strong> (XGBoost, AdaBoost) : reduit principalement le <strong>biais</strong></li>
+        <li><strong>Stacking</strong> : peut reduire <strong>les deux</strong></li>
+    </ul>
+
+    <h3>1.3 Vue d'ensemble des methodes</h3>
+
+    <div class="svg-container">
+        <svg width="800" height="400" viewBox="0 0 800 400">
+            <rect width="800" height="400" fill="#0f0f23"/>
+            <!-- Title -->
+            <text x="400" y="35" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Les 3 Familles de Methodes d'Ensemble</text>
+
+            <!-- Bagging -->
+            <rect x="30" y="60" width="230" height="310" rx="15" fill="none" stroke="#00d2ff" stroke-width="2"/>
+            <text x="145" y="90" text-anchor="middle" fill="#00d2ff" font-size="16" font-weight="bold">BAGGING</text>
+            <text x="145" y="115" text-anchor="middle" fill="#aaa" font-size="11">Modeles en PARALLELE</text>
+            <!-- Trees parallel -->
+            <rect x="50" y="135" width="55" height="40" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="77" y="160" text-anchor="middle" fill="#00d2ff" font-size="10">Arbre 1</text>
+            <rect x="115" y="135" width="55" height="40" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="142" y="160" text-anchor="middle" fill="#00d2ff" font-size="10">Arbre 2</text>
+            <rect x="180" y="135" width="55" height="40" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="207" y="160" text-anchor="middle" fill="#00d2ff" font-size="10">Arbre N</text>
+            <!-- Vote -->
+            <line x1="77" y1="175" x2="145" y2="210" stroke="#00d2ff" stroke-width="1.5"/>
+            <line x1="142" y1="175" x2="145" y2="210" stroke="#00d2ff" stroke-width="1.5"/>
+            <line x1="207" y1="175" x2="145" y2="210" stroke="#00d2ff" stroke-width="1.5"/>
+            <rect x="95" y="210" width="100" height="35" rx="5" fill="rgba(0,210,255,0.3)" stroke="#00d2ff"/>
+            <text x="145" y="232" text-anchor="middle" fill="white" font-size="11">VOTE</text>
+            <!-- Info -->
+            <text x="145" y="275" text-anchor="middle" fill="#00d2ff" font-size="11">Reduit la VARIANCE</text>
+            <text x="145" y="295" text-anchor="middle" fill="#aaa" font-size="10">- Random Forest</text>
+            <text x="145" y="315" text-anchor="middle" fill="#aaa" font-size="10">- Bagged Trees</text>
+            <text x="145" y="340" text-anchor="middle" fill="#00ff88" font-size="11">Robuste, stable</text>
+
+            <!-- Boosting -->
+            <rect x="285" y="60" width="230" height="310" rx="15" fill="none" stroke="#ff6b35" stroke-width="2"/>
+            <text x="400" y="90" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">BOOSTING</text>
+            <text x="400" y="115" text-anchor="middle" fill="#aaa" font-size="11">Modeles en SERIE</text>
+            <!-- Trees serial -->
+            <rect x="350" y="135" width="100" height="30" rx="5" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="400" y="155" text-anchor="middle" fill="#ff6b35" font-size="10">Modele 1</text>
+            <line x1="400" y1="165" x2="400" y2="175" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow-orange)"/>
+            <text x="450" y="178" fill="#ff4444" font-size="9">erreurs</text>
+            <rect x="350" y="180" width="100" height="30" rx="5" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="400" y="200" text-anchor="middle" fill="#ff6b35" font-size="10">Modele 2</text>
+            <line x1="400" y1="210" x2="400" y2="220" stroke="#ff6b35" stroke-width="2"/>
+            <text x="450" y="223" fill="#ff4444" font-size="9">erreurs</text>
+            <rect x="350" y="225" width="100" height="30" rx="5" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="400" y="245" text-anchor="middle" fill="#ff6b35" font-size="10">Modele N</text>
+            <!-- Info -->
+            <text x="400" y="285" text-anchor="middle" fill="#ff6b35" font-size="11">Reduit le BIAIS</text>
+            <text x="400" y="305" text-anchor="middle" fill="#aaa" font-size="10">- AdaBoost, XGBoost</text>
+            <text x="400" y="325" text-anchor="middle" fill="#aaa" font-size="10">- LightGBM, CatBoost</text>
+            <text x="400" y="350" text-anchor="middle" fill="#00ff88" font-size="11">Tres precis</text>
+
+            <!-- Stacking -->
+            <rect x="540" y="60" width="230" height="310" rx="15" fill="none" stroke="#a855f7" stroke-width="2"/>
+            <text x="655" y="90" text-anchor="middle" fill="#a855f7" font-size="16" font-weight="bold">STACKING</text>
+            <text x="655" y="115" text-anchor="middle" fill="#aaa" font-size="11">Modeles EMPILES</text>
+            <!-- Level 0 -->
+            <rect x="560" y="135" width="55" height="35" rx="5" fill="rgba(168,85,247,0.2)" stroke="#a855f7"/>
+            <text x="587" y="157" text-anchor="middle" fill="#a855f7" font-size="9">KNN</text>
+            <rect x="625" y="135" width="55" height="35" rx="5" fill="rgba(168,85,247,0.2)" stroke="#a855f7"/>
+            <text x="652" y="157" text-anchor="middle" fill="#a855f7" font-size="9">SVM</text>
+            <rect x="690" y="135" width="55" height="35" rx="5" fill="rgba(168,85,247,0.2)" stroke="#a855f7"/>
+            <text x="717" y="157" text-anchor="middle" fill="#a855f7" font-size="9">RF</text>
+            <text x="560" y="150" text-anchor="end" fill="#aaa" font-size="9">Niv.0</text>
+            <!-- Lines to meta -->
+            <line x1="587" y1="170" x2="655" y2="210" stroke="#a855f7" stroke-width="1.5"/>
+            <line x1="652" y1="170" x2="655" y2="210" stroke="#a855f7" stroke-width="1.5"/>
+            <line x1="717" y1="170" x2="655" y2="210" stroke="#a855f7" stroke-width="1.5"/>
+            <!-- Meta model -->
+            <rect x="595" y="210" width="120" height="40" rx="5" fill="rgba(168,85,247,0.3)" stroke="#a855f7" stroke-width="2"/>
+            <text x="655" y="225" text-anchor="middle" fill="#a855f7" font-size="10">META-MODELE</text>
+            <text x="655" y="240" text-anchor="middle" fill="white" font-size="9">(Logistic Reg.)</text>
+            <text x="565" y="235" text-anchor="end" fill="#aaa" font-size="9">Niv.1</text>
+            <!-- Info -->
+            <text x="655" y="285" text-anchor="middle" fill="#a855f7" font-size="11">Reduit BIAIS + VARIANCE</text>
+            <text x="655" y="305" text-anchor="middle" fill="#aaa" font-size="10">- Blending</text>
+            <text x="655" y="325" text-anchor="middle" fill="#aaa" font-size="10">- Super Learner</text>
+            <text x="655" y="350" text-anchor="middle" fill="#00ff88" font-size="11">Le plus flexible</text>
+        </svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 2 -->
+    <!-- ============================================ -->
+    <h2 id="ch2">Chapitre 2 : Bagging - Le Principe</h2>
+
+    <h3>2.1 Qu'est-ce que le Bagging ?</h3>
+    <p><strong>Bagging</strong> signifie <strong>Bootstrap AGGregatING</strong>. C'est une technique qui consiste a creer plusieurs echantillons aleatoires a partir des donnees d'entrainement, entrainer un modele sur chacun d'eux, puis combiner leurs predictions.</p>
+
+    <div class="analogy">
+        Imaginez un concours de cuisine. Au lieu d'avoir un seul chef qui prepare le plat, vous avez 100 chefs. Chacun recoit des ingredients legerement differents (echantillon aleatoire). Chacun prepare son plat independamment. A la fin, les juges goutent tous les plats et choisissent la recette moyenne/majoritaire. Le resultat est presque toujours meilleur que celui d'un seul chef.
+    </div>
+
+    <h3>2.2 Le Bootstrap : echantillonnage avec remise</h3>
+    <p>Le <strong>bootstrap</strong> est la cle du bagging. C'est une technique statistique qui consiste a creer de nouveaux jeux de donnees en tirant aleatoirement des exemples <strong>avec remise</strong> (un meme exemple peut etre tire plusieurs fois).</p>
+
+    <div class="concept-box blue">
+        <h4>Comment fonctionne le Bootstrap ?</h4>
+        <p>Si vous avez un jeu de donnees de 1000 exemples :</p>
+        <ul>
+            <li>Vous creez un nouvel echantillon de 1000 exemples en piochant au hasard <strong>avec remise</strong></li>
+            <li>Certains exemples apparaitront 2 ou 3 fois, d'autres pas du tout</li>
+            <li>En moyenne, chaque echantillon bootstrap contient environ <strong>63.2%</strong> des exemples originaux</li>
+            <li>Les 36.8% restants forment le jeu "Out-of-Bag" (OOB), utile pour evaluer le modele</li>
+        </ul>
+    </div>
+
+    <div class="svg-container">
+        <svg width="750" height="350" viewBox="0 0 750 350">
+            <rect width="750" height="350" fill="#0f0f23"/>
+            <text x="375" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Le Processus de Bagging - Etape par Etape</text>
+
+            <!-- Original data -->
+            <rect x="280" y="50" width="190" height="40" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="375" y="75" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">Donnees Originales (N)</text>
+
+            <!-- Arrows down -->
+            <line x1="200" y1="90" x2="130" y2="120" stroke="#00d2ff" stroke-width="1.5"/>
+            <line x1="375" y1="90" x2="375" y2="120" stroke="#00d2ff" stroke-width="1.5"/>
+            <line x1="550" y1="90" x2="620" y2="120" stroke="#00d2ff" stroke-width="1.5"/>
+            <text x="100" y="110" fill="#aaa" font-size="10">Bootstrap</text>
+            <text x="345" y="110" fill="#aaa" font-size="10">Bootstrap</text>
+            <text x="590" y="110" fill="#aaa" font-size="10">Bootstrap</text>
+
+            <!-- Bootstrap samples -->
+            <rect x="50" y="120" width="160" height="35" rx="6" fill="rgba(0,210,255,0.15)" stroke="#00d2ff"/>
+            <text x="130" y="143" text-anchor="middle" fill="#00d2ff" font-size="11">Echantillon 1 (N)</text>
+            <rect x="295" y="120" width="160" height="35" rx="6" fill="rgba(0,210,255,0.15)" stroke="#00d2ff"/>
+            <text x="375" y="143" text-anchor="middle" fill="#00d2ff" font-size="11">Echantillon 2 (N)</text>
+            <rect x="540" y="120" width="160" height="35" rx="6" fill="rgba(0,210,255,0.15)" stroke="#00d2ff"/>
+            <text x="620" y="143" text-anchor="middle" fill="#00d2ff" font-size="11">Echantillon K (N)</text>
+
+            <!-- Arrows to models -->
+            <line x1="130" y1="155" x2="130" y2="185" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="375" y1="155" x2="375" y2="185" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="620" y1="155" x2="620" y2="185" stroke="#00ff88" stroke-width="1.5"/>
+
+            <!-- Models -->
+            <rect x="60" y="185" width="140" height="40" rx="8" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="2"/>
+            <text x="130" y="210" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Modele 1</text>
+            <rect x="305" y="185" width="140" height="40" rx="8" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="2"/>
+            <text x="375" y="210" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Modele 2</text>
+            <rect x="550" y="185" width="140" height="40" rx="8" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="2"/>
+            <text x="620" y="210" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Modele K</text>
+
+            <!-- Dots between -->
+            <text x="250" y="210" text-anchor="middle" fill="#aaa" font-size="20">...</text>
+            <text x="480" y="210" text-anchor="middle" fill="#aaa" font-size="20">...</text>
+
+            <!-- Predictions -->
+            <line x1="130" y1="225" x2="130" y2="255" stroke="#aaa" stroke-width="1"/>
+            <line x1="375" y1="225" x2="375" y2="255" stroke="#aaa" stroke-width="1"/>
+            <line x1="620" y1="225" x2="620" y2="255" stroke="#aaa" stroke-width="1"/>
+            <text x="130" y="270" text-anchor="middle" fill="#aaa" font-size="11">Pred: Chat</text>
+            <text x="375" y="270" text-anchor="middle" fill="#aaa" font-size="11">Pred: Chien</text>
+            <text x="620" y="270" text-anchor="middle" fill="#aaa" font-size="11">Pred: Chat</text>
+
+            <!-- Aggregation -->
+            <line x1="130" y1="280" x2="375" y2="305" stroke="#a855f7" stroke-width="1.5"/>
+            <line x1="375" y1="280" x2="375" y2="305" stroke="#a855f7" stroke-width="1.5"/>
+            <line x1="620" y1="280" x2="375" y2="305" stroke="#a855f7" stroke-width="1.5"/>
+
+            <rect x="280" y="305" width="190" height="35" rx="8" fill="rgba(168,85,247,0.3)" stroke="#a855f7" stroke-width="2"/>
+            <text x="375" y="327" text-anchor="middle" fill="white" font-size="13" font-weight="bold">VOTE MAJORITAIRE : Chat</text>
+        </svg>
+    </div>
+
+    <h3>2.3 Types d'agregation</h3>
+    <table>
+        <tr><th>Probleme</th><th>Methode d'agregation</th><th>Explication</th></tr>
+        <tr>
+            <td><strong>Classification</strong></td>
+            <td>Vote majoritaire</td>
+            <td>La classe predite par le plus grand nombre de modeles est choisie</td>
+        </tr>
+        <tr>
+            <td><strong>Regression</strong></td>
+            <td>Moyenne</td>
+            <td>La prediction finale est la moyenne de toutes les predictions</td>
+        </tr>
+    </table>
+
+    <div class="tip">
+        Le Bagging est particulierement efficace avec des modeles a <strong>haute variance</strong> comme les arbres de decision profonds. Il les stabilise sans augmenter le biais.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 3 -->
+    <!-- ============================================ -->
+    <h2 id="ch3">Chapitre 3 : Random Forest - La Foret Aleatoire</h2>
+
+    <h3>3.1 Le roi du Bagging</h3>
+    <p>La <strong>Random Forest</strong> (Foret Aleatoire) est la methode d'ensemble la plus populaire basee sur le Bagging. Elle combine des centaines d'arbres de decision, chacun entraine sur un sous-ensemble aleatoire des donnees ET des features.</p>
+
+    <div class="analogy">
+        Une foret est composee de centaines d'arbres, chacun different. En Machine Learning, la Random Forest est une "foret" de centaines d'arbres de decision. Chaque arbre "voit" le probleme sous un angle different (donnees differentes, features differentes). La foret entiere est bien plus sage qu'un seul arbre.
+    </div>
+
+    <h3>3.2 Double aleatoire : donnees ET features</h3>
+    <p>Ce qui rend la Random Forest speciale par rapport au simple Bagging, c'est sa <strong>double randomisation</strong> :</p>
+
+    <div class="concept-box green">
+        <h4>Les 2 sources d'aleatoire</h4>
+        <ol>
+            <li><strong>Aleatoire sur les donnees</strong> (Bootstrap) : Chaque arbre recoit un echantillon aleatoire des donnees</li>
+            <li><strong>Aleatoire sur les features</strong> : A chaque noeud de decision, seul un sous-ensemble aleatoire de features est considere (generalement la racine carree du nombre total de features)</li>
+        </ol>
+        <p style="margin-top:15px;">Cette double randomisation force chaque arbre a etre <strong>different</strong>, ce qui est crucial. Si tous les arbres etaient identiques, la combinaison n'apporterait rien !</p>
+    </div>
+
+    <div class="svg-container">
+        <svg width="780" height="420" viewBox="0 0 780 420">
+            <rect width="780" height="420" fill="#0f0f23"/>
+            <text x="390" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Random Forest : Double Aleatoire</text>
+
+            <!-- Dataset box -->
+            <rect x="290" y="45" width="200" height="50" rx="10" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="390" y="65" text-anchor="middle" fill="#ff6b35" font-size="12">Donnees : 1000 lignes</text>
+            <text x="390" y="83" text-anchor="middle" fill="#ff6b35" font-size="12">20 features</text>
+
+            <!-- Arrow down branches -->
+            <line x1="320" y1="95" x2="130" y2="130" stroke="#00d2ff" stroke-width="1.5"/>
+            <line x1="390" y1="95" x2="390" y2="130" stroke="#00d2ff" stroke-width="1.5"/>
+            <line x1="460" y1="95" x2="650" y2="130" stroke="#00d2ff" stroke-width="1.5"/>
+
+            <!-- Tree 1 -->
+            <rect x="30" y="130" width="200" height="75" rx="8" fill="rgba(0,210,255,0.1)" stroke="#00d2ff"/>
+            <text x="130" y="152" text-anchor="middle" fill="#00d2ff" font-size="12" font-weight="bold">Arbre 1</text>
+            <text x="130" y="170" text-anchor="middle" fill="#aaa" font-size="10">~632 lignes (bootstrap)</text>
+            <text x="130" y="188" text-anchor="middle" fill="#00ff88" font-size="10">Features: 2, 7, 11, 15 (4/20)</text>
+
+            <!-- Tree 2 -->
+            <rect x="290" y="130" width="200" height="75" rx="8" fill="rgba(0,210,255,0.1)" stroke="#00d2ff"/>
+            <text x="390" y="152" text-anchor="middle" fill="#00d2ff" font-size="12" font-weight="bold">Arbre 2</text>
+            <text x="390" y="170" text-anchor="middle" fill="#aaa" font-size="10">~632 lignes (bootstrap)</text>
+            <text x="390" y="188" text-anchor="middle" fill="#00ff88" font-size="10">Features: 1, 5, 9, 18 (4/20)</text>
+
+            <!-- Tree N -->
+            <rect x="550" y="130" width="200" height="75" rx="8" fill="rgba(0,210,255,0.1)" stroke="#00d2ff"/>
+            <text x="650" y="152" text-anchor="middle" fill="#00d2ff" font-size="12" font-weight="bold">Arbre 500</text>
+            <text x="650" y="170" text-anchor="middle" fill="#aaa" font-size="10">~632 lignes (bootstrap)</text>
+            <text x="650" y="188" text-anchor="middle" fill="#00ff88" font-size="10">Features: 3, 6, 14, 20 (4/20)</text>
+
+            <!-- Small trees -->
+            <g transform="translate(80,220)">
+                <line x1="50" y1="0" x2="25" y2="30" stroke="#00d2ff" stroke-width="1.5"/>
+                <line x1="50" y1="0" x2="75" y2="30" stroke="#00d2ff" stroke-width="1.5"/>
+                <line x1="25" y1="30" x2="10" y2="55" stroke="#00d2ff" stroke-width="1"/>
+                <line x1="25" y1="30" x2="40" y2="55" stroke="#00d2ff" stroke-width="1"/>
+                <circle cx="50" cy="0" r="5" fill="#00d2ff"/>
+                <circle cx="25" cy="30" r="4" fill="#00d2ff"/>
+                <circle cx="75" cy="30" r="4" fill="#00ff88"/>
+                <circle cx="10" cy="55" r="3" fill="#00ff88"/>
+                <circle cx="40" cy="55" r="3" fill="#ff6b35"/>
+                <text x="50" y="75" text-anchor="middle" fill="#aaa" font-size="10">Pred: Chat</text>
+            </g>
+
+            <g transform="translate(340,220)">
+                <line x1="50" y1="0" x2="25" y2="30" stroke="#00d2ff" stroke-width="1.5"/>
+                <line x1="50" y1="0" x2="75" y2="30" stroke="#00d2ff" stroke-width="1.5"/>
+                <line x1="75" y1="30" x2="60" y2="55" stroke="#00d2ff" stroke-width="1"/>
+                <line x1="75" y1="30" x2="90" y2="55" stroke="#00d2ff" stroke-width="1"/>
+                <circle cx="50" cy="0" r="5" fill="#00d2ff"/>
+                <circle cx="25" cy="30" r="4" fill="#00ff88"/>
+                <circle cx="75" cy="30" r="4" fill="#00d2ff"/>
+                <circle cx="60" cy="55" r="3" fill="#ff6b35"/>
+                <circle cx="90" cy="55" r="3" fill="#00ff88"/>
+                <text x="50" y="75" text-anchor="middle" fill="#aaa" font-size="10">Pred: Chien</text>
+            </g>
+
+            <g transform="translate(600,220)">
+                <line x1="50" y1="0" x2="25" y2="30" stroke="#00d2ff" stroke-width="1.5"/>
+                <line x1="50" y1="0" x2="75" y2="30" stroke="#00d2ff" stroke-width="1.5"/>
+                <line x1="25" y1="30" x2="10" y2="55" stroke="#00d2ff" stroke-width="1"/>
+                <line x1="25" y1="30" x2="40" y2="55" stroke="#00d2ff" stroke-width="1"/>
+                <circle cx="50" cy="0" r="5" fill="#00d2ff"/>
+                <circle cx="25" cy="30" r="4" fill="#00d2ff"/>
+                <circle cx="75" cy="30" r="4" fill="#00ff88"/>
+                <circle cx="10" cy="55" r="3" fill="#00ff88"/>
+                <circle cx="40" cy="55" r="3" fill="#00d2ff"/>
+                <text x="50" y="75" text-anchor="middle" fill="#aaa" font-size="10">Pred: Chat</text>
+            </g>
+
+            <!-- Dots -->
+            <text x="265" y="270" text-anchor="middle" fill="#aaa" font-size="24">...</text>
+            <text x="525" y="270" text-anchor="middle" fill="#aaa" font-size="24">...</text>
+
+            <!-- Final aggregation -->
+            <line x1="130" y1="310" x2="390" y2="350" stroke="#a855f7" stroke-width="1.5"/>
+            <line x1="390" y1="310" x2="390" y2="350" stroke="#a855f7" stroke-width="1.5"/>
+            <line x1="650" y1="310" x2="390" y2="350" stroke="#a855f7" stroke-width="1.5"/>
+
+            <rect x="270" y="350" width="240" height="45" rx="10" fill="rgba(0,255,136,0.2)" stroke="#00ff88" stroke-width="2"/>
+            <text x="390" y="370" text-anchor="middle" fill="white" font-size="13" font-weight="bold">Vote : 337 Chat vs 163 Chien</text>
+            <text x="390" y="388" text-anchor="middle" fill="#00ff88" font-size="12">Prediction finale : CHAT</text>
+        </svg>
+    </div>
+
+    <h3>3.3 Pourquoi ca marche si bien ?</h3>
+    <div class="concept-box">
+        <table>
+            <tr><th>Avantage</th><th>Explication detaillee</th></tr>
+            <tr>
+                <td><strong style="color:#00ff88">Reduction de la variance</strong></td>
+                <td>En moyennant les predictions de centaines d'arbres, les erreurs individuelles se compensent. Un arbre peut se tromper, mais 500 arbres se trompent rarement tous en meme temps.</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#00ff88">Robuste au surapprentissage</strong></td>
+                <td>Contrairement a un seul arbre profond qui overfitte facilement, la foret reste stable car chaque arbre a une vue partielle des donnees.</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#00ff88">Gere bien les outliers</strong></td>
+                <td>Un outlier n'apparait pas dans tous les echantillons bootstrap. Son influence est donc diluee.</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#00ff88">Pas besoin de normalisation</strong></td>
+                <td>Les arbres de decision ne sont pas sensibles a l'echelle des features.</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#00ff88">Importance des features</strong></td>
+                <td>On peut mesurer quelles features contribuent le plus aux predictions (voir chapitre 13).</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>3.4 Limites de la Random Forest</h3>
+    <div class="concept-box red">
+        <ul>
+            <li><strong>Lent a predire</strong> : 500 arbres = 500 fois plus lent qu'un seul arbre pour chaque prediction</li>
+            <li><strong>Gourmand en memoire</strong> : Stocker 500 arbres complets prend beaucoup de place</li>
+            <li><strong>Boite noire</strong> : Difficile d'expliquer pourquoi une prediction specifique a ete faite</li>
+            <li><strong>Peu efficace pour l'extrapolation</strong> : Ne peut pas predire des valeurs en dehors de la plage d'entrainement en regression</li>
+        </ul>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 4 -->
+    <!-- ============================================ -->
+    <h2 id="ch4">Chapitre 4 : Boosting - Le Principe</h2>
+
+    <h3>4.1 L'idee geniale du Boosting</h3>
+    <p>Le <strong>Boosting</strong> prend une approche completement differente du Bagging. Au lieu d'entrainer des modeles independamment en parallele, le Boosting les entraine <strong>sequentiellement</strong>, ou chaque nouveau modele se concentre sur les erreurs commises par les modeles precedents.</p>
+
+    <div class="analogy">
+        Imaginez que vous preparez un examen avec un tuteur. Apres chaque test blanc, le tuteur identifie vos points faibles et le prochain cours se concentre UNIQUEMENT sur ces points faibles. Puis on refait un test, on identifie les nouvelles faiblesses, et ainsi de suite. Apres 100 iterations, vous maitrisez tout le sujet parce que chaque session a comble un manque specifique.
+    </div>
+
+    <h3>4.2 Le principe sequentiel</h3>
+    <div class="svg-container">
+        <svg width="780" height="380" viewBox="0 0 780 380">
+            <rect width="780" height="380" fill="#0f0f23"/>
+            <text x="390" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Boosting : Apprentissage Sequentiel des Erreurs</text>
+
+            <!-- Step 1 -->
+            <rect x="20" y="50" width="170" height="110" rx="10" fill="rgba(255,107,53,0.1)" stroke="#ff6b35"/>
+            <text x="105" y="72" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Etape 1</text>
+            <!-- Data points -->
+            <circle cx="50" cy="95" r="6" fill="#00ff88" opacity="0.7"/><text x="50" y="99" text-anchor="middle" fill="black" font-size="8">+</text>
+            <circle cx="80" cy="100" r="6" fill="#00ff88" opacity="0.7"/><text x="80" y="104" text-anchor="middle" fill="black" font-size="8">+</text>
+            <circle cx="110" cy="90" r="6" fill="#ff4444" opacity="0.7"/><text x="110" y="94" text-anchor="middle" fill="white" font-size="8">-</text>
+            <circle cx="140" cy="105" r="6" fill="#ff4444" opacity="0.7"/><text x="140" y="109" text-anchor="middle" fill="white" font-size="8">-</text>
+            <circle cx="65" cy="120" r="6" fill="#00ff88" opacity="0.7"/><text x="65" y="124" text-anchor="middle" fill="black" font-size="8">+</text>
+            <circle cx="130" cy="130" r="6" fill="#ff4444" opacity="0.7"/><text x="130" y="134" text-anchor="middle" fill="white" font-size="8">-</text>
+            <text x="105" y="152" text-anchor="middle" fill="#aaa" font-size="10">Tous les points ont</text>
+            <text x="105" y="155" text-anchor="middle" fill="#aaa" font-size="10">le meme poids</text>
+
+            <!-- Arrow 1 -->
+            <line x1="190" y1="105" x2="220" y2="105" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="218,100 228,105 218,110" fill="#ff6b35"/>
+
+            <!-- Model 1 -->
+            <rect x="230" y="75" width="100" height="60" rx="8" fill="rgba(0,210,255,0.2)" stroke="#00d2ff" stroke-width="2"/>
+            <text x="280" y="100" text-anchor="middle" fill="#00d2ff" font-size="11" font-weight="bold">Modele 1</text>
+            <text x="280" y="118" text-anchor="middle" fill="#aaa" font-size="10">(faible)</text>
+
+            <!-- Errors highlighted -->
+            <text x="280" y="160" text-anchor="middle" fill="#ff4444" font-size="11">2 erreurs detectees</text>
+
+            <!-- Arrow 2 -->
+            <line x1="330" y1="105" x2="360" y2="105" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="358,100 368,105 358,110" fill="#ff6b35"/>
+
+            <!-- Step 2 -->
+            <rect x="370" y="50" width="170" height="110" rx="10" fill="rgba(255,107,53,0.1)" stroke="#ff6b35"/>
+            <text x="455" y="72" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Etape 2</text>
+            <!-- Bigger error points -->
+            <circle cx="400" cy="95" r="4" fill="#00ff88" opacity="0.5"/>
+            <circle cx="430" cy="100" r="4" fill="#00ff88" opacity="0.5"/>
+            <circle cx="460" cy="90" r="11" fill="#ff4444" stroke="#ffaa00" stroke-width="2"/><text x="460" y="94" text-anchor="middle" fill="white" font-size="8">-</text>
+            <circle cx="490" cy="105" r="4" fill="#ff4444" opacity="0.5"/>
+            <circle cx="415" cy="120" r="11" fill="#00ff88" stroke="#ffaa00" stroke-width="2"/><text x="415" y="124" text-anchor="middle" fill="black" font-size="8">+</text>
+            <circle cx="480" cy="130" r="4" fill="#ff4444" opacity="0.5"/>
+            <text x="455" y="155" text-anchor="middle" fill="#ffaa00" font-size="10">Erreurs = GROS poids</text>
+
+            <!-- Arrow 3 -->
+            <line x1="540" y1="105" x2="570" y2="105" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="568,100 578,105 568,110" fill="#ff6b35"/>
+
+            <!-- Model 2 -->
+            <rect x="580" y="75" width="100" height="60" rx="8" fill="rgba(0,210,255,0.2)" stroke="#00d2ff" stroke-width="2"/>
+            <text x="630" y="100" text-anchor="middle" fill="#00d2ff" font-size="11" font-weight="bold">Modele 2</text>
+            <text x="630" y="118" text-anchor="middle" fill="#aaa" font-size="10">(corrige M1)</text>
+
+            <!-- Repeat indicator -->
+            <rect x="700" y="80" width="60" height="50" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-dasharray="5,5"/>
+            <text x="730" y="110" text-anchor="middle" fill="#ff6b35" font-size="20">...</text>
+
+            <!-- Bottom: combination -->
+            <rect x="100" y="200" width="580" height="60" rx="10" fill="rgba(168,85,247,0.1)" stroke="#a855f7" stroke-width="2"/>
+            <text x="390" y="220" text-anchor="middle" fill="#a855f7" font-size="13" font-weight="bold">Combinaison Ponderee de Tous les Modeles</text>
+            <text x="390" y="245" text-anchor="middle" fill="white" font-size="12">F(x) = a1 * M1(x) + a2 * M2(x) + a3 * M3(x) + ... + aN * MN(x)</text>
+
+            <!-- Key difference -->
+            <rect x="100" y="280" width="260" height="80" rx="10" fill="rgba(0,210,255,0.1)" stroke="#00d2ff"/>
+            <text x="230" y="302" text-anchor="middle" fill="#00d2ff" font-size="12" font-weight="bold">Bagging (Random Forest)</text>
+            <text x="230" y="322" text-anchor="middle" fill="#aaa" font-size="11">Modeles INDEPENDANTS</text>
+            <text x="230" y="342" text-anchor="middle" fill="#aaa" font-size="11">Parallele | Reduit VARIANCE</text>
+
+            <rect x="420" y="280" width="260" height="80" rx="10" fill="rgba(255,107,53,0.1)" stroke="#ff6b35"/>
+            <text x="550" y="302" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Boosting (XGBoost...)</text>
+            <text x="550" y="322" text-anchor="middle" fill="#aaa" font-size="11">Modeles DEPENDANTS</text>
+            <text x="550" y="342" text-anchor="middle" fill="#aaa" font-size="11">Sequentiel | Reduit BIAIS</text>
+
+            <text x="390" y="310" text-anchor="middle" fill="#ff6b35" font-size="18">VS</text>
+        </svg>
+    </div>
+
+    <div class="important">
+        Dans le Boosting, chaque modele individuel est volontairement <strong>"faible"</strong> (weak learner) - souvent un arbre de decision tres peu profond (1 a 6 niveaux). C'est la combinaison de centaines de ces modeles faibles qui cree un modele fort. Un seul modele faible est a peine meilleur que le hasard, mais 500 combines sont redoutables !
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 5 -->
+    <!-- ============================================ -->
+    <h2 id="ch5">Chapitre 5 : AdaBoost</h2>
+
+    <h3>5.1 Le pionnier du Boosting</h3>
+    <p><strong>AdaBoost</strong> (Adaptive Boosting), cree en 1995, est le premier algorithme de Boosting a avoir ete largement utilise. Son principe est simple et elegant : a chaque iteration, il <strong>augmente le poids des exemples mal classes</strong> pour que le prochain modele se concentre dessus.</p>
+
+    <h3>5.2 Fonctionnement detaille</h3>
+    <div class="concept-box">
+        <h4>Les 4 etapes d'AdaBoost a chaque iteration :</h4>
+        <ol>
+            <li><strong>Entrainer</strong> un modele faible (stump = arbre a 1 niveau) sur les donnees ponderees</li>
+            <li><strong>Calculer</strong> le taux d'erreur pondere de ce modele</li>
+            <li><strong>Calculer</strong> le poids (importance) de ce modele : les modeles precis ont plus de poids</li>
+            <li><strong>Mettre a jour</strong> les poids des exemples : les exemples mal classes recoivent un poids plus grand</li>
+        </ol>
+    </div>
+
+    <div class="analogy">
+        Imaginez un professeur qui prepare ses eleves pour un examen. Apres chaque test blanc, il note les questions ratees par le plus d'eleves. Le cours suivant se concentre sur ces points faibles. Les eleves qui ont le plus de difficultes recoivent plus d'attention (poids plus grand). Apres 100 seances, meme les sujets les plus difficiles sont maitrises.
+    </div>
+
+    <h3>5.3 Avantages et limites d'AdaBoost</h3>
+    <div class="comparison-grid">
+        <div class="card" style="border-color:#00ff88">
+            <h4 style="color:#00ff88">Avantages</h4>
+            <ul>
+                <li>Simple a comprendre et implementer</li>
+                <li>Pas d'hyperparametres complexes</li>
+                <li>Fonctionne bien avec des modeles tres simples</li>
+                <li>Bonne performance sur de nombreux jeux de donnees</li>
+            </ul>
+        </div>
+        <div class="card" style="border-color:#ff4444">
+            <h4 style="color:#ff4444">Limites</h4>
+            <ul>
+                <li>Tres sensible aux outliers (ils recoivent des poids enormes)</li>
+                <li>Peut overfitter si trop d'iterations</li>
+                <li>Depasse par XGBoost et LightGBM en performance</li>
+                <li>Lent pour les tres grands jeux de donnees</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 6 -->
+    <!-- ============================================ -->
+    <h2 id="ch6">Chapitre 6 : Gradient Boosting</h2>
+
+    <h3>6.1 L'evolution d'AdaBoost</h3>
+    <p>Le <strong>Gradient Boosting</strong> est une generalisation d'AdaBoost. Au lieu de modifier les poids des exemples, il fait quelque chose de plus elegant : chaque nouveau modele est entraine pour predire les <strong>residus</strong> (erreurs) du modele precedent.</p>
+
+    <div class="analogy">
+        Imaginez que vous devez deviner le prix d'une maison qui vaut 300 000 euros. Le premier expert dit "250 000". L'erreur est +50 000. Le deuxieme expert analyse pourquoi le premier s'est trompe et dit "l'erreur est de +40 000" (il corrige en partie). Le troisieme analyse l'erreur restante (+10 000) et dit "+8 000". Et ainsi de suite. A la fin, la somme de toutes les corrections donne une prediction tres proche de 300 000.
+    </div>
+
+    <h3>6.2 Les residus : la cle du Gradient Boosting</h3>
+    <div class="svg-container">
+        <svg width="760" height="360" viewBox="0 0 760 360">
+            <rect width="760" height="360" fill="#0f0f23"/>
+            <text x="380" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Gradient Boosting : Chaque Modele Corrige les Erreurs</text>
+
+            <!-- Target -->
+            <text x="30" y="60" fill="#aaa" font-size="11">Valeur reelle : 300 000 EUR</text>
+
+            <!-- Model 1 -->
+            <rect x="30" y="75" width="160" height="55" rx="8" fill="rgba(0,210,255,0.15)" stroke="#00d2ff"/>
+            <text x="110" y="95" text-anchor="middle" fill="#00d2ff" font-size="11" font-weight="bold">Modele 1</text>
+            <text x="110" y="115" text-anchor="middle" fill="white" font-size="11">Predit: 250 000</text>
+
+            <text x="220" y="105" fill="#ff4444" font-size="12">Residu = +50 000</text>
+
+            <!-- Arrow -->
+            <line x1="330" y1="102" x2="370" y2="102" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="368,97 378,102 368,107" fill="#ff6b35"/>
+
+            <!-- Model 2 -->
+            <rect x="380" y="75" width="160" height="55" rx="8" fill="rgba(255,107,53,0.15)" stroke="#ff6b35"/>
+            <text x="460" y="95" text-anchor="middle" fill="#ff6b35" font-size="11" font-weight="bold">Modele 2</text>
+            <text x="460" y="115" text-anchor="middle" fill="white" font-size="11">Predit le residu: +40 000</text>
+
+            <text x="570" y="105" fill="#ff4444" font-size="12">Residu = +10 000</text>
+
+            <!-- Model 3 -->
+            <rect x="30" y="155" width="160" height="55" rx="8" fill="rgba(168,85,247,0.15)" stroke="#a855f7"/>
+            <text x="110" y="175" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="bold">Modele 3</text>
+            <text x="110" y="195" text-anchor="middle" fill="white" font-size="11">Predit le residu: +8 000</text>
+
+            <text x="220" y="185" fill="#ff4444" font-size="12">Residu = +2 000</text>
+
+            <!-- Model 4 -->
+            <rect x="380" y="155" width="160" height="55" rx="8" fill="rgba(0,255,136,0.15)" stroke="#00ff88"/>
+            <text x="460" y="175" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">Modele 4</text>
+            <text x="460" y="195" text-anchor="middle" fill="white" font-size="11">Predit le residu: +1 800</text>
+
+            <text x="570" y="185" fill="#00ff88" font-size="12">Residu = +200 !</text>
+
+            <!-- Final sum -->
+            <rect x="100" y="240" width="560" height="100" rx="12" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="2"/>
+            <text x="380" y="265" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Prediction Finale = Somme de tous les modeles</text>
+            <text x="380" y="290" text-anchor="middle" fill="white" font-size="12">250 000 + 40 000 + 8 000 + 1 800 = 299 800</text>
+            <text x="380" y="315" text-anchor="middle" fill="#00ff88" font-size="12">Erreur finale : seulement 200 EUR sur 300 000 !</text>
+            <text x="380" y="335" text-anchor="middle" fill="#aaa" font-size="11">(soit 0.07% d'erreur apres seulement 4 modeles)</text>
+        </svg>
+    </div>
+
+    <h3>6.3 Learning Rate : le frein de securite</h3>
+    <p>Le <strong>learning rate</strong> (taux d'apprentissage) est un parametre crucial. Il controle combien chaque nouveau modele contribue a la prediction finale. Un learning rate plus petit = apprentissage plus lent mais plus precis.</p>
+
+    <table>
+        <tr><th>Learning Rate</th><th>Effet</th><th>Consequences</th></tr>
+        <tr>
+            <td><strong style="color:#ff4444">Trop grand (0.5-1.0)</strong></td>
+            <td>Chaque modele a une forte influence</td>
+            <td>Apprentissage rapide mais risque d'overfitting, instable</td>
+        </tr>
+        <tr>
+            <td><strong style="color:#00ff88">Bon (0.01-0.1)</strong></td>
+            <td>Chaque modele a une influence moderee</td>
+            <td>Apprentissage stable, bonne generalisation, necessite plus d'arbres</td>
+        </tr>
+        <tr>
+            <td><strong style="color:#ffaa00">Trop petit (0.001)</strong></td>
+            <td>Chaque modele a une influence minime</td>
+            <td>Tres lent, necessite enormement d'arbres, mais tres precis</td>
+        </tr>
+    </table>
+
+    <div class="tip">
+        Regle d'or : <strong>petit learning rate + beaucoup d'arbres</strong> donne generalement de meilleurs resultats que grand learning rate + peu d'arbres. C'est comme en cuisine : cuisson lente = meilleur resultat.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 7 -->
+    <!-- ============================================ -->
+    <h2 id="ch7">Chapitre 7 : XGBoost - Le Champion</h2>
+
+    <h3>7.1 Pourquoi XGBoost est-il si celebre ?</h3>
+    <p><strong>XGBoost</strong> (eXtreme Gradient Boosting), cree en 2014 par Tianqi Chen, est probablement l'algorithme de Machine Learning le plus celebre et le plus utilise dans les competitions. Il a domine les competitions Kaggle pendant des annees et reste aujourd'hui un incontournable.</p>
+
+    <div class="concept-box">
+        <h4>XGBoost en chiffres impressionnants :</h4>
+        <ul>
+            <li>A remporte <strong>plus de 50%</strong> des competitions Kaggle entre 2015 et 2018</li>
+            <li>Utilise par les plus grandes entreprises : Google, Amazon, Netflix, Airbnb</li>
+            <li>Des millions de telechargements chaque mois</li>
+            <li>Gere des milliards de donnees en quelques minutes</li>
+        </ul>
+    </div>
+
+    <h3>7.2 Qu'est-ce qui rend XGBoost special ?</h3>
+    <p>XGBoost est une version <strong>optimisee et amelioree</strong> du Gradient Boosting classique avec plusieurs innovations :</p>
+
+    <div class="svg-container">
+        <svg width="760" height="300" viewBox="0 0 760 300">
+            <rect width="760" height="300" fill="#0f0f23"/>
+            <text x="380" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Les 6 Innovations de XGBoost</text>
+
+            <!-- Innovation 1 -->
+            <rect x="20" y="50" width="230" height="100" rx="10" fill="rgba(255,107,53,0.1)" stroke="#ff6b35"/>
+            <text x="135" y="75" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">1. Regularisation</text>
+            <text x="135" y="95" text-anchor="middle" fill="#aaa" font-size="10">Penalise les arbres trop complexes</text>
+            <text x="135" y="115" text-anchor="middle" fill="#aaa" font-size="10">comme Ridge/Lasso pour les arbres</text>
+            <text x="135" y="135" text-anchor="middle" fill="#00ff88" font-size="10">= Moins de surapprentissage</text>
+
+            <!-- Innovation 2 -->
+            <rect x="265" y="50" width="230" height="100" rx="10" fill="rgba(0,210,255,0.1)" stroke="#00d2ff"/>
+            <text x="380" y="75" text-anchor="middle" fill="#00d2ff" font-size="12" font-weight="bold">2. Parallelisation</text>
+            <text x="380" y="95" text-anchor="middle" fill="#aaa" font-size="10">Construction des noeuds en</text>
+            <text x="380" y="115" text-anchor="middle" fill="#aaa" font-size="10">parallele sur plusieurs CPU</text>
+            <text x="380" y="135" text-anchor="middle" fill="#00ff88" font-size="10">= 10x plus rapide</text>
+
+            <!-- Innovation 3 -->
+            <rect x="510" y="50" width="230" height="100" rx="10" fill="rgba(0,255,136,0.1)" stroke="#00ff88"/>
+            <text x="625" y="75" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">3. Gestion des NaN</text>
+            <text x="625" y="95" text-anchor="middle" fill="#aaa" font-size="10">Gere les valeurs manquantes</text>
+            <text x="625" y="115" text-anchor="middle" fill="#aaa" font-size="10">nativement, sans pre-traitement</text>
+            <text x="625" y="135" text-anchor="middle" fill="#00ff88" font-size="10">= Moins de preparation</text>
+
+            <!-- Innovation 4 -->
+            <rect x="20" y="170" width="230" height="100" rx="10" fill="rgba(168,85,247,0.1)" stroke="#a855f7"/>
+            <text x="135" y="195" text-anchor="middle" fill="#a855f7" font-size="12" font-weight="bold">4. Elagage intelligent</text>
+            <text x="135" y="215" text-anchor="middle" fill="#aaa" font-size="10">Fait grandir l'arbre puis coupe les</text>
+            <text x="135" y="235" text-anchor="middle" fill="#aaa" font-size="10">branches inutiles (depth-first)</text>
+            <text x="135" y="255" text-anchor="middle" fill="#00ff88" font-size="10">= Arbres plus efficaces</text>
+
+            <!-- Innovation 5 -->
+            <rect x="265" y="170" width="230" height="100" rx="10" fill="rgba(255,170,0,0.1)" stroke="#ffaa00"/>
+            <text x="380" y="195" text-anchor="middle" fill="#ffaa00" font-size="12" font-weight="bold">5. Cache-aware</text>
+            <text x="380" y="215" text-anchor="middle" fill="#aaa" font-size="10">Optimise l'acces a la memoire</text>
+            <text x="380" y="235" text-anchor="middle" fill="#aaa" font-size="10">du processeur (cache CPU)</text>
+            <text x="380" y="255" text-anchor="middle" fill="#00ff88" font-size="10">= Performance hardware</text>
+
+            <!-- Innovation 6 -->
+            <rect x="510" y="170" width="230" height="100" rx="10" fill="rgba(255,68,68,0.1)" stroke="#ff4444"/>
+            <text x="625" y="195" text-anchor="middle" fill="#ff4444" font-size="12" font-weight="bold">6. Sous-echantillonnage</text>
+            <text x="625" y="215" text-anchor="middle" fill="#aaa" font-size="10">Comme la Random Forest : utilise</text>
+            <text x="625" y="235" text-anchor="middle" fill="#aaa" font-size="10">un sous-ensemble des donnees/features</text>
+            <text x="625" y="255" text-anchor="middle" fill="#00ff88" font-size="10">= Combine Bagging + Boosting !</text>
+        </svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 8 -->
+    <!-- ============================================ -->
+    <h2 id="ch8">Chapitre 8 : LightGBM - Le Rapide</h2>
+
+    <h3>8.1 Pourquoi LightGBM ?</h3>
+    <p><strong>LightGBM</strong> (Light Gradient Boosting Machine), cree par Microsoft en 2017, resout le principal probleme de XGBoost : la <strong>vitesse</strong> sur les tres grands jeux de donnees. Sur des donnees avec des millions de lignes, LightGBM peut etre <strong>20 fois plus rapide</strong> que XGBoost.</p>
+
+    <h3>8.2 Les 2 innovations cles</h3>
+    <div class="comparison-grid">
+        <div class="card" style="border-color:#00d2ff">
+            <h4 style="color:#00d2ff">GOSS (Gradient-based One-Side Sampling)</h4>
+            <p>Au lieu d'utiliser toutes les donnees, LightGBM garde tous les exemples avec des <strong>gros gradients</strong> (erreurs importantes) et echantillonne aleatoirement parmi ceux avec des <strong>petits gradients</strong> (bien predits).</p>
+            <p style="color:#00ff88; margin-top:10px;"><strong>Analogie :</strong> Un professeur qui passe plus de temps avec les eleves en difficulte et moins avec ceux qui comprennent deja.</p>
+        </div>
+        <div class="card" style="border-color:#ff6b35">
+            <h4 style="color:#ff6b35">EFB (Exclusive Feature Bundling)</h4>
+            <p>Regroupe les features qui ne sont <strong>presque jamais actives en meme temps</strong> en une seule feature. Cela reduit enormement le nombre de features a traiter.</p>
+            <p style="color:#00ff88; margin-top:10px;"><strong>Analogie :</strong> Au lieu de verifier 100 colonnes dont 80 sont vides, regrouper les colonnes similaires pour n'en verifier que 20.</p>
+        </div>
+    </div>
+
+    <h3>8.3 Leaf-wise vs Level-wise</h3>
+    <p>L'autre grande difference : la <strong>strategie de croissance des arbres</strong>.</p>
+
+    <div class="svg-container">
+        <svg width="750" height="280" viewBox="0 0 750 280">
+            <rect width="750" height="280" fill="#0f0f23"/>
+
+            <!-- XGBoost level-wise -->
+            <text x="185" y="25" text-anchor="middle" fill="#00d2ff" font-size="14" font-weight="bold">XGBoost : Level-wise</text>
+            <text x="185" y="45" text-anchor="middle" fill="#aaa" font-size="10">(croit niveau par niveau)</text>
+
+            <!-- Tree level-wise -->
+            <circle cx="185" cy="75" r="15" fill="rgba(0,210,255,0.3)" stroke="#00d2ff" stroke-width="2"/>
+            <line x1="170" y1="90" x2="120" y2="120" stroke="#00d2ff" stroke-width="2"/>
+            <line x1="200" y1="90" x2="250" y2="120" stroke="#00d2ff" stroke-width="2"/>
+            <circle cx="120" cy="135" r="15" fill="rgba(0,210,255,0.3)" stroke="#00d2ff" stroke-width="2"/>
+            <circle cx="250" cy="135" r="15" fill="rgba(0,210,255,0.3)" stroke="#00d2ff" stroke-width="2"/>
+            <line x1="105" y1="150" x2="75" y2="180" stroke="#00d2ff" stroke-width="2"/>
+            <line x1="135" y1="150" x2="165" y2="180" stroke="#00d2ff" stroke-width="2"/>
+            <line x1="235" y1="150" x2="205" y2="180" stroke="#00d2ff" stroke-width="2"/>
+            <line x1="265" y1="150" x2="295" y2="180" stroke="#00d2ff" stroke-width="2"/>
+            <circle cx="75" cy="195" r="12" fill="rgba(0,210,255,0.3)" stroke="#00d2ff"/>
+            <circle cx="165" cy="195" r="12" fill="rgba(0,210,255,0.3)" stroke="#00d2ff"/>
+            <circle cx="205" cy="195" r="12" fill="rgba(0,210,255,0.3)" stroke="#00d2ff"/>
+            <circle cx="295" cy="195" r="12" fill="rgba(0,210,255,0.3)" stroke="#00d2ff"/>
+
+            <!-- Labels level-wise -->
+            <text x="340" y="80" fill="#aaa" font-size="10">Niv 1</text>
+            <text x="340" y="140" fill="#aaa" font-size="10">Niv 2</text>
+            <text x="340" y="200" fill="#aaa" font-size="10">Niv 3</text>
+            <line x1="30" y1="105" x2="330" y2="105" stroke="#333" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="30" y1="165" x2="330" y2="165" stroke="#333" stroke-width="1" stroke-dasharray="3,3"/>
+
+            <!-- Separator -->
+            <line x1="375" y1="20" x2="375" y2="260" stroke="#555" stroke-width="1" stroke-dasharray="5,5"/>
+
+            <!-- LightGBM leaf-wise -->
+            <text x="565" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">LightGBM : Leaf-wise</text>
+            <text x="565" y="45" text-anchor="middle" fill="#aaa" font-size="10">(croit par la feuille avec le plus de gain)</text>
+
+            <circle cx="565" cy="75" r="15" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="550" y1="90" x2="490" y2="120" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="580" y1="90" x2="640" y2="120" stroke="#ff6b35" stroke-width="2"/>
+            <circle cx="490" cy="135" r="15" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <circle cx="640" cy="135" r="15" fill="rgba(255,107,53,0.5)" stroke="#ff6b35" stroke-width="2"/>
+            <!-- Only left grows deeper -->
+            <line x1="625" y1="150" x2="595" y2="180" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="655" y1="150" x2="685" y2="180" stroke="#ff6b35" stroke-width="2"/>
+            <circle cx="595" cy="195" r="12" fill="rgba(255,107,53,0.5)" stroke="#ff6b35"/>
+            <circle cx="685" cy="195" r="12" fill="rgba(255,107,53,0.3)" stroke="#ff6b35"/>
+            <!-- Even deeper on one branch -->
+            <line x1="583" y1="207" x2="560" y2="230" stroke="#ff6b35" stroke-width="1.5"/>
+            <line x1="607" y1="207" x2="630" y2="230" stroke="#ff6b35" stroke-width="1.5"/>
+            <circle cx="560" cy="240" r="10" fill="rgba(255,107,53,0.3)" stroke="#ff6b35"/>
+            <circle cx="630" cy="240" r="10" fill="rgba(255,107,53,0.3)" stroke="#ff6b35"/>
+
+            <!-- Arrow showing max gain -->
+            <text x="700" y="140" fill="#ffaa00" font-size="9">Max gain</text>
+            <text x="700" y="155" fill="#ffaa00" font-size="9">ici !</text>
+
+            <!-- Bottom comparison -->
+            <text x="185" y="240" text-anchor="middle" fill="#00d2ff" font-size="11">Arbre equilibre, plus robuste</text>
+            <text x="185" y="255" text-anchor="middle" fill="#aaa" font-size="10">mais plus lent</text>
+            <text x="565" y="265" text-anchor="middle" fill="#ff6b35" font-size="11">Arbre asymetrique, plus precis</text>
+            <text x="565" y="280" text-anchor="middle" fill="#aaa" font-size="10">et beaucoup plus rapide</text>
+        </svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 9 -->
+    <!-- ============================================ -->
+    <h2 id="ch9">Chapitre 9 : CatBoost - Le Specialiste des Categories</h2>
+
+    <h3>9.1 La force de CatBoost</h3>
+    <p><strong>CatBoost</strong> (Categorical Boosting), cree par Yandex en 2017, est specialement concu pour gerer les <strong>features categoriques</strong> (couleur, ville, type...) sans avoir besoin de les encoder manuellement.</p>
+
+    <div class="concept-box purple">
+        <h4>Les 3 innovations de CatBoost :</h4>
+        <table>
+            <tr><th>Innovation</th><th>Description</th><th>Benefice</th></tr>
+            <tr>
+                <td><strong style="color:#a855f7">Ordered Target Encoding</strong></td>
+                <td>Encode les categories en utilisant les informations des exemples precedents uniquement, evitant la fuite de donnees</td>
+                <td>Pas besoin de one-hot encoding ou label encoding</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#a855f7">Ordered Boosting</strong></td>
+                <td>Utilise un ordre aleatoire des donnees pour eviter le biais de prediction</td>
+                <td>Predictions plus justes, moins d'overfitting</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#a855f7">Symmetric Trees</strong></td>
+                <td>Construit des arbres parfaitement symetriques (meme split a chaque niveau)</td>
+                <td>Prediction ultra-rapide et cache-friendly</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="analogy">
+        Si XGBoost est un chirurgien precis et LightGBM un sprinter rapide, CatBoost est un linguiste polyglotte : il comprend nativement le "langage" des categories sans qu'on ait besoin de les traduire.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 10 -->
+    <!-- ============================================ -->
+    <h2 id="ch10">Chapitre 10 : Bagging vs Boosting - Le Grand Duel</h2>
+
+    <div class="svg-container">
+        <svg width="780" height="350" viewBox="0 0 780 350">
+            <rect width="780" height="350" fill="#0f0f23"/>
+            <text x="390" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Bagging vs Boosting : Comparaison Visuelle</text>
+
+            <!-- Bagging side -->
+            <rect x="20" y="50" width="360" height="280" rx="15" fill="rgba(0,210,255,0.05)" stroke="#00d2ff" stroke-width="2"/>
+            <text x="200" y="80" text-anchor="middle" fill="#00d2ff" font-size="16" font-weight="bold">BAGGING</text>
+
+            <!-- Parallel models -->
+            <rect x="40" y="95" width="70" height="35" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="75" y="117" text-anchor="middle" fill="#00d2ff" font-size="10">M1</text>
+            <rect x="125" y="95" width="70" height="35" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="160" y="117" text-anchor="middle" fill="#00d2ff" font-size="10">M2</text>
+            <rect x="210" y="95" width="70" height="35" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="245" y="117" text-anchor="middle" fill="#00d2ff" font-size="10">M3</text>
+            <rect x="295" y="95" width="70" height="35" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="330" y="117" text-anchor="middle" fill="#00d2ff" font-size="10">MN</text>
+
+            <text x="200" y="155" text-anchor="middle" fill="white" font-size="11">Entraines en PARALLELE</text>
+            <text x="200" y="175" text-anchor="middle" fill="white" font-size="11">sur des donnees differentes</text>
+
+            <text x="60" y="210" fill="#aaa" font-size="10">Reduit : VARIANCE</text>
+            <text x="60" y="230" fill="#aaa" font-size="10">Type modeles : Forts</text>
+            <text x="60" y="250" fill="#aaa" font-size="10">Sensibilite bruit : Faible</text>
+            <text x="60" y="270" fill="#aaa" font-size="10">Risque overfitting : Faible</text>
+            <text x="60" y="290" fill="#aaa" font-size="10">Parallelisable : OUI</text>
+            <text x="60" y="310" fill="#00d2ff" font-size="11" font-weight="bold">Ex: Random Forest</text>
+
+            <!-- Boosting side -->
+            <rect x="400" y="50" width="360" height="280" rx="15" fill="rgba(255,107,53,0.05)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="580" y="80" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">BOOSTING</text>
+
+            <!-- Sequential models -->
+            <rect x="420" y="95" width="70" height="35" rx="5" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="455" y="117" text-anchor="middle" fill="#ff6b35" font-size="10">M1</text>
+            <text x="502" y="115" fill="#ff6b35" font-size="14">&#8594;</text>
+            <rect x="515" y="95" width="70" height="35" rx="5" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="550" y="117" text-anchor="middle" fill="#ff6b35" font-size="10">M2</text>
+            <text x="597" y="115" fill="#ff6b35" font-size="14">&#8594;</text>
+            <rect x="610" y="95" width="70" height="35" rx="5" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="645" y="117" text-anchor="middle" fill="#ff6b35" font-size="10">M3</text>
+            <text x="695" y="117" fill="#ff6b35" font-size="12">...</text>
+
+            <text x="580" y="155" text-anchor="middle" fill="white" font-size="11">Entraines en SERIE</text>
+            <text x="580" y="175" text-anchor="middle" fill="white" font-size="11">chacun corrige le precedent</text>
+
+            <text x="440" y="210" fill="#aaa" font-size="10">Reduit : BIAIS</text>
+            <text x="440" y="230" fill="#aaa" font-size="10">Type modeles : Faibles</text>
+            <text x="440" y="250" fill="#aaa" font-size="10">Sensibilite bruit : Forte</text>
+            <text x="440" y="270" fill="#aaa" font-size="10">Risque overfitting : Modere</text>
+            <text x="440" y="290" fill="#aaa" font-size="10">Parallelisable : NON</text>
+            <text x="440" y="310" fill="#ff6b35" font-size="11" font-weight="bold">Ex: XGBoost, LightGBM</text>
+        </svg>
+    </div>
+
+    <div class="tip">
+        En pratique : commencez par une <strong>Random Forest</strong> pour avoir une baseline solide, puis essayez <strong>XGBoost ou LightGBM</strong> pour ameliorer la precision. Le Boosting est generalement plus precis mais plus delicat a parametrer.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 11 -->
+    <!-- ============================================ -->
+    <h2 id="ch11">Chapitre 11 : Stacking - L'Empilement</h2>
+
+    <h3>11.1 Le concept</h3>
+    <p>Le <strong>Stacking</strong> (ou Stacked Generalization) est la methode d'ensemble la plus flexible et souvent la plus puissante. L'idee : utiliser les <strong>predictions de plusieurs modeles differents</strong> comme features d'entree pour un <strong>meta-modele</strong> qui apprend a combiner ces predictions de maniere optimale.</p>
+
+    <div class="analogy">
+        Imaginez un conseil medical. Un cardiologue, un radiologue et un generaliste examinent chacun le patient et donnent leur diagnostic. Puis un medecin-chef (le meta-modele) recoit ces 3 diagnostics et prend la decision finale. Le medecin-chef a appris a savoir quand faire confiance au cardiologue plutot qu'au radiologue, etc.
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="320" viewBox="0 0 700 320">
+            <rect width="700" height="320" fill="#0f0f23"/>
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Stacking : 2 Niveaux d'Apprentissage</text>
+
+            <!-- Input -->
+            <rect x="270" y="40" width="160" height="35" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="350" y="63" text-anchor="middle" fill="#ff6b35" font-size="12">Donnees d'entree (X)</text>
+
+            <!-- Arrows to level 0 -->
+            <line x1="280" y1="75" x2="110" y2="110" stroke="#aaa" stroke-width="1"/>
+            <line x1="350" y1="75" x2="350" y2="110" stroke="#aaa" stroke-width="1"/>
+            <line x1="420" y1="75" x2="590" y2="110" stroke="#aaa" stroke-width="1"/>
+
+            <!-- Level 0 label -->
+            <text x="30" y="130" fill="#aaa" font-size="10">Niveau 0</text>
+
+            <!-- Level 0 models -->
+            <rect x="50" y="110" width="120" height="50" rx="8" fill="rgba(0,210,255,0.15)" stroke="#00d2ff" stroke-width="2"/>
+            <text x="110" y="132" text-anchor="middle" fill="#00d2ff" font-size="11" font-weight="bold">Random Forest</text>
+            <text x="110" y="150" text-anchor="middle" fill="#aaa" font-size="10">Pred: 0.82</text>
+
+            <rect x="290" y="110" width="120" height="50" rx="8" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="2"/>
+            <text x="350" y="132" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">XGBoost</text>
+            <text x="350" y="150" text-anchor="middle" fill="#aaa" font-size="10">Pred: 0.91</text>
+
+            <rect x="530" y="110" width="120" height="50" rx="8" fill="rgba(168,85,247,0.15)" stroke="#a855f7" stroke-width="2"/>
+            <text x="590" y="132" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="bold">KNN</text>
+            <text x="590" y="150" text-anchor="middle" fill="#aaa" font-size="10">Pred: 0.75</text>
+
+            <!-- Arrows to meta input -->
+            <line x1="110" y1="160" x2="350" y2="210" stroke="#ffaa00" stroke-width="1.5"/>
+            <line x1="350" y1="160" x2="350" y2="210" stroke="#ffaa00" stroke-width="1.5"/>
+            <line x1="590" y1="160" x2="350" y2="210" stroke="#ffaa00" stroke-width="1.5"/>
+
+            <!-- Level 1 label -->
+            <text x="30" y="240" fill="#aaa" font-size="10">Niveau 1</text>
+
+            <!-- New features -->
+            <rect x="210" y="210" width="280" height="35" rx="6" fill="rgba(255,170,0,0.15)" stroke="#ffaa00"/>
+            <text x="350" y="232" text-anchor="middle" fill="#ffaa00" font-size="11">Nouvelles features : [0.82, 0.91, 0.75]</text>
+
+            <!-- Arrow to meta model -->
+            <line x1="350" y1="245" x2="350" y2="265" stroke="#ffaa00" stroke-width="2"/>
+
+            <!-- Meta model -->
+            <rect x="240" y="265" width="220" height="45" rx="10" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="350" y="285" text-anchor="middle" fill="white" font-size="12" font-weight="bold">META-MODELE</text>
+            <text x="350" y="303" text-anchor="middle" fill="#00ff88" font-size="11">Prediction finale : 0.88</text>
+        </svg>
+    </div>
+
+    <h3>11.2 Regles d'or du Stacking</h3>
+    <div class="concept-box green">
+        <ul>
+            <li><strong>Diversite des modeles</strong> : Les modeles de niveau 0 doivent etre aussi <strong>differents</strong> que possible (ex: un arbre, un SVM, un KNN, une regression)</li>
+            <li><strong>Meta-modele simple</strong> : Le meta-modele de niveau 1 doit etre <strong>simple</strong> (souvent une regression logistique) pour eviter l'overfitting</li>
+            <li><strong>Validation croisee</strong> : Les predictions du niveau 0 doivent etre generees par <strong>validation croisee</strong> pour eviter la fuite de donnees</li>
+        </ul>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 12 -->
+    <!-- ============================================ -->
+    <h2 id="ch12">Chapitre 12 : Voting - Le Vote</h2>
+
+    <h3>12.1 La methode la plus simple</h3>
+    <p>Le <strong>Voting</strong> est la methode d'ensemble la plus simple a comprendre. Comme dans une election, chaque modele "vote" pour une prediction, et on prend la decision majoritaire.</p>
+
+    <h3>12.2 Deux types de vote</h3>
+    <div class="comparison-grid">
+        <div class="card" style="border-color:#00d2ff">
+            <h4 style="color:#00d2ff">Hard Voting (Vote dur)</h4>
+            <p>Chaque modele vote pour une classe. La classe avec le plus de votes gagne.</p>
+            <p style="margin-top:10px;"><strong>Exemple :</strong></p>
+            <ul>
+                <li>Modele 1 vote : Chat</li>
+                <li>Modele 2 vote : Chien</li>
+                <li>Modele 3 vote : Chat</li>
+            </ul>
+            <p style="color:#00ff88;"><strong>Resultat : Chat (2 vs 1)</strong></p>
+        </div>
+        <div class="card" style="border-color:#ff6b35">
+            <h4 style="color:#ff6b35">Soft Voting (Vote doux)</h4>
+            <p>Chaque modele donne une <strong>probabilite</strong>. On fait la <strong>moyenne des probabilites</strong> et on choisit la classe avec la plus haute moyenne.</p>
+            <p style="margin-top:10px;"><strong>Exemple :</strong></p>
+            <ul>
+                <li>M1 : Chat 90%, Chien 10%</li>
+                <li>M2 : Chat 30%, Chien 70%</li>
+                <li>M3 : Chat 80%, Chien 20%</li>
+            </ul>
+            <p style="color:#00ff88;"><strong>Moyenne : Chat 66.7% = Chat</strong></p>
+        </div>
+    </div>
+
+    <div class="tip">
+        Le <strong>Soft Voting</strong> est generalement meilleur car il prend en compte le <strong>degre de confiance</strong> de chaque modele, pas seulement sa decision finale.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 13 -->
+    <!-- ============================================ -->
+    <h2 id="ch13">Chapitre 13 : L'Importance des Features</h2>
+
+    <h3>13.1 Comprendre quelles features comptent</h3>
+    <p>Un des grands avantages des methodes d'ensemble basees sur les arbres est de pouvoir mesurer l'<strong>importance de chaque feature</strong>. Cela repond a la question : "Quelles informations sont les plus utiles pour faire des predictions ?"</p>
+
+    <h3>13.2 Comment ca marche ?</h3>
+    <p>Pour chaque feature, on mesure combien elle contribue a reduire l'erreur quand elle est utilisee pour faire un split dans un arbre. Plus une feature est utilisee dans des splits importants, plus son importance est elevee.</p>
+
+    <div class="svg-container">
+        <svg width="650" height="280" viewBox="0 0 650 280">
+            <rect width="650" height="280" fill="#0f0f23"/>
+            <text x="325" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Importance des Features - Prediction du Prix d'une Maison</text>
+
+            <!-- Bars -->
+            <text x="140" y="65" text-anchor="end" fill="#aaa" font-size="11">Surface (m2)</text>
+            <rect x="150" y="50" width="400" height="25" rx="4" fill="#ff6b35"/>
+            <text x="560" y="67" fill="white" font-size="11">100%</text>
+
+            <text x="140" y="105" text-anchor="end" fill="#aaa" font-size="11">Quartier</text>
+            <rect x="150" y="90" width="320" height="25" rx="4" fill="#ff8c42"/>
+            <text x="480" y="107" fill="white" font-size="11">80%</text>
+
+            <text x="140" y="145" text-anchor="end" fill="#aaa" font-size="11">Nb Chambres</text>
+            <rect x="150" y="130" width="240" height="25" rx="4" fill="#ffaa70"/>
+            <text x="400" y="147" fill="white" font-size="11">60%</text>
+
+            <text x="140" y="185" text-anchor="end" fill="#aaa" font-size="11">Annee construction</text>
+            <rect x="150" y="170" width="140" height="25" rx="4" fill="#cc5500"/>
+            <text x="300" y="187" fill="white" font-size="11">35%</text>
+
+            <text x="140" y="225" text-anchor="end" fill="#aaa" font-size="11">Parking</text>
+            <rect x="150" y="210" width="60" height="25" rx="4" fill="#993300"/>
+            <text x="220" y="227" fill="white" font-size="11">15%</text>
+
+            <text x="140" y="265" text-anchor="end" fill="#aaa" font-size="11">Couleur facade</text>
+            <rect x="150" y="250" width="8" height="25" rx="2" fill="#662200"/>
+            <text x="170" y="267" fill="#aaa" font-size="11">2%</text>
+        </svg>
+    </div>
+
+    <div class="concept-box">
+        <h4>A quoi sert l'importance des features ?</h4>
+        <ul>
+            <li><strong>Comprendre le modele</strong> : Savoir quels facteurs influencent le plus les predictions</li>
+            <li><strong>Selection de features</strong> : Eliminer les features inutiles (ex: couleur de facade) pour simplifier le modele</li>
+            <li><strong>Communication</strong> : Expliquer aux non-techniques pourquoi le modele fait telle prediction</li>
+            <li><strong>Detection d'anomalies</strong> : Si une feature inattendue est tres importante, il y a peut-etre une fuite de donnees</li>
+        </ul>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 14 -->
+    <!-- ============================================ -->
+    <h2 id="ch14">Chapitre 14 : Les Hyperparametres Cles</h2>
+
+    <h3>14.1 Les parametres a regler</h3>
+    <p>Les methodes d'ensemble ont plusieurs hyperparametres importants qui influencent leur performance. Voici les principaux a connaitre :</p>
+
+    <table>
+        <tr><th>Hyperparametre</th><th>Description</th><th>Valeur typique</th><th>Effet si trop grand</th><th>Effet si trop petit</th></tr>
+        <tr>
+            <td><strong style="color:#ff6b35">n_estimators</strong></td>
+            <td>Nombre d'arbres dans la foret/ensemble</td>
+            <td>100 - 1000</td>
+            <td>Plus lent, pas de surapprentissage (Bagging) ou surapprentissage (Boosting)</td>
+            <td>Sous-apprentissage</td>
+        </tr>
+        <tr>
+            <td><strong style="color:#ff6b35">max_depth</strong></td>
+            <td>Profondeur maximale de chaque arbre</td>
+            <td>3-10 (Boosting), None (RF)</td>
+            <td>Surapprentissage</td>
+            <td>Sous-apprentissage</td>
+        </tr>
+        <tr>
+            <td><strong style="color:#ff6b35">learning_rate</strong></td>
+            <td>Taux d'apprentissage (Boosting uniquement)</td>
+            <td>0.01 - 0.3</td>
+            <td>Apprentissage instable</td>
+            <td>Tres lent, besoin de plus d'arbres</td>
+        </tr>
+        <tr>
+            <td><strong style="color:#ff6b35">min_samples_split</strong></td>
+            <td>Nombre minimum d'exemples pour diviser un noeud</td>
+            <td>2 - 20</td>
+            <td>Sous-apprentissage</td>
+            <td>Surapprentissage</td>
+        </tr>
+        <tr>
+            <td><strong style="color:#ff6b35">max_features</strong></td>
+            <td>Nombre de features a considerer par split</td>
+            <td>sqrt(n) ou log2(n)</td>
+            <td>Arbres trop similaires</td>
+            <td>Arbres trop aleatoires</td>
+        </tr>
+        <tr>
+            <td><strong style="color:#ff6b35">subsample</strong></td>
+            <td>Fraction des donnees utilisee par arbre (Boosting)</td>
+            <td>0.7 - 1.0</td>
+            <td>-</td>
+            <td>Trop de randomisation</td>
+        </tr>
+    </table>
+
+    <div class="analogy">
+        Regler les hyperparametres, c'est comme regler l'equalizer d'un systeme audio. Chaque curseur (basses, mediums, aigus) affecte le son global. Il faut trouver le bon equilibre pour que la musique sonne bien. Trop de basses = son brouillon (overfitting). Pas assez = son plat (underfitting).
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 15 -->
+    <!-- ============================================ -->
+    <h2 id="ch15">Chapitre 15 : Quel Algorithme Choisir ?</h2>
+
+    <h3>15.1 Guide de decision</h3>
+
+    <div class="svg-container">
+        <svg width="750" height="380" viewBox="0 0 750 380">
+            <rect width="750" height="380" fill="#0f0f23"/>
+            <text x="375" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Arbre de Decision : Quel Algorithme d'Ensemble Choisir ?</text>
+
+            <!-- Root question -->
+            <rect x="250" y="40" width="250" height="40" rx="10" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="375" y="65" text-anchor="middle" fill="white" font-size="11">Votre priorite principale ?</text>
+
+            <!-- Branch 1: Speed -->
+            <line x1="300" y1="80" x2="120" y2="120" stroke="#00d2ff" stroke-width="2"/>
+            <text x="180" y="100" fill="#00d2ff" font-size="10">Rapidite</text>
+            <rect x="30" y="120" width="180" height="40" rx="8" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="120" y="138" text-anchor="middle" fill="#00d2ff" font-size="11" font-weight="bold">LightGBM</text>
+            <text x="120" y="153" text-anchor="middle" fill="#aaa" font-size="9">Le plus rapide sur gros data</text>
+
+            <!-- Branch 2: Precision -->
+            <line x1="375" y1="80" x2="375" y2="120" stroke="#ff6b35" stroke-width="2"/>
+            <text x="395" y="100" fill="#ff6b35" font-size="10">Precision max</text>
+            <rect x="280" y="120" width="190" height="40" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="375" y="138" text-anchor="middle" fill="#ff6b35" font-size="11" font-weight="bold">XGBoost</text>
+            <text x="375" y="153" text-anchor="middle" fill="#aaa" font-size="9">Le champion des competitions</text>
+
+            <!-- Branch 3: Categories -->
+            <line x1="450" y1="80" x2="630" y2="120" stroke="#a855f7" stroke-width="2"/>
+            <text x="560" y="100" fill="#a855f7" font-size="10">Beaucoup de categories</text>
+            <rect x="540" y="120" width="180" height="40" rx="8" fill="rgba(168,85,247,0.2)" stroke="#a855f7"/>
+            <text x="630" y="138" text-anchor="middle" fill="#a855f7" font-size="11" font-weight="bold">CatBoost</text>
+            <text x="630" y="153" text-anchor="middle" fill="#aaa" font-size="9">Le specialiste categorique</text>
+
+            <!-- Second level questions -->
+            <rect x="100" y="200" width="250" height="35" rx="8" fill="rgba(255,170,0,0.2)" stroke="#ffaa00"/>
+            <text x="225" y="222" text-anchor="middle" fill="#ffaa00" font-size="11">Besoin de robustesse et simplicite ?</text>
+
+            <line x1="225" y1="235" x2="120" y2="270" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="150" y="255" fill="#00ff88" font-size="10">OUI</text>
+            <rect x="30" y="270" width="180" height="40" rx="8" fill="rgba(0,255,136,0.2)" stroke="#00ff88"/>
+            <text x="120" y="288" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">Random Forest</text>
+            <text x="120" y="303" text-anchor="middle" fill="#aaa" font-size="9">Simple, robuste, peu de tuning</text>
+
+            <line x1="225" y1="235" x2="330" y2="270" stroke="#ffaa00" stroke-width="1.5"/>
+            <text x="300" y="255" fill="#ffaa00" font-size="10">Performance max</text>
+            <rect x="240" y="270" width="180" height="40" rx="8" fill="rgba(255,170,0,0.2)" stroke="#ffaa00"/>
+            <text x="330" y="288" text-anchor="middle" fill="#ffaa00" font-size="11" font-weight="bold">Stacking</text>
+            <text x="330" y="303" text-anchor="middle" fill="#aaa" font-size="9">Combine tous les modeles</text>
+
+            <!-- Bottom summary -->
+            <rect x="100" y="335" width="550" height="35" rx="8" fill="rgba(0,255,136,0.1)" stroke="#00ff88"/>
+            <text x="375" y="357" text-anchor="middle" fill="#00ff88" font-size="12">En general : Random Forest d'abord, puis XGBoost/LightGBM pour ameliorer</text>
+        </svg>
+    </div>
+
+    <h3>15.2 Tableau comparatif complet</h3>
+    <table>
+        <tr>
+            <th>Critere</th>
+            <th style="color:#00d2ff">Random Forest</th>
+            <th style="color:#ff6b35">XGBoost</th>
+            <th style="color:#ffaa00">LightGBM</th>
+            <th style="color:#a855f7">CatBoost</th>
+        </tr>
+        <tr>
+            <td>Vitesse d'entrainement</td>
+            <td>Rapide</td>
+            <td>Moyen</td>
+            <td><strong style="color:#00ff88">Tres rapide</strong></td>
+            <td>Moyen</td>
+        </tr>
+        <tr>
+            <td>Precision</td>
+            <td>Bonne</td>
+            <td><strong style="color:#00ff88">Excellente</strong></td>
+            <td><strong style="color:#00ff88">Excellente</strong></td>
+            <td><strong style="color:#00ff88">Excellente</strong></td>
+        </tr>
+        <tr>
+            <td>Facilite de tuning</td>
+            <td><strong style="color:#00ff88">Facile</strong></td>
+            <td>Difficile</td>
+            <td>Difficile</td>
+            <td>Moyen</td>
+        </tr>
+        <tr>
+            <td>Risque d'overfitting</td>
+            <td><strong style="color:#00ff88">Faible</strong></td>
+            <td>Modere</td>
+            <td>Modere</td>
+            <td>Faible</td>
+        </tr>
+        <tr>
+            <td>Donnees categoriques</td>
+            <td>Encoding requis</td>
+            <td>Encoding requis</td>
+            <td>Encoding requis</td>
+            <td><strong style="color:#00ff88">Natif !</strong></td>
+        </tr>
+        <tr>
+            <td>Gros jeux de donnees</td>
+            <td>OK</td>
+            <td>OK</td>
+            <td><strong style="color:#00ff88">Excellent</strong></td>
+            <td>OK</td>
+        </tr>
+        <tr>
+            <td>Valeurs manquantes</td>
+            <td>Non</td>
+            <td><strong style="color:#00ff88">Oui</strong></td>
+            <td><strong style="color:#00ff88">Oui</strong></td>
+            <td><strong style="color:#00ff88">Oui</strong></td>
+        </tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- CHAPITRE 16 -->
+    <!-- ============================================ -->
+    <h2 id="ch16">Chapitre 16 : Resume et Synthese</h2>
+
+    <div class="concept-box">
+        <h3 style="color:#ff6b35; margin-top:0;">Ce qu'il faut retenir</h3>
+        <table>
+            <tr><th>Concept</th><th>Explication en 1 phrase</th></tr>
+            <tr><td><strong>Methode d'ensemble</strong></td><td>Combiner plusieurs modeles pour en faire un meilleur</td></tr>
+            <tr><td><strong>Bagging</strong></td><td>Entrainer des modeles en parallele sur des echantillons differents et voter</td></tr>
+            <tr><td><strong>Random Forest</strong></td><td>Bagging + arbres de decision + randomisation des features</td></tr>
+            <tr><td><strong>Boosting</strong></td><td>Entrainer des modeles en serie, chacun corrigeant les erreurs du precedent</td></tr>
+            <tr><td><strong>AdaBoost</strong></td><td>Le pionnier du boosting : augmente le poids des exemples mal classes</td></tr>
+            <tr><td><strong>Gradient Boosting</strong></td><td>Chaque nouveau modele predit les residus (erreurs) du precedent</td></tr>
+            <tr><td><strong>XGBoost</strong></td><td>Gradient Boosting optimise avec regularisation, parallelisation et elagage</td></tr>
+            <tr><td><strong>LightGBM</strong></td><td>Le plus rapide grace a leaf-wise growth et GOSS/EFB</td></tr>
+            <tr><td><strong>CatBoost</strong></td><td>Le specialiste des donnees categoriques avec Ordered Target Encoding</td></tr>
+            <tr><td><strong>Stacking</strong></td><td>Empiler des modeles differents et utiliser un meta-modele pour combiner</td></tr>
+            <tr><td><strong>Voting</strong></td><td>Chaque modele vote et la majorite l'emporte</td></tr>
+            <tr><td><strong>Feature Importance</strong></td><td>Mesurer quelles variables contribuent le plus aux predictions</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box green" style="margin-top:30px;">
+        <h3 style="color:#00ff88; margin-top:0;">Conseil Final du Professeur</h3>
+        <p>Les methodes d'ensemble sont les algorithmes les plus puissants du Machine Learning classique (hors deep learning). Dans 90% des cas pratiques avec des donnees tabulaires (tableaux), <strong>XGBoost ou LightGBM</strong> donneront les meilleurs resultats. Commencez toujours par une <strong>Random Forest</strong> comme baseline, puis ameliorez avec du Boosting.</p>
+        <p style="margin-top:10px;"><strong>Prochain chapitre :</strong> L'Apprentissage Non Supervise - quand les donnees n'ont pas de labels et qu'il faut decouvrir des patterns caches (clustering, reduction de dimensions...).</p>
+    </div>
+
+    <!-- Navigation -->
+    <div style="display:flex; justify-content:space-between; margin-top:40px; padding:20px 0; border-top:1px solid #333;">
+        <a href="ml_05_classification.html" style="color:#ff6b35; text-decoration:none;">&larr; 05 - Classification</a>
+        <a href="ml_07_non_supervise.html" style="color:#ff6b35; text-decoration:none;">07 - Non Supervise &rarr;</a>
+    </div>
+
+</div>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

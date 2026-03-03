@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formation IA Complete - Machine Learning & IA Generative</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f0f23;
+            color: #e0e0e0;
+            line-height: 1.8;
+            min-height: 100vh;
+        }
+
+        /* ===== HEADER ===== */
+        .hero {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+            text-align: center;
+            padding: 60px 20px 40px;
+            border-bottom: 3px solid #ff6b35;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,107,53,0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(86,156,214,0.08) 0%, transparent 50%);
+        }
+        .hero h1 {
+            font-size: 2.8rem;
+            color: #ff6b35;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .hero .tagline {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat .number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ff6b35;
+            display: block;
+        }
+        .stat .label {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        /* ===== NAV TABS ===== */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: #0a0a1a;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 10px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #aaa;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 1px solid #333;
+        }
+        .nav-tab:hover {
+            color: #ff6b35;
+            border-color: #ff6b35;
+            background: rgba(255,107,53,0.08);
+        }
+        .nav-tab.ml { border-left: 3px solid #00ff88; }
+        .nav-tab.llm { border-left: 3px solid #569cd6; }
+        .nav-tab.lc { border-left: 3px solid #ff6b35; }
+        .nav-tab.lg { border-left: 3px solid #c678dd; }
+        .nav-tab.rag { border-left: 3px solid #e5c07b; }
+
+        /* ===== MAIN ===== */
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* ===== SECTION ===== */
+        .section {
+            margin-bottom: 60px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #ff6b35;
+        }
+        .section-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .section-icon.ml { background: rgba(0,255,136,0.15); border: 1px solid #00ff88; }
+        .section-icon.llm { background: rgba(86,156,214,0.15); border: 1px solid #569cd6; }
+        .section-icon.lc { background: rgba(255,107,53,0.15); border: 1px solid #ff6b35; }
+        .section-icon.lg { background: rgba(198,120,221,0.15); border: 1px solid #c678dd; }
+        .section-icon.rag { background: rgba(229,192,123,0.15); border: 1px solid #e5c07b; }
+        .section-title {
+            font-size: 1.8rem;
+            color: #ff6b35;
+        }
+        .section-desc {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        /* ===== SUBSECTION ===== */
+        .subsection-label {
+            font-size: 1.1rem;
+            color: #ff8c42;
+            margin: 25px 0 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .subsection-label::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .subsection-label.cours::before { background: #569cd6; }
+        .subsection-label.td::before { background: #00ff88; }
+
+        /* ===== CARDS GRID ===== */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .card {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            text-decoration: none;
+            color: #e0e0e0;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .card:hover {
+            border-color: #ff6b35;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255,107,53,0.15);
+        }
+        .card .card-number {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .card .card-title {
+            font-size: 1.05rem;
+            color: #fff;
+            font-weight: 600;
+        }
+        .card .card-desc {
+            font-size: 0.85rem;
+            color: #888;
+            line-height: 1.5;
+        }
+        .card.cours-card { border-left: 3px solid #569cd6; }
+        .card.td-card { border-left: 3px solid #00ff88; }
+        .card.td-card .card-number { color: #00ff88; }
+        .card.cours-card .card-number { color: #569cd6; }
+
+        /* ===== PARCOURS ===== */
+        .parcours-box {
+            background: rgba(255,107,53,0.05);
+            border: 2px solid #ff6b35;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 40px 0;
+            text-align: center;
+        }
+        .parcours-box h2 {
+            color: #ff6b35;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .parcours-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        .parcours-step {
+            background: #1a1a2e;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .parcours-step.active { border-color: #ff6b35; color: #ff6b35; }
+        .parcours-arrow { color: #ff6b35; font-size: 1.3rem; }
+
+        /* ===== HOSTING SECTION ===== */
+        .hosting {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 1px solid #569cd6;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 40px 0;
+        }
+        .hosting h2 {
+            color: #569cd6;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+        .hosting-step {
+            background: rgba(86,156,214,0.05);
+            border-left: 3px solid #569cd6;
+            padding: 12px 20px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .hosting-step strong { color: #569cd6; }
+        .hosting code {
+            background: #0d1117;
+            color: #00ff88;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid #333;
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 1.8rem; }
+            .stats { gap: 20px; }
+            .stat .number { font-size: 1.8rem; }
+            .cards { grid-template-columns: 1fr; }
+            .nav-tabs { gap: 5px; }
+            .nav-tab { padding: 8px 15px; font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+    <h1>Formation IA Complete</h1>
+    <p class="tagline">Machine Learning & Intelligence Artificielle Generative</p>
+    <p style="color: #ff8c42; font-size: 1rem; margin-bottom: 10px; position: relative; font-weight: 600;">par Azdine Laaouissi</p>
+    <div class="stats">
+        <div class="stat">
+            <span class="number">63</span>
+            <span class="label">Fichiers HTML</span>
+        </div>
+        <div class="stat">
+            <span class="number">38</span>
+            <span class="label">Cours</span>
+        </div>
+        <div class="stat">
+            <span class="number">24</span>
+            <span class="label">TDs Pratiques</span>
+        </div>
+        <div class="stat">
+            <span class="number">56 000+</span>
+            <span class="label">Lignes de contenu</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== NAVIGATION ===== -->
+<nav class="nav-tabs">
+    <a href="#ml" class="nav-tab ml">Machine Learning</a>
+    <a href="#llm" class="nav-tab llm">LLM</a>
+    <a href="#langchain" class="nav-tab lc">LangChain</a>
+    <a href="#langgraph" class="nav-tab lg">LangGraph</a>
+    <a href="#rag" class="nav-tab rag">RAG</a>
+    <a href="#hebergement" class="nav-tab">Hebergement</a>
+</nav>
+
+<div class="main">
+
+<!-- ===== PARCOURS RECOMMANDE ===== -->
+<div class="parcours-box">
+    <h2>Parcours Recommande</h2>
+    <div class="parcours-flow">
+        <div class="parcours-step active">ML</div>
+        <span class="parcours-arrow">&rarr;</span>
+        <div class="parcours-step">LLM</div>
+        <span class="parcours-arrow">&rarr;</span>
+        <div class="parcours-step">LangChain</div>
+        <span class="parcours-arrow">&rarr;</span>
+        <div class="parcours-step">LangGraph</div>
+        <span class="parcours-arrow">&rarr;</span>
+        <div class="parcours-step">RAG</div>
+    </div>
+    <p style="color: #888; font-size: 0.9rem;">Suivez cet ordre pour une progression optimale. Chaque section s'appuie sur la precedente.</p>
+</div>
+
+<!-- =============================================== -->
+<!-- ===== MACHINE LEARNING ===== -->
+<!-- =============================================== -->
+<div class="section" id="ml">
+    <div class="section-header">
+        <div class="section-icon ml">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m-7.07-2.93l2.83-2.83m8.48-8.48l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83"/></svg>
+        </div>
+        <div>
+            <div class="section-title">Machine Learning</div>
+            <div class="section-desc">12 cours theoriques + 11 TDs pratiques - Scikit-learn, algorithmes, evaluation</div>
+        </div>
+    </div>
+
+    <div class="subsection-label cours">Cours (12)</div>
+    <div class="cards">
+        <a href="machine_learning/cours/ml_01_introduction.html" class="card cours-card">
+            <span class="card-number">Cours 01</span>
+            <span class="card-title">Introduction au ML</span>
+            <span class="card-desc">Types d'apprentissage, workflow ML, premiers concepts</span>
+        </a>
+        <a href="machine_learning/cours/ml_02_maths_visuelles.html" class="card cours-card">
+            <span class="card-number">Cours 02</span>
+            <span class="card-title">Mathematiques Visuelles</span>
+            <span class="card-desc">Algebre lineaire, statistiques, derivees pour le ML</span>
+        </a>
+        <a href="machine_learning/cours/ml_03_donnees.html" class="card cours-card">
+            <span class="card-number">Cours 03</span>
+            <span class="card-title">Les Donnees</span>
+            <span class="card-desc">Preprocessing, features, normalisation, encodage</span>
+        </a>
+        <a href="machine_learning/cours/ml_04_regression.html" class="card cours-card">
+            <span class="card-number">Cours 04</span>
+            <span class="card-title">Regression</span>
+            <span class="card-desc">Regression lineaire, polynomiale, Ridge, Lasso</span>
+        </a>
+        <a href="machine_learning/cours/ml_05_classification.html" class="card cours-card">
+            <span class="card-number">Cours 05</span>
+            <span class="card-title">Classification</span>
+            <span class="card-desc">KNN, SVM, regression logistique, arbres de decision</span>
+        </a>
+        <a href="machine_learning/cours/ml_06_ensemble.html" class="card cours-card">
+            <span class="card-number">Cours 06</span>
+            <span class="card-title">Methodes d'Ensemble</span>
+            <span class="card-desc">Random Forest, Bagging, Boosting, XGBoost</span>
+        </a>
+        <a href="machine_learning/cours/ml_07_non_supervise.html" class="card cours-card">
+            <span class="card-number">Cours 07</span>
+            <span class="card-title">Apprentissage Non Supervise</span>
+            <span class="card-desc">K-Means, DBSCAN, PCA, reduction de dimensions</span>
+        </a>
+        <a href="machine_learning/cours/ml_08_reseaux_neurones.html" class="card cours-card">
+            <span class="card-number">Cours 08</span>
+            <span class="card-title">Reseaux de Neurones</span>
+            <span class="card-desc">Perceptron, MLP, backpropagation, activations</span>
+        </a>
+        <a href="machine_learning/cours/ml_09_deep_learning.html" class="card cours-card">
+            <span class="card-number">Cours 09</span>
+            <span class="card-title">Deep Learning</span>
+            <span class="card-desc">CNN, RNN, LSTM, architectures profondes</span>
+        </a>
+        <a href="machine_learning/cours/ml_10_nlp.html" class="card cours-card">
+            <span class="card-number">Cours 10</span>
+            <span class="card-title">NLP</span>
+            <span class="card-desc">Traitement du langage naturel, TF-IDF, Word2Vec</span>
+        </a>
+        <a href="machine_learning/cours/ml_11_evaluation.html" class="card cours-card">
+            <span class="card-number">Cours 11</span>
+            <span class="card-title">Evaluation</span>
+            <span class="card-desc">Metriques, validation croisee, overfitting, biais-variance</span>
+        </a>
+        <a href="machine_learning/cours/ml_12_pipeline.html" class="card cours-card">
+            <span class="card-number">Cours 12</span>
+            <span class="card-title">Pipeline ML</span>
+            <span class="card-desc">Pipeline complet, feature engineering, deploiement</span>
+        </a>
+    </div>
+
+    <div class="subsection-label td">TDs Pratiques - Supervise (8)</div>
+    <div class="cards">
+        <a href="machine_learning/td/supervise/td_regression_lineaire.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Regression Lineaire</span>
+            <span class="card-desc">MSE, RMSE, R2, Ridge/Lasso, pipeline complet</span>
+        </a>
+        <a href="machine_learning/td/supervise/td_regression_logistique.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Regression Logistique</span>
+            <span class="card-desc">Sigmoide, seuil de decision, ROC-AUC</span>
+        </a>
+        <a href="machine_learning/td/supervise/td_knn.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">K-Nearest Neighbors</span>
+            <span class="card-desc">Distance euclidienne, choix de K, normalisation</span>
+        </a>
+        <a href="machine_learning/td/supervise/td_svm.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">SVM</span>
+            <span class="card-desc">Hyperplan, kernel trick, marge maximale</span>
+        </a>
+        <a href="machine_learning/td/supervise/td_arbre_decision.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Arbre de Decision</span>
+            <span class="card-desc">Gini, entropie, elagage, profondeur</span>
+        </a>
+        <a href="machine_learning/td/supervise/td_random_forest.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Random Forest</span>
+            <span class="card-desc">Bagging, OOB score, importance des features</span>
+        </a>
+        <a href="machine_learning/td/supervise/td_xgboost.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">XGBoost</span>
+            <span class="card-desc">Gradient Boosting, early stopping, tuning</span>
+        </a>
+        <a href="machine_learning/td/supervise/td_reseau_neurones.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Reseau de Neurones (MLP)</span>
+            <span class="card-desc">Architecture MLP, backpropagation, activations</span>
+        </a>
+    </div>
+
+    <div class="subsection-label td">TDs Pratiques - Non Supervise (3)</div>
+    <div class="cards">
+        <a href="machine_learning/td/non_supervise/td_kmeans.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">K-Means</span>
+            <span class="card-desc">Elbow method, silhouette score, centroides</span>
+        </a>
+        <a href="machine_learning/td/non_supervise/td_dbscan.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">DBSCAN</span>
+            <span class="card-desc">Points core/border/noise, epsilon, min_samples</span>
+        </a>
+        <a href="machine_learning/td/non_supervise/td_pca.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">PCA</span>
+            <span class="card-desc">Variance expliquee, reduction de dimensions, projection</span>
+        </a>
+    </div>
+</div>
+
+<!-- =============================================== -->
+<!-- ===== LLM ===== -->
+<!-- =============================================== -->
+<div class="section" id="llm">
+    <div class="section-header">
+        <div class="section-icon llm">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#569cd6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
+        </div>
+        <div>
+            <div class="section-title">LLM - Large Language Models</div>
+            <div class="section-desc">5 cours + 2 TDs - Transformer, tokenisation, prompting, API</div>
+        </div>
+    </div>
+
+    <div class="subsection-label cours">Cours (5)</div>
+    <div class="cards">
+        <a href="ia_generative/llm/cours/llm_01_introduction.html" class="card cours-card">
+            <span class="card-number">Cours 01</span>
+            <span class="card-title">Introduction aux LLM</span>
+            <span class="card-desc">Histoire, GPT, Claude, Llama, comparaison des modeles</span>
+        </a>
+        <a href="ia_generative/llm/cours/llm_02_transformer.html" class="card cours-card">
+            <span class="card-number">Cours 02</span>
+            <span class="card-title">Architecture Transformer</span>
+            <span class="card-desc">Self-attention, multi-head attention, encoder/decoder</span>
+        </a>
+        <a href="ia_generative/llm/cours/llm_03_tokenisation_embeddings.html" class="card cours-card">
+            <span class="card-number">Cours 03</span>
+            <span class="card-title">Tokenisation & Embeddings</span>
+            <span class="card-desc">BPE, WordPiece, similarite cosinus, espaces vectoriels</span>
+        </a>
+        <a href="ia_generative/llm/cours/llm_04_prompting.html" class="card cours-card">
+            <span class="card-number">Cours 04</span>
+            <span class="card-title">Prompt Engineering</span>
+            <span class="card-desc">Zero-shot, few-shot, Chain of Thought, Tree of Thoughts</span>
+        </a>
+        <a href="ia_generative/llm/cours/llm_05_api_parametres.html" class="card cours-card">
+            <span class="card-number">Cours 05</span>
+            <span class="card-title">API & Parametres</span>
+            <span class="card-desc">Temperature, top_p, streaming, gestion des couts</span>
+        </a>
+    </div>
+
+    <div class="subsection-label td">TDs Pratiques (2)</div>
+    <div class="cards">
+        <a href="ia_generative/llm/td/td_prompting.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Prompt Engineering</span>
+            <span class="card-desc">Exercices de prompting, techniques avancees</span>
+        </a>
+        <a href="ia_generative/llm/td/td_api_llm.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">API LLM</span>
+            <span class="card-desc">Utilisation des API, parametres, streaming</span>
+        </a>
+    </div>
+</div>
+
+<!-- =============================================== -->
+<!-- ===== LANGCHAIN ===== -->
+<!-- =============================================== -->
+<div class="section" id="langchain">
+    <div class="section-header">
+        <div class="section-icon lc">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ff6b35" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <div>
+            <div class="section-title">LangChain</div>
+            <div class="section-desc">8 cours + 4 TDs - LCEL, Models, Memory, VectorStores, Agents</div>
+        </div>
+    </div>
+
+    <div class="subsection-label cours">Cours (8)</div>
+    <div class="cards">
+        <a href="ia_generative/langchain/cours/lc_01_introduction.html" class="card cours-card">
+            <span class="card-number">Cours 01</span>
+            <span class="card-title">Introduction a LangChain</span>
+            <span class="card-desc">Ecosysteme, installation, premiers pas avec LCEL</span>
+        </a>
+        <a href="ia_generative/langchain/cours/lc_02_models_prompts.html" class="card cours-card">
+            <span class="card-number">Cours 02</span>
+            <span class="card-title">Models & Prompts</span>
+            <span class="card-desc">ChatModels, PromptTemplates, OutputParsers</span>
+        </a>
+        <a href="ia_generative/langchain/cours/lc_03_lcel_chains.html" class="card cours-card">
+            <span class="card-number">Cours 03</span>
+            <span class="card-title">LCEL & Chains</span>
+            <span class="card-desc">Runnables, pipe operator, RunnableParallel, streaming</span>
+        </a>
+        <a href="ia_generative/langchain/cours/lc_04_memory.html" class="card cours-card">
+            <span class="card-number">Cours 04</span>
+            <span class="card-title">Memory</span>
+            <span class="card-desc">Buffer, Window, Summary, Token memory types</span>
+        </a>
+        <a href="ia_generative/langchain/cours/lc_05_document_loaders.html" class="card cours-card">
+            <span class="card-number">Cours 05</span>
+            <span class="card-title">Document Loaders</span>
+            <span class="card-desc">PDF, Web, CSV loaders, Text Splitters, chunking</span>
+        </a>
+        <a href="ia_generative/langchain/cours/lc_06_embeddings_vectorstores.html" class="card cours-card">
+            <span class="card-number">Cours 06</span>
+            <span class="card-title">Embeddings & VectorStores</span>
+            <span class="card-desc">FAISS, Chroma, MMR, similarite, indexation</span>
+        </a>
+        <a href="ia_generative/langchain/cours/lc_07_retrievers.html" class="card cours-card">
+            <span class="card-number">Cours 07</span>
+            <span class="card-title">Retrievers</span>
+            <span class="card-desc">MultiQuery, Compression, SelfQuery, Ensemble</span>
+        </a>
+        <a href="ia_generative/langchain/cours/lc_08_agents_tools.html" class="card cours-card">
+            <span class="card-number">Cours 08</span>
+            <span class="card-title">Agents & Tools</span>
+            <span class="card-desc">ReAct, Tools, AgentExecutor, create_react_agent</span>
+        </a>
+    </div>
+
+    <div class="subsection-label td">TDs Pratiques (4)</div>
+    <div class="cards">
+        <a href="ia_generative/langchain/td/td_prompts_chains.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Prompts & Chains</span>
+            <span class="card-desc">LCEL, PromptTemplate, OutputParser, RunnableParallel</span>
+        </a>
+        <a href="ia_generative/langchain/td/td_memory.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Memory</span>
+            <span class="card-desc">Buffer, Window, Summary, RunnableWithMessageHistory</span>
+        </a>
+        <a href="ia_generative/langchain/td/td_vectorstores.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">VectorStores</span>
+            <span class="card-desc">FAISS, Chroma, embeddings, similarity search, MMR</span>
+        </a>
+        <a href="ia_generative/langchain/td/td_agents.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Agents & Tools</span>
+            <span class="card-desc">ReAct, @tool, AgentExecutor, multi-tools</span>
+        </a>
+    </div>
+</div>
+
+<!-- =============================================== -->
+<!-- ===== LANGGRAPH ===== -->
+<!-- =============================================== -->
+<div class="section" id="langgraph">
+    <div class="section-header">
+        <div class="section-icon lg">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c678dd" stroke-width="2"><circle cx="5" cy="6" r="3"/><circle cx="19" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><path d="M7.5 7.5l3 6m4-6l-3 6"/></svg>
+        </div>
+        <div>
+            <div class="section-title">LangGraph</div>
+            <div class="section-desc">6 cours + 3 TDs - StateGraph, routing, cycles, human-in-the-loop</div>
+        </div>
+    </div>
+
+    <div class="subsection-label cours">Cours (6)</div>
+    <div class="cards">
+        <a href="ia_generative/langgraph/cours/lg_01_introduction.html" class="card cours-card">
+            <span class="card-number">Cours 01</span>
+            <span class="card-title">Introduction a LangGraph</span>
+            <span class="card-desc">LangGraph vs LangChain, graphes, premier workflow</span>
+        </a>
+        <a href="ia_generative/langgraph/cours/lg_02_state_graph.html" class="card cours-card">
+            <span class="card-number">Cours 02</span>
+            <span class="card-title">StateGraph, Noeuds & Edges</span>
+            <span class="card-desc">Construire des graphes, noeuds, edges, compilation</span>
+        </a>
+        <a href="ia_generative/langgraph/cours/lg_03_state_management.html" class="card cours-card">
+            <span class="card-number">Cours 03</span>
+            <span class="card-title">State Management</span>
+            <span class="card-desc">TypedDict, reducers, channels, validation Pydantic</span>
+        </a>
+        <a href="ia_generative/langgraph/cours/lg_04_routing_cycles.html" class="card cours-card">
+            <span class="card-number">Cours 04</span>
+            <span class="card-title">Routing & Cycles</span>
+            <span class="card-desc">Conditional edges, boucles, ReAct, recursion_limit</span>
+        </a>
+        <a href="ia_generative/langgraph/cours/lg_05_human_in_loop.html" class="card cours-card">
+            <span class="card-number">Cours 05</span>
+            <span class="card-title">Human-in-the-Loop</span>
+            <span class="card-desc">interrupt_before/after, approbation, time travel</span>
+        </a>
+        <a href="ia_generative/langgraph/cours/lg_06_advanced.html" class="card cours-card">
+            <span class="card-number">Cours 06</span>
+            <span class="card-title">Avance</span>
+            <span class="card-desc">Subgraphs, persistence, multi-agents, production</span>
+        </a>
+    </div>
+
+    <div class="subsection-label td">TDs Pratiques (3)</div>
+    <div class="cards">
+        <a href="ia_generative/langgraph/td/td_graphe_simple.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Graphe Simple</span>
+            <span class="card-desc">Premier StateGraph, noeuds, edges conditionnels</span>
+        </a>
+        <a href="ia_generative/langgraph/td/td_chatbot.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Chatbot</span>
+            <span class="card-desc">Chatbot avec memory, tools, multi-sessions</span>
+        </a>
+        <a href="ia_generative/langgraph/td/td_agent_autonome.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Agent Autonome</span>
+            <span class="card-desc">ReAct loop, multi-tools, RAG agent</span>
+        </a>
+    </div>
+</div>
+
+<!-- =============================================== -->
+<!-- ===== RAG ===== -->
+<!-- =============================================== -->
+<div class="section" id="rag">
+    <div class="section-header">
+        <div class="section-icon rag">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e5c07b" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M8 7h8m-8 4h8"/></svg>
+        </div>
+        <div>
+            <div class="section-title">RAG - Retrieval-Augmented Generation</div>
+            <div class="section-desc">7 cours + 4 TDs - Ingestion, embeddings, retrieval, evaluation, techniques avancees</div>
+        </div>
+    </div>
+
+    <div class="subsection-label cours">Cours (7)</div>
+    <div class="cards">
+        <a href="ia_generative/rag/cours/rag_01_introduction.html" class="card cours-card">
+            <span class="card-number">Cours 01</span>
+            <span class="card-title">Introduction au RAG</span>
+            <span class="card-desc">Architecture RAG, Naive vs Advanced, cas d'usage</span>
+        </a>
+        <a href="ia_generative/rag/cours/rag_02_ingestion.html" class="card cours-card">
+            <span class="card-number">Cours 02</span>
+            <span class="card-title">Pipeline d'Ingestion</span>
+            <span class="card-desc">Document Loaders, Text Splitters, chunking</span>
+        </a>
+        <a href="ia_generative/rag/cours/rag_03_embeddings_vectorstores.html" class="card cours-card">
+            <span class="card-number">Cours 03</span>
+            <span class="card-title">Embeddings & VectorStores</span>
+            <span class="card-desc">OpenAI/HuggingFace embeddings, FAISS, Chroma, HNSW</span>
+        </a>
+        <a href="ia_generative/rag/cours/rag_04_retrieval.html" class="card cours-card">
+            <span class="card-number">Cours 04</span>
+            <span class="card-title">Strategies de Retrieval</span>
+            <span class="card-desc">MultiQuery, Compression, re-ranking, hybrid search</span>
+        </a>
+        <a href="ia_generative/rag/cours/rag_05_generation.html" class="card cours-card">
+            <span class="card-number">Cours 05</span>
+            <span class="card-title">Generation & Prompts</span>
+            <span class="card-desc">Prompts RAG, stuffing/map-reduce, RAG conversationnel</span>
+        </a>
+        <a href="ia_generative/rag/cours/rag_06_evaluation.html" class="card cours-card">
+            <span class="card-number">Cours 06</span>
+            <span class="card-title">Evaluation & Metriques</span>
+            <span class="card-desc">RAGAS, faithfulness, relevancy, LLM-as-Judge</span>
+        </a>
+        <a href="ia_generative/rag/cours/rag_07_advanced.html" class="card cours-card">
+            <span class="card-number">Cours 07</span>
+            <span class="card-title">Techniques Avancees</span>
+            <span class="card-desc">HyDE, CRAG, Self-RAG, Agentic RAG, RAG Fusion</span>
+        </a>
+    </div>
+
+    <div class="subsection-label td">TDs Pratiques (4)</div>
+    <div class="cards">
+        <a href="ia_generative/rag/td/td_rag_basique.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">RAG Basique</span>
+            <span class="card-desc">Premier pipeline RAG de A a Z</span>
+        </a>
+        <a href="ia_generative/rag/td/td_chunking.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Strategies de Chunking</span>
+            <span class="card-desc">chunk_size, overlap, splitters, experimentation</span>
+        </a>
+        <a href="ia_generative/rag/td/td_retrieval_avance.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Retrieval Avance</span>
+            <span class="card-desc">MMR, MultiQuery, Compression, Ensemble</span>
+        </a>
+        <a href="ia_generative/rag/td/td_rag_complet.html" class="card td-card">
+            <span class="card-number">TD Pratique</span>
+            <span class="card-title">Pipeline RAG Complet</span>
+            <span class="card-desc">Projet final : RAG de A a Z avec evaluation</span>
+        </a>
+    </div>
+</div>
+
+<!-- =============================================== -->
+<!-- ===== HEBERGEMENT ===== -->
+<!-- =============================================== -->
+<div class="hosting" id="hebergement">
+    <h2>Comment Heberger et Partager avec tes Amis ?</h2>
+    <p style="color: #aaa; margin-bottom: 20px;">3 methodes gratuites pour mettre en ligne tes cours :</p>
+
+    <h3 style="color: #ff8c42; margin: 20px 0 10px;">Methode 1 : GitHub Pages (Recommande)</h3>
+    <div class="hosting-step">
+        <strong>Etape 1 :</strong> Creer un compte sur <code>github.com</code> (gratuit)
+    </div>
+    <div class="hosting-step">
+        <strong>Etape 2 :</strong> Creer un nouveau repository (ex: <code>formation-ia</code>)
+    </div>
+    <div class="hosting-step">
+        <strong>Etape 3 :</strong> Uploader tous les fichiers (glisser-deposer le dossier <code>rag_test</code>)
+    </div>
+    <div class="hosting-step">
+        <strong>Etape 4 :</strong> Aller dans Settings &gt; Pages &gt; Source: <code>main</code> &gt; Save
+    </div>
+    <div class="hosting-step">
+        <strong>Etape 5 :</strong> Ton site sera sur : <code>https://tonpseudo.github.io/formation-ia/</code>
+    </div>
+
+    <h3 style="color: #ff8c42; margin: 20px 0 10px;">Methode 2 : Netlify (Glisser-Deposer)</h3>
+    <div class="hosting-step">
+        <strong>Etape 1 :</strong> Aller sur <code>app.netlify.com/drop</code>
+    </div>
+    <div class="hosting-step">
+        <strong>Etape 2 :</strong> Glisser-deposer le dossier <code>rag_test</code> directement sur la page
+    </div>
+    <div class="hosting-step">
+        <strong>Etape 3 :</strong> C'est en ligne ! Tu recois un lien instantanement
+    </div>
+
+    <h3 style="color: #ff8c42; margin: 20px 0 10px;">Methode 3 : Vercel</h3>
+    <div class="hosting-step">
+        <strong>Etape 1 :</strong> Aller sur <code>vercel.com</code>, se connecter avec GitHub
+    </div>
+    <div class="hosting-step">
+        <strong>Etape 2 :</strong> Importer le repository GitHub cree dans la methode 1
+    </div>
+    <div class="hosting-step">
+        <strong>Etape 3 :</strong> Deploye automatiquement sur <code>formation-ia.vercel.app</code>
+    </div>
+</div>
+
+<!-- ===== FOOTER / SIGNATURE ===== -->
+<div class="footer">
+    <div style="margin-bottom: 20px;">
+        <svg width="60" height="60" viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="28" fill="none" stroke="#ff6b35" stroke-width="2"/>
+            <text x="30" y="35" text-anchor="middle" fill="#ff6b35" font-size="20" font-weight="bold" font-family="Segoe UI, sans-serif">AL</text>
+        </svg>
+    </div>
+    <p style="font-size: 1.4rem; color: #ff6b35; font-weight: 700; margin-bottom: 5px;">Azdine Laaouissi</p>
+    <p style="color: #888; font-size: 0.95rem; margin-bottom: 15px;">Auteur & Concepteur de cette formation</p>
+    <div style="width: 60px; height: 2px; background: #ff6b35; margin: 0 auto 15px;"></div>
+    <p>Formation IA Complete - 63 fichiers HTML | 56 000+ lignes de contenu pedagogique</p>
+    <p style="margin-top: 5px;">Cours et TDs en francais avec approche pedagogique professorale</p>
+    <p style="margin-top: 10px; color: #555; font-size: 0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+
+</div>
+</body>
+</html>

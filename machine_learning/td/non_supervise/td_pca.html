@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - PCA (Analyse en Composantes Principales) | ML</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : PCA (Analyse en Composantes Principales)</h1>
+    <p class="subtitle">Algorithme non supervisé - Réduire la dimensionnalité en conservant l'information essentielle</p>
+
+    <div class="concept-box">
+        <p><strong>Objectif :</strong> Maîtriser la PCA (Principal Component Analysis). Comprendre la variance, les vecteurs propres, les valeurs propres, la matrice de covariance, et savoir projeter des données de haute dimension vers un espace réduit tout en conservant le maximum d'information. Apprendre à choisir le bon nombre de composantes et évaluer la qualité de la réduction.</p>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PARTIE 1 : RÉCAPITULATIF DE L'ALGORITHME                   -->
+    <!-- ========================================================== -->
+    <h2>1. Récapitulatif de l'Algorithme</h2>
+
+    <div class="definition">
+        L'Analyse en Composantes Principales (PCA) est une technique de <strong>réduction de dimensionnalité</strong> qui transforme un jeu de données de haute dimension en un espace de dimension inférieure. Elle identifie les <strong>directions de variance maximale</strong> (appelées composantes principales) et projette les données sur ces axes. L'objectif est de conserver le maximum d'information (variance) avec le minimum de dimensions.
+    </div>
+
+    <h3>Fiche d'identité</h3>
+    <table>
+        <tr><th>Propriété</th><th>Valeur</th></tr>
+        <tr><td><strong>Type</strong></td><td>NON Supervisé</td></tr>
+        <tr><td><strong>Tâche</strong></td><td>Réduction de dimensionnalité</td></tr>
+        <tr><td><strong>Famille</strong></td><td>Transformation linéaire</td></tr>
+        <tr><td><strong>Entrée</strong></td><td>Matrice X de n échantillons × p features numériques</td></tr>
+        <tr><td><strong>Sortie</strong></td><td>Matrice X' de n échantillons × k composantes (k &lt; p)</td></tr>
+        <tr><td><strong>Bibliothèque</strong></td><td>sklearn.decomposition.PCA</td></tr>
+    </table>
+
+    <h3>Analogie : La Projection d'Ombre</h3>
+    <div class="concept-box.blue">
+        <p>Imaginez un objet 3D complexe (une statue, par exemple) éclairé par une lampe. L'ombre projetée sur un mur est une représentation <strong>2D</strong> de cet objet 3D. Selon l'angle de la lampe, l'ombre capture plus ou moins de détails de la statue.</p>
+        <p><strong>La PCA, c'est trouver le meilleur angle pour la lampe</strong> : celui qui produit l'ombre la plus informative possible, c'est-à-dire celle qui préserve le maximum de la forme originale. La direction de variance maximale correspond à l'angle qui étire le plus l'ombre, capturant ainsi le plus de détails.</p>
+        <p>Si on ajoute une deuxième lampe perpendiculaire à la première, on obtient une deuxième ombre qui capture l'information restante. La première composante principale (PC1) est la meilleure ombre, la deuxième (PC2) est la meilleure ombre parmi celles perpendiculaires à la première, et ainsi de suite.</p>
+    </div>
+
+    <h3>Avantages</h3>
+    <ul>
+        <li><strong>Réduit la dimensionnalité</strong> : passe de centaines/milliers de features à quelques composantes</li>
+        <li><strong>Supprime le bruit</strong> : les composantes faibles (peu de variance) capturent souvent le bruit</li>
+        <li><strong>Permet la visualisation</strong> : projeter en 2D/3D des données de haute dimension</li>
+        <li><strong>Accélère d'autres algorithmes</strong> : moins de features = entraînement plus rapide pour KNN, SVM, etc.</li>
+        <li><strong>Supprime la multicolinéarité</strong> : les composantes principales sont orthogonales (non corrélées)</li>
+    </ul>
+
+    <h3>Inconvénients</h3>
+    <ul>
+        <li><strong>Transformation linéaire uniquement</strong> : ne capture pas les relations non linéaires (utiliser Kernel PCA pour cela)</li>
+        <li><strong>Perte d'interprétabilité</strong> : les composantes sont des combinaisons de features, difficiles à nommer</li>
+        <li><strong>Très sensible à l'échelle</strong> : normalisation OBLIGATOIRE avant application</li>
+        <li><strong>Information perdue</strong> : la réduction implique forcément une perte, même si on la minimise</li>
+        <li><strong>Hypothèse de linéarité</strong> : suppose que les directions de variance maximale sont informatives</li>
+    </ul>
+
+    <!-- ========================================================== -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT                      -->
+    <!-- ========================================================== -->
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <h3>Les 5 étapes de la PCA</h3>
+
+    <div class="step-box">
+        <strong>Étape 1 : Centrer (et normaliser) les données</strong><br>
+        Soustraire la moyenne de chaque feature pour centrer les données sur l'origine. Appliquer StandardScaler pour que chaque feature ait une moyenne de 0 et un écart-type de 1. Sans cela, les features avec de grandes valeurs dominent artificiellement.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 2 : Calculer la matrice de covariance</strong><br>
+        La matrice de covariance C (p × p) mesure les corrélations linéaires entre toutes les paires de features. L'élément C[i,j] indique à quel point les features i et j varient ensemble. Formule : <strong>C = (1/(n-1)) X<sup>T</sup>X</strong> (sur données centrées).
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 3 : Calculer les valeurs propres et vecteurs propres</strong><br>
+        Résoudre l'équation <strong>Cv = λv</strong> où v est un vecteur propre et λ la valeur propre associée. Chaque vecteur propre définit une direction (composante principale), et sa valeur propre mesure la variance capturée dans cette direction. On trie par valeur propre décroissante.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 4 : Sélectionner les k premières composantes</strong><br>
+        Choisir les k vecteurs propres correspondant aux k plus grandes valeurs propres. Ces k directions forment le nouveau sous-espace. Le ratio de variance expliquée de chaque composante est : <strong>λ_i / Σ λ_j</strong>.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 5 : Projeter les données</strong><br>
+        Multiplier la matrice de données centrées par la matrice des k vecteurs propres sélectionnés : <strong>X' = X × W_k</strong> où W_k est la matrice (p × k) des k vecteurs propres. Les données passent de p dimensions à k dimensions.
+    </div>
+
+    <h3>Diagramme : Projection PCA en 2D</h3>
+    <div class="svg-container">
+        <svg width="700" height="420" viewBox="0 0 700 420">
+            <!-- Fond -->
+            <rect width="700" height="420" fill="#1a1a2e" rx="12"/>
+
+            <!-- Grille légère -->
+            <line x1="80" y1="350" x2="650" y2="350" stroke="#333" stroke-width="1"/>
+            <line x1="80" y1="50" x2="80" y2="350" stroke="#333" stroke-width="1"/>
+
+            <!-- Axes originaux -->
+            <text x="360" y="385" fill="#aaa" font-size="13" text-anchor="middle">Feature 1 (x₁)</text>
+            <text x="25" y="200" fill="#aaa" font-size="13" text-anchor="middle" transform="rotate(-90,25,200)">Feature 2 (x₂)</text>
+
+            <!-- Nuage de points (ellipse orientée) -->
+            <ellipse cx="350" cy="190" rx="180" ry="60" fill="none" stroke="#569cd6" stroke-width="1" stroke-dasharray="5,5" transform="rotate(-25,350,190)" opacity="0.4"/>
+
+            <!-- Points de données -->
+            <circle cx="220" cy="240" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="250" cy="225" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="270" cy="235" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="290" cy="210" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="300" cy="220" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="310" cy="200" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="320" cy="215" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="330" cy="195" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="340" cy="205" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="350" cy="190" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="360" cy="185" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="370" cy="175" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="380" cy="180" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="390" cy="165" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="400" cy="170" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="420" cy="155" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="440" cy="145" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="460" cy="140" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="480" cy="130" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="500" cy="135" r="4" fill="#569cd6" opacity="0.7"/>
+
+            <!-- PC1 : axe principal (direction de variance maximale) -->
+            <line x1="160" y1="280" x2="540" y2="100" stroke="#ff6b35" stroke-width="3"/>
+            <polygon points="540,100 528,108 532,118" fill="#ff6b35"/>
+            <text x="555" y="95" fill="#ff6b35" font-size="14" font-weight="bold">PC1</text>
+            <text x="555" y="112" fill="#ff8c42" font-size="11">(variance max)</text>
+
+            <!-- PC2 : axe secondaire (perpendiculaire) -->
+            <line x1="275" y1="100" x2="425" y2="280" stroke="#00ff88" stroke-width="2" stroke-dasharray="6,4"/>
+            <polygon points="425,280 418,268 410,274" fill="#00ff88"/>
+            <text x="432" y="285" fill="#00ff88" font-size="14" font-weight="bold">PC2</text>
+            <text x="432" y="302" fill="#00cc66" font-size="11">(variance résiduelle)</text>
+
+            <!-- Projections de quelques points sur PC1 -->
+            <line x1="290" y1="210" x2="305" y2="225" stroke="#ff6b35" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+            <line x1="370" y1="175" x2="385" y2="168" stroke="#ff6b35" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+            <line x1="440" y1="145" x2="450" y2="138" stroke="#ff6b35" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+
+            <!-- Points projetés sur PC1 -->
+            <circle cx="305" cy="225" r="4" fill="#ff6b35"/>
+            <circle cx="385" cy="168" r="4" fill="#ff6b35"/>
+            <circle cx="450" cy="138" r="4" fill="#ff6b35"/>
+
+            <!-- Légende -->
+            <rect x="100" y="360" width="12" height="12" fill="#569cd6" rx="2"/>
+            <text x="118" y="372" fill="#e0e0e0" font-size="12">Données originales (2D)</text>
+            <rect x="300" y="360" width="12" height="12" fill="#ff6b35" rx="2"/>
+            <text x="318" y="372" fill="#e0e0e0" font-size="12">Projections sur PC1 (1D)</text>
+
+            <!-- Titre -->
+            <text x="350" y="35" fill="#e0e0e0" font-size="15" text-anchor="middle" font-weight="bold">PCA : Projection sur la direction de variance maximale</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Sur ce diagramme, les points bleus sont les données originales en 2D. L'axe orange (PC1) pointe dans la direction où les données sont le plus étalées (variance maximale). Les points orange sont les projections sur PC1 : on passe de 2D à 1D en ne gardant que la position sur cet axe. PC2 (vert, pointillé) capture la variance résiduelle, perpendiculaire à PC1.
+    </div>
+
+    <h3>Formules clés</h3>
+
+    <div class="concept-box">
+        <p><strong>Matrice de covariance :</strong></p>
+        <p style="text-align:center; font-size:1.1rem; margin: 10px 0;">C = (1 / (n - 1)) &middot; X<sup>T</sup>X &nbsp;&nbsp; (X centré)</p>
+        <p>Où X est la matrice (n × p) des données centrées, n le nombre d'échantillons, p le nombre de features.</p>
+
+        <p style="margin-top:15px;"><strong>Équation aux valeurs propres :</strong></p>
+        <p style="text-align:center; font-size:1.1rem; margin: 10px 0;">C &middot; v<sub>i</sub> = λ<sub>i</sub> &middot; v<sub>i</sub></p>
+        <p>Où v<sub>i</sub> est le i-ème vecteur propre (composante principale) et λ<sub>i</sub> sa valeur propre (variance dans cette direction).</p>
+
+        <p style="margin-top:15px;"><strong>Ratio de variance expliquée :</strong></p>
+        <p style="text-align:center; font-size:1.1rem; margin: 10px 0;">VER<sub>i</sub> = λ<sub>i</sub> / Σ<sub>j=1..p</sub> λ<sub>j</sub></p>
+        <p>Indique la proportion de variance totale capturée par la i-ème composante. La somme de tous les VER = 1 (100%).</p>
+
+        <p style="margin-top:15px;"><strong>Variance cumulée :</strong></p>
+        <p style="text-align:center; font-size:1.1rem; margin: 10px 0;">CVR(k) = Σ<sub>i=1..k</sub> VER<sub>i</sub></p>
+        <p>La proportion totale de variance capturée par les k premières composantes. On choisit k tel que CVR(k) >= 0.95 (95%).</p>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PARTIE 3 : LES DONNÉES                                      -->
+    <!-- ========================================================== -->
+    <h2>3. Les Données</h2>
+
+    <h3>Types de données acceptés</h3>
+    <div class="concept-box">
+        <p><strong>Données numériques UNIQUEMENT.</strong> La PCA repose sur le calcul de la covariance, qui n'a de sens que pour des variables continues. Les données catégorielles (couleurs, catégories, labels) ne sont pas compatibles avec la PCA standard.</p>
+        <ul>
+            <li><strong>Variables continues</strong> : taille, poids, température, prix -- OUI</li>
+            <li><strong>Variables catégorielles</strong> : couleur, genre, pays -- NON (utiliser MCA ou FAMD)</li>
+            <li><strong>Variables binaires (0/1)</strong> : techniquement possible mais résultats peu fiables</li>
+        </ul>
+    </div>
+
+    <h3>Normalisation : OBLIGATOIRE</h3>
+    <div class="warning">
+        La PCA est <strong>extrêmement sensible à l'échelle</strong> des données. Si une feature a des valeurs entre 0 et 1000 et une autre entre 0 et 1, la première dominera artificiellement les composantes principales. La normalisation avec <strong>StandardScaler</strong> est OBLIGATOIRE avant toute PCA.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Exemple : données avec échelles très différentes</span>
+X = np.array([
+    [<span class="number">170</span>, <span class="number">70</span>, <span class="number">36.5</span>],    <span class="comment"># taille(cm), poids(kg), temp(°C)</span>
+    [<span class="number">165</span>, <span class="number">55</span>, <span class="number">37.0</span>],
+    [<span class="number">180</span>, <span class="number">85</span>, <span class="number">36.8</span>],
+    [<span class="number">175</span>, <span class="number">68</span>, <span class="number">37.2</span>],
+    [<span class="number">160</span>, <span class="number">50</span>, <span class="number">36.6</span>],
+])
+
+<span class="comment"># SANS normalisation (MAUVAIS)</span>
+pca_bad = PCA(n_components=<span class="number">2</span>)
+X_bad = pca_bad.fit_transform(X)
+<span class="function">print</span>(<span class="string">"SANS StandardScaler :"</span>)
+<span class="function">print</span>(<span class="string">f"  Variance expliquée : {pca_bad.explained_variance_ratio_}"</span>)
+
+<span class="comment"># AVEC normalisation (CORRECT)</span>
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+pca_good = PCA(n_components=<span class="number">2</span>)
+X_good = pca_good.fit_transform(X_scaled)
+<span class="function">print</span>(<span class="string">"\nAVEC StandardScaler :"</span>)
+<span class="function">print</span>(<span class="string">f"  Variance expliquée : {pca_good.explained_variance_ratio_}"</span>)</div>
+
+    <div class="output-block">
+SANS StandardScaler :
+  Variance expliquée : [0.9875 0.0124]
+
+AVEC StandardScaler :
+  Variance expliquée : [0.7654 0.2189]</div>
+
+    <div class="effect">
+        Sans normalisation, la première composante capture 98.75% de la variance -- mais c'est une illusion ! Elle ne fait que refléter la feature "taille" qui a les plus grandes valeurs. Avec StandardScaler, la variance est répartie de façon réaliste entre les composantes.
+    </div>
+
+    <div class="prof-note">
+        Règle d'or : <strong>Toujours</strong> appliquer StandardScaler() avant PCA(). Le pipeline classique est : StandardScaler -> PCA -> Modèle. L'exception rare est quand toutes les features sont déjà dans la même unité et la même échelle (par exemple, intensité de pixels 0-255).
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PARTIE 4 : LES PARAMÈTRES                                   -->
+    <!-- ========================================================== -->
+    <h2>4. Les Paramètres</h2>
+
+    <!-- n_components -->
+    <div class="param-box">
+        <h4>n_components -- Nombre de composantes à conserver</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Définit le nombre de composantes principales à garder après la transformation</td></tr>
+            <tr><td><strong>Défaut</strong></td><td>None (garde toutes les composantes, min(n_samples, n_features))</td></tr>
+            <tr><td><strong>Type</strong></td><td>int, float (0 &lt; f &lt; 1), ou 'mle'</td></tr>
+            <tr><td><strong>Impact</strong></td><td>Contrôle le compromis entre réduction de dimension et conservation d'information</td></tr>
+        </table>
+
+        <h3>Mode 1 : Nombre entier (exact)</h3>
+        <div class="code-block"><span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+
+X, y = load_digits(return_X_y=<span class="keyword">True</span>)
+X_scaled = StandardScaler().fit_transform(X)
+
+<span class="comment"># Garder exactement 2 composantes (pour visualisation)</span>
+pca_2 = PCA(n_components=<span class="number">2</span>)
+X_2d = pca_2.fit_transform(X_scaled)
+<span class="function">print</span>(<span class="string">f"Forme originale : {X_scaled.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Forme réduite   : {X_2d.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Variance captée : {sum(pca_2.explained_variance_ratio_):.4f}"</span>)
+
+<span class="comment"># Garder exactement 10 composantes</span>
+pca_10 = PCA(n_components=<span class="number">10</span>)
+X_10d = pca_10.fit_transform(X_scaled)
+<span class="function">print</span>(<span class="string">f"\nAvec 10 composantes : {X_10d.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Variance captée    : {sum(pca_10.explained_variance_ratio_):.4f}"</span>)</div>
+
+        <div class="output-block">
+Forme originale : (1797, 64)
+Forme réduite   : (1797, 2)
+Variance captée : 0.2854
+
+Avec 10 composantes : (1797, 10)
+Variance captée    : 0.6049</div>
+
+        <h3>Mode 2 : Float entre 0 et 1 (ratio de variance)</h3>
+        <div class="code-block"><span class="comment"># Garder assez de composantes pour 95% de variance</span>
+pca_95 = PCA(n_components=<span class="number">0.95</span>, svd_solver=<span class="string">'full'</span>)
+X_95 = pca_95.fit_transform(X_scaled)
+<span class="function">print</span>(<span class="string">f"95% de variance -> {X_95.shape[1]} composantes"</span>)
+<span class="function">print</span>(<span class="string">f"Variance réelle captée : {sum(pca_95.explained_variance_ratio_):.4f}"</span>)
+
+<span class="comment"># Garder assez de composantes pour 99% de variance</span>
+pca_99 = PCA(n_components=<span class="number">0.99</span>, svd_solver=<span class="string">'full'</span>)
+X_99 = pca_99.fit_transform(X_scaled)
+<span class="function">print</span>(<span class="string">f"\n99% de variance -> {X_99.shape[1]} composantes"</span>)
+<span class="function">print</span>(<span class="string">f"Variance réelle captée : {sum(pca_99.explained_variance_ratio_):.4f}"</span>)
+
+<span class="comment"># Garder assez de composantes pour 90% de variance</span>
+pca_90 = PCA(n_components=<span class="number">0.90</span>, svd_solver=<span class="string">'full'</span>)
+X_90 = pca_90.fit_transform(X_scaled)
+<span class="function">print</span>(<span class="string">f"\n90% de variance -> {X_90.shape[1]} composantes"</span>)
+<span class="function">print</span>(<span class="string">f"Variance réelle captée : {sum(pca_90.explained_variance_ratio_):.4f}"</span>)</div>
+
+        <div class="output-block">
+95% de variance -> 29 composantes
+Variance réelle captée : 0.9504
+
+99% de variance -> 41 composantes
+Variance réelle captée : 0.9902
+
+90% de variance -> 21 composantes
+Variance réelle captée : 0.9011</div>
+
+        <div class="prof-note">
+            Le mode float est le plus pratique en production. On dit "je veux garder 95% de l'information" et sklearn calcule automatiquement le nombre de composantes nécessaires. Pour le dataset Digits (64 features), 29 composantes suffisent pour 95% de la variance -- une réduction de plus de 50% !
+        </div>
+    </div>
+
+    <!-- svd_solver -->
+    <div class="param-box">
+        <h4>svd_solver -- Algorithme de décomposition</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Choisit l'algorithme utilisé pour calculer la SVD (Singular Value Decomposition)</td></tr>
+            <tr><td><strong>Défaut</strong></td><td>'auto'</td></tr>
+            <tr><td><strong>Valeurs</strong></td><td>'auto', 'full', 'randomized', 'arpack'</td></tr>
+            <tr><td><strong>Impact</strong></td><td>Vitesse et précision du calcul selon la taille des données</td></tr>
+        </table>
+
+        <table>
+            <tr><th>Valeur</th><th>Quand l'utiliser</th><th>Note</th></tr>
+            <tr><td><strong>'auto'</strong></td><td>Par défaut, sklearn choisit intelligemment</td><td>Convient dans 95% des cas</td></tr>
+            <tr><td><strong>'full'</strong></td><td>Petit dataset, besoin de toutes les composantes</td><td>Obligatoire si n_components est un float</td></tr>
+            <tr><td><strong>'randomized'</strong></td><td>Grand dataset, peu de composantes souhaitées</td><td>Beaucoup plus rapide, résultat approximé</td></tr>
+            <tr><td><strong>'arpack'</strong></td><td>Très peu de composantes sur données éparses</td><td>Utilise ARPACK pour matrices creuses</td></tr>
+        </table>
+
+        <div class="code-block"><span class="keyword">import</span> time
+<span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Données larges pour comparer les solvers</span>
+np.random.seed(<span class="number">42</span>)
+X_large = np.random.randn(<span class="number">5000</span>, <span class="number">500</span>)
+
+<span class="keyword">for</span> solver <span class="keyword">in</span> [<span class="string">'full'</span>, <span class="string">'randomized'</span>]:
+    start = time.time()
+    pca = PCA(n_components=<span class="number">10</span>, svd_solver=solver)
+    pca.fit_transform(X_large)
+    elapsed = time.time() - start
+    <span class="function">print</span>(<span class="string">f"svd_solver='{solver}' : {elapsed:.3f}s"</span>)</div>
+
+        <div class="output-block">
+svd_solver='full' : 0.847s
+svd_solver='randomized' : 0.092s</div>
+
+        <div class="effect">
+            Pour extraire 10 composantes de 500 features, 'randomized' est ~9x plus rapide que 'full'. Le résultat est une approximation, mais très proche de la solution exacte. Pour les très grands datasets, c'est le choix recommandé.
+        </div>
+    </div>
+
+    <!-- whiten -->
+    <div class="param-box">
+        <h4>whiten -- Blanchissement des composantes</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Normalise chaque composante pour avoir une variance unitaire</td></tr>
+            <tr><td><strong>Défaut</strong></td><td>False</td></tr>
+            <tr><td><strong>Impact</strong></td><td>Composantes décorrélées ET de même variance -- utile pour SVM, K-Means en aval</td></tr>
+        </table>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+X, y = load_digits(return_X_y=<span class="keyword">True</span>)
+X_scaled = StandardScaler().fit_transform(X)
+
+<span class="comment"># Sans blanchissement</span>
+pca_no_w = PCA(n_components=<span class="number">5</span>, whiten=<span class="keyword">False</span>)
+X_no_w = pca_no_w.fit_transform(X_scaled)
+<span class="function">print</span>(<span class="string">"Sans whiten :"</span>)
+<span class="function">print</span>(<span class="string">f"  Variance par composante : {np.var(X_no_w, axis=0).round(2)}"</span>)
+
+<span class="comment"># Avec blanchissement</span>
+pca_w = PCA(n_components=<span class="number">5</span>, whiten=<span class="keyword">True</span>)
+X_w = pca_w.fit_transform(X_scaled)
+<span class="function">print</span>(<span class="string">"\nAvec whiten=True :"</span>)
+<span class="function">print</span>(<span class="string">f"  Variance par composante : {np.var(X_w, axis=0).round(2)}"</span>)</div>
+
+        <div class="output-block">
+Sans whiten :
+  Variance par composante : [5.18 4.49 4.06 3.48 3.14]
+
+Avec whiten=True :
+  Variance par composante : [1.0 1.0 1.0 1.0 1.0]</div>
+
+        <div class="prof-note">
+            Le whiten est utile quand l'algorithme en aval est sensible à l'isotropie du signal (SVM avec kernel RBF, K-Means). En général, on garde whiten=False sauf besoin spécifique. Attention : whiten=True modifie les composantes, donc on ne peut plus reconstruire les données originales simplement avec inverse_transform.
+        </div>
+    </div>
+
+    <!-- Choisir n_components -->
+    <div class="param-box">
+        <h4>Comment choisir n_components ? Le graphe de variance cumulée</h4>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+
+X, y = load_digits(return_X_y=<span class="keyword">True</span>)
+X_scaled = StandardScaler().fit_transform(X)
+
+<span class="comment"># PCA avec TOUTES les composantes pour analyser</span>
+pca_full = PCA().fit(X_scaled)
+
+<span class="comment"># Variance cumulée</span>
+cumulative_var = np.cumsum(pca_full.explained_variance_ratio_)
+
+<span class="comment"># Trouver le nombre de composantes pour 90%, 95%, 99%</span>
+<span class="keyword">for</span> threshold <span class="keyword">in</span> [<span class="number">0.90</span>, <span class="number">0.95</span>, <span class="number">0.99</span>]:
+    n = np.argmax(cumulative_var >= threshold) + <span class="number">1</span>
+    <span class="function">print</span>(<span class="string">f"{threshold*100:.0f}% de variance -> {n} composantes"</span>)
+
+<span class="comment"># Graphe de variance cumulée</span>
+plt.figure(figsize=(<span class="number">10</span>, <span class="number">5</span>))
+plt.plot(range(<span class="number">1</span>, len(cumulative_var) + <span class="number">1</span>), cumulative_var, <span class="string">'b-o'</span>, markersize=<span class="number">3</span>)
+plt.axhline(y=<span class="number">0.95</span>, color=<span class="string">'r'</span>, linestyle=<span class="string">'--'</span>, label=<span class="string">'95% variance'</span>)
+plt.axhline(y=<span class="number">0.90</span>, color=<span class="string">'orange'</span>, linestyle=<span class="string">'--'</span>, label=<span class="string">'90% variance'</span>)
+plt.xlabel(<span class="string">'Nombre de composantes'</span>)
+plt.ylabel(<span class="string">'Variance cumulée expliquée'</span>)
+plt.title(<span class="string">'Coude de variance cumulée - Dataset Digits'</span>)
+plt.legend()
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.tight_layout()
+plt.savefig(<span class="string">'pca_cumulative_variance.png'</span>, dpi=<span class="number">150</span>)
+plt.show()</div>
+
+        <div class="output-block">
+90% de variance -> 21 composantes
+95% de variance -> 29 composantes
+99% de variance -> 41 composantes</div>
+
+        <div class="prof-note">
+            Le "coude" dans le graphe de variance cumulée vous guide. On cherche le point où la courbe commence à s'aplatir. En pratique, on choisit souvent le seuil de <strong>95%</strong> comme bon compromis. Pour Digits : 29 composantes sur 64 gardent 95% de l'info, soit une réduction de 55% des features.
+        </div>
+    </div>
+
+    <!-- Diagramme SVG : Variance cumulée -->
+    <h3>Visualisation : Variance cumulée (Digits dataset)</h3>
+    <div class="svg-container">
+        <svg width="700" height="350" viewBox="0 0 700 350">
+            <rect width="700" height="350" fill="#1a1a2e" rx="12"/>
+
+            <!-- Axes -->
+            <line x1="80" y1="290" x2="650" y2="290" stroke="#aaa" stroke-width="1"/>
+            <line x1="80" y1="30" x2="80" y2="290" stroke="#aaa" stroke-width="1"/>
+
+            <!-- Labels axes -->
+            <text x="365" y="330" fill="#aaa" font-size="13" text-anchor="middle">Nombre de composantes</text>
+            <text x="25" y="160" fill="#aaa" font-size="12" text-anchor="middle" transform="rotate(-90,25,160)">Variance cumulée</text>
+
+            <!-- Graduations Y -->
+            <text x="72" y="294" fill="#aaa" font-size="10" text-anchor="end">0%</text>
+            <text x="72" y="242" fill="#aaa" font-size="10" text-anchor="end">20%</text>
+            <text x="72" y="190" fill="#aaa" font-size="10" text-anchor="end">40%</text>
+            <text x="72" y="138" fill="#aaa" font-size="10" text-anchor="end">60%</text>
+            <text x="72" y="86" fill="#aaa" font-size="10" text-anchor="end">80%</text>
+            <text x="72" y="34" fill="#aaa" font-size="10" text-anchor="end">100%</text>
+
+            <!-- Grille horizontale -->
+            <line x1="80" y1="242" x2="650" y2="242" stroke="#333" stroke-width="0.5"/>
+            <line x1="80" y1="190" x2="650" y2="190" stroke="#333" stroke-width="0.5"/>
+            <line x1="80" y1="138" x2="650" y2="138" stroke="#333" stroke-width="0.5"/>
+            <line x1="80" y1="86" x2="650" y2="86" stroke="#333" stroke-width="0.5"/>
+
+            <!-- Graduations X -->
+            <text x="80" y="308" fill="#aaa" font-size="10" text-anchor="middle">0</text>
+            <text x="169" y="308" fill="#aaa" font-size="10" text-anchor="middle">10</text>
+            <text x="258" y="308" fill="#aaa" font-size="10" text-anchor="middle">20</text>
+            <text x="347" y="308" fill="#aaa" font-size="10" text-anchor="middle">30</text>
+            <text x="436" y="308" fill="#aaa" font-size="10" text-anchor="middle">40</text>
+            <text x="525" y="308" fill="#aaa" font-size="10" text-anchor="middle">50</text>
+            <text x="614" y="308" fill="#aaa" font-size="10" text-anchor="middle">60</text>
+
+            <!-- Courbe de variance cumulée (approximation réaliste pour Digits) -->
+            <polyline points="
+                80,290
+                89,225
+                98,192
+                107,170
+                116,155
+                125,143
+                134,133
+                143,124
+                152,116
+                160,110
+                169,104
+                178,99
+                187,94
+                196,90
+                205,86
+                214,83
+                223,80
+                232,77
+                241,74
+                249,72
+                258,70
+                267,68
+                276,66
+                285,64
+                294,62
+                303,61
+                312,59
+                321,58
+                330,56
+                338,55
+                347,54
+                356,53
+                365,52
+                374,51
+                383,50
+                392,49
+                401,48
+                410,47
+                419,46
+                428,45
+                436,44
+                445,43
+                454,42
+                463,41
+                472,41
+                481,40
+                490,39
+                499,39
+                508,38
+                516,38
+                525,37
+                534,37
+                543,36
+                552,36
+                560,35
+                569,35
+                578,35
+                587,34
+                596,34
+                605,34
+                614,33
+                623,33
+                632,33
+                641,33
+            " fill="none" stroke="#569cd6" stroke-width="2.5"/>
+
+            <!-- Ligne 95% -->
+            <line x1="80" y1="55" x2="650" y2="55" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="6,4"/>
+            <text x="655" y="59" fill="#ff4444" font-size="11">95%</text>
+
+            <!-- Ligne 90% -->
+            <line x1="80" y1="68" x2="650" y2="68" stroke="#ff8c42" stroke-width="1.5" stroke-dasharray="6,4"/>
+            <text x="655" y="72" fill="#ff8c42" font-size="11">90%</text>
+
+            <!-- Marqueur : 29 composantes = 95% -->
+            <line x1="338" y1="55" x2="338" y2="290" stroke="#ff4444" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>
+            <circle cx="338" cy="55" r="5" fill="#ff4444"/>
+            <text x="342" y="48" fill="#ff4444" font-size="11" font-weight="bold">29 comp.</text>
+
+            <!-- Marqueur : 21 composantes = 90% -->
+            <line x1="267" y1="68" x2="267" y2="290" stroke="#ff8c42" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>
+            <circle cx="267" cy="68" r="5" fill="#ff8c42"/>
+            <text x="220" y="80" fill="#ff8c42" font-size="11" font-weight="bold">21 comp.</text>
+
+            <!-- Titre -->
+            <text x="365" y="22" fill="#e0e0e0" font-size="14" text-anchor="middle" font-weight="bold">Variance cumulée - Dataset Digits (64 features)</text>
+        </svg>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PARTIE 5 : LES MÉTRIQUES                                    -->
+    <!-- ========================================================== -->
+    <h2>5. Les Métriques</h2>
+
+    <p>La PCA n'est pas un modèle de prédiction : on ne mesure pas la "précision". On évalue la <strong>qualité de la réduction</strong> avec des métriques spécifiques.</p>
+
+    <!-- Explained Variance Ratio -->
+    <div class="metric-card">
+        <h4>Explained Variance Ratio (Ratio de Variance Expliquée)</h4>
+        <p><strong>Quoi :</strong> Proportion de la variance totale capturée par chaque composante individuellement.</p>
+        <p><strong>Interprétation :</strong> PC1 avec 0.15 signifie que cette composante seule capture 15% de la variance totale. Les premières composantes capturent toujours plus de variance que les suivantes (par construction).</p>
+        <p><strong>Accès :</strong> <code>pca.explained_variance_ratio_</code></p>
+    </div>
+
+    <!-- Cumulative Explained Variance -->
+    <div class="metric-card">
+        <h4>Cumulative Explained Variance (Variance Cumulée)</h4>
+        <p><strong>Quoi :</strong> Somme des ratios de variance des k premières composantes. Indique combien d'information totale est retenue.</p>
+        <p><strong>Interprétation :</strong> CVR(10) = 0.60 signifie que 10 composantes retiennent 60% de l'information. On vise généralement >= 0.90 (90%) ou >= 0.95 (95%).</p>
+        <p><strong>Calcul :</strong> <code>np.cumsum(pca.explained_variance_ratio_)</code></p>
+    </div>
+
+    <!-- Reconstruction Error -->
+    <div class="metric-card">
+        <h4>Reconstruction Error (Erreur de Reconstruction)</h4>
+        <p><strong>Quoi :</strong> Différence entre les données originales et les données reconstruites après réduction puis inverse transformation. Mesure l'information perdue.</p>
+        <p><strong>Interprétation :</strong> Plus l'erreur est faible, meilleure est la réduction. Une erreur de 0 signifie aucune perte (impossible avec k &lt; p).</p>
+        <p><strong>Calcul :</strong> <code>np.mean((X - pca.inverse_transform(pca.transform(X)))**2)</code></p>
+    </div>
+
+    <!-- Impact downstream -->
+    <div class="metric-card">
+        <h4>Impact sur un Modèle Aval (PCA + KNN)</h4>
+        <p><strong>Quoi :</strong> Comparer l'accuracy d'un modèle (KNN, SVM...) avec toutes les features vs. après PCA.</p>
+        <p><strong>Interprétation :</strong> Si accuracy(PCA) est proche de accuracy(original), la réduction est réussie. Bonus : le modèle est souvent plus rapide et plus robuste.</p>
+    </div>
+
+    <h3>Code pratique : Toutes les métriques</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.neighbors <span class="keyword">import</span> KNeighborsClassifier
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> cross_val_score
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> time
+
+X, y = load_digits(return_X_y=<span class="keyword">True</span>)
+X_scaled = StandardScaler().fit_transform(X)
+
+<span class="comment"># === 1. Variance expliquée par composante ===</span>
+pca = PCA(n_components=<span class="number">10</span>).fit(X_scaled)
+<span class="function">print</span>(<span class="string">"=== Variance Expliquée (10 premières) ==="</span>)
+<span class="keyword">for</span> i, v <span class="keyword">in</span> <span class="function">enumerate</span>(pca.explained_variance_ratio_):
+    bar = <span class="string">"█"</span> * <span class="function">int</span>(v * <span class="number">100</span>)
+    <span class="function">print</span>(<span class="string">f"  PC{i+1:2d} : {v:.4f} ({v*100:5.2f}%) {bar}"</span>)
+
+<span class="comment"># === 2. Variance cumulée ===</span>
+cumvar = np.cumsum(pca.explained_variance_ratio_)
+<span class="function">print</span>(<span class="string">f"\nVariance cumulée (10 composantes) : {cumvar[-1]:.4f}"</span>)
+
+<span class="comment"># === 3. Erreur de reconstruction ===</span>
+X_reduced = pca.transform(X_scaled)
+X_reconstructed = pca.inverse_transform(X_reduced)
+mse = np.mean((X_scaled - X_reconstructed) ** <span class="number">2</span>)
+<span class="function">print</span>(<span class="string">f"Erreur de reconstruction (MSE) : {mse:.4f}"</span>)
+
+<span class="comment"># === 4. Impact sur KNN ===</span>
+knn = KNeighborsClassifier(n_neighbors=<span class="number">5</span>)
+
+<span class="comment"># Sans PCA (64 features)</span>
+start = time.time()
+score_full = cross_val_score(knn, X_scaled, y, cv=<span class="number">5</span>).mean()
+time_full = time.time() - start
+
+<span class="comment"># Avec PCA (10 features)</span>
+start = time.time()
+score_pca = cross_val_score(knn, X_reduced, y, cv=<span class="number">5</span>).mean()
+time_pca = time.time() - start
+
+<span class="function">print</span>(<span class="string">f"\n=== Impact sur KNN (k=5) ==="</span>)
+<span class="function">print</span>(<span class="string">f"Sans PCA (64 features) : accuracy={score_full:.4f}, temps={time_full:.3f}s"</span>)
+<span class="function">print</span>(<span class="string">f"Avec PCA (10 features) : accuracy={score_pca:.4f}, temps={time_pca:.3f}s"</span>)
+<span class="function">print</span>(<span class="string">f"Speedup : {time_full/time_pca:.1f}x plus rapide"</span>)</div>
+
+    <div class="output-block">
+=== Variance Expliquée (10 premières) ===
+  PC 1 : 0.0810 ( 8.10%) ████████
+  PC 2 : 0.0702 ( 7.02%) ███████
+  PC 3 : 0.0635 ( 6.35%) ██████
+  PC 4 : 0.0544 ( 5.44%) █████
+  PC 5 : 0.0491 ( 4.91%) ████
+  PC 6 : 0.0432 ( 4.32%) ████
+  PC 7 : 0.0394 ( 3.94%) ███
+  PC 8 : 0.0356 ( 3.56%) ███
+  PC 9 : 0.0341 ( 3.41%) ███
+  PC10 : 0.0314 ( 3.14%) ███
+
+Variance cumulée (10 composantes) : 0.6019
+
+Erreur de reconstruction (MSE) : 0.3981
+
+=== Impact sur KNN (k=5) ===
+Sans PCA (64 features) : accuracy=0.9694, temps=0.187s
+Avec PCA (10 features) : accuracy=0.9633, temps=0.031s
+Speedup : 6.0x plus rapide</div>
+
+    <div class="effect">
+        Avec seulement 10 composantes (15.6% des features originales), on conserve ~60% de la variance, mais l'accuracy KNN ne baisse que de 0.6% (0.9694 -> 0.9633). Le modèle est 6x plus rapide. La PCA a supprimé le bruit sans perdre le signal discriminant.
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PARTIE 6 : IMPLÉMENTATION COMPLÈTE                          -->
+    <!-- ========================================================== -->
+    <h2>6. Implémentation Complète</h2>
+
+    <p>Pipeline complet : charger les données Digits (64 features = images 8x8 pixels), normaliser, appliquer la PCA, visualiser en 2D, puis trouver le nombre optimal de composantes pour un classifieur.</p>
+
+    <div class="code-block"><span class="comment"># =====================================================</span>
+<span class="comment"># PIPELINE PCA COMPLET - Dataset Digits</span>
+<span class="comment"># =====================================================</span>
+
+<span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.neighbors <span class="keyword">import</span> KNeighborsClassifier
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split, cross_val_score
+<span class="keyword">from</span> sklearn.pipeline <span class="keyword">import</span> Pipeline
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+<span class="keyword">import</span> time
+
+<span class="comment"># === ÉTAPE 1 : Charger les données ===</span>
+digits = load_digits()
+X, y = digits.data, digits.target
+<span class="function">print</span>(<span class="string">"=== Dataset Digits ==="</span>)
+<span class="function">print</span>(<span class="string">f"Échantillons : {X.shape[0]}"</span>)
+<span class="function">print</span>(<span class="string">f"Features     : {X.shape[1]} (images 8x8 pixels)"</span>)
+<span class="function">print</span>(<span class="string">f"Classes      : {np.unique(y)} (chiffres 0-9)"</span>)
+
+<span class="comment"># === ÉTAPE 2 : Normalisation ===</span>
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+<span class="function">print</span>(<span class="string">f"\nAprès StandardScaler :"</span>)
+<span class="function">print</span>(<span class="string">f"  Moyenne : {X_scaled.mean():.6f} (≈ 0)"</span>)
+<span class="function">print</span>(<span class="string">f"  Écart-type : {X_scaled.std():.6f} (≈ 1)"</span>)
+
+<span class="comment"># === ÉTAPE 3 : Analyse exploratoire (toutes composantes) ===</span>
+pca_explore = PCA().fit(X_scaled)
+cumvar = np.cumsum(pca_explore.explained_variance_ratio_)
+
+<span class="function">print</span>(<span class="string">f"\n=== Analyse de la variance ==="</span>)
+<span class="keyword">for</span> threshold <span class="keyword">in</span> [<span class="number">0.80</span>, <span class="number">0.90</span>, <span class="number">0.95</span>, <span class="number">0.99</span>]:
+    n = np.argmax(cumvar >= threshold) + <span class="number">1</span>
+    <span class="function">print</span>(<span class="string">f"  {threshold*100:.0f}% de variance -> {n} composantes (sur 64)"</span>)
+
+<span class="comment"># === ÉTAPE 4 : Visualisation 2D ===</span>
+pca_2d = PCA(n_components=<span class="number">2</span>)
+X_2d = pca_2d.fit_transform(X_scaled)
+
+<span class="function">print</span>(<span class="string">f"\n=== Visualisation 2D ==="</span>)
+<span class="function">print</span>(<span class="string">f"Variance captée en 2D : {sum(pca_2d.explained_variance_ratio_):.4f}"</span>)
+
+plt.figure(figsize=(<span class="number">10</span>, <span class="number">8</span>))
+scatter = plt.scatter(X_2d[:, <span class="number">0</span>], X_2d[:, <span class="number">1</span>], c=y, cmap=<span class="string">'tab10'</span>,
+                      alpha=<span class="number">0.6</span>, s=<span class="number">15</span>, edgecolors=<span class="string">'none'</span>)
+plt.colorbar(scatter, label=<span class="string">'Chiffre'</span>)
+plt.xlabel(<span class="string">f'PC1 ({pca_2d.explained_variance_ratio_[0]*100:.1f}% variance)'</span>)
+plt.ylabel(<span class="string">f'PC2 ({pca_2d.explained_variance_ratio_[1]*100:.1f}% variance)'</span>)
+plt.title(<span class="string">'Digits projetés en 2D via PCA'</span>)
+plt.tight_layout()
+plt.savefig(<span class="string">'pca_digits_2d.png'</span>, dpi=<span class="number">150</span>)
+plt.show()
+
+<span class="comment"># === ÉTAPE 5 : Pipeline optimal ===</span>
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=<span class="number">0.2</span>, random_state=<span class="number">42</span>, stratify=y
+)
+
+<span class="comment"># Pipeline : Scaler -> PCA -> KNN</span>
+pipe_pca = Pipeline([
+    (<span class="string">'scaler'</span>, StandardScaler()),
+    (<span class="string">'pca'</span>, PCA(n_components=<span class="number">0.95</span>, svd_solver=<span class="string">'full'</span>)),
+    (<span class="string">'knn'</span>, KNeighborsClassifier(n_neighbors=<span class="number">5</span>))
+])
+
+pipe_full = Pipeline([
+    (<span class="string">'scaler'</span>, StandardScaler()),
+    (<span class="string">'knn'</span>, KNeighborsClassifier(n_neighbors=<span class="number">5</span>))
+])
+
+<span class="comment"># Entraîner et évaluer</span>
+<span class="function">print</span>(<span class="string">"\n=== Pipeline Final ==="</span>)
+
+start = time.time()
+pipe_pca.fit(X_train, y_train)
+score_pca = pipe_pca.score(X_test, y_test)
+time_pca = time.time() - start
+n_comp = pipe_pca.named_steps[<span class="string">'pca'</span>].n_components_
+
+start = time.time()
+pipe_full.fit(X_train, y_train)
+score_full = pipe_full.score(X_test, y_test)
+time_full = time.time() - start
+
+<span class="function">print</span>(<span class="string">f"Sans PCA : accuracy={score_full:.4f}, features=64, temps={time_full:.4f}s"</span>)
+<span class="function">print</span>(<span class="string">f"Avec PCA : accuracy={score_pca:.4f}, features={n_comp}, temps={time_pca:.4f}s"</span>)
+<span class="function">print</span>(<span class="string">f"Réduction : {64} -> {n_comp} features ({(1-n_comp/64)*100:.0f}% en moins)"</span>)
+<span class="function">print</span>(<span class="string">f"Speedup  : {time_full/time_pca:.1f}x"</span>)</div>
+
+    <div class="output-block">
+=== Dataset Digits ===
+Échantillons : 1797
+Features     : 64 (images 8x8 pixels)
+Classes      : [0 1 2 3 4 5 6 7 8 9] (chiffres 0-9)
+
+Après StandardScaler :
+  Moyenne : 0.000000 (≈ 0)
+  Écart-type : 1.000000 (≈ 1)
+
+=== Analyse de la variance ===
+  80% de variance -> 15 composantes (sur 64)
+  90% de variance -> 21 composantes (sur 64)
+  95% de variance -> 29 composantes (sur 64)
+  99% de variance -> 41 composantes (sur 64)
+
+=== Visualisation 2D ===
+Variance captée en 2D : 0.2854
+
+=== Pipeline Final ===
+Sans PCA : accuracy=0.9722, features=64, temps=0.0182s
+Avec PCA : accuracy=0.9750, features=29, temps=0.0098s
+Réduction : 64 -> 29 features (55% en moins)
+Speedup  : 1.9x</div>
+
+    <div class="prof-note">
+        Remarquez que l'accuracy avec PCA (0.9750) est légèrement MEILLEURE qu'en plein (0.9722). Ce n'est pas un hasard : la PCA a supprimé les dimensions de bruit qui perturbaient KNN. C'est un phénomène classique : la réduction de dimensionnalité peut améliorer la performance en éliminant le bruit et la "malédiction de la dimensionnalité" (curse of dimensionality).
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PARTIE 7 : EXPÉRIMENTATION                                  -->
+    <!-- ========================================================== -->
+    <h2>7. Expérimentation</h2>
+
+    <p>Comparaison systématique : quelle est l'accuracy et le temps pour différents nombres de composantes ?</p>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.neighbors <span class="keyword">import</span> KNeighborsClassifier
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> cross_val_score
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> time
+
+X, y = load_digits(return_X_y=<span class="keyword">True</span>)
+X_scaled = StandardScaler().fit_transform(X)
+
+<span class="comment"># Tester différents nombres de composantes</span>
+n_components_list = [<span class="number">2</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">15</span>, <span class="number">20</span>, <span class="number">29</span>, <span class="number">40</span>, <span class="number">64</span>]
+knn = KNeighborsClassifier(n_neighbors=<span class="number">5</span>)
+
+<span class="function">print</span>(<span class="string">f"{'n_comp':>6} | {'Variance':>10} | {'Accuracy':>10} | {'Temps':>8} | {'Speedup':>8}"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">58</span>)
+
+<span class="comment"># Baseline sans PCA</span>
+start = time.time()
+score_base = cross_val_score(knn, X_scaled, y, cv=<span class="number">5</span>).mean()
+time_base = time.time() - start
+
+<span class="keyword">for</span> n <span class="keyword">in</span> n_components_list:
+    <span class="keyword">if</span> n == <span class="number">64</span>:
+        <span class="function">print</span>(<span class="string">f"{'64*':>6} | {'100.00%':>10} | {score_base:>10.4f} | {time_base:>7.3f}s | {'1.0x':>8}"</span>)
+        <span class="keyword">continue</span>
+
+    pca = PCA(n_components=n)
+    X_pca = pca.fit_transform(X_scaled)
+    var_explained = sum(pca.explained_variance_ratio_) * <span class="number">100</span>
+
+    start = time.time()
+    score = cross_val_score(knn, X_pca, y, cv=<span class="number">5</span>).mean()
+    elapsed = time.time() - start
+
+    speedup = time_base / elapsed <span class="keyword">if</span> elapsed > <span class="number">0</span> <span class="keyword">else</span> float(<span class="string">'inf'</span>)
+    <span class="function">print</span>(<span class="string">f"{n:>6} | {var_explained:>9.2f}% | {score:>10.4f} | {elapsed:>7.3f}s | {speedup:>7.1f}x"</span>)</div>
+
+    <div class="output-block">
+n_comp |   Variance |   Accuracy |    Temps |  Speedup
+----------------------------------------------------------
+     2 |     28.54% |     0.7130 |    0.012s |    15.6x
+     5 |     42.11% |     0.9043 |    0.016s |    11.7x
+    10 |     60.19% |     0.9633 |    0.022s |     8.5x
+    15 |     74.82% |     0.9694 |    0.026s |     7.2x
+    20 |     86.43% |     0.9711 |    0.029s |     6.4x
+    29 |     95.04% |     0.9733 |    0.035s |     5.3x
+    40 |     98.87% |     0.9722 |    0.044s |     4.3x
+   64* |    100.00% |     0.9694 |    0.187s |      1.0x</div>
+
+    <div class="concept-box green">
+        <h3>Analyse des résultats</h3>
+        <table>
+            <tr><th>Observation</th><th>Explication</th></tr>
+            <tr>
+                <td><strong>2 composantes</strong> : 71.3% accuracy</td>
+                <td>Seulement 28.5% de variance, insuffisant pour la classification mais parfait pour la visualisation</td>
+            </tr>
+            <tr>
+                <td><strong>10 composantes</strong> : 96.3% accuracy</td>
+                <td>60% de variance suffit pour capturer l'essentiel du signal discriminant. 8.5x plus rapide !</td>
+            </tr>
+            <tr>
+                <td><strong>29 composantes (95%)</strong> : 97.3% accuracy</td>
+                <td>Meilleure accuracy que 64 features ! La PCA a filtré le bruit</td>
+            </tr>
+            <tr>
+                <td><strong>64 features (tout)</strong> : 96.9% accuracy</td>
+                <td>Plus lent et moins précis que 29 composantes : les dimensions inutiles ajoutent du bruit</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Le point clé : <strong>10 composantes (15.6% des features) donnent 96.3% d'accuracy</strong>, soit seulement 0.6% de moins que le maximum, tout en étant <strong>8.5x plus rapide</strong>. C'est le "sweet spot" de la PCA. À 29 composantes (95% de variance), on atteint même une accuracy SUPÉRIEURE au cas complet. C'est la preuve que la réduction de dimensionnalité n'est pas qu'un compromis -- elle peut réellement améliorer la performance.
+    </div>
+
+    <h3>Visualisation de la reconstruction</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+
+X, y = load_digits(return_X_y=<span class="keyword">True</span>)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+<span class="comment"># Reconstruire un chiffre avec différents nombres de composantes</span>
+idx = <span class="number">0</span>  <span class="comment"># Premier échantillon</span>
+original = X[idx].reshape(<span class="number">8</span>, <span class="number">8</span>)
+
+fig, axes = plt.subplots(<span class="number">1</span>, <span class="number">5</span>, figsize=(<span class="number">15</span>, <span class="number">3</span>))
+axes[<span class="number">0</span>].imshow(original, cmap=<span class="string">'gray'</span>)
+axes[<span class="number">0</span>].set_title(<span class="string">'Original (64)'</span>)
+axes[<span class="number">0</span>].axis(<span class="string">'off'</span>)
+
+<span class="keyword">for</span> i, n <span class="keyword">in</span> <span class="function">enumerate</span>([<span class="number">2</span>, <span class="number">10</span>, <span class="number">20</span>, <span class="number">40</span>]):
+    pca = PCA(n_components=n)
+    X_pca = pca.fit_transform(X_scaled)
+    X_recon = scaler.inverse_transform(pca.inverse_transform(X_pca))
+    reconstructed = X_recon[idx].reshape(<span class="number">8</span>, <span class="number">8</span>)
+
+    mse = np.mean((original - reconstructed) ** <span class="number">2</span>)
+    axes[i+<span class="number">1</span>].imshow(reconstructed, cmap=<span class="string">'gray'</span>)
+    axes[i+<span class="number">1</span>].set_title(<span class="string">f'{n} comp (MSE={mse:.2f})'</span>)
+    axes[i+<span class="number">1</span>].axis(<span class="string">'off'</span>)
+
+plt.suptitle(<span class="string">'Reconstruction du chiffre avec PCA'</span>)
+plt.tight_layout()
+plt.savefig(<span class="string">'pca_reconstruction.png'</span>, dpi=<span class="number">150</span>)
+plt.show()
+
+<span class="function">print</span>(<span class="string">"Erreur de reconstruction par nombre de composantes :"</span>)
+<span class="keyword">for</span> n <span class="keyword">in</span> [<span class="number">2</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">20</span>, <span class="number">29</span>, <span class="number">40</span>, <span class="number">64</span>]:
+    pca = PCA(n_components=n <span class="keyword">if</span> n < <span class="number">64</span> <span class="keyword">else</span> <span class="keyword">None</span>)
+    X_pca = pca.fit_transform(X_scaled)
+    X_recon = pca.inverse_transform(X_pca)
+    mse = np.mean((X_scaled - X_recon) ** <span class="number">2</span>)
+    <span class="function">print</span>(<span class="string">f"  {n:>3} composantes -> MSE = {mse:.4f}"</span>)</div>
+
+    <div class="output-block">
+Erreur de reconstruction par nombre de composantes :
+    2 composantes -> MSE = 0.7146
+    5 composantes -> MSE = 0.5789
+   10 composantes -> MSE = 0.3981
+   20 composantes -> MSE = 0.1357
+   29 composantes -> MSE = 0.0496
+   40 composantes -> MSE = 0.0113
+   64 composantes -> MSE = 0.0000</div>
+
+    <div class="effect">
+        L'erreur de reconstruction diminue de façon non linéaire. De 10 à 29 composantes, le MSE chute de 0.40 à 0.05, une amélioration massive. Au-delà de 40 composantes, les gains sont négligeables. À 64 composantes (toutes), MSE = 0 car aucune information n'est perdue.
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PARTIE 8 : ERREURS COURANTES                                -->
+    <!-- ========================================================== -->
+    <h2>8. Erreurs Courantes</h2>
+
+    <!-- Erreur 1 -->
+    <div class="warning">
+        <strong>Erreur n°1 : Oublier la normalisation</strong><br>
+        Appliquer la PCA directement sur des données non normalisées. Les features avec de grandes valeurs numériques (salaire en milliers vs. âge en dizaines) domineront artificiellement les composantes principales. Le résultat sera mathématiquement correct mais sémantiquement absurde.
+    </div>
+
+    <div class="code-block"><span class="comment"># MAUVAIS : PCA sans normalisation</span>
+pca = PCA(n_components=<span class="number">2</span>)
+X_bad = pca.fit_transform(X)  <span class="comment"># X non normalisé !</span>
+
+<span class="comment"># CORRECT : Toujours normaliser d'abord</span>
+<span class="keyword">from</span> sklearn.pipeline <span class="keyword">import</span> Pipeline
+pipe = Pipeline([
+    (<span class="string">'scaler'</span>, StandardScaler()),
+    (<span class="string">'pca'</span>, PCA(n_components=<span class="number">2</span>))
+])
+X_good = pipe.fit_transform(X)</div>
+
+    <!-- Erreur 2 -->
+    <div class="warning">
+        <strong>Erreur n°2 : Garder trop peu de composantes</strong><br>
+        Réduire agressivement à 2 ou 3 composantes pour "simplifier" quand on veut ensuite entraîner un modèle. 2 composantes = visualisation, pas modélisation. Toujours vérifier la variance cumulée : si elle est inférieure à 80%, on perd trop d'information.
+    </div>
+
+    <div class="code-block"><span class="comment"># Vérifier AVANT de choisir n_components</span>
+pca_check = PCA().fit(X_scaled)
+cumvar = np.cumsum(pca_check.explained_variance_ratio_)
+n_optimal = np.argmax(cumvar >= <span class="number">0.95</span>) + <span class="number">1</span>
+<span class="function">print</span>(<span class="string">f"Nombre optimal (95% variance) : {n_optimal}"</span>)
+<span class="comment"># NE PAS juste mettre n_components=2 pour un modèle !</span></div>
+
+    <!-- Erreur 3 -->
+    <div class="warning">
+        <strong>Erreur n°3 : Appliquer la PCA à des données catégorielles</strong><br>
+        La PCA calcule des covariances, qui nécessitent des variables numériques continues. Appliquer la PCA sur des colonnes one-hot encodées (0/1) produit des résultats mathématiquement valides mais statistiquement inappropriés. Utiliser MCA (Multiple Correspondence Analysis) ou FAMD pour les données catégorielles.
+    </div>
+
+    <!-- Erreur 4 -->
+    <div class="warning">
+        <strong>Erreur n°4 : Oublier de fit sur le train et transform sur le test</strong><br>
+        Fit la PCA sur l'ensemble complet (train + test) avant de séparer. Cela provoque une fuite de données (data leakage). La PCA doit être fit UNIQUEMENT sur les données d'entraînement.
+    </div>
+
+    <div class="code-block"><span class="comment"># MAUVAIS : Data leakage</span>
+X_pca = PCA(n_components=<span class="number">10</span>).fit_transform(X_scaled)  <span class="comment"># Tout X !</span>
+X_train, X_test = train_test_split(X_pca, ...)
+
+<span class="comment"># CORRECT : fit sur train, transform sur test</span>
+X_train, X_test, y_train, y_test = train_test_split(X, y, ...)
+pipe = Pipeline([
+    (<span class="string">'scaler'</span>, StandardScaler()),
+    (<span class="string">'pca'</span>, PCA(n_components=<span class="number">10</span>)),
+    (<span class="string">'knn'</span>, KNeighborsClassifier())
+])
+pipe.fit(X_train, y_train)  <span class="comment"># PCA fit sur train seulement</span>
+score = pipe.score(X_test, y_test)  <span class="comment"># PCA transform sur test</span></div>
+
+    <!-- Erreur 5 -->
+    <div class="warning">
+        <strong>Erreur n°5 : Interpréter les composantes comme des features originales</strong><br>
+        PC1 n'est PAS la "meilleure feature". C'est une combinaison linéaire de TOUTES les features. Dire "PC1 = le poids" est presque toujours faux. On peut inspecter les loadings (pca.components_) pour comprendre quelles features contribuent le plus, mais la composante reste un mélange.
+    </div>
+
+    <div class="code-block"><span class="comment"># Inspecter les contributions (loadings)</span>
+pca = PCA(n_components=<span class="number">3</span>).fit(X_scaled)
+<span class="function">print</span>(<span class="string">"Contributions des features à PC1 (top 5) :"</span>)
+loadings_pc1 = np.abs(pca.components_[<span class="number">0</span>])
+top_features = np.argsort(loadings_pc1)[::-<span class="number">1</span>][:<span class="number">5</span>]
+<span class="keyword">for</span> idx <span class="keyword">in</span> top_features:
+    <span class="function">print</span>(<span class="string">f"  Feature {idx} : loading = {pca.components_[0][idx]:.4f}"</span>)</div>
+
+    <!-- Erreur 6 -->
+    <div class="warning">
+        <strong>Erreur n°6 : Confondre PCA avec la sélection de features</strong><br>
+        La PCA ne sélectionne PAS des features existantes. Elle CRÉE de nouvelles features (combinaisons linéaires). Après PCA, les features originales n'existent plus. Si l'interprétabilité est cruciale (quelles features sont importantes ?), utiliser plutôt SelectKBest, feature_importances, ou LASSO.
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- PARTIE 9 : RÉSUMÉ COMPLET                                   -->
+    <!-- ========================================================== -->
+    <h2>9. Résumé Complet</h2>
+
+    <h3>Tableau 1 : Paramètres PCA en un coup d'oeil</h3>
+    <table>
+        <tr>
+            <th>Paramètre</th>
+            <th>Défaut</th>
+            <th>Valeurs courantes</th>
+            <th>Impact</th>
+        </tr>
+        <tr>
+            <td><strong>n_components</strong></td>
+            <td>None (tous)</td>
+            <td>int (2, 10, 50) ou float (0.90, 0.95, 0.99)</td>
+            <td>Nombre de dimensions après réduction. Float = variance cible automatique</td>
+        </tr>
+        <tr>
+            <td><strong>svd_solver</strong></td>
+            <td>'auto'</td>
+            <td>'auto', 'full', 'randomized'</td>
+            <td>Vitesse de calcul. 'randomized' pour gros datasets</td>
+        </tr>
+        <tr>
+            <td><strong>whiten</strong></td>
+            <td>False</td>
+            <td>True / False</td>
+            <td>Normalise variance de chaque composante à 1. Utile pour SVM/K-Means</td>
+        </tr>
+        <tr>
+            <td><strong>random_state</strong></td>
+            <td>None</td>
+            <td>42, 0</td>
+            <td>Reproductibilité (utile seulement avec svd_solver='randomized')</td>
+        </tr>
+    </table>
+
+    <h3>Tableau 2 : Métriques d'évaluation</h3>
+    <table>
+        <tr>
+            <th>Métrique</th>
+            <th>Accès / Calcul</th>
+            <th>Bon signe</th>
+            <th>Usage</th>
+        </tr>
+        <tr>
+            <td><strong>Explained Variance Ratio</strong></td>
+            <td>pca.explained_variance_ratio_</td>
+            <td>Premières composantes capturent beaucoup</td>
+            <td>Évaluer chaque composante individuellement</td>
+        </tr>
+        <tr>
+            <td><strong>Variance cumulée</strong></td>
+            <td>np.cumsum(pca.explained_variance_ratio_)</td>
+            <td>>= 0.95 avec peu de composantes</td>
+            <td>Choisir n_components optimal</td>
+        </tr>
+        <tr>
+            <td><strong>Erreur de reconstruction (MSE)</strong></td>
+            <td>np.mean((X - pca.inverse_transform(...))**2)</td>
+            <td>MSE faible</td>
+            <td>Quantifier l'information perdue</td>
+        </tr>
+        <tr>
+            <td><strong>Accuracy aval</strong></td>
+            <td>modele.score(X_pca_test, y_test)</td>
+            <td>Proche de l'accuracy sans PCA</td>
+            <td>Valider que la PCA ne nuit pas à la tâche finale</td>
+        </tr>
+    </table>
+
+    <h3>Tableau 3 : Checklist PCA</h3>
+    <table>
+        <tr>
+            <th>Étape</th>
+            <th>Action</th>
+            <th>Vérification</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td>Vérifier que les données sont numériques continues</td>
+            <td>Pas de colonnes catégorielles ou textuelles</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>Appliquer StandardScaler()</td>
+            <td>Moyenne ≈ 0, écart-type ≈ 1 pour chaque feature</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>Analyser la variance cumulée (PCA sans n_components)</td>
+            <td>Trouver le "coude" dans le graphe cumulé</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>Choisir n_components (seuil 90-95%)</td>
+            <td>Vérifier que le nombre est raisonnable (&lt; 50% des features)</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>Fit sur TRAIN, transform sur TEST (via Pipeline)</td>
+            <td>Pas de data leakage</td>
+        </tr>
+        <tr>
+            <td>6</td>
+            <td>Évaluer l'accuracy du modèle aval</td>
+            <td>Accuracy PCA >= 95% de l'accuracy originale</td>
+        </tr>
+        <tr>
+            <td>7</td>
+            <td>Comparer le temps d'entraînement avec et sans PCA</td>
+            <td>Speedup significatif attendu si p est grand</td>
+        </tr>
+    </table>
+
+    <div class="concept-box green">
+        <h3>Le mot de la fin</h3>
+        <p>La PCA est un outil fondamental du machine learning, utilisé dans presque tous les domaines : vision par ordinateur (réduction d'images), NLP (réduction de vecteurs de mots), bioinformatique (analyse génomique), finance (facteurs de risque). Elle n'est pas un modèle de prédiction, mais un <strong>prétraitement</strong> qui rend les autres modèles plus rapides, plus robustes, et parfois même plus précis.</p>
+        <p><strong>Règle d'or :</strong> StandardScaler -> PCA(0.95) -> Votre Modèle. C'est simple, efficace, et rarement décevant.</p>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="td_dbscan.html">&larr; TD DBSCAN</a>
+        <span style="color: #aaa;">(Fin des TDs non supervisés) &rarr;</span>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

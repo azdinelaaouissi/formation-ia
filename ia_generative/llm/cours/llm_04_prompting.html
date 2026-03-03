@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cours LLM 04 - Prompt Engineering</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Prompt Engineering - L'Art de Parler aux LLMs</h1>
+    <p class="subtitle">Cours 04 - Ma&icirc;triser les techniques de formulation pour obtenir des r&eacute;sultats optimaux</p>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1 : QU'EST-CE QUE LE PROMPT ENGINEERING -->
+    <!-- ============================================================ -->
+    <h2>1. Qu'est-ce que le Prompt Engineering ?</h2>
+
+    <div class="definition">
+        Le <strong>Prompt Engineering</strong> (ing&eacute;nierie de prompt) est la discipline qui consiste &agrave; concevoir, structurer et optimiser les instructions textuelles envoy&eacute;es &agrave; un mod&egrave;le de langage (LLM) afin d'obtenir des r&eacute;ponses pr&eacute;cises, pertinentes et de haute qualit&eacute;.
+    </div>
+
+    <p>Pourquoi est-ce si important ? Un <strong>m&ecirc;me mod&egrave;le</strong> peut produire des r&eacute;sultats <strong>radicalement diff&eacute;rents</strong> selon la fa&ccedil;on dont on lui pose une question. Consid&eacute;rez les deux prompts suivants :</p>
+
+    <div class="code-block"><span class="comment"># Prompt vague</span>
+prompt_v1 = <span class="string">"Parle-moi de Python"</span></div>
+
+    <div class="output-block">Python est un langage de programmation... (r&eacute;ponse g&eacute;n&eacute;rique, peu structur&eacute;e, 3 paragraphes vagues)</div>
+
+    <div class="code-block"><span class="comment"># Prompt bien structur&eacute;</span>
+prompt_v2 = <span class="string">"""Tu es un professeur d'informatique.
+Explique les 5 avantages principaux de Python pour un d&eacute;butant.
+Format : liste num&eacute;rot&eacute;e avec un exemple de code pour chaque point.
+Longueur : 300 mots maximum."""</span></div>
+
+    <div class="output-block">1. Syntaxe lisible : x = 5 (pas de point-virgule)
+2. Typage dynamique : nom = "Alice" (pas besoin de d&eacute;clarer le type)
+3. Biblioth&egrave;ques riches : import pandas as pd
+... (r&eacute;ponse structur&eacute;e, pr&eacute;cise, avec exemples)</div>
+
+    <div class="prof-note">
+        Le prompt engineering n'est pas de la programmation classique, mais c'est devenu une comp&eacute;tence professionnelle &agrave; part enti&egrave;re en 2025-2026. De nombreuses entreprises recrutent d&eacute;sormais des "Prompt Engineers" sp&eacute;cialis&eacute;s.
+    </div>
+
+    <div class="concept-box green">
+        <h3>Principe fondamental</h3>
+        <p>La qualit&eacute; de la sortie d'un LLM est <strong>directement proportionnelle</strong> &agrave; la qualit&eacute; de l'entr&eacute;e (le prompt). Un prompt bien con&ccedil;u peut transformer un mod&egrave;le moyen en outil puissant, tandis qu'un mauvais prompt peut rendre inutile m&ecirc;me le mod&egrave;le le plus avanc&eacute;.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2 : ANATOMIE D'UN BON PROMPT -->
+    <!-- ============================================================ -->
+    <h2>2. Anatomie d'un bon prompt</h2>
+
+    <p>Un prompt efficace se compose de plusieurs &eacute;l&eacute;ments cl&eacute;s, chacun jouant un r&ocirc;le sp&eacute;cifique dans la qualit&eacute; de la r&eacute;ponse obtenue :</p>
+
+    <div class="svg-container">
+        <svg width="750" height="420" viewBox="0 0 750 420">
+            <defs>
+                <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#1a1a2e"/>
+                    <stop offset="100%" style="stop-color:#16213e"/>
+                </linearGradient>
+            </defs>
+            <rect x="5" y="5" width="740" height="410" rx="15" fill="url(#bgGrad)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="375" y="40" fill="#ff6b35" font-size="18" font-weight="bold" text-anchor="middle">Anatomie d'un Prompt Efficace</text>
+            <!-- Role -->
+            <rect x="30" y="60" width="690" height="50" rx="8" fill="rgba(86,156,214,0.15)" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="50" y="90" fill="#569cd6" font-size="14" font-weight="bold">1. R&ocirc;le (System)</text>
+            <text x="250" y="90" fill="#e0e0e0" font-size="13">"Tu es un expert en s&eacute;curit&eacute; informatique..."</text>
+            <!-- Instruction -->
+            <rect x="30" y="120" width="690" height="50" rx="8" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="50" y="150" fill="#ff6b35" font-size="14" font-weight="bold">2. Instruction</text>
+            <text x="250" y="150" fill="#e0e0e0" font-size="13">"Analyse les vuln&eacute;rabilit&eacute;s du code suivant..."</text>
+            <!-- Contexte -->
+            <rect x="30" y="180" width="690" height="50" rx="8" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="50" y="210" fill="#00ff88" font-size="14" font-weight="bold">3. Contexte</text>
+            <text x="250" y="210" fill="#e0e0e0" font-size="13">"Voici le code Python d'une API Flask : [code]..."</text>
+            <!-- Exemples -->
+            <rect x="30" y="240" width="690" height="50" rx="8" fill="rgba(255,140,66,0.15)" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="50" y="270" fill="#ff8c42" font-size="14" font-weight="bold">4. Exemples (Few-shot)</text>
+            <text x="250" y="270" fill="#e0e0e0" font-size="13">"Exemple : eval(input) -> Injection de code, Criticit&eacute;: Haute"</text>
+            <!-- Format -->
+            <rect x="30" y="300" width="690" height="50" rx="8" fill="rgba(181,206,168,0.15)" stroke="#b5cea8" stroke-width="1.5"/>
+            <text x="50" y="330" fill="#b5cea8" font-size="14" font-weight="bold">5. Format de sortie</text>
+            <text x="250" y="330" fill="#e0e0e0" font-size="13">"R&eacute;ponds en JSON : {vuln&eacute;rabilit&eacute;, criticit&eacute;, correction}"</text>
+            <!-- Contraintes -->
+            <rect x="30" y="360" width="690" height="50" rx="8" fill="rgba(255,68,68,0.15)" stroke="#ff4444" stroke-width="1.5"/>
+            <text x="50" y="390" fill="#ff4444" font-size="14" font-weight="bold">6. Contraintes</text>
+            <text x="250" y="390" fill="#e0e0e0" font-size="13">"Maximum 5 vuln&eacute;rabilit&eacute;s, tri&eacute;es par criticit&eacute; d&eacute;croissante"</text>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># Prompt complet int&eacute;grant tous les &eacute;l&eacute;ments</span>
+prompt_complet = {
+    <span class="string">"system"</span>: <span class="string">"Tu es un nutritionniste dipl&ocirc;m&eacute; avec 10 ans d'exp&eacute;rience."</span>,  <span class="comment"># R&ocirc;le</span>
+    <span class="string">"user"</span>: <span class="string">"""
+    Cr&eacute;e un plan alimentaire hebdomadaire.                          # Instruction
+
+    Contexte : Patient de 30 ans, sportif, intol&eacute;rant au gluten.   # Contexte
+
+    Exemple de format pour un jour :                                # Exemple
+    - Lundi : Petit-d&eacute;j: Smoothie banane-avoine | D&eacute;j: Salade
+      quinoa | D&icirc;ner: Saumon grill&eacute;
+
+    R&egrave;gles :                                                       # Contraintes
+    - 2000-2500 kcal/jour
+    - Pas de gluten
+    - Format : tableau avec colonnes Jour|Repas|Calories           # Format
+    """</span>
+}</div>
+
+    <div class="prof-note">
+        Tous les &eacute;l&eacute;ments ne sont pas toujours n&eacute;cessaires. Pour une question simple, une instruction claire peut suffire. Mais pour des t&acirc;ches complexes, chaque composant am&eacute;liore significativement la qualit&eacute; du r&eacute;sultat.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3 : TECHNIQUES DE BASE -->
+    <!-- ============================================================ -->
+    <h2>3. Techniques de base</h2>
+
+    <h3>3.1 Zero-shot Prompting</h3>
+
+    <div class="definition">
+        Le <strong>zero-shot prompting</strong> consiste &agrave; demander au mod&egrave;le d'ex&eacute;cuter une t&acirc;che <strong>sans lui fournir aucun exemple</strong>. On s'appuie enti&egrave;rement sur les connaissances d&eacute;j&agrave; acquises par le mod&egrave;le lors de son entra&icirc;nement.
+    </div>
+
+    <div class="code-block"><span class="comment"># Zero-shot : pas d'exemple fourni</span>
+prompt = <span class="string">"Classifie le sentiment de cette phrase comme positif, n&eacute;gatif ou neutre :
+'Ce restaurant a une cuisine exceptionnelle mais le service est d&eacute;plorable.'"</span>
+
+response = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}]
+)</div>
+
+    <div class="output-block">Sentiment : Mitig&eacute;/Neutre. La phrase exprime &agrave; la fois un avis tr&egrave;s positif sur la cuisine ("exceptionnelle") et un avis tr&egrave;s n&eacute;gatif sur le service ("d&eacute;plorable").</div>
+
+    <h3>3.2 Few-shot Prompting</h3>
+
+    <div class="definition">
+        Le <strong>few-shot prompting</strong> fournit <strong>quelques exemples</strong> (g&eacute;n&eacute;ralement 2 &agrave; 5) de la t&acirc;che attendue avant de poser la question r&eacute;elle. Cela guide le mod&egrave;le vers le format et le type de r&eacute;ponse souhait&eacute;.
+    </div>
+
+    <div class="code-block"><span class="comment"># Few-shot : on donne des exemples pour guider le mod&egrave;le</span>
+prompt = <span class="string">"""Classifie le sentiment de chaque phrase.
+
+Phrase : "J'adore ce film, il est magnifique !"
+Sentiment : positif
+
+Phrase : "Le temps est couvert aujourd'hui."
+Sentiment : neutre
+
+Phrase : "Cette application plante constamment, c'est inutilisable."
+Sentiment : n&eacute;gatif
+
+Phrase : "Le nouveau campus universitaire est vraiment bien con&ccedil;u."
+Sentiment : """</span></div>
+
+    <div class="output-block">positif</div>
+
+    <div class="effect">
+        Avec le few-shot, le mod&egrave;le comprend exactement le format attendu (un seul mot) et la granularit&eacute; de classification (positif/n&eacute;gatif/neutre). Le taux de pr&eacute;cision augmente de 15 &agrave; 30% par rapport au zero-shot pour les t&acirc;ches de classification.
+    </div>
+
+    <h3>3.3 Instruction-following</h3>
+
+    <p>Cette technique repose sur des <strong>instructions explicites et d&eacute;taill&eacute;es</strong> qui d&eacute;crivent pr&eacute;cis&eacute;ment ce que le mod&egrave;le doit faire :</p>
+
+    <div class="code-block"><span class="comment"># Instruction-following : instructions tr&egrave;s d&eacute;taill&eacute;es</span>
+prompt = <span class="string">"""Analyse le texte suivant en effectuant ces &eacute;tapes :
+1. Identifie la langue du texte
+2. Extrais les entit&eacute;s nomm&eacute;es (personnes, lieux, organisations)
+3. R&eacute;sume le texte en une phrase
+4. Attribue un score de complexit&eacute; de 1 &agrave; 10
+
+Texte : 'Le pr&eacute;sident Emmanuel Macron a inaugur&eacute; le nouveau si&egrave;ge
+de l'INRIA &agrave; Saclay lors d'une c&eacute;r&eacute;monie officielle.'
+
+Format de r&eacute;ponse :
+- Langue : [langue]
+- Entit&eacute;s : [liste]
+- R&eacute;sum&eacute; : [phrase]
+- Complexit&eacute; : [score]/10"""</span></div>
+
+    <div class="output-block">- Langue : Fran&ccedil;ais
+- Entit&eacute;s : Emmanuel Macron (personne), INRIA (organisation), Saclay (lieu)
+- R&eacute;sum&eacute; : Macron a inaugur&eacute; le nouveau si&egrave;ge de l'INRIA &agrave; Saclay.
+- Complexit&eacute; : 3/10</div>
+
+    <div class="svg-container">
+        <svg width="700" height="200" viewBox="0 0 700 200">
+            <rect x="5" y="5" width="690" height="190" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="350" y="35" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Comparaison des techniques de base</text>
+            <!-- Zero-shot -->
+            <rect x="30" y="55" width="190" height="120" rx="10" fill="rgba(86,156,214,0.1)" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="125" y="80" fill="#569cd6" font-size="14" font-weight="bold" text-anchor="middle">Zero-shot</text>
+            <text x="125" y="105" fill="#e0e0e0" font-size="11" text-anchor="middle">Aucun exemple</text>
+            <text x="125" y="125" fill="#aaa" font-size="11" text-anchor="middle">Simple &amp; rapide</text>
+            <text x="125" y="150" fill="#00ff88" font-size="12" text-anchor="middle">Pr&eacute;cision : ~70%</text>
+            <!-- Few-shot -->
+            <rect x="255" y="55" width="190" height="120" rx="10" fill="rgba(255,107,53,0.1)" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="350" y="80" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">Few-shot</text>
+            <text x="350" y="105" fill="#e0e0e0" font-size="11" text-anchor="middle">2-5 exemples</text>
+            <text x="350" y="125" fill="#aaa" font-size="11" text-anchor="middle">Guid&eacute; par exemples</text>
+            <text x="350" y="150" fill="#00ff88" font-size="12" text-anchor="middle">Pr&eacute;cision : ~85%</text>
+            <!-- Instruction -->
+            <rect x="480" y="55" width="190" height="120" rx="10" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="575" y="80" fill="#00ff88" font-size="14" font-weight="bold" text-anchor="middle">Instruction</text>
+            <text x="575" y="105" fill="#e0e0e0" font-size="11" text-anchor="middle">&Eacute;tapes d&eacute;taill&eacute;es</text>
+            <text x="575" y="125" fill="#aaa" font-size="11" text-anchor="middle">Contr&ocirc;le maximal</text>
+            <text x="575" y="150" fill="#00ff88" font-size="12" text-anchor="middle">Pr&eacute;cision : ~90%</text>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4 : TECHNIQUES AVANCEES -->
+    <!-- ============================================================ -->
+    <h2>4. Techniques avanc&eacute;es</h2>
+
+    <h3>4.1 Chain-of-Thought (CoT) - Cha&icirc;ne de Pens&eacute;e</h3>
+
+    <div class="definition">
+        Le <strong>Chain-of-Thought (CoT)</strong> est une technique qui encourage le mod&egrave;le &agrave; <strong>raisonner &eacute;tape par &eacute;tape</strong> plut&ocirc;t que de sauter directement &agrave; la r&eacute;ponse finale. Cette approche am&eacute;liore consid&eacute;rablement les performances sur les t&acirc;ches de raisonnement logique et math&eacute;matique.
+    </div>
+
+    <div class="code-block"><span class="comment"># SANS Chain-of-Thought</span>
+prompt_sans_cot = <span class="string">"Si un magasin vend 3 chemises &agrave; 25 euros chacune
+avec une r&eacute;duction de 15%, quel est le montant total ?"</span></div>
+    <div class="output-block">Le montant total est de 63,75 euros. (r&eacute;ponse directe, parfois incorrecte)</div>
+
+    <div class="code-block"><span class="comment"># AVEC Chain-of-Thought</span>
+prompt_avec_cot = <span class="string">"""Si un magasin vend 3 chemises &agrave; 25 euros chacune
+avec une r&eacute;duction de 15%, quel est le montant total ?
+
+R&eacute;fl&eacute;chis &eacute;tape par &eacute;tape avant de donner ta r&eacute;ponse finale."""</span></div>
+
+    <div class="output-block">&Eacute;tape 1 : Prix d'une chemise = 25 euros
+&Eacute;tape 2 : Prix de 3 chemises = 3 x 25 = 75 euros
+&Eacute;tape 3 : R&eacute;duction de 15% = 75 x 0.15 = 11.25 euros
+&Eacute;tape 4 : Total apr&egrave;s r&eacute;duction = 75 - 11.25 = 63.75 euros
+
+R&eacute;ponse finale : Le montant total est de 63,75 euros.</div>
+
+    <div class="effect">
+        Le CoT augmente la pr&eacute;cision des calculs math&eacute;matiques de 20 &agrave; 40% selon les &eacute;tudes. La simple phrase "R&eacute;fl&eacute;chis &eacute;tape par &eacute;tape" active le raisonnement s&eacute;quentiel du mod&egrave;le.
+    </div>
+
+    <h3>4.2 Step-by-Step structur&eacute;</h3>
+
+    <p>Variante plus dirig&eacute;e du CoT o&ugrave; l'on <strong>impose explicitement les &eacute;tapes</strong> de raisonnement :</p>
+
+    <div class="code-block"><span class="comment"># Step-by-step avec &eacute;tapes impos&eacute;es</span>
+prompt = <span class="string">"""D&eacute;termine si l'argument suivant est valide.
+
+Argument : "Tous les d&eacute;veloppeurs connaissent Python.
+Marie est d&eacute;veloppeuse. Donc Marie conna&icirc;t Python."
+
+Suis ces &eacute;tapes :
+&Eacute;tape 1 - Identifie les pr&eacute;misses
+&Eacute;tape 2 - Identifie la conclusion
+&Eacute;tape 3 - V&eacute;rifie la structure logique (syllogisme)
+&Eacute;tape 4 - &Eacute;value la validit&eacute; des pr&eacute;misses dans le monde r&eacute;el
+&Eacute;tape 5 - Conclusion finale"""</span></div>
+
+    <div class="output-block">&Eacute;tape 1 - Pr&eacute;misses : (P1) Tous les d&eacute;veloppeurs connaissent Python.
+(P2) Marie est d&eacute;veloppeuse.
+&Eacute;tape 2 - Conclusion : Marie conna&icirc;t Python.
+&Eacute;tape 3 - Structure : Syllogisme valide (Barbara) : Tout A est B, C est A, donc C est B.
+&Eacute;tape 4 - Validit&eacute; r&eacute;elle : P1 est FAUSSE (tous les d&eacute;veloppeurs ne connaissent pas Python).
+&Eacute;tape 5 - L'argument est logiquement valide mais factuellement incorrect.</div>
+
+    <h3>4.3 Self-Consistency (Auto-coh&eacute;rence)</h3>
+
+    <div class="definition">
+        La <strong>Self-Consistency</strong> consiste &agrave; g&eacute;n&eacute;rer <strong>plusieurs raisonnements ind&eacute;pendants</strong> pour la m&ecirc;me question, puis &agrave; choisir la r&eacute;ponse la plus fr&eacute;quente (vote majoritaire). Cela r&eacute;duit l'impact des erreurs al&eacute;atoires.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> anthropic
+<span class="keyword">from</span> collections <span class="keyword">import</span> Counter
+
+client = anthropic.<span class="function">Anthropic</span>()
+
+<span class="keyword">def</span> <span class="function">self_consistency</span>(question, n=<span class="number">5</span>):
+    <span class="string">"""G&eacute;n&egrave;re n raisonnements et retourne la r&eacute;ponse majoritaire."""</span>
+    reponses = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n):
+        response = client.messages.<span class="function">create</span>(
+            model=<span class="string">"claude-sonnet-4-5-20250514"</span>,
+            max_tokens=<span class="number">500</span>,
+            temperature=<span class="number">0.7</span>,   <span class="comment"># Temp&eacute;rature &gt; 0 pour diversit&eacute;</span>
+            messages=[{
+                <span class="string">"role"</span>: <span class="string">"user"</span>,
+                <span class="string">"content"</span>: question + <span class="string">"\nR&eacute;fl&eacute;chis &eacute;tape par &eacute;tape. Termine par 'R&eacute;ponse: [X]'"</span>
+            }]
+        )
+        <span class="comment"># Extraire la r&eacute;ponse finale</span>
+        texte = response.content[<span class="number">0</span>].text
+        reponse_finale = texte.<span class="function">split</span>(<span class="string">"R&eacute;ponse:"</span>)[-<span class="number">1</span>].<span class="function">strip</span>()
+        reponses.<span class="function">append</span>(reponse_finale)
+
+    <span class="comment"># Vote majoritaire</span>
+    compteur = <span class="function">Counter</span>(reponses)
+    <span class="keyword">return</span> compteur.<span class="function">most_common</span>(<span class="number">1</span>)[<span class="number">0</span>][<span class="number">0</span>]
+
+resultat = <span class="function">self_consistency</span>(
+    <span class="string">"Un fermier a 17 moutons. Tous sauf 9 meurent. Combien en reste-t-il ?"</span>
+)
+<span class="function">print</span>(<span class="string">f"R&eacute;ponse finale : <span class="keyword">{resultat}</span>"</span>)</div>
+
+    <div class="output-block">R&eacute;ponse finale : 9 (obtenue par vote majoritaire sur 5 raisonnements ind&eacute;pendants)</div>
+
+    <h3>4.4 Tree of Thoughts (ToT) - Arbre de Pens&eacute;es</h3>
+
+    <div class="definition">
+        Le <strong>Tree of Thoughts (ToT)</strong> g&eacute;n&eacute;ralise le Chain-of-Thought en explorant <strong>plusieurs chemins de raisonnement simultan&eacute;ment</strong>, construisant un arbre o&ugrave; chaque noeud repr&eacute;sente une &eacute;tape interm&eacute;diaire et chaque branche explore une approche alternative. Le mod&egrave;le &eacute;value chaque branche et peut abandonner les pistes non prometteuses.
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="320" viewBox="0 0 700 320">
+            <rect x="5" y="5" width="690" height="310" rx="12" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="350" y="35" fill="#ff8c42" font-size="16" font-weight="bold" text-anchor="middle">Tree of Thoughts - Exploration multi-chemins</text>
+            <!-- Root -->
+            <rect x="280" y="50" width="140" height="35" rx="6" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="350" y="73" fill="#ff6b35" font-size="12" text-anchor="middle">Probl&egrave;me initial</text>
+            <!-- Level 1 -->
+            <line x1="350" y1="85" x2="150" y2="115" stroke="#569cd6" stroke-width="1.5"/>
+            <line x1="350" y1="85" x2="350" y2="115" stroke="#569cd6" stroke-width="1.5"/>
+            <line x1="350" y1="85" x2="550" y2="115" stroke="#569cd6" stroke-width="1.5"/>
+            <rect x="75" y="115" width="150" height="35" rx="6" fill="rgba(86,156,214,0.15)" stroke="#569cd6"/>
+            <text x="150" y="138" fill="#569cd6" font-size="11" text-anchor="middle">Approche A</text>
+            <rect x="275" y="115" width="150" height="35" rx="6" fill="rgba(86,156,214,0.15)" stroke="#569cd6"/>
+            <text x="350" y="138" fill="#569cd6" font-size="11" text-anchor="middle">Approche B</text>
+            <rect x="475" y="115" width="150" height="35" rx="6" fill="rgba(86,156,214,0.15)" stroke="#569cd6"/>
+            <text x="550" y="138" fill="#569cd6" font-size="11" text-anchor="middle">Approche C</text>
+            <!-- Level 2 branches -->
+            <line x1="150" y1="150" x2="90" y2="185" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="150" y1="150" x2="210" y2="185" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5"/>
+            <line x1="350" y1="150" x2="310" y2="185" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="350" y1="150" x2="390" y2="185" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="550" y1="150" x2="550" y2="185" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5"/>
+            <rect x="40" y="185" width="100" height="30" rx="6" fill="rgba(0,255,136,0.15)" stroke="#00ff88"/>
+            <text x="90" y="205" fill="#00ff88" font-size="10" text-anchor="middle">A1 : Viable</text>
+            <rect x="160" y="185" width="100" height="30" rx="6" fill="rgba(255,68,68,0.15)" stroke="#ff4444"/>
+            <text x="210" y="205" fill="#ff4444" font-size="10" text-anchor="middle">A2 : Abandonn&eacute;</text>
+            <rect x="260" y="185" width="100" height="30" rx="6" fill="rgba(0,255,136,0.15)" stroke="#00ff88"/>
+            <text x="310" y="205" fill="#00ff88" font-size="10" text-anchor="middle">B1 : Viable</text>
+            <rect x="340" y="185" width="100" height="30" rx="6" fill="rgba(0,255,136,0.15)" stroke="#00ff88"/>
+            <text x="390" y="205" fill="#00ff88" font-size="10" text-anchor="middle">B2 : Viable</text>
+            <rect x="500" y="185" width="100" height="30" rx="6" fill="rgba(255,68,68,0.15)" stroke="#ff4444"/>
+            <text x="550" y="205" fill="#ff4444" font-size="10" text-anchor="middle">C1 : Abandonn&eacute;</text>
+            <!-- Best path -->
+            <line x1="310" y1="215" x2="310" y2="250" stroke="#00ff88" stroke-width="2"/>
+            <rect x="250" y="250" width="120" height="35" rx="6" fill="rgba(0,255,136,0.25)" stroke="#00ff88" stroke-width="2"/>
+            <text x="310" y="272" fill="#00ff88" font-size="12" font-weight="bold" text-anchor="middle">Meilleure solution</text>
+            <text x="350" y="305" fill="#aaa" font-size="11" text-anchor="middle">Les branches prometteuses sont explor&eacute;es, les impasses sont abandonn&eacute;es</text>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># Tree of Thoughts - impl&eacute;mentation simplifi&eacute;e</span>
+prompt_tot = <span class="string">"""R&eacute;sous ce probl&egrave;me en explorant 3 approches diff&eacute;rentes.
+
+Probl&egrave;me : Comment r&eacute;duire le temps de r&eacute;ponse d'une API de 2s &agrave; 200ms ?
+
+Pour chaque approche :
+1. D&eacute;cris l'approche en une phrase
+2. Liste les &eacute;tapes de mise en oeuvre
+3. &Eacute;value la faisabilit&eacute; (facile/moyen/difficile)
+4. Estime le gain potentiel
+
+Ensuite, choisis la meilleure approche et justifie ton choix."""</span></div>
+
+    <div class="output-block">Approche 1 : Mise en cache Redis
+  - &Eacute;tapes : Installer Redis, identifier les requ&ecirc;tes fr&eacute;quentes, impl&eacute;menter le cache
+  - Faisabilit&eacute; : Facile | Gain : -80% (400ms)
+
+Approche 2 : Optimisation des requ&ecirc;tes SQL
+  - &Eacute;tapes : Analyser les requ&ecirc;tes lentes, ajouter des index, r&eacute;&eacute;crire les JOIN
+  - Faisabilit&eacute; : Moyen | Gain : -60% (800ms)
+
+Approche 3 : Architecture microservices + CDN
+  - &Eacute;tapes : D&eacute;couper le monolithe, d&eacute;ployer sur CDN, load balancer
+  - Faisabilit&eacute; : Difficile | Gain : -90% (200ms)
+
+Meilleur choix : Combinaison des approches 1 et 2 (cache + SQL)
+Justification : Gain cumul&eacute; de ~90% avec une faisabilit&eacute; mod&eacute;r&eacute;e.</div>
+
+    <div class="prof-note">
+        Le Tree of Thoughts est particuli&egrave;rement efficace pour les probl&egrave;mes cr&eacute;atifs, la planification strat&eacute;gique et les sc&eacute;narios de d&eacute;cision complexes. Il imite le processus de r&eacute;flexion humain o&ugrave; l'on consid&egrave;re plusieurs options avant de s'engager.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5 : SYSTEM PROMPTS -->
+    <!-- ============================================================ -->
+    <h2>5. System Prompts</h2>
+
+    <p>Le <strong>system prompt</strong> (message syst&egrave;me) est une instruction sp&eacute;ciale envoy&eacute;e au mod&egrave;le qui d&eacute;finit son <strong>comportement global</strong>, son <strong>r&ocirc;le</strong> et ses <strong>contraintes</strong> avant toute interaction avec l'utilisateur.</p>
+
+    <h3>5.1 Attribution de r&ocirc;le (Role-based prompting)</h3>
+
+    <div class="code-block"><span class="comment"># Diff&eacute;rents r&ocirc;les pour diff&eacute;rents r&eacute;sultats</span>
+
+<span class="comment"># R&ocirc;le 1 : Expert technique</span>
+system_dev = <span class="string">"Tu es un architecte logiciel senior avec 15 ans d'exp&eacute;rience
+en Python et syst&egrave;mes distribu&eacute;s. Tu r&eacute;ponds de mani&egrave;re technique et pr&eacute;cise,
+en citant les design patterns pertinents."</span>
+
+<span class="comment"># R&ocirc;le 2 : P&eacute;dagogue</span>
+system_prof = <span class="string">"Tu es un professeur d'informatique qui enseigne &agrave; des &eacute;tudiants
+de premi&egrave;re ann&eacute;e. Tu utilises des analogies simples, des exemples concrets
+et tu &eacute;vites le jargon technique non expliqu&eacute;."</span>
+
+<span class="comment"># R&ocirc;le 3 : Reviewer de code</span>
+system_review = <span class="string">"Tu es un reviewer de code strict mais bienveillant.
+Pour chaque code soumis, tu identifies :
+- Les bugs potentiels
+- Les probl&egrave;mes de performance
+- Les violations des bonnes pratiques
+Tu proposes toujours une version corrig&eacute;e."</span></div>
+
+    <h3>5.2 Contraintes et garde-fous</h3>
+
+    <div class="code-block"><span class="comment"># System prompt avec contraintes</span>
+system_contraint = <span class="string">"""Tu es un assistant juridique sp&eacute;cialis&eacute; en droit fran&ccedil;ais.
+
+CONTRAINTES :
+- R&eacute;ponds UNIQUEMENT sur le droit fran&ccedil;ais
+- Cite toujours les articles de loi pertinents
+- Pr&eacute;cise que tu ne remplaces pas un avocat
+- Ne donne JAMAIS de conseil m&eacute;dical
+- Limite tes r&eacute;ponses &agrave; 500 mots maximum
+- Si la question sort de ton domaine, indique-le clairement
+
+FORMAT :
+- Utilise des puces pour la clart&eacute;
+- Termine par une section "R&eacute;f&eacute;rences l&eacute;gales"
+"""</span>
+
+response = client.messages.<span class="function">create</span>(
+    model=<span class="string">"claude-sonnet-4-5-20250514"</span>,
+    max_tokens=<span class="number">1024</span>,
+    system=system_contraint,
+    messages=[{
+        <span class="string">"role"</span>: <span class="string">"user"</span>,
+        <span class="string">"content"</span>: <span class="string">"Quels sont mes droits en cas de licenciement abusif ?"</span>
+    }]
+)</div>
+
+    <div class="prof-note">
+        Le system prompt est l'outil le plus puissant pour contr&ocirc;ler le comportement du mod&egrave;le. Il est trait&eacute; avec une priorit&eacute; plus &eacute;lev&eacute;e que les messages utilisateur par la plupart des APIs (OpenAI, Anthropic).
+    </div>
+
+    <h3>5.3 Persona et style de communication</h3>
+
+    <div class="code-block"><span class="comment"># Persona : Cr&eacute;er un style unique</span>
+system_persona = <span class="string">"""Tu es "DataBot", un assistant d'analyse de donn&eacute;es.
+
+Personnalit&eacute; :
+- Pr&eacute;cis et factuel (cite toujours les chiffres)
+- Utilise des m&eacute;taphores li&eacute;es &agrave; la cuisine pour expliquer les concepts
+- Termine chaque r&eacute;ponse par un "Conseil du chef" li&eacute; aux donn&eacute;es
+
+Style :
+- Phrases courtes et directes
+- Utilise des tableaux quand possible
+- Inclut toujours une recommandation actionnable
+"""</span></div>
+
+    <div class="warning">
+        Ne confondez pas le system prompt avec les instructions utilisateur. Le system prompt d&eacute;finit le cadre g&eacute;n&eacute;ral (qui est le mod&egrave;le), tandis que le message utilisateur contient la t&acirc;che sp&eacute;cifique &agrave; ex&eacute;cuter.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6 : OUTPUT FORMATTING -->
+    <!-- ============================================================ -->
+    <h2>6. Formatage de la sortie</h2>
+
+    <p>Contr&ocirc;ler le <strong>format de sortie</strong> est essentiel pour int&eacute;grer les r&eacute;ponses des LLMs dans des pipelines de traitement automatis&eacute;s.</p>
+
+    <h3>6.1 Sortie JSON</h3>
+
+    <div class="code-block"><span class="comment"># Demander une sortie JSON structur&eacute;e</span>
+prompt_json = <span class="string">"""Analyse le produit suivant et retourne un JSON.
+
+Produit : "iPhone 15 Pro Max 256Go - 1399 euros - Apple Store"
+
+Retourne UNIQUEMENT un JSON valide avec cette structure :
+{
+  "nom": "string",
+  "marque": "string",
+  "stockage_go": number,
+  "prix_euros": number,
+  "categorie": "string",
+  "gamme": "entree|milieu|haut"
+}
+
+Pas de texte avant ou apr&egrave;s le JSON."""</span></div>
+
+    <div class="output-block">{
+  "nom": "iPhone 15 Pro Max",
+  "marque": "Apple",
+  "stockage_go": 256,
+  "prix_euros": 1399,
+  "categorie": "smartphone",
+  "gamme": "haut"
+}</div>
+
+    <h3>6.2 Sortie XML</h3>
+
+    <div class="code-block"><span class="comment"># Sortie XML pour int&eacute;gration avec des syst&egrave;mes legacy</span>
+prompt_xml = <span class="string">"""Convertis cette information en XML valide :
+
+"Marie Dupont, 28 ans, ing&eacute;nieure logiciel chez TechCorp, Paris"
+
+Utilise la structure :
+&lt;employe&gt;
+  &lt;identite&gt;...&lt;/identite&gt;
+  &lt;poste&gt;...&lt;/poste&gt;
+  &lt;entreprise&gt;...&lt;/entreprise&gt;
+&lt;/employe&gt;"""</span></div>
+
+    <div class="output-block">&lt;employe&gt;
+  &lt;identite&gt;
+    &lt;nom&gt;Dupont&lt;/nom&gt;
+    &lt;prenom&gt;Marie&lt;/prenom&gt;
+    &lt;age&gt;28&lt;/age&gt;
+  &lt;/identite&gt;
+  &lt;poste&gt;Ing&eacute;nieure logiciel&lt;/poste&gt;
+  &lt;entreprise&gt;
+    &lt;nom&gt;TechCorp&lt;/nom&gt;
+    &lt;ville&gt;Paris&lt;/ville&gt;
+  &lt;/entreprise&gt;
+&lt;/employe&gt;</div>
+
+    <h3>6.3 Sortie Markdown structur&eacute;e</h3>
+
+    <div class="code-block"><span class="comment"># Sortie Markdown pour documentation</span>
+prompt_md = <span class="string">"""G&eacute;n&egrave;re la documentation de cette fonction Python en Markdown :
+
+def calculer_imc(poids_kg, taille_m):
+    return poids_kg / (taille_m ** 2)
+
+Format attendu :
+## Nom de la fonction
+### Description
+### Param&egrave;tres
+| Param&egrave;tre | Type | Description |
+### Valeur de retour
+### Exemple d'utilisation"""</span></div>
+
+    <h3>6.4 Sortie structur&eacute;e avec sch&eacute;ma (Structured Outputs)</h3>
+
+    <div class="code-block"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel
+
+<span class="comment"># Utilisation de Structured Outputs (OpenAI, 2025+)</span>
+<span class="keyword">class</span> <span class="function">AnalyseSentiment</span>(BaseModel):
+    texte: <span class="function">str</span>
+    sentiment: <span class="function">str</span>      <span class="comment"># positif, n&eacute;gatif, neutre</span>
+    confiance: <span class="function">float</span>     <span class="comment"># 0.0 &agrave; 1.0</span>
+    mots_cles: <span class="function">list</span>[<span class="function">str</span>]
+
+client = <span class="function">OpenAI</span>()
+completion = client.beta.chat.completions.<span class="function">parse</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Analyse le sentiment du texte."</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"J'adore cette biblioth&egrave;que, elle simplifie tout !"</span>}
+    ],
+    response_format=AnalyseSentiment
+)
+
+resultat = completion.choices[<span class="number">0</span>].message.parsed
+<span class="function">print</span>(resultat.<span class="function">model_dump_json</span>(indent=<span class="number">2</span>))</div>
+
+    <div class="output-block">{
+  "texte": "J'adore cette biblioth&egrave;que, elle simplifie tout !",
+  "sentiment": "positif",
+  "confiance": 0.95,
+  "mots_cles": ["adore", "simplifie"]
+}</div>
+
+    <div class="prof-note">
+        Les Structured Outputs (sorties structur&eacute;es) disponibles via l'API OpenAI garantissent que la r&eacute;ponse respecte exactement le sch&eacute;ma Pydantic d&eacute;fini. C'est beaucoup plus fiable que de demander du JSON dans le prompt texte.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7 : PROMPT PATTERNS -->
+    <!-- ============================================================ -->
+    <h2>7. Prompt Patterns - Mod&egrave;les r&eacute;utilisables</h2>
+
+    <p>Voici une collection de <strong>patterns de prompts</strong> &eacute;prouv&eacute;s pour les t&acirc;ches les plus courantes :</p>
+
+    <table>
+        <tr>
+            <th>T&acirc;che</th>
+            <th>Mod&egrave;le de prompt</th>
+            <th>Astuce</th>
+        </tr>
+        <tr>
+            <td><strong>Extraction</strong></td>
+            <td>"Extrais les [entit&eacute;s] du texte suivant. Retourne un JSON avec les cl&eacute;s : [cl&eacute;s]."</td>
+            <td>Sp&eacute;cifier le format exact de sortie</td>
+        </tr>
+        <tr>
+            <td><strong>R&eacute;sum&eacute;</strong></td>
+            <td>"R&eacute;sume ce texte en [N] phrases/points. Public cible : [audience]. Focus : [aspect]."</td>
+            <td>Pr&eacute;ciser la longueur et l'audience</td>
+        </tr>
+        <tr>
+            <td><strong>Traduction</strong></td>
+            <td>"Traduis de [source] vers [cible]. Conserve le ton [formel/informel]. Domaine : [sp&eacute;cialit&eacute;]."</td>
+            <td>Indiquer le domaine sp&eacute;cialis&eacute;</td>
+        </tr>
+        <tr>
+            <td><strong>Classification</strong></td>
+            <td>"Classifie dans les cat&eacute;gories suivantes : [A, B, C]. Retourne uniquement la cat&eacute;gorie."</td>
+            <td>Lister les cat&eacute;gories possibles</td>
+        </tr>
+        <tr>
+            <td><strong>G&eacute;n&eacute;ration de code</strong></td>
+            <td>"&Eacute;cris une fonction [langage] qui [action]. Inclus : docstring, types hints, tests unitaires."</td>
+            <td>Demander les tests et la doc</td>
+        </tr>
+        <tr>
+            <td><strong>Analyse de sentiment</strong></td>
+            <td>"Analyse le sentiment : positif/n&eacute;gatif/neutre. Score de confiance 0-1. Mots-cl&eacute;s d&eacute;tect&eacute;s."</td>
+            <td>Demander le score num&eacute;rique</td>
+        </tr>
+        <tr>
+            <td><strong>Q&amp;A sur document</strong></td>
+            <td>"En te basant UNIQUEMENT sur le contexte ci-dessous, r&eacute;ponds &agrave; la question. Si non trouv&eacute;, dis 'Non trouv&eacute;'."</td>
+            <td>Emp&ecirc;cher l'hallucination</td>
+        </tr>
+        <tr>
+            <td><strong>R&eacute;&eacute;criture</strong></td>
+            <td>"R&eacute;&eacute;cris ce texte en conservant le sens mais en changeant le style vers [style cible]."</td>
+            <td>Donner un exemple du style vis&eacute;</td>
+        </tr>
+    </table>
+
+    <h3>7.1 Pattern d'extraction en d&eacute;tail</h3>
+
+    <div class="code-block"><span class="comment"># Pattern d'extraction d'informations</span>
+prompt_extraction = <span class="string">"""Extrais les informations structur&eacute;es du CV suivant.
+
+--- CV ---
+Jean Martin | jean.martin@email.com | 06 12 34 56 78
+Ing&eacute;nieur Data Science - 5 ans d'exp&eacute;rience
+Comp&eacute;tences : Python, TensorFlow, SQL, Spark, AWS
+Formation : Master Data Science, Universit&eacute; Paris-Saclay (2019)
+Exp&eacute;rience actuelle : Data Scientist Senior chez DataCorp (depuis 2021)
+--- Fin CV ---
+
+Retourne un JSON avec :
+{
+  "nom_complet": "",
+  "email": "",
+  "telephone": "",
+  "poste_actuel": "",
+  "annees_experience": 0,
+  "competences": [],
+  "formation": {"diplome": "", "etablissement": "", "annee": 0},
+  "entreprise_actuelle": ""
+}"""</span></div>
+
+    <div class="output-block">{
+  "nom_complet": "Jean Martin",
+  "email": "jean.martin@email.com",
+  "telephone": "06 12 34 56 78",
+  "poste_actuel": "Data Scientist Senior",
+  "annees_experience": 5,
+  "competences": ["Python", "TensorFlow", "SQL", "Spark", "AWS"],
+  "formation": {"diplome": "Master Data Science", "etablissement": "Universit&eacute; Paris-Saclay", "annee": 2019},
+  "entreprise_actuelle": "DataCorp"
+}</div>
+
+    <h3>7.2 Pattern de g&eacute;n&eacute;ration de code</h3>
+
+    <div class="code-block"><span class="comment"># Pattern pour g&eacute;n&eacute;rer du code de qualit&eacute; production</span>
+prompt_code = <span class="string">"""&Eacute;cris une fonction Python qui respecte ces sp&eacute;cifications :
+
+Nom : valider_email
+But : V&eacute;rifie si une cha&icirc;ne est un email valide
+Entr&eacute;e : email (str)
+Sortie : bool
+
+Exigences :
+- Utilise une regex compl&egrave;te
+- Inclus une docstring Google-style
+- Ajoute les type hints
+- &Eacute;cris 5 tests unitaires avec pytest
+- G&egrave;re les cas limites (None, cha&icirc;ne vide, espaces)
+"""</span></div>
+
+    <div class="effect">
+        En sp&eacute;cifiant clairement les exigences de qualit&eacute; (docstring, type hints, tests), le code g&eacute;n&eacute;r&eacute; est directement utilisable en production, sans retouche manuelle.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 8 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+    <h2>8. Erreurs courantes en Prompt Engineering</h2>
+
+    <div class="concept-box">
+        <h3>Les 8 p&eacute;ch&eacute;s capitaux du prompting</h3>
+
+        <div class="warning">
+            <strong>1. Le prompt vague</strong> - "Parle-moi d'IA" au lieu de "Explique les 3 types d'apprentissage automatique avec un exemple concret pour chacun." Un prompt sans direction donne une r&eacute;ponse sans valeur.
+        </div>
+
+        <div class="warning">
+            <strong>2. Le prompt fleuve</strong> - Un prompt de 2000 mots avec des d&eacute;tails inutiles. Le mod&egrave;le se perd dans le bruit et rate l'essentiel. Soyez concis mais pr&eacute;cis.
+        </div>
+
+        <div class="warning">
+            <strong>3. L'absence d'exemples</strong> - Ne pas fournir d'exemples quand le format de sortie est sp&eacute;cifique. Le mod&egrave;le doit deviner ce que vous voulez. Le few-shot r&eacute;sout ce probl&egrave;me.
+        </div>
+
+        <div class="warning">
+            <strong>4. Aucun format demand&eacute;</strong> - Ne pas sp&eacute;cifier si vous voulez du JSON, une liste, un paragraphe. Le mod&egrave;le choisit arbitrairement et le r&eacute;sultat est impr&eacute;visible.
+        </div>
+
+        <div class="warning">
+            <strong>5. Ignorer le system prompt</strong> - Ne pas d&eacute;finir de r&ocirc;le. C'est comme demander &agrave; un g&eacute;n&eacute;raliste quand vous avez besoin d'un sp&eacute;cialiste.
+        </div>
+
+        <div class="warning">
+            <strong>6. Instructions contradictoires</strong> - "Sois bref mais d&eacute;taille tout" ou "R&eacute;ponds en JSON et en texte libre". Le mod&egrave;le ne peut pas satisfaire deux exigences oppos&eacute;es.
+        </div>
+
+        <div class="warning">
+            <strong>7. Ne pas it&eacute;rer</strong> - Envoyer un seul prompt et accepter le r&eacute;sultat tel quel. Les meilleurs r&eacute;sultats viennent d'un processus it&eacute;ratif d'am&eacute;lioration.
+        </div>
+
+        <div class="warning">
+            <strong>8. Ignorer les limites du mod&egrave;le</strong> - Demander des calculs math&eacute;matiques complexes ou des donn&eacute;es en temps r&eacute;el &agrave; un mod&egrave;le qui n'y a pas acc&egrave;s.
+        </div>
+    </div>
+
+    <h3>8.1 Exemples de corrections</h3>
+
+    <table>
+        <tr>
+            <th>Mauvais prompt</th>
+            <th>Bon prompt</th>
+            <th>Pourquoi</th>
+        </tr>
+        <tr>
+            <td>"Fais-moi un site web"</td>
+            <td>"Cr&eacute;e une page HTML/CSS pour un portfolio. 3 sections : &agrave; propos, projets, contact. Style minimaliste, palette bleue."</td>
+            <td>Sp&eacute;cifications concr&egrave;tes</td>
+        </tr>
+        <tr>
+            <td>"Corrige mon code"</td>
+            <td>"Ce code Python l&egrave;ve une TypeError &agrave; la ligne 15. Identifie le bug, explique la cause, et propose la correction."</td>
+            <td>Contexte de l'erreur fourni</td>
+        </tr>
+        <tr>
+            <td>"R&eacute;sume ce texte"</td>
+            <td>"R&eacute;sume ce texte en 3 bullet points pour un public non-technique. Maximum 50 mots."</td>
+            <td>Longueur et audience d&eacute;finies</td>
+        </tr>
+        <tr>
+            <td>"Traduis en anglais"</td>
+            <td>"Traduis en anglais am&eacute;ricain professionnel. Domaine : juridique. Conserve les termes techniques en fran&ccedil;ais entre parenth&egrave;ses."</td>
+            <td>Registre et domaine pr&eacute;cis&eacute;s</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        Le prompt engineering est un processus <strong>it&eacute;ratif</strong>. Ne cherchez pas le prompt parfait du premier coup. Commencez simple, testez, analysez les erreurs, et affinez progressivement. La r&egrave;gle d'or : si le mod&egrave;le ne donne pas le r&eacute;sultat attendu, c'est probablement le prompt qui est &agrave; am&eacute;liorer, pas le mod&egrave;le.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 9 : RESUME -->
+    <!-- ============================================================ -->
+    <h2>9. R&eacute;sum&eacute; des techniques</h2>
+
+    <div class="concept-box blue">
+        <h3>Tableau r&eacute;capitulatif des techniques de prompting</h3>
+
+        <table>
+            <tr>
+                <th>Technique</th>
+                <th>Description</th>
+                <th>Quand l'utiliser</th>
+                <th>Complexit&eacute;</th>
+            </tr>
+            <tr>
+                <td><strong>Zero-shot</strong></td>
+                <td>Question directe sans exemple</td>
+                <td>T&acirc;ches simples et g&eacute;n&eacute;riques</td>
+                <td>Faible</td>
+            </tr>
+            <tr>
+                <td><strong>Few-shot</strong></td>
+                <td>Inclure 2-5 exemples dans le prompt</td>
+                <td>Classification, format sp&eacute;cifique, t&acirc;ches inhabituelles</td>
+                <td>Faible</td>
+            </tr>
+            <tr>
+                <td><strong>Instruction-following</strong></td>
+                <td>&Eacute;tapes et contraintes explicites</td>
+                <td>T&acirc;ches multi-&eacute;tapes, pipelines</td>
+                <td>Moyenne</td>
+            </tr>
+            <tr>
+                <td><strong>Chain-of-Thought</strong></td>
+                <td>Raisonnement &eacute;tape par &eacute;tape</td>
+                <td>Math, logique, raisonnement complexe</td>
+                <td>Moyenne</td>
+            </tr>
+            <tr>
+                <td><strong>Self-Consistency</strong></td>
+                <td>Multiple raisonnements + vote majoritaire</td>
+                <td>D&eacute;cisions critiques, pr&eacute;cision maximale</td>
+                <td>&Eacute;lev&eacute;e</td>
+            </tr>
+            <tr>
+                <td><strong>Tree of Thoughts</strong></td>
+                <td>Exploration de chemins multiples en arbre</td>
+                <td>Probl&egrave;mes cr&eacute;atifs, planification, d&eacute;cision</td>
+                <td>&Eacute;lev&eacute;e</td>
+            </tr>
+            <tr>
+                <td><strong>Role-based</strong></td>
+                <td>Assigner un r&ocirc;le d'expert via system prompt</td>
+                <td>Toute t&acirc;che sp&eacute;cialis&eacute;e</td>
+                <td>Faible</td>
+            </tr>
+            <tr>
+                <td><strong>Structured Output</strong></td>
+                <td>Imposer un format JSON/XML/sch&eacute;ma</td>
+                <td>Int&eacute;gration API, pipelines automatis&eacute;s</td>
+                <td>Moyenne</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Les 5 r&egrave;gles d'or du Prompt Engineering</h3>
+        <ol>
+            <li><strong>Soyez sp&eacute;cifique</strong> : Plus le prompt est pr&eacute;cis, meilleure est la r&eacute;ponse.</li>
+            <li><strong>Donnez du contexte</strong> : Le mod&egrave;le ne peut pas deviner ce que vous savez d&eacute;j&agrave;.</li>
+            <li><strong>Sp&eacute;cifiez le format</strong> : Dites exactement comment vous voulez la r&eacute;ponse.</li>
+            <li><strong>Utilisez des exemples</strong> : Le few-shot est votre meilleur alli&eacute; pour les t&acirc;ches sp&eacute;cifiques.</li>
+            <li><strong>It&eacute;rez</strong> : Testez, analysez, am&eacute;liorez. Le premier prompt n'est jamais le dernier.</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        En 2025-2026, le prompt engineering &eacute;volue rapidement avec l'arriv&eacute;e de mod&egrave;les de raisonnement (comme o1 et o3 d'OpenAI, ou le mode "extended thinking" de Claude) qui int&egrave;grent le Chain-of-Thought automatiquement. Le m&eacute;tier se d&eacute;place vers l'orchestration de prompts complexes, le "prompt blending" (combinaison de techniques) et la conception d'agents autonomes.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="llm_03_tokenisation.html">&larr; Cours pr&eacute;c&eacute;dent : Tokenisation</a>
+        <a href="llm_05_api_parametres.html">Cours suivant : APIs et Param&egrave;tres &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

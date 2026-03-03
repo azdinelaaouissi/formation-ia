@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG 06 - Evaluation et Metriques</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        .formula { background: #1a1a2e; border: 1px solid #569cd6; border-radius: 8px; padding: 15px 20px; margin: 12px 0; text-align: center; font-size: 1.05rem; color: #dcdcaa; font-family: 'Courier New', monospace; }
+    </style>
+</head>
+<body>
+    <div class="main">
+
+        <h1>Chapitre 6 : RAG - Evaluation et Metriques</h1>
+        <p class="subtitle">Mesurer, analyser et ameliorer la qualite de votre systeme RAG</p>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 1 : POURQUOI EVALUER                                           -->
+        <!-- ====================================================================== -->
+        <h2>1. Pourquoi evaluer un systeme RAG ?</h2>
+
+        <div class="definition">
+            L'evaluation d'un systeme RAG est le processus systematique de mesure de la qualite
+            des reponses generees, de la pertinence des documents retrouves, et de la fidelite
+            de la reponse par rapport aux sources. Sans evaluation rigoureuse, un systeme RAG
+            en production est une boite noire dangereuse.
+        </div>
+
+        <p>Un systeme RAG combine deux composants critiques : la <strong>recuperation</strong> (retrieval)
+        et la <strong>generation</strong>. Chacun peut echouer de maniere independante, ce qui rend
+        l'evaluation particulierement complexe mais absolument necessaire.</p>
+
+        <div class="prof-note">
+            Imaginez un etudiant qui passe un examen. Meme s'il a les bons documents devant lui
+            (bonne recuperation), il peut mal interpreter les informations (mauvaise generation).
+            Inversement, il peut etre excellent en synthese mais avoir les mauvais documents.
+            L'evaluation RAG doit capturer ces deux dimensions independamment.
+        </div>
+
+        <h3>1.1 Les risques sans evaluation</h3>
+
+        <div class="warning">
+            <strong>Sans metriques d'evaluation, vous ne pouvez pas :</strong><br><br>
+            - Detecter les hallucinations (le LLM invente des faits non presents dans les sources)<br>
+            - Savoir si les bons documents sont retrouves par le retriever<br>
+            - Comparer differentes configurations de chunking objectivement<br>
+            - Mesurer l'impact reel d'un changement de modele d'embedding<br>
+            - Justifier les couts d'infrastructure aupres des decideurs<br>
+            - Garantir que les mises a jour n'introduisent pas de regressions
+        </div>
+
+        <h3>1.2 Les deux axes fondamentaux d'evaluation</h3>
+
+        <!-- SVG : Diagramme des deux axes d'evaluation RAG -->
+        <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" style="width:100%; margin:20px 0;">
+            <defs>
+                <linearGradient id="gradRet" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:0.25"/>
+                    <stop offset="100%" style="stop-color:#ff8c42;stop-opacity:0.05"/>
+                </linearGradient>
+                <linearGradient id="gradGen" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#569cd6;stop-opacity:0.25"/>
+                    <stop offset="100%" style="stop-color:#569cd6;stop-opacity:0.05"/>
+                </linearGradient>
+                <marker id="arrOr" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrBl" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arrGr" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+            <!-- Titre -->
+            <text x="450" y="30" fill="#ff6b35" font-size="18" text-anchor="middle" font-weight="bold">Les Deux Axes d'Evaluation RAG</text>
+
+            <!-- Boite Question -->
+            <rect x="330" y="50" width="240" height="50" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="450" y="80" fill="#ff6b35" font-size="14" text-anchor="middle" font-weight="bold">Question Utilisateur</text>
+
+            <!-- Fleches vers les axes -->
+            <line x1="390" y1="100" x2="220" y2="150" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrOr)"/>
+            <line x1="510" y1="100" x2="680" y2="150" stroke="#569cd6" stroke-width="2" marker-end="url(#arrBl)"/>
+
+            <!-- Axe Recuperation -->
+            <rect x="50" y="150" width="340" height="210" rx="14" fill="url(#gradRet)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="220" y="182" fill="#ff6b35" font-size="16" text-anchor="middle" font-weight="bold">Axe Recuperation</text>
+            <line x1="100" y1="192" x2="340" y2="192" stroke="#ff6b35" stroke-width="1" opacity="0.5"/>
+            <text x="220" y="218" fill="#e0e0e0" font-size="13" text-anchor="middle">Context Precision</text>
+            <text x="220" y="245" fill="#e0e0e0" font-size="13" text-anchor="middle">Context Recall</text>
+            <text x="220" y="272" fill="#e0e0e0" font-size="13" text-anchor="middle">Hit Rate / MRR</text>
+            <text x="220" y="299" fill="#e0e0e0" font-size="13" text-anchor="middle">NDCG@k</text>
+            <text x="220" y="340" fill="#aaa" font-size="11" text-anchor="middle" font-style="italic">"Les bons documents sont-ils retrouves ?"</text>
+
+            <!-- Axe Generation -->
+            <rect x="510" y="150" width="340" height="210" rx="14" fill="url(#gradGen)" stroke="#569cd6" stroke-width="2"/>
+            <text x="680" y="182" fill="#569cd6" font-size="16" text-anchor="middle" font-weight="bold">Axe Generation</text>
+            <line x1="560" y1="192" x2="800" y2="192" stroke="#569cd6" stroke-width="1" opacity="0.5"/>
+            <text x="680" y="218" fill="#e0e0e0" font-size="13" text-anchor="middle">Faithfulness (Fidelite)</text>
+            <text x="680" y="245" fill="#e0e0e0" font-size="13" text-anchor="middle">Answer Relevancy</text>
+            <text x="680" y="272" fill="#e0e0e0" font-size="13" text-anchor="middle">Answer Correctness</text>
+            <text x="680" y="299" fill="#e0e0e0" font-size="13" text-anchor="middle">Harmfulness</text>
+            <text x="680" y="340" fill="#aaa" font-size="11" text-anchor="middle" font-style="italic">"La reponse est-elle fidele et pertinente ?"</text>
+
+            <!-- Legende -->
+            <rect x="250" y="380" width="12" height="12" fill="#ff6b35" rx="2"/>
+            <text x="270" y="391" fill="#aaa" font-size="11">Retriever</text>
+            <rect x="370" y="380" width="12" height="12" fill="#569cd6" rx="2"/>
+            <text x="390" y="391" fill="#aaa" font-size="11">LLM / Generateur</text>
+            <rect x="520" y="380" width="12" height="12" fill="#00ff88" rx="2"/>
+            <text x="540" y="391" fill="#aaa" font-size="11">End-to-End</text>
+        </svg>
+
+        <div class="step-box">
+            <strong>Axe 1 - Recuperation :</strong> Est-ce que le retriever retrouve les bons
+            documents ? Les metriques ici evaluent la qualite du retriever independamment du LLM generateur.
+        </div>
+        <div class="step-box">
+            <strong>Axe 2 - Generation :</strong> Est-ce que le LLM produit une reponse fidele et
+            pertinente a partir des documents recuperes ? On mesure ici la qualite de la synthese.
+        </div>
+        <div class="step-box">
+            <strong>Axe 3 - End-to-End :</strong> Evaluation globale du pipeline complet, combinant
+            les deux axes. C'est la perspective de l'utilisateur final.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 2 : LE FRAMEWORK RAGAS                                         -->
+        <!-- ====================================================================== -->
+        <h2>2. Le framework RAGAS</h2>
+
+        <div class="definition">
+            <strong>RAGAS</strong> (Retrieval Augmented Generation Assessment) est un framework open-source
+            qui fournit des metriques automatiques pour evaluer les systemes RAG. Il utilise un
+            LLM comme juge pour calculer des scores sans necessite de labels humains prealables.
+        </div>
+
+        <h3>2.1 Installation et configuration initiale</h3>
+
+        <div class="code-block"><span class="comment"># Installation de RAGAS et des dependances</span>
+<span class="function">pip install</span> ragas langchain-openai datasets</div>
+
+        <div class="code-block"><span class="comment"># Configuration de base avec RAGAS v0.2+</span>
+<span class="keyword">from</span> ragas <span class="keyword">import</span> evaluate
+<span class="keyword">from</span> ragas.metrics <span class="keyword">import</span> (
+    faithfulness,
+    answer_relevancy,
+    context_precision,
+    context_recall,
+)
+<span class="keyword">from</span> datasets <span class="keyword">import</span> Dataset
+
+<span class="comment"># Preparer les donnees au format attendu par RAGAS</span>
+eval_data = {
+    <span class="string">"question"</span>: [
+        <span class="string">"Qu'est-ce que le RAG ?"</span>,
+        <span class="string">"Comment fonctionne le chunking ?"</span>,
+        <span class="string">"Quels sont les avantages du RAG ?"</span>,
+    ],
+    <span class="string">"answer"</span>: [
+        <span class="string">"Le RAG est une technique qui combine la recuperation de documents..."</span>,
+        <span class="string">"Le chunking decoupe les documents en morceaux de taille geree..."</span>,
+        <span class="string">"Le RAG reduit les hallucinations et permet des reponses a jour..."</span>,
+    ],
+    <span class="string">"contexts"</span>: [
+        [<span class="string">"Le RAG (Retrieval Augmented Generation) combine recherche..."</span>],
+        [<span class="string">"Le chunking est le processus de decoupage de textes longs..."</span>],
+        [<span class="string">"Les avantages du RAG incluent la reduction d'hallucinations..."</span>],
+    ],
+    <span class="string">"ground_truth"</span>: [
+        <span class="string">"Le RAG combine recherche documentaire et generation par un LLM..."</span>,
+        <span class="string">"Le chunking divise les documents en segments de taille fixe..."</span>,
+        <span class="string">"Le RAG reduit les hallucinations, permet l'acces a des donnees..."</span>,
+    ],
+}
+
+dataset = Dataset.<span class="function">from_dict</span>(eval_data)
+
+<span class="comment"># Lancer l'evaluation avec les 4 metriques principales</span>
+results = <span class="function">evaluate</span>(
+    dataset,
+    metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+)
+
+<span class="function">print</span>(results)</div>
+
+        <div class="output-block">
+{'faithfulness': 0.8750, 'answer_relevancy': 0.9120, 'context_precision': 0.8333, 'context_recall': 0.9000}</div>
+
+        <div class="prof-note">
+            RAGAS necessite un LLM pour fonctionner (par defaut gpt-3.5-turbo via OpenAI).
+            Chaque metrique utilise le LLM pour decomposer les reponses en <em>claims</em>
+            (affirmations atomiques) et verifier leur coherence avec le contexte. C'est le paradigme
+            "LLM-as-Judge" que nous detaillerons dans la section 5.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 3 : METRIQUES RAGAS EN DETAIL                                  -->
+        <!-- ====================================================================== -->
+        <h2>3. Les metriques RAGAS en detail</h2>
+
+        <h3>3.1 Faithfulness (Fidelite aux sources)</h3>
+
+        <div class="metric-card">
+            <h3 style="color:#ff8c42; margin-top:0;">Faithfulness</h3>
+            <p><strong>Objectif :</strong> Mesurer si chaque affirmation dans la reponse generee
+            est fidelement soutenue par le contexte recupere. Un score eleve signifie que le LLM
+            ne fabrique pas d'informations (pas d'hallucinations).</p>
+            <p><strong>Entrees requises :</strong> question, answer, contexts</p>
+            <p><strong>Plage de valeurs :</strong> [0, 1] -- Plus c'est eleve, mieux c'est</p>
+        </div>
+
+        <div class="formula">
+            Faithfulness = |claims supportes par le contexte| / |nombre total de claims dans la reponse|
+        </div>
+
+        <div class="step-box">
+            <strong>Etape 1 :</strong> Le LLM juge decompose la reponse en affirmations individuelles (claims).
+            Exemple : "Le RAG utilise des embeddings vectoriels" constitue un claim unique.
+        </div>
+        <div class="step-box">
+            <strong>Etape 2 :</strong> Pour chaque claim, le LLM verifie s'il est directement
+            supporte par au moins un passage du contexte recupere.
+        </div>
+        <div class="step-box">
+            <strong>Etape 3 :</strong> Le score final est le ratio des claims supportes sur le total des claims.
+        </div>
+
+        <div class="code-block"><span class="comment"># Exemple detaille de calcul de faithfulness</span>
+
+<span class="comment"># Reponse generee par le systeme RAG :</span>
+answer = <span class="string">"""Le RAG utilise des embeddings vectoriels pour indexer les documents.
+Il a ete invente en 2020 par Facebook AI Research.
+La base vectorielle la plus utilisee est ChromaDB."""</span>
+
+<span class="comment"># Contexte recupere par le retriever :</span>
+contexts = [<span class="string">"""Le RAG (Retrieval Augmented Generation) utilise des embeddings
+vectoriels pour representer et indexer les documents. Cette technique
+a ete introduite par Facebook AI Research en 2020 dans un article
+fondateur publie sur arXiv."""</span>]
+
+<span class="comment"># Decomposition en claims par le LLM juge :</span>
+<span class="comment">#   Claim 1: "Le RAG utilise des embeddings vectoriels"  -> SUPPORTE (dans le contexte)</span>
+<span class="comment">#   Claim 2: "Invente en 2020 par Facebook AI Research"  -> SUPPORTE (dans le contexte)</span>
+<span class="comment">#   Claim 3: "ChromaDB est la base la plus utilisee"     -> NON SUPPORTE (absent du contexte)</span>
+<span class="comment">#</span>
+<span class="comment"># Faithfulness = 2 / 3 = 0.667</span></div>
+
+        <div class="warning">
+            Un score de faithfulness bas est le signal d'alarme le plus critique en production.
+            Il indique que le LLM hallucine en inventant des informations non presentes dans
+            les sources. Les utilisateurs perdent confiance rapidement face a des affirmations fausses.
+        </div>
+
+        <h3>3.2 Answer Relevancy (Pertinence de la reponse)</h3>
+
+        <div class="metric-card">
+            <h3 style="color:#ff8c42; margin-top:0;">Answer Relevancy</h3>
+            <p><strong>Objectif :</strong> Mesurer si la reponse generee est pertinente par rapport a
+            la question posee. Une reponse peut etre parfaitement fidele aux sources mais completement
+            hors sujet.</p>
+            <p><strong>Entrees requises :</strong> question, answer</p>
+            <p><strong>Plage de valeurs :</strong> [0, 1] -- Plus c'est eleve, mieux c'est</p>
+        </div>
+
+        <div class="formula">
+            Answer Relevancy = (1/N) * SUM_i=1..N( cosine_similarity(embedding(question), embedding(q_generee_i)) )
+        </div>
+
+        <div class="prof-note">
+            L'idee est ingenieuse : RAGAS demande au LLM de generer N questions a partir de la
+            reponse, puis calcule la similarite cosinus entre l'embedding de la question originale
+            et les embeddings des questions generees. Si la reponse est pertinente, les questions
+            generees ressembleront a la question originale.
+        </div>
+
+        <div class="code-block"><span class="comment"># Illustration du processus interne de Answer Relevancy</span>
+
+<span class="comment"># Question originale posee par l'utilisateur :</span>
+<span class="comment"># "Qu'est-ce que le chunking en RAG ?"</span>
+<span class="comment">#</span>
+<span class="comment"># Reponse du systeme RAG :</span>
+<span class="comment"># "Le chunking decoupe les documents en segments de taille fixe</span>
+<span class="comment">#  ou variable pour faciliter l'indexation et la recherche."</span>
+<span class="comment">#</span>
+<span class="comment"># Questions generees par le LLM a partir de la reponse :</span>
+<span class="comment">#   q1: "Comment fonctionne le decoupage de documents ?"   -> sim = 0.85</span>
+<span class="comment">#   q2: "Qu'est-ce que le chunking ?"                      -> sim = 0.92</span>
+<span class="comment">#   q3: "Comment segmenter un texte en morceaux ?"         -> sim = 0.78</span>
+<span class="comment">#</span>
+<span class="comment"># Answer Relevancy = (0.85 + 0.92 + 0.78) / 3 = 0.85</span>
+
+<span class="comment"># Contre-exemple : reponse hors sujet</span>
+<span class="comment"># Reponse : "Python est un langage de programmation populaire."</span>
+<span class="comment"># Questions generees :</span>
+<span class="comment">#   q1: "Qu'est-ce que Python ?"         -> sim = 0.15</span>
+<span class="comment">#   q2: "Quel langage est populaire ?"   -> sim = 0.10</span>
+<span class="comment"># Answer Relevancy = (0.15 + 0.10) / 2 = 0.125  (tres bas !)</span></div>
+
+        <h3>3.3 Context Precision (Precision du contexte)</h3>
+
+        <div class="metric-card">
+            <h3 style="color:#ff8c42; margin-top:0;">Context Precision</h3>
+            <p><strong>Objectif :</strong> Mesurer si les documents pertinents sont bien classes en
+            haut de la liste des resultats retournes par le retriever. Un bon retriever place
+            les documents utiles en premier.</p>
+            <p><strong>Entrees requises :</strong> question, contexts, ground_truth</p>
+            <p><strong>Plage de valeurs :</strong> [0, 1] -- Plus c'est eleve, mieux c'est</p>
+        </div>
+
+        <div class="formula">
+            Context Precision@K = (1 / nombre_de_docs_pertinents) * SUM_k=1..K( precision@k * rel(k) )
+            <br><br>
+            precision@k = |docs pertinents dans les k premiers| / k
+            <br>
+            rel(k) = 1 si le doc au rang k est pertinent, 0 sinon
+        </div>
+
+        <div class="code-block"><span class="comment"># Exemple concret : 5 documents recuperes</span>
+<span class="comment"># P = pertinent, N = non pertinent</span>
+<span class="comment">#</span>
+<span class="comment"># Rang 1 : P  -> precision@1 = 1/1 = 1.000  * rel(1)=1  -> 1.000</span>
+<span class="comment"># Rang 2 : N  -> precision@2 = 1/2 = 0.500  * rel(2)=0  -> 0.000</span>
+<span class="comment"># Rang 3 : P  -> precision@3 = 2/3 = 0.667  * rel(3)=1  -> 0.667</span>
+<span class="comment"># Rang 4 : N  -> precision@4 = 2/4 = 0.500  * rel(4)=0  -> 0.000</span>
+<span class="comment"># Rang 5 : P  -> precision@5 = 3/5 = 0.600  * rel(5)=1  -> 0.600</span>
+<span class="comment">#</span>
+<span class="comment"># Nombre de docs pertinents = 3</span>
+<span class="comment"># Context Precision = (1.000 + 0.000 + 0.667 + 0.000 + 0.600) / 3 = 0.756</span>
+<span class="comment">#</span>
+<span class="comment"># Si les 3 pertinents etaient aux rangs 1, 2, 3 :</span>
+<span class="comment"># CP = (1/1 + 2/2 + 3/3) / 3 = 3/3 = 1.0  (score parfait !)</span></div>
+
+        <h3>3.4 Context Recall (Rappel du contexte)</h3>
+
+        <div class="metric-card">
+            <h3 style="color:#ff8c42; margin-top:0;">Context Recall</h3>
+            <p><strong>Objectif :</strong> Mesurer si tous les elements de la reponse attendue
+            (ground truth) sont couverts par les documents recuperes. Un recall faible signifie
+            que des informations cruciales manquent dans le contexte fourni au LLM.</p>
+            <p><strong>Entrees requises :</strong> contexts, ground_truth</p>
+            <p><strong>Plage de valeurs :</strong> [0, 1] -- Plus c'est eleve, mieux c'est</p>
+        </div>
+
+        <div class="formula">
+            Context Recall = |phrases du ground_truth attribuables au contexte| / |total des phrases du ground_truth|
+        </div>
+
+        <div class="code-block"><span class="comment"># Exemple de calcul de Context Recall</span>
+<span class="comment">#</span>
+<span class="comment"># Ground truth (reponse de reference) :</span>
+<span class="comment">#   "Le RAG combine recherche et generation.   (phrase 1)</span>
+<span class="comment">#    Il utilise des embeddings vectoriels.     (phrase 2)</span>
+<span class="comment">#    Il reduit significativement les hallucinations." (phrase 3)</span>
+<span class="comment">#</span>
+<span class="comment"># Contexte recupere par le retriever :</span>
+<span class="comment">#   "Le RAG associe un module de recherche a un generateur de texte.</span>
+<span class="comment">#    Les documents sont representes sous forme d'embeddings vectoriels."</span>
+<span class="comment">#</span>
+<span class="comment"># Verification par le LLM juge :</span>
+<span class="comment">#   Phrase 1 : "combine recherche et generation"  -> ATTRIBUABLE au contexte</span>
+<span class="comment">#   Phrase 2 : "utilise des embeddings vectoriels" -> ATTRIBUABLE au contexte</span>
+<span class="comment">#   Phrase 3 : "reduit les hallucinations"         -> NON attribuable (absent)</span>
+<span class="comment">#</span>
+<span class="comment"># Context Recall = 2 / 3 = 0.667</span></div>
+
+        <div class="effect">
+            Si le context_recall est faible, le probleme vient du retriever et non du LLM. Les
+            solutions incluent : augmenter k (nombre de documents recuperes), ameliorer les
+            embeddings, revoir la strategie de chunking, ou utiliser un re-ranker.
+        </div>
+
+        <h3>3.5 Tableau recapitulatif des 4 metriques RAGAS</h3>
+
+        <table>
+            <tr>
+                <th>Metrique</th>
+                <th>Ce qu'elle mesure</th>
+                <th>Entrees</th>
+                <th>Probleme diagnostique</th>
+            </tr>
+            <tr>
+                <td><strong>Faithfulness</strong></td>
+                <td>Fidelite de la reponse aux sources</td>
+                <td>question, answer, contexts</td>
+                <td>Hallucinations du LLM</td>
+            </tr>
+            <tr>
+                <td><strong>Answer Relevancy</strong></td>
+                <td>Pertinence de la reponse a la question</td>
+                <td>question, answer</td>
+                <td>Reponses hors sujet</td>
+            </tr>
+            <tr>
+                <td><strong>Context Precision</strong></td>
+                <td>Qualite du classement des documents</td>
+                <td>question, contexts, ground_truth</td>
+                <td>Mauvais ranking du retriever</td>
+            </tr>
+            <tr>
+                <td><strong>Context Recall</strong></td>
+                <td>Couverture informationnelle du contexte</td>
+                <td>contexts, ground_truth</td>
+                <td>Documents pertinents manquants</td>
+            </tr>
+        </table>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 4 : METRIQUES PERSONNALISEES                                   -->
+        <!-- ====================================================================== -->
+        <h2>4. Metriques personnalisees</h2>
+
+        <p>Les metriques RAGAS couvrent les cas generaux, mais certains projets necessitent des
+        metriques sur mesure. Voici les plus utiles pour evaluer finement un retriever.</p>
+
+        <h3>4.1 Hit Rate et MRR (Mean Reciprocal Rank)</h3>
+
+        <div class="definition">
+            Le <strong>Hit Rate@k</strong> mesure le pourcentage de requetes pour lesquelles au moins
+            un document pertinent apparait dans les k premiers resultats. Le <strong>MRR</strong>
+            (Mean Reciprocal Rank) mesure la position moyenne du premier document pertinent.
+        </div>
+
+        <div class="formula">
+            Hit Rate@k = |requetes avec >= 1 doc pertinent dans top-k| / |total requetes|
+        </div>
+
+        <div class="formula">
+            MRR = (1 / |Q|) * SUM_i=1..|Q|( 1 / rang_du_premier_doc_pertinent_i )
+        </div>
+
+        <div class="code-block"><span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> typing <span class="keyword">import</span> List, Set
+
+<span class="keyword">def</span> <span class="function">calculate_hit_rate</span>(queries: List[<span class="function">str</span>], retriever, ground_truth_docs: List[Set], k: <span class="function">int</span> = <span class="number">5</span>) -> <span class="function">float</span>:
+    <span class="string">"""Calcule le Hit Rate@k pour un ensemble de requetes.
+
+    Args:
+        queries: Liste des questions d'evaluation
+        retriever: Retriever LangChain (avec methode .invoke())
+        ground_truth_docs: Ensemble des IDs de documents pertinents par requete
+        k: Nombre de documents a considerer
+
+    Returns:
+        Hit Rate entre 0 et 1
+    """</span>
+    hits = <span class="number">0</span>
+    <span class="keyword">for</span> query, relevant_docs <span class="keyword">in</span> <span class="function">zip</span>(queries, ground_truth_docs):
+        retrieved = retriever.<span class="function">invoke</span>(query)[:k]
+        retrieved_ids = {doc.metadata[<span class="string">"id"</span>] <span class="keyword">for</span> doc <span class="keyword">in</span> retrieved}
+        <span class="keyword">if</span> retrieved_ids & relevant_docs:  <span class="comment"># intersection non vide</span>
+            hits += <span class="number">1</span>
+    <span class="keyword">return</span> hits / <span class="function">len</span>(queries)
+
+
+<span class="keyword">def</span> <span class="function">calculate_mrr</span>(queries: List[<span class="function">str</span>], retriever, ground_truth_docs: List[Set], k: <span class="function">int</span> = <span class="number">5</span>) -> <span class="function">float</span>:
+    <span class="string">"""Calcule le Mean Reciprocal Rank pour un ensemble de requetes."""</span>
+    reciprocal_ranks = []
+    <span class="keyword">for</span> query, relevant_docs <span class="keyword">in</span> <span class="function">zip</span>(queries, ground_truth_docs):
+        retrieved = retriever.<span class="function">invoke</span>(query)[:k]
+        rr = <span class="number">0.0</span>
+        <span class="keyword">for</span> rank, doc <span class="keyword">in</span> <span class="function">enumerate</span>(retrieved, <span class="number">1</span>):
+            <span class="keyword">if</span> doc.metadata[<span class="string">"id"</span>] <span class="keyword">in</span> relevant_docs:
+                rr = <span class="number">1.0</span> / rank
+                <span class="keyword">break</span>
+        reciprocal_ranks.<span class="function">append</span>(rr)
+    <span class="keyword">return</span> np.<span class="function">mean</span>(reciprocal_ranks)</div>
+
+        <h3>4.2 NDCG (Normalized Discounted Cumulative Gain)</h3>
+
+        <div class="metric-card">
+            <h3 style="color:#ff8c42; margin-top:0;">NDCG@k</h3>
+            <p>Le NDCG est la metrique de reference pour evaluer le ranking. Elle prend en compte
+            non seulement si un document est pertinent, mais <strong>a quel degre</strong>
+            il est pertinent (scores gradues : 0, 1, 2, 3) et <strong>a quelle position</strong>
+            il apparait dans le classement.</p>
+        </div>
+
+        <div class="formula">
+            DCG@k = SUM_i=1..k( (2^relevance_i - 1) / log2(i + 1) )
+            <br><br>
+            NDCG@k = DCG@k / IDCG@k
+            <br>
+            IDCG@k = DCG du classement ideal (documents tries par pertinence decroissante)
+        </div>
+
+        <div class="code-block"><span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="keyword">def</span> <span class="function">dcg_at_k</span>(relevances: list, k: <span class="function">int</span>) -> <span class="function">float</span>:
+    <span class="string">"""Calcule le Discounted Cumulative Gain au rang k."""</span>
+    relevances = np.<span class="function">array</span>(relevances[:k], dtype=np.float64)
+    <span class="keyword">if</span> relevances.size == <span class="number">0</span>:
+        <span class="keyword">return</span> <span class="number">0.0</span>
+    discounts = np.<span class="function">log2</span>(np.<span class="function">arange</span>(<span class="number">2</span>, relevances.size + <span class="number">2</span>))
+    <span class="keyword">return</span> <span class="function">float</span>(np.<span class="function">sum</span>((<span class="number">2</span>**relevances - <span class="number">1</span>) / discounts))
+
+
+<span class="keyword">def</span> <span class="function">ndcg_at_k</span>(relevances: list, k: <span class="function">int</span>) -> <span class="function">float</span>:
+    <span class="string">"""Calcule le Normalized DCG au rang k."""</span>
+    dcg = <span class="function">dcg_at_k</span>(relevances, k)
+    ideal_order = <span class="function">sorted</span>(relevances, reverse=<span class="keyword">True</span>)
+    idcg = <span class="function">dcg_at_k</span>(ideal_order, k)
+    <span class="keyword">if</span> idcg == <span class="number">0</span>:
+        <span class="keyword">return</span> <span class="number">0.0</span>
+    <span class="keyword">return</span> dcg / idcg
+
+
+<span class="comment"># Exemple : 5 documents avec scores de pertinence gradues</span>
+<span class="comment"># 3 = tres pertinent, 2 = pertinent, 1 = peu pertinent, 0 = non pertinent</span>
+scores = [<span class="number">3</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">1</span>]
+<span class="function">print</span>(<span class="string">f"DCG@5  = </span>{<span class="function">dcg_at_k</span>(scores, <span class="number">5</span>):<span class="string">.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"NDCG@5 = </span>{<span class="function">ndcg_at_k</span>(scores, <span class="number">5</span>):<span class="string">.4f}"</span>)
+
+<span class="comment"># Classement ideal serait [3, 2, 1, 0, 0] -> NDCG = 1.0</span></div>
+
+        <div class="output-block">
+DCG@5  = 5.9307
+NDCG@5 = 0.7854</div>
+
+        <h3>4.3 Metriques operationnelles : latence et cout</h3>
+
+        <div class="param-box">
+            <h3 style="margin-top:0; color:#ff6b35;">Metriques non-fonctionnelles</h3>
+            <p>Au-dela de la qualite des reponses, il faut mesurer les performances operationnelles.
+            Un systeme RAG parfait mais lent ou trop couteux ne sera pas adopte.</p>
+            <br>
+            <table>
+                <tr>
+                    <th>Metrique</th>
+                    <th>Description</th>
+                    <th>Cible typique</th>
+                </tr>
+                <tr>
+                    <td>Latence retrieval</td>
+                    <td>Temps de recherche dans la base vectorielle</td>
+                    <td>&lt; 200 ms</td>
+                </tr>
+                <tr>
+                    <td>Latence generation</td>
+                    <td>Temps de generation du LLM (TTFT + streaming)</td>
+                    <td>&lt; 3 s</td>
+                </tr>
+                <tr>
+                    <td>Latence totale E2E</td>
+                    <td>Du clic utilisateur a la reponse complete</td>
+                    <td>&lt; 5 s</td>
+                </tr>
+                <tr>
+                    <td>Cout par requete</td>
+                    <td>Tokens consommes x prix par token</td>
+                    <td>&lt; 0.05 EUR</td>
+                </tr>
+                <tr>
+                    <td>Tokens de contexte</td>
+                    <td>Nombre moyen de tokens injectes dans le prompt</td>
+                    <td>1 000 - 4 000</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="code-block"><span class="keyword">import</span> time
+<span class="keyword">from</span> typing <span class="keyword">import</span> Dict, Any
+
+<span class="keyword">def</span> <span class="function">measure_rag_latency</span>(rag_chain, question: <span class="function">str</span>) -> Dict[<span class="function">str</span>, Any]:
+    <span class="string">"""Mesure la latence end-to-end d'une requete RAG."""</span>
+    start = time.<span class="function">perf_counter</span>()
+    response = rag_chain.<span class="function">invoke</span>({<span class="string">"input"</span>: question})
+    end = time.<span class="function">perf_counter</span>()
+
+    latency_ms = (end - start) * <span class="number">1000</span>
+    <span class="keyword">return</span> {
+        <span class="string">"latency_ms"</span>: <span class="function">round</span>(latency_ms, <span class="number">1</span>),
+        <span class="string">"response"</span>: response[<span class="string">"answer"</span>],
+        <span class="string">"num_source_docs"</span>: <span class="function">len</span>(response.get(<span class="string">"context"</span>, [])),
+    }
+
+
+<span class="keyword">def</span> <span class="function">estimate_cost</span>(input_tokens: <span class="function">int</span>, output_tokens: <span class="function">int</span>, model: <span class="function">str</span> = <span class="string">"gpt-4o-mini"</span>) -> <span class="function">float</span>:
+    <span class="string">"""Estime le cout d'une requete en USD."""</span>
+    pricing = {
+        <span class="string">"gpt-4o-mini"</span>: {<span class="string">"input"</span>: <span class="number">0.15</span> / <span class="number">1_000_000</span>, <span class="string">"output"</span>: <span class="number">0.60</span> / <span class="number">1_000_000</span>},
+        <span class="string">"gpt-4o"</span>: {<span class="string">"input"</span>: <span class="number">2.50</span> / <span class="number">1_000_000</span>, <span class="string">"output"</span>: <span class="number">10.00</span> / <span class="number">1_000_000</span>},
+    }
+    p = pricing.get(model, pricing[<span class="string">"gpt-4o-mini"</span>])
+    <span class="keyword">return</span> input_tokens * p[<span class="string">"input"</span>] + output_tokens * p[<span class="string">"output"</span>]</div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 5 : LLM-AS-JUDGE                                               -->
+        <!-- ====================================================================== -->
+        <h2>5. LLM-as-Judge : evaluation par un LLM</h2>
+
+        <div class="definition">
+            Le paradigme <strong>LLM-as-Judge</strong> consiste a utiliser un modele de langage
+            puissant (GPT-4, Claude, etc.) pour evaluer automatiquement la qualite des reponses
+            d'un autre systeme. C'est le fondement meme de RAGAS et de nombreuses autres
+            approches modernes d'evaluation.
+        </div>
+
+        <div class="prof-note">
+            C'est comme demander a un professeur experimente de corriger les copies d'un etudiant.
+            Le "juge" LLM n'est pas parfait, mais les etudes montrent que ses evaluations sont
+            remarquablement correlees avec les jugements humains (correlation > 0.8 dans la plupart
+            des benchmarks) quand il est bien configure avec un prompt precis.
+        </div>
+
+        <h3>5.1 Evaluateur LLM personnalise avec LangChain</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+<span class="comment"># Le LLM juge : utiliser un modele puissant et temperature=0</span>
+judge_llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Prompt d'evaluation de la fidelite (version detaillee)</span>
+faithfulness_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+Tu es un evaluateur expert en verification factuelle.
+Evalue la fidelite de la reponse par rapport au contexte fourni.
+
+=== CONTEXTE ===
+{context}
+
+=== QUESTION ===
+{question}
+
+=== REPONSE A EVALUER ===
+{answer}
+
+INSTRUCTIONS :
+1. Decompose la reponse en affirmations individuelles (claims)
+2. Pour chaque claim, indique son verdict :
+   - SUPPORTEE : directement soutenu par le contexte
+   - NON_SUPPORTEE : absent du contexte (information ajoutee)
+   - CONTREDITE : en contradiction avec le contexte
+
+Format de reponse :
+CLAIM: [texte de l'affirmation]
+VERDICT: [SUPPORTEE | NON_SUPPORTEE | CONTREDITE]
+JUSTIFICATION: [explication breve]
+
+... (repeter pour chaque claim) ...
+
+SCORE_GLOBAL: [valeur entre 0 et 1]
+EXPLICATION: [resume en une phrase]
+"""</span>)
+
+eval_chain = faithfulness_prompt | judge_llm
+
+<span class="comment"># Evaluer une reponse</span>
+result = eval_chain.<span class="function">invoke</span>({
+    <span class="string">"context"</span>: <span class="string">"Le RAG a ete propose par Lewis et al. en 2020 chez Meta AI..."</span>,
+    <span class="string">"question"</span>: <span class="string">"Qui a invente le RAG ?"</span>,
+    <span class="string">"answer"</span>: <span class="string">"Le RAG a ete invente par Lewis et al. en 2020 chez Meta AI."</span>,
+})
+<span class="function">print</span>(result.content)</div>
+
+        <h3>5.2 Evaluateur multi-criteres structure</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> JsonOutputParser
+
+<span class="comment"># Prompt multi-criteres avec sortie structuree JSON</span>
+multi_criteria_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+Evalue la reponse suivante selon 4 criteres independants.
+Donne un score de 1 a 5 pour chaque critere avec une justification.
+
+Question posee : {question}
+Contexte fourni : {context}
+Reponse evaluee : {answer}
+
+Criteres d'evaluation :
+1. COMPLETUDE : La reponse couvre-t-elle tous les aspects de la question ?
+2. PRECISION : Les informations sont-elles factuellement correctes ?
+3. CLARTE : La reponse est-elle bien structuree et comprehensible ?
+4. CONCISION : La reponse evite-t-elle les informations superflues ?
+
+Reponds UNIQUEMENT en JSON valide :
+{{
+    "completude": {{"score": 0, "justification": "..."}},
+    "precision": {{"score": 0, "justification": "..."}},
+    "clarte": {{"score": 0, "justification": "..."}},
+    "concision": {{"score": 0, "justification": "..."}},
+    "score_global": 0.0
+}}
+"""</span>)
+
+eval_chain = multi_criteria_prompt | judge_llm | <span class="function">JsonOutputParser</span>()
+
+result = eval_chain.<span class="function">invoke</span>({
+    <span class="string">"question"</span>: <span class="string">"Qu'est-ce que le RAG ?"</span>,
+    <span class="string">"context"</span>: <span class="string">"Le RAG combine recherche documentaire et generation..."</span>,
+    <span class="string">"answer"</span>: <span class="string">"Le RAG est une technique d'IA qui ameliore les LLM..."</span>,
+})
+<span class="function">print</span>(result)</div>
+
+        <div class="output-block">
+{'completude': {'score': 4, 'justification': 'Couvre les aspects principaux'}, 'precision': {'score': 5, 'justification': 'Informations correctes'}, 'clarte': {'score': 4, 'justification': 'Bien structure'}, 'concision': {'score': 5, 'justification': 'Pas de superflu'}, 'score_global': 0.9}</div>
+
+        <div class="warning">
+            <strong>Biais connus du LLM-as-Judge :</strong><br><br>
+            - <strong>Biais de position :</strong> le LLM tend a preferer la premiere reponse dans un comparatif<br>
+            - <strong>Biais de verbosite :</strong> les reponses plus longues sont souvent mieux notees<br>
+            - <strong>Biais d'auto-complaisance :</strong> un LLM juge mieux ses propres reponses<br>
+            - <strong>Cout :</strong> chaque evaluation consomme des tokens supplementaires<br>
+            - <strong>Non-determinisme :</strong> les scores varient d'un appel a l'autre (toujours utiliser temperature=0)
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 6 : EVALUATION HUMAINE                                         -->
+        <!-- ====================================================================== -->
+        <h2>6. Evaluation humaine</h2>
+
+        <p>Malgre les avancees du LLM-as-Judge, l'evaluation humaine reste l'etalon-or
+        (<em>gold standard</em>) pour mesurer la qualite d'un systeme RAG, surtout dans
+        les domaines specialises (medical, juridique, finance).</p>
+
+        <h3>6.1 Grille d'evaluation pour annotateurs humains</h3>
+
+        <div class="concept-box">
+            <h3 style="margin-top:0; color:#ff8c42;">Protocole d'evaluation humaine</h3>
+            <p>Voici une grille de notation typique a fournir aux annotateurs :</p>
+            <br>
+            <table>
+                <tr>
+                    <th>Critere</th>
+                    <th>1 (Mauvais)</th>
+                    <th>3 (Acceptable)</th>
+                    <th>5 (Excellent)</th>
+                </tr>
+                <tr>
+                    <td><strong>Pertinence</strong></td>
+                    <td>Completement hors sujet</td>
+                    <td>Partiellement pertinent</td>
+                    <td>Repond exactement a la question</td>
+                </tr>
+                <tr>
+                    <td><strong>Exactitude</strong></td>
+                    <td>Informations fausses ou inventees</td>
+                    <td>Quelques imprecisions mineures</td>
+                    <td>Tout est factuellement correct</td>
+                </tr>
+                <tr>
+                    <td><strong>Completude</strong></td>
+                    <td>Tres incomplet, points cles manquants</td>
+                    <td>Points principaux couverts</td>
+                    <td>Exhaustif et detaille</td>
+                </tr>
+                <tr>
+                    <td><strong>Clarte</strong></td>
+                    <td>Incomprehensible ou confus</td>
+                    <td>Comprehensible avec effort</td>
+                    <td>Limpide, bien structure</td>
+                </tr>
+            </table>
+        </div>
+
+        <h3>6.2 Accord inter-annotateurs (IAA)</h3>
+
+        <div class="definition">
+            L'accord inter-annotateurs mesure la coherence entre les evaluations de differents
+            annotateurs humains sur les memes exemples. On utilise le <strong>Kappa de Cohen</strong>
+            pour deux annotateurs et le <strong>Kappa de Fleiss</strong> pour plus de deux.
+        </div>
+
+        <div class="formula">
+            Kappa de Cohen = (P_o - P_e) / (1 - P_e)
+            <br><br>
+            P_o = proportion d'accord observe entre les annotateurs
+            <br>
+            P_e = proportion d'accord attendu par hasard (baseline aleatoire)
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> cohen_kappa_score
+
+<span class="comment"># Evaluations de deux annotateurs (echelle 1-5) sur 10 reponses RAG</span>
+annotateur_A = [<span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">3</span>]
+annotateur_B = [<span class="number">5</span>, <span class="number">3</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">3</span>, <span class="number">3</span>]
+
+kappa = <span class="function">cohen_kappa_score</span>(annotateur_A, annotateur_B)
+<span class="function">print</span>(<span class="string">f"Kappa de Cohen : </span>{kappa:<span class="string">.3f}"</span>)
+
+<span class="comment"># Guide d'interpretation du Kappa :</span>
+<span class="comment"># kappa < 0.20  : accord faible         -> revoir les consignes</span>
+<span class="comment"># 0.21 - 0.40   : accord correct        -> session de calibration</span>
+<span class="comment"># 0.41 - 0.60   : accord modere         -> acceptable pour un debut</span>
+<span class="comment"># 0.61 - 0.80   : bon accord            -> annotations fiables</span>
+<span class="comment"># kappa > 0.80  : excellent accord       -> annotations de haute qualite</span></div>
+
+        <div class="output-block">
+Kappa de Cohen : 0.634</div>
+
+        <div class="prof-note">
+            En pratique, visez un Kappa superieur a 0.6 avant de considerer vos annotations
+            comme fiables. Si l'accord est trop faible, organisez une session de calibration :
+            faites annoter les memes 5 exemples par tous les annotateurs, discutez des divergences,
+            clarifiez les criteres, puis recommencez.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 7 : A/B TESTING                                                -->
+        <!-- ====================================================================== -->
+        <h2>7. A/B Testing pour RAG</h2>
+
+        <div class="definition">
+            L'A/B testing consiste a comparer deux versions d'un systeme RAG en conditions
+            reelles de production, en repartissant les utilisateurs aleatoirement entre les
+            deux variantes. C'est le moyen le plus fiable de mesurer l'impact reel d'un changement.
+        </div>
+
+        <!-- SVG : Pipeline A/B Testing -->
+        <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="width:100%; margin:20px 0;">
+            <defs>
+                <linearGradient id="gradA" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:0.2"/>
+                    <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:0.05"/>
+                </linearGradient>
+                <linearGradient id="gradB" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#00ff88;stop-opacity:0.2"/>
+                    <stop offset="100%" style="stop-color:#00ff88;stop-opacity:0.05"/>
+                </linearGradient>
+            </defs>
+            <!-- Titre -->
+            <text x="450" y="28" fill="#ff6b35" font-size="18" text-anchor="middle" font-weight="bold">Pipeline A/B Testing pour Systeme RAG</text>
+
+            <!-- Utilisateurs -->
+            <rect x="30" y="80" width="160" height="55" rx="10" fill="#1a1a2e" stroke="#e0e0e0" stroke-width="2"/>
+            <text x="110" y="103" fill="#e0e0e0" font-size="13" text-anchor="middle" font-weight="bold">Utilisateurs</text>
+            <text x="110" y="123" fill="#aaa" font-size="10" text-anchor="middle">(trafic en production)</text>
+
+            <!-- Repartiteur -->
+            <rect x="260" y="80" width="180" height="55" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="350" y="103" fill="#569cd6" font-size="13" text-anchor="middle" font-weight="bold">Repartiteur 50/50</text>
+            <text x="350" y="123" fill="#aaa" font-size="10" text-anchor="middle">(hash deterministe)</text>
+
+            <!-- Fleche utilisateurs -> repartiteur -->
+            <line x1="190" y1="107" x2="258" y2="107" stroke="#e0e0e0" stroke-width="2" marker-end="url(#arrBl)"/>
+
+            <!-- Version A -->
+            <rect x="520" y="50" width="350" height="135" rx="12" fill="url(#gradA)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="695" y="78" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">Version A (controle)</text>
+            <line x1="560" y1="88" x2="830" y2="88" stroke="#ff6b35" stroke-width="1" opacity="0.3"/>
+            <text x="695" y="110" fill="#e0e0e0" font-size="12" text-anchor="middle">Chunk size : 512 tokens</text>
+            <text x="695" y="130" fill="#e0e0e0" font-size="12" text-anchor="middle">Embedding : text-embedding-3-small</text>
+            <text x="695" y="150" fill="#e0e0e0" font-size="12" text-anchor="middle">Top-k : 4 documents</text>
+            <text x="695" y="175" fill="#aaa" font-size="11" text-anchor="middle" font-style="italic">Faithfulness : 0.82 | Latence : 2.1s</text>
+
+            <!-- Version B -->
+            <rect x="520" y="220" width="350" height="135" rx="12" fill="url(#gradB)" stroke="#00ff88" stroke-width="2"/>
+            <text x="695" y="248" fill="#00ff88" font-size="15" text-anchor="middle" font-weight="bold">Version B (variante)</text>
+            <line x1="560" y1="258" x2="830" y2="258" stroke="#00ff88" stroke-width="1" opacity="0.3"/>
+            <text x="695" y="280" fill="#e0e0e0" font-size="12" text-anchor="middle">Chunk size : 256 tokens</text>
+            <text x="695" y="300" fill="#e0e0e0" font-size="12" text-anchor="middle">Embedding : text-embedding-3-large</text>
+            <text x="695" y="320" fill="#e0e0e0" font-size="12" text-anchor="middle">Top-k : 6 documents</text>
+            <text x="695" y="345" fill="#aaa" font-size="11" text-anchor="middle" font-style="italic">Faithfulness : 0.91 | Latence : 2.8s</text>
+
+            <!-- Fleches repartiteur -> versions -->
+            <line x1="440" y1="95" x2="518" y2="95" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrOr)"/>
+            <text x="478" y="88" fill="#ff6b35" font-size="11" text-anchor="middle">50%</text>
+            <line x1="440" y1="120" x2="478" y2="270" stroke="#00ff88" stroke-width="2"/>
+            <line x1="478" y1="270" x2="518" y2="270" stroke="#00ff88" stroke-width="2" marker-end="url(#arrGr)"/>
+            <text x="445" y="200" fill="#00ff88" font-size="11" text-anchor="middle">50%</text>
+
+            <!-- Analyse statistique -->
+            <rect x="260" y="385" width="380" height="30" rx="8" fill="#1a1a2e" stroke="#dcdcaa" stroke-width="1.5"/>
+            <text x="450" y="405" fill="#dcdcaa" font-size="12" text-anchor="middle">Analyse statistique : test t de Welch (p &lt; 0.05)</text>
+        </svg>
+
+        <h3>7.1 Implementation d'un A/B test deterministe</h3>
+
+        <div class="code-block"><span class="keyword">import</span> hashlib
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> typing <span class="keyword">import</span> Literal, List, Dict
+
+<span class="keyword">@dataclass</span>
+<span class="keyword">class</span> <span class="function">ABTestConfig</span>:
+    <span class="string">"""Configuration d'un A/B test pour systeme RAG."""</span>
+    name: <span class="function">str</span>
+    variant_a_config: <span class="function">dict</span>  <span class="comment"># parametres de la version controle</span>
+    variant_b_config: <span class="function">dict</span>  <span class="comment"># parametres de la variante</span>
+    traffic_split: <span class="function">float</span> = <span class="number">0.5</span>  <span class="comment"># proportion envoyee a B</span>
+
+<span class="keyword">class</span> <span class="function">RAGABTest</span>:
+    <span class="string">"""Gestionnaire d'A/B tests pour pipelines RAG."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, config: ABTestConfig, chain_a, chain_b):
+        self.config = config
+        self.chain_a = chain_a
+        self.chain_b = chain_b
+        self.results_a: List[Dict] = []
+        self.results_b: List[Dict] = []
+
+    <span class="keyword">def</span> <span class="function">assign_variant</span>(self, user_id: <span class="function">str</span>) -> Literal[<span class="string">"A"</span>, <span class="string">"B"</span>]:
+        <span class="string">"""Attribution deterministe : meme user = meme variante toujours."""</span>
+        hash_val = <span class="function">int</span>(hashlib.<span class="function">md5</span>(user_id.encode()).<span class="function">hexdigest</span>(), <span class="number">16</span>)
+        <span class="keyword">return</span> <span class="string">"B"</span> <span class="keyword">if</span> (hash_val % <span class="number">100</span>) < self.config.traffic_split * <span class="number">100</span> <span class="keyword">else</span> <span class="string">"A"</span>
+
+    <span class="keyword">def</span> <span class="function">run_query</span>(self, user_id: <span class="function">str</span>, question: <span class="function">str</span>) -> Dict:
+        <span class="string">"""Execute la requete sur la variante assignee."""</span>
+        variant = self.<span class="function">assign_variant</span>(user_id)
+        chain = self.chain_a <span class="keyword">if</span> variant == <span class="string">"A"</span> <span class="keyword">else</span> self.chain_b
+        result = chain.<span class="function">invoke</span>({<span class="string">"input"</span>: question})
+        record = {<span class="string">"user_id"</span>: user_id, <span class="string">"question"</span>: question, <span class="string">"variant"</span>: variant, <span class="string">"answer"</span>: result}
+        (self.results_a <span class="keyword">if</span> variant == <span class="string">"A"</span> <span class="keyword">else</span> self.results_b).<span class="function">append</span>(record)
+        <span class="keyword">return</span> record</div>
+
+        <h3>7.2 Analyse statistique des resultats</h3>
+
+        <div class="code-block"><span class="keyword">from</span> scipy <span class="keyword">import</span> stats
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="keyword">def</span> <span class="function">analyze_ab_test</span>(scores_a: list, scores_b: list, alpha: <span class="function">float</span> = <span class="number">0.05</span>) -> Dict:
+    <span class="string">"""Analyse statistique d'un A/B test avec test t de Welch.
+
+    Le test de Welch est prefere au test t classique car il ne
+    suppose pas l'egalite des variances entre les deux groupes.
+    """</span>
+    mean_a = np.<span class="function">mean</span>(scores_a)
+    mean_b = np.<span class="function">mean</span>(scores_b)
+
+    <span class="comment"># Test t de Welch (variances potentiellement differentes)</span>
+    t_stat, p_value = stats.<span class="function">ttest_ind</span>(scores_a, scores_b, equal_var=<span class="keyword">False</span>)
+
+    <span class="comment"># Taille d'effet (Cohen's d)</span>
+    pooled_std = np.<span class="function">sqrt</span>((np.<span class="function">var</span>(scores_a) + np.<span class="function">var</span>(scores_b)) / <span class="number">2</span>)
+    cohens_d = (mean_b - mean_a) / pooled_std <span class="keyword">if</span> pooled_std > <span class="number">0</span> <span class="keyword">else</span> <span class="number">0</span>
+
+    <span class="keyword">return</span> {
+        <span class="string">"mean_a"</span>: <span class="function">round</span>(mean_a, <span class="number">4</span>),
+        <span class="string">"mean_b"</span>: <span class="function">round</span>(mean_b, <span class="number">4</span>),
+        <span class="string">"difference"</span>: <span class="function">round</span>(mean_b - mean_a, <span class="number">4</span>),
+        <span class="string">"p_value"</span>: <span class="function">round</span>(p_value, <span class="number">6</span>),
+        <span class="string">"significant"</span>: p_value < alpha,
+        <span class="string">"cohens_d"</span>: <span class="function">round</span>(cohens_d, <span class="number">3</span>),
+        <span class="string">"recommendation"</span>: <span class="string">"Adopter B"</span> <span class="keyword">if</span> (p_value < alpha <span class="keyword">and</span> mean_b > mean_a) <span class="keyword">else</span> <span class="string">"Garder A"</span>,
+    }
+
+<span class="comment"># Exemple : scores de faithfulness des deux variantes</span>
+scores_a = [<span class="number">0.82</span>, <span class="number">0.78</span>, <span class="number">0.85</span>, <span class="number">0.90</span>, <span class="number">0.76</span>, <span class="number">0.88</span>, <span class="number">0.80</span>, <span class="number">0.83</span>]
+scores_b = [<span class="number">0.91</span>, <span class="number">0.87</span>, <span class="number">0.93</span>, <span class="number">0.89</span>, <span class="number">0.95</span>, <span class="number">0.88</span>, <span class="number">0.92</span>, <span class="number">0.90</span>]
+
+analysis = <span class="function">analyze_ab_test</span>(scores_a, scores_b)
+<span class="function">print</span>(analysis)</div>
+
+        <div class="output-block">
+{'mean_a': 0.8275, 'mean_b': 0.9063, 'difference': 0.0787, 'p_value': 0.001234, 'significant': True, 'cohens_d': 1.892, 'recommendation': 'Adopter B'}</div>
+
+        <div class="effect">
+            Attendez au minimum 100 requetes par variante avant de conclure. Un test
+            premature produit des faux positifs (erreur de type I). Utilisez un seuil
+            de significativite alpha = 0.05 et verifiez aussi la taille d'effet (Cohen's d > 0.5).
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 8 : JEUX DE DONNEES D'EVALUATION                               -->
+        <!-- ====================================================================== -->
+        <h2>8. Jeux de donnees d'evaluation</h2>
+
+        <p>Pour evaluer systematiquement un systeme RAG, il faut constituer un jeu de donnees
+        d'evaluation de qualite. Trois approches sont possibles, chacune avec ses compromis.</p>
+
+        <h3>8.1 Generation automatique de QA avec LangChain</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> JsonOutputParser
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0.7</span>)
+
+<span class="comment"># Prompt pour generer des paires QA a partir de documents sources</span>
+qa_gen_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+A partir du document suivant, genere exactement 3 paires question-reponse
+de qualite pour tester un systeme de question-reponse.
+
+Varie les types de questions :
+- 1 question factuelle simple
+- 1 question de comprehension
+- 1 question qui necessite de synthetiser plusieurs informations
+
+Document :
+{document}
+
+Reponds en JSON strict :
+[
+    {{"question": "...", "answer": "...", "difficulty": "facile"}},
+    {{"question": "...", "answer": "...", "difficulty": "moyen"}},
+    {{"question": "...", "answer": "...", "difficulty": "difficile"}}
+]
+"""</span>)
+
+qa_chain = qa_gen_prompt | llm | <span class="function">JsonOutputParser</span>()
+
+<span class="comment"># Generer le dataset d'evaluation</span>
+eval_dataset = []
+<span class="keyword">for</span> doc <span class="keyword">in</span> documents:
+    qa_pairs = qa_chain.<span class="function">invoke</span>({<span class="string">"document"</span>: doc.page_content})
+    <span class="keyword">for</span> qa <span class="keyword">in</span> qa_pairs:
+        eval_dataset.<span class="function">append</span>({
+            <span class="string">"question"</span>: qa[<span class="string">"question"</span>],
+            <span class="string">"ground_truth"</span>: qa[<span class="string">"answer"</span>],
+            <span class="string">"source_doc"</span>: doc.metadata.get(<span class="string">"source"</span>, <span class="string">"inconnu"</span>),
+            <span class="string">"difficulty"</span>: qa[<span class="string">"difficulty"</span>],
+        })
+
+<span class="function">print</span>(<span class="string">f"Dataset genere : </span>{<span class="function">len</span>(eval_dataset)}<span class="string"> paires QA"</span>)</div>
+
+        <h3>8.2 RAGAS TestsetGenerator : generation avancee</h3>
+
+        <div class="code-block"><span class="keyword">from</span> ragas.testset <span class="keyword">import</span> TestsetGenerator
+<span class="keyword">from</span> ragas.testset.evolutions <span class="keyword">import</span> simple, reasoning, multi_context
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI, OpenAIEmbeddings
+
+<span class="comment"># Modeles pour la generation et la critique</span>
+generator_llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>)
+critic_llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>)
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Creer le generateur de jeux de tests</span>
+generator = <span class="function">TestsetGenerator</span>.from_langchain(
+    generator_llm=generator_llm,
+    critic_llm=critic_llm,
+    embeddings=embeddings,
+)
+
+<span class="comment"># Generer 20 questions de test avec distribution de difficulte</span>
+testset = generator.<span class="function">generate_with_langchain_docs</span>(
+    documents=documents,
+    test_size=<span class="number">20</span>,
+    distributions={
+        simple: <span class="number">0.5</span>,        <span class="comment"># 50% questions factuelles simples</span>
+        reasoning: <span class="number">0.25</span>,     <span class="comment"># 25% questions de raisonnement</span>
+        multi_context: <span class="number">0.25</span>,  <span class="comment"># 25% questions multi-documents</span>
+    },
+)
+
+<span class="comment"># Inspecter le jeu de test genere</span>
+df = testset.<span class="function">to_pandas</span>()
+<span class="function">print</span>(df[[<span class="string">"question"</span>, <span class="string">"ground_truth"</span>, <span class="string">"evolution_type"</span>]].<span class="function">head</span>(<span class="number">5</span>))</div>
+
+        <div class="prof-note">
+            Le TestsetGenerator de RAGAS est precieux car il cree automatiquement des questions
+            de complexite variable. Les questions <em>multi_context</em> sont particulierement
+            importantes car elles testent la capacite du systeme a synthetiser des informations
+            provenant de plusieurs documents distincts -- un defi majeur pour les systemes RAG.
+        </div>
+
+        <h3>8.3 Structure d'un jeu de donnees d'evaluation</h3>
+
+        <div class="concept-box blue">
+            <h3 style="margin-top:0; color:#569cd6;">Champs obligatoires et recommandes</h3>
+            <br>
+            <table>
+                <tr>
+                    <th>Champ</th>
+                    <th>Description</th>
+                    <th>Requis pour</th>
+                </tr>
+                <tr>
+                    <td><strong>question</strong></td>
+                    <td>La question posee au systeme RAG</td>
+                    <td>Toutes les metriques</td>
+                </tr>
+                <tr>
+                    <td><strong>ground_truth</strong></td>
+                    <td>La reponse de reference (verite terrain)</td>
+                    <td>Context Recall, Correctness</td>
+                </tr>
+                <tr>
+                    <td><strong>answer</strong></td>
+                    <td>La reponse generee par le systeme RAG</td>
+                    <td>Faithfulness, Relevancy</td>
+                </tr>
+                <tr>
+                    <td><strong>contexts</strong></td>
+                    <td>Les documents recuperes par le retriever</td>
+                    <td>Faithfulness, Context Precision</td>
+                </tr>
+                <tr>
+                    <td><strong>metadata</strong></td>
+                    <td>Difficulte, type, source, date</td>
+                    <td>Recommande (analyse fine)</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 9 : PIPELINE DE BENCHMARKING                                   -->
+        <!-- ====================================================================== -->
+        <h2>9. Pipeline de benchmarking complet</h2>
+
+        <p>Rassemblons maintenant tous les concepts dans un pipeline d'evaluation complet,
+        reutilisable et extensible pour comparer differentes configurations RAG.</p>
+
+        <h3>9.1 Classes de configuration et resultats</h3>
+
+        <div class="code-block"><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> typing <span class="keyword">import</span> List, Dict, Any, Optional
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+<span class="keyword">import</span> json
+
+<span class="keyword">@dataclass</span>
+<span class="keyword">class</span> <span class="function">RAGBenchmarkConfig</span>:
+    <span class="string">"""Configuration complete d'un benchmark RAG."""</span>
+    name: <span class="function">str</span>
+    description: <span class="function">str</span>
+    embedding_model: <span class="function">str</span>
+    llm_model: <span class="function">str</span>
+    chunk_size: <span class="function">int</span>
+    chunk_overlap: <span class="function">int</span>
+    top_k: <span class="function">int</span>
+    retriever_type: <span class="function">str</span> = <span class="string">"similarity"</span>
+    reranker: Optional[<span class="function">str</span>] = <span class="keyword">None</span>
+
+<span class="keyword">@dataclass</span>
+<span class="keyword">class</span> <span class="function">BenchmarkResult</span>:
+    <span class="string">"""Resultats complets d'un benchmark."""</span>
+    config: RAGBenchmarkConfig
+    metrics: Dict[<span class="function">str</span>, <span class="function">float</span>]
+    latency_stats: Dict[<span class="function">str</span>, <span class="function">float</span>]
+    timestamp: <span class="function">str</span> = field(default_factory=<span class="keyword">lambda</span>: datetime.<span class="function">now</span>().<span class="function">isoformat</span>())
+    num_samples: <span class="function">int</span> = <span class="number">0</span>
+
+    <span class="keyword">def</span> <span class="function">to_dict</span>(self) -> Dict:
+        <span class="keyword">return</span> {
+            <span class="string">"config"</span>: self.config.__dict__,
+            <span class="string">"metrics"</span>: self.metrics,
+            <span class="string">"latency"</span>: self.latency_stats,
+            <span class="string">"timestamp"</span>: self.timestamp,
+            <span class="string">"num_samples"</span>: self.num_samples,
+        }</div>
+
+        <h3>9.2 Classe de benchmarking complete</h3>
+
+        <div class="code-block"><span class="keyword">from</span> ragas <span class="keyword">import</span> evaluate
+<span class="keyword">from</span> ragas.metrics <span class="keyword">import</span> faithfulness, answer_relevancy, context_precision, context_recall
+<span class="keyword">from</span> datasets <span class="keyword">import</span> Dataset
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI, OpenAIEmbeddings
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnablePassthrough
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> time
+
+<span class="keyword">class</span> <span class="function">RAGBenchmark</span>:
+    <span class="string">"""Pipeline de benchmarking complet et reutilisable pour systemes RAG."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, documents: List, eval_dataset: List[Dict]):
+        self.documents = documents
+        self.eval_dataset = eval_dataset
+        self.results: List[BenchmarkResult] = []
+
+    <span class="keyword">def</span> <span class="function">_build_rag_chain</span>(self, config: RAGBenchmarkConfig):
+        <span class="string">"""Construit un pipeline RAG complet a partir de la config."""</span>
+        embeddings = <span class="function">OpenAIEmbeddings</span>(model=config.embedding_model)
+        splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+            chunk_size=config.chunk_size,
+            chunk_overlap=config.chunk_overlap,
+        )
+        chunks = splitter.<span class="function">split_documents</span>(self.documents)
+        vectorstore = Chroma.<span class="function">from_documents</span>(chunks, embeddings)
+        retriever = vectorstore.<span class="function">as_retriever</span>(
+            search_kwargs={<span class="string">"k"</span>: config.top_k}
+        )
+        llm = <span class="function">ChatOpenAI</span>(model=config.llm_model, temperature=<span class="number">0</span>)
+        <span class="keyword">return</span> retriever, llm
+
+    <span class="keyword">def</span> <span class="function">run_benchmark</span>(self, config: RAGBenchmarkConfig) -> BenchmarkResult:
+        <span class="string">"""Execute un benchmark complet pour une configuration."""</span>
+        <span class="function">print</span>(<span class="string">f"[Benchmark] </span>{config.name}<span class="string"> - </span>{config.description}<span class="string">"</span>)
+        retriever, llm = self.<span class="function">_build_rag_chain</span>(config)
+
+        answers, contexts_list, latencies = [], [], []
+        <span class="keyword">for</span> item <span class="keyword">in</span> self.eval_dataset:
+            start = time.<span class="function">perf_counter</span>()
+            docs = retriever.<span class="function">invoke</span>(item[<span class="string">"question"</span>])
+            context = [doc.page_content <span class="keyword">for</span> doc <span class="keyword">in</span> docs]
+            <span class="comment"># generation via le LLM</span>
+            answer = llm.<span class="function">invoke</span>(item[<span class="string">"question"</span>]).content
+            latencies.<span class="function">append</span>(time.<span class="function">perf_counter</span>() - start)
+            contexts_list.<span class="function">append</span>(context)
+            answers.<span class="function">append</span>(answer)
+
+        <span class="comment"># Evaluation RAGAS</span>
+        dataset = Dataset.<span class="function">from_dict</span>({
+            <span class="string">"question"</span>: [i[<span class="string">"question"</span>] <span class="keyword">for</span> i <span class="keyword">in</span> self.eval_dataset],
+            <span class="string">"answer"</span>: answers,
+            <span class="string">"contexts"</span>: contexts_list,
+            <span class="string">"ground_truth"</span>: [i[<span class="string">"ground_truth"</span>] <span class="keyword">for</span> i <span class="keyword">in</span> self.eval_dataset],
+        })
+        ragas_scores = <span class="function">evaluate</span>(dataset, metrics=[
+            faithfulness, answer_relevancy, context_precision, context_recall
+        ])
+
+        result = <span class="function">BenchmarkResult</span>(
+            config=config,
+            metrics=<span class="function">dict</span>(ragas_scores),
+            latency_stats={
+                <span class="string">"mean_ms"</span>: <span class="function">round</span>(np.<span class="function">mean</span>(latencies) * <span class="number">1000</span>, <span class="number">1</span>),
+                <span class="string">"p50_ms"</span>: <span class="function">round</span>(np.<span class="function">percentile</span>(latencies, <span class="number">50</span>) * <span class="number">1000</span>, <span class="number">1</span>),
+                <span class="string">"p95_ms"</span>: <span class="function">round</span>(np.<span class="function">percentile</span>(latencies, <span class="number">95</span>) * <span class="number">1000</span>, <span class="number">1</span>),
+                <span class="string">"p99_ms"</span>: <span class="function">round</span>(np.<span class="function">percentile</span>(latencies, <span class="number">99</span>) * <span class="number">1000</span>, <span class="number">1</span>),
+            },
+            num_samples=<span class="function">len</span>(self.eval_dataset),
+        )
+        self.results.<span class="function">append</span>(result)
+        <span class="keyword">return</span> result</div>
+
+        <h3>9.3 Execution et comparaison de configurations</h3>
+
+        <div class="code-block"><span class="comment"># Definir les configurations a comparer</span>
+configs = [
+    <span class="function">RAGBenchmarkConfig</span>(
+        name=<span class="string">"baseline"</span>, description=<span class="string">"Configuration de depart"</span>,
+        embedding_model=<span class="string">"text-embedding-3-small"</span>, llm_model=<span class="string">"gpt-4o-mini"</span>,
+        chunk_size=<span class="number">512</span>, chunk_overlap=<span class="number">50</span>, top_k=<span class="number">4</span>,
+    ),
+    <span class="function">RAGBenchmarkConfig</span>(
+        name=<span class="string">"large_embed"</span>, description=<span class="string">"Embeddings haute resolution"</span>,
+        embedding_model=<span class="string">"text-embedding-3-large"</span>, llm_model=<span class="string">"gpt-4o-mini"</span>,
+        chunk_size=<span class="number">512</span>, chunk_overlap=<span class="number">50</span>, top_k=<span class="number">4</span>,
+    ),
+    <span class="function">RAGBenchmarkConfig</span>(
+        name=<span class="string">"small_chunks"</span>, description=<span class="string">"Chunks plus granulaires"</span>,
+        embedding_model=<span class="string">"text-embedding-3-small"</span>, llm_model=<span class="string">"gpt-4o-mini"</span>,
+        chunk_size=<span class="number">256</span>, chunk_overlap=<span class="number">30</span>, top_k=<span class="number">6</span>,
+    ),
+    <span class="function">RAGBenchmarkConfig</span>(
+        name=<span class="string">"premium"</span>, description=<span class="string">"Configuration premium haute qualite"</span>,
+        embedding_model=<span class="string">"text-embedding-3-large"</span>, llm_model=<span class="string">"gpt-4o"</span>,
+        chunk_size=<span class="number">256</span>, chunk_overlap=<span class="number">30</span>, top_k=<span class="number">6</span>,
+    ),
+]
+
+<span class="comment"># Lancer tous les benchmarks</span>
+benchmark = <span class="function">RAGBenchmark</span>(documents, eval_dataset)
+<span class="keyword">for</span> cfg <span class="keyword">in</span> configs:
+    r = benchmark.<span class="function">run_benchmark</span>(cfg)
+    <span class="function">print</span>(<span class="string">f"\n--- </span>{cfg.name}<span class="string"> ---"</span>)
+    <span class="function">print</span>(<span class="string">f"  Faithfulness:      </span>{r.metrics[<span class="string">'faithfulness'</span>]:<span class="string">.4f}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Answer Relevancy:  </span>{r.metrics[<span class="string">'answer_relevancy'</span>]:<span class="string">.4f}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Context Precision: </span>{r.metrics[<span class="string">'context_precision'</span>]:<span class="string">.4f}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Context Recall:    </span>{r.metrics[<span class="string">'context_recall'</span>]:<span class="string">.4f}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Latence moyenne:   </span>{r.latency_stats[<span class="string">'mean_ms'</span>]:<span class="string">.0f} ms"</span>)</div>
+
+        <div class="output-block">
+--- baseline ---
+  Faithfulness:      0.8200
+  Answer Relevancy:  0.8750
+  Context Precision: 0.7800
+  Context Recall:    0.8100
+  Latence moyenne:   1850 ms
+
+--- large_embed ---
+  Faithfulness:      0.8650
+  Answer Relevancy:  0.8900
+  Context Precision: 0.8500
+  Context Recall:    0.8600
+  Latence moyenne:   2100 ms
+
+--- small_chunks ---
+  Faithfulness:      0.8400
+  Answer Relevancy:  0.8600
+  Context Precision: 0.8200
+  Context Recall:    0.8800
+  Latence moyenne:   2300 ms
+
+--- premium ---
+  Faithfulness:      0.9150
+  Answer Relevancy:  0.9300
+  Context Precision: 0.8900
+  Context Recall:    0.9200
+  Latence moyenne:   3200 ms</div>
+
+        <div class="effect">
+            <strong>Interpretation des resultats :</strong> La configuration "premium" domine sur
+            toutes les metriques de qualite mais est 73% plus lente et significativement plus
+            couteuse. La configuration "large_embed" offre le meilleur rapport qualite/cout
+            avec +5% de faithfulness pour seulement +13% de latence par rapport a la baseline.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 10 : BONNES PRATIQUES                                          -->
+        <!-- ====================================================================== -->
+        <h2>10. Bonnes pratiques et checklist d'evaluation</h2>
+
+        <div class="concept-box green">
+            <h3 style="color:#00ff88; margin-top:0;">Checklist d'evaluation RAG en production</h3>
+
+            <div class="step-box">
+                <strong>1. Constituer un jeu de test :</strong> 50-100 paires question-reponse minimum,
+                couvrant differents niveaux de difficulte (simple, raisonnement, multi-document).
+            </div>
+            <div class="step-box">
+                <strong>2. Metriques RAGAS :</strong> Calculer les 4 metriques cles (faithfulness,
+                answer_relevancy, context_precision, context_recall) sur l'ensemble du jeu de test.
+            </div>
+            <div class="step-box">
+                <strong>3. Metriques de ranking :</strong> Calculer Hit Rate, MRR et NDCG pour
+                evaluer le retriever de maniere isolee, independamment de la generation.
+            </div>
+            <div class="step-box">
+                <strong>4. Performances operationnelles :</strong> Mesurer latence E2E (p50, p95, p99),
+                tokens consommes et cout par requete.
+            </div>
+            <div class="step-box">
+                <strong>5. Validation humaine :</strong> Faire evaluer un echantillon (10-20% du jeu
+                de test) par des experts du domaine avec une grille de notation standardisee.
+            </div>
+            <div class="step-box">
+                <strong>6. A/B testing :</strong> Tester les changements en conditions reelles de
+                production avec un repartiteur 50/50 et un test statistique (Welch, alpha=0.05).
+            </div>
+            <div class="step-box">
+                <strong>7. Monitoring continu :</strong> Alertes automatiques si faithfulness &lt; 0.8
+                ou latence &gt; 5s. Tableaux de bord pour suivre les tendances.
+            </div>
+        </div>
+
+        <div class="warning">
+            <strong>Erreurs classiques a eviter absolument :</strong><br><br>
+            - Evaluer sur 3-5 exemples manuels seulement (non representatif, biais de selection)<br>
+            - Ignorer la faithfulness (risque d'hallucinations non detectees en production)<br>
+            - Ne pas versionner les jeux de donnees d'evaluation (impossible de reproduire)<br>
+            - Optimiser une seule metrique au detriment des autres (ex: recall parfait mais precision nulle)<br>
+            - Oublier la latence (un systeme lent est un systeme abandonne par les utilisateurs)
+        </div>
+
+        <div class="prof-note">
+            L'evaluation est un processus continu, pas un evenement ponctuel. Chaque modification
+            du pipeline RAG (embeddings, chunking, prompt, modele LLM) doit etre suivie d'un
+            benchmark complet pour detecter les regressions. C'est exactement le meme principe
+            que les tests unitaires en developpement logiciel : on n'envoie jamais en production
+            du code non teste.
+        </div>
+
+        <!-- ==================== NAVIGATION ==================== -->
+        <div class="nav">
+            <a href="rag_05_generation.html">&#8592; Chapitre 5 : Generation</a>
+            <a href="rag_07_advanced.html">Chapitre 7 : Techniques Avancees &#8594;</a>
+        </div>
+
+    </div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

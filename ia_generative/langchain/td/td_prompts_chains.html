@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Prompts et Chains avec LangChain</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Prompts et Chains avec LangChain</h1>
+    <p class="subtitle">LangChain v0.3 -- LCEL (LangChain Expression Language) -- PromptTemplates, Chains et Output Parsers</p>
+
+    <!-- =========================================================== -->
+    <!-- 1. RECAPITULATIF                                             -->
+    <!-- =========================================================== -->
+    <h2>1. Recapitulatif</h2>
+
+    <div class="definition">
+        Un <strong>Prompt</strong> est un modele de texte parametrable envoye a un LLM. Une <strong>Chain</strong> (chaine)
+        est une sequence d'operations ou chaque composant transforme les donnees et les passe au suivant. En LangChain v0.3,
+        on construit des chains grace a <strong>LCEL</strong> (LangChain Expression Language), une syntaxe declarative
+        qui utilise l'operateur pipe <code>|</code> pour composer des <em>Runnables</em>.
+    </div>
+
+    <p>Les trois piliers fondamentaux de LCEL :</p>
+
+    <div class="concept-box">
+        <h3>PromptTemplate</h3>
+        <p>Formate les variables d'entree en un prompt lisible par le modele. Il existe <code>PromptTemplate</code>
+        pour les modeles texte et <code>ChatPromptTemplate</code> pour les modeles de chat (messages systeme + utilisateur).</p>
+    </div>
+
+    <div class="concept-box green">
+        <h3>ChatModel (LLM)</h3>
+        <p>Le modele de langage qui recoit le prompt formate et genere une reponse. Exemples :
+        <code>ChatOpenAI</code>, <code>ChatAnthropic</code>, <code>ChatOllama</code>.</p>
+    </div>
+
+    <div class="concept-box blue">
+        <h3>OutputParser</h3>
+        <p>Transforme la reponse brute du modele en un format exploitable : texte brut (<code>StrOutputParser</code>),
+        JSON (<code>JsonOutputParser</code>), ou objet Pydantic (<code>PydanticOutputParser</code>).</p>
+    </div>
+
+    <p>En LCEL, une chain s'ecrit simplement :</p>
+
+    <div class="code-block"><span class="comment"># La syntaxe fondamentale LCEL</span>
+<span class="keyword">chain</span> = prompt | model | output_parser</div>
+
+    <div class="prof-note">
+        Chaque composant LCEL implemente l'interface <code>Runnable</code>, ce qui garantit les methodes
+        <code>invoke()</code>, <code>stream()</code>, <code>batch()</code> et <code>ainvoke()</code> de facon uniforme.
+        C'est la grande force de LCEL par rapport aux anciennes <code>LLMChain</code> desormais obsoletes.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 2. PRINCIPE - SVG                                            -->
+    <!-- =========================================================== -->
+    <h2>2. Principe : Architecture d'une Chain LCEL</h2>
+
+    <div class="svg-container">
+        <svg width="900" height="280" viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="900" height="280" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+
+            <!-- Title -->
+            <text x="450" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Architecture d'une Chain LCEL</text>
+
+            <!-- Input -->
+            <rect x="20" y="70" width="140" height="70" rx="10" fill="#0d1117" stroke="#569cd6" stroke-width="2"/>
+            <text x="90" y="100" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Variables</text>
+            <text x="90" y="122" text-anchor="middle" fill="#aaa" font-size="11">{"langue": "espagnol"}</text>
+
+            <!-- Arrow 1 -->
+            <line x1="160" y1="105" x2="195" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+            <!-- PromptTemplate -->
+            <rect x="195" y="60" width="160" height="90" rx="10" fill="#0d1117" stroke="#ff6b35" stroke-width="2"/>
+            <text x="275" y="90" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">PromptTemplate</text>
+            <text x="275" y="112" text-anchor="middle" fill="#aaa" font-size="10">"Traduis en {langue}:"</text>
+            <text x="275" y="130" text-anchor="middle" fill="#ce9178" font-size="10">ChatPromptTemplate</text>
+
+            <!-- Arrow 2 -->
+            <line x1="355" y1="105" x2="390" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+            <!-- Pipe symbol -->
+            <text x="373" y="90" text-anchor="middle" fill="#ff6b35" font-size="22" font-weight="bold">|</text>
+
+            <!-- ChatModel -->
+            <rect x="390" y="60" width="160" height="90" rx="10" fill="#0d1117" stroke="#00ff88" stroke-width="2"/>
+            <text x="470" y="90" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">ChatModel</text>
+            <text x="470" y="112" text-anchor="middle" fill="#aaa" font-size="10">ChatOpenAI(model=</text>
+            <text x="470" y="128" text-anchor="middle" fill="#aaa" font-size="10">"gpt-4o-mini")</text>
+
+            <!-- Arrow 3 -->
+            <line x1="550" y1="105" x2="585" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+            <!-- Pipe symbol -->
+            <text x="568" y="90" text-anchor="middle" fill="#ff6b35" font-size="22" font-weight="bold">|</text>
+
+            <!-- OutputParser -->
+            <rect x="585" y="60" width="160" height="90" rx="10" fill="#0d1117" stroke="#569cd6" stroke-width="2"/>
+            <text x="665" y="90" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">OutputParser</text>
+            <text x="665" y="112" text-anchor="middle" fill="#aaa" font-size="10">StrOutputParser()</text>
+            <text x="665" y="128" text-anchor="middle" fill="#aaa" font-size="10">JsonOutputParser()</text>
+
+            <!-- Arrow 4 -->
+            <line x1="745" y1="105" x2="780" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+            <!-- Output -->
+            <rect x="780" y="70" width="100" height="70" rx="10" fill="#0d1117" stroke="#00ff88" stroke-width="2"/>
+            <text x="830" y="100" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Resultat</text>
+            <text x="830" y="120" text-anchor="middle" fill="#aaa" font-size="10">str / dict</text>
+
+            <!-- Bottom legend -->
+            <rect x="100" y="190" width="700" height="70" rx="8" fill="rgba(255,107,53,0.05)" stroke="#ff6b35" stroke-width="1"/>
+            <text x="450" y="215" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">chain = prompt | model | parser</text>
+            <text x="450" y="240" text-anchor="middle" fill="#aaa" font-size="11">Chaque composant est un Runnable -- invoke(), stream(), batch() disponibles sur toute la chain</text>
+
+            <!-- Arrowhead marker -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        L'operateur <code>|</code> (pipe) est surcharge par LangChain. Il ne s'agit pas du pipe Unix ou du OR binaire Python.
+        Quand vous ecrivez <code>a | b</code>, LangChain cree un <code>RunnableSequence</code> ou la sortie de <code>a</code>
+        devient l'entree de <code>b</code>. C'est le coeur de la composition LCEL.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 3. EXERCICE 1 - PromptTemplate basique                      -->
+    <!-- =========================================================== -->
+    <h2>Exercice 1 : PromptTemplate basique -- Prompt de traduction</h2>
+
+    <p>Objectif : Creer un prompt parametrable qui demande une traduction dans une langue donnee.</p>
+
+    <div class="step-box">
+        <strong>Etape 1 :</strong> Installer les dependances necessaires.
+    </div>
+
+    <div class="code-block"><span class="comment"># Installation (a executer dans le terminal)</span>
+<span class="comment"># pip install langchain-core langchain-openai python-dotenv</span>
+
+<span class="keyword">import</span> os
+<span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+<span class="function">load_dotenv</span>()  <span class="comment"># Charge OPENAI_API_KEY depuis .env</span></div>
+
+    <div class="step-box">
+        <strong>Etape 2 :</strong> Creer un <code>PromptTemplate</code> avec des variables.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate
+
+<span class="comment"># PromptTemplate avec deux variables : langue et texte</span>
+prompt = <span class="function">PromptTemplate</span>(
+    template=<span class="string">"Traduis le texte suivant en {langue}.\n\nTexte : {texte}\n\nTraduction :"</span>,
+    input_variables=[<span class="string">"langue"</span>, <span class="string">"texte"</span>]
+)
+
+<span class="comment"># Formater le prompt avec des valeurs concretes</span>
+prompt_formate = prompt.<span class="function">format</span>(
+    langue=<span class="string">"espagnol"</span>,
+    texte=<span class="string">"Bonjour, comment allez-vous aujourd'hui ?"</span>
+)
+
+<span class="function">print</span>(prompt_formate)</div>
+
+    <div class="output-block">Traduis le texte suivant en espagnol.
+
+Texte : Bonjour, comment allez-vous aujourd'hui ?
+
+Traduction :</div>
+
+    <div class="step-box">
+        <strong>Etape 3 :</strong> Utiliser la methode raccourcie <code>from_template</code>.
+    </div>
+
+    <div class="code-block"><span class="comment"># Syntaxe raccourcie -- pas besoin de specifier input_variables</span>
+prompt_v2 = PromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Donne-moi {nombre} faits interessants sur {sujet}."</span>
+)
+
+<span class="function">print</span>(prompt_v2.input_variables)
+<span class="comment"># Les variables sont detectees automatiquement</span>
+
+<span class="function">print</span>(prompt_v2.<span class="function">format</span>(nombre=<span class="number">3</span>, sujet=<span class="string">"les octopodes"</span>))</div>
+
+    <div class="output-block">['nombre', 'sujet']
+Donne-moi 3 faits interessants sur les octopodes.</div>
+
+    <div class="effect">
+        Le <code>PromptTemplate</code> est un objet reutilisable. Vous pouvez l'invoquer avec differentes valeurs
+        sans re-ecrire le prompt a chaque fois. C'est la base de la modularite LCEL.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 4. EXERCICE 2 - ChatPromptTemplate                          -->
+    <!-- =========================================================== -->
+    <h2>Exercice 2 : ChatPromptTemplate -- Messages systeme et utilisateur</h2>
+
+    <p>Objectif : Construire un prompt structure avec un message systeme qui definit le role du LLM
+    et un message utilisateur parametrable.</p>
+
+    <div class="definition">
+        Le <code>ChatPromptTemplate</code> est concu pour les modeles de chat (GPT-4, Claude, etc.) qui
+        distinguent les roles : <strong>system</strong> (instructions), <strong>human</strong> (utilisateur)
+        et <strong>ai</strong> (assistant). C'est le format recommande en LangChain v0.3.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+<span class="comment"># Creer un ChatPromptTemplate avec messages structures</span>
+chat_prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un expert en {domaine}. Reponds de maniere concise et pedagogique."</span>),
+    (<span class="string">"human"</span>, <span class="string">"Explique-moi {concept} en maximum {nb_phrases} phrases."</span>)
+])
+
+<span class="comment"># Formatter le prompt</span>
+messages = chat_prompt.<span class="function">format_messages</span>(
+    domaine=<span class="string">"intelligence artificielle"</span>,
+    concept=<span class="string">"le mecanisme d'attention"</span>,
+    nb_phrases=<span class="number">3</span>
+)
+
+<span class="keyword">for</span> msg <span class="keyword">in</span> messages:
+    <span class="function">print</span>(<span class="string">f"[{msg.type}] {msg.content}"</span>)</div>
+
+    <div class="output-block">[system] Tu es un expert en intelligence artificielle. Reponds de maniere concise et pedagogique.
+[human] Explique-moi le mecanisme d'attention en maximum 3 phrases.</div>
+
+    <h3>Variante : ajout d'un placeholder pour l'historique</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate, MessagesPlaceholder
+
+<span class="comment"># Prompt avec un emplacement reserve pour des messages dynamiques</span>
+chat_prompt_avec_historique = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un assistant pedagogique specialise en {domaine}."</span>),
+    <span class="function">MessagesPlaceholder</span>(variable_name=<span class="string">"historique"</span>),
+    (<span class="string">"human"</span>, <span class="string">"{question}"</span>)
+])
+
+<span class="function">print</span>(chat_prompt_avec_historique.input_variables)</div>
+
+    <div class="output-block">['domaine', 'historique', 'question']</div>
+
+    <div class="prof-note">
+        Le <code>MessagesPlaceholder</code> est essentiel pour integrer de la memoire dans une chain.
+        Il sera reutilise dans le TD suivant sur la Memory. Retenez son existence des maintenant !
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 5. EXERCICE 3 - Premiere chain LCEL                         -->
+    <!-- =========================================================== -->
+    <h2>Exercice 3 : Premiere chain LCEL -- prompt | model | parser</h2>
+
+    <p>Objectif : Assembler les composants en une chain fonctionnelle et l'invoquer.</p>
+
+    <div class="step-box">
+        <strong>Etape 1 :</strong> Configurer le modele.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+
+<span class="comment"># Initialiser le modele</span>
+model = <span class="function">ChatOpenAI</span>(
+    model=<span class="string">"gpt-4o-mini"</span>,
+    temperature=<span class="number">0.7</span>
+)</div>
+
+    <div class="step-box">
+        <strong>Etape 2 :</strong> Creer le prompt et le parser.
+    </div>
+
+    <div class="code-block"><span class="comment"># Prompt structure pour un chatbot culinaire</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un chef cuisinier francais. Donne des recettes simples et savoureuses."</span>),
+    (<span class="string">"human"</span>, <span class="string">"Propose-moi une recette avec {ingredient} pour {nb_personnes} personnes."</span>)
+])
+
+<span class="comment"># Parser qui extrait le texte brut de la reponse</span>
+parser = <span class="function">StrOutputParser</span>()</div>
+
+    <div class="step-box">
+        <strong>Etape 3 :</strong> Composer la chain avec l'operateur pipe.
+    </div>
+
+    <div class="code-block"><span class="comment"># Composition LCEL : prompt -> model -> parser</span>
+chain = prompt | model | parser
+
+<span class="comment"># Invoquer la chain avec des parametres</span>
+resultat = chain.<span class="function">invoke</span>({
+    <span class="string">"ingredient"</span>: <span class="string">"des champignons"</span>,
+    <span class="string">"nb_personnes"</span>: <span class="number">4</span>
+})
+
+<span class="function">print</span>(resultat)</div>
+
+    <div class="output-block">Voici une recette simple de risotto aux champignons pour 4 personnes :
+
+Ingredients :
+- 300g de riz arborio
+- 250g de champignons de Paris
+- 1 oignon
+- 1L de bouillon de legumes chaud
+- 10cl de vin blanc sec
+- 50g de parmesan rape
+- 30g de beurre
+- Sel, poivre, persil frais
+
+Instructions :
+1. Emincer l'oignon et les champignons. Faire revenir l'oignon dans le beurre.
+2. Ajouter les champignons, cuire 5 minutes.
+3. Ajouter le riz, nacrer 2 minutes, puis deglacez au vin blanc.
+4. Ajouter le bouillon louche par louche en remuant.
+5. Cuire 18 minutes, incorporer le parmesan. Servir aussitot !</div>
+
+    <div class="prof-note">
+        L'operateur <code>|</code> cree en coulisses un <code>RunnableSequence</code>. Quand vous appelez
+        <code>chain.invoke(data)</code>, voici ce qui se passe :<br><br>
+        1. <code>prompt.invoke(data)</code> &rarr; retourne un <code>ChatPromptValue</code> (les messages formates)<br>
+        2. <code>model.invoke(messages)</code> &rarr; retourne un <code>AIMessage</code> (reponse du LLM)<br>
+        3. <code>parser.invoke(ai_message)</code> &rarr; retourne une <code>str</code> (le contenu textuel)<br><br>
+        Chaque etape recoit la sortie de la precedente. C'est le pattern fondamental de LCEL.
+    </div>
+
+    <h3>Bonus : Streaming de la reponse</h3>
+
+    <div class="code-block"><span class="comment"># Streamer la reponse token par token</span>
+<span class="keyword">for</span> chunk <span class="keyword">in</span> chain.<span class="function">stream</span>({<span class="string">"ingredient"</span>: <span class="string">"du saumon"</span>, <span class="string">"nb_personnes"</span>: <span class="number">2</span>}):
+    <span class="function">print</span>(chunk, end=<span class="string">""</span>, flush=<span class="keyword">True</span>)</div>
+
+    <div class="effect">
+        Grace a <code>stream()</code>, les tokens s'affichent un par un au lieu d'attendre la reponse complete.
+        Cela fonctionne sur toute la chain grace a l'interface Runnable uniforme.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 6. EXERCICE 4 - JsonOutputParser                            -->
+    <!-- =========================================================== -->
+    <h2>Exercice 4 : Sortie structuree avec JsonOutputParser</h2>
+
+    <p>Objectif : Forcer le modele a repondre en JSON et parser automatiquement la sortie en dictionnaire Python.</p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> JsonOutputParser
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+<span class="comment"># Creer le parser JSON</span>
+json_parser = <span class="function">JsonOutputParser</span>()
+
+<span class="comment"># Le prompt inclut les instructions de formatage du parser</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"""Tu es un analyste de films. Pour chaque film, fournis une fiche technique en JSON.
+{format_instructions}"""</span>),
+    (<span class="string">"human"</span>, <span class="string">"Analyse le film : {titre_film}"</span>)
+])
+
+<span class="comment"># Injecter les instructions de formatage dans le prompt</span>
+prompt = prompt.<span class="function">partial</span>(
+    format_instructions=json_parser.<span class="function">get_format_instructions</span>()
+)
+
+model = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Chain complete</span>
+chain = prompt | model | json_parser
+
+<span class="comment"># Invoquer</span>
+resultat = chain.<span class="function">invoke</span>({<span class="string">"titre_film"</span>: <span class="string">"Inception"</span>})
+
+<span class="function">print</span>(<span class="function">type</span>(resultat))
+<span class="function">print</span>(resultat)</div>
+
+    <div class="output-block">&lt;class 'dict'&gt;
+{
+  "titre": "Inception",
+  "realisateur": "Christopher Nolan",
+  "annee": 2010,
+  "genre": ["Science-fiction", "Thriller", "Action"],
+  "acteurs_principaux": ["Leonardo DiCaprio", "Joseph Gordon-Levitt", "Ellen Page"],
+  "note_sur_10": 8.8,
+  "resume": "Un voleur specialise dans l'extraction d'idees par les reves accepte une mission inverse : implanter une idee dans l'esprit d'un heritier."
+}</div>
+
+    <h3>Variante avancee : PydanticOutputParser avec schema type</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> PydanticOutputParser
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field
+<span class="keyword">from</span> typing <span class="keyword">import</span> List
+
+<span class="comment"># Definir un schema Pydantic</span>
+<span class="keyword">class</span> <span class="function">FicheFilm</span>(BaseModel):
+    titre: <span class="keyword">str</span> = <span class="function">Field</span>(description=<span class="string">"Titre du film"</span>)
+    realisateur: <span class="keyword">str</span> = <span class="function">Field</span>(description=<span class="string">"Nom du realisateur"</span>)
+    annee: <span class="keyword">int</span> = <span class="function">Field</span>(description=<span class="string">"Annee de sortie"</span>)
+    genres: List[<span class="keyword">str</span>] = <span class="function">Field</span>(description=<span class="string">"Liste des genres"</span>)
+    note: <span class="keyword">float</span> = <span class="function">Field</span>(description=<span class="string">"Note sur 10"</span>)
+
+<span class="comment"># Le parser sait generer les instructions a partir du schema</span>
+pydantic_parser = <span class="function">PydanticOutputParser</span>(pydantic_object=FicheFilm)
+
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Analyse le film demande.\n{format_instructions}"</span>),
+    (<span class="string">"human"</span>, <span class="string">"{titre_film}"</span>)
+])
+prompt = prompt.<span class="function">partial</span>(
+    format_instructions=pydantic_parser.<span class="function">get_format_instructions</span>()
+)
+
+chain = prompt | model | pydantic_parser
+fiche = chain.<span class="function">invoke</span>({<span class="string">"titre_film"</span>: <span class="string">"Le Seigneur des Anneaux"</span>})
+
+<span class="function">print</span>(<span class="function">type</span>(fiche))  <span class="comment"># &lt;class 'FicheFilm'&gt;</span>
+<span class="function">print</span>(fiche.titre, <span class="string">"-"</span>, fiche.annee)</div>
+
+    <div class="output-block">&lt;class 'FicheFilm'&gt;
+Le Seigneur des Anneaux : La Communaute de l'Anneau - 2001</div>
+
+    <div class="effect">
+        Le <code>PydanticOutputParser</code> valide la sortie du LLM contre le schema. Si un champ manque
+        ou a le mauvais type, une erreur explicite est levee. C'est ideal pour des pipelines de production.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 7. EXERCICE 5 - RunnablePassthrough et RunnableParallel     -->
+    <!-- =========================================================== -->
+    <h2>Exercice 5 : RunnablePassthrough et RunnableParallel</h2>
+
+    <p>Objectif : Gerer des entrees multiples et executer des branches en parallele dans une chain LCEL.</p>
+
+    <div class="definition">
+        <strong>RunnablePassthrough</strong> transmet les donnees d'entree sans modification (comme une identite).
+        <strong>RunnableParallel</strong> execute plusieurs Runnables en parallele sur la meme entree
+        et retourne un dictionnaire de resultats.
+    </div>
+
+    <h3>Exemple 1 : RunnablePassthrough pour conserver l'entree originale</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnablePassthrough, RunnableParallel
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+model = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Prompt qui attend "question" et "contexte"</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Reponds a la question en te basant sur le contexte fourni."</span>),
+    (<span class="string">"human"</span>, <span class="string">"Contexte : {contexte}\n\nQuestion : {question}"</span>)
+])
+
+<span class="comment"># RunnablePassthrough transmet la question telle quelle</span>
+<span class="comment"># tandis qu'une autre branche pourrait enrichir le contexte</span>
+chain = (
+    {
+        <span class="string">"contexte"</span>: <span class="keyword">lambda</span> x: <span class="string">"LangChain est un framework Python pour construire des applications LLM."</span>,
+        <span class="string">"question"</span>: RunnablePassthrough()
+    }
+    | prompt
+    | model
+    | <span class="function">StrOutputParser</span>()
+)
+
+<span class="comment"># Ici, l'entree est directement la question (une string)</span>
+resultat = chain.<span class="function">invoke</span>(<span class="string">"Qu'est-ce que LangChain ?"</span>)
+<span class="function">print</span>(resultat)</div>
+
+    <div class="output-block">LangChain est un framework Python concu pour faciliter la construction d'applications basees sur des modeles de langage (LLM). Il fournit des abstractions pour les prompts, les chains, la memoire et les outils, permettant de creer des pipelines d'IA complexes de maniere modulaire.</div>
+
+    <h3>Exemple 2 : RunnableParallel pour des analyses multiples</h3>
+
+    <div class="code-block"><span class="comment"># Analyser un texte sous trois angles differents en parallele</span>
+texte_prompt = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Analyse le sentiment du texte suivant : {texte}"</span>
+)
+resume_prompt = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Resume ce texte en une phrase : {texte}"</span>
+)
+mots_cles_prompt = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Extrais 5 mots-cles de ce texte : {texte}"</span>
+)
+
+parser = <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Trois chains independantes</span>
+chain_sentiment = texte_prompt | model | parser
+chain_resume = resume_prompt | model | parser
+chain_mots_cles = mots_cles_prompt | model | parser
+
+<span class="comment"># Execution parallele avec RunnableParallel</span>
+analyse_parallele = <span class="function">RunnableParallel</span>(
+    sentiment=chain_sentiment,
+    resume=chain_resume,
+    mots_cles=chain_mots_cles
+)
+
+<span class="comment"># Toutes les analyses sont executees en meme temps !</span>
+resultats = analyse_parallele.<span class="function">invoke</span>({
+    <span class="string">"texte"</span>: <span class="string">"""L'equipe de France a remporte une victoire eclatante hier soir
+    au Stade de France. Les joueurs ont fait preuve d'une determination
+    sans faille, malgre un debut de match difficile. Le public etait
+    en delire apres le but decisif a la 89e minute."""</span>
+})
+
+<span class="keyword">for</span> cle, valeur <span class="keyword">in</span> resultats.items():
+    <span class="function">print</span>(<span class="string">f"\n--- {cle.upper()} ---"</span>)
+    <span class="function">print</span>(valeur)</div>
+
+    <div class="output-block">
+--- SENTIMENT ---
+Le sentiment de ce texte est tres positif. Il exprime l'enthousiasme, la fierte et la joie liee a une victoire sportive.
+
+--- RESUME ---
+L'equipe de France a remporte une victoire spectaculaire au Stade de France grace a un but decisif a la 89e minute, apres un debut de match complique.
+
+--- MOTS_CLES ---
+1. Victoire
+2. Equipe de France
+3. Stade de France
+4. Determination
+5. But decisif</div>
+
+    <div class="prof-note">
+        <code>RunnableParallel</code> est extremement utile en RAG (Retrieval-Augmented Generation) ou vous
+        devez souvent preparer plusieurs inputs simultanement (recuperer des documents, formatter la question, etc.)
+        avant de les passer au modele. Notez que la syntaxe <code>{"cle": chain}</code> en debut de pipeline
+        est automatiquement convertie en <code>RunnableParallel</code> par LCEL.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 8. EXERCICE 6 - RunnableLambda                              -->
+    <!-- =========================================================== -->
+    <h2>Exercice 6 : RunnableLambda -- Transformations personnalisees</h2>
+
+    <p>Objectif : Integrer des fonctions Python personnalisees dans une chain LCEL
+    grace a <code>RunnableLambda</code>.</p>
+
+    <div class="definition">
+        <code>RunnableLambda</code> transforme n'importe quelle fonction Python (synchrone ou asynchrone)
+        en un composant <code>Runnable</code> compatible avec l'operateur pipe <code>|</code>.
+        Cela permet d'ajouter du pre-traitement, de la validation ou des transformations intermediaires.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnableLambda
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+model = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.3</span>)
+
+<span class="comment"># Fonction de pre-traitement : nettoyer et enrichir l'entree</span>
+<span class="keyword">def</span> <span class="function">preprocesser_texte</span>(entree: <span class="keyword">dict</span>) -> <span class="keyword">dict</span>:
+    <span class="string">"""Nettoie le texte et ajoute des metadonnees."""</span>
+    texte = entree[<span class="string">"texte"</span>].strip().lower()
+    nb_mots = <span class="function">len</span>(texte.split())
+    <span class="keyword">return</span> {
+        <span class="string">"texte_original"</span>: entree[<span class="string">"texte"</span>],
+        <span class="string">"texte_nettoye"</span>: texte,
+        <span class="string">"nb_mots"</span>: nb_mots,
+        <span class="string">"est_court"</span>: nb_mots < <span class="number">50</span>
+    }
+
+<span class="comment"># Fonction de post-traitement : formater la sortie</span>
+<span class="keyword">def</span> <span class="function">formater_sortie</span>(reponse: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Ajoute un encadrement a la reponse."""</span>
+    separateur = <span class="string">"="</span> * <span class="number">50</span>
+    <span class="keyword">return</span> <span class="string">f"{separateur}\nANALYSE AUTOMATIQUE\n{separateur}\n{reponse}\n{separateur}"</span>
+
+<span class="comment"># Prompt qui utilise les donnees enrichies</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un analyste linguistique."</span>),
+    (<span class="string">"human"</span>, <span class="string">"""Analyse ce texte ({nb_mots} mots, texte {'court' if est_court else 'long'}) :
+
+Texte : {texte_nettoye}
+
+Fournis : le ton, le theme principal, et une suggestion d'amelioration."""</span>)
+])
+
+<span class="comment"># Chain avec RunnableLambda en pre et post-traitement</span>
+chain = (
+    <span class="function">RunnableLambda</span>(preprocesser_texte)
+    | prompt
+    | model
+    | <span class="function">StrOutputParser</span>()
+    | <span class="function">RunnableLambda</span>(formater_sortie)
+)
+
+resultat = chain.<span class="function">invoke</span>({
+    <span class="string">"texte"</span>: <span class="string">"  L'IA transforme notre monde. Les possibilites sont infinies.  "</span>
+})
+<span class="function">print</span>(resultat)</div>
+
+    <div class="output-block">==================================================
+ANALYSE AUTOMATIQUE
+==================================================
+Ton : Enthousiaste et affirmatif. Le texte adopte un ton optimiste face aux avancees technologiques.
+
+Theme principal : L'impact transformateur de l'intelligence artificielle sur la societe.
+
+Suggestion d'amelioration : Le texte est tres court et pourrait beneficier d'exemples concrets pour illustrer les "possibilites infinies" mentionnees.
+==================================================</div>
+
+    <h3>Astuce : Utiliser le decorateur @chain</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> chain <span class="keyword">as</span> lc_chain
+
+<span class="comment"># Le decorateur @chain transforme une fonction en Runnable</span>
+@lc_chain
+<span class="keyword">def</span> <span class="function">analyser_et_traduire</span>(entree: <span class="keyword">dict</span>):
+    <span class="string">"""Analyse un texte puis le traduit."""</span>
+    <span class="comment"># Premiere chain : analyser</span>
+    analyse_prompt = ChatPromptTemplate.<span class="function">from_template</span>(
+        <span class="string">"Analyse le sentiment : {texte}"</span>
+    )
+    analyse = (analyse_prompt | model | <span class="function">StrOutputParser</span>()).<span class="function">invoke</span>(entree)
+
+    <span class="comment"># Deuxieme chain : traduire l'analyse</span>
+    traduction_prompt = ChatPromptTemplate.<span class="function">from_template</span>(
+        <span class="string">"Traduis en anglais : {texte_a_traduire}"</span>
+    )
+    traduction = (traduction_prompt | model | <span class="function">StrOutputParser</span>()).<span class="function">invoke</span>(
+        {<span class="string">"texte_a_traduire"</span>: analyse}
+    )
+
+    <span class="keyword">return</span> {<span class="string">"analyse_fr"</span>: analyse, <span class="string">"analyse_en"</span>: traduction}
+
+<span class="comment"># Utilisable comme un Runnable classique</span>
+resultat = analyser_et_traduire.<span class="function">invoke</span>({<span class="string">"texte"</span>: <span class="string">"Quelle belle journee !"</span>})
+<span class="function">print</span>(resultat)</div>
+
+    <div class="effect">
+        Le decorateur <code>@chain</code> est un raccourci elegant pour creer des <code>RunnableLambda</code>
+        complexes. Il permet d'ecrire du code Python classique tout en restant compatible avec l'ecosysteme LCEL.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 9. EXERCICE 7 - Chain complexe multi-etapes                 -->
+    <!-- =========================================================== -->
+    <h2>Exercice 7 : Pipeline complexe multi-etapes</h2>
+
+    <p>Objectif : Combiner tous les concepts vus precedemment dans un pipeline de traitement complet
+    qui analyse un article, en extrait des donnees structurees, et produit un rapport formate.</p>
+
+    <div class="svg-container">
+        <svg width="900" height="340" viewBox="0 0 900 340" xmlns="http://www.w3.org/2000/svg">
+            <rect width="900" height="340" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="450" y="28" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Pipeline Multi-Etapes</text>
+
+            <!-- Step 1 -->
+            <rect x="30" y="50" width="170" height="60" rx="8" fill="#0d1117" stroke="#569cd6" stroke-width="2"/>
+            <text x="115" y="75" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">Etape 1 : Pre-traitement</text>
+            <text x="115" y="95" text-anchor="middle" fill="#aaa" font-size="10">RunnableLambda</text>
+
+            <!-- Arrow -->
+            <line x1="200" y1="80" x2="240" y2="80" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+
+            <!-- Step 2 -->
+            <rect x="240" y="50" width="170" height="60" rx="8" fill="#0d1117" stroke="#ff6b35" stroke-width="2"/>
+            <text x="325" y="75" text-anchor="middle" fill="#ff6b35" font-size="11" font-weight="bold">Etape 2 : Analyse</text>
+            <text x="325" y="95" text-anchor="middle" fill="#aaa" font-size="10">RunnableParallel</text>
+
+            <!-- Fork down -->
+            <line x1="325" y1="110" x2="325" y2="140" stroke="#00ff88" stroke-width="2"/>
+
+            <!-- Parallel branches -->
+            <rect x="120" y="140" width="130" height="50" rx="6" fill="#0d1117" stroke="#00ff88" stroke-width="1"/>
+            <text x="185" y="162" text-anchor="middle" fill="#00ff88" font-size="10">Sentiment</text>
+            <text x="185" y="178" text-anchor="middle" fill="#aaa" font-size="9">prompt | model</text>
+
+            <rect x="260" y="140" width="130" height="50" rx="6" fill="#0d1117" stroke="#00ff88" stroke-width="1"/>
+            <text x="325" y="162" text-anchor="middle" fill="#00ff88" font-size="10">Mots-cles</text>
+            <text x="325" y="178" text-anchor="middle" fill="#aaa" font-size="9">prompt | model | json</text>
+
+            <rect x="400" y="140" width="130" height="50" rx="6" fill="#0d1117" stroke="#00ff88" stroke-width="1"/>
+            <text x="465" y="162" text-anchor="middle" fill="#00ff88" font-size="10">Resume</text>
+            <text x="465" y="178" text-anchor="middle" fill="#aaa" font-size="9">prompt | model</text>
+
+            <!-- Lines to parallel -->
+            <line x1="325" y1="140" x2="185" y2="140" stroke="#00ff88" stroke-width="1"/>
+            <line x1="325" y1="140" x2="465" y2="140" stroke="#00ff88" stroke-width="1"/>
+
+            <!-- Merge -->
+            <line x1="185" y1="190" x2="185" y2="220" stroke="#00ff88" stroke-width="1"/>
+            <line x1="325" y1="190" x2="325" y2="220" stroke="#00ff88" stroke-width="1"/>
+            <line x1="465" y1="190" x2="465" y2="220" stroke="#00ff88" stroke-width="1"/>
+            <line x1="185" y1="220" x2="465" y2="220" stroke="#00ff88" stroke-width="1"/>
+            <line x1="325" y1="220" x2="325" y2="240" stroke="#ff6b35" stroke-width="2"/>
+
+            <!-- Step 3 -->
+            <rect x="240" y="240" width="170" height="60" rx="8" fill="#0d1117" stroke="#569cd6" stroke-width="2"/>
+            <text x="325" y="265" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">Etape 3 : Synthese</text>
+            <text x="325" y="285" text-anchor="middle" fill="#aaa" font-size="10">prompt | model | parser</text>
+
+            <!-- Arrow to output -->
+            <line x1="410" y1="270" x2="470" y2="270" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+
+            <!-- Step 4 -->
+            <rect x="470" y="240" width="170" height="60" rx="8" fill="#0d1117" stroke="#ff8c42" stroke-width="2"/>
+            <text x="555" y="265" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">Etape 4 : Formatage</text>
+            <text x="555" y="285" text-anchor="middle" fill="#aaa" font-size="10">RunnableLambda</text>
+
+            <!-- Final output -->
+            <line x1="640" y1="270" x2="680" y2="270" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+            <rect x="680" y="248" width="120" height="44" rx="8" fill="#0d1117" stroke="#00ff88" stroke-width="2"/>
+            <text x="740" y="275" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Rapport Final</text>
+
+            <defs>
+                <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> (
+    RunnableLambda, RunnableParallel, RunnablePassthrough
+)
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser, JsonOutputParser
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+model = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+parser = <span class="function">StrOutputParser</span>()
+
+<span class="comment"># ============================================</span>
+<span class="comment"># ETAPE 1 : Pre-traitement (RunnableLambda)</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">def</span> <span class="function">pretraiter</span>(entree: <span class="keyword">dict</span>) -> <span class="keyword">dict</span>:
+    article = entree[<span class="string">"article"</span>]
+    <span class="keyword">return</span> {
+        <span class="string">"article"</span>: article,
+        <span class="string">"nb_mots"</span>: <span class="function">len</span>(article.split()),
+        <span class="string">"date_analyse"</span>: datetime.<span class="function">now</span>().<span class="function">strftime</span>(<span class="string">"%Y-%m-%d %H:%M"</span>),
+        <span class="string">"langue"</span>: entree.<span class="function">get</span>(<span class="string">"langue"</span>, <span class="string">"francais"</span>)
+    }
+
+<span class="comment"># ============================================</span>
+<span class="comment"># ETAPE 2 : Analyses paralleles</span>
+<span class="comment"># ============================================</span>
+sentiment_prompt = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Analyse le sentiment de ce texte en un mot (positif/negatif/neutre) "
+    "suivi d'un score de -1 a 1 : {article}"</span>
+)
+
+mots_cles_prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Extrais des mots-cles. Reponds UNIQUEMENT en JSON : "
+    '{{"mots_cles": ["mot1", "mot2", ...]}}'</span>),
+    (<span class="string">"human"</span>, <span class="string">"{article}"</span>)
+])
+
+resume_prompt = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Resume ce texte en exactement 2 phrases : {article}"</span>
+)
+
+analyse_parallele = <span class="function">RunnableParallel</span>(
+    sentiment=sentiment_prompt | model | parser,
+    mots_cles=mots_cles_prompt | model | <span class="function">JsonOutputParser</span>(),
+    resume=resume_prompt | model | parser,
+    metadonnees=RunnablePassthrough()  <span class="comment"># Conserver les metadonnees</span>
+)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># ETAPE 3 : Synthese finale</span>
+<span class="comment"># ============================================</span>
+synthese_prompt = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"""A partir de ces analyses, redige une conclusion en 3 lignes :
+- Sentiment : {sentiment}
+- Mots-cles : {mots_cles}
+- Resume : {resume}"""</span>
+)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># ETAPE 4 : Formatage (RunnableLambda)</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">def</span> <span class="function">formater_rapport</span>(donnees: <span class="keyword">dict</span>) -> <span class="keyword">str</span>:
+    meta = donnees[<span class="string">"metadonnees"</span>]
+    <span class="keyword">return</span> <span class="string">f"""
+========================================
+  RAPPORT D'ANALYSE AUTOMATIQUE
+  Date : {meta['date_analyse']}
+  Mots : {meta['nb_mots']}
+========================================
+
+SENTIMENT : {donnees['sentiment']}
+
+MOTS-CLES : {', '.join(donnees['mots_cles']['mots_cles'])}
+
+RESUME : {donnees['resume']}
+
+CONCLUSION : {donnees.get('conclusion', 'N/A')}
+========================================"""</span>
+
+<span class="comment"># ============================================</span>
+<span class="comment"># ASSEMBLAGE DU PIPELINE COMPLET</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">def</span> <span class="function">ajouter_conclusion</span>(donnees: <span class="keyword">dict</span>) -> <span class="keyword">dict</span>:
+    <span class="comment"># Generer la conclusion a partir des analyses</span>
+    conclusion_chain = synthese_prompt | model | parser
+    conclusion = conclusion_chain.<span class="function">invoke</span>({
+        <span class="string">"sentiment"</span>: donnees[<span class="string">"sentiment"</span>],
+        <span class="string">"mots_cles"</span>: <span class="keyword">str</span>(donnees[<span class="string">"mots_cles"</span>]),
+        <span class="string">"resume"</span>: donnees[<span class="string">"resume"</span>]
+    })
+    donnees[<span class="string">"conclusion"</span>] = conclusion
+    <span class="keyword">return</span> donnees
+
+pipeline = (
+    <span class="function">RunnableLambda</span>(pretraiter)       <span class="comment"># Etape 1 : pre-traitement</span>
+    | analyse_parallele                <span class="comment"># Etape 2 : analyses paralleles</span>
+    | <span class="function">RunnableLambda</span>(ajouter_conclusion)  <span class="comment"># Etape 3 : synthese</span>
+    | <span class="function">RunnableLambda</span>(formater_rapport)    <span class="comment"># Etape 4 : formatage</span>
+)
+
+<span class="comment"># Lancer le pipeline complet</span>
+rapport = pipeline.<span class="function">invoke</span>({
+    <span class="string">"article"</span>: <span class="string">"""Les avancees recentes en intelligence artificielle generative
+    soulèvent des questions fondamentales sur l'avenir du travail.
+    Si certains experts predisent une revolution positive, d'autres
+    mettent en garde contre les risques de deplacements d'emplois massifs.
+    Le debat reste ouvert et les gouvernements tardent a reguler."""</span>
+})
+
+<span class="function">print</span>(rapport)</div>
+
+    <div class="output-block">
+========================================
+  RAPPORT D'ANALYSE AUTOMATIQUE
+  Date : 2026-03-03 14:30
+  Mots : 47
+========================================
+
+SENTIMENT : Neutre (0.1) - Le texte presente une perspective equilibree avec des elements positifs et negatifs.
+
+MOTS-CLES : intelligence artificielle, travail, revolution, regulation, emplois
+
+RESUME : Les avancees en IA generative posent des questions sur l'avenir professionnel, avec des avis partages entre optimisme et inquietude. Les gouvernements peinent a mettre en place une regulation adequate face a ces transformations rapides.
+
+CONCLUSION : Ce texte adopte une position nuancee sur l'IA generative, soulignant a la fois les opportunites et les risques. Les mots-cles revelent une preoccupation centree sur l'emploi et la regulation. L'absence de consensus parmi les experts appelle a un debat public approfondi et a une action politique rapide.
+========================================</div>
+
+    <div class="prof-note">
+        Ce pipeline illustre la puissance de LCEL : chaque etape est un Runnable independant, testable
+        et reutilisable. Vous pouvez remplacer n'importe quel composant (par exemple, changer le modele,
+        ajouter une branche parallele) sans modifier le reste du pipeline. C'est l'essence de la
+        composabilite LCEL.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 10. ERREURS COURANTES                                       -->
+    <!-- =========================================================== -->
+    <h2>Erreurs Courantes</h2>
+
+    <div class="warning">
+        <strong>Oublier les accolades dans le template.</strong>
+        Ecrire <code>"Traduis en langue"</code> au lieu de <code>"Traduis en {langue}"</code>.
+        Sans accolades, la variable ne sera jamais substituee et le LLM recevra le texte brut.
+    </div>
+
+    <div class="warning">
+        <strong>Passer une string au lieu d'un dict a <code>invoke()</code>.</strong>
+        Si votre chain attend <code>{"question": "..."}</code>, ne passez pas juste <code>"..."</code>.
+        Exception typique : <code>KeyError: 'question'</code>. Seule exception :
+        si votre premiere etape est un <code>RunnablePassthrough</code> qui accepte une string.
+    </div>
+
+    <div class="warning">
+        <strong>Utiliser <code>LLMChain</code> au lieu de LCEL.</strong>
+        <code>LLMChain</code> est obsolete depuis LangChain v0.3. Utilisez toujours
+        <code>prompt | model | parser</code>. Les anciennes chains ne supportent
+        ni le streaming natif, ni le batch, ni l'execution asynchrone.
+    </div>
+
+    <div class="warning">
+        <strong>Ne pas appeler <code>.partial()</code> pour les format_instructions.</strong>
+        Quand vous utilisez un <code>JsonOutputParser</code> ou <code>PydanticOutputParser</code>,
+        il faut injecter <code>format_instructions</code> dans le prompt avec <code>prompt.partial()</code>.
+        Sinon, le modele ne saura pas quel format JSON produire.
+    </div>
+
+    <div class="warning">
+        <strong>Confondre <code>format()</code> et <code>invoke()</code>.</strong>
+        <code>prompt.format()</code> retourne une string (utile pour le debug).
+        <code>prompt.invoke()</code> retourne un <code>PromptValue</code> (necessaire dans une chain LCEL).
+        En chain, c'est toujours <code>invoke()</code> qui est appele automatiquement.
+    </div>
+
+    <div class="warning">
+        <strong>Oublier le <code>StrOutputParser()</code> en fin de chain.</strong>
+        Sans parser, le resultat est un objet <code>AIMessage</code>, pas une string.
+        Pour obtenir le texte directement, ajoutez toujours <code>| StrOutputParser()</code>
+        comme derniere etape de votre chain.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 11. RESUME - LCEL Cheatsheet                                -->
+    <!-- =========================================================== -->
+    <h2>Resume : LCEL Cheatsheet</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Composant</th>
+                <th>Import</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>PromptTemplate</code></td>
+                <td><code>langchain_core.prompts</code></td>
+                <td>Template de prompt simple avec variables</td>
+            </tr>
+            <tr>
+                <td><code>ChatPromptTemplate</code></td>
+                <td><code>langchain_core.prompts</code></td>
+                <td>Template avec messages structures (system/human/ai)</td>
+            </tr>
+            <tr>
+                <td><code>MessagesPlaceholder</code></td>
+                <td><code>langchain_core.prompts</code></td>
+                <td>Emplacement pour messages dynamiques (historique)</td>
+            </tr>
+            <tr>
+                <td><code>ChatOpenAI</code></td>
+                <td><code>langchain_openai</code></td>
+                <td>Modele de chat OpenAI (gpt-4o, gpt-4o-mini)</td>
+            </tr>
+            <tr>
+                <td><code>StrOutputParser</code></td>
+                <td><code>langchain_core.output_parsers</code></td>
+                <td>Extrait le texte brut de la reponse</td>
+            </tr>
+            <tr>
+                <td><code>JsonOutputParser</code></td>
+                <td><code>langchain_core.output_parsers</code></td>
+                <td>Parse la sortie JSON en dictionnaire Python</td>
+            </tr>
+            <tr>
+                <td><code>PydanticOutputParser</code></td>
+                <td><code>langchain_core.output_parsers</code></td>
+                <td>Valide la sortie contre un schema Pydantic</td>
+            </tr>
+            <tr>
+                <td><code>RunnablePassthrough</code></td>
+                <td><code>langchain_core.runnables</code></td>
+                <td>Passe les donnees sans modification</td>
+            </tr>
+            <tr>
+                <td><code>RunnableParallel</code></td>
+                <td><code>langchain_core.runnables</code></td>
+                <td>Execute plusieurs Runnables en parallele</td>
+            </tr>
+            <tr>
+                <td><code>RunnableLambda</code></td>
+                <td><code>langchain_core.runnables</code></td>
+                <td>Transforme une fonction Python en Runnable</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="concept-box">
+        <h3>Syntaxe LCEL essentielle</h3>
+        <div class="code-block"><span class="comment"># Chain simple</span>
+chain = prompt | model | parser
+
+<span class="comment"># Chain avec entrees paralleles</span>
+chain = {<span class="string">"a"</span>: runnable1, <span class="string">"b"</span>: runnable2} | prompt | model | parser
+
+<span class="comment"># Chain avec transformation personnalisee</span>
+chain = RunnableLambda(fn) | prompt | model | parser
+
+<span class="comment"># Methodes disponibles sur toute chain</span>
+chain.<span class="function">invoke</span>(data)       <span class="comment"># Execution synchrone</span>
+chain.<span class="function">stream</span>(data)       <span class="comment"># Streaming token par token</span>
+chain.<span class="function">batch</span>([d1, d2])    <span class="comment"># Execution en lot</span>
+<span class="keyword">await</span> chain.<span class="function">ainvoke</span>(data) <span class="comment"># Execution asynchrone</span></div>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Points cles a retenir</h3>
+        <ul>
+            <li><strong>LCEL remplace LLMChain</strong> : ne plus utiliser les anciennes classes</li>
+            <li><strong>L'operateur <code>|</code></strong> cree un <code>RunnableSequence</code></li>
+            <li><strong>Tout est Runnable</strong> : invoke, stream, batch, ainvoke disponibles partout</li>
+            <li><strong>ChatPromptTemplate</strong> est prefere pour les modeles de chat modernes</li>
+            <li><strong>Toujours finir par un parser</strong> pour obtenir le format voulu</li>
+            <li><strong>RunnableParallel</strong> pour les traitements simultanement, <strong>RunnableLambda</strong> pour le code custom</li>
+        </ul>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- NAVIGATION                                                   -->
+    <!-- =========================================================== -->
+    <div class="nav">
+        <span style="color: #666;">(Premier TD LangChain)</span>
+        <a href="td_memory.html">TD suivant : Memory &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

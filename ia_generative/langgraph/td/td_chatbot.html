@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Construire un Chatbot avec LangGraph</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        p { margin-bottom: 12px; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .svg-container { text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Construire un Chatbot avec LangGraph</h1>
+    <p class="subtitle">Deuxieme TD LangGraph -- Concevoir un chatbot conversationnel avec memoire, routage et outils</p>
+
+    <!-- ============================== SECTION 1 ============================== -->
+    <h2>1. Recapitulatif -- Qu'est-ce qu'un Chatbot ?</h2>
+
+    <div class="definition">
+        Un <strong>chatbot</strong> est un programme informatique capable de mener une conversation en langage naturel
+        avec un utilisateur. Dans le contexte de LangGraph, un chatbot est modelise comme un <strong>graphe oriente
+        avec etat</strong> ou chaque message (humain ou IA) est stocke dans un etat partage, permettant au modele
+        de maintenir le contexte de la conversation au fil des echanges.
+    </div>
+
+    <div class="concept-box">
+        <h3>Fiche d'identite du Chatbot LangGraph</h3>
+        <table>
+            <tr><th>Propriete</th><th>Valeur</th></tr>
+            <tr><td><strong>Type</strong></td><td>Application conversationnelle a base de graphe</td></tr>
+            <tr><td><strong>Framework</strong></td><td>LangGraph (extension de LangChain)</td></tr>
+            <tr><td><strong>Etat principal</strong></td><td>Liste de messages (HumanMessage, AIMessage, SystemMessage)</td></tr>
+            <tr><td><strong>Persistance</strong></td><td>MemorySaver pour conserver l'historique entre sessions</td></tr>
+            <tr><td><strong>Noeuds typiques</strong></td><td>process_message, generate_response, route_message</td></tr>
+            <tr><td><strong>Cas d'usage</strong></td><td>Assistance client, FAQ interactive, tuteur virtuel</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Imaginez un chatbot LangGraph comme un standardiste telephonique intelligent : il recoit un appel (message),
+        consulte le dossier du client (etat/memoire), decide comment traiter la demande (routage), et fournit une
+        reponse adaptee. La difference avec un simple appel a un LLM, c'est que le standardiste <em>se souvient</em>
+        de tous les echanges precedents grace a l'etat du graphe.
+    </div>
+
+    <h3>Pourquoi LangGraph pour un chatbot ?</h3>
+    <p>Un simple appel a <code>ChatOpenAI</code> ne conserve aucune memoire. Chaque appel est independant.
+    LangGraph resout ce probleme en gerant un <strong>etat persistant</strong> qui accumule les messages
+    et permet au modele de repondre en tenant compte de tout l'historique.</p>
+
+    <div class="step-box">
+        <strong>Avantage 1 :</strong> Memoire native -- l'historique de conversation est gere automatiquement dans l'etat.
+    </div>
+    <div class="step-box">
+        <strong>Avantage 2 :</strong> Routage conditionnel -- le chatbot peut diriger la conversation vers differents noeuds selon le contexte.
+    </div>
+    <div class="step-box">
+        <strong>Avantage 3 :</strong> Integration d'outils -- le chatbot peut appeler des fonctions externes (recherche, calcul, API).
+    </div>
+
+    <h3>Installation</h3>
+    <div class="code-block"><span class="comment"># Installation des dependances pour le chatbot</span>
+<span class="function">pip install</span> langgraph langchain-openai langchain-core langgraph-checkpoint</div>
+
+    <!-- ============================== SECTION 2 ============================== -->
+    <h2>2. Principe de Fonctionnement -- Le StateGraph du Chatbot</h2>
+
+    <p>Le chatbot LangGraph repose sur un <strong>StateGraph</strong> dont l'etat central contient la liste
+    des messages echanges. Le flux d'execution passe par deux noeuds principaux :</p>
+
+    <div class="step-box">
+        <strong>Noeud 1 : process_message</strong> -- Recoit le message de l'utilisateur, l'ajoute a l'etat,
+        et prepare le contexte pour le LLM (ajout du system prompt, troncature si necessaire).
+    </div>
+    <div class="step-box">
+        <strong>Noeud 2 : generate_response</strong> -- Invoque le modele de langage avec l'historique complet
+        des messages et retourne la reponse de l'IA ajoutee a l'etat.
+    </div>
+
+    <h3>Architecture du graphe simple</h3>
+
+    <div class="svg-container">
+        <svg width="700" height="400" viewBox="0 0 700 400">
+            <rect width="700" height="400" fill="#0f0f23" rx="10"/>
+            <text x="20" y="30" fill="#aaa" font-size="11">Architecture du chatbot LangGraph -- version simple</text>
+
+            <!-- START -->
+            <circle cx="100" cy="200" r="30" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="100" y="205" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">START</text>
+
+            <!-- Fleche START -> process_message -->
+            <line x1="130" y1="200" x2="190" y2="200" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+
+            <!-- process_message -->
+            <rect x="190" y="170" width="160" height="60" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="270" y="195" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">process_message</text>
+            <text x="270" y="215" text-anchor="middle" fill="#aaa" font-size="10">Preparer le contexte</text>
+
+            <!-- Fleche process_message -> generate_response -->
+            <line x1="350" y1="200" x2="410" y2="200" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+
+            <!-- generate_response -->
+            <rect x="410" y="170" width="160" height="60" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="490" y="195" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">generate_response</text>
+            <text x="490" y="215" text-anchor="middle" fill="#aaa" font-size="10">Appeler le LLM</text>
+
+            <!-- Fleche generate_response -> END -->
+            <line x1="570" y1="200" x2="610" y2="200" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+
+            <!-- END -->
+            <circle cx="640" cy="200" r="30" fill="none" stroke="#ff4444" stroke-width="2"/>
+            <text x="640" y="205" text-anchor="middle" fill="#ff4444" font-size="12" font-weight="bold">END</text>
+
+            <!-- Etat partage -->
+            <rect x="220" y="290" width="260" height="50" rx="8" fill="rgba(255,140,66,0.1)" stroke="#ff8c42" stroke-width="1" stroke-dasharray="5,5"/>
+            <text x="350" y="312" text-anchor="middle" fill="#ff8c42" font-size="12">Etat : {"messages": [...]}</text>
+            <text x="350" y="328" text-anchor="middle" fill="#aaa" font-size="10">Partage entre tous les noeuds</text>
+
+            <!-- Fleches vers etat -->
+            <line x1="270" y1="230" x2="310" y2="290" stroke="#ff8c42" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="490" y1="230" x2="410" y2="290" stroke="#ff8c42" stroke-width="1" stroke-dasharray="3,3"/>
+
+            <defs>
+                <marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Ce schema est la version la plus simple du chatbot. Dans la section 6, nous ajouterons un noeud de routage
+        et un noeud d'outils pour creer un chatbot plus sophistique. Mais il est essentiel de comprendre cette
+        base avant d'aller plus loin.
+    </div>
+
+    <h3>Code minimal du graphe</h3>
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+<span class="comment"># Definition de l'etat du chatbot</span>
+<span class="keyword">class</span> <span class="function">State</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+
+<span class="comment"># Initialisation du modele</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.7</span>)
+
+<span class="comment"># Noeud unique : generer une reponse</span>
+<span class="keyword">def</span> <span class="function">chatbot_node</span>(state: State):
+    response = llm.invoke(state[<span class="string">"messages"</span>])
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [response]}
+
+<span class="comment"># Construction du graphe</span>
+graph_builder = StateGraph(State)
+graph_builder.add_node(<span class="string">"chatbot"</span>, chatbot_node)
+graph_builder.add_edge(START, <span class="string">"chatbot"</span>)
+graph_builder.add_edge(<span class="string">"chatbot"</span>, END)
+
+graph = graph_builder.compile()
+</div>
+
+    <div class="effect">
+        Ce graphe minimal contient un seul noeud. C'est le squelette de tout chatbot LangGraph.
+        Chaque amelioration (memoire, routage, outils) s'ajoute a cette base.
+    </div>
+
+    <!-- ============================== SECTION 3 ============================== -->
+    <h2>3. Les Donnees -- Types de Messages et Etat Conversationnel</h2>
+
+    <p>Dans LangGraph, la conversation est representee par une <strong>liste de messages types</strong>.
+    Chaque type de message a un role specifique dans la conversation :</p>
+
+    <div class="concept-box">
+        <h3>Les trois types de messages fondamentaux</h3>
+        <table>
+            <tr><th>Type</th><th>Role</th><th>Exemple</th></tr>
+            <tr>
+                <td><strong>HumanMessage</strong></td>
+                <td>Message envoye par l'utilisateur</td>
+                <td><code>HumanMessage(content="Bonjour !")</code></td>
+            </tr>
+            <tr>
+                <td><strong>AIMessage</strong></td>
+                <td>Reponse generee par le modele de langage</td>
+                <td><code>AIMessage(content="Comment puis-je vous aider ?")</code></td>
+            </tr>
+            <tr>
+                <td><strong>SystemMessage</strong></td>
+                <td>Instructions systeme pour guider le comportement du LLM</td>
+                <td><code>SystemMessage(content="Tu es un assistant.")</code></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, AIMessage, SystemMessage
+
+<span class="comment"># Exemple d'un historique de conversation complet</span>
+messages = [
+    SystemMessage(content=<span class="string">"Tu es un assistant pedagogique specialise en Python."</span>),
+    HumanMessage(content=<span class="string">"Qu'est-ce qu'une liste en Python ?"</span>),
+    AIMessage(content=<span class="string">"Une liste est une structure de donnees ordonnee et modifiable..."</span>),
+    HumanMessage(content=<span class="string">"Comment ajouter un element a une liste ?"</span>),
+]
+
+<span class="comment"># Chaque message possede des attributs utiles</span>
+<span class="keyword">for</span> msg <span class="keyword">in</span> messages:
+    print(f<span class="string">"{msg.type}: {msg.content[:60]}..."</span>)
+</div>
+
+    <div class="output-block">system: Tu es un assistant pedagogique specialise en Python...
+human: Qu'est-ce qu'une liste en Python ?...
+ai: Une liste est une structure de donnees ordonnee et modifiable...
+human: Comment ajouter un element a une liste ?...</div>
+
+    <h3>L'etat conversationnel avec add_messages</h3>
+
+    <p>La fonction <code>add_messages</code> est un <strong>reducer</strong> qui gere intelligemment
+    l'accumulation des messages. Au lieu de remplacer la liste a chaque noeud, elle <em>ajoute</em>
+    les nouveaux messages a la liste existante.</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+
+<span class="comment"># L'annotation Annotated[list, add_messages] signifie :</span>
+<span class="comment"># "Cette liste utilise add_messages comme fonction de reduction"</span>
+<span class="keyword">class</span> <span class="function">ChatState</span>(TypedDict):
+    messages: Annotated[list, add_messages]  <span class="comment"># Accumule les messages</span>
+    user_name: str                            <span class="comment"># Donnee supplementaire optionnelle</span>
+    session_id: str                           <span class="comment"># Identifiant de session</span>
+
+<span class="comment"># Sans add_messages : {"messages": new_list} REMPLACE l'ancienne liste</span>
+<span class="comment"># Avec add_messages : {"messages": new_list} AJOUTE a l'ancienne liste</span>
+</div>
+
+    <div class="warning">
+        Sans le reducer <code>add_messages</code>, chaque noeud remplacerait toute la liste de messages.
+        Vous perdriez l'historique de conversation a chaque etape. Utilisez <strong>toujours</strong>
+        <code>Annotated[list, add_messages]</code> pour le champ messages d'un chatbot.
+    </div>
+
+    <div class="prof-note">
+        Pensez au reducer <code>add_messages</code> comme a un cahier de notes : quand un noeud retourne
+        un nouveau message, le reducer l'ecrit a la suite dans le cahier au lieu d'arracher les pages
+        precedentes. C'est ce mecanisme qui donne la "memoire" au chatbot.
+    </div>
+
+    <h3>Structure complete de l'etat</h3>
+
+    <div class="code-block"><span class="comment"># Etat enrichi pour un chatbot avance</span>
+<span class="keyword">class</span> <span class="function">ChatbotState</span>(TypedDict):
+    messages: Annotated[list, add_messages]  <span class="comment"># Historique complet</span>
+    user_info: dict                           <span class="comment"># Infos sur l'utilisateur</span>
+    turn_count: int                           <span class="comment"># Nombre de tours de conversation</span>
+    last_tool_used: str                       <span class="comment"># Dernier outil utilise</span>
+
+<span class="comment"># L'etat circule entre tous les noeuds du graphe</span>
+<span class="comment"># Chaque noeud peut lire et modifier n'importe quel champ</span>
+</div>
+
+    <!-- ============================== SECTION 4 ============================== -->
+    <h2>4. Les Parametres -- Configuration du Chatbot</h2>
+
+    <h3>4.1 Temperature</h3>
+    <div class="param-box">
+        <h4 style="color:#ff6b35; margin:0 0 10px;">temperature (float, 0.0 a 2.0)</h4>
+        <p>Controle le caractere aleatoire des reponses du modele.</p>
+        <table>
+            <tr><th>Valeur</th><th>Comportement</th><th>Cas d'usage</th></tr>
+            <tr><td><strong>0.0</strong></td><td>Deterministe, toujours la meme reponse</td><td>FAQ, support technique</td></tr>
+            <tr><td><strong>0.3 - 0.7</strong></td><td>Equilibre entre creativite et coherence</td><td>Chatbot general</td></tr>
+            <tr><td><strong>1.0 - 2.0</strong></td><td>Tres creatif, parfois incoherent</td><td>Brainstorming, ecriture creative</td></tr>
+        </table>
+    </div>
+
+    <div class="effect">
+        Une temperature de <strong>0.7</strong> est generalement recommandee pour un chatbot conversationnel.
+        Elle offre des reponses variees tout en restant coherentes et pertinentes.
+    </div>
+
+    <h3>4.2 Selection du modele</h3>
+    <div class="param-box">
+        <h4 style="color:#ff6b35; margin:0 0 10px;">model (str)</h4>
+        <p>Le choix du modele impacte directement la qualite, la vitesse et le cout des reponses.</p>
+        <table>
+            <tr><th>Modele</th><th>Vitesse</th><th>Qualite</th><th>Cout</th></tr>
+            <tr><td><code>gpt-4o-mini</code></td><td>Tres rapide</td><td>Bonne</td><td>Faible</td></tr>
+            <tr><td><code>gpt-4o</code></td><td>Rapide</td><td>Excellente</td><td>Moyen</td></tr>
+            <tr><td><code>gpt-4-turbo</code></td><td>Moyen</td><td>Excellente</td><td>Eleve</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Pour le developpement et les tests, utilisez <code>gpt-4o-mini</code> (rapide et peu couteux).
+        Passez a <code>gpt-4o</code> en production si la qualite des reponses est critique.
+    </div>
+
+    <h3>4.3 System Prompt</h3>
+    <div class="param-box">
+        <h4 style="color:#ff6b35; margin:0 0 10px;">system_prompt (str)</h4>
+        <p>Le message systeme definit la personnalite, le ton et les regles de comportement du chatbot.
+        C'est le parametre le plus important pour personnaliser votre assistant.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemples de system prompts pour differents cas d'usage</span>
+system_prompts = {
+    <span class="string">"assistant_general"</span>: <span class="string">"""Tu es un assistant francophone serviable et precis.
+Reponds de facon claire et structuree. Si tu ne sais pas, dis-le."""</span>,
+
+    <span class="string">"tuteur_python"</span>: <span class="string">"""Tu es un tuteur Python patient et pedagogique.
+Explique chaque concept avec des exemples simples.
+Encourage l'etudiant et corrige ses erreurs avec bienveillance."""</span>,
+
+    <span class="string">"support_client"</span>: <span class="string">"""Tu es un agent de support client pour TechCorp.
+Sois poli, empathique et oriente solution.
+Si le probleme depasse tes competences, propose d'escalader au support niveau 2."""</span>,
+}
+</div>
+
+    <h3>4.4 Persistance de la memoire avec MemorySaver</h3>
+    <div class="param-box">
+        <h4 style="color:#ff6b35; margin:0 0 10px;">MemorySaver -- Checkpointer de memoire</h4>
+        <p>Le <code>MemorySaver</code> est un <strong>checkpointer</strong> qui sauvegarde l'etat du graphe
+        apres chaque etape d'execution. Il permet de reprendre une conversation exactement la ou elle
+        s'est arretee, meme apres un redemarrage du programme.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+
+<span class="comment"># Creer le checkpointer</span>
+memory = MemorySaver()
+
+<span class="comment"># Compiler le graphe avec la memoire</span>
+graph = graph_builder.compile(checkpointer=memory)
+
+<span class="comment"># Utiliser un thread_id pour identifier chaque conversation</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"conversation_1"</span>}}
+
+<span class="comment"># Chaque appel avec le meme thread_id reprend la conversation</span>
+result1 = graph.invoke(
+    {<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Bonjour, je m'appelle Alice."</span>)]},
+    config
+)
+result2 = graph.invoke(
+    {<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Quel est mon prenom ?"</span>)]},
+    config
+)
+<span class="comment"># Le chatbot se souvient de "Alice" grace au MemorySaver</span>
+</div>
+
+    <div class="prof-note">
+        Le <code>thread_id</code> fonctionne comme un numero de dossier dans une armoire : toutes les
+        interactions portant le meme numero sont regroupees dans la meme conversation. Changez le
+        thread_id et vous demarrez une conversation vierge, comme un nouveau dossier.
+    </div>
+
+    <!-- ============================== SECTION 5 ============================== -->
+    <h2>5. Les Metriques -- Evaluer la Qualite du Chatbot</h2>
+
+    <p>Un chatbot doit etre evalue selon plusieurs dimensions pour garantir une bonne experience utilisateur.
+    Voici les trois metriques essentielles :</p>
+
+    <div class="metric-card">
+        <h4 style="color:#ff8c42; margin-bottom:8px;">Qualite des reponses</h4>
+        <p><strong>Definition :</strong> La pertinence, la coherence et l'exactitude des reponses generees.</p>
+        <p><strong>Comment mesurer :</strong> Evaluation humaine (note de 1 a 5), ou utilisation d'un LLM
+        evaluateur qui juge la qualite de la reponse par rapport a la question posee.</p>
+        <p><strong>Cible :</strong> Score moyen superieur a 4/5 pour un chatbot en production.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4 style="color:#ff8c42; margin-bottom:8px;">Latence (temps de reponse)</h4>
+        <p><strong>Definition :</strong> Le temps ecoule entre la question de l'utilisateur et la reponse complete du chatbot.</p>
+        <p><strong>Comment mesurer :</strong> Chronometre autour de <code>graph.invoke()</code> avec <code>time.time()</code>.</p>
+        <p><strong>Cible :</strong> Moins de 3 secondes pour une experience utilisateur fluide.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4 style="color:#ff8c42; margin-bottom:8px;">Utilisation de tokens</h4>
+        <p><strong>Definition :</strong> Le nombre de tokens consommes par requete (prompt + completion).</p>
+        <p><strong>Comment mesurer :</strong> Inspecter <code>response.usage_metadata</code> sur l'AIMessage retournee.</p>
+        <p><strong>Cible :</strong> Optimiser pour rester sous le budget tout en maintenant la qualite.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> time
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage
+
+<span class="keyword">def</span> <span class="function">mesurer_performance</span>(graph, message: str, config: dict):
+    <span class="string">"""Mesure la latence et l'utilisation de tokens pour une requete."""</span>
+    start = time.time()
+    result = graph.invoke(
+        {<span class="string">"messages"</span>: [HumanMessage(content=message)]},
+        config
+    )
+    latence = time.time() - start
+
+    <span class="comment"># Recuperer le dernier message IA</span>
+    ai_msg = result[<span class="string">"messages"</span>][-<span class="number">1</span>]
+    print(f<span class="string">"Latence        : {latence:.2f} secondes"</span>)
+    print(f<span class="string">"Reponse        : {ai_msg.content[:100]}..."</span>)
+
+    <span class="keyword">if</span> <span class="function">hasattr</span>(ai_msg, <span class="string">"usage_metadata"</span>) <span class="keyword">and</span> ai_msg.usage_metadata:
+        tokens = ai_msg.usage_metadata
+        print(f<span class="string">"Tokens prompt  : {tokens.get('input_tokens', 'N/A')}"</span>)
+        print(f<span class="string">"Tokens reponse : {tokens.get('output_tokens', 'N/A')}"</span>)
+        print(f<span class="string">"Tokens total   : {tokens.get('total_tokens', 'N/A')}"</span>)
+    <span class="keyword">return</span> result
+
+<span class="comment"># Exemple d'utilisation</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"perf_test"</span>}}
+mesurer_performance(chatbot, <span class="string">"Explique-moi les decorateurs Python."</span>, config)
+</div>
+
+    <div class="output-block">Latence        : 1.23 secondes
+Reponse        : Les decorateurs en Python sont des fonctions qui modifient le comportement d'autres fonctions...
+Tokens prompt  : 156
+Tokens reponse : 203
+Tokens total   : 359</div>
+
+    <!-- ============================== SECTION 6 ============================== -->
+    <h2>6. Implementation Complete -- Chatbot avec Memoire, Routage et Outils</h2>
+
+    <p>Nous allons maintenant construire un chatbot complet qui combine trois capacites :</p>
+    <ul>
+        <li><strong>Memoire persistante</strong> avec MemorySaver pour conserver le contexte</li>
+        <li><strong>Routage conditionnel</strong> pour diriger vers differents traitements</li>
+        <li><strong>Integration d'outils</strong> pour repondre a des questions factuelles</li>
+    </ul>
+
+    <h3>Diagramme du chatbot complet</h3>
+
+    <div class="svg-container">
+        <svg width="750" height="520" viewBox="0 0 750 520">
+            <rect width="750" height="520" fill="#0f0f23" rx="10"/>
+            <text x="375" y="28" text-anchor="middle" fill="#aaa" font-size="13">Chatbot complet avec routage et outils</text>
+
+            <!-- START -->
+            <circle cx="375" cy="70" r="25" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="375" y="75" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">START</text>
+
+            <!-- Fleche START -> process -->
+            <line x1="375" y1="95" x2="375" y2="130" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+
+            <!-- process_message -->
+            <rect x="280" y="130" width="190" height="50" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="375" y="155" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">process_message</text>
+            <text x="375" y="170" text-anchor="middle" fill="#aaa" font-size="9">Ajout system prompt + contexte</text>
+
+            <!-- Fleche process -> generate -->
+            <line x1="375" y1="180" x2="375" y2="210" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+
+            <!-- generate_response -->
+            <rect x="280" y="210" width="190" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="375" y="235" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">generate_response</text>
+            <text x="375" y="250" text-anchor="middle" fill="#aaa" font-size="9">Appeler le LLM avec outils</text>
+
+            <!-- Fleche generate -> route -->
+            <line x1="375" y1="260" x2="375" y2="290" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+
+            <!-- route (losange) -->
+            <polygon points="375,290 435,320 375,350 315,320" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="375" y="324" text-anchor="middle" fill="#ff8c42" font-size="10" font-weight="bold">route?</text>
+
+            <!-- Branche gauche : END -->
+            <line x1="315" y1="320" x2="180" y2="320" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow2b)"/>
+            <text x="248" y="312" text-anchor="middle" fill="#569cd6" font-size="9">pas d'outil</text>
+
+            <circle cx="150" cy="320" r="25" fill="none" stroke="#ff4444" stroke-width="2"/>
+            <text x="150" y="325" text-anchor="middle" fill="#ff4444" font-size="11" font-weight="bold">END</text>
+
+            <!-- Branche droite : tools -->
+            <line x1="435" y1="320" x2="560" y2="320" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow2g)"/>
+            <text x="497" y="312" text-anchor="middle" fill="#00ff88" font-size="9">tool_calls</text>
+
+            <rect x="560" y="295" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="620" y="320" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">tools</text>
+            <text x="620" y="335" text-anchor="middle" fill="#aaa" font-size="9">Executer outils</text>
+
+            <!-- Boucle retour tools -> generate -->
+            <line x1="620" y1="295" x2="620" y2="235" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="620" y1="235" x2="475" y2="235" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow2g)"/>
+            <text x="560" y="225" fill="#00ff88" font-size="8">retour avec resultats</text>
+
+            <!-- Memoire -->
+            <rect x="250" y="420" width="250" height="35" rx="6" fill="rgba(86,156,214,0.1)" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="375" y="442" text-anchor="middle" fill="#569cd6" font-size="10">MemorySaver (persistance thread_id)</text>
+
+            <!-- Fleche memoire -->
+            <line x1="375" y1="420" x2="375" y2="375" stroke="#569cd6" stroke-width="1" stroke-dasharray="3,3"/>
+
+            <defs>
+                <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrow2b" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arrow2g" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>Etape 1 : Definir l'etat et les outils</h3>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated, Literal
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+<span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> ToolNode
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, SystemMessage
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="comment"># --- Definition de l'etat ---</span>
+<span class="keyword">class</span> <span class="function">ChatbotState</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+
+<span class="comment"># --- Definition des outils ---</span>
+@tool
+<span class="keyword">def</span> <span class="function">rechercher_documentation</span>(query: str) -> str:
+    <span class="string">"""Recherche dans la documentation technique.
+    Utilise cet outil quand l'utilisateur pose une question technique."""</span>
+    <span class="comment"># Simulation d'une base de documentation</span>
+    docs = {
+        <span class="string">"python liste"</span>: <span class="string">"Une liste Python est une collection ordonnee, modifiable, qui accepte les doublons."</span>,
+        <span class="string">"python dict"</span>: <span class="string">"Un dictionnaire Python stocke des paires cle-valeur avec acces O(1)."</span>,
+        <span class="string">"langgraph"</span>: <span class="string">"LangGraph permet de creer des applications LLM sous forme de graphes orientes."</span>,
+    }
+    <span class="keyword">for</span> key, val <span class="keyword">in</span> docs.items():
+        <span class="keyword">if</span> key <span class="keyword">in</span> query.lower():
+            <span class="keyword">return</span> val
+    <span class="keyword">return</span> <span class="string">"Aucun resultat trouve pour cette recherche."</span>
+
+@tool
+<span class="keyword">def</span> <span class="function">calculer</span>(expression: str) -> str:
+    <span class="string">"""Effectue un calcul mathematique.
+    Utilise cet outil pour les questions avec des operations arithmetiques."""</span>
+    <span class="keyword">try</span>:
+        result = <span class="function">eval</span>(expression)
+        <span class="keyword">return</span> f<span class="string">"Le resultat de {expression} est {result}"</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> f<span class="string">"Erreur de calcul : {e}"</span>
+
+tools = [rechercher_documentation, calculer]
+</div>
+
+    <h3>Etape 2 : Creer les noeuds et le routage</h3>
+
+    <div class="code-block"><span class="comment"># --- Initialisation du LLM avec outils ---</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.7</span>)
+llm_with_tools = llm.bind_tools(tools)
+
+SYSTEM_PROMPT = (
+    <span class="string">"Tu es un assistant pedagogique francophone. Tu aides les etudiants "</span>
+    <span class="string">"a comprendre la programmation. Utilise les outils a ta disposition "</span>
+    <span class="string">"quand c'est pertinent pour donner des reponses precises."</span>
+)
+
+<span class="comment"># --- Noeud 1 : preparation du message ---</span>
+<span class="keyword">def</span> <span class="function">process_message</span>(state: ChatbotState):
+    messages = state[<span class="string">"messages"</span>]
+    <span class="comment"># Ajouter le system prompt seulement s'il n'est pas deja present</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> messages <span class="keyword">or</span> messages[<span class="number">0</span>].type != <span class="string">"system"</span>:
+        <span class="keyword">return</span> {<span class="string">"messages"</span>: [SystemMessage(content=SYSTEM_PROMPT)]}
+    <span class="keyword">return</span> {}
+
+<span class="comment"># --- Noeud 2 : generation de reponse avec outils ---</span>
+<span class="keyword">def</span> <span class="function">generate_response</span>(state: ChatbotState):
+    response = llm_with_tools.invoke(state[<span class="string">"messages"</span>])
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [response]}
+
+<span class="comment"># --- Fonction de routage conditionnel ---</span>
+<span class="keyword">def</span> <span class="function">route_after_generation</span>(state: ChatbotState) -> Literal[<span class="string">"tools"</span>, <span class="string">"__end__"</span>]:
+    <span class="string">"""Si le LLM a demande un outil, on va vers 'tools'.
+    Sinon, on termine la conversation."""</span>
+    last_message = state[<span class="string">"messages"</span>][-<span class="number">1</span>]
+    <span class="keyword">if</span> <span class="function">hasattr</span>(last_message, <span class="string">"tool_calls"</span>) <span class="keyword">and</span> last_message.tool_calls:
+        <span class="keyword">return</span> <span class="string">"tools"</span>
+    <span class="keyword">return</span> <span class="string">"__end__"</span>
+</div>
+
+    <h3>Etape 3 : Assembler et compiler le graphe</h3>
+
+    <div class="code-block"><span class="comment"># --- Construction du graphe complet ---</span>
+graph_builder = StateGraph(ChatbotState)
+
+<span class="comment"># Ajout des noeuds</span>
+graph_builder.add_node(<span class="string">"process"</span>, process_message)
+graph_builder.add_node(<span class="string">"generate"</span>, generate_response)
+graph_builder.add_node(<span class="string">"tools"</span>, ToolNode(tools=tools))
+
+<span class="comment"># Ajout des aretes</span>
+graph_builder.add_edge(START, <span class="string">"process"</span>)           <span class="comment"># Entree -> Preparation</span>
+graph_builder.add_edge(<span class="string">"process"</span>, <span class="string">"generate"</span>)    <span class="comment"># Preparation -> Generation</span>
+
+<span class="comment"># Routage conditionnel apres la generation</span>
+graph_builder.add_conditional_edges(
+    <span class="string">"generate"</span>,                  <span class="comment"># Noeud source</span>
+    route_after_generation,       <span class="comment"># Fonction de routage</span>
+    {<span class="string">"tools"</span>: <span class="string">"tools"</span>, <span class="string">"__end__"</span>: END}  <span class="comment"># Mapping</span>
+)
+
+<span class="comment"># Apres les outils, retour a la generation pour formuler la reponse</span>
+graph_builder.add_edge(<span class="string">"tools"</span>, <span class="string">"generate"</span>)
+
+<span class="comment"># Compilation avec memoire persistante</span>
+memory = MemorySaver()
+chatbot = graph_builder.compile(checkpointer=memory)
+
+print(<span class="string">"Chatbot compile avec succes !"</span>)
+</div>
+
+    <div class="output-block">Chatbot compile avec succes !</div>
+
+    <h3>Etape 4 : Fonction d'interaction</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">chat</span>(user_message: str, thread_id: str = <span class="string">"default"</span>):
+    <span class="string">"""Envoie un message au chatbot et affiche la reponse."""</span>
+    config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: thread_id}}
+    result = chatbot.invoke(
+        {<span class="string">"messages"</span>: [HumanMessage(content=user_message)]},
+        config
+    )
+    <span class="comment"># Recuperer le dernier AIMessage (sans tool_calls)</span>
+    ai_messages = [
+        m <span class="keyword">for</span> m <span class="keyword">in</span> result[<span class="string">"messages"</span>]
+        <span class="keyword">if</span> m.type == <span class="string">"ai"</span> <span class="keyword">and</span> <span class="keyword">not</span> <span class="function">getattr</span>(m, <span class="string">"tool_calls"</span>, [])
+    ]
+    <span class="keyword">if</span> ai_messages:
+        print(f<span class="string">"Assistant : {ai_messages[-1].content}"</span>)
+    <span class="keyword">return</span> result
+
+<span class="comment"># Boucle interactive complete</span>
+<span class="keyword">def</span> <span class="function">boucle_chatbot</span>(thread_id: str = <span class="string">"session_1"</span>):
+    <span class="string">"""Lance une boucle de chat interactive dans le terminal."""</span>
+    print(<span class="string">"Chatbot LangGraph demarre ! Tapez 'quit' pour quitter."</span>)
+    print(<span class="string">"-"</span> * <span class="number">50</span>)
+    <span class="keyword">while</span> <span class="keyword">True</span>:
+        user_input = <span class="function">input</span>(<span class="string">"Vous : "</span>)
+        <span class="keyword">if</span> user_input.lower() <span class="keyword">in</span> [<span class="string">"quit"</span>, <span class="string">"exit"</span>, <span class="string">"q"</span>]:
+            print(<span class="string">"Au revoir !"</span>)
+            <span class="keyword">break</span>
+        chat(user_input, thread_id)
+        print()
+</div>
+
+    <!-- ============================== SECTION 7 ============================== -->
+    <h2>7. Experimentation -- Tests et Exemples de Conversation</h2>
+
+    <h3>Test 1 : Conversation simple avec memoire</h3>
+    <div class="code-block"><span class="comment"># Tester que le chatbot se souvient du contexte</span>
+chat(<span class="string">"Bonjour, je m'appelle Alice et j'apprends Python."</span>, <span class="string">"test_memoire"</span>)
+chat(<span class="string">"Quel est mon prenom ?"</span>, <span class="string">"test_memoire"</span>)
+chat(<span class="string">"Qu'est-ce que j'apprends en ce moment ?"</span>, <span class="string">"test_memoire"</span>)
+</div>
+
+    <div class="output-block">Assistant : Bonjour Alice ! Bienvenue dans ton apprentissage de Python. Comment puis-je t'aider ?
+
+Assistant : Ton prenom est Alice, tu me l'as dit au debut de notre conversation.
+
+Assistant : Tu apprends Python ! Tu me l'as mentionne dans ton premier message.</div>
+
+    <div class="effect">
+        Le chatbot se souvient du prenom et du sujet d'etude grace au <code>MemorySaver</code>.
+        Sans la persistance, chaque appel serait totalement independant.
+    </div>
+
+    <h3>Test 2 : Utilisation automatique des outils</h3>
+    <div class="code-block"><span class="comment"># Le LLM decide seul quand utiliser un outil</span>
+chat(<span class="string">"Combien font 234 * 56 + 789 ?"</span>, <span class="string">"test_outils"</span>)
+chat(<span class="string">"Cherche des infos sur les listes Python."</span>, <span class="string">"test_outils"</span>)
+chat(<span class="string">"Merci pour ton aide !"</span>, <span class="string">"test_outils"</span>)  <span class="comment"># Pas d'outil ici</span>
+</div>
+
+    <div class="output-block">Assistant : D'apres mon calcul, 234 x 56 + 789 = 13 893.
+
+Assistant : D'apres la documentation, une liste Python est une collection ordonnee, modifiable, qui accepte les doublons. Tu peux y ajouter des elements avec append() ou insert().
+
+Assistant : De rien ! N'hesite pas si tu as d'autres questions.</div>
+
+    <div class="prof-note">
+        Remarquez que pour "Merci pour ton aide !", le chatbot repond directement sans appeler d'outil.
+        Le routage conditionnel fonctionne : le LLM n'utilise les outils que quand c'est pertinent.
+    </div>
+
+    <h3>Test 3 : Conversations independantes (thread_id differents)</h3>
+    <div class="code-block"><span class="comment"># Deux conversations en parallele avec des contextes separes</span>
+chat(<span class="string">"Je travaille sur un projet Django."</span>, <span class="string">"thread_alice"</span>)
+chat(<span class="string">"Je developpe une API Flask."</span>, <span class="string">"thread_bob"</span>)
+
+<span class="comment"># Chaque thread garde son propre contexte</span>
+chat(<span class="string">"Sur quel framework je travaille ?"</span>, <span class="string">"thread_alice"</span>)
+chat(<span class="string">"Sur quel framework je travaille ?"</span>, <span class="string">"thread_bob"</span>)
+</div>
+
+    <div class="output-block">Assistant : Tu travailles sur un projet Django !
+Assistant : Tu developpes une API Flask !</div>
+
+    <h3>Test 4 : Impact de la temperature sur les reponses</h3>
+    <div class="code-block"><span class="comment"># Comparer les reponses avec differentes temperatures</span>
+<span class="keyword">for</span> temp <span class="keyword">in</span> [<span class="number">0.0</span>, <span class="number">0.5</span>, <span class="number">1.0</span>]:
+    llm_temp = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=temp)
+    response = llm_temp.invoke([
+        HumanMessage(content=<span class="string">"Decris le soleil en une phrase."</span>)
+    ])
+    print(f<span class="string">"Temperature {temp} : {response.content}"</span>)
+    print()
+</div>
+
+    <div class="output-block">Temperature 0.0 : Le soleil est une etoile naine jaune situee au centre de notre systeme solaire.
+
+Temperature 0.5 : Le soleil est une boule de feu majestueuse qui illumine nos journees et nourrit la vie.
+
+Temperature 1.0 : Tel un phare cosmique dansant dans le vide, le soleil crache sa lumiere doree sur le monde.</div>
+
+    <div class="prof-note">
+        Observez le gradient de creativite : a 0.0 la reponse est factuelle et reproductible ;
+        a 0.5 elle est plus imagee ; a 1.0 elle devient poetique et imprevisible.
+        Pour un chatbot de support, utilisez 0.0-0.3. Pour un chatbot creatif, 0.7-1.0.
+    </div>
+
+    <!-- ============================== SECTION 8 ============================== -->
+    <h2>8. Erreurs Courantes -- Les Six Pieges a Eviter</h2>
+
+    <div class="warning">
+        <h3>Erreur 1 : Oublier le reducer add_messages</h3>
+        <p><strong>Symptome :</strong> Le chatbot ne se souvient de rien ; chaque reponse est hors contexte.</p>
+        <div class="code-block"><span class="comment"># FAUX -- pas de reducer, la liste est remplacee a chaque noeud</span>
+<span class="keyword">class</span> <span class="function">BadState</span>(TypedDict):
+    messages: list  <span class="comment"># Pas de reducer !</span>
+
+<span class="comment"># CORRECT -- le reducer accumule les messages</span>
+<span class="keyword">class</span> <span class="function">GoodState</span>(TypedDict):
+    messages: Annotated[list, add_messages]</div>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 2 : Ne pas passer le config avec thread_id</h3>
+        <p><strong>Symptome :</strong> <code>ValueError</code> car le checkpointer attend un thread_id.</p>
+        <div class="code-block"><span class="comment"># FAUX -- pas de config quand un checkpointer est actif</span>
+result = chatbot.invoke({<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Bonjour"</span>)]})
+<span class="comment"># Leve : ValueError: Missing required 'thread_id'</span>
+
+<span class="comment"># CORRECT -- toujours passer le config avec thread_id</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"ma_session"</span>}}
+result = chatbot.invoke({<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Bonjour"</span>)]}, config)</div>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 3 : Oublier de compiler le graphe</h3>
+        <p><strong>Symptome :</strong> <code>AttributeError: 'StateGraph' object has no attribute 'invoke'</code></p>
+        <div class="code-block"><span class="comment"># FAUX -- appeler invoke sur le builder</span>
+graph_builder.invoke(...)  <span class="comment"># StateGraph n'a pas de methode invoke !</span>
+
+<span class="comment"># CORRECT -- compiler d'abord, puis appeler invoke</span>
+graph = graph_builder.compile(checkpointer=memory)
+graph.invoke(...)  <span class="comment"># CompiledGraph a la methode invoke</span></div>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 4 : System prompt duplique a chaque tour</h3>
+        <p><strong>Symptome :</strong> Le system prompt est ajoute a chaque message, consommant des tokens en double.</p>
+        <div class="code-block"><span class="comment"># FAUX -- ajoute le system prompt a chaque appel sans verifier</span>
+<span class="keyword">def</span> <span class="function">bad_process</span>(state):
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [SystemMessage(content=SYSTEM_PROMPT)]}
+
+<span class="comment"># CORRECT -- verifier s'il est deja present</span>
+<span class="keyword">def</span> <span class="function">good_process</span>(state):
+    <span class="keyword">if</span> <span class="keyword">not</span> state[<span class="string">"messages"</span>] <span class="keyword">or</span> state[<span class="string">"messages"</span>][<span class="number">0</span>].type != <span class="string">"system"</span>:
+        <span class="keyword">return</span> {<span class="string">"messages"</span>: [SystemMessage(content=SYSTEM_PROMPT)]}
+    <span class="keyword">return</span> {}</div>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 5 : Outils sans retour au noeud de generation</h3>
+        <p><strong>Symptome :</strong> Apres l'execution d'un outil, le chatbot renvoie le ToolMessage brut au lieu d'une reponse en langage naturel.</p>
+        <div class="code-block"><span class="comment"># FAUX -- les outils envoient directement vers END</span>
+graph_builder.add_edge(<span class="string">"tools"</span>, END)
+<span class="comment"># L'utilisateur recoit : "Le resultat de 2+2 est 4" (ToolMessage brut)</span>
+
+<span class="comment"># CORRECT -- retourner au noeud de generation</span>
+graph_builder.add_edge(<span class="string">"tools"</span>, <span class="string">"generate"</span>)
+<span class="comment"># Le LLM formule : "Le calcul donne 4 comme resultat."</span></div>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 6 : Confondre HumanMessage et string</h3>
+        <p><strong>Symptome :</strong> <code>TypeError</code> ou comportement inattendu lors de l'invocation.</p>
+        <div class="code-block"><span class="comment"># FAUX -- passer une string brute dans la liste</span>
+result = chatbot.invoke({<span class="string">"messages"</span>: [<span class="string">"Bonjour"</span>]})
+
+<span class="comment"># CORRECT -- utiliser les objets Message</span>
+result = chatbot.invoke({<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Bonjour"</span>)]})</div>
+        <p><em>Note : LangGraph peut parfois convertir les strings automatiquement, mais il est fortement
+        recommande d'utiliser les objets Message explicitement pour eviter les ambiguites.</em></p>
+    </div>
+
+    <!-- ============================== SECTION 9 ============================== -->
+    <h2>9. Resume</h2>
+
+    <div class="concept-box green">
+        <h3>Ce que vous avez appris dans ce TD</h3>
+        <table>
+            <tr><th>Concept</th><th>Description</th></tr>
+            <tr><td><strong>Chatbot LangGraph</strong></td><td>Application conversationnelle modelisee comme un graphe oriente avec etat persistant</td></tr>
+            <tr><td><strong>Types de messages</strong></td><td>HumanMessage, AIMessage, SystemMessage -- les briques de la conversation</td></tr>
+            <tr><td><strong>add_messages</strong></td><td>Reducer qui accumule les messages au lieu de les remplacer</td></tr>
+            <tr><td><strong>MemorySaver</strong></td><td>Checkpointer qui persiste l'etat entre les appels grace au thread_id</td></tr>
+            <tr><td><strong>Routage conditionnel</strong></td><td>Diriger le flux vers les outils ou la fin selon le contexte</td></tr>
+            <tr><td><strong>ToolNode</strong></td><td>Noeud pre-construit qui execute les outils appeles par le LLM</td></tr>
+            <tr><td><strong>Temperature</strong></td><td>Parametre controlant la creativite (0.0 = deterministe, 1.0+ = creatif)</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box blue">
+        <h3>Schema recapitulatif du flux complet</h3>
+        <p><strong>1.</strong> L'utilisateur envoie un <code>HumanMessage</code> avec un <code>thread_id</code></p>
+        <p><strong>2.</strong> Le noeud <code>process_message</code> ajoute le system prompt si necessaire</p>
+        <p><strong>3.</strong> Le noeud <code>generate_response</code> appelle le LLM avec les outils disponibles</p>
+        <p><strong>4.</strong> Le routeur conditionnel decide : reponse directe (END) ou appel d'outil (tools)</p>
+        <p><strong>5.</strong> Si outil : execution par <code>ToolNode</code>, puis retour a la generation</p>
+        <p><strong>6.</strong> Le <code>MemorySaver</code> sauvegarde l'etat complet pour le prochain message</p>
+    </div>
+
+    <div class="prof-note">
+        Ce TD vous a montre comment construire un chatbot complet avec memoire, routage et outils.
+        Dans le prochain TD, nous irons beaucoup plus loin en construisant un <strong>agent autonome</strong>
+        capable de raisonner, d'agir et d'observer en boucle pour accomplir des taches complexes.
+        C'est le pattern <strong>ReAct</strong>, et c'est la veritable puissance de LangGraph.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="td_graphe_simple.html">Precedent : TD Graphe Simple</a>
+        <a href="td_agent_autonome.html">Suivant : TD Agent Autonome</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

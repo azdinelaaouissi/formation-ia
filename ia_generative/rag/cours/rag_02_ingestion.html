@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingestion des Documents - Preparer les Donnees pour le RAG</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Ingestion des Documents - Preparer les Donnees pour le RAG</h1>
+    <p class="subtitle">Cours 2/4 -- Le pipeline d'ingestion : charger, decouper, enrichir et stocker</p>
+
+    <!-- ============================================================ -->
+    <h2>1. Le Pipeline d'Ingestion</h2>
+
+    <div class="definition">
+        L'<strong>ingestion</strong> est la phase hors-ligne du RAG ou l'on transforme des documents bruts (PDF, TXT, HTML, CSV, bases de donnees) en vecteurs stockes dans une base vectorielle. Cette phase determine directement la qualite du retrieval : si les chunks sont mal decoupes ou les metadonnees absentes, meme le meilleur retriever ne pourra pas trouver l'information pertinente.
+    </div>
+
+    <p>Le pipeline d'ingestion comporte 5 etapes sequentielles. Chaque etape doit etre soigneusement configuree car les erreurs se propagent en cascade : un mauvais decoupage entraine un mauvais retrieval, qui entraine une mauvaise generation.</p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" style="max-width:880px;">
+            <rect width="900" height="250" fill="#0f0f23" rx="12"/>
+            <text x="450" y="30" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">Pipeline d'Ingestion RAG</text>
+
+            <!-- Step 1: Raw Docs -->
+            <rect x="20" y="70" width="140" height="80" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="90" y="95" fill="#ff8c42" font-size="11" text-anchor="middle" font-weight="bold">Documents</text>
+            <text x="90" y="112" fill="#ff8c42" font-size="11" text-anchor="middle" font-weight="bold">Bruts</text>
+            <text x="90" y="130" fill="#aaa" font-size="9" text-anchor="middle">PDF, TXT, HTML</text>
+            <text x="90" y="143" fill="#aaa" font-size="9" text-anchor="middle">CSV, DOCX, Web</text>
+
+            <line x1="160" y1="110" x2="190" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr2)"/>
+
+            <!-- Step 2: Load -->
+            <rect x="190" y="75" width="120" height="70" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="250" y="100" fill="#ff6b35" font-size="11" text-anchor="middle" font-weight="bold">Load</text>
+            <text x="250" y="118" fill="#e0e0e0" font-size="9" text-anchor="middle">Document Loaders</text>
+            <text x="250" y="133" fill="#aaa" font-size="8" text-anchor="middle">+ Extraction metadata</text>
+
+            <line x1="310" y1="110" x2="340" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr2)"/>
+
+            <!-- Step 3: Split -->
+            <rect x="340" y="75" width="120" height="70" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="400" y="100" fill="#ff6b35" font-size="11" text-anchor="middle" font-weight="bold">Split</text>
+            <text x="400" y="118" fill="#e0e0e0" font-size="9" text-anchor="middle">Text Splitters</text>
+            <text x="400" y="133" fill="#aaa" font-size="8" text-anchor="middle">Chunks + Overlap</text>
+
+            <line x1="460" y1="110" x2="490" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr2)"/>
+
+            <!-- Step 4: Embed -->
+            <rect x="490" y="75" width="120" height="70" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="550" y="100" fill="#569cd6" font-size="11" text-anchor="middle" font-weight="bold">Embed</text>
+            <text x="550" y="118" fill="#e0e0e0" font-size="9" text-anchor="middle">Embedding Model</text>
+            <text x="550" y="133" fill="#aaa" font-size="8" text-anchor="middle">text -> vecteur [768]</text>
+
+            <line x1="610" y1="110" x2="640" y2="110" stroke="#569cd6" stroke-width="2" marker-end="url(#arrB2)"/>
+
+            <!-- Step 5: Store -->
+            <rect x="640" y="70" width="140" height="80" rx="10" fill="#16213e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="710" y="98" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">Store</text>
+            <text x="710" y="116" fill="#e0e0e0" font-size="9" text-anchor="middle">Vector Store</text>
+            <text x="710" y="130" fill="#aaa" font-size="8" text-anchor="middle">FAISS / Chroma</text>
+            <text x="710" y="143" fill="#aaa" font-size="8" text-anchor="middle">Pinecone / Qdrant</text>
+
+            <!-- Quality annotation -->
+            <rect x="190" y="170" width="590" height="55" rx="8" fill="rgba(255,68,68,0.06)" stroke="#ff4444" stroke-width="1"/>
+            <text x="485" y="192" fill="#ff4444" font-size="10" text-anchor="middle" font-weight="bold">Chaque etape impacte la qualite du RAG</text>
+            <text x="485" y="210" fill="#aaa" font-size="9" text-anchor="middle">Mauvais Load -> Texte corrompu | Mauvais Split -> Chunks non pertinents | Mauvais Embed -> Recherche imprecise</text>
+
+            <defs>
+                <marker id="arr2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrB2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>2. Document Loading - Charger les Documents</h2>
+
+    <p>La premiere etape consiste a charger les documents bruts et a les convertir en objets <code>Document</code> exploitables par le pipeline. Chaque type de fichier necessite un loader specifique. LangChain fournit des dizaines de loaders pour couvrir tous les formats courants.</p>
+
+    <h3>2.1 Charger des fichiers PDF</h3>
+
+    <p>Les PDF sont le format le plus courant en entreprise. Plusieurs loaders existent, avec des niveaux de qualite differents pour l'extraction du texte :</p>
+
+    <div class="code-block"><span class="comment"># Methode 1 : PyPDFLoader - Simple et rapide</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader
+
+loader = PyPDFLoader(<span class="string">"rapport_annuel_2024.pdf"</span>)
+pages = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"Nombre de pages : {len(pages)}"</span>)
+<span class="function">print</span>(<span class="string">f"Page 1 - Contenu (200 premiers caracteres) :"</span>)
+<span class="function">print</span>(pages[<span class="number">0</span>].page_content[:<span class="number">200</span>])
+<span class="function">print</span>(<span class="string">f"Page 1 - Metadonnees : {pages[0].metadata}"</span>)</div>
+
+    <div class="output-block">Nombre de pages : 42
+Page 1 - Contenu (200 premiers caracteres) :
+Rapport Annuel 2024 - Societe XYZ
+Resume executif
+L'annee 2024 a ete marquee par une croissance significative de notre
+chiffre d'affaires, atteignant 150M euros...
+Page 1 - Metadonnees : {'source': 'rapport_annuel_2024.pdf', 'page': 0}</div>
+
+    <div class="code-block"><span class="comment"># Methode 2 : UnstructuredPDFLoader - Meilleure extraction (tableaux, images)</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> UnstructuredPDFLoader
+
+loader = UnstructuredPDFLoader(
+    <span class="string">"rapport_annuel_2024.pdf"</span>,
+    mode=<span class="string">"elements"</span>  <span class="comment"># Separe tableaux, titres, paragraphes</span>
+)
+elements = loader.<span class="function">load</span>()
+
+<span class="keyword">for</span> elem <span class="keyword">in</span> elements[:<span class="number">5</span>]:
+    <span class="function">print</span>(<span class="string">f"Type: {elem.metadata.get('category', 'N/A')} | "</span>
+          <span class="string">f"Contenu: {elem.page_content[:80]}..."</span>)</div>
+
+    <div class="output-block">Type: Title | Contenu: Rapport Annuel 2024 - Societe XYZ...
+Type: NarrativeText | Contenu: Resume executif L'annee 2024 a ete marquee par une croissance significative...
+Type: Table | Contenu: | Trimestre | CA (M euros) | Croissance | | Q1 | 35 | +12% |...
+Type: NarrativeText | Contenu: Notre strategie d'expansion internationale a porte ses fruits avec...
+Type: Title | Contenu: 2. Performance financiere...</div>
+
+    <h3>2.2 Charger des fichiers texte, CSV et Markdown</h3>
+
+    <div class="code-block"><span class="comment"># Fichiers texte simples</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader
+
+loader = TextLoader(<span class="string">"faq.txt"</span>, encoding=<span class="string">"utf-8"</span>)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Document charge : {len(docs[0].page_content)} caracteres"</span>)
+
+<span class="comment"># Fichiers CSV - chaque ligne devient un document</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> CSVLoader
+
+loader = CSVLoader(
+    <span class="string">"produits.csv"</span>,
+    csv_args={<span class="string">"delimiter"</span>: <span class="string">";"</span>},
+    source_column=<span class="string">"nom_produit"</span>  <span class="comment"># Colonne utilisee comme source dans les metadonnees</span>
+)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Nombre de documents (lignes) : {len(docs)}"</span>)
+<span class="function">print</span>(<span class="string">f"Premier doc : {docs[0].page_content}"</span>)
+
+<span class="comment"># Fichiers Markdown - preserve la structure</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> UnstructuredMarkdownLoader
+
+loader = UnstructuredMarkdownLoader(<span class="string">"documentation.md"</span>, mode=<span class="string">"elements"</span>)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Elements extraits : {len(docs)}"</span>)</div>
+
+    <h3>2.3 Charger des pages web</h3>
+
+    <div class="code-block"><span class="comment"># Charger une page web unique</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> WebBaseLoader
+
+loader = WebBaseLoader(<span class="string">"https://docs.python.org/3/tutorial/index.html"</span>)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Contenu extrait : {len(docs[0].page_content)} caracteres"</span>)
+
+<span class="comment"># Charger plusieurs URLs</span>
+urls = [
+    <span class="string">"https://example.com/page1"</span>,
+    <span class="string">"https://example.com/page2"</span>,
+    <span class="string">"https://example.com/page3"</span>,
+]
+loader = WebBaseLoader(urls)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Pages chargees : {len(docs)}"</span>)
+
+<span class="comment"># Crawling recursif d'un site web</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> RecursiveUrlLoader
+<span class="keyword">from</span> bs4 <span class="keyword">import</span> BeautifulSoup
+
+<span class="keyword">def</span> <span class="function">bs4_extractor</span>(html):
+    soup = BeautifulSoup(html, <span class="string">"html.parser"</span>)
+    <span class="keyword">return</span> soup.<span class="function">get_text</span>(separator=<span class="string">"\n"</span>, strip=<span class="keyword">True</span>)
+
+loader = RecursiveUrlLoader(
+    url=<span class="string">"https://docs.example.com/"</span>,
+    max_depth=<span class="number">3</span>,
+    extractor=bs4_extractor,
+    prevent_outside=<span class="keyword">True</span>  <span class="comment"># Ne pas sortir du domaine</span>
+)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Pages crawlees : {len(docs)}"</span>)</div>
+
+    <h3>2.4 Charger depuis des bases de donnees</h3>
+
+    <div class="code-block"><span class="comment"># Charger depuis une base SQL</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> SQLDatabaseLoader
+<span class="keyword">from</span> sqlalchemy <span class="keyword">import</span> create_engine
+
+engine = create_engine(<span class="string">"sqlite:///knowledge_base.db"</span>)
+loader = SQLDatabaseLoader(
+    query=<span class="string">"SELECT titre, contenu, date_publication FROM articles WHERE actif = 1"</span>,
+    engine=engine,
+    page_content_columns=[<span class="string">"contenu"</span>],
+    metadata_columns=[<span class="string">"titre"</span>, <span class="string">"date_publication"</span>]
+)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Articles charges : {len(docs)}"</span>)
+<span class="function">print</span>(<span class="string">f"Metadata : {docs[0].metadata}"</span>)</div>
+
+    <div class="output-block">Articles charges : 156
+Metadata : {'titre': 'Guide d installation v3.2', 'date_publication': '2024-11-15'}</div>
+
+    <div class="prof-note">
+        Le choix du loader a un impact direct sur la qualite de l'extraction. Pour les PDF, <code>UnstructuredPDFLoader</code> est nettement superieur a <code>PyPDFLoader</code> pour les documents contenant des tableaux, images ou mises en page complexes, mais il est plus lent et necessite des dependances supplementaires. Testez toujours sur un echantillon de vos documents reels.
+    </div>
+
+    <h3>2.5 Charger un repertoire complet</h3>
+
+    <div class="code-block"><span class="comment"># Charger tous les fichiers d'un repertoire</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> DirectoryLoader
+
+<span class="comment"># Charger tous les PDF d'un dossier</span>
+loader = DirectoryLoader(
+    <span class="string">"./documents/"</span>,
+    glob=<span class="string">"**/*.pdf"</span>,         <span class="comment"># Pattern de fichiers</span>
+    loader_cls=PyPDFLoader,   <span class="comment"># Loader a utiliser</span>
+    show_progress=<span class="keyword">True</span>,       <span class="comment"># Barre de progression</span>
+    use_multithreading=<span class="keyword">True</span>,  <span class="comment"># Charger en parallele</span>
+    max_concurrency=<span class="number">8</span>         <span class="comment"># Nombre de threads</span>
+)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Total documents charges : {len(docs)}"</span>)
+
+<span class="comment"># Verifier les sources uniques</span>
+sources = <span class="function">set</span>(doc.metadata[<span class="string">"source"</span>] <span class="keyword">for</span> doc <span class="keyword">in</span> docs)
+<span class="function">print</span>(<span class="string">f"Fichiers source uniques : {len(sources)}"</span>)</div>
+
+    <div class="output-block">Total documents charges : 342
+Fichiers source uniques : 28</div>
+
+    <!-- ============================================================ -->
+    <h2>3. Chunking Strategy - La cle du RAG performant</h2>
+
+    <p>Le chunking (decoupage) est <strong>l'etape la plus critique</strong> du pipeline d'ingestion. Un mauvais chunking est la cause numero 1 des mauvaises performances RAG. Il s'agit de trouver le bon equilibre entre des chunks trop petits (manque de contexte) et trop grands (trop de bruit).</p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" style="max-width:880px;">
+            <rect width="900" height="300" fill="#0f0f23" rx="12"/>
+            <text x="450" y="30" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">Impact de la Taille des Chunks sur la Qualite du RAG</text>
+
+            <!-- Too Small -->
+            <rect x="30" y="55" width="260" height="220" rx="10" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="160" y="80" fill="#ff4444" font-size="13" text-anchor="middle" font-weight="bold">Trop Petit (50-100 tokens)</text>
+
+            <rect x="50" y="95" width="220" height="25" rx="4" fill="#16213e" stroke="#ff4444" stroke-width="1"/>
+            <text x="160" y="113" fill="#aaa" font-size="9" text-anchor="middle">"Le produit est disponible en 3 tailles."</text>
+
+            <rect x="50" y="125" width="220" height="25" rx="4" fill="#16213e" stroke="#ff4444" stroke-width="1"/>
+            <text x="160" y="143" fill="#aaa" font-size="9" text-anchor="middle">"S, M et L. Le prix varie selon"</text>
+
+            <rect x="50" y="155" width="220" height="25" rx="4" fill="#16213e" stroke="#ff4444" stroke-width="1"/>
+            <text x="160" y="173" fill="#aaa" font-size="9" text-anchor="middle">"la taille choisie par le client."</text>
+
+            <text x="160" y="205" fill="#ff4444" font-size="10" text-anchor="middle">Pas assez de contexte</text>
+            <text x="160" y="220" fill="#ff4444" font-size="10" text-anchor="middle">Information fragmentee</text>
+            <text x="160" y="235" fill="#ff4444" font-size="10" text-anchor="middle">Sens coupe en morceaux</text>
+            <text x="160" y="258" fill="#ff4444" font-size="11" text-anchor="middle" font-weight="bold">Recall eleve, Precision faible</text>
+
+            <!-- Optimal -->
+            <rect x="320" y="55" width="260" height="220" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="450" y="80" fill="#00ff88" font-size="13" text-anchor="middle" font-weight="bold">Optimal (200-600 tokens)</text>
+
+            <rect x="340" y="95" width="220" height="80" rx="4" fill="#16213e" stroke="#00ff88" stroke-width="1"/>
+            <text x="450" y="113" fill="#e0e0e0" font-size="9" text-anchor="middle">"Le produit est disponible en 3</text>
+            <text x="450" y="128" fill="#e0e0e0" font-size="9" text-anchor="middle">tailles : S, M et L. Le prix varie</text>
+            <text x="450" y="143" fill="#e0e0e0" font-size="9" text-anchor="middle">selon la taille : S = 29E, M = 39E,</text>
+            <text x="450" y="158" fill="#e0e0e0" font-size="9" text-anchor="middle">L = 49E. Livraison gratuite."</text>
+
+            <text x="450" y="200" fill="#00ff88" font-size="10" text-anchor="middle">Contexte suffisant</text>
+            <text x="450" y="215" fill="#00ff88" font-size="10" text-anchor="middle">Information complete et coherente</text>
+            <text x="450" y="230" fill="#00ff88" font-size="10" text-anchor="middle">Unite semantique preservee</text>
+            <text x="450" y="258" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">Bon equilibre Recall/Precision</text>
+
+            <!-- Too Large -->
+            <rect x="610" y="55" width="260" height="220" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="740" y="80" fill="#ff8c42" font-size="13" text-anchor="middle" font-weight="bold">Trop Grand (1000+ tokens)</text>
+
+            <rect x="630" y="95" width="220" height="110" rx="4" fill="#16213e" stroke="#ff8c42" stroke-width="1"/>
+            <text x="740" y="113" fill="#aaa" font-size="8" text-anchor="middle">Chapitre 3 complet : prix, livraison,</text>
+            <text x="740" y="126" fill="#aaa" font-size="8" text-anchor="middle">retours, garantie, FAQ, conditions,</text>
+            <text x="740" y="139" fill="#aaa" font-size="8" text-anchor="middle">mentions legales, politique de</text>
+            <text x="740" y="152" fill="#aaa" font-size="8" text-anchor="middle">confidentialite, CGV, tout melange</text>
+            <text x="740" y="165" fill="#aaa" font-size="8" text-anchor="middle">dans un seul bloc monolithique...</text>
+            <text x="740" y="178" fill="#aaa" font-size="8" text-anchor="middle">... 1500 mots de contenu divers</text>
+
+            <text x="740" y="220" fill="#ff8c42" font-size="10" text-anchor="middle">Trop de bruit / hors-sujet</text>
+            <text x="740" y="235" fill="#ff8c42" font-size="10" text-anchor="middle">Embedding dilue / imprecis</text>
+            <text x="740" y="258" fill="#ff8c42" font-size="11" text-anchor="middle" font-weight="bold">Recall faible, beaucoup de bruit</text>
+        </svg>
+    </div>
+
+    <h3>3.1 Regles de base pour le chunking</h3>
+
+    <table>
+        <tr>
+            <th>Parametre</th>
+            <th>Recommandation</th>
+            <th>Explication</th>
+        </tr>
+        <tr>
+            <td><strong>chunk_size</strong></td>
+            <td>300-600 caracteres (ou 100-200 tokens)</td>
+            <td>Assez grand pour contenir une idee complete, assez petit pour etre precis lors de la recherche</td>
+        </tr>
+        <tr>
+            <td><strong>chunk_overlap</strong></td>
+            <td>10-20% de chunk_size (50-100 caracteres)</td>
+            <td>Evite de couper une idee a la frontiere entre deux chunks. Cree de la redondance benefique</td>
+        </tr>
+        <tr>
+            <td><strong>Separateurs</strong></td>
+            <td>["\n\n", "\n", ". ", " ", ""]</td>
+            <td>Coupe d'abord sur les paragraphes, puis les lignes, puis les phrases, puis les mots</td>
+        </tr>
+        <tr>
+            <td><strong>Test</strong></td>
+            <td>Toujours verifier visuellement les chunks</td>
+            <td>Inspecter 20-30 chunks pour verifier la coherence semantique</td>
+        </tr>
+    </table>
+
+    <div class="warning">
+        Ne vous fiez pas aux benchmarks generiques pour choisir votre chunk_size. Un benchmark recent (Vecta, fevrier 2026) a montre que les chunks de 512 tokens avec RecursiveCharacterTextSplitter obtiennent 69% de precision, mais cela depend enormement de vos donnees. Testez TOUJOURS avec vos propres documents et questions.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>4. RecursiveCharacterTextSplitter - Le splitter de reference</h2>
+
+    <p>Le <code>RecursiveCharacterTextSplitter</code> est le text splitter le plus utilise et recommande pour la majorite des cas d'usage RAG. Il tente de decouper le texte en respectant les limites naturelles (paragraphes, phrases) tout en maintenant la taille des chunks sous un seuil configure.</p>
+
+    <div class="definition">
+        Le <strong>RecursiveCharacterTextSplitter</strong> fonctionne de maniere "recursive" : il essaie d'abord de couper sur le premier separateur (ex: "\n\n" pour les paragraphes). Si un morceau est encore trop grand, il essaie le separateur suivant (ex: "\n" pour les lignes), puis le suivant (ex: ". " pour les phrases), et ainsi de suite jusqu'a obtenir des chunks de la bonne taille.
+    </div>
+
+    <h3>4.1 Configuration basique</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Configuration recommandee pour du texte general</span>
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">500</span>,           <span class="comment"># Taille maximale d'un chunk (en caracteres)</span>
+    chunk_overlap=<span class="number">50</span>,          <span class="comment"># Chevauchement entre chunks consecutifs</span>
+    length_function=<span class="function">len</span>,       <span class="comment"># Fonction pour mesurer la taille</span>
+    separators=[               <span class="comment"># Ordre de priorite des separateurs</span>
+        <span class="string">"\n\n"</span>,  <span class="comment"># Paragraphes</span>
+        <span class="string">"\n"</span>,    <span class="comment"># Lignes</span>
+        <span class="string">". "</span>,   <span class="comment"># Phrases</span>
+        <span class="string">", "</span>,   <span class="comment"># Clauses</span>
+        <span class="string">" "</span>,    <span class="comment"># Mots</span>
+        <span class="string">""</span>      <span class="comment"># Caracteres (dernier recours)</span>
+    ],
+    is_separator_regex=<span class="keyword">False</span>
+)
+
+<span class="comment"># Texte d'exemple</span>
+texte = <span class="string">"""Politique de retour
+
+Notre politique de retour vous permet de retourner tout article dans
+les 30 jours suivant la reception. Le produit doit etre dans son
+emballage d'origine et en parfait etat.
+
+Procedure de retour
+
+Pour initier un retour, connectez-vous a votre compte client et
+accedez a la section "Mes commandes". Selectionnez la commande
+concernee et cliquez sur "Demander un retour". Vous recevrez un
+email avec une etiquette de retour prepayee.
+
+Remboursement
+
+Le remboursement est effectue dans un delai de 5 a 10 jours ouvrables
+apres reception du colis retourne dans nos entrepots. Le remboursement
+est effectue sur le meme moyen de paiement utilise lors de l'achat.
+
+Exceptions
+
+Les articles personnalises, les produits d'hygiene ouverts et les
+cartes cadeaux ne peuvent pas etre retournes. Les frais de livraison
+initiaux ne sont pas rembourses sauf en cas d'erreur de notre part.
+"""</span>
+
+<span class="comment"># Decouper</span>
+chunks = splitter.<span class="function">split_text</span>(texte)
+
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="function">print</span>(<span class="string">f"\n--- Chunk {i+1} ({len(chunk)} caracteres) ---"</span>)
+    <span class="function">print</span>(chunk)</div>
+
+    <div class="output-block">--- Chunk 1 (259 caracteres) ---
+Politique de retour
+
+Notre politique de retour vous permet de retourner tout article dans
+les 30 jours suivant la reception. Le produit doit etre dans son
+emballage d'origine et en parfait etat.
+
+Procedure de retour
+
+--- Chunk 2 (308 caracteres) ---
+Procedure de retour
+
+Pour initier un retour, connectez-vous a votre compte client et
+accedez a la section "Mes commandes". Selectionnez la commande
+concernee et cliquez sur "Demander un retour". Vous recevrez un
+email avec une etiquette de retour prepayee.
+
+Remboursement
+
+--- Chunk 3 (325 caracteres) ---
+Remboursement
+
+Le remboursement est effectue dans un delai de 5 a 10 jours ouvrables
+apres reception du colis retourne dans nos entrepots. Le remboursement
+est effectue sur le meme moyen de paiement utilise lors de l'achat.
+
+Exceptions
+
+--- Chunk 4 (234 caracteres) ---
+Exceptions
+
+Les articles personnalises, les produits d'hygiene ouverts et les
+cartes cadeaux ne peuvent pas etre retournes. Les frais de livraison
+initiaux ne sont pas rembourses sauf en cas d'erreur de notre part.</div>
+
+    <div class="effect">
+        Observez comment le splitter coupe d'abord sur les doubles sauts de ligne ("\n\n") qui separent les paragraphes. L'overlap de 50 caracteres fait que le titre de la section suivante apparait a la fin de chaque chunk, creant un lien contextuel entre les chunks consecutifs.
+    </div>
+
+    <h3>4.2 Comparaison de differentes configurations</h3>
+
+    <div class="code-block"><span class="comment"># Comparons l'impact de differents chunk_size</span>
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Charger un gros document</span>
+<span class="keyword">with</span> <span class="function">open</span>(<span class="string">"documentation_complete.txt"</span>, <span class="string">"r"</span>) <span class="keyword">as</span> f:
+    texte = f.<span class="function">read</span>()
+
+<span class="function">print</span>(<span class="string">f"Taille du document : {len(texte)} caracteres\n"</span>)
+
+configs = [
+    {<span class="string">"chunk_size"</span>: <span class="number">200</span>,  <span class="string">"chunk_overlap"</span>: <span class="number">20</span>},
+    {<span class="string">"chunk_size"</span>: <span class="number">500</span>,  <span class="string">"chunk_overlap"</span>: <span class="number">50</span>},
+    {<span class="string">"chunk_size"</span>: <span class="number">1000</span>, <span class="string">"chunk_overlap"</span>: <span class="number">100</span>},
+    {<span class="string">"chunk_size"</span>: <span class="number">2000</span>, <span class="string">"chunk_overlap"</span>: <span class="number">200</span>},
+]
+
+<span class="keyword">for</span> config <span class="keyword">in</span> configs:
+    splitter = RecursiveCharacterTextSplitter(**config)
+    chunks = splitter.<span class="function">split_text</span>(texte)
+    sizes = [<span class="function">len</span>(c) <span class="keyword">for</span> c <span class="keyword">in</span> chunks]
+    <span class="function">print</span>(<span class="string">f"chunk_size={config['chunk_size']:>5} | "</span>
+          <span class="string">f"Nombre de chunks: {len(chunks):>4} | "</span>
+          <span class="string">f"Taille moy: {sum(sizes)//len(sizes):>5} | "</span>
+          <span class="string">f"Min: {min(sizes):>4} | Max: {max(sizes):>5}"</span>)</div>
+
+    <div class="output-block">Taille du document : 125000 caracteres
+
+chunk_size=  200 | Nombre de chunks:  712 | Taille moy:   178 | Min:   45 | Max:   200
+chunk_size=  500 | Nombre de chunks:  278 | Taille moy:   462 | Min:  112 | Max:   500
+chunk_size= 1000 | Nombre de chunks:  138 | Taille moy:   921 | Min:  287 | Max:  1000
+chunk_size= 2000 | Nombre de chunks:   68 | Taille moy:  1867 | Min:  534 | Max:  2000</div>
+
+    <div class="prof-note">
+        Le chunk_size=500 avec chunk_overlap=50 est le point de depart recommande pour la plupart des cas. Plus petit (200) convient pour les FAQ et les documents tres structures. Plus grand (1000-2000) convient pour les documents narratifs longs ou le contexte etendu est necessaire. Toujours valider en testant le retrieval avec des questions reelles.
+    </div>
+
+    <h3>4.3 Utilisation avec des Documents (pas juste du texte)</h3>
+
+    <div class="code-block"><span class="comment"># split_documents preserve les metadonnees</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Charger le PDF</span>
+loader = PyPDFLoader(<span class="string">"guide_utilisateur.pdf"</span>)
+pages = loader.<span class="function">load</span>()
+
+<span class="comment"># Decouper en chunks</span>
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">50</span>
+)
+chunks = splitter.<span class="function">split_documents</span>(pages)  <span class="comment"># Note: split_documents, pas split_text</span>
+
+<span class="function">print</span>(<span class="string">f"Pages originales : {len(pages)}"</span>)
+<span class="function">print</span>(<span class="string">f"Chunks apres decoupage : {len(chunks)}"</span>)
+<span class="function">print</span>(<span class="string">f"\nExemple de chunk avec metadonnees :"</span>)
+<span class="function">print</span>(<span class="string">f"Contenu : {chunks[5].page_content[:100]}..."</span>)
+<span class="function">print</span>(<span class="string">f"Metadata : {chunks[5].metadata}"</span>)</div>
+
+    <div class="output-block">Pages originales : 24
+Chunks apres decoupage : 89
+
+Exemple de chunk avec metadonnees :
+Contenu : Configuration du reseau Wi-Fi
+
+Pour connecter votre appareil au reseau Wi-Fi, accedez aux parametres...
+Metadata : {'source': 'guide_utilisateur.pdf', 'page': 3}</div>
+
+    <!-- ============================================================ -->
+    <h2>5. Semantic Chunking - Decoupage par le sens</h2>
+
+    <p>Le chunking semantique est une approche plus sophistiquee qui decoupe le texte en fonction du <strong>sens</strong> plutot que du nombre de caracteres. L'idee : quand le sujet change significativement dans le texte, on cree un nouveau chunk.</p>
+
+    <div class="definition">
+        Le <strong>Semantic Chunking</strong> utilise un modele d'embedding pour calculer la similarite entre phrases consecutives. Quand la similarite chute en dessous d'un seuil (indiquant un changement de sujet), le splitter cree une frontiere de chunk. Chaque chunk contient ainsi un sujet coherent.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_experimental.text_splitter <span class="keyword">import</span> SemanticChunker
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+<span class="comment"># Creer le semantic chunker</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Methode 1 : Seuil base sur le percentile</span>
+chunker = SemanticChunker(
+    embeddings,
+    breakpoint_threshold_type=<span class="string">"percentile"</span>,
+    breakpoint_threshold_amount=<span class="number">70</span>  <span class="comment"># Couper quand la similarite est dans le 30% le plus bas</span>
+)
+
+texte = <span class="string">"""L'intelligence artificielle (IA) est un domaine de l'informatique
+qui vise a creer des systemes capables de realiser des taches
+necessitant normalement l'intelligence humaine. Les reseaux de neurones
+sont une approche fondamentale de l'IA moderne.
+
+Le jardinage biologique gagne en popularite. Les jardiniers preferent
+eviter les pesticides chimiques et utilisent des methodes naturelles
+comme le compostage et les insectes benefiques.
+
+L'apprentissage profond (deep learning) utilise des reseaux de neurones
+a plusieurs couches pour apprendre des representations de donnees.
+GPT et BERT sont des exemples de modeles de deep learning pour le NLP."""</span>
+
+chunks = chunker.<span class="function">split_text</span>(texte)
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="function">print</span>(<span class="string">f"\n--- Chunk semantique {i+1} ---"</span>)
+    <span class="function">print</span>(chunk)</div>
+
+    <div class="output-block">--- Chunk semantique 1 ---
+L'intelligence artificielle (IA) est un domaine de l'informatique
+qui vise a creer des systemes capables de realiser des taches
+necessitant normalement l'intelligence humaine. Les reseaux de neurones
+sont une approche fondamentale de l'IA moderne.
+
+--- Chunk semantique 2 ---
+Le jardinage biologique gagne en popularite. Les jardiniers preferent
+eviter les pesticides chimiques et utilisent des methodes naturelles
+comme le compostage et les insectes benefiques.
+
+--- Chunk semantique 3 ---
+L'apprentissage profond (deep learning) utilise des reseaux de neurones
+a plusieurs couches pour apprendre des representations de donnees.
+GPT et BERT sont des exemples de modeles de deep learning pour le NLP.</div>
+
+    <div class="effect">
+        Le chunking semantique a correctement identifie 3 sujets distincts (IA, jardinage, deep learning) et a cree 3 chunks coherents, meme si le paragraphe sur le jardinage est au milieu de deux paragraphes sur l'IA. Un RecursiveCharacterTextSplitter aurait pu melanger ces sujets dans un meme chunk.
+    </div>
+
+    <div class="warning">
+        Un article de NAACL 2025 Findings a montre que le semantic chunking ne justifie pas toujours son cout supplementaire : des chunks fixes de 200 mots egalent ou surpassent le chunking semantique sur de nombreux benchmarks. Le cout en embeddings est aussi significatif (il faut embedder chaque phrase pour calculer les points de coupure). Evaluez toujours si le gain de precision justifie le cout pour votre cas d'usage specifique.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>6. Hierarchical Chunking - Chunks parents-enfants</h2>
+
+    <p>Le chunking hierarchique est une strategie avancee qui cree des chunks a <strong>deux niveaux</strong> : des petits chunks pour la recherche precise, et des grands chunks (parents) pour fournir un contexte complet au LLM.</p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="max-width:870px;">
+            <rect width="900" height="320" fill="#0f0f23" rx="12"/>
+            <text x="450" y="30" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">Chunking Hierarchique : Parents et Enfants</text>
+
+            <!-- Document -->
+            <rect x="50" y="55" width="800" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="450" y="85" fill="#ff8c42" font-size="12" text-anchor="middle" font-weight="bold">Document Complet (ex: chapitre 3 - Politique de retour, 2000 tokens)</text>
+
+            <!-- Parent chunks -->
+            <text x="70" y="130" fill="#569cd6" font-size="11" font-weight="bold">Chunks Parents (500 tokens) -- Fournis au LLM pour le contexte</text>
+
+            <rect x="50" y="140" width="250" height="45" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="175" y="167" fill="#569cd6" font-size="10" text-anchor="middle">Parent 1: Conditions generales</text>
+
+            <rect x="325" y="140" width="250" height="45" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="450" y="167" fill="#569cd6" font-size="10" text-anchor="middle">Parent 2: Procedure de retour</text>
+
+            <rect x="600" y="140" width="250" height="45" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="725" y="167" fill="#569cd6" font-size="10" text-anchor="middle">Parent 3: Exceptions et limites</text>
+
+            <!-- Child chunks -->
+            <text x="70" y="215" fill="#00ff88" font-size="11" font-weight="bold">Chunks Enfants (100 tokens) -- Utilises pour la RECHERCHE (plus precis)</text>
+
+            <rect x="50" y="225" width="115" height="35" rx="4" fill="#16213e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="107" y="247" fill="#00ff88" font-size="8" text-anchor="middle">Enfant 1a</text>
+
+            <rect x="175" y="225" width="115" height="35" rx="4" fill="#16213e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="232" y="247" fill="#00ff88" font-size="8" text-anchor="middle">Enfant 1b</text>
+
+            <rect x="325" y="225" width="115" height="35" rx="4" fill="#16213e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="382" y="247" fill="#00ff88" font-size="8" text-anchor="middle">Enfant 2a</text>
+
+            <rect x="460" y="225" width="115" height="35" rx="4" fill="#16213e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="517" y="247" fill="#00ff88" font-size="8" text-anchor="middle">Enfant 2b</text>
+
+            <rect x="600" y="225" width="115" height="35" rx="4" fill="#16213e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="657" y="247" fill="#00ff88" font-size="8" text-anchor="middle">Enfant 3a</text>
+
+            <rect x="725" y="225" width="115" height="35" rx="4" fill="#16213e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="782" y="247" fill="#00ff88" font-size="8" text-anchor="middle">Enfant 3b</text>
+
+            <!-- Arrows parent->child -->
+            <line x1="107" y1="185" x2="107" y2="225" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,3"/>
+            <line x1="232" y1="185" x2="232" y2="225" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,3"/>
+            <line x1="382" y1="185" x2="382" y2="225" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,3"/>
+            <line x1="517" y1="185" x2="517" y2="225" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,3"/>
+            <line x1="657" y1="185" x2="657" y2="225" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,3"/>
+            <line x1="782" y1="185" x2="782" y2="225" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,3"/>
+
+            <!-- Explanation -->
+            <rect x="200" y="275" width="500" height="30" rx="6" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="1"/>
+            <text x="450" y="295" fill="#00ff88" font-size="10" text-anchor="middle">Recherche sur les enfants -> Retourne le parent correspondant au LLM</text>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># Implementer le chunking hierarchique avec LangChain</span>
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain.storage <span class="keyword">import</span> InMemoryStore
+<span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> ParentDocumentRetriever
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+<span class="comment"># Splitter pour les chunks enfants (petits = recherche precise)</span>
+child_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">200</span>,
+    chunk_overlap=<span class="number">20</span>
+)
+
+<span class="comment"># Splitter pour les chunks parents (grands = contexte complet)</span>
+parent_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">1000</span>,
+    chunk_overlap=<span class="number">100</span>
+)
+
+<span class="comment"># Vector store pour les enfants (utilisee pour la recherche)</span>
+vectorstore = Chroma(
+    collection_name=<span class="string">"children"</span>,
+    embedding_function=OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+)
+
+<span class="comment"># Store pour les parents (en memoire ou persistent)</span>
+docstore = InMemoryStore()
+
+<span class="comment"># Le ParentDocumentRetriever lie les deux</span>
+retriever = ParentDocumentRetriever(
+    vectorstore=vectorstore,
+    docstore=docstore,
+    child_splitter=child_splitter,
+    parent_splitter=parent_splitter,
+)
+
+<span class="comment"># Ajouter les documents</span>
+retriever.<span class="function">add_documents</span>(documents)
+
+<span class="comment"># Recherche : cherche dans les enfants, retourne les parents</span>
+results = retriever.<span class="function">invoke</span>(<span class="string">"Comment faire un retour ?"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de parents retournes : {len(results)}"</span>)
+<span class="function">print</span>(<span class="string">f"Taille du contexte : {len(results[0].page_content)} caracteres"</span>)</div>
+
+    <div class="output-block">Nombre de parents retournes : 2
+Taille du contexte : 956 caracteres</div>
+
+    <div class="prof-note">
+        Le chunking hierarchique est particulierement efficace pour les documents longs et structures (manuels techniques, documentation API, contrats). Il combine la precision de la recherche (petits chunks) avec la richesse du contexte (grands chunks). C'est une des techniques les plus impactantes du Advanced RAG.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>7. Chunking par type de document</h2>
+
+    <p>Il n'existe pas de configuration universelle. La strategie de chunking optimale depend fortement du type de document que vous indexez :</p>
+
+    <table>
+        <tr>
+            <th>Type de document</th>
+            <th>chunk_size recommande</th>
+            <th>Strategie</th>
+            <th>Separateurs speciaux</th>
+        </tr>
+        <tr>
+            <td><strong>FAQ / Q&amp;A</strong></td>
+            <td>200-300 caracteres</td>
+            <td>1 chunk = 1 question-reponse</td>
+            <td>"\n\nQ:" ou "\n\n###"</td>
+        </tr>
+        <tr>
+            <td><strong>Documentation technique</strong></td>
+            <td>500-800 caracteres</td>
+            <td>Par section/sous-section + hierarchique</td>
+            <td>Headers Markdown "## ", "### "</td>
+        </tr>
+        <tr>
+            <td><strong>Documents juridiques</strong></td>
+            <td>800-1200 caracteres</td>
+            <td>Par article/clause + contexte etendu</td>
+            <td>"Article ", "Clause "</td>
+        </tr>
+        <tr>
+            <td><strong>Code source</strong></td>
+            <td>Par fonction/classe</td>
+            <td>Respecter la structure du code</td>
+            <td>"\nclass ", "\ndef ", "\nfunction "</td>
+        </tr>
+        <tr>
+            <td><strong>Emails / Chats</strong></td>
+            <td>Par message complet</td>
+            <td>1 chunk = 1 message + contexte</td>
+            <td>"From:", "De:", separateurs de messages</td>
+        </tr>
+        <tr>
+            <td><strong>Articles scientifiques</strong></td>
+            <td>600-1000 caracteres</td>
+            <td>Par section (abstract, methode, resultats)</td>
+            <td>Sections LaTeX ou headers</td>
+        </tr>
+        <tr>
+            <td><strong>Tableaux / CSV</strong></td>
+            <td>Par ligne ou groupe de lignes</td>
+            <td>Inclure les en-tetes dans chaque chunk</td>
+            <td>Lignes avec headers repetes</td>
+        </tr>
+    </table>
+
+    <h3>7.1 Splitter specialise pour le code</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> (
+    RecursiveCharacterTextSplitter,
+    Language
+)
+
+<span class="comment"># Splitter pour le code Python</span>
+python_splitter = RecursiveCharacterTextSplitter.<span class="function">from_language</span>(
+    language=Language.PYTHON,
+    chunk_size=<span class="number">1000</span>,
+    chunk_overlap=<span class="number">100</span>
+)
+
+code_python = <span class="string">"""
+class UserManager:
+    def __init__(self, db_connection):
+        self.db = db_connection
+        self.cache = {}
+
+    def get_user(self, user_id):
+        if user_id in self.cache:
+            return self.cache[user_id]
+        user = self.db.query(f"SELECT * FROM users WHERE id = {user_id}")
+        self.cache[user_id] = user
+        return user
+
+    def create_user(self, name, email):
+        user = self.db.insert("users", {"name": name, "email": email})
+        self.cache[user["id"]] = user
+        return user
+
+class OrderManager:
+    def __init__(self, db_connection, user_manager):
+        self.db = db_connection
+        self.user_manager = user_manager
+
+    def create_order(self, user_id, items):
+        user = self.user_manager.get_user(user_id)
+        order = self.db.insert("orders", {
+            "user_id": user_id,
+            "items": items,
+            "total": sum(item["price"] for item in items)
+        })
+        return order
+"""</span>
+
+chunks = python_splitter.<span class="function">split_text</span>(code_python)
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="function">print</span>(<span class="string">f"--- Chunk {i+1} ({len(chunk)} car.) ---"</span>)
+    <span class="function">print</span>(chunk[:150], <span class="string">"..."</span>)</div>
+
+    <div class="output-block">--- Chunk 1 (392 car.) ---
+class UserManager:
+    def __init__(self, db_connection):
+        self.db = db_connection
+        self.cache = {}
+
+    def get_user(self, user_id):
+        if user_id in self.cache ...
+
+--- Chunk 2 (398 car.) ---
+class OrderManager:
+    def __init__(self, db_connection, user_manager):
+        self.db = db_connection
+        self.user_manager = user_manager
+
+    def create_order(self, use ...</div>
+
+    <div class="effect">
+        Le splitter pour Python respecte la structure du code : il coupe entre les classes, pas au milieu d'une methode. Cela garantit que chaque chunk contient une unite logique complete du code.
+    </div>
+
+    <h3>7.2 Splitter pour les documents Markdown</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> MarkdownHeaderTextSplitter
+
+<span class="comment"># Decouper par headers Markdown</span>
+headers_to_split_on = [
+    (<span class="string">"#"</span>, <span class="string">"Titre_principal"</span>),
+    (<span class="string">"##"</span>, <span class="string">"Section"</span>),
+    (<span class="string">"###"</span>, <span class="string">"Sous_section"</span>),
+]
+
+md_splitter = MarkdownHeaderTextSplitter(
+    headers_to_split_on=headers_to_split_on
+)
+
+markdown_doc = <span class="string">"""# Guide utilisateur
+
+## Installation
+
+### Prerequis
+Python 3.9+ est requis. Installez pip et virtualenv.
+
+### Installation du package
+Executez: pip install monpackage
+
+## Configuration
+
+### Fichier de config
+Creez un fichier config.yaml a la racine du projet.
+
+### Variables d'environnement
+Exportez API_KEY et DB_URL dans votre shell.
+"""</span>
+
+chunks = md_splitter.<span class="function">split_text</span>(markdown_doc)
+<span class="keyword">for</span> chunk <span class="keyword">in</span> chunks:
+    <span class="function">print</span>(<span class="string">f"Metadata: {chunk.metadata}"</span>)
+    <span class="function">print</span>(<span class="string">f"Contenu: {chunk.page_content[:80]}\n"</span>)</div>
+
+    <div class="output-block">Metadata: {'Titre_principal': 'Guide utilisateur', 'Section': 'Installation', 'Sous_section': 'Prerequis'}
+Contenu: Python 3.9+ est requis. Installez pip et virtualenv.
+
+Metadata: {'Titre_principal': 'Guide utilisateur', 'Section': 'Installation', 'Sous_section': 'Installation du package'}
+Contenu: Executez: pip install monpackage
+
+Metadata: {'Titre_principal': 'Guide utilisateur', 'Section': 'Configuration', 'Sous_section': 'Fichier de config'}
+Contenu: Creez un fichier config.yaml a la racine du projet.
+
+Metadata: {'Titre_principal': 'Guide utilisateur', 'Section': 'Configuration', 'Sous_section': 'Variables d environnement'}
+Contenu: Exportez API_KEY et DB_URL dans votre shell.</div>
+
+    <div class="effect">
+        Le MarkdownHeaderTextSplitter extrait automatiquement la hierarchie des headers et les ajoute en metadonnees. Cela permet un filtrage par section lors du retrieval -- par exemple, ne chercher que dans la section "Configuration".
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>8. Metadata Enrichment - Enrichir les metadonnees</h2>
+
+    <p>Les metadonnees sont des informations <strong>structurees</strong> attachees a chaque chunk. Elles sont cruciales pour le filtrage lors du retrieval et pour la tracabilite des sources. Un chunk sans metadonnees est comme un livre sans table des matieres.</p>
+
+    <h3>8.1 Types de metadonnees essentielles</h3>
+
+    <table>
+        <tr>
+            <th>Metadonnee</th>
+            <th>Utilite</th>
+            <th>Exemple</th>
+        </tr>
+        <tr>
+            <td><strong>source</strong></td>
+            <td>Savoir d'ou vient l'information</td>
+            <td>"guide_rh_2024.pdf"</td>
+        </tr>
+        <tr>
+            <td><strong>page</strong></td>
+            <td>Localiser l'information dans le document original</td>
+            <td>3</td>
+        </tr>
+        <tr>
+            <td><strong>section / titre</strong></td>
+            <td>Filtrer par section, comprendre le contexte</td>
+            <td>"Politique de conges"</td>
+        </tr>
+        <tr>
+            <td><strong>date</strong></td>
+            <td>Filtrer par date, privilegier les docs recents</td>
+            <td>"2024-11-15"</td>
+        </tr>
+        <tr>
+            <td><strong>categorie / type</strong></td>
+            <td>Router vers le bon sous-ensemble de documents</td>
+            <td>"RH", "technique", "commercial"</td>
+        </tr>
+        <tr>
+            <td><strong>langue</strong></td>
+            <td>Filtrer par langue pour les corpus multilingues</td>
+            <td>"fr", "en"</td>
+        </tr>
+        <tr>
+            <td><strong>auteur</strong></td>
+            <td>Tracabilite, credibilite de la source</td>
+            <td>"Service juridique"</td>
+        </tr>
+    </table>
+
+    <h3>8.2 Enrichir les metadonnees programmatiquement</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader
+<span class="keyword">import</span> os
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="keyword">def</span> <span class="function">enrich_metadata</span>(docs, category, department):
+    <span class="string">"""Enrichir les metadonnees de chaque document/chunk."""</span>
+    <span class="keyword">for</span> doc <span class="keyword">in</span> docs:
+        <span class="comment"># Metadonnees existantes</span>
+        source = doc.metadata.get(<span class="string">"source"</span>, <span class="string">"inconnu"</span>)
+
+        <span class="comment"># Enrichissement</span>
+        doc.metadata[<span class="string">"category"</span>] = category
+        doc.metadata[<span class="string">"department"</span>] = department
+        doc.metadata[<span class="string">"indexed_at"</span>] = datetime.<span class="function">now</span>().<span class="function">isoformat</span>()
+        doc.metadata[<span class="string">"file_name"</span>] = os.path.<span class="function">basename</span>(source)
+        doc.metadata[<span class="string">"file_type"</span>] = os.path.<span class="function">splitext</span>(source)[<span class="number">1</span>]
+
+        <span class="comment"># Ajouter la taille du chunk (utile pour le debug)</span>
+        doc.metadata[<span class="string">"chunk_size"</span>] = <span class="function">len</span>(doc.page_content)
+
+        <span class="comment"># Extraire le titre (premiere ligne si c'est un titre)</span>
+        first_line = doc.page_content.<span class="function">split</span>(<span class="string">"\n"</span>)[<span class="number">0</span>].<span class="function">strip</span>()
+        <span class="keyword">if</span> <span class="function">len</span>(first_line) < <span class="number">100</span>:
+            doc.metadata[<span class="string">"title_hint"</span>] = first_line
+
+    <span class="keyword">return</span> docs
+
+<span class="comment"># Utilisation</span>
+loader = PyPDFLoader(<span class="string">"politique_rh.pdf"</span>)
+splitter = RecursiveCharacterTextSplitter(chunk_size=<span class="number">500</span>, chunk_overlap=<span class="number">50</span>)
+
+pages = loader.<span class="function">load</span>()
+chunks = splitter.<span class="function">split_documents</span>(pages)
+chunks = <span class="function">enrich_metadata</span>(chunks, category=<span class="string">"RH"</span>, department=<span class="string">"Ressources Humaines"</span>)
+
+<span class="function">print</span>(<span class="string">f"Metadonnees enrichies du chunk 3 :"</span>)
+<span class="keyword">for</span> key, value <span class="keyword">in</span> chunks[<span class="number">3</span>].metadata.<span class="function">items</span>():
+    <span class="function">print</span>(<span class="string">f"  {key}: {value}"</span>)</div>
+
+    <div class="output-block">Metadonnees enrichies du chunk 3 :
+  source: politique_rh.pdf
+  page: 1
+  category: RH
+  department: Ressources Humaines
+  indexed_at: 2025-01-15T14:23:45.123456
+  file_name: politique_rh.pdf
+  file_type: .pdf
+  chunk_size: 487
+  title_hint: Politique de conges payes</div>
+
+    <!-- ============================================================ -->
+    <h2>9. Deduplication - Eviter les doublons</h2>
+
+    <p>Quand on indexe de nombreux documents, il est frequent d'avoir du contenu en double (memes paragraphes dans differents documents, versions multiples du meme document, headers/footers repetes). La deduplication ameliore la qualite du retrieval en evitant de recuperer le meme contenu plusieurs fois.</p>
+
+    <div class="code-block"><span class="keyword">import</span> hashlib
+<span class="keyword">from</span> typing <span class="keyword">import</span> List
+<span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document
+
+<span class="keyword">def</span> <span class="function">deduplicate_chunks</span>(chunks: List[Document], similarity_threshold: <span class="keyword">float</span> = <span class="number">0.95</span>) -> List[Document]:
+    <span class="string">"""Supprimer les chunks en double base sur le hash du contenu."""</span>
+    seen_hashes = <span class="function">set</span>()
+    unique_chunks = []
+
+    <span class="keyword">for</span> chunk <span class="keyword">in</span> chunks:
+        <span class="comment"># Normaliser le texte (minuscules, espaces)</span>
+        normalized = chunk.page_content.<span class="function">lower</span>().<span class="function">strip</span>()
+        normalized = <span class="string">" "</span>.<span class="function">join</span>(normalized.<span class="function">split</span>())
+
+        <span class="comment"># Calculer le hash</span>
+        content_hash = hashlib.<span class="function">md5</span>(normalized.<span class="function">encode</span>()).<span class="function">hexdigest</span>()
+
+        <span class="keyword">if</span> content_hash <span class="keyword">not in</span> seen_hashes:
+            seen_hashes.<span class="function">add</span>(content_hash)
+            unique_chunks.<span class="function">append</span>(chunk)
+
+    <span class="function">print</span>(<span class="string">f"Chunks avant deduplication : {len(chunks)}"</span>)
+    <span class="function">print</span>(<span class="string">f"Chunks apres deduplication : {len(unique_chunks)}"</span>)
+    <span class="function">print</span>(<span class="string">f"Doublons supprimes : {len(chunks) - len(unique_chunks)}"</span>)
+
+    <span class="keyword">return</span> unique_chunks
+
+<span class="comment"># Utilisation</span>
+unique_chunks = <span class="function">deduplicate_chunks</span>(all_chunks)</div>
+
+    <div class="output-block">Chunks avant deduplication : 534
+Chunks apres deduplication : 487
+Doublons supprimes : 47</div>
+
+    <div class="code-block"><span class="comment"># Deduplication plus avancee avec MinHash pour la similarite approximative</span>
+<span class="keyword">from</span> datasketch <span class="keyword">import</span> MinHash, MinHashLSH
+
+<span class="keyword">def</span> <span class="function">deduplicate_fuzzy</span>(chunks, threshold=<span class="number">0.85</span>):
+    <span class="string">"""Deduplication floue : detecte les quasi-doublons."""</span>
+    lsh = MinHashLSH(threshold=threshold, num_perm=<span class="number">128</span>)
+    unique = []
+
+    <span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+        <span class="comment"># Creer le MinHash du contenu</span>
+        m = MinHash(num_perm=<span class="number">128</span>)
+        <span class="keyword">for</span> word <span class="keyword">in</span> chunk.page_content.<span class="function">lower</span>().<span class="function">split</span>():
+            m.<span class="function">update</span>(word.<span class="function">encode</span>(<span class="string">'utf-8'</span>))
+
+        <span class="comment"># Verifier s'il existe un quasi-doublon</span>
+        similar = lsh.<span class="function">query</span>(m)
+        <span class="keyword">if</span> <span class="keyword">not</span> similar:
+            lsh.<span class="function">insert</span>(<span class="string">f"chunk_{i}"</span>, m)
+            unique.<span class="function">append</span>(chunk)
+
+    <span class="function">print</span>(<span class="string">f"Quasi-doublons detectes : {len(chunks) - len(unique)}"</span>)
+    <span class="keyword">return</span> unique</div>
+
+    <!-- ============================================================ -->
+    <h2>10. Batch Processing - Traitement en lots</h2>
+
+    <p>En production, vous devrez souvent indexer des centaines ou des milliers de documents. Le traitement en lots (batch processing) est essentiel pour gerer efficacement cette charge.</p>
+
+    <div class="code-block"><span class="keyword">import</span> os
+<span class="keyword">from</span> pathlib <span class="keyword">import</span> Path
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader, TextLoader
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> tqdm <span class="keyword">import</span> tqdm
+<span class="keyword">import</span> logging
+
+logging.<span class="function">basicConfig</span>(level=logging.INFO)
+logger = logging.<span class="function">getLogger</span>(<span class="string">"ingestion"</span>)
+
+<span class="keyword">class</span> <span class="function">IngestionPipeline</span>:
+    <span class="string">"""Pipeline d'ingestion complet et robuste pour le RAG."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, persist_dir=<span class="string">"./chroma_db"</span>, chunk_size=<span class="number">500</span>, chunk_overlap=<span class="number">50</span>):
+        self.splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap
+        )
+        self.embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+        self.persist_dir = persist_dir
+        self.stats = {<span class="string">"loaded"</span>: <span class="number">0</span>, <span class="string">"chunks"</span>: <span class="number">0</span>, <span class="string">"errors"</span>: <span class="number">0</span>}
+
+    <span class="keyword">def</span> <span class="function">_get_loader</span>(self, file_path):
+        <span class="string">"""Selectionner le bon loader selon l'extension."""</span>
+        ext = Path(file_path).suffix.<span class="function">lower</span>()
+        loaders = {
+            <span class="string">".pdf"</span>: PyPDFLoader,
+            <span class="string">".txt"</span>: TextLoader,
+            <span class="string">".md"</span>: TextLoader,
+        }
+        loader_cls = loaders.get(ext)
+        <span class="keyword">if</span> <span class="keyword">not</span> loader_cls:
+            <span class="keyword">raise</span> <span class="function">ValueError</span>(<span class="string">f"Extension non supportee : {ext}"</span>)
+        <span class="keyword">return</span> loader_cls(file_path)
+
+    <span class="keyword">def</span> <span class="function">process_directory</span>(self, directory, batch_size=<span class="number">50</span>):
+        <span class="string">"""Traiter tous les fichiers d'un repertoire par lots."""</span>
+        files = <span class="function">list</span>(Path(directory).<span class="function">rglob</span>(<span class="string">"*"</span>))
+        files = [f <span class="keyword">for</span> f <span class="keyword">in</span> files <span class="keyword">if</span> f.suffix.<span class="function">lower</span>() <span class="keyword">in</span> [<span class="string">".pdf"</span>, <span class="string">".txt"</span>, <span class="string">".md"</span>]]
+
+        logger.<span class="function">info</span>(<span class="string">f"Fichiers trouves : {len(files)}"</span>)
+
+        all_chunks = []
+        <span class="keyword">for</span> file_path <span class="keyword">in</span> tqdm(files, desc=<span class="string">"Chargement"</span>):
+            <span class="keyword">try</span>:
+                loader = self.<span class="function">_get_loader</span>(<span class="function">str</span>(file_path))
+                docs = loader.<span class="function">load</span>()
+                chunks = self.splitter.<span class="function">split_documents</span>(docs)
+
+                <span class="comment"># Enrichir les metadonnees</span>
+                <span class="keyword">for</span> chunk <span class="keyword">in</span> chunks:
+                    chunk.metadata[<span class="string">"file_type"</span>] = file_path.suffix
+                    chunk.metadata[<span class="string">"file_name"</span>] = file_path.name
+
+                all_chunks.<span class="function">extend</span>(chunks)
+                self.stats[<span class="string">"loaded"</span>] += <span class="number">1</span>
+
+            <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+                logger.<span class="function">error</span>(<span class="string">f"Erreur {file_path}: {e}"</span>)
+                self.stats[<span class="string">"errors"</span>] += <span class="number">1</span>
+
+        <span class="comment"># Deduplication</span>
+        all_chunks = <span class="function">deduplicate_chunks</span>(all_chunks)
+        self.stats[<span class="string">"chunks"</span>] = <span class="function">len</span>(all_chunks)
+
+        <span class="comment"># Indexation par lots</span>
+        logger.<span class="function">info</span>(<span class="string">f"Indexation de {len(all_chunks)} chunks par lots de {batch_size}..."</span>)
+        vectorstore = <span class="keyword">None</span>
+
+        <span class="keyword">for</span> i <span class="keyword">in</span> tqdm(<span class="function">range</span>(<span class="number">0</span>, <span class="function">len</span>(all_chunks), batch_size), desc=<span class="string">"Indexation"</span>):
+            batch = all_chunks[i:i + batch_size]
+            <span class="keyword">if</span> vectorstore <span class="keyword">is</span> <span class="keyword">None</span>:
+                vectorstore = Chroma.<span class="function">from_documents</span>(
+                    batch, self.embeddings,
+                    persist_directory=self.persist_dir
+                )
+            <span class="keyword">else</span>:
+                vectorstore.<span class="function">add_documents</span>(batch)
+
+        logger.<span class="function">info</span>(<span class="string">f"Ingestion terminee ! Stats : {self.stats}"</span>)
+        <span class="keyword">return</span> vectorstore
+
+<span class="comment"># Utilisation</span>
+pipeline = IngestionPipeline(chunk_size=<span class="number">500</span>, chunk_overlap=<span class="number">50</span>)
+vectorstore = pipeline.<span class="function">process_directory</span>(<span class="string">"./documents/"</span>)</div>
+
+    <div class="output-block">Fichiers trouves : 47
+Chargement: 100%|##########| 47/47 [00:12&lt;00:00, 3.92it/s]
+Chunks avant deduplication : 1256
+Chunks apres deduplication : 1189
+Doublons supprimes : 67
+Indexation de 1189 chunks par lots de 50...
+Indexation: 100%|##########| 24/24 [00:45&lt;00:00, 1.87s/it]
+Ingestion terminee ! Stats : {'loaded': 45, 'chunks': 1189, 'errors': 2}</div>
+
+    <!-- ============================================================ -->
+    <h2>11. Resume - Strategie de chunking par cas d'usage</h2>
+
+    <div class="concept-box green">
+        <h3>Decision : quelle strategie de chunking choisir ?</h3>
+        <table>
+            <tr>
+                <th>Situation</th>
+                <th>Strategie recommandee</th>
+                <th>chunk_size</th>
+                <th>overlap</th>
+            </tr>
+            <tr>
+                <td>Debut / prototype rapide</td>
+                <td>RecursiveCharacterTextSplitter</td>
+                <td>500</td>
+                <td>50</td>
+            </tr>
+            <tr>
+                <td>FAQ / Q&amp;A structures</td>
+                <td>Separateurs personnalises</td>
+                <td>200-300</td>
+                <td>0-20</td>
+            </tr>
+            <tr>
+                <td>Documentation technique (MD)</td>
+                <td>MarkdownHeaderTextSplitter</td>
+                <td>500-800</td>
+                <td>50-80</td>
+            </tr>
+            <tr>
+                <td>Documents longs (rapports, juridique)</td>
+                <td>Hierarchique (parent/enfant)</td>
+                <td>Enfant: 200, Parent: 1000</td>
+                <td>20 / 100</td>
+            </tr>
+            <tr>
+                <td>Code source</td>
+                <td>Language-specific splitter</td>
+                <td>1000-2000</td>
+                <td>100-200</td>
+            </tr>
+            <tr>
+                <td>Precision maximale requise</td>
+                <td>Semantic Chunking</td>
+                <td>Dynamique</td>
+                <td>N/A</td>
+            </tr>
+            <tr>
+                <td>Corpus heterogene (multi-types)</td>
+                <td>Pipeline avec detection de type</td>
+                <td>Variable</td>
+                <td>Variable</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box blue">
+        <h3>Checklist d'ingestion</h3>
+        <ol>
+            <li>Identifiez les types de documents dans votre corpus</li>
+            <li>Choisissez les bons loaders pour chaque type</li>
+            <li>Definissez votre strategie de chunking selon le tableau ci-dessus</li>
+            <li>Enrichissez les metadonnees (source, page, date, categorie)</li>
+            <li>Effectuez la deduplication avant l'indexation</li>
+            <li>Traitez en lots pour les gros corpus</li>
+            <li>Inspectez visuellement 20-30 chunks pour valider la qualite</li>
+            <li>Testez le retrieval avec 10 questions representatives</li>
+            <li>Iterez sur les parametres en mesurant l'impact</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        L'ingestion est la fondation de votre systeme RAG. 80% des problemes de qualite en production viennent d'une mauvaise ingestion (mauvais chunking, metadonnees manquantes, doublons). Investissez du temps dans cette etape. Dans le prochain cours, nous verrons comment choisir le bon modele d'embedding et le bon vector store pour stocker et rechercher ces chunks efficacement.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="rag_01_introduction.html">&larr; Cours Introduction RAG</a>
+        <a href="rag_03_embeddings_vectorstores.html">Cours suivant : Embeddings &amp; Vector Stores &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML 05 - La Classification</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0f0f23;color:#e0e0e0;line-height:1.8}
+nav{position:fixed;top:0;left:0;width:260px;height:100vh;background:#1a1a2e;padding:20px 15px;overflow-y:auto;border-right:2px solid #ff6b35;z-index:10}
+nav h2{color:#ff6b35;font-size:15px;margin-bottom:15px;text-align:center}
+nav a{display:block;color:#aaa;text-decoration:none;padding:5px 10px;font-size:12.5px;border-radius:5px;margin-bottom:2px}
+nav a:hover{background:#16213e;color:#ff6b35}
+main{margin-left:270px;padding:30px 40px;max-width:950px}
+h1{color:#ff6b35;font-size:32px;margin-bottom:10px;border-bottom:3px solid #ff6b35;padding-bottom:10px}
+h2{color:#ff6b35;font-size:24px;margin:45px 0 15px;border-left:4px solid #ff6b35;padding-left:15px}
+h3{color:#ff8c5a;font-size:18px;margin:25px 0 10px}
+h4{color:#ffab76;font-size:16px;margin:20px 0 8px}
+p{margin-bottom:12px}
+ul,ol{margin:10px 0 15px 25px}
+li{margin-bottom:8px}
+.box{background:#16213e;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0}
+.box-green{border-left:4px solid #4caf50}
+.box-orange{border-left:4px solid #ff9800}
+.box-red{border-left:4px solid #f44336}
+.box-blue{border-left:4px solid #2196f3}
+.box-purple{border-left:4px solid #9c27b0}
+.box-gold{border-left:4px solid #ffd700}
+table{width:100%;border-collapse:collapse;margin:15px 0}
+th{background:#1a1a2e;color:#ff6b35;padding:12px;text-align:left;border:1px solid #333}
+td{padding:10px;border:1px solid #333;background:#16213e}
+svg{display:block;margin:20px auto}
+svg text{font-family:'Segoe UI',sans-serif}
+.analogy{background:#1a2e1a;border:2px solid #4caf50;border-radius:12px;padding:20px;margin:15px 0}
+.analogy h4{color:#4caf50;margin-top:0}
+.step{display:flex;align-items:flex-start;gap:15px;margin:12px 0}
+.step-num{background:#ff6b35;color:#fff;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<nav>
+<h2>🏷️ ML 05 - Classification</h2>
+<a href="#ch1">1. C'est quoi la classification ?</a>
+<a href="#ch2">2. Binaire vs Multi-classe</a>
+<a href="#ch3">3. Régression Logistique</a>
+<a href="#ch4">4. KNN (les voisins)</a>
+<a href="#ch5">5. SVM (la frontière)</a>
+<a href="#ch6">6. Arbre de décision</a>
+<a href="#ch7">7. Naive Bayes</a>
+<a href="#ch8">8. Matrice de confusion</a>
+<a href="#ch9">9. Accuracy</a>
+<a href="#ch10">10. Precision et Recall</a>
+<a href="#ch11">11. F1-Score</a>
+<a href="#ch12">12. Courbe ROC / AUC</a>
+<a href="#ch13">13. Seuil de décision</a>
+<a href="#ch14">14. Classes déséquilibrées</a>
+<a href="#ch15">15. Comparaison des algos</a>
+<a href="#ch16">16. Résumé</a>
+</nav>
+
+<main>
+<h1>🏷️ La Classification</h1>
+<p>Cours 5/12 - Prédire une catégorie (spam ? chat ? malade ?)</p>
+
+<!-- ============================================ -->
+<h2 id="ch1">1. C'est quoi la classification ?</h2>
+
+<div class="box box-gold">
+<p><strong>La classification</strong> = donner une <strong>étiquette</strong> (catégorie) à une nouvelle donnée. Le modèle a appris à partir d'exemples étiquetés, puis il classe les nouvelles données qu'il n'a jamais vues.</p>
+</div>
+
+<svg width="750" height="220" viewBox="0 0 750 220">
+<rect x="0" y="0" width="750" height="220" rx="15" fill="#16213e" stroke="#333"/>
+<text x="375" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Le processus de classification</text>
+<!-- Input -->
+<rect x="30" y="70" width="140" height="80" rx="10" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+<text x="100" y="100" fill="#ff9800" text-anchor="middle" font-size="12">Nouvelle donnée</text>
+<text x="100" y="120" fill="#aaa" text-anchor="middle" font-size="10">Photo, email, patient...</text>
+<!-- Modèle -->
+<rect x="220" y="70" width="160" height="80" rx="10" fill="#1a1a2e" stroke="#9c27b0" stroke-width="2"/>
+<text x="300" y="100" fill="#9c27b0" text-anchor="middle" font-size="12" font-weight="bold">MODÈLE</text>
+<text x="300" y="118" fill="#aaa" text-anchor="middle" font-size="10">Entraîné sur des</text>
+<text x="300" y="133" fill="#aaa" text-anchor="middle" font-size="10">exemples étiquetés</text>
+<!-- Output -->
+<rect x="430" y="50" width="130" height="35" rx="8" fill="rgba(76,175,80,0.2)" stroke="#4caf50" stroke-width="2"/>
+<text x="495" y="73" fill="#4caf50" text-anchor="middle" font-size="12">Chat (85%)</text>
+<rect x="430" y="95" width="130" height="35" rx="8" fill="rgba(244,67,54,0.1)" stroke="#555"/>
+<text x="495" y="118" fill="#aaa" text-anchor="middle" font-size="12">Chien (12%)</text>
+<rect x="430" y="140" width="130" height="35" rx="8" fill="rgba(244,67,54,0.1)" stroke="#555"/>
+<text x="495" y="163" fill="#aaa" text-anchor="middle" font-size="12">Oiseau (3%)</text>
+<!-- Résultat -->
+<rect x="610" y="55" width="110" height="40" rx="8" fill="#1b3a1b" stroke="#4caf50" stroke-width="2"/>
+<text x="665" y="80" fill="#4caf50" text-anchor="middle" font-size="14" font-weight="bold">= CHAT</text>
+<!-- Flèches -->
+<line x1="170" y1="110" x2="220" y2="110" stroke="#aaa" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="380" y1="110" x2="430" y2="110" stroke="#aaa" stroke-width="2" marker-end="url(#ar)"/>
+<line x1="560" y1="68" x2="610" y2="75" stroke="#4caf50" stroke-width="2" marker-end="url(#ar)"/>
+<text x="375" y="205" fill="#aaa" text-anchor="middle" font-size="11">Le modèle donne une probabilité par classe et choisit la plus haute</text>
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#aaa"/></marker></defs>
+</svg>
+
+<div class="analogy">
+<h4>📬 Analogie : Le facteur intelligent</h4>
+<p>Un facteur reçoit un courrier sans adresse lisible. Il a trié des <strong>milliers de courriers</strong> avant, donc il reconnaît les patterns (type d'enveloppe, tampon, écriture...) et sait instinctivement dans quelle boîte aux lettres le mettre.</p>
+<p>Un classifieur fait pareil : il a vu des milliers d'exemples et apprend à <strong>reconnaître les patterns</strong> pour classer les nouvelles données.</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch2">2. Binaire vs Multi-classe</h2>
+
+<svg width="700" height="250" viewBox="0 0 700 250">
+<rect x="0" y="0" width="700" height="250" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Binaire -->
+<rect x="30" y="20" width="300" height="210" rx="10" fill="#1a1a2e" stroke="#2196f3" stroke-width="2"/>
+<text x="180" y="50" fill="#2196f3" text-anchor="middle" font-size="14" font-weight="bold">Classification Binaire</text>
+<text x="180" y="70" fill="#aaa" text-anchor="middle" font-size="11">2 classes seulement</text>
+<line x1="50" y1="80" x2="310" y2="80" stroke="#333"/>
+<text x="60" y="105" fill="#ddd" font-size="12">Spam ou Pas spam ?</text>
+<text x="60" y="130" fill="#ddd" font-size="12">Malade ou Sain ?</text>
+<text x="60" y="155" fill="#ddd" font-size="12">Fraude ou Légitime ?</text>
+<text x="60" y="180" fill="#ddd" font-size="12">Positif ou Négatif ?</text>
+<rect x="60" y="195" width="240" height="25" rx="5" fill="#1a2a3a"/>
+<text x="180" y="213" fill="#2196f3" text-anchor="middle" font-size="10">La plus courante et la plus simple</text>
+
+<!-- Multi-classe -->
+<rect x="370" y="20" width="300" height="210" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+<text x="520" y="50" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Classification Multi-classe</text>
+<text x="520" y="70" fill="#aaa" text-anchor="middle" font-size="11">3 classes ou plus</text>
+<line x1="390" y1="80" x2="650" y2="80" stroke="#333"/>
+<text x="400" y="105" fill="#ddd" font-size="12">Chat, Chien, ou Oiseau ?</text>
+<text x="400" y="130" fill="#ddd" font-size="12">Chiffre 0, 1, 2, ... 9 ?</text>
+<text x="400" y="155" fill="#ddd" font-size="12">Sentiment : positif, neutre, négatif ?</text>
+<text x="400" y="180" fill="#ddd" font-size="12">Type d'iris : setosa, versicolor, virginica ?</text>
+<rect x="400" y="195" width="240" height="25" rx="5" fill="#2a1a00"/>
+<text x="520" y="213" fill="#ff6b35" text-anchor="middle" font-size="10">Plus complexe, nécessite plus de données</text>
+</svg>
+
+<div class="box box-green">
+<p><strong>Il existe aussi la Multi-label :</strong> un exemple peut appartenir à PLUSIEURS classes en même temps. Exemple : un article de journal peut être "politique" ET "économie" en même temps.</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch3">3. Régression Logistique</h2>
+
+<div class="box box-blue">
+<p><strong>Malgré son nom, ce n'est PAS de la régression !</strong> C'est un algorithme de <strong>classification</strong>. Il calcule la probabilité qu'une donnée appartienne à une classe.</p>
+</div>
+
+<h3>Comment ça marche, étape par étape</h3>
+
+<div class="step">
+<div class="step-num">1</div>
+<div>Le modèle calcule un score (comme la régression linéaire) : score = w1 × feature1 + w2 × feature2 + ...</div>
+</div>
+<div class="step">
+<div class="step-num">2</div>
+<div>Ce score peut aller de -infini à +infini. Ce n'est pas une probabilité.</div>
+</div>
+<div class="step">
+<div class="step-num">3</div>
+<div>On passe le score dans la <strong>fonction sigmoïde</strong> qui le transforme en probabilité (entre 0 et 1).</div>
+</div>
+<div class="step">
+<div class="step-num">4</div>
+<div>Si la probabilité > 0.5 → classe 1. Sinon → classe 0.</div>
+</div>
+
+<svg width="700" height="280" viewBox="0 0 700 280">
+<rect x="0" y="0" width="700" height="280" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">La fonction Sigmoïde : transformer un score en probabilité</text>
+
+<!-- Axes -->
+<line x1="80" y1="230" x2="620" y2="230" stroke="#555" stroke-width="2"/>
+<line x1="350" y1="250" x2="350" y2="40" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="620" y="250" fill="#aaa" font-size="10">score →</text>
+<text x="65" y="50" fill="#aaa" font-size="10">prob</text>
+
+<!-- Sigmoïde -->
+<path d="M100 225 Q150 225 200 220 Q250 210 300 190 Q330 170 350 140 Q370 110 400 80 Q450 55 500 48 Q550 45 600 44" stroke="#4caf50" stroke-width="3" fill="none"/>
+
+<!-- Ligne 0.5 -->
+<line x1="80" y1="140" x2="620" y2="140" stroke="#ffd700" stroke-width="1" stroke-dasharray="5,5"/>
+<text x="65" y="143" fill="#ffd700" font-size="10">0.5</text>
+
+<!-- Ligne 1.0 -->
+<line x1="80" y1="44" x2="140" y2="44" stroke="#aaa" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="65" y="48" fill="#aaa" font-size="10">1.0</text>
+
+<!-- Ligne 0.0 -->
+<text x="65" y="228" fill="#aaa" font-size="10">0.0</text>
+
+<!-- Zones -->
+<rect x="100" y="140" width="250" height="90" fill="rgba(244,67,54,0.1)"/>
+<text x="225" y="200" fill="#f44336" text-anchor="middle" font-size="12">Classe 0 (non)</text>
+<text x="225" y="218" fill="#aaa" text-anchor="middle" font-size="10">probabilité &lt; 0.5</text>
+
+<rect x="350" y="44" width="250" height="96" fill="rgba(76,175,80,0.1)"/>
+<text x="475" y="90" fill="#4caf50" text-anchor="middle" font-size="12">Classe 1 (oui)</text>
+<text x="475" y="108" fill="#aaa" text-anchor="middle" font-size="10">probabilité > 0.5</text>
+
+<text x="350" y="270" fill="#ffd700" text-anchor="middle" font-size="11">Le seuil de 0.5 est le point de bascule entre les deux classes</text>
+</svg>
+
+<div class="analogy">
+<h4>🎚️ Analogie : Le curseur de probabilité</h4>
+<p>Imagine un curseur qui va de "certainement pas spam" (0%) à "certainement spam" (100%).</p>
+<p>La sigmoïde est ce curseur. Quand le score est très négatif → presque 0%. Quand le score est très positif → presque 100%. Autour de 0 → 50%, c'est incertain.</p>
+<p>Le seuil de 0.5 dit : "au-dessus de 50% → je classe comme spam".</p>
+</div>
+
+<h3>Avantages et inconvénients</h3>
+<table>
+<tr><th>Avantages</th><th>Inconvénients</th></tr>
+<tr><td>Simple et rapide</td><td>Ne fonctionne que si les données sont linéairement séparables</td></tr>
+<tr><td>Donne des probabilités (pas juste oui/non)</td><td>Ne gère pas bien les relations complexes</td></tr>
+<tr><td>Peu de risque d'overfitting</td><td>Performances limitées sur des problèmes complexes</td></tr>
+<tr><td>Interprétable : on peut voir l'impact de chaque feature</td><td>Suppose une relation linéaire entre features et log-odds</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch4">4. KNN - K-Nearest Neighbors (Les K plus proches voisins)</h2>
+
+<div class="box box-blue">
+<p><strong>Idée :</strong> Pour classer un nouveau point, on regarde ses <strong>K voisins les plus proches</strong> dans les données d'entraînement. On prend la classe majoritaire parmi ces voisins.</p>
+</div>
+
+<svg width="700" height="350" viewBox="0 0 700 350">
+<rect x="0" y="0" width="700" height="350" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">KNN : voter selon les voisins (K=5)</text>
+
+<!-- Points classe A (ronds verts) -->
+<circle cx="150" cy="100" r="8" fill="#4caf50"/>
+<circle cx="180" cy="140" r="8" fill="#4caf50"/>
+<circle cx="120" cy="160" r="8" fill="#4caf50"/>
+<circle cx="200" cy="110" r="8" fill="#4caf50"/>
+<circle cx="160" cy="180" r="8" fill="#4caf50"/>
+<circle cx="100" cy="120" r="8" fill="#4caf50"/>
+<circle cx="220" cy="170" r="8" fill="#4caf50"/>
+<circle cx="140" cy="200" r="8" fill="#4caf50"/>
+
+<!-- Points classe B (carrés bleus) -->
+<rect x="396" y="92" width="16" height="16" rx="2" fill="#2196f3"/>
+<rect x="446" y="132" width="16" height="16" rx="2" fill="#2196f3"/>
+<rect x="416" y="172" width="16" height="16" rx="2" fill="#2196f3"/>
+<rect x="466" y="112" width="16" height="16" rx="2" fill="#2196f3"/>
+<rect x="376" y="152" width="16" height="16" rx="2" fill="#2196f3"/>
+<rect x="496" y="142" width="16" height="16" rx="2" fill="#2196f3"/>
+<rect x="436" y="192" width="16" height="16" rx="2" fill="#2196f3"/>
+
+<!-- Nouveau point (inconnu) -->
+<circle cx="290" cy="150" r="12" fill="none" stroke="#ffd700" stroke-width="3"/>
+<text x="290" y="155" fill="#ffd700" text-anchor="middle" font-size="10">?</text>
+
+<!-- Cercle K=5 -->
+<circle cx="290" cy="150" r="80" fill="none" stroke="#ffd700" stroke-width="2" stroke-dasharray="5,5"/>
+
+<!-- Lignes vers 5 voisins -->
+<line x1="290" y1="150" x2="220" y2="170" stroke="#4caf50" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="290" y1="150" x2="200" y2="110" stroke="#4caf50" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="290" y1="150" x2="180" y2="140" stroke="#4caf50" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="290" y1="150" x2="376" y2="160" stroke="#2196f3" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="290" y1="150" x2="396" y2="100" stroke="#2196f3" stroke-width="1" stroke-dasharray="3,3"/>
+
+<!-- Vote -->
+<rect x="180" y="260" width="340" height="70" rx="10" fill="#1a1a2e" stroke="#ffd700" stroke-width="2"/>
+<text x="350" y="285" fill="#ffd700" text-anchor="middle" font-size="13" font-weight="bold">Vote des 5 voisins :</text>
+<text x="350" y="310" fill="#ddd" text-anchor="middle" font-size="12">3 verts (A) vs 2 bleus (B) → Classe A gagne !</text>
+
+<!-- Légende -->
+<circle cx="560" cy="260" r="8" fill="#4caf50"/>
+<text x="580" y="264" fill="#4caf50" font-size="11">Classe A</text>
+<rect x="552" y="282" width="16" height="16" rx="2" fill="#2196f3"/>
+<text x="580" y="295" fill="#2196f3" font-size="11">Classe B</text>
+<circle cx="560" cy="320" r="8" fill="none" stroke="#ffd700" stroke-width="2"/>
+<text x="580" y="324" fill="#ffd700" font-size="11">Nouveau (à classer)</text>
+</svg>
+
+<h3>Comment choisir K ?</h3>
+
+<svg width="700" height="180" viewBox="0 0 700 180">
+<rect x="0" y="0" width="700" height="180" rx="15" fill="#16213e" stroke="#333"/>
+
+<rect x="20" y="20" width="200" height="80" rx="8" fill="#1a1a2e" stroke="#f44336" stroke-width="2"/>
+<text x="120" y="45" fill="#f44336" text-anchor="middle" font-size="12" font-weight="bold">K = 1 (trop petit)</text>
+<text x="120" y="65" fill="#aaa" text-anchor="middle" font-size="10">Regarde 1 seul voisin</text>
+<text x="120" y="82" fill="#aaa" text-anchor="middle" font-size="10">Très sensible au bruit</text>
+<text x="120" y="110" fill="#f44336" text-anchor="middle" font-size="10">→ OVERFITTING</text>
+
+<rect x="250" y="20" width="200" height="80" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="350" y="45" fill="#4caf50" text-anchor="middle" font-size="12" font-weight="bold">K = 5 à 10 (bon)</text>
+<text x="350" y="65" fill="#aaa" text-anchor="middle" font-size="10">Vote de plusieurs voisins</text>
+<text x="350" y="82" fill="#aaa" text-anchor="middle" font-size="10">Bon équilibre</text>
+<text x="350" y="110" fill="#4caf50" text-anchor="middle" font-size="10">→ GOOD FIT</text>
+
+<rect x="480" y="20" width="200" height="80" rx="8" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+<text x="580" y="45" fill="#ff9800" text-anchor="middle" font-size="12" font-weight="bold">K = 1000 (trop grand)</text>
+<text x="580" y="65" fill="#aaa" text-anchor="middle" font-size="10">Regarde trop de voisins</text>
+<text x="580" y="82" fill="#aaa" text-anchor="middle" font-size="10">Tout devient la même classe</text>
+<text x="580" y="110" fill="#ff9800" text-anchor="middle" font-size="10">→ UNDERFITTING</text>
+
+<text x="350" y="145" fill="#ffd700" text-anchor="middle" font-size="11">Règle : K = racine carrée du nombre de données. Toujours un nombre impair (pas d'égalité).</text>
+<text x="350" y="168" fill="#aaa" text-anchor="middle" font-size="10">Pour 100 données → K ≈ 10. Pour 10 000 → K ≈ 100.</text>
+</svg>
+
+<div class="analogy">
+<h4>🏘️ Analogie : Emménager dans un quartier</h4>
+<p>Tu veux savoir si un quartier est "riche" ou "modeste". Tu ne regardes pas toute la ville, tu regardes les <strong>5 maisons les plus proches</strong> de la tienne. Si 4 sur 5 sont des villas → quartier riche. C'est KNN !</p>
+</div>
+
+<table>
+<tr><th>Avantages</th><th>Inconvénients</th></tr>
+<tr><td>Très simple, aucun "entraînement" réel</td><td>Très lent avec beaucoup de données (doit comparer à tout)</td></tr>
+<tr><td>Fonctionne bien avec peu de données</td><td>Très sensible aux features non normalisées</td></tr>
+<tr><td>Pas de suppositions sur la forme des données</td><td>Ne fonctionne pas bien en haute dimension</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch5">5. SVM - Support Vector Machine (La frontière optimale)</h2>
+
+<div class="box box-blue">
+<p><strong>Idée :</strong> Tracer la meilleure <strong>frontière</strong> (ligne, plan) qui sépare les deux classes avec la <strong>marge la plus large possible</strong>.</p>
+</div>
+
+<svg width="700" height="320" viewBox="0 0 700 320">
+<rect x="0" y="0" width="700" height="320" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">SVM : trouver la frontière avec la marge maximale</text>
+
+<!-- Mauvaise frontière -->
+<text x="170" y="55" fill="#f44336" text-anchor="middle" font-size="12">Mauvaise frontière</text>
+<!-- Points A -->
+<circle cx="60" cy="100" r="6" fill="#4caf50"/>
+<circle cx="90" cy="130" r="6" fill="#4caf50"/>
+<circle cx="70" cy="160" r="6" fill="#4caf50"/>
+<circle cx="110" cy="110" r="6" fill="#4caf50"/>
+<circle cx="100" cy="180" r="6" fill="#4caf50"/>
+<!-- Points B -->
+<circle cx="200" cy="90" r="6" fill="#2196f3"/>
+<circle cx="230" cy="120" r="6" fill="#2196f3"/>
+<circle cx="250" cy="100" r="6" fill="#2196f3"/>
+<circle cx="220" cy="160" r="6" fill="#2196f3"/>
+<circle cx="260" cy="140" r="6" fill="#2196f3"/>
+<!-- Mauvaise ligne -->
+<line x1="130" y1="70" x2="170" y2="210" stroke="#f44336" stroke-width="2"/>
+<text x="170" y="230" fill="#f44336" text-anchor="middle" font-size="10">Marge étroite = fragile</text>
+
+<!-- Bonne frontière -->
+<text x="520" y="55" fill="#4caf50" text-anchor="middle" font-size="12">Bonne frontière (SVM)</text>
+<!-- Points A -->
+<circle cx="390" cy="100" r="6" fill="#4caf50"/>
+<circle cx="420" cy="130" r="6" fill="#4caf50"/>
+<circle cx="400" cy="160" r="6" fill="#4caf50"/>
+<circle cx="430" cy="110" r="6" fill="#4caf50"/>
+<circle cx="410" cy="180" r="6" fill="#4caf50"/>
+<!-- Points B -->
+<circle cx="560" cy="90" r="6" fill="#2196f3"/>
+<circle cx="590" cy="120" r="6" fill="#2196f3"/>
+<circle cx="610" cy="100" r="6" fill="#2196f3"/>
+<circle cx="580" cy="160" r="6" fill="#2196f3"/>
+<circle cx="620" cy="140" r="6" fill="#2196f3"/>
+<!-- Bonne ligne -->
+<line x1="495" y1="70" x2="495" y2="210" stroke="#4caf50" stroke-width="3"/>
+<!-- Marge -->
+<line x1="450" y1="70" x2="450" y2="210" stroke="#ffd700" stroke-width="1" stroke-dasharray="5,5"/>
+<line x1="540" y1="70" x2="540" y2="210" stroke="#ffd700" stroke-width="1" stroke-dasharray="5,5"/>
+<!-- Double flèche marge -->
+<line x1="450" y1="230" x2="540" y2="230" stroke="#ffd700" stroke-width="2"/>
+<text x="495" y="250" fill="#ffd700" text-anchor="middle" font-size="11">MARGE MAXIMALE</text>
+<!-- Support vectors -->
+<circle cx="430" cy="110" r="10" fill="none" stroke="#ffd700" stroke-width="2"/>
+<circle cx="560" cy="90" r="10" fill="none" stroke="#ffd700" stroke-width="2"/>
+<text x="520" y="280" fill="#ffd700" text-anchor="middle" font-size="10">Les points encerclés = "Support Vectors" (les plus proches de la frontière)</text>
+<text x="520" y="300" fill="#aaa" text-anchor="middle" font-size="10">Ce sont EUX qui définissent la position de la frontière</text>
+</svg>
+
+<h3>Le kernel trick (pour les données non linéaires)</h3>
+
+<div class="box box-purple">
+<p><strong>Problème :</strong> Et si les données ne sont pas séparables par une droite ? Le <strong>kernel trick</strong> projette les données dans une dimension supérieure où elles DEVIENNENT séparables.</p>
+</div>
+
+<svg width="600" height="180" viewBox="0 0 600 180">
+<rect x="0" y="0" width="600" height="180" rx="15" fill="#16213e" stroke="#333"/>
+<!-- 2D non séparable -->
+<text x="130" y="25" fill="#f44336" text-anchor="middle" font-size="12">En 2D : impossible</text>
+<circle cx="130" cy="90" r="50" fill="none" stroke="#4caf50" stroke-width="1" stroke-dasharray="3,3"/>
+<circle cx="110" cy="80" r="5" fill="#4caf50"/>
+<circle cx="140" cy="95" r="5" fill="#4caf50"/>
+<circle cx="125" cy="105" r="5" fill="#4caf50"/>
+<circle cx="60" cy="60" r="5" fill="#2196f3"/>
+<circle cx="200" cy="70" r="5" fill="#2196f3"/>
+<circle cx="80" cy="130" r="5" fill="#2196f3"/>
+<circle cx="190" cy="130" r="5" fill="#2196f3"/>
+<circle cx="130" cy="40" r="5" fill="#2196f3"/>
+<text x="130" y="160" fill="#f44336" text-anchor="middle" font-size="10">Aucune droite ne sépare</text>
+
+<text x="300" y="90" fill="#ffd700" font-size="24">→</text>
+<text x="300" y="110" fill="#ffd700" text-anchor="middle" font-size="9">Kernel trick</text>
+
+<!-- 3D séparable -->
+<text x="470" y="25" fill="#4caf50" text-anchor="middle" font-size="12">En 3D : facile !</text>
+<text x="470" y="90" fill="#4caf50" text-anchor="middle" font-size="40">✓</text>
+<text x="470" y="120" fill="#aaa" text-anchor="middle" font-size="10">En ajoutant une dimension,</text>
+<text x="470" y="135" fill="#aaa" text-anchor="middle" font-size="10">un plan peut les séparer</text>
+<text x="470" y="165" fill="#4caf50" text-anchor="middle" font-size="10">C'est le "kernel trick" de SVM</text>
+</svg>
+
+<table>
+<tr><th>Avantages</th><th>Inconvénients</th></tr>
+<tr><td>Très efficace en haute dimension</td><td>Lent avec beaucoup de données (&gt; 100 000)</td></tr>
+<tr><td>Fonctionne même avec peu de données</td><td>Difficile à interpréter (boîte noire)</td></tr>
+<tr><td>Le kernel trick gère les cas non linéaires</td><td>Sensible au choix du kernel et des paramètres</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch6">6. Arbre de décision</h2>
+
+<div class="box box-blue">
+<p><strong>Idée :</strong> Poser une série de questions oui/non sur les features, comme un jeu de devinettes, pour arriver à une réponse.</p>
+</div>
+
+<svg width="700" height="400" viewBox="0 0 700 400">
+<rect x="0" y="0" width="700" height="400" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Arbre de décision : "Le Titanic - qui survit ?"</text>
+
+<!-- Racine -->
+<rect x="250" y="40" width="200" height="40" rx="8" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+<text x="350" y="65" fill="#ff9800" text-anchor="middle" font-size="12">Sexe = Femme ?</text>
+
+<!-- Niveau 2 gauche (Oui) -->
+<rect x="80" y="120" width="180" height="40" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="170" y="145" fill="#4caf50" text-anchor="middle" font-size="12">Classe = 1ère ou 2ème ?</text>
+<line x1="300" y1="80" x2="170" y2="120" stroke="#4caf50" stroke-width="2"/>
+<text x="220" y="100" fill="#4caf50" font-size="10">Oui</text>
+
+<!-- Niveau 2 droite (Non = homme) -->
+<rect x="440" y="120" width="180" height="40" rx="8" fill="#1a1a2e" stroke="#f44336" stroke-width="2"/>
+<text x="530" y="145" fill="#f44336" text-anchor="middle" font-size="12">Âge &lt; 10 ans ?</text>
+<line x1="400" y1="80" x2="530" y2="120" stroke="#f44336" stroke-width="2"/>
+<text x="480" y="100" fill="#f44336" font-size="10">Non (homme)</text>
+
+<!-- Feuilles gauche -->
+<rect x="30" y="200" width="120" height="40" rx="8" fill="#1b3a1b" stroke="#4caf50" stroke-width="2"/>
+<text x="90" y="225" fill="#4caf50" text-anchor="middle" font-size="12" font-weight="bold">SURVIT</text>
+<text x="90" y="255" fill="#4caf50" text-anchor="middle" font-size="10">97% survie</text>
+<line x1="130" y1="160" x2="90" y2="200" stroke="#4caf50" stroke-width="2"/>
+<text x="95" y="185" fill="#4caf50" font-size="9">Oui</text>
+
+<rect x="180" y="200" width="120" height="40" rx="8" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+<text x="240" y="225" fill="#ff9800" text-anchor="middle" font-size="12">Âge &lt; 30 ?</text>
+<line x1="210" y1="160" x2="240" y2="200" stroke="#ff9800" stroke-width="2"/>
+<text x="240" y="185" fill="#ff9800" font-size="9">Non (3ème)</text>
+
+<!-- Sous-feuilles -->
+<rect x="150" y="280" width="80" height="35" rx="5" fill="#1b3a1b" stroke="#4caf50"/>
+<text x="190" y="302" fill="#4caf50" text-anchor="middle" font-size="10">SURVIT</text>
+<line x1="220" y1="240" x2="190" y2="280" stroke="#4caf50" stroke-width="1"/>
+
+<rect x="250" y="280" width="80" height="35" rx="5" fill="#2e1a1a" stroke="#f44336"/>
+<text x="290" y="302" fill="#f44336" text-anchor="middle" font-size="10">MEURT</text>
+<line x1="260" y1="240" x2="290" y2="280" stroke="#f44336" stroke-width="1"/>
+
+<!-- Feuilles droite -->
+<rect x="400" y="200" width="100" height="40" rx="8" fill="#1b3a1b" stroke="#4caf50" stroke-width="2"/>
+<text x="450" y="225" fill="#4caf50" text-anchor="middle" font-size="12">SURVIT</text>
+<text x="450" y="255" fill="#4caf50" text-anchor="middle" font-size="10">enfant</text>
+<line x1="500" y1="160" x2="450" y2="200" stroke="#4caf50" stroke-width="2"/>
+<text x="460" y="185" fill="#4caf50" font-size="9">Oui</text>
+
+<rect x="540" y="200" width="100" height="40" rx="8" fill="#2e1a1a" stroke="#f44336" stroke-width="2"/>
+<text x="590" y="225" fill="#f44336" text-anchor="middle" font-size="12" font-weight="bold">MEURT</text>
+<text x="590" y="255" fill="#f44336" text-anchor="middle" font-size="10">80% décès</text>
+<line x1="560" y1="160" x2="590" y2="200" stroke="#f44336" stroke-width="2"/>
+<text x="590" y="185" fill="#f44336" font-size="9">Non</text>
+
+<!-- Légende -->
+<text x="350" y="350" fill="#aaa" text-anchor="middle" font-size="11">L'arbre pose des questions successives pour arriver à une décision</text>
+<text x="350" y="372" fill="#ffd700" text-anchor="middle" font-size="11">Chaque nœud = une question. Chaque feuille = une réponse finale.</text>
+<text x="350" y="392" fill="#aaa" text-anchor="middle" font-size="10">L'arbre choisit automatiquement l'ordre des questions pour maximiser la séparation</text>
+</svg>
+
+<div class="analogy">
+<h4>🎯 Analogie : Le jeu "Qui est-ce ?"</h4>
+<p>Dans le jeu "Qui est-ce ?", tu poses des questions binaires pour éliminer des candidats : "a-t-il des lunettes ?", "est-ce une femme ?", "a-t-il les cheveux noirs ?". À chaque question, tu élimines la moitié des possibilités.</p>
+<p>L'arbre de décision fait exactement pareil : il choisit les <strong>meilleures questions</strong> (features les plus discriminantes) pour classer les données le plus vite possible.</p>
+</div>
+
+<table>
+<tr><th>Avantages</th><th>Inconvénients</th></tr>
+<tr><td>Très facile à comprendre et visualiser</td><td>Overfit très facilement si l'arbre est trop profond</td></tr>
+<tr><td>Aucune normalisation nécessaire</td><td>Instable : un petit changement dans les données peut changer tout l'arbre</td></tr>
+<tr><td>Gère les données numériques ET catégorielles</td><td>Souvent moins performant seul que les méthodes d'ensemble</td></tr>
+<tr><td>On peut voir exactement POURQUOI une décision est prise</td><td>Tendance à créer des frontières "en escalier"</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch7">7. Naive Bayes</h2>
+
+<div class="box box-blue">
+<p><strong>Idée :</strong> Utiliser les <strong>probabilités</strong> pour classifier. Si on sait que les spams contiennent souvent "gagné", "gratuit", "cliquez", alors un nouvel email avec ces mots a une forte probabilité d'être un spam.</p>
+</div>
+
+<div class="step">
+<div class="step-num">1</div>
+<div><strong>Phase d'apprentissage :</strong> Le modèle calcule la probabilité de chaque feature pour chaque classe. Ex : P("gratuit" | spam) = 80%, P("gratuit" | pas spam) = 2%.</div>
+</div>
+<div class="step">
+<div class="step-num">2</div>
+<div><strong>Phase de prédiction :</strong> Pour un nouvel email, il multiplie les probabilités de tous les mots pour chaque classe et choisit la classe avec la probabilité la plus haute.</div>
+</div>
+
+<div class="box box-orange">
+<p><strong>Pourquoi "Naive" ?</strong> Parce qu'il suppose que toutes les features sont <strong>indépendantes</strong> entre elles. En réalité, "gratuit" et "cliquez" sont souvent ensemble dans les spams. Mais malgré cette hypothèse simpliste, Naive Bayes marche très bien en pratique, surtout pour le texte !</p>
+</div>
+
+<table>
+<tr><th>Avantages</th><th>Inconvénients</th></tr>
+<tr><td>Extrêmement rapide (même sur millions de données)</td><td>L'hypothèse d'indépendance est souvent fausse</td></tr>
+<tr><td>Excellent pour la classification de texte</td><td>Mauvais si les features sont très corrélées</td></tr>
+<tr><td>Fonctionne bien avec peu de données</td><td>Donne des probabilités parfois mal calibrées</td></tr>
+<tr><td>Peu de paramètres à régler</td><td>Limité pour les problèmes complexes</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch8">8. La matrice de confusion</h2>
+
+<div class="box box-gold">
+<p><strong>La matrice de confusion</strong> est le tableau le plus important pour évaluer un classifieur. Elle montre exactement où le modèle se trompe.</p>
+</div>
+
+<svg width="600" height="380" viewBox="0 0 600 380">
+<rect x="0" y="0" width="600" height="380" rx="15" fill="#16213e" stroke="#333"/>
+<text x="300" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Matrice de confusion (exemple : spam)</text>
+
+<!-- Labels -->
+<text x="350" y="55" fill="#aaa" text-anchor="middle" font-size="12">Prédit par le modèle</text>
+<text x="260" y="80" fill="#aaa" text-anchor="middle" font-size="11">Pas spam</text>
+<text x="420" y="80" fill="#aaa" text-anchor="middle" font-size="11">Spam</text>
+<text x="110" y="135" fill="#aaa" text-anchor="middle" font-size="11">Vrai Pas spam</text>
+<text x="110" y="215" fill="#aaa" text-anchor="middle" font-size="11">Vrai Spam</text>
+<text x="50" y="170" fill="#aaa" text-anchor="middle" font-size="11" transform="rotate(-90,50,170)">Réalité</text>
+
+<!-- Cellules -->
+<!-- Vrai Négatif -->
+<rect x="180" y="95" width="150" height="70" rx="8" fill="#1b3a1b" stroke="#4caf50" stroke-width="2"/>
+<text x="255" y="125" fill="#4caf50" text-anchor="middle" font-size="14" font-weight="bold">850</text>
+<text x="255" y="148" fill="#4caf50" text-anchor="middle" font-size="10">Vrai Négatif (VN)</text>
+
+<!-- Faux Positif -->
+<rect x="340" y="95" width="150" height="70" rx="8" fill="#2e2a1a" stroke="#ff9800" stroke-width="2"/>
+<text x="415" y="125" fill="#ff9800" text-anchor="middle" font-size="14" font-weight="bold">30</text>
+<text x="415" y="148" fill="#ff9800" text-anchor="middle" font-size="10">Faux Positif (FP)</text>
+
+<!-- Faux Négatif -->
+<rect x="180" y="175" width="150" height="70" rx="8" fill="#2e1a1a" stroke="#f44336" stroke-width="2"/>
+<text x="255" y="205" fill="#f44336" text-anchor="middle" font-size="14" font-weight="bold">20</text>
+<text x="255" y="228" fill="#f44336" text-anchor="middle" font-size="10">Faux Négatif (FN)</text>
+
+<!-- Vrai Positif -->
+<rect x="340" y="175" width="150" height="70" rx="8" fill="#1b3a1b" stroke="#4caf50" stroke-width="2"/>
+<text x="415" y="205" fill="#4caf50" text-anchor="middle" font-size="14" font-weight="bold">100</text>
+<text x="415" y="228" fill="#4caf50" text-anchor="middle" font-size="10">Vrai Positif (VP)</text>
+
+<!-- Explications -->
+<text x="255" y="270" fill="#4caf50" text-anchor="middle" font-size="10">VN : Pas spam, prédit pas spam ✓</text>
+<text x="415" y="270" fill="#ff9800" text-anchor="middle" font-size="10">FP : Pas spam, MAIS prédit spam ✗</text>
+<text x="255" y="295" fill="#f44336" text-anchor="middle" font-size="10">FN : Spam, MAIS prédit pas spam ✗</text>
+<text x="415" y="295" fill="#4caf50" text-anchor="middle" font-size="10">VP : Spam, prédit spam ✓</text>
+
+<text x="300" y="330" fill="#ffd700" text-anchor="middle" font-size="12">Les BONS résultats sont sur la diagonale (VN et VP)</text>
+<text x="300" y="350" fill="#aaa" text-anchor="middle" font-size="11">FP = "fausse alerte" | FN = "raté" (le plus dangereux souvent)</text>
+<text x="300" y="370" fill="#aaa" text-anchor="middle" font-size="10">Total : 850 + 30 + 20 + 100 = 1000 emails testés</text>
+</svg>
+
+<div class="analogy">
+<h4>🏥 Analogie : Test médical</h4>
+<ul>
+<li><strong>Vrai Positif (VP)</strong> = le patient EST malade, le test dit "malade" → correct</li>
+<li><strong>Vrai Négatif (VN)</strong> = le patient est sain, le test dit "sain" → correct</li>
+<li><strong>Faux Positif (FP)</strong> = le patient est sain, MAIS le test dit "malade" → fausse alerte (stress inutile)</li>
+<li><strong>Faux Négatif (FN)</strong> = le patient EST malade, MAIS le test dit "sain" → <strong>DANGEREUX</strong> (maladie non détectée !)</li>
+</ul>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch9">9. Accuracy (Exactitude)</h2>
+
+<div class="box box-blue">
+<p><strong>Accuracy</strong> = le pourcentage de prédictions correctes sur le total.</p>
+<p>Accuracy = (VP + VN) / Total = (100 + 850) / 1000 = <strong>95%</strong></p>
+</div>
+
+<div class="box box-red">
+<p><strong>ATTENTION : L'accuracy peut être trompeuse !</strong></p>
+<p>Imagine un dataset de détection de fraude : 99% de transactions légitimes, 1% de fraudes.</p>
+<p>Un modèle qui dit TOUJOURS "légitime" (il ne détecte AUCUNE fraude) a une accuracy de... <strong>99% !</strong></p>
+<p>99% d'accuracy mais il est complètement inutile. C'est pour ça qu'on a besoin de Precision et Recall.</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch10">10. Precision et Recall</h2>
+
+<svg width="750" height="320" viewBox="0 0 750 320">
+<rect x="0" y="0" width="750" height="320" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Precision -->
+<rect x="20" y="20" width="340" height="280" rx="10" fill="#1a1a2e" stroke="#2196f3" stroke-width="2"/>
+<text x="190" y="50" fill="#2196f3" text-anchor="middle" font-size="16" font-weight="bold">PRECISION</text>
+<text x="190" y="75" fill="#aaa" text-anchor="middle" font-size="12">"Quand je dis spam, ai-je raison ?"</text>
+<line x1="40" y1="85" x2="340" y2="85" stroke="#333"/>
+
+<text x="190" y="115" fill="#ddd" text-anchor="middle" font-size="13">Precision = VP / (VP + FP)</text>
+<text x="190" y="140" fill="#ddd" text-anchor="middle" font-size="13">= 100 / (100 + 30) = <tspan fill="#2196f3" font-weight="bold">77%</tspan></text>
+
+<text x="190" y="175" fill="#aaa" text-anchor="middle" font-size="11">Sur tous les emails que le modèle</text>
+<text x="190" y="195" fill="#aaa" text-anchor="middle" font-size="11">a CLASSÉ comme spam,</text>
+<text x="190" y="215" fill="#2196f3" text-anchor="middle" font-size="12">77% étaient VRAIMENT des spams</text>
+
+<text x="190" y="255" fill="#ff9800" text-anchor="middle" font-size="11">Important quand les FP coûtent cher :</text>
+<text x="190" y="275" fill="#aaa" text-anchor="middle" font-size="10">Bloquer un vrai email = grave</text>
+<text x="190" y="292" fill="#aaa" text-anchor="middle" font-size="10">(email important perdu)</text>
+
+<!-- Recall -->
+<rect x="390" y="20" width="340" height="280" rx="10" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="560" y="50" fill="#4caf50" text-anchor="middle" font-size="16" font-weight="bold">RECALL (Rappel)</text>
+<text x="560" y="75" fill="#aaa" text-anchor="middle" font-size="12">"Ai-je trouvé tous les spams ?"</text>
+<line x1="410" y1="85" x2="710" y2="85" stroke="#333"/>
+
+<text x="560" y="115" fill="#ddd" text-anchor="middle" font-size="13">Recall = VP / (VP + FN)</text>
+<text x="560" y="140" fill="#ddd" text-anchor="middle" font-size="13">= 100 / (100 + 20) = <tspan fill="#4caf50" font-weight="bold">83%</tspan></text>
+
+<text x="560" y="175" fill="#aaa" text-anchor="middle" font-size="11">Sur tous les VRAIS spams</text>
+<text x="560" y="195" fill="#aaa" text-anchor="middle" font-size="11">qui existaient,</text>
+<text x="560" y="215" fill="#4caf50" text-anchor="middle" font-size="12">83% ont été DÉTECTÉS</text>
+
+<text x="560" y="255" fill="#f44336" text-anchor="middle" font-size="11">Important quand les FN coûtent cher :</text>
+<text x="560" y="275" fill="#aaa" text-anchor="middle" font-size="10">Rater un cancer = grave</text>
+<text x="560" y="292" fill="#aaa" text-anchor="middle" font-size="10">(maladie non détectée)</text>
+</svg>
+
+<div class="box box-gold">
+<p><strong>Le dilemme Precision vs Recall :</strong></p>
+<ul>
+<li><strong>Filtre spam email :</strong> on veut une haute <strong>Precision</strong> (ne pas bloquer de vrais emails). Un spam qui passe, ce n'est pas grave. Mais un email important bloqué, c'est catastrophique.</li>
+<li><strong>Détection de cancer :</strong> on veut un haut <strong>Recall</strong> (ne rater aucun cancer). Une fausse alerte (FP) n'est pas grave (on fait des examens supplémentaires). Mais rater un cancer (FN) peut être mortel.</li>
+<li><strong>Impossible d'avoir les deux à 100%.</strong> Améliorer l'un dégrade souvent l'autre.</li>
+</ul>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch11">11. F1-Score</h2>
+
+<div class="box box-blue">
+<p><strong>F1-Score</strong> = la moyenne harmonique de Precision et Recall. C'est le <strong>compromis</strong> entre les deux. Si l'un est très bas, le F1 sera bas aussi.</p>
+<p>F1 = 2 × (Precision × Recall) / (Precision + Recall)</p>
+<p>F1 = 2 × (0.77 × 0.83) / (0.77 + 0.83) = <strong>0.80</strong></p>
+</div>
+
+<table>
+<tr><th>Situation</th><th>Métrique à privilégier</th></tr>
+<tr><td>Les classes sont équilibrées (50/50)</td><td>Accuracy suffit</td></tr>
+<tr><td>Les FP coûtent cher (bloquer un vrai email)</td><td><strong>Precision</strong></td></tr>
+<tr><td>Les FN coûtent cher (rater un cancer)</td><td><strong>Recall</strong></td></tr>
+<tr><td>On veut un bon équilibre des deux</td><td><strong>F1-Score</strong></td></tr>
+<tr><td>Classes très déséquilibrées (99%/1%)</td><td>F1 ou AUC-ROC (jamais accuracy seule)</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch12">12. Courbe ROC et AUC</h2>
+
+<div class="box box-blue">
+<p><strong>La courbe ROC</strong> montre comment le modèle se comporte à TOUS les seuils possibles (pas juste 0.5). C'est un graphique avec le Recall (axe Y) vs le taux de fausses alertes (axe X).</p>
+<p><strong>AUC</strong> (Area Under Curve) = l'aire sous la courbe ROC. Plus c'est grand (proche de 1), mieux c'est.</p>
+</div>
+
+<svg width="500" height="350" viewBox="0 0 500 350">
+<rect x="0" y="0" width="500" height="350" rx="15" fill="#16213e" stroke="#333"/>
+<text x="250" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Courbe ROC</text>
+
+<!-- Axes -->
+<line x1="60" y1="280" x2="440" y2="280" stroke="#555" stroke-width="2"/>
+<line x1="60" y1="280" x2="60" y2="40" stroke="#555" stroke-width="2"/>
+<text x="250" y="320" fill="#aaa" text-anchor="middle" font-size="10">Taux de Faux Positifs (FP Rate) →</text>
+<text x="25" y="160" fill="#aaa" text-anchor="middle" font-size="10" transform="rotate(-90,25,160)">Recall (Taux VP) →</text>
+<text x="60" y="300" fill="#aaa" font-size="9">0</text>
+<text x="440" y="300" fill="#aaa" font-size="9">1</text>
+<text x="45" y="285" fill="#aaa" font-size="9">0</text>
+<text x="45" y="45" fill="#aaa" font-size="9">1</text>
+
+<!-- Diagonale (aléatoire) -->
+<line x1="60" y1="280" x2="440" y2="40" stroke="#555" stroke-width="1" stroke-dasharray="5,5"/>
+<text x="280" y="195" fill="#555" font-size="10" transform="rotate(-32,280,195)">Aléatoire (AUC=0.5)</text>
+
+<!-- Bon modèle -->
+<path d="M60 280 Q60 120 120 80 Q200 50 300 45 Q380 42 440 40" stroke="#4caf50" stroke-width="3" fill="rgba(76,175,80,0.15)"/>
+<text x="180" y="100" fill="#4caf50" font-size="12" font-weight="bold">Bon modèle</text>
+<text x="180" y="118" fill="#4caf50" font-size="10">AUC = 0.92</text>
+
+<!-- Mauvais modèle -->
+<path d="M60 280 Q100 250 180 200 Q260 150 340 100 Q400 65 440 40" stroke="#ff9800" stroke-width="2" fill="none" stroke-dasharray="5,5"/>
+<text x="320" y="150" fill="#ff9800" font-size="10">Modèle moyen (AUC=0.75)</text>
+
+<!-- Modèle parfait -->
+<text x="80" y="55" fill="#ffd700" font-size="10">Parfait (AUC=1.0) →</text>
+<text x="80" y="70" fill="#ffd700" font-size="10">Courbe collée en haut à gauche</text>
+</svg>
+
+<table>
+<tr><th>AUC</th><th>Qualité</th></tr>
+<tr><td style="color:#f44336">0.5</td><td>Aléatoire (aussi utile qu'un pile ou face)</td></tr>
+<tr><td style="color:#ff9800">0.5 - 0.7</td><td>Mauvais</td></tr>
+<tr><td style="color:#ffd700">0.7 - 0.8</td><td>Acceptable</td></tr>
+<tr><td style="color:#8bc34a">0.8 - 0.9</td><td>Bon</td></tr>
+<tr><td style="color:#4caf50">0.9 - 1.0</td><td>Excellent</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch13">13. Le seuil de décision</h2>
+
+<div class="box box-gold">
+<p><strong>Le seuil</strong> n'est pas obligatoirement 0.5. Tu peux l'ajuster selon tes besoins :</p>
+</div>
+
+<table>
+<tr><th>Seuil</th><th>Effet</th><th>Quand l'utiliser</th></tr>
+<tr><td><strong>Seuil bas (0.3)</strong></td><td>Classe plus facilement comme positif → plus de VP mais aussi plus de FP</td><td>Détection de cancer (ne rien rater)</td></tr>
+<tr><td><strong>Seuil standard (0.5)</strong></td><td>Équilibre entre les deux</td><td>Cas général</td></tr>
+<tr><td><strong>Seuil haut (0.8)</strong></td><td>Classe comme positif seulement si très sûr → moins de FP mais plus de FN</td><td>Filtre spam (ne pas bloquer de vrais emails)</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch14">14. Classes déséquilibrées</h2>
+
+<div class="box box-red">
+<p><strong>Le problème :</strong> Si tu as 9900 transactions normales et 100 fraudes, le modèle peut prédire "normal" à chaque fois et avoir 99% d'accuracy... mais détecter 0 fraude.</p>
+</div>
+
+<h3>Solutions</h3>
+<table>
+<tr><th>Technique</th><th>Comment ça marche</th></tr>
+<tr><td><strong>Sous-échantillonnage</strong></td><td>Réduire la classe majoritaire (prendre 200 normales au lieu de 9900)</td></tr>
+<tr><td><strong>Sur-échantillonnage</strong></td><td>Augmenter la classe minoritaire (dupliquer ou créer des fraudes synthétiques avec SMOTE)</td></tr>
+<tr><td><strong>Poids de classe</strong></td><td>Dire au modèle : "les fraudes comptent 100x plus que les normales"</td></tr>
+<tr><td><strong>Changer la métrique</strong></td><td>Utiliser F1, Recall ou AUC au lieu de l'accuracy</td></tr>
+<tr><td><strong>Seuil adapté</strong></td><td>Baisser le seuil de décision (0.3 au lieu de 0.5)</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch15">15. Comparaison de tous les algorithmes</h2>
+
+<table>
+<tr><th>Algorithme</th><th>Vitesse</th><th>Interprétable ?</th><th>Données nécessaires</th><th>Meilleur pour</th></tr>
+<tr><td><strong>Régression Logistique</strong></td><td>Très rapide</td><td>Oui</td><td>Moyen</td><td>Binaire simple, probabilités</td></tr>
+<tr><td><strong>KNN</strong></td><td>Lent (prédiction)</td><td>Oui</td><td>Peu</td><td>Petits datasets, prototypage</td></tr>
+<tr><td><strong>SVM</strong></td><td>Moyen</td><td>Non</td><td>Peu à moyen</td><td>Haute dimension, texte</td></tr>
+<tr><td><strong>Arbre de décision</strong></td><td>Rapide</td><td>Très</td><td>Peu</td><td>Interprétabilité, données mixtes</td></tr>
+<tr><td><strong>Naive Bayes</strong></td><td>Très rapide</td><td>Oui</td><td>Peu</td><td>Texte, spam, NLP</td></tr>
+<tr><td><strong>Random Forest</strong></td><td>Moyen</td><td>Moyen</td><td>Moyen+</td><td>Performance générale (cours suivant)</td></tr>
+<tr><td><strong>XGBoost</strong></td><td>Moyen</td><td>Non</td><td>Moyen+</td><td>Compétitions, meilleure perf (cours suivant)</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch16">16. Résumé</h2>
+
+<table>
+<tr><th>Concept</th><th>En une phrase</th></tr>
+<tr><td>Classification</td><td>Prédire une catégorie (étiquette)</td></tr>
+<tr><td>Régression Logistique</td><td>Score → sigmoïde → probabilité → classe</td></tr>
+<tr><td>KNN</td><td>Regarde les K voisins les plus proches, vote majoritaire</td></tr>
+<tr><td>SVM</td><td>Trouve la frontière avec la marge la plus large</td></tr>
+<tr><td>Arbre de décision</td><td>Questions oui/non successives</td></tr>
+<tr><td>Naive Bayes</td><td>Probabilités conditionnelles (super pour le texte)</td></tr>
+<tr><td>Matrice de confusion</td><td>Tableau VP/VN/FP/FN</td></tr>
+<tr><td>Accuracy</td><td>% de bonnes réponses (attention classes déséquilibrées)</td></tr>
+<tr><td>Precision</td><td>"Quand je dis oui, ai-je raison ?" VP/(VP+FP)</td></tr>
+<tr><td>Recall</td><td>"Ai-je trouvé tous les oui ?" VP/(VP+FN)</td></tr>
+<tr><td>F1-Score</td><td>Compromis Precision/Recall</td></tr>
+<tr><td>AUC-ROC</td><td>Performance globale à tous les seuils (0 à 1)</td></tr>
+<tr><td>Seuil</td><td>Le curseur qui bascule entre les classes (ajustable)</td></tr>
+</table>
+
+<div class="box box-green" style="margin-top:30px">
+<p style="font-size:18px"><strong>✅ Cours 5/12 terminé !</strong> Tu maîtrises tous les algorithmes de classification et leurs métriques. Prochain cours : <strong>Les Méthodes d'Ensemble</strong> (Random Forest, XGBoost...)</p>
+</div>
+
+</main>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

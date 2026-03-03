@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangGraph - Human-in-the-Loop</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Human-in-the-Loop</h1>
+    <p class="subtitle">L'Humain dans la Boucle - Controle, Approbation et Supervision des Agents IA</p>
+
+    <!-- ========================================== -->
+    <!-- SECTION 1 : POURQUOI HITL -->
+    <!-- ========================================== -->
+    <h2>1. Pourquoi Human-in-the-Loop ?</h2>
+
+    <div class="definition">
+        Le pattern <strong>Human-in-the-Loop</strong> (HITL) permet a un humain d'intervenir dans l'execution d'un graphe LangGraph pour approuver, rejeter ou modifier les actions d'un agent IA avant qu'elles ne soient executees. C'est un mecanisme essentiel pour la <strong>securite</strong>, la <strong>fiabilite</strong> et la <strong>conformite</strong>.
+    </div>
+
+    <p>Les systemes d'IA, meme les plus avances, commettent des erreurs. Dans certains contextes, ces erreurs peuvent avoir des consequences graves :</p>
+
+    <ul>
+        <li><strong>Actions irreversibles</strong> : envoi d'emails, publication sur les reseaux sociaux, modifications en base de donnees</li>
+        <li><strong>Transactions financieres</strong> : virements, achats, modifications de contrats</li>
+        <li><strong>Decisions critiques</strong> : diagnostics medicaux, decisions juridiques, evaluations de risques</li>
+        <li><strong>Acces a des donnees sensibles</strong> : fichiers confidentiels, informations personnelles</li>
+        <li><strong>Actions a fort impact</strong> : suppression de comptes, modification d'infrastructures, deploiements</li>
+    </ul>
+
+    <p>Le HITL cree un <strong>point de controle</strong> ou l'humain peut examiner ce que l'agent propose de faire et decider de la suite. C'est le principe du "trust but verify" (faire confiance mais verifier).</p>
+
+    <h3>1.1 Diagramme du Flux HITL</h3>
+
+    <div class="svg-container">
+        <svg width="750" height="350" viewBox="0 0 750 350" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrowH" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrowHg" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+                <marker id="arrowHr" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/>
+                </marker>
+            </defs>
+            <!-- Agent node -->
+            <rect x="30" y="120" width="130" height="60" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="95" y="145" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Agent IA</text>
+            <text x="95" y="165" text-anchor="middle" fill="#aaa" font-size="10">Propose action</text>
+            <!-- Interrupt marker -->
+            <rect x="200" y="110" width="30" height="80" rx="5" fill="#ff4444" opacity="0.3"/>
+            <text x="215" y="95" text-anchor="middle" fill="#ff4444" font-size="10" font-weight="bold">PAUSE</text>
+            <!-- Human review -->
+            <rect x="270" y="100" width="150" height="100" rx="12" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="345" y="130" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">Humain</text>
+            <text x="345" y="150" text-anchor="middle" fill="#aaa" font-size="10">Examine l'action</text>
+            <text x="345" y="170" text-anchor="middle" fill="#aaa" font-size="10">proposee par l'agent</text>
+            <text x="345" y="190" text-anchor="middle" fill="#ff8c42" font-size="10">Approuve / Rejette / Modifie</text>
+            <!-- Execute node -->
+            <rect x="490" y="60" width="130" height="50" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="555" y="90" text-anchor="middle" fill="#00ff88" font-size="12">Execute</text>
+            <!-- Modify node -->
+            <rect x="490" y="150" width="130" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="555" y="180" text-anchor="middle" fill="#569cd6" font-size="12">Modifie + Exec</text>
+            <!-- Reject / Cancel -->
+            <rect x="490" y="240" width="130" height="50" rx="10" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="555" y="270" text-anchor="middle" fill="#ff4444" font-size="12">Annule</text>
+            <!-- END -->
+            <circle cx="690" cy="150" r="25" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="690" y="155" text-anchor="middle" fill="#00ff88" font-size="11">END</text>
+            <!-- Arrows -->
+            <line x1="160" y1="150" x2="198" y2="150" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowH)"/>
+            <line x1="230" y1="150" x2="268" y2="150" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowH)"/>
+            <line x1="420" y1="125" x2="488" y2="85" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowHg)"/>
+            <text x="445" y="95" fill="#00ff88" font-size="10">Approuve</text>
+            <line x1="420" y1="155" x2="488" y2="175" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowH)"/>
+            <text x="445" y="158" fill="#569cd6" font-size="10">Modifie</text>
+            <line x1="420" y1="185" x2="488" y2="260" stroke="#ff4444" stroke-width="2" marker-end="url(#arrowHr)"/>
+            <text x="435" y="230" fill="#ff4444" font-size="10">Rejette</text>
+            <line x1="620" y1="85" x2="665" y2="135" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowHg)"/>
+            <line x1="620" y1="175" x2="665" y2="155" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowH)"/>
+            <line x1="620" y1="265" x2="665" y2="165" stroke="#ff4444" stroke-width="2" marker-end="url(#arrowHr)"/>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Le HITL n'est pas un aveu d'echec de l'IA. C'est une bonne pratique d'ingenierie. Meme les meilleurs modeles produisent des hallucinations. Un point de validation humain est souvent la difference entre un prototype et un systeme de production fiable.
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 2 : INTERRUPT_BEFORE -->
+    <!-- ========================================== -->
+    <h2>2. interrupt_before - Pause Avant un Noeud</h2>
+
+    <div class="definition">
+        <code>interrupt_before</code> est un parametre de compilation qui <strong>met en pause</strong> l'execution du graphe <strong>avant</strong> qu'un noeud specifie ne s'execute. L'humain peut alors examiner l'etat, approuver, ou modifier avant de reprendre.
+    </div>
+
+    <h3>2.1 Prerequis : le Checkpointer</h3>
+
+    <p>Le HITL necessite <strong>obligatoirement</strong> un checkpointer. Sans persistence, le graphe ne peut pas sauvegarder son etat pendant la pause et le restaurer lors de la reprise.</p>
+
+    <div class="warning">
+        Sans checkpointer, les interruptions ne fonctionnent pas. Le graphe leve une erreur si vous essayez d'utiliser <code>interrupt_before</code> ou <code>interrupt_after</code> sans avoir configure un checkpointer.
+    </div>
+
+    <h3>2.2 Exemple Complet avec interrupt_before</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict
+
+<span class="keyword">class</span> <span class="function">EmailState</span>(TypedDict):
+    to: str
+    subject: str
+    body: str
+    approved: bool
+    sent: bool
+
+<span class="keyword">def</span> <span class="function">draft_email</span>(state: EmailState) -> dict:
+    <span class="string">"""L'agent genere un brouillon d'email."""</span>
+    <span class="keyword">return</span> {
+        <span class="string">"to"</span>: state[<span class="string">"to"</span>],
+        <span class="string">"subject"</span>: <span class="string">"Re: Votre demande"</span>,
+        <span class="string">"body"</span>: <span class="string">f"Bonjour,\n\nSuite a votre demande concernant '{state['subject']}', "
+               f"nous avons le plaisir de vous informer que...\n\nCordialement,\nL'equipe"</span>
+    }
+
+<span class="keyword">def</span> <span class="function">send_email</span>(state: EmailState) -> dict:
+    <span class="string">"""Envoie l'email (action irreversible!)."""</span>
+    <span class="function">print</span>(<span class="string">f"EMAIL ENVOYE a {state['to']}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Sujet : {state['subject']}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Corps : {state['body'][:100]}..."</span>)
+    <span class="keyword">return</span> {<span class="string">"sent"</span>: <span class="keyword">True</span>}
+
+<span class="comment"># Construction du graphe</span>
+builder = StateGraph(EmailState)
+builder.<span class="function">add_node</span>(<span class="string">"draft"</span>, draft_email)
+builder.<span class="function">add_node</span>(<span class="string">"send"</span>, send_email)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"draft"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"draft"</span>, <span class="string">"send"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"send"</span>, END)
+
+<span class="comment"># Compilation avec interrupt_before sur "send"</span>
+checkpointer = MemorySaver()
+graph = builder.<span class="function">compile</span>(
+    checkpointer=checkpointer,
+    interrupt_before=[<span class="string">"send"</span>]  <span class="comment"># PAUSE avant l'envoi</span>
+)
+
+<span class="comment"># --- Etape 1 : Executer jusqu'a la pause ---</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"email-1"</span>}}
+
+result = graph.<span class="function">invoke</span>(
+    {<span class="string">"to"</span>: <span class="string">"client@example.com"</span>, <span class="string">"subject"</span>: <span class="string">"reclamation produit"</span>},
+    config=config
+)
+
+<span class="comment"># Le graphe est en pause AVANT "send"</span>
+<span class="function">print</span>(<span class="string">"--- GRAPHE EN PAUSE ---"</span>)
+<span class="function">print</span>(<span class="string">f"Brouillon : {result['body']}"</span>)
+<span class="function">print</span>(<span class="string">"L'email n'a PAS ete envoye."</span>)
+
+<span class="comment"># --- Etape 2 : L'humain examine et approuve ---</span>
+<span class="comment"># En production, cela passerait par une UI, un webhook, etc.</span>
+user_input = <span class="function">input</span>(<span class="string">"Approuvez-vous l'envoi ? (oui/non) : "</span>)
+
+<span class="keyword">if</span> user_input.lower() == <span class="string">"oui"</span>:
+    <span class="comment"># Reprendre l'execution (None = pas de nouvelle entree)</span>
+    result = graph.<span class="function">invoke</span>(<span class="keyword">None</span>, config=config)
+    <span class="function">print</span>(<span class="string">f"Email envoye : {result['sent']}"</span>)
+<span class="keyword">else</span>:
+    <span class="function">print</span>(<span class="string">"Envoi annule par l'utilisateur."</span>)</div>
+
+    <div class="output-block">--- GRAPHE EN PAUSE ---
+Brouillon : Bonjour,
+
+Suite a votre demande concernant 'reclamation produit', nous avons le plaisir...
+L'email n'a PAS ete envoye.
+Approuvez-vous l'envoi ? (oui/non) : oui
+EMAIL ENVOYE a client@example.com
+  Sujet : Re: Votre demande
+  Corps : Bonjour, Suite a votre demande...
+Email envoye : True</div>
+
+    <div class="effect">
+        L'execution se fige juste avant le noeud <code>"send"</code>. L'etat est sauvegarde par le checkpointer. Quand l'humain reprend avec <code>graph.invoke(None, config)</code>, le graphe repart exactement ou il s'etait arrete.
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 3 : INTERRUPT_AFTER -->
+    <!-- ========================================== -->
+    <h2>3. interrupt_after - Pause Apres un Noeud</h2>
+
+    <div class="definition">
+        <code>interrupt_after</code> met en pause l'execution <strong>apres</strong> qu'un noeud ait fini de s'executer. L'humain peut alors examiner le resultat produit par le noeud et decider comment continuer.
+    </div>
+
+    <p>La difference avec <code>interrupt_before</code> est subtile mais importante :</p>
+
+    <table>
+        <tr>
+            <th>Parametre</th>
+            <th>Quand la pause se produit</th>
+            <th>Ce que l'humain voit</th>
+        </tr>
+        <tr>
+            <td><code>interrupt_before</code></td>
+            <td>AVANT l'execution du noeud</td>
+            <td>L'etat juste avant le noeud (entree du noeud)</td>
+        </tr>
+        <tr>
+            <td><code>interrupt_after</code></td>
+            <td>APRES l'execution du noeud</td>
+            <td>L'etat apres le noeud (sortie du noeud)</td>
+        </tr>
+    </table>
+
+    <h3>3.1 Exemple : Revue d'une Analyse avant Publication</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict
+
+<span class="keyword">class</span> <span class="function">ReportState</span>(TypedDict):
+    data: str
+    analysis: str
+    review_comment: str
+    published: bool
+
+<span class="keyword">def</span> <span class="function">analyze_data</span>(state: ReportState) -> dict:
+    <span class="string">"""Genere une analyse a partir des donnees."""</span>
+    analysis = <span class="string">f"""Analyse des donnees : {state['data']}
+
+Conclusions principales :
+1. Tendance a la hausse de 15% sur le trimestre
+2. Segment B sous-performant (-5%)
+3. Recommandation : reallouer le budget du segment B vers A"""</span>
+    <span class="keyword">return</span> {<span class="string">"analysis"</span>: analysis}
+
+<span class="keyword">def</span> <span class="function">publish_report</span>(state: ReportState) -> dict:
+    <span class="string">"""Publie le rapport (action visible par les stakeholders)."""</span>
+    <span class="function">print</span>(<span class="string">f"RAPPORT PUBLIE :\n{state['analysis']}"</span>)
+    <span class="keyword">return</span> {<span class="string">"published"</span>: <span class="keyword">True</span>}
+
+builder = StateGraph(ReportState)
+builder.<span class="function">add_node</span>(<span class="string">"analyze"</span>, analyze_data)
+builder.<span class="function">add_node</span>(<span class="string">"publish"</span>, publish_report)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"analyze"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"analyze"</span>, <span class="string">"publish"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"publish"</span>, END)
+
+checkpointer = MemorySaver()
+graph = builder.<span class="function">compile</span>(
+    checkpointer=checkpointer,
+    interrupt_after=[<span class="string">"analyze"</span>]  <span class="comment"># Pause APRES l'analyse</span>
+)
+
+<span class="comment"># Execution : l'analyse s'execute, puis PAUSE</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"report-42"</span>}}
+result = graph.<span class="function">invoke</span>({<span class="string">"data"</span>: <span class="string">"Ventes Q3 2025"</span>}, config=config)
+
+<span class="function">print</span>(<span class="string">"--- ANALYSE GENEREE (en attente de revue) ---"</span>)
+<span class="function">print</span>(result[<span class="string">"analysis"</span>])
+
+<span class="comment"># L'humain examine l'analyse produite et decide de continuer</span>
+<span class="comment"># Reprendre l'execution</span>
+result = graph.<span class="function">invoke</span>(<span class="keyword">None</span>, config=config)</div>
+
+    <div class="output-block">--- ANALYSE GENEREE (en attente de revue) ---
+Analyse des donnees : Ventes Q3 2025
+
+Conclusions principales :
+1. Tendance a la hausse de 15% sur le trimestre
+2. Segment B sous-performant (-5%)
+3. Recommandation : reallouer le budget du segment B vers A
+
+RAPPORT PUBLIE :
+[meme contenu que ci-dessus]</div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 4 : MODIFIER LE STATE -->
+    <!-- ========================================== -->
+    <h2>4. Modifier le State Pendant l'Interruption</h2>
+
+    <p>L'un des aspects les plus puissants du HITL est la capacite de l'humain a <strong>modifier l'etat du graphe</strong> pendant la pause, avant de reprendre l'execution. Cela permet de corriger des erreurs, d'ajouter des informations, ou de rediriger l'agent.</p>
+
+    <h3>4.1 Avec update_state()</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict
+
+<span class="keyword">class</span> <span class="function">ContractState</span>(TypedDict):
+    client_name: str
+    amount: float
+    terms: str
+    approved: bool
+    final_terms: str
+
+<span class="keyword">def</span> <span class="function">draft_contract</span>(state: ContractState) -> dict:
+    terms = <span class="string">f"""CONTRAT DE SERVICE
+Client : {state['client_name']}
+Montant : {state['amount']} EUR
+Conditions : Paiement a 30 jours, livraison sous 2 semaines.
+Clause de penalite : 1% par jour de retard."""</span>
+    <span class="keyword">return</span> {<span class="string">"terms"</span>: terms}
+
+<span class="keyword">def</span> <span class="function">finalize_contract</span>(state: ContractState) -> dict:
+    <span class="function">print</span>(<span class="string">f"CONTRAT FINALISE :\n{state['terms']}"</span>)
+    <span class="keyword">return</span> {<span class="string">"final_terms"</span>: state[<span class="string">"terms"</span>], <span class="string">"approved"</span>: <span class="keyword">True</span>}
+
+builder = StateGraph(ContractState)
+builder.<span class="function">add_node</span>(<span class="string">"draft"</span>, draft_contract)
+builder.<span class="function">add_node</span>(<span class="string">"finalize"</span>, finalize_contract)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"draft"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"draft"</span>, <span class="string">"finalize"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"finalize"</span>, END)
+
+checkpointer = MemorySaver()
+graph = builder.<span class="function">compile</span>(
+    checkpointer=checkpointer,
+    interrupt_before=[<span class="string">"finalize"</span>]
+)
+
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"contract-001"</span>}}
+result = graph.<span class="function">invoke</span>(
+    {<span class="string">"client_name"</span>: <span class="string">"Acme Corp"</span>, <span class="string">"amount"</span>: <span class="number">50000</span>},
+    config=config
+)
+
+<span class="function">print</span>(<span class="string">"--- BROUILLON DU CONTRAT ---"</span>)
+<span class="function">print</span>(result[<span class="string">"terms"</span>])
+
+<span class="comment"># L'humain veut modifier les termes avant finalisation</span>
+<span class="comment"># Utiliser update_state() pour injecter des modifications</span>
+graph.<span class="function">update_state</span>(
+    config,
+    {
+        <span class="string">"terms"</span>: <span class="string">"""CONTRAT DE SERVICE (REVISE)
+Client : Acme Corp
+Montant : 50000 EUR
+Conditions : Paiement a 45 jours, livraison sous 3 semaines.
+Clause de penalite : 0.5% par jour de retard.
+Note : Remise de 5% pour paiement anticipe."""</span>
+    }
+)
+
+<span class="comment"># Reprendre avec l'etat modifie</span>
+result = graph.<span class="function">invoke</span>(<span class="keyword">None</span>, config=config)
+<span class="function">print</span>(<span class="string">f"\nContrat approuve : {result['approved']}"</span>)</div>
+
+    <div class="output-block">--- BROUILLON DU CONTRAT ---
+CONTRAT DE SERVICE
+Client : Acme Corp
+Montant : 50000 EUR
+Conditions : Paiement a 30 jours, livraison sous 2 semaines.
+Clause de penalite : 1% par jour de retard.
+
+CONTRAT FINALISE :
+CONTRAT DE SERVICE (REVISE)
+Client : Acme Corp
+Montant : 50000 EUR
+Conditions : Paiement a 45 jours, livraison sous 3 semaines.
+Clause de penalite : 0.5% par jour de retard.
+Note : Remise de 5% pour paiement anticipe.
+
+Contrat approuve : True</div>
+
+    <div class="prof-note">
+        La methode <code>update_state()</code> est l'une des fonctionnalites les plus puissantes de LangGraph. Elle permet a l'humain de corriger non seulement le texte genere, mais aussi des valeurs structurees dans le state (scores, flags, listes, etc.). C'est ce qui rend le HITL vraiment interactif plutot que simplement binaire (oui/non).
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 5 : FONCTION INTERRUPT() -->
+    <!-- ========================================== -->
+    <h2>5. La Fonction interrupt() (Approche Recommandee)</h2>
+
+    <div class="definition">
+        Depuis les versions recentes de LangGraph, la fonction <code>interrupt()</code> est l'approche <strong>recommandee</strong> pour le HITL. Contrairement a <code>interrupt_before</code>/<code>interrupt_after</code> qui sont statiques (definies a la compilation), <code>interrupt()</code> est dynamique et peut etre appelee a n'importe quel moment dans le code d'un noeud.
+    </div>
+
+    <div class="concept-box blue">
+        <h3>interrupt_before/after vs interrupt()</h3>
+        <table>
+            <tr>
+                <th>Critere</th>
+                <th>interrupt_before/after</th>
+                <th>interrupt()</th>
+            </tr>
+            <tr>
+                <td>Moment de definition</td>
+                <td>A la compilation (statique)</td>
+                <td>A l'execution (dynamique)</td>
+            </tr>
+            <tr>
+                <td>Granularite</td>
+                <td>Avant/apres un noeud entier</td>
+                <td>N'importe ou dans un noeud</td>
+            </tr>
+            <tr>
+                <td>Donnees echangees</td>
+                <td>Via update_state() externe</td>
+                <td>Valeur de retour directe</td>
+            </tr>
+            <tr>
+                <td>Recommandation</td>
+                <td>Pour debug/breakpoints</td>
+                <td>Pour HITL en production</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>5.1 Syntaxe de interrupt()</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.types <span class="keyword">import</span> interrupt, Command
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict
+
+<span class="keyword">class</span> <span class="function">OrderState</span>(TypedDict):
+    order_id: str
+    items: list
+    total: float
+    discount_applied: bool
+    confirmation: str
+
+<span class="keyword">def</span> <span class="function">process_order</span>(state: OrderState) -> dict:
+    <span class="string">"""Traite la commande et demande approbation si montant eleve."""</span>
+    total = state[<span class="string">"total"</span>]
+
+    <span class="keyword">if</span> total > <span class="number">1000</span>:
+        <span class="comment"># Pause dynamique : montant eleve, demander approbation</span>
+        human_response = <span class="function">interrupt</span>({
+            <span class="string">"question"</span>: <span class="string">f"Commande #{state['order_id']} pour {total} EUR. Approuvez-vous ?"</span>,
+            <span class="string">"options"</span>: [<span class="string">"approuver"</span>, <span class="string">"rejeter"</span>, <span class="string">"appliquer_remise"</span>]
+        })
+
+        <span class="comment"># human_response contient la reponse de l'humain</span>
+        <span class="keyword">if</span> human_response == <span class="string">"rejeter"</span>:
+            <span class="keyword">return</span> {<span class="string">"confirmation"</span>: <span class="string">"Commande rejetee par le superviseur."</span>}
+        <span class="keyword">elif</span> human_response == <span class="string">"appliquer_remise"</span>:
+            <span class="keyword">return</span> {
+                <span class="string">"total"</span>: total * <span class="number">0.9</span>,
+                <span class="string">"discount_applied"</span>: <span class="keyword">True</span>,
+                <span class="string">"confirmation"</span>: <span class="string">f"Remise 10% appliquee. Nouveau total : {total * 0.9} EUR"</span>
+            }
+
+    <span class="keyword">return</span> {<span class="string">"confirmation"</span>: <span class="string">f"Commande #{state['order_id']} confirmee pour {total} EUR."</span>}
+
+builder = StateGraph(OrderState)
+builder.<span class="function">add_node</span>(<span class="string">"process"</span>, process_order)
+builder.<span class="function">set_entry_point</span>(<span class="string">"process"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"process"</span>, END)
+
+checkpointer = MemorySaver()
+graph = builder.<span class="function">compile</span>(checkpointer=checkpointer)
+
+<span class="comment"># --- Execution ---</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"order-789"</span>}}
+
+<span class="comment"># Etape 1 : le graphe s'execute et s'arrete a interrupt()</span>
+result = graph.<span class="function">invoke</span>(
+    {<span class="string">"order_id"</span>: <span class="string">"789"</span>, <span class="string">"items"</span>: [<span class="string">"laptop"</span>, <span class="string">"souris"</span>], <span class="string">"total"</span>: <span class="number">1500.0</span>},
+    config=config
+)
+<span class="comment"># Le graphe est en pause, montrant la question a l'humain</span>
+
+<span class="comment"># Etape 2 : L'humain repond via Command(resume=...)</span>
+result = graph.<span class="function">invoke</span>(
+    Command(resume=<span class="string">"appliquer_remise"</span>),
+    config=config
+)
+<span class="function">print</span>(result[<span class="string">"confirmation"</span>])</div>
+
+    <div class="output-block">Remise 10% appliquee. Nouveau total : 1350.0 EUR</div>
+
+    <h3>5.2 Avantages de interrupt()</h3>
+
+    <div class="concept-box green">
+        <h3>Pourquoi interrupt() est preferable</h3>
+        <ul>
+            <li><strong>Conditionnel</strong> : L'interruption ne se produit que si necessaire (montant eleve, action risquee)</li>
+            <li><strong>Echange de donnees riche</strong> : Vous pouvez passer un objet structure a l'humain et recevoir une reponse typee</li>
+            <li><strong>Plusieurs interruptions</strong> : Un meme noeud peut contenir plusieurs appels a <code>interrupt()</code></li>
+            <li><strong>Resume direct</strong> : La valeur retournee par <code>Command(resume=...)</code> est directement disponible dans la variable</li>
+            <li><strong>Inspire de input()</strong> : La semantique est similaire a la fonction <code>input()</code> de Python</li>
+        </ul>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 6 : APPROVAL PATTERNS -->
+    <!-- ========================================== -->
+    <h2>6. Patterns d'Approbation</h2>
+
+    <p>En production, il existe plusieurs patterns d'approbation selon le niveau de controle souhaite par l'humain.</p>
+
+    <h3>6.1 Pattern : Approbation Binaire (Oui/Non)</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">risky_action_node</span>(state: dict) -> dict:
+    <span class="string">"""Action a risque avec approbation simple."""</span>
+    action_desc = <span class="string">f"Supprimer {state['file_count']} fichiers du serveur"</span>
+
+    approval = <span class="function">interrupt</span>({
+        <span class="string">"type"</span>: <span class="string">"binary_approval"</span>,
+        <span class="string">"action"</span>: action_desc,
+        <span class="string">"risk_level"</span>: <span class="string">"ELEVE"</span>
+    })
+
+    <span class="keyword">if</span> approval == <span class="string">"oui"</span>:
+        <span class="comment"># Executer l'action risquee</span>
+        <span class="keyword">return</span> {<span class="string">"result"</span>: <span class="string">f"{state['file_count']} fichiers supprimes."</span>}
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> {<span class="string">"result"</span>: <span class="string">"Action annulee par l'utilisateur."</span>}</div>
+
+    <h3>6.2 Pattern : Edition et Continuation</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">generate_and_review</span>(state: dict) -> dict:
+    <span class="string">"""Genere un contenu, permet a l'humain de l'editer."""</span>
+    <span class="comment"># Generer le brouillon</span>
+    draft = llm.<span class="function">invoke</span>(<span class="string">f"Ecris un tweet sur : {state['topic']}"</span>).content
+
+    <span class="comment"># Presenter a l'humain pour edition</span>
+    edited = <span class="function">interrupt</span>({
+        <span class="string">"type"</span>: <span class="string">"edit"</span>,
+        <span class="string">"original"</span>: draft,
+        <span class="string">"instruction"</span>: <span class="string">"Editez le texte ou tapez 'ok' pour accepter tel quel."</span>
+    })
+
+    <span class="comment"># Si l'humain tape "ok", garder l'original</span>
+    final_text = draft <span class="keyword">if</span> edited == <span class="string">"ok"</span> <span class="keyword">else</span> edited
+    <span class="keyword">return</span> {<span class="string">"tweet"</span>: final_text}</div>
+
+    <h3>6.3 Pattern : Fournir des Informations Supplementaires</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">clarification_node</span>(state: dict) -> dict:
+    <span class="string">"""Demande des precisions a l'humain."""</span>
+    question = state[<span class="string">"question"</span>]
+
+    <span class="comment"># L'agent detecte une ambiguite</span>
+    <span class="keyword">if</span> <span class="string">"date"</span> <span class="keyword">not</span> <span class="keyword">in</span> state <span class="keyword">or</span> <span class="keyword">not</span> state[<span class="string">"date"</span>]:
+        date_info = <span class="function">interrupt</span>({
+            <span class="string">"type"</span>: <span class="string">"clarification"</span>,
+            <span class="string">"question"</span>: <span class="string">"Pour quelle date souhaitez-vous cette reservation ?"</span>,
+            <span class="string">"context"</span>: <span class="string">f"Demande originale : {question}"</span>
+        })
+        <span class="keyword">return</span> {<span class="string">"date"</span>: date_info}
+
+    <span class="keyword">return</span> {}</div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 7 : TOOL APPROVAL -->
+    <!-- ========================================== -->
+    <h2>7. Approbation d'Outils (Tool Approval)</h2>
+
+    <div class="definition">
+        Le <strong>Tool Approval</strong> est un pattern ou l'agent propose d'utiliser un outil, mais attend l'approbation humaine avant l'execution. C'est critique pour les outils qui ont des effets de bord (envoi d'emails, requetes SQL, appels API externes).
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.types <span class="keyword">import</span> interrupt, Command
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, AIMessage, ToolMessage
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Annotated, Sequence
+<span class="keyword">import</span> operator, json
+
+@tool
+<span class="keyword">def</span> <span class="function">send_email</span>(to: str, subject: str, body: str) -> str:
+    <span class="string">"""Envoie un email (action irreversible)."""</span>
+    <span class="keyword">return</span> <span class="string">f"Email envoye a {to} avec sujet '{subject}'"</span>
+
+@tool
+<span class="keyword">def</span> <span class="function">delete_records</span>(table: str, condition: str) -> str:
+    <span class="string">"""Supprime des enregistrements en base de donnees."""</span>
+    <span class="keyword">return</span> <span class="string">f"Suppression dans {table} WHERE {condition}"</span>
+
+<span class="comment"># Outils necessitant une approbation</span>
+DANGEROUS_TOOLS = {<span class="string">"send_email"</span>, <span class="string">"delete_records"</span>}
+
+<span class="keyword">class</span> <span class="function">ToolApprovalState</span>(TypedDict):
+    messages: Annotated[Sequence, operator.add]
+
+<span class="keyword">def</span> <span class="function">tool_executor_with_approval</span>(state: ToolApprovalState) -> dict:
+    <span class="string">"""Execute les outils AVEC approbation pour les outils dangereux."""</span>
+    last_message = state[<span class="string">"messages"</span>][-<span class="number">1</span>]
+    results = []
+
+    <span class="keyword">for</span> tool_call <span class="keyword">in</span> last_message.tool_calls:
+        tool_name = tool_call[<span class="string">"name"</span>]
+        tool_args = tool_call[<span class="string">"args"</span>]
+
+        <span class="keyword">if</span> tool_name <span class="keyword">in</span> DANGEROUS_TOOLS:
+            <span class="comment"># Demander approbation pour les outils dangereux</span>
+            approval = <span class="function">interrupt</span>({
+                <span class="string">"type"</span>: <span class="string">"tool_approval"</span>,
+                <span class="string">"tool_name"</span>: tool_name,
+                <span class="string">"arguments"</span>: tool_args,
+                <span class="string">"warning"</span>: <span class="string">f"L'agent veut executer '{tool_name}'. Cette action est irreversible."</span>
+            })
+
+            <span class="keyword">if</span> approval != <span class="string">"approuver"</span>:
+                results.append(ToolMessage(
+                    content=<span class="string">f"Action '{tool_name}' rejetee par l'utilisateur."</span>,
+                    tool_call_id=tool_call[<span class="string">"id"</span>]
+                ))
+                <span class="keyword">continue</span>
+
+        <span class="comment"># Executer l'outil (approuve ou non-dangereux)</span>
+        tool_fn = {<span class="string">"send_email"</span>: send_email, <span class="string">"delete_records"</span>: delete_records}[tool_name]
+        result = tool_fn.<span class="function">invoke</span>(tool_args)
+        results.append(ToolMessage(content=result, tool_call_id=tool_call[<span class="string">"id"</span>]))
+
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: results}</div>
+
+    <div class="warning">
+        En production, classifiez <strong>toujours</strong> vos outils par niveau de risque. Les outils en lecture seule (recherche, calcul) peuvent s'executer automatiquement. Les outils avec des effets de bord (ecriture, suppression, envoi) doivent passer par une approbation humaine.
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="300" viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrowT" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+            <!-- Title -->
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Classification des Outils par Risque</text>
+            <!-- Safe tools -->
+            <rect x="30" y="50" width="200" height="200" rx="12" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="130" y="75" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">SAFE (Auto)</text>
+            <text x="130" y="105" text-anchor="middle" fill="#aaa" font-size="11">search_web()</text>
+            <text x="130" y="130" text-anchor="middle" fill="#aaa" font-size="11">calculator()</text>
+            <text x="130" y="155" text-anchor="middle" fill="#aaa" font-size="11">get_weather()</text>
+            <text x="130" y="180" text-anchor="middle" fill="#aaa" font-size="11">read_file()</text>
+            <text x="130" y="215" text-anchor="middle" fill="#00ff88" font-size="10">Pas d'approbation</text>
+            <text x="130" y="235" text-anchor="middle" fill="#00ff88" font-size="10">necessaire</text>
+            <!-- Medium risk -->
+            <rect x="260" y="50" width="200" height="200" rx="12" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="360" y="75" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">MOYEN (Review)</text>
+            <text x="360" y="105" text-anchor="middle" fill="#aaa" font-size="11">write_file()</text>
+            <text x="360" y="130" text-anchor="middle" fill="#aaa" font-size="11">create_record()</text>
+            <text x="360" y="155" text-anchor="middle" fill="#aaa" font-size="11">update_config()</text>
+            <text x="360" y="180" text-anchor="middle" fill="#aaa" font-size="11">schedule_task()</text>
+            <text x="360" y="215" text-anchor="middle" fill="#ff8c42" font-size="10">Approbation pour</text>
+            <text x="360" y="235" text-anchor="middle" fill="#ff8c42" font-size="10">montants eleves</text>
+            <!-- High risk -->
+            <rect x="490" y="50" width="200" height="200" rx="12" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="590" y="75" text-anchor="middle" fill="#ff4444" font-size="13" font-weight="bold">CRITIQUE (Toujours)</text>
+            <text x="590" y="105" text-anchor="middle" fill="#aaa" font-size="11">send_email()</text>
+            <text x="590" y="130" text-anchor="middle" fill="#aaa" font-size="11">delete_records()</text>
+            <text x="590" y="155" text-anchor="middle" fill="#aaa" font-size="11">transfer_money()</text>
+            <text x="590" y="180" text-anchor="middle" fill="#aaa" font-size="11">deploy_code()</text>
+            <text x="590" y="215" text-anchor="middle" fill="#ff4444" font-size="10">Approbation TOUJOURS</text>
+            <text x="590" y="235" text-anchor="middle" fill="#ff4444" font-size="10">requise</text>
+        </svg>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 8 : MULTI-STEP APPROVAL -->
+    <!-- ========================================== -->
+    <h2>8. Approbation Multi-Etapes</h2>
+
+    <p>Certains workflows necessitent <strong>plusieurs points d'approbation</strong> a differentes etapes. Par exemple, un processus de publication qui requiert une revue editoriale, puis une validation juridique, puis une approbation de la direction.</p>
+
+    <h3>8.1 Pipeline avec Checkpoints Multiples</h3>
+
+    <div class="svg-container">
+        <svg width="750" height="250" viewBox="0 0 750 250" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrowM" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+            <!-- Pipeline -->
+            <rect x="20" y="80" width="110" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="75" y="110" text-anchor="middle" fill="#569cd6" font-size="11">Redaction IA</text>
+
+            <rect x="155" y="65" width="20" height="80" rx="4" fill="#ff4444" opacity="0.4"/>
+            <text x="165" y="55" text-anchor="middle" fill="#ff4444" font-size="9">PAUSE 1</text>
+
+            <rect x="200" y="80" width="110" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="255" y="105" text-anchor="middle" fill="#ff8c42" font-size="10">Revue</text>
+            <text x="255" y="120" text-anchor="middle" fill="#ff8c42" font-size="10">editoriale</text>
+
+            <rect x="335" y="65" width="20" height="80" rx="4" fill="#ff4444" opacity="0.4"/>
+            <text x="345" y="55" text-anchor="middle" fill="#ff4444" font-size="9">PAUSE 2</text>
+
+            <rect x="380" y="80" width="110" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="435" y="105" text-anchor="middle" fill="#ff8c42" font-size="10">Validation</text>
+            <text x="435" y="120" text-anchor="middle" fill="#ff8c42" font-size="10">juridique</text>
+
+            <rect x="515" y="65" width="20" height="80" rx="4" fill="#ff4444" opacity="0.4"/>
+            <text x="525" y="55" text-anchor="middle" fill="#ff4444" font-size="9">PAUSE 3</text>
+
+            <rect x="560" y="80" width="110" height="50" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="615" y="110" text-anchor="middle" fill="#00ff88" font-size="11">Publication</text>
+
+            <!-- Arrows -->
+            <line x1="130" y1="105" x2="153" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowM)"/>
+            <line x1="175" y1="105" x2="198" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowM)"/>
+            <line x1="310" y1="105" x2="333" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowM)"/>
+            <line x1="355" y1="105" x2="378" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowM)"/>
+            <line x1="490" y1="105" x2="513" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowM)"/>
+            <line x1="535" y1="105" x2="558" y2="105" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowM)"/>
+
+            <!-- Legend -->
+            <text x="375" y="195" text-anchor="middle" fill="#aaa" font-size="12">Chaque PAUSE attend une approbation humaine differente</text>
+            <text x="375" y="215" text-anchor="middle" fill="#aaa" font-size="11">Editeur -> Juriste -> Directeur</text>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.types <span class="keyword">import</span> interrupt, Command
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, List
+
+<span class="keyword">class</span> <span class="function">PublicationState</span>(TypedDict):
+    content: str
+    editorial_review: str
+    legal_review: str
+    director_approval: bool
+    published: bool
+    rejection_reason: str
+
+<span class="keyword">def</span> <span class="function">ai_write</span>(state: PublicationState) -> dict:
+    <span class="string">"""L'IA redige le contenu initial."""</span>
+    content = <span class="string">f"Article genere par IA sur le sujet demande. Lorem ipsum..."</span>
+    <span class="keyword">return</span> {<span class="string">"content"</span>: content}
+
+<span class="keyword">def</span> <span class="function">editorial_review_node</span>(state: PublicationState) -> dict:
+    <span class="string">"""Point de controle editorial."""</span>
+    review = <span class="function">interrupt</span>({
+        <span class="string">"step"</span>: <span class="string">"revue_editoriale"</span>,
+        <span class="string">"content"</span>: state[<span class="string">"content"</span>],
+        <span class="string">"instruction"</span>: <span class="string">"Veuillez relire et corriger le contenu. Retournez le texte corrige ou 'rejeter'."</span>
+    })
+
+    <span class="keyword">if</span> review == <span class="string">"rejeter"</span>:
+        <span class="keyword">return</span> {<span class="string">"rejection_reason"</span>: <span class="string">"Rejete en revue editoriale"</span>}
+
+    <span class="keyword">return</span> {<span class="string">"content"</span>: review, <span class="string">"editorial_review"</span>: <span class="string">"approuve"</span>}
+
+<span class="keyword">def</span> <span class="function">legal_review_node</span>(state: PublicationState) -> dict:
+    <span class="string">"""Point de controle juridique."""</span>
+    <span class="keyword">if</span> state.get(<span class="string">"rejection_reason"</span>):
+        <span class="keyword">return</span> {}  <span class="comment"># Deja rejete, passer</span>
+
+    legal = <span class="function">interrupt</span>({
+        <span class="string">"step"</span>: <span class="string">"validation_juridique"</span>,
+        <span class="string">"content"</span>: state[<span class="string">"content"</span>],
+        <span class="string">"instruction"</span>: <span class="string">"Y a-t-il des problemes juridiques ? Repondez 'approuve' ou decrivez le probleme."</span>
+    })
+
+    <span class="keyword">if</span> legal != <span class="string">"approuve"</span>:
+        <span class="keyword">return</span> {<span class="string">"rejection_reason"</span>: <span class="string">f"Probleme juridique : {legal}"</span>}
+
+    <span class="keyword">return</span> {<span class="string">"legal_review"</span>: <span class="string">"approuve"</span>}
+
+<span class="keyword">def</span> <span class="function">director_approval_node</span>(state: PublicationState) -> dict:
+    <span class="string">"""Approbation finale du directeur."""</span>
+    <span class="keyword">if</span> state.get(<span class="string">"rejection_reason"</span>):
+        <span class="keyword">return</span> {}
+
+    approval = <span class="function">interrupt</span>({
+        <span class="string">"step"</span>: <span class="string">"approbation_direction"</span>,
+        <span class="string">"content"</span>: state[<span class="string">"content"</span>],
+        <span class="string">"reviews"</span>: {
+            <span class="string">"editorial"</span>: state[<span class="string">"editorial_review"</span>],
+            <span class="string">"legal"</span>: state[<span class="string">"legal_review"</span>]
+        },
+        <span class="string">"instruction"</span>: <span class="string">"Toutes les revues sont approuvees. Publier ? (oui/non)"</span>
+    })
+
+    <span class="keyword">return</span> {<span class="string">"director_approval"</span>: approval == <span class="string">"oui"</span>}
+
+<span class="keyword">def</span> <span class="function">publish_node</span>(state: PublicationState) -> dict:
+    <span class="keyword">if</span> state.get(<span class="string">"rejection_reason"</span>) <span class="keyword">or</span> <span class="keyword">not</span> state.get(<span class="string">"director_approval"</span>):
+        <span class="keyword">return</span> {<span class="string">"published"</span>: <span class="keyword">False</span>}
+    <span class="function">print</span>(<span class="string">"ARTICLE PUBLIE AVEC SUCCES"</span>)
+    <span class="keyword">return</span> {<span class="string">"published"</span>: <span class="keyword">True</span>}
+
+<span class="comment"># Construction du pipeline</span>
+builder = StateGraph(PublicationState)
+builder.<span class="function">add_node</span>(<span class="string">"write"</span>, ai_write)
+builder.<span class="function">add_node</span>(<span class="string">"editorial"</span>, editorial_review_node)
+builder.<span class="function">add_node</span>(<span class="string">"legal"</span>, legal_review_node)
+builder.<span class="function">add_node</span>(<span class="string">"director"</span>, director_approval_node)
+builder.<span class="function">add_node</span>(<span class="string">"publish"</span>, publish_node)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"write"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"write"</span>, <span class="string">"editorial"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"editorial"</span>, <span class="string">"legal"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"legal"</span>, <span class="string">"director"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"director"</span>, <span class="string">"publish"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"publish"</span>, END)
+
+checkpointer = MemorySaver()
+graph = builder.<span class="function">compile</span>(checkpointer=checkpointer)
+
+<span class="comment"># --- Execution progressive ---</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"pub-2025-001"</span>}}
+
+<span class="comment"># Etape 1 : Redaction + pause pour revue editoriale</span>
+result = graph.<span class="function">invoke</span>({}, config=config)
+
+<span class="comment"># Etape 2 : L'editeur approuve avec corrections</span>
+result = graph.<span class="function">invoke</span>(Command(resume=<span class="string">"Article corrige par l'editeur..."</span>), config=config)
+
+<span class="comment"># Etape 3 : Le juriste approuve</span>
+result = graph.<span class="function">invoke</span>(Command(resume=<span class="string">"approuve"</span>), config=config)
+
+<span class="comment"># Etape 4 : Le directeur approuve</span>
+result = graph.<span class="function">invoke</span>(Command(resume=<span class="string">"oui"</span>), config=config)
+
+<span class="function">print</span>(<span class="string">f"Publie : {result['published']}"</span>)</div>
+
+    <div class="output-block">ARTICLE PUBLIE AVEC SUCCES
+Publie : True</div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 9 : RESUME ET REPLAY -->
+    <!-- ========================================== -->
+    <h2>9. Resume et Replay</h2>
+
+    <p>Le checkpointer sauvegarde l'etat du graphe a chaque interruption, ce qui permet de <strong>reprendre</strong> exactement la ou l'execution s'est arretee, meme apres un redemarrage de l'application.</p>
+
+    <h3>9.1 Reprendre une Execution Interrompue</h3>
+
+    <div class="code-block"><span class="comment"># L'execution est interrompue (l'utilisateur ferme le navigateur, etc.)</span>
+<span class="comment"># Plus tard, on reprend avec le meme thread_id</span>
+
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"session-user-42"</span>}}
+
+<span class="comment"># Recuperer l'etat sauvegarde</span>
+state_snapshot = graph.<span class="function">get_state</span>(config)
+
+<span class="function">print</span>(<span class="string">f"Dernier noeud execute : {state_snapshot.next}"</span>)
+<span class="function">print</span>(<span class="string">f"Etat actuel : {state_snapshot.values}"</span>)
+
+<span class="comment"># Reprendre l'execution</span>
+<span class="keyword">if</span> state_snapshot.next:
+    <span class="comment"># Le graphe n'est pas termine, on peut reprendre</span>
+    result = graph.<span class="function">invoke</span>(<span class="keyword">None</span>, config=config)
+    <span class="function">print</span>(<span class="string">"Execution reprise et terminee."</span>)
+<span class="keyword">else</span>:
+    <span class="function">print</span>(<span class="string">"Le graphe est deja termine."</span>)</div>
+
+    <h3>9.2 Historique des Checkpoints</h3>
+
+    <div class="code-block"><span class="comment"># Parcourir l'historique des etats</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"session-user-42"</span>}}
+
+<span class="keyword">for</span> state <span class="keyword">in</span> graph.<span class="function">get_state_history</span>(config):
+    <span class="function">print</span>(<span class="string">f"Checkpoint : {state.config['configurable']['checkpoint_id']}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Noeud suivant : {state.next}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Timestamp : {state.created_at}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Valeurs cles : {list(state.values.keys())}"</span>)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">Checkpoint : ck_abc123
+  Noeud suivant : ('publish',)
+  Timestamp : 2025-10-15T14:32:00Z
+  Valeurs cles : ['content', 'editorial_review', 'legal_review', 'director_approval']
+
+Checkpoint : ck_abc122
+  Noeud suivant : ('director',)
+  Timestamp : 2025-10-15T14:30:00Z
+  Valeurs cles : ['content', 'editorial_review', 'legal_review']
+...</div>
+
+    <h3>9.3 Replay depuis un Checkpoint Specifique</h3>
+
+    <div class="code-block"><span class="comment"># Revenir a un checkpoint anterieur (time travel)</span>
+config_replay = {
+    <span class="string">"configurable"</span>: {
+        <span class="string">"thread_id"</span>: <span class="string">"session-user-42"</span>,
+        <span class="string">"checkpoint_id"</span>: <span class="string">"ck_abc122"</span>  <span class="comment"># Revenir avant l'approbation directeur</span>
+    }
+}
+
+<span class="comment"># Reprendre depuis ce point avec une decision differente</span>
+result = graph.<span class="function">invoke</span>(
+    Command(resume=<span class="string">"non"</span>),  <span class="comment"># Cette fois, le directeur refuse</span>
+    config=config_replay
+)
+<span class="function">print</span>(<span class="string">f"Publie : {result['published']}"</span>)  <span class="comment"># False</span></div>
+
+    <div class="prof-note">
+        Le replay (time travel) est une fonctionnalite extremement puissante pour le debugging et les tests. Vous pouvez rejouer n'importe quelle execution depuis n'importe quel point, en changeant les decisions humaines. C'est aussi utile pour les audits : vous pouvez prouver exactement ce qui s'est passe a chaque etape.
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 10 : RESUME FINAL -->
+    <!-- ========================================== -->
+    <h2>10. Resume</h2>
+
+    <h3>10.1 Comparaison des Patterns HITL</h3>
+
+    <table>
+        <tr>
+            <th>Pattern</th>
+            <th>Mecanisme</th>
+            <th>Cas d'usage</th>
+            <th>Complexite</th>
+        </tr>
+        <tr>
+            <td>interrupt_before</td>
+            <td>Statique (compilation)</td>
+            <td>Debugging, breakpoints</td>
+            <td>Faible</td>
+        </tr>
+        <tr>
+            <td>interrupt_after</td>
+            <td>Statique (compilation)</td>
+            <td>Revue de sortie de noeud</td>
+            <td>Faible</td>
+        </tr>
+        <tr>
+            <td>interrupt()</td>
+            <td>Dynamique (runtime)</td>
+            <td>Production HITL, approbations</td>
+            <td>Moyenne</td>
+        </tr>
+        <tr>
+            <td>update_state()</td>
+            <td>Modification externe</td>
+            <td>Edition du state pendant pause</td>
+            <td>Moyenne</td>
+        </tr>
+        <tr>
+            <td>Tool Approval</td>
+            <td>interrupt() + classification outils</td>
+            <td>Securite des appels d'outils</td>
+            <td>Elevee</td>
+        </tr>
+        <tr>
+            <td>Multi-step</td>
+            <td>Plusieurs interrupt() en chaine</td>
+            <td>Workflows reglementaires</td>
+            <td>Elevee</td>
+        </tr>
+    </table>
+
+    <h3>10.2 Quand Utiliser Chaque Approche</h3>
+
+    <div class="concept-box green">
+        <h3>Guide de decision</h3>
+        <ul>
+            <li><strong>Vous debuggez</strong> un graphe ? Utilisez <code>interrupt_before</code>/<code>interrupt_after</code> comme breakpoints</li>
+            <li><strong>Action irreversible simple</strong> ? Utilisez <code>interrupt()</code> avec approbation binaire</li>
+            <li><strong>Contenu a editer</strong> ? Utilisez <code>interrupt()</code> avec retour de texte edite</li>
+            <li><strong>Agent avec outils dangereux</strong> ? Implementez le pattern Tool Approval</li>
+            <li><strong>Pipeline reglementaire</strong> ? Utilisez le pattern Multi-step avec plusieurs <code>interrupt()</code></li>
+            <li><strong>Modification externe du state</strong> ? Utilisez <code>update_state()</code> avec <code>interrupt_before</code></li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3>Points cles a retenir</h3>
+        <ul>
+            <li>Le HITL est <strong>essentiel</strong> pour la securite des agents IA en production</li>
+            <li>Un <strong>checkpointer</strong> est obligatoire pour toute forme d'interruption</li>
+            <li>La fonction <code>interrupt()</code> avec <code>Command(resume=...)</code> est l'approche <strong>recommandee</strong></li>
+            <li>Classifiez vos outils par <strong>niveau de risque</strong> pour determiner lesquels necessitent une approbation</li>
+            <li>Le <strong>replay</strong> (time travel) permet de revenir a n'importe quel checkpoint et de prendre une decision differente</li>
+            <li><code>update_state()</code> permet a l'humain de modifier toutes les valeurs du state, pas seulement d'approuver/rejeter</li>
+        </ul>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="lg_04_routing_cycles.html">&larr; Cours Routing &amp; Cycles</a>
+        <a href="lg_06_advanced.html">Cours suivant : Subgraphs &amp; Production &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

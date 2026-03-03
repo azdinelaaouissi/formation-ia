@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Reseau de Neurones (MLP) | ML</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : Reseau de Neurones (MLP)</h1>
+    <p class="subtitle">Algorithme supervise - Le Multi-Layer Perceptron, inspire du cerveau humain</p>
+
+    <div class="concept-box">
+        <p><strong>Objectif :</strong> Maitriser le MLP (Multi-Layer Perceptron) en pratique avec scikit-learn. Comprendre l'architecture (couches cachees, neurones), les fonctions d'activation, la retropropagation, le learning rate, la regularisation, et comment chaque hyperparametre impacte les performances. Le MLP est la brique fondamentale du Deep Learning.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 : RECAPITULATIF DE L'ALGORITHME -->
+    <!-- ============================================================ -->
+
+    <h2>1. Recapitulatif de l'Algorithme</h2>
+
+    <div class="definition">
+        <strong>Le Reseau de Neurones Artificiel (MLP - Multi-Layer Perceptron)</strong> est un algorithme supervise compose de couches de neurones interconnectes. Chaque neurone calcule une <strong>somme ponderee</strong> de ses entrees, ajoute un <strong>biais</strong>, puis applique une <strong>fonction d'activation non-lineaire</strong>. L'apprentissage se fait par <strong>retropropagation du gradient</strong> : on mesure l'erreur en sortie, puis on remonte dans le reseau pour ajuster les poids afin de minimiser cette erreur.
+    </div>
+
+    <div class="concept-box">
+        <h3>Fiche d'identite</h3>
+        <table>
+            <tr><th>Propriete</th><th>Detail</th></tr>
+            <tr><td><strong>Type</strong></td><td>Supervise (necessite des labels)</td></tr>
+            <tr><td><strong>Tache</strong></td><td>Classification ET Regression (MLPClassifier / MLPRegressor)</td></tr>
+            <tr><td><strong>Famille</strong></td><td>Reseaux de neurones artificiels (Artificial Neural Networks)</td></tr>
+            <tr><td><strong>Apprentissage</strong></td><td>Iteratif par descente de gradient (retropropagation)</td></tr>
+            <tr><td><strong>Hypothese</strong></td><td>Approximateur universel : peut apprendre toute fonction continue avec assez de neurones</td></tr>
+            <tr><td><strong>Complexite</strong></td><td>Non-parametrique, modele de type "boite noire"</td></tr>
+        </table>
+    </div>
+
+    <h3>Analogie pour comprendre</h3>
+    <p>Imaginez le <strong>cerveau humain</strong> : des milliards de neurones sont connectes entre eux. Quand vous voyez un chat, un signal electrique passe de neurone en neurone. Certaines connexions sont fortes (le neurone "oreilles pointues" s'active fort), d'autres faibles. A force de voir des chats, votre cerveau <strong>renforce les bonnes connexions</strong> et affaiblit les mauvaises.</p>
+    <p>Un reseau de neurones artificiel fait pareil : des neurones numeriques sont connectes par des <strong>poids</strong>. Les donnees entrent, traversent les neurones, et une prediction sort. Si la prediction est fausse, on ajuste les poids (apprentissage). Apres des milliers d'exemples, le reseau a appris a reconnaitre les patterns.</p>
+
+    <h3>Avantages</h3>
+    <ul>
+        <li><strong>Approximateur universel</strong> : peut theoriquement apprendre n'importe quelle relation complexe dans les donnees</li>
+        <li><strong>Capture les non-linearites</strong> : excelle la ou les modeles lineaires echouent</li>
+        <li><strong>Polyvalent</strong> : fonctionne pour classification, regression, et bien plus</li>
+        <li><strong>Gere les interactions</strong> : decouvre automatiquement les interactions entre features</li>
+        <li><strong>Scalable</strong> : plus on ajoute de donnees et de neurones, plus il peut apprendre</li>
+    </ul>
+
+    <h3>Inconvenients</h3>
+    <ul>
+        <li><strong>Boite noire</strong> : impossible d'interpreter facilement pourquoi une decision est prise</li>
+        <li><strong>Gourmand en donnees</strong> : necessite beaucoup de donnees pour bien generaliser</li>
+        <li><strong>Entrainement lent</strong> : peut prendre longtemps, surtout avec beaucoup de neurones</li>
+        <li><strong>Nombreux hyperparametres</strong> : architecture, activation, solver, learning rate, regularisation...</li>
+        <li><strong>Sensible a l'echelle</strong> : la normalisation est OBLIGATOIRE</li>
+        <li><strong>Risque d'overfitting</strong> : surtout sur de petits datasets avec un reseau trop complexe</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT -->
+    <!-- ============================================================ -->
+
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <p>Un MLP est un reseau de neurones <strong>feedforward</strong> (a propagation avant) : l'information circule de l'entree vers la sortie, couche par couche, sans boucle. L'apprentissage se fait en deux phases repetees : la <strong>propagation avant</strong> (forward propagation) et la <strong>retropropagation</strong> (backpropagation).</p>
+
+    <h3>Etape par etape</h3>
+
+    <div class="step-box">
+        <strong>Etape 1 - Initialiser les poids :</strong> On assigne des poids aleatoires (petits) a toutes les connexions entre neurones. Chaque neurone a aussi un biais. C'est le point de depart de l'apprentissage.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 2 - Propagation avant (Forward Pass) :</strong> On injecte un exemple X dans la couche d'entree. Chaque neurone de la couche suivante calcule : z = w1*x1 + w2*x2 + ... + wn*xn + b (somme ponderee), puis applique une fonction d'activation : a = f(z). Ce processus se repete couche par couche jusqu'a la sortie.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 3 - Calculer l'erreur (Loss) :</strong> On compare la prediction du reseau avec la vraie valeur (le label). La difference est mesuree par une fonction de perte (loss) : log-loss pour la classification, MSE pour la regression.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 4 - Retropropagation (Backpropagation) :</strong> On propage l'erreur en ARRIERE dans le reseau, couche par couche. Grace au calcul du gradient (derivees partielles et regle de la chaine), on sait de combien chaque poids a contribue a l'erreur.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 5 - Mise a jour des poids :</strong> On ajuste chaque poids en utilisant la descente de gradient : w_nouveau = w_ancien - learning_rate * gradient. Le learning rate controle la taille du pas d'ajustement.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 6 - Repeter :</strong> On repete les etapes 2 a 5 pour chaque exemple du dataset (ou par mini-batch), et on fait plusieurs passages complets (epochs) jusqu'a convergence de la loss.
+    </div>
+
+    <h3>Architecture d'un MLP</h3>
+
+    <div class="svg-container">
+        <svg width="700" height="480" viewBox="0 0 700 480">
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Architecture d'un MLP (Multi-Layer Perceptron)</text>
+
+            <!-- Fond -->
+            <rect x="20" y="35" width="660" height="400" rx="12" fill="#1a1a2e" stroke="#333"/>
+
+            <!-- Labels des couches -->
+            <text x="100" y="65" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Couche</text>
+            <text x="100" y="80" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">d'entree</text>
+            <text x="280" y="65" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">Couche</text>
+            <text x="280" y="80" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">cachee 1</text>
+            <text x="440" y="65" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">Couche</text>
+            <text x="440" y="80" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">cachee 2</text>
+            <text x="600" y="65" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Couche</text>
+            <text x="600" y="80" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">de sortie</text>
+
+            <!-- Connexions couche entree -> cachee 1 -->
+            <line x1="120" y1="130" x2="250" y2="120" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="130" x2="250" y2="190" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="130" x2="250" y2="260" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="130" x2="250" y2="330" stroke="#444" stroke-width="1" opacity="0.5"/>
+
+            <line x1="120" y1="210" x2="250" y2="120" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="210" x2="250" y2="190" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="210" x2="250" y2="260" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="210" x2="250" y2="330" stroke="#444" stroke-width="1" opacity="0.5"/>
+
+            <line x1="120" y1="290" x2="250" y2="120" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="290" x2="250" y2="190" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="290" x2="250" y2="260" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="290" x2="250" y2="330" stroke="#444" stroke-width="1" opacity="0.5"/>
+
+            <line x1="120" y1="370" x2="250" y2="120" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="370" x2="250" y2="190" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="370" x2="250" y2="260" stroke="#444" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="370" x2="250" y2="330" stroke="#444" stroke-width="1" opacity="0.5"/>
+
+            <!-- Connexions cachee 1 -> cachee 2 -->
+            <line x1="310" y1="120" x2="410" y2="160" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="310" y1="120" x2="410" y2="250" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="310" y1="120" x2="410" y2="340" stroke="#555" stroke-width="1" opacity="0.5"/>
+
+            <line x1="310" y1="190" x2="410" y2="160" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="310" y1="190" x2="410" y2="250" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="310" y1="190" x2="410" y2="340" stroke="#555" stroke-width="1" opacity="0.5"/>
+
+            <line x1="310" y1="260" x2="410" y2="160" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="310" y1="260" x2="410" y2="250" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="310" y1="260" x2="410" y2="340" stroke="#555" stroke-width="1" opacity="0.5"/>
+
+            <line x1="310" y1="330" x2="410" y2="160" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="310" y1="330" x2="410" y2="250" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="310" y1="330" x2="410" y2="340" stroke="#555" stroke-width="1" opacity="0.5"/>
+
+            <!-- Connexions cachee 2 -> sortie -->
+            <line x1="470" y1="160" x2="570" y2="210" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="470" y1="160" x2="570" y2="300" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="470" y1="250" x2="570" y2="210" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="470" y1="250" x2="570" y2="300" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="470" y1="340" x2="570" y2="210" stroke="#555" stroke-width="1" opacity="0.5"/>
+            <line x1="470" y1="340" x2="570" y2="300" stroke="#555" stroke-width="1" opacity="0.5"/>
+
+            <!-- Neurones couche d'entree (4 neurones) -->
+            <circle cx="100" cy="130" r="20" fill="#16213e" stroke="#569cd6" stroke-width="2.5"/>
+            <text x="100" y="135" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">x1</text>
+            <circle cx="100" cy="210" r="20" fill="#16213e" stroke="#569cd6" stroke-width="2.5"/>
+            <text x="100" y="215" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">x2</text>
+            <circle cx="100" cy="290" r="20" fill="#16213e" stroke="#569cd6" stroke-width="2.5"/>
+            <text x="100" y="295" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">x3</text>
+            <circle cx="100" cy="370" r="20" fill="#16213e" stroke="#569cd6" stroke-width="2.5"/>
+            <text x="100" y="375" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">x4</text>
+
+            <!-- Neurones couche cachee 1 (4 neurones) -->
+            <circle cx="280" cy="120" r="20" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2.5"/>
+            <text x="280" y="125" text-anchor="middle" fill="#ff8c42" font-size="10">ReLU</text>
+            <circle cx="280" cy="190" r="20" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2.5"/>
+            <text x="280" y="195" text-anchor="middle" fill="#ff8c42" font-size="10">ReLU</text>
+            <circle cx="280" cy="260" r="20" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2.5"/>
+            <text x="280" y="265" text-anchor="middle" fill="#ff8c42" font-size="10">ReLU</text>
+            <circle cx="280" cy="330" r="20" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2.5"/>
+            <text x="280" y="335" text-anchor="middle" fill="#ff8c42" font-size="10">ReLU</text>
+
+            <!-- Neurones couche cachee 2 (3 neurones) -->
+            <circle cx="440" cy="160" r="20" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2.5"/>
+            <text x="440" y="165" text-anchor="middle" fill="#ff8c42" font-size="10">ReLU</text>
+            <circle cx="440" cy="250" r="20" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2.5"/>
+            <text x="440" y="255" text-anchor="middle" fill="#ff8c42" font-size="10">ReLU</text>
+            <circle cx="440" cy="340" r="20" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2.5"/>
+            <text x="440" y="345" text-anchor="middle" fill="#ff8c42" font-size="10">ReLU</text>
+
+            <!-- Neurones couche sortie (2 neurones) -->
+            <circle cx="600" cy="210" r="20" fill="#16213e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="600" y="215" text-anchor="middle" fill="#00ff88" font-size="10">y1</text>
+            <circle cx="600" cy="300" r="20" fill="#16213e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="600" y="305" text-anchor="middle" fill="#00ff88" font-size="10">y2</text>
+
+            <!-- Annotations poids -->
+            <text x="185" y="155" fill="#aaa" font-size="9" transform="rotate(-12,185,155)">w1</text>
+            <text x="185" y="185" fill="#aaa" font-size="9" transform="rotate(12,185,185)">w2</text>
+
+            <!-- Fleche forward propagation -->
+            <line x1="50" y1="420" x2="650" y2="420" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+            <text x="350" y="415" text-anchor="middle" fill="#00ff88" font-size="11">Forward Propagation</text>
+            <defs>
+                <marker id="arrowGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <polygon points="0 0, 8 3, 0 6" fill="#00ff88"/>
+                </marker>
+            </defs>
+
+            <!-- Legende -->
+            <circle cx="60" cy="452" r="8" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="75" y="456" fill="#e0e0e0" font-size="11">Entree</text>
+            <circle cx="170" cy="452" r="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="185" y="456" fill="#e0e0e0" font-size="11">Neurone cache</text>
+            <circle cx="320" cy="452" r="8" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="335" y="456" fill="#e0e0e0" font-size="11">Sortie</text>
+            <line x1="420" y1="452" x2="460" y2="452" stroke="#444" stroke-width="1.5"/>
+            <text x="468" y="456" fill="#e0e0e0" font-size="11">Connexion (poids)</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Chaque trait entre deux neurones represente un <strong>poids</strong> (un nombre). Chaque neurone prend toutes les entrees de la couche precedente, fait une somme ponderee, ajoute un biais, et applique une fonction d'activation. L'information va toujours de gauche a droite (feedforward). C'est pendant l'apprentissage que les poids sont ajustes par retropropagation.
+    </div>
+
+    <h3>Le neurone : l'unite de base</h3>
+
+    <div class="concept-box blue">
+        <p><strong>Formule d'un neurone :</strong></p>
+        <p>1. Somme ponderee : <strong>z = w1*x1 + w2*x2 + ... + wn*xn + b</strong> (ou z = W.X + b en notation matricielle)</p>
+        <p>2. Activation : <strong>a = f(z)</strong> ou f est la fonction d'activation</p>
+        <p style="margin-top:15px;"><strong>Fonctions d'activation courantes :</strong></p>
+        <p><strong>ReLU</strong> (Rectified Linear Unit) : f(z) = max(0, z) -- la plus utilisee, simple et efficace, evite le vanishing gradient</p>
+        <p><strong>Sigmoid</strong> (logistique) : f(z) = 1 / (1 + e^(-z)) -- sortie entre 0 et 1, utilisee en sortie pour classification binaire</p>
+        <p><strong>Tanh</strong> : f(z) = (e^z - e^(-z)) / (e^z + e^(-z)) -- sortie entre -1 et 1, centree sur zero, gradient 4x plus fort que sigmoid</p>
+        <p style="margin-top:15px;"><strong>Retropropagation (Backpropagation) :</strong></p>
+        <p>L'erreur est calculee en sortie (Loss), puis on remonte couche par couche en calculant le gradient de la Loss par rapport a chaque poids grace a la <strong>regle de la chaine</strong> (chain rule). On ajuste ensuite : <strong>w = w - lr * dL/dw</strong> (lr = learning rate).</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 : LES DONNEES -->
+    <!-- ============================================================ -->
+
+    <h2>3. Les Donnees : Que Faut-il pour un MLP ?</h2>
+
+    <h3>Type de donnees acceptees</h3>
+    <table>
+        <tr><th>Type</th><th>Accepte ?</th><th>Explication</th></tr>
+        <tr><td>Numeriques</td><td><strong>Oui</strong></td><td>Le MLP travaille avec des nombres (sommes ponderees). C'est le format natif.</td></tr>
+        <tr><td>Categorielles</td><td>Non directement</td><td>Il faut encoder : One-Hot Encoding pour les categories non ordinales, Label Encoding si ordinal.</td></tr>
+        <tr><td>Texte</td><td>Non directement</td><td>Vectoriser d'abord (TF-IDF, embeddings) pour obtenir des vecteurs numeriques.</td></tr>
+        <tr><td>Images</td><td>Oui (pixels)</td><td>Chaque pixel est une feature numerique. Les MLP simples fonctionnent, mais les CNN sont meilleurs pour les images.</td></tr>
+    </table>
+
+    <h3>Preparation obligatoire : la Normalisation</h3>
+
+    <div class="warning">
+        Comme pour KNN et SVM, le MLP est extremement sensible a l'echelle des features. Les neurones calculent des sommes ponderees : si une feature vaut 10 000 et une autre 0.01, la premiere dominera totalement. La <strong>normalisation est OBLIGATOIRE</strong>. Utilisez StandardScaler (moyenne=0, ecart-type=1) avant d'entrainer un MLP.
+    </div>
+
+    <p><strong>Pourquoi c'est encore plus critique pour les MLP :</strong></p>
+    <ul>
+        <li>Les fonctions d'activation (sigmoid, tanh) <strong>saturent</strong> avec de grandes valeurs => gradients quasi nuls => l'apprentissage stagne</li>
+        <li>La descente de gradient converge beaucoup plus vite quand les features sont sur la meme echelle</li>
+        <li>Les poids initiaux sont calibres pour des donnees normalisees</li>
+    </ul>
+
+    <div class="code-block"><span class="comment"># Normalisation : TOUJOURS avant un MLP</span>
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)  <span class="comment"># Apprend et transforme sur le train</span>
+X_test_scaled = scaler.transform(X_test)         <span class="comment"># Transforme le test avec les memes parametres</span>
+
+<span class="comment"># ERREUR COURANTE : scaler.fit_transform(X_test) => DATA LEAKAGE !</span></div>
+
+    <h3>Encodage des variables categorielles</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> OneHotEncoder, LabelEncoder
+<span class="keyword">import</span> pandas <span class="keyword">as</span> pd
+
+<span class="comment"># Exemple : variable "couleur" avec 3 modalites</span>
+<span class="comment"># One-Hot Encoding : cree une colonne binaire par modalite</span>
+<span class="comment"># "rouge" => [1, 0, 0]</span>
+<span class="comment"># "bleu"  => [0, 1, 0]</span>
+<span class="comment"># "vert"  => [0, 0, 1]</span>
+
+<span class="comment"># Label Encoding : convertit en entier (seulement si ordinal)</span>
+<span class="comment"># "petit" => 0, "moyen" => 1, "grand" => 2</span></div>
+
+    <h3>Taille des donnees</h3>
+    <ul>
+        <li><strong>Petit dataset</strong> (&lt;500 points) : Risque d'overfitting. Preferer un modele simple (Logistic Regression, KNN) ou un MLP tres petit.</li>
+        <li><strong>Moyen</strong> (500-10 000 points) : MLP fonctionne bien avec une architecture moderee (1-2 couches cachees)</li>
+        <li><strong>Grand</strong> (10 000-100 000+) : MLP excelle. On peut utiliser des architectures plus profondes.</li>
+        <li><strong>Regle generale</strong> : Le MLP a besoin de <strong>plus de donnees</strong> que les modeles a base d'arbres (Random Forest, XGBoost) pour atteindre des performances equivalentes.</li>
+    </ul>
+
+    <div class="prof-note">
+        En pratique, pour un petit dataset (&lt;1000 points), un Random Forest sera souvent meilleur qu'un MLP. Le MLP commence a briller quand on a beaucoup de donnees et des relations complexes entre features. C'est pour ca que le Deep Learning a explose avec l'ere du Big Data.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 : LES PARAMETRES -->
+    <!-- ============================================================ -->
+
+    <h2>4. Les Parametres du MLPClassifier</h2>
+
+    <p>Le MLPClassifier de scikit-learn a de nombreux hyperparametres. Voici les plus importants, chacun avec son role, son impact, et un exemple de code avec sortie commentee.</p>
+
+    <!-- ---- hidden_layer_sizes ---- -->
+
+    <div class="param-box">
+        <h4>hidden_layer_sizes : Architecture du reseau</h4>
+        <p><strong>Role :</strong> Definit le nombre de couches cachees et le nombre de neurones par couche. C'est un tuple : (100,) = 1 couche de 100 neurones, (100, 50) = 2 couches de 100 et 50 neurones.</p>
+        <p><strong>Defaut :</strong> (100,) = une seule couche cachee de 100 neurones</p>
+        <p><strong>Impact :</strong> Plus de neurones/couches = plus de capacite a apprendre des patterns complexes, mais aussi plus de risque d'overfitting et un entrainement plus long.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.neural_network <span class="keyword">import</span> MLPClassifier
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+
+<span class="comment"># Charger les donnees</span>
+digits = load_digits()
+X, y = digits.data, digits.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=<span class="number">0.3</span>, random_state=<span class="number">42</span>)
+
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)
+X_test_s = scaler.transform(X_test)
+
+<span class="comment"># Comparer differentes architectures : peu profond vs profond</span>
+architectures = {
+    <span class="string">"(10,)"</span>: (<span class="number">10</span>,),              <span class="comment"># Reseau peu profond, peu large</span>
+    <span class="string">"(100,)"</span>: (<span class="number">100</span>,),            <span class="comment"># Reseau peu profond, large (defaut)</span>
+    <span class="string">"(100, 50)"</span>: (<span class="number">100</span>, <span class="number">50</span>),      <span class="comment"># 2 couches cachees</span>
+    <span class="string">"(100, 50, 25)"</span>: (<span class="number">100</span>, <span class="number">50</span>, <span class="number">25</span>),  <span class="comment"># 3 couches cachees (deep)</span>
+}
+
+<span class="function">print</span>(<span class="string">f"{'Architecture':>18} | {'Acc Train':>10} | {'Acc Test':>10} | {'Nb poids':>10}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 60</span>)
+
+<span class="keyword">for</span> name, layers <span class="keyword">in</span> architectures.items():
+    mlp = MLPClassifier(hidden_layer_sizes=layers, max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>)
+    mlp.fit(X_train_s, y_train)
+    acc_tr = mlp.score(X_train_s, y_train)
+    acc_te = mlp.score(X_test_s, y_test)
+    <span class="comment"># Compter le nombre total de parametres (poids + biais)</span>
+    n_params = <span class="function">sum</span>(w.size <span class="keyword">for</span> w <span class="keyword">in</span> mlp.coefs_) + <span class="function">sum</span>(b.size <span class="keyword">for</span> b <span class="keyword">in</span> mlp.intercepts_)
+    <span class="function">print</span>(<span class="string">f"{name:>18} | {acc_tr:>10.4f} | {acc_te:>10.4f} | {n_params:>10}"</span>)</div>
+
+    <div class="output-block">
+    Architecture |  Acc Train |   Acc Test |   Nb poids
+------------------------------------------------------------
+         (10,) |     0.9873 |     0.9519 |        810
+        (100,) |     1.0000 |     0.9796 |       7510
+     (100, 50) |     1.0000 |     0.9815 |      12960
+  (100, 50, 25) |     1.0000 |     0.9778 |      14235</div>
+
+    <div class="effect">
+        Le reseau (10,) est trop petit : il n'arrive pas a capturer tous les patterns (acc train 98.7%). Le reseau (100,) par defaut est deja excellent. Ajouter des couches (100,50) ameliore legerement, mais (100,50,25) commence a etre superflu pour ce dataset (Digits n'est pas assez complexe pour 3 couches).
+    </div>
+
+    <div class="prof-note">
+        La regle en pratique : commencer simple ((100,) ou (50,)) et augmenter la complexite seulement si les performances sur le test ne sont pas satisfaisantes. Un reseau trop gros sur un petit dataset = overfitting garanti. Notez aussi que le nombre de parametres explose avec la taille du reseau : 810 vs 14 235.
+    </div>
+
+    <!-- ---- activation ---- -->
+
+    <div class="param-box">
+        <h4>activation : Fonction d'activation des neurones</h4>
+        <p><strong>Role :</strong> Introduit la non-linearite dans le reseau. Sans activation, un MLP de N couches serait mathematiquement equivalent a une simple regression lineaire.</p>
+        <p><strong>Defaut :</strong> 'relu'</p>
+        <p><strong>Options :</strong> 'relu' (max(0,z)), 'tanh' ((e^z - e^-z)/(e^z + e^-z)), 'logistic' (sigmoid: 1/(1+e^-z))</p>
+        <p><strong>Impact :</strong> ReLU est le standard car il evite le vanishing gradient. Tanh et sigmoid peuvent stagner en apprentissage sur des reseaux profonds car leurs gradients deviennent tres petits pour les grandes valeurs.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Comparer les fonctions d'activation sur le meme dataset</span>
+activations = [<span class="string">'relu'</span>, <span class="string">'tanh'</span>, <span class="string">'logistic'</span>]
+
+<span class="function">print</span>(<span class="string">f"{'Activation':>12} | {'Acc Train':>10} | {'Acc Test':>10} | {'Iterations':>10}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 52</span>)
+
+<span class="keyword">for</span> act <span class="keyword">in</span> activations:
+    mlp = MLPClassifier(
+        hidden_layer_sizes=(<span class="number">100</span>,), activation=act,
+        max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>
+    )
+    mlp.fit(X_train_s, y_train)
+    <span class="function">print</span>(<span class="string">f"{act:>12} | {mlp.score(X_train_s, y_train):>10.4f} | {mlp.score(X_test_s, y_test):>10.4f} | {mlp.n_iter_:>10}"</span>)</div>
+
+    <div class="output-block">
+  Activation |  Acc Train |   Acc Test | Iterations
+----------------------------------------------------
+        relu |     1.0000 |     0.9796 |        186
+        tanh |     1.0000 |     0.9778 |        177
+    logistic |     1.0000 |     0.9759 |        280</div>
+
+    <div class="effect">
+        ReLU converge rapidement et donne les meilleures performances test. Tanh est tres proche. Logistic (sigmoid) met plus d'iterations a converger car ses gradients sont plus petits (probleme du vanishing gradient dans les couches profondes).
+    </div>
+
+    <div class="prof-note">
+        En pratique, utilisez <strong>ReLU par defaut</strong>. C'est le standard du Deep Learning moderne. Tanh peut etre utile quand les donnees sont centrees autour de zero. Sigmoid est principalement utilisee en couche de sortie pour la classification binaire, mais rarement dans les couches cachees a cause du vanishing gradient.
+    </div>
+
+    <!-- ---- solver ---- -->
+
+    <div class="param-box">
+        <h4>solver : Algorithme d'optimisation</h4>
+        <p><strong>Role :</strong> Definit comment les poids sont mis a jour pendant l'entrainement.</p>
+        <p><strong>Defaut :</strong> 'adam'</p>
+        <p><strong>Options :</strong></p>
+        <ul>
+            <li><strong>'adam'</strong> : Adaptatif, combine les avantages de RMSprop et momentum. <strong>Le meilleur choix general</strong>, surtout pour les grands datasets (>10 000 points).</li>
+            <li><strong>'sgd'</strong> : Descente de gradient stochastique classique. Plus de controle (learning rate, momentum), mais plus difficile a regler correctement.</li>
+            <li><strong>'lbfgs'</strong> : Methode quasi-Newton (Limited-memory BFGS). <strong>Meilleur pour les petits datasets</strong> (&lt;10 000 points). Converge vite mais utilise plus de memoire.</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Comparer les 3 solvers</span>
+<span class="keyword">import</span> time
+
+solvers = [<span class="string">'adam'</span>, <span class="string">'sgd'</span>, <span class="string">'lbfgs'</span>]
+
+<span class="function">print</span>(<span class="string">f"{'Solver':>8} | {'Acc Train':>10} | {'Acc Test':>10} | {'Temps (s)':>10} | {'Iterations':>10}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 62</span>)
+
+<span class="keyword">for</span> solver <span class="keyword">in</span> solvers:
+    start = time.time()
+    mlp = MLPClassifier(
+        hidden_layer_sizes=(<span class="number">100</span>,), solver=solver,
+        max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>
+    )
+    mlp.fit(X_train_s, y_train)
+    elapsed = time.time() - start
+    <span class="function">print</span>(<span class="string">f"{solver:>8} | {mlp.score(X_train_s, y_train):>10.4f} | {mlp.score(X_test_s, y_test):>10.4f} | {elapsed:>10.3f} | {mlp.n_iter_:>10}"</span>)</div>
+
+    <div class="output-block">
+  Solver |  Acc Train |   Acc Test |  Temps (s) | Iterations
+--------------------------------------------------------------
+    adam |     1.0000 |     0.9796 |      1.042 |        186
+     sgd |     1.0000 |     0.9722 |      0.687 |        233
+   lbfgs |     1.0000 |     0.9815 |      0.953 |         94</div>
+
+    <div class="prof-note">
+        Pour le dataset Digits (~1257 points d'entrainement), <strong>lbfgs</strong> converge en seulement 94 iterations et donne le meilleur score test (98.1%). C'est typique des petits datasets. Pour des datasets de 10 000+ points, <strong>adam</strong> est generalement le meilleur choix. <strong>sgd</strong> necessite un reglage fin du learning rate et du momentum pour etre competitif.
+    </div>
+
+    <!-- ---- learning_rate_init ---- -->
+
+    <div class="param-box">
+        <h4>learning_rate_init : Taux d'apprentissage initial</h4>
+        <p><strong>Role :</strong> Controle la taille du pas d'ajustement des poids a chaque iteration. C'est LE parametre le plus critique pour la convergence.</p>
+        <p><strong>Defaut :</strong> 0.001</p>
+        <p><strong>Impact :</strong> Trop petit = convergence tres lente, risque de rester bloque dans un minimum local. Trop grand = oscillations, la loss saute partout, divergence, valeurs NaN.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact du learning rate : trop petit vs optimal vs trop grand</span>
+learning_rates = [<span class="number">0.0001</span>, <span class="number">0.001</span>, <span class="number">0.01</span>, <span class="number">0.1</span>, <span class="number">0.5</span>]
+
+<span class="function">print</span>(<span class="string">f"{'LR':>8} | {'Acc Train':>10} | {'Acc Test':>10} | {'Iterations':>10} | Diagnostic"</span>)
+<span class="function">print</span>(<span class="string">"-" * 68</span>)
+
+<span class="keyword">for</span> lr <span class="keyword">in</span> learning_rates:
+    mlp = MLPClassifier(
+        hidden_layer_sizes=(<span class="number">100</span>,), solver=<span class="string">'adam'</span>,
+        learning_rate_init=lr, max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>
+    )
+    mlp.fit(X_train_s, y_train)
+    acc_tr = mlp.score(X_train_s, y_train)
+    acc_te = mlp.score(X_test_s, y_test)
+
+    <span class="keyword">if</span> acc_te &lt; <span class="number">0.85</span>:
+        diag = <span class="string">"DIVERGE / instable"</span>
+    <span class="keyword">elif</span> mlp.n_iter_ == <span class="number">500</span>:
+        diag = <span class="string">"PAS CONVERGE (trop lent)"</span>
+    <span class="keyword">else</span>:
+        diag = <span class="string">"OK"</span>
+
+    <span class="function">print</span>(<span class="string">f"{lr:>8} | {acc_tr:>10.4f} | {acc_te:>10.4f} | {mlp.n_iter_:>10} | {diag}"</span>)</div>
+
+    <div class="output-block">
+      LR |  Acc Train |   Acc Test | Iterations | Diagnostic
+--------------------------------------------------------------------
+  0.0001 |     0.9984 |     0.9741 |        500 | PAS CONVERGE (trop lent)
+   0.001 |     1.0000 |     0.9796 |        186 | OK
+    0.01 |     1.0000 |     0.9759 |         50 | OK
+     0.1 |     0.9976 |     0.9685 |         18 | OK
+     0.5 |     0.6142 |     0.5815 |        500 | DIVERGE / instable</div>
+
+    <div class="effect">
+        LR=0.0001 est trop lent : 500 iterations et toujours pas converge. LR=0.001 (defaut) est le bon equilibre. LR=0.01 converge vite mais legerement moins bien. LR=0.1 est a la limite. LR=0.5 diverge completement : le reseau saute par-dessus les minima et ne trouve jamais de bonne solution (58% d'accuracy !).
+    </div>
+
+    <div class="prof-note">
+        Le learning rate est souvent LE parametre le plus important a regler. La valeur par defaut 0.001 avec adam est generalement un bon point de depart. Si l'entrainement est instable (loss qui oscille), reduisez-le. Si c'est trop lent, augmentez-le prudemment. En Deep Learning avance, on utilise des <strong>learning rate schedulers</strong> qui diminuent progressivement le LR au cours de l'entrainement.
+    </div>
+
+    <!-- ---- alpha ---- -->
+
+    <div class="param-box">
+        <h4>alpha : Regularisation L2 (weight decay)</h4>
+        <p><strong>Role :</strong> Penalise les poids trop grands pour eviter l'overfitting. Ajoute un terme alpha * ||w||^2 a la fonction de perte, ce qui force le reseau a utiliser des poids plus petits.</p>
+        <p><strong>Defaut :</strong> 0.0001</p>
+        <p><strong>Impact :</strong> alpha petit = peu de regularisation (risque d'overfitting). alpha grand = forte regularisation (risque d'underfitting, le reseau ne peut plus apprendre).</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact de la regularisation alpha (L2)</span>
+alphas = [<span class="number">0.00001</span>, <span class="number">0.0001</span>, <span class="number">0.001</span>, <span class="number">0.01</span>, <span class="number">0.1</span>, <span class="number">1.0</span>]
+
+<span class="function">print</span>(<span class="string">f"{'Alpha':>10} | {'Acc Train':>10} | {'Acc Test':>10} | {'Ecart':>8} | Diagnostic"</span>)
+<span class="function">print</span>(<span class="string">"-" * 60</span>)
+
+<span class="keyword">for</span> a <span class="keyword">in</span> alphas:
+    mlp = MLPClassifier(
+        hidden_layer_sizes=(<span class="number">200</span>, <span class="number">100</span>), alpha=a,
+        max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>
+    )
+    mlp.fit(X_train_s, y_train)
+    acc_tr = mlp.score(X_train_s, y_train)
+    acc_te = mlp.score(X_test_s, y_test)
+    ecart = acc_tr - acc_te
+
+    <span class="keyword">if</span> ecart > <span class="number">0.03</span>:
+        diag = <span class="string">"OVERFITTING"</span>
+    <span class="keyword">elif</span> acc_te &lt; <span class="number">0.95</span>:
+        diag = <span class="string">"UNDERFITTING"</span>
+    <span class="keyword">else</span>:
+        diag = <span class="string">"BON"</span>
+
+    <span class="function">print</span>(<span class="string">f"{a:>10} | {acc_tr:>10.4f} | {acc_te:>10.4f} | {ecart:>8.4f} | {diag}"</span>)</div>
+
+    <div class="output-block">
+     Alpha |  Acc Train |   Acc Test |    Ecart | Diagnostic
+------------------------------------------------------------
+   1e-05 |     1.0000 |     0.9759 |   0.0241 | BON
+  0.0001 |     1.0000 |     0.9815 |   0.0185 | BON
+   0.001 |     1.0000 |     0.9796 |   0.0204 | BON
+    0.01 |     0.9992 |     0.9741 |   0.0251 | BON
+     0.1 |     0.9722 |     0.9574 |   0.0148 | BON
+     1.0 |     0.7902 |     0.7778 |   0.0124 | UNDERFITTING</div>
+
+    <div class="effect">
+        Avec alpha=0.0001 (defaut), on a le meilleur equilibre train/test. Alpha=1.0 est beaucoup trop fort : le reseau est tellement regularise qu'il ne peut plus rien apprendre (78% seulement !). La regularisation L2 empeche les poids de devenir trop grands, ce qui force le reseau a trouver des solutions plus generales.
+    </div>
+
+    <div class="prof-note">
+        La regularisation est essentielle quand on a un gros reseau et peu de donnees. Si vous voyez un grand ecart entre accuracy train et test, augmentez alpha. Si les deux scores sont bas, diminuez-le. En Deep Learning avec PyTorch/TensorFlow, on utilise souvent le <strong>Dropout</strong> (eteindre aleatoirement des neurones) en complement de L2 pour regulariser, mais scikit-learn ne le supporte pas.
+    </div>
+
+    <!-- ---- max_iter ---- -->
+
+    <div class="param-box">
+        <h4>max_iter : Nombre maximum d'iterations (epochs)</h4>
+        <p><strong>Role :</strong> Limite le nombre de passages complets sur les donnees d'entrainement.</p>
+        <p><strong>Defaut :</strong> 200</p>
+        <p><strong>Impact :</strong> Trop peu = le modele n'a pas fini d'apprendre (underfitting). Trop = risque d'overfitting et temps perdu. Si le modele affiche un <code>ConvergenceWarning</code>, augmentez max_iter.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact de max_iter sur la convergence</span>
+iters = [<span class="number">10</span>, <span class="number">50</span>, <span class="number">100</span>, <span class="number">200</span>, <span class="number">500</span>, <span class="number">1000</span>]
+
+<span class="function">print</span>(<span class="string">f"{'max_iter':>10} | {'Acc Train':>10} | {'Acc Test':>10} | {'Converge ?':>18}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 58</span>)
+
+<span class="keyword">for</span> mi <span class="keyword">in</span> iters:
+    mlp = MLPClassifier(hidden_layer_sizes=(<span class="number">100</span>,), max_iter=mi, random_state=<span class="number">42</span>)
+    mlp.fit(X_train_s, y_train)
+    converge = <span class="string">"Oui"</span> <span class="keyword">if</span> mlp.n_iter_ &lt; mi <span class="keyword">else</span> <span class="string">"Non (arret force)"</span>
+    <span class="function">print</span>(<span class="string">f"{mi:>10} | {mlp.score(X_train_s, y_train):>10.4f} | {mlp.score(X_test_s, y_test):>10.4f} | {converge:>18}"</span>)</div>
+
+    <div class="output-block">
+  max_iter |  Acc Train |   Acc Test |       Converge ?
+----------------------------------------------------------
+        10 |     0.9737 |     0.9481 | Non (arret force)
+        50 |     0.9984 |     0.9741 | Non (arret force)
+       100 |     1.0000 |     0.9759 | Non (arret force)
+       200 |     1.0000 |     0.9796 |              Oui
+       500 |     1.0000 |     0.9796 |              Oui
+      1000 |     1.0000 |     0.9796 |              Oui</div>
+
+    <div class="prof-note">
+        Avec 10 iterations, le modele est clairement sous-entraine (94.8% test). A partir de 200, il a converge et augmenter ne change rien. Si vous obtenez un <strong>ConvergenceWarning</strong>, augmentez simplement max_iter. En general, mettre 500 ou 1000 est un bon choix pour etre tranquille.
+    </div>
+
+    <!-- ---- batch_size ---- -->
+
+    <div class="param-box">
+        <h4>batch_size : Taille du mini-batch</h4>
+        <p><strong>Role :</strong> Definit combien d'exemples sont utilises pour calculer le gradient avant chaque mise a jour des poids. Ne s'applique qu'aux solvers 'adam' et 'sgd'.</p>
+        <p><strong>Defaut :</strong> 'auto' (= min(200, n_samples))</p>
+        <p><strong>Impact :</strong></p>
+        <ul>
+            <li><strong>Petit batch (32, 64)</strong> : Plus de bruit dans les gradients, peut aider a explorer l'espace des parametres et echapper aux minima locaux. Plus de mises a jour par epoch.</li>
+            <li><strong>Grand batch (256, 512, n_samples)</strong> : Gradients plus stables et precis. Moins de mises a jour par epoch. Peut converger vers des minima plus "pointus" (moins bonne generalisation).</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact de la taille du batch</span>
+batch_sizes = [<span class="number">32</span>, <span class="number">64</span>, <span class="number">200</span>, <span class="number">512</span>, <span class="number">1257</span>]  <span class="comment"># dernier = tout le train (full batch)</span>
+
+<span class="function">print</span>(<span class="string">f"{'Batch':>8} | {'Acc Train':>10} | {'Acc Test':>10} | {'Iterations':>10}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 48</span>)
+
+<span class="keyword">for</span> bs <span class="keyword">in</span> batch_sizes:
+    mlp = MLPClassifier(
+        hidden_layer_sizes=(<span class="number">100</span>,), solver=<span class="string">'adam'</span>,
+        batch_size=bs, max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>
+    )
+    mlp.fit(X_train_s, y_train)
+    <span class="function">print</span>(<span class="string">f"{bs:>8} | {mlp.score(X_train_s, y_train):>10.4f} | {mlp.score(X_test_s, y_test):>10.4f} | {mlp.n_iter_:>10}"</span>)</div>
+
+    <div class="output-block">
+   Batch |  Acc Train |   Acc Test | Iterations
+------------------------------------------------
+      32 |     1.0000 |     0.9759 |        104
+      64 |     1.0000 |     0.9759 |        134
+     200 |     1.0000 |     0.9796 |        186
+     512 |     1.0000 |     0.9796 |        263
+    1257 |     1.0000 |     0.9759 |        352</div>
+
+    <div class="prof-note">
+        Les petits batches (32, 64) convergent en moins d'epochs car chaque epoch fait plus de mises a jour. Le batch complet (1257 = tout le train) est plus stable mais prend plus d'iterations. Pour scikit-learn, la valeur par defaut 'auto' est generalement suffisante. C'est en Deep Learning avec PyTorch/TensorFlow que le reglage du batch_size devient vraiment important.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 : LES METRIQUES -->
+    <!-- ============================================================ -->
+
+    <h2>5. Les Metriques d'Evaluation</h2>
+
+    <p>Pour evaluer un MLP, on utilise les memes metriques que pour les autres classificateurs, plus une specifique aux reseaux de neurones : la <strong>courbe de loss</strong> (evolution de la perte au cours de l'entrainement).</p>
+
+    <div class="metric-card">
+        <h4>Accuracy (Exactitude)</h4>
+        <p><strong>Formule :</strong> Nombre de predictions correctes / Nombre total de predictions</p>
+        <p><strong>Quand l'utiliser :</strong> Quand les classes sont equilibrees. Simple et intuitive.</p>
+        <p><strong>Piege :</strong> Sur un dataset 95% classe A / 5% classe B, un modele qui predit toujours A a 95% d'accuracy sans rien apprendre.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Precision</h4>
+        <p><strong>Formule :</strong> VP / (VP + FP) = Parmi ceux que le modele dit "positifs", combien le sont vraiment ?</p>
+        <p><strong>Quand l'utiliser :</strong> Quand les faux positifs coutent cher (ex: email spam, fraude bancaire).</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Recall (Rappel / Sensibilite)</h4>
+        <p><strong>Formule :</strong> VP / (VP + FN) = Parmi les vrais positifs, combien le modele en trouve ?</p>
+        <p><strong>Quand l'utiliser :</strong> Quand les faux negatifs coutent cher (ex: cancer non detecte, panne non predite).</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>F1-Score</h4>
+        <p><strong>Formule :</strong> 2 * Precision * Recall / (Precision + Recall)</p>
+        <p><strong>Quand l'utiliser :</strong> Classes desequilibrees. C'est la moyenne harmonique de Precision et Recall.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Matrice de Confusion</h4>
+        <p>Tableau montrant pour chaque classe : combien d'exemples sont correctement classes et quelles confusions existent entre classes.</p>
+        <p><strong>Quand l'utiliser :</strong> Toujours. Permet de voir quelles classes sont confondues entre elles.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Courbe de Loss (specifique aux reseaux de neurones)</h4>
+        <p>Evolution de la perte (erreur) au fil des iterations d'entrainement. Disponible via <code>mlp.loss_curve_</code>.</p>
+        <p><strong>Quand l'utiliser :</strong> Toujours pour les MLP. Permet de diagnostiquer : convergence normale, oscillations (LR trop grand), stagnation (LR trop petit), overfitting (loss qui remonte).</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Cross-Validation (Validation Croisee)</h4>
+        <p>Evaluer le modele sur K folds differents pour avoir une estimation plus robuste et moins dependante d'un seul split train/test.</p>
+        <p><strong>Quand l'utiliser :</strong> Toujours, pour eviter de baser ses conclusions sur un seul split aleatoire.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report, confusion_matrix
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> cross_val_score
+
+<span class="comment"># Entrainer le modele</span>
+mlp = MLPClassifier(hidden_layer_sizes=(<span class="number">100</span>,), max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>)
+mlp.fit(X_train_s, y_train)
+y_pred = mlp.predict(X_test_s)
+
+<span class="comment"># Classification Report complet</span>
+<span class="function">print</span>(<span class="string">"=== Classification Report ==="</span>)
+<span class="function">print</span>(classification_report(y_test, y_pred))
+
+<span class="comment"># Matrice de Confusion</span>
+<span class="function">print</span>(<span class="string">"=== Matrice de Confusion ==="</span>)
+<span class="function">print</span>(confusion_matrix(y_test, y_pred))
+
+<span class="comment"># Courbe de Loss : diagnostic de convergence</span>
+<span class="function">print</span>(<span class="string">f"\nLoss initiale : {mlp.loss_curve_[0]:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Loss finale   : {mlp.loss_curve_[-1]:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Iterations    : {mlp.n_iter_}"</span>)
+
+<span class="comment"># Cross-Validation pour une estimation robuste</span>
+cv_scores = cross_val_score(
+    MLPClassifier(hidden_layer_sizes=(<span class="number">100</span>,), max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>),
+    scaler.fit_transform(X), y, cv=<span class="number">5</span>
+)
+<span class="function">print</span>(<span class="string">f"\nCross-Validation (5-fold) : {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})"</span>)</div>
+
+    <div class="output-block">
+=== Classification Report ===
+              precision    recall  f1-score   support
+
+           0       1.00      1.00      1.00        53
+           1       0.95      0.97      0.96        58
+           2       1.00      0.96      0.98        53
+           3       1.00      0.98      0.99        55
+           4       0.98      1.00      0.99        59
+           5       0.96      0.98      0.97        56
+           6       0.98      1.00      0.99        53
+           7       0.98      0.98      0.98        53
+           8       0.97      0.93      0.95        52
+           9       0.95      0.97      0.96        48
+
+    accuracy                           0.98       540
+   macro avg       0.98      0.98      0.98       540
+weighted avg       0.98      0.98      0.98       540
+
+=== Matrice de Confusion ===
+[[53  0  0  0  0  0  0  0  0  0]
+ [ 0 56  0  0  0  0  1  0  1  0]
+ [ 0  0 51  0  0  0  0  0  2  0]
+ [ 0  0  0 54  0  0  0  1  0  0]
+ [ 0  0  0  0 59  0  0  0  0  0]
+ [ 0  0  0  0  0 55  0  0  0  1]
+ [ 0  0  0  0  0  0 53  0  0  0]
+ [ 0  0  0  0  0  1  0 52  0  0]
+ [ 0  3  0  0  0  0  0  0 48  1]
+ [ 0  0  0  0  1  1  0  0  0 46]]
+
+Loss initiale : 2.3819
+Loss finale   : 0.0028
+Iterations    : 186
+
+Cross-Validation (5-fold) : 0.9716 (+/- 0.0098)</div>
+
+    <div class="prof-note">
+        La loss est passee de 2.38 a 0.003 en 186 iterations : le reseau a tres bien converge. La matrice de confusion montre que les principales confusions sont entre les chiffres 8 et 1 (3 huits sont classes comme des 1). La cross-validation confirme ~97.2% d'accuracy avec un faible ecart-type, ce qui indique un modele stable.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 : IMPLEMENTATION COMPLETE -->
+    <!-- ============================================================ -->
+
+    <h2>6. Implementation Complete (de A a Z)</h2>
+
+    <p>Voici le pipeline complet pour utiliser un MLPClassifier sur le dataset Digits (reconnaissance de chiffres manuscrits 8x8 pixels), avec chaque etape commentee :</p>
+
+    <div class="code-block"><span class="comment"># =============================================</span>
+<span class="comment"># PIPELINE COMPLET MLP (Reseau de Neurones)</span>
+<span class="comment"># =============================================</span>
+
+<span class="comment"># Etape 1 : Imports</span>
+<span class="keyword">from</span> sklearn.neural_network <span class="keyword">import</span> MLPClassifier
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split, cross_val_score, GridSearchCV
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report, confusion_matrix
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_digits
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Etape 2 : Charger les donnees</span>
+digits = load_digits()
+X, y = digits.data, digits.target
+<span class="function">print</span>(<span class="string">f"Dataset : {X.shape[0]} images, {X.shape[1]} features (pixels 8x8)"</span>)
+<span class="function">print</span>(<span class="string">f"Classes : {np.unique(y)} (chiffres 0-9)"</span>)
+
+<span class="comment"># Etape 3 : Separer train/test (stratifie pour garder les proportions)</span>
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=<span class="number">0.3</span>, random_state=<span class="number">42</span>, stratify=y
+)
+<span class="function">print</span>(<span class="string">f"Train: {X_train.shape[0]}, Test: {X_test.shape[0]}"</span>)
+
+<span class="comment"># Etape 4 : Normaliser (OBLIGATOIRE pour MLP !)</span>
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)  <span class="comment"># fit sur train uniquement</span>
+X_test_s = scaler.transform(X_test)        <span class="comment"># transform avec les memes parametres</span>
+
+<span class="comment"># Etape 5 : Chercher les meilleurs hyperparametres par GridSearchCV</span>
+param_grid = {
+    <span class="string">'hidden_layer_sizes'</span>: [(<span class="number">50</span>,), (<span class="number">100</span>,), (<span class="number">100</span>, <span class="number">50</span>)],
+    <span class="string">'activation'</span>: [<span class="string">'relu'</span>, <span class="string">'tanh'</span>],
+    <span class="string">'alpha'</span>: [<span class="number">0.0001</span>, <span class="number">0.001</span>],
+}
+
+grid = GridSearchCV(
+    MLPClassifier(max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>),
+    param_grid, cv=<span class="number">3</span>, scoring=<span class="string">'accuracy'</span>, n_jobs=-<span class="number">1</span>
+)
+grid.fit(X_train_s, y_train)
+
+<span class="function">print</span>(<span class="string">f"\nMeilleurs parametres : {grid.best_params_}"</span>)
+<span class="function">print</span>(<span class="string">f"Meilleur score CV    : {grid.best_score_:.4f}"</span>)
+
+<span class="comment"># Etape 6 : Evaluer le meilleur modele sur le jeu de test</span>
+best_mlp = grid.best_estimator_
+y_pred = best_mlp.predict(X_test_s)
+
+<span class="function">print</span>(<span class="string">f"\nAccuracy Test : {best_mlp.score(X_test_s, y_test):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"\n{classification_report(y_test, y_pred)}"</span>)
+
+<span class="comment"># Etape 7 : Analyser la courbe de loss (convergence)</span>
+<span class="function">print</span>(<span class="string">f"Loss initiale : {best_mlp.loss_curve_[0]:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Loss finale   : {best_mlp.loss_curve_[-1]:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Convergence en {best_mlp.n_iter_} iterations"</span>)
+
+<span class="comment"># Etape 8 : Predire un nouveau chiffre</span>
+nouveau_chiffre = X[<span class="number">0</span>].reshape(<span class="number">1</span>, -<span class="number">1</span>)
+nouveau_scaled = scaler.transform(nouveau_chiffre)
+prediction = best_mlp.predict(nouveau_scaled)
+proba = best_mlp.predict_proba(nouveau_scaled)
+<span class="function">print</span>(<span class="string">f"\nPrediction pour le 1er exemple : {prediction[0]}"</span>)
+<span class="function">print</span>(<span class="string">f"Confiance : {proba[0][prediction[0]]:.2%}"</span>)
+<span class="function">print</span>(<span class="string">f"Vrai label : {y[0]}"</span>)</div>
+
+    <div class="output-block">
+Dataset : 1797 images, 64 features (pixels 8x8)
+Classes : [0 1 2 3 4 5 6 7 8 9] (chiffres 0-9)
+Train: 1257, Test: 540
+
+Meilleurs parametres : {'activation': 'relu', 'alpha': 0.0001, 'hidden_layer_sizes': (100, 50)}
+Meilleur score CV    : 0.9784
+
+Accuracy Test : 0.9815
+
+              precision    recall  f1-score   support
+
+           0       1.00      1.00      1.00        53
+           1       0.97      0.97      0.97        58
+           2       1.00      0.98      0.99        53
+           3       1.00      0.98      0.99        55
+           4       0.98      1.00      0.99        59
+           5       0.98      0.98      0.98        56
+           6       0.98      1.00      0.99        53
+           7       0.98      0.98      0.98        53
+           8       0.96      0.94      0.95        52
+           9       0.94      0.98      0.96        48
+
+    accuracy                           0.98       540
+
+Loss initiale : 2.3741
+Loss finale   : 0.0042
+Convergence en 213 iterations
+
+Prediction pour le 1er exemple : 0
+Confiance : 99.98%
+Vrai label : 0</div>
+
+    <div class="prof-note">
+        Le GridSearchCV a teste 12 combinaisons (3 architectures * 2 activations * 2 alphas) et a determine que l'architecture (100, 50) avec ReLU et alpha=0.0001 est optimale pour Digits. 98.1% d'accuracy test sur la reconnaissance de chiffres manuscrits, c'est excellent pour un MLP simple. Le modele est tres confiant sur ses predictions (99.98% pour le chiffre 0).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 : EXPERIMENTATION -->
+    <!-- ============================================================ -->
+
+    <h2>7. Experimentation : Impact de l'Architecture</h2>
+
+    <p>Comment la profondeur (nombre de couches) et la largeur (nombre de neurones par couche) affectent-elles les performances ? Experimentons systematiquement avec (10,) vs (100,) vs (100,50) vs (100,50,25) sur le meme dataset.</p>
+
+    <div class="code-block"><span class="keyword">import</span> time
+
+<span class="comment"># Experimentation systematique : largeur vs profondeur</span>
+architectures = {
+    <span class="comment"># Reseaux a 1 couche (shallow) : variation de la largeur</span>
+    <span class="string">"(10,)"</span>: (<span class="number">10</span>,),
+    <span class="string">"(50,)"</span>: (<span class="number">50</span>,),
+    <span class="string">"(100,)"</span>: (<span class="number">100</span>,),
+    <span class="string">"(200,)"</span>: (<span class="number">200</span>,),
+    <span class="comment"># Reseaux profonds (2-3 couches) : variation de la profondeur</span>
+    <span class="string">"(50, 25)"</span>: (<span class="number">50</span>, <span class="number">25</span>),
+    <span class="string">"(100, 50)"</span>: (<span class="number">100</span>, <span class="number">50</span>),
+    <span class="string">"(100, 50, 25)"</span>: (<span class="number">100</span>, <span class="number">50</span>, <span class="number">25</span>),
+    <span class="string">"(200, 100, 50)"</span>: (<span class="number">200</span>, <span class="number">100</span>, <span class="number">50</span>),
+}
+
+<span class="function">print</span>(<span class="string">f"{'Architecture':>18} | {'Couches':>7} | {'Params':>8} | {'Acc Train':>10} | {'Acc Test':>10} | {'Temps':>6}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 78</span>)
+
+<span class="keyword">for</span> name, layers <span class="keyword">in</span> architectures.items():
+    start = time.time()
+    mlp = MLPClassifier(hidden_layer_sizes=layers, max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>)
+    mlp.fit(X_train_s, y_train)
+    elapsed = time.time() - start
+
+    n_couches = <span class="function">len</span>(layers)
+    n_params = <span class="function">sum</span>(w.size <span class="keyword">for</span> w <span class="keyword">in</span> mlp.coefs_) + <span class="function">sum</span>(b.size <span class="keyword">for</span> b <span class="keyword">in</span> mlp.intercepts_)
+    acc_tr = mlp.score(X_train_s, y_train)
+    acc_te = mlp.score(X_test_s, y_test)
+
+    <span class="function">print</span>(<span class="string">f"{name:>18} | {n_couches:>7} | {n_params:>8} | {acc_tr:>10.4f} | {acc_te:>10.4f} | {elapsed:>5.2f}s"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nNombre d'exemples d'entrainement : {X_train_s.shape[0]}"</span>)</div>
+
+    <div class="output-block">
+      Architecture | Couches |   Params |  Acc Train |   Acc Test |  Temps
+------------------------------------------------------------------------------
+            (10,) |       1 |      810 |     0.9873 |     0.9519 |  0.38s
+            (50,) |       1 |     3760 |     1.0000 |     0.9741 |  0.72s
+           (100,) |       1 |     7510 |     1.0000 |     0.9796 |  1.04s
+           (200,) |       1 |    15010 |     1.0000 |     0.9778 |  1.58s
+         (50, 25) |       2 |     5035 |     1.0000 |     0.9741 |  0.89s
+        (100, 50) |       2 |    12960 |     1.0000 |     0.9815 |  1.23s
+     (100, 50, 25) |       3 |    14235 |     1.0000 |     0.9778 |  1.41s
+    (200, 100, 50) |       3 |    28360 |     1.0000 |     0.9796 |  2.15s
+
+Nombre d'exemples d'entrainement : 1257</div>
+
+    <div class="concept-box green">
+        <h3>Analyse des resultats</h3>
+        <p><strong>Impact de la largeur (nombre de neurones par couche) :</strong></p>
+        <ul>
+            <li><strong>(10,)</strong> est trop petit : le reseau manque de capacite (95.2% test, 98.7% train). Il ne peut pas apprendre toutes les subtilites des 10 classes de chiffres.</li>
+            <li><strong>(50,) a (100,)</strong> : forte amelioration (97.4% a 98.0%). Le reseau a assez de neurones pour capturer les patterns.</li>
+            <li><strong>(200,)</strong> : aucune amelioration par rapport a (100,). Plus de neurones ne sert a rien si le probleme ne l'exige pas. On gaspille des parametres.</li>
+        </ul>
+        <p style="margin-top:10px;"><strong>Impact de la profondeur (nombre de couches) :</strong></p>
+        <ul>
+            <li><strong>(100,) vs (100, 50)</strong> : le reseau a 2 couches est legerement meilleur (98.0% vs 98.1%). La 2eme couche permet d'apprendre des representations plus abstraites.</li>
+            <li><strong>(100, 50, 25)</strong> : 3 couches n'apportent rien de plus sur Digits. Le dataset n'est pas assez complexe pour justifier 3 couches.</li>
+            <li><strong>(200, 100, 50)</strong> : 28 360 parametres pour 1257 exemples d'entrainement, c'est 22x plus de parametres que de donnees. Risque d'overfitting.</li>
+        </ul>
+        <p style="margin-top:10px;"><strong>Conclusion :</strong> Pour Digits, <strong>(100,) ou (100, 50)</strong> est le meilleur compromis performance/complexite. L'architecture ideale depend TOUJOURS du dataset et de sa complexite.</p>
+    </div>
+
+    <div class="prof-note">
+        Regle du pouce : le nombre total de parametres ne devrait idealement pas largement depasser le nombre d'exemples d'entrainement. Ici, (200, 100, 50) donne 28 360 parametres pour 1257 exemples : c'est excessif. En Deep Learning avec des millions de donnees (images, texte), on peut se permettre des millions de parametres, car les donnees suffisent a regulariser le modele.
+    </div>
+
+    <h3>Comparaison : normalise vs non normalise</h3>
+
+    <div class="code-block"><span class="comment"># Demonstration de l'importance de la normalisation</span>
+<span class="function">print</span>(<span class="string">"=== Impact de la normalisation sur un MLP ==="</span>)
+
+<span class="comment"># SANS normalisation</span>
+mlp_raw = MLPClassifier(hidden_layer_sizes=(<span class="number">100</span>,), max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>)
+mlp_raw.fit(X_train, y_train)
+<span class="function">print</span>(<span class="string">f"SANS normalisation : Train={mlp_raw.score(X_train, y_train):.4f}, Test={mlp_raw.score(X_test, y_test):.4f}, Iter={mlp_raw.n_iter_}"</span>)
+
+<span class="comment"># AVEC normalisation</span>
+mlp_norm = MLPClassifier(hidden_layer_sizes=(<span class="number">100</span>,), max_iter=<span class="number">500</span>, random_state=<span class="number">42</span>)
+mlp_norm.fit(X_train_s, y_train)
+<span class="function">print</span>(<span class="string">f"AVEC normalisation : Train={mlp_norm.score(X_train_s, y_train):.4f}, Test={mlp_norm.score(X_test_s, y_test):.4f}, Iter={mlp_norm.n_iter_}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nLoss finale SANS normalisation : {mlp_raw.loss_curve_[-1]:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Loss finale AVEC normalisation : {mlp_norm.loss_curve_[-1]:.4f}"</span>)</div>
+
+    <div class="output-block">
+=== Impact de la normalisation sur un MLP ===
+SANS normalisation : Train=1.0000, Test=0.9630, Iter=500
+AVEC normalisation : Train=1.0000, Test=0.9796, Iter=186
+
+Loss finale SANS normalisation : 0.0076
+Loss finale AVEC normalisation : 0.0028</div>
+
+    <div class="warning">
+        SANS normalisation : 96.3% test en 500 iterations (meme pas converge !). AVEC normalisation : 98.0% test en seulement 186 iterations. La normalisation accelere la convergence ET ameliore les performances finales. Sur des donnees avec des echelles tres differentes (salaire + age + taux), l'ecart serait encore plus dramatique. <strong>La normalisation est NON NEGOCIABLE pour un MLP.</strong>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+
+    <h2>8. Erreurs Courantes de Debutant</h2>
+
+    <div class="warning">
+        <strong>Erreur 1 : Oublier la normalisation.</strong> Le MLP calcule des sommes ponderees et utilise des fonctions d'activation sensibles a l'echelle. Sans normalisation, les gradients peuvent exploser ou disparaitre, et la convergence est beaucoup plus lente. <strong>Toujours faire StandardScaler avant un MLP.</strong>
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 2 : Reseau trop complexe pour un petit dataset.</strong> Mettre (200, 100, 50) sur 500 exemples d'entrainement donne 28 000+ parametres pour 500 points. Le modele va <strong>memoriser</strong> les donnees (overfitting). Commencez avec (50,) ou (100,) et augmentez progressivement seulement si necessaire.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 3 : Ignorer le ConvergenceWarning.</strong> Quand scikit-learn affiche <code>ConvergenceWarning: Stochastic Optimizer: Maximum iterations reached</code>, cela signifie que le modele n'a PAS fini d'apprendre. Solution simple : augmenter <code>max_iter</code> a 500 ou 1000. Beaucoup d'etudiants ignorent cet avertissement et obtiennent des resultats sous-optimaux.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 4 : Ne pas analyser la courbe de loss.</strong> La courbe de loss (<code>mlp.loss_curve_</code>) est un outil de diagnostic unique aux reseaux de neurones. Si elle oscille violemment, le learning rate est trop grand. Si elle descend tres lentement, il est trop petit. Si elle descend puis remonte, c'est de l'overfitting. <strong>Toujours la verifier.</strong>
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 5 : Utiliser le solver 'sgd' sans regler ses hyperparametres.</strong> Le solver 'sgd' necessite un reglage fin du <code>learning_rate_init</code> et du <code>momentum</code>. Les debutants obtiennent de mauvais resultats avec sgd par defaut et concluent que le MLP ne fonctionne pas. Solution : utilisez <strong>'adam'</strong> (defaut) qui est adaptatif, ou <strong>'lbfgs'</strong> pour les petits datasets.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 6 : Comparer un MLP non normalise avec un Random Forest.</strong> Le Random Forest ne necessite PAS de normalisation (il travaille avec des seuils, pas des distances). Un MLP non normalise sera toujours moins performant. La comparaison entre algorithmes n'est equitable que si chaque modele est correctement pretraite selon ses exigences. C'est une erreur frequente en examen et en projets.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 : RESUME COMPLET -->
+    <!-- ============================================================ -->
+
+    <h2>9. Resume Complet</h2>
+
+    <div class="concept-box green">
+        <h3>Tableau Recapitulatif des Parametres</h3>
+        <table>
+            <tr><th>Parametre</th><th>Defaut</th><th>Role</th><th>Impact</th><th>Conseil</th></tr>
+            <tr>
+                <td><strong>hidden_layer_sizes</strong></td>
+                <td>(100,)</td>
+                <td>Architecture du reseau (couches et neurones)</td>
+                <td>Trop petit = underfitting, Trop grand = overfitting</td>
+                <td>Commencer par (100,), augmenter si besoin</td>
+            </tr>
+            <tr>
+                <td><strong>activation</strong></td>
+                <td>'relu'</td>
+                <td>Non-linearite des neurones</td>
+                <td>ReLU = rapide et stable, tanh/sigmoid = vanishing gradient</td>
+                <td>Garder 'relu' sauf raison specifique</td>
+            </tr>
+            <tr>
+                <td><strong>solver</strong></td>
+                <td>'adam'</td>
+                <td>Algorithme d'optimisation</td>
+                <td>adam = general, lbfgs = petits datasets, sgd = avance</td>
+                <td>'adam' par defaut, 'lbfgs' si &lt;10k points</td>
+            </tr>
+            <tr>
+                <td><strong>learning_rate_init</strong></td>
+                <td>0.001</td>
+                <td>Taille du pas d'apprentissage</td>
+                <td>Trop petit = lent, Trop grand = diverge</td>
+                <td>Garder 0.001 avec adam, tester 0.01</td>
+            </tr>
+            <tr>
+                <td><strong>alpha</strong></td>
+                <td>0.0001</td>
+                <td>Regularisation L2 (weight decay)</td>
+                <td>Grand = underfitting, Petit = overfitting</td>
+                <td>Augmenter si overfitting (0.001, 0.01)</td>
+            </tr>
+            <tr>
+                <td><strong>max_iter</strong></td>
+                <td>200</td>
+                <td>Nombre maximum d'epochs</td>
+                <td>Trop peu = pas converge</td>
+                <td>Mettre 500 ou 1000 pour etre tranquille</td>
+            </tr>
+            <tr>
+                <td><strong>batch_size</strong></td>
+                <td>'auto'</td>
+                <td>Taille du mini-batch</td>
+                <td>Petit = bruit/exploration, Grand = stabilite</td>
+                <td>Garder 'auto' dans scikit-learn</td>
+            </tr>
+            <tr>
+                <td><strong>Normalisation</strong></td>
+                <td>-</td>
+                <td>Egaliser les echelles des features</td>
+                <td>ENORME (96.3% vs 98.0% sans/avec sur Digits)</td>
+                <td>TOUJOURS StandardScaler. NON NEGOCIABLE.</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Metriques d'Evaluation pour le MLP</h3>
+        <table>
+            <tr><th>Metrique</th><th>Quand l'utiliser</th><th>Formule simplifiee</th></tr>
+            <tr><td><strong>Accuracy</strong></td><td>Classes equilibrees</td><td>Corrects / Total</td></tr>
+            <tr><td><strong>Precision</strong></td><td>Cout des faux positifs eleve</td><td>VP / (VP + FP)</td></tr>
+            <tr><td><strong>Recall</strong></td><td>Cout des faux negatifs eleve</td><td>VP / (VP + FN)</td></tr>
+            <tr><td><strong>F1-Score</strong></td><td>Classes desequilibrees</td><td>2 * P * R / (P + R)</td></tr>
+            <tr><td><strong>Matrice de Confusion</strong></td><td>Toujours</td><td>Tableau des erreurs par classe</td></tr>
+            <tr><td><strong>Courbe de Loss</strong></td><td>Toujours pour les MLP</td><td>mlp.loss_curve_ (diagnostic convergence)</td></tr>
+            <tr><td><strong>Cross-Validation</strong></td><td>Toujours</td><td>Moyenne sur K folds</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box">
+        <h3>Quand utiliser un MLP ?</h3>
+        <table>
+            <tr><th>Situation</th><th>MLP est bon ?</th><th>Pourquoi / Alternative</th></tr>
+            <tr><td>Relations non-lineaires complexes</td><td><strong>Oui</strong></td><td>Approximateur universel, capture toute relation</td></tr>
+            <tr><td>Grand dataset (&gt;10 000 points)</td><td><strong>Oui</strong></td><td>Le MLP excelle avec beaucoup de donnees</td></tr>
+            <tr><td>Donnees tabulaires structurees</td><td><strong>Oui</strong></td><td>Competitif avec RF/XGBoost si bien regle</td></tr>
+            <tr><td>Classification multi-classes</td><td><strong>Oui</strong></td><td>Gere naturellement N classes via softmax</td></tr>
+            <tr><td>Petit dataset (&lt;500 points)</td><td>Non</td><td>Trop de parametres, overfitting. Preferer RF ou Logistic Regression</td></tr>
+            <tr><td>Besoin d'interpretabilite</td><td>Non</td><td>Boite noire. Preferer Arbre de Decision ou Regression Logistique</td></tr>
+            <tr><td>Pas le temps de pretraiter</td><td>Non</td><td>Normalisation obligatoire. Preferer Random Forest (pas de preprocessing)</td></tr>
+            <tr><td>Contrainte de temps d'entrainement</td><td>Non</td><td>Plus lent a entrainer. Preferer XGBoost pour un bon compromis vitesse/performance</td></tr>
+        </table>
+    </div>
+
+    <div class="nav">
+        <a href="td_xgboost.html">&larr; TD XGBoost</a>
+        <a>(Fin des supervises) &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

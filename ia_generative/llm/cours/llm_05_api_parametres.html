@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cours LLM 05 - APIs et Param&egrave;tres</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>APIs LLM et Param&egrave;tres - Contr&ocirc;ler la G&eacute;n&eacute;ration</h1>
+    <p class="subtitle">Cours 05 - Ma&icirc;triser les APIs d'OpenAI, Anthropic et les param&egrave;tres qui contr&ocirc;lent le comportement des LLMs</p>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1 : LES APIs LLM -->
+    <!-- ============================================================ -->
+    <h2>1. Les APIs LLM</h2>
+
+    <div class="definition">
+        Une <strong>API LLM</strong> (Application Programming Interface) est une interface qui permet &agrave; votre code d'envoyer des requ&ecirc;tes textuelles &agrave; un mod&egrave;le de langage h&eacute;berg&eacute; dans le cloud et de recevoir des r&eacute;ponses g&eacute;n&eacute;r&eacute;es. Vous n'avez pas besoin d'h&eacute;berger le mod&egrave;le vous-m&ecirc;me : vous payez &agrave; l'utilisation (par token).
+    </div>
+
+    <h3>1.1 Les principaux fournisseurs (2025-2026)</h3>
+
+    <table>
+        <tr>
+            <th>Fournisseur</th>
+            <th>Mod&egrave;les phares</th>
+            <th>Point fort</th>
+        </tr>
+        <tr>
+            <td><strong>OpenAI</strong></td>
+            <td>GPT-4o, GPT-4o-mini, o3, o4-mini</td>
+            <td>&Eacute;cosyst&egrave;me mature, Structured Outputs</td>
+        </tr>
+        <tr>
+            <td><strong>Anthropic</strong></td>
+            <td>Claude Opus 4.5, Claude Sonnet 4.5, Claude Haiku 4.5</td>
+            <td>S&eacute;curit&eacute;, fen&ecirc;tre de contexte 200K-1M tokens</td>
+        </tr>
+        <tr>
+            <td><strong>Google</strong></td>
+            <td>Gemini 2.5 Pro, Gemini 2.5 Flash</td>
+            <td>Multimodal natif, longue fen&ecirc;tre contexte</td>
+        </tr>
+        <tr>
+            <td><strong>Meta (open source)</strong></td>
+            <td>Llama 4 Scout, Llama 4 Maverick</td>
+            <td>Gratuit, auto-h&eacute;bergeable</td>
+        </tr>
+        <tr>
+            <td><strong>Mistral AI</strong></td>
+            <td>Mistral Large, Mistral Medium</td>
+            <td>Entreprise fran&ccedil;aise, souverainet&eacute; des donn&eacute;es</td>
+        </tr>
+    </table>
+
+    <h3>1.2 Structure d'un appel API - OpenAI</h3>
+
+    <div class="code-block"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+<span class="comment"># Initialisation du client</span>
+client = <span class="function">OpenAI</span>(api_key=<span class="string">"sk-votre-cle-api"</span>)
+
+<span class="comment"># Appel API de base</span>
+response = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,                    <span class="comment"># Mod&egrave;le &agrave; utiliser</span>
+    messages=[                              <span class="comment"># Historique de conversation</span>
+        {
+            <span class="string">"role"</span>: <span class="string">"system"</span>,             <span class="comment"># Message syst&egrave;me (r&ocirc;le)</span>
+            <span class="string">"content"</span>: <span class="string">"Tu es un assistant utile et concis."</span>
+        },
+        {
+            <span class="string">"role"</span>: <span class="string">"user"</span>,               <span class="comment"># Message de l'utilisateur</span>
+            <span class="string">"content"</span>: <span class="string">"Qu'est-ce qu'une API REST ?"</span>
+        }
+    ],
+    temperature=<span class="number">0.7</span>,                    <span class="comment"># Cr&eacute;ativit&eacute; (0.0 &agrave; 2.0)</span>
+    max_tokens=<span class="number">500</span>,                      <span class="comment"># Longueur max de la r&eacute;ponse</span>
+    top_p=<span class="number">1.0</span>,                            <span class="comment"># Nucleus sampling</span>
+)
+
+<span class="comment"># Extraire la r&eacute;ponse</span>
+reponse_texte = response.choices[<span class="number">0</span>].message.content
+tokens_utilises = response.usage.total_tokens
+
+<span class="function">print</span>(<span class="string">f"R&eacute;ponse : <span class="keyword">{reponse_texte}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Tokens utilis&eacute;s : <span class="keyword">{tokens_utilises}</span>"</span>)</div>
+
+    <div class="output-block">R&eacute;ponse : Une API REST (Representational State Transfer) est une interface
+qui permet &agrave; des applications de communiquer via HTTP en utilisant des
+m&eacute;thodes standard (GET, POST, PUT, DELETE) pour manipuler des ressources
+identifi&eacute;es par des URLs.
+Tokens utilis&eacute;s : 127</div>
+
+    <h3>1.3 Structure d'un appel API - Anthropic (Claude)</h3>
+
+    <div class="code-block"><span class="keyword">import</span> anthropic
+
+<span class="comment"># Initialisation du client Anthropic</span>
+client = anthropic.<span class="function">Anthropic</span>(api_key=<span class="string">"sk-ant-votre-cle-api"</span>)
+
+<span class="comment"># Appel API Claude</span>
+response = client.messages.<span class="function">create</span>(
+    model=<span class="string">"claude-sonnet-4-5-20250514"</span>,  <span class="comment"># Mod&egrave;le Claude</span>
+    max_tokens=<span class="number">1024</span>,                       <span class="comment"># Longueur max</span>
+    system=<span class="string">"Tu es un assistant technique expert en Python."</span>,  <span class="comment"># System prompt</span>
+    messages=[
+        {
+            <span class="string">"role"</span>: <span class="string">"user"</span>,
+            <span class="string">"content"</span>: <span class="string">"Explique les list comprehensions en Python."</span>
+        }
+    ],
+    temperature=<span class="number">0.5</span>,                      <span class="comment"># Cr&eacute;ativit&eacute; (0.0 &agrave; 1.0)</span>
+    top_p=<span class="number">0.9</span>,                              <span class="comment"># Nucleus sampling</span>
+)
+
+<span class="comment"># Extraire la r&eacute;ponse</span>
+reponse_texte = response.content[<span class="number">0</span>].text
+tokens_entree = response.usage.input_tokens
+tokens_sortie = response.usage.output_tokens
+
+<span class="function">print</span>(<span class="string">f"R&eacute;ponse : <span class="keyword">{reponse_texte}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Tokens entr&eacute;e : <span class="keyword">{tokens_entree}</span> | Tokens sortie : <span class="keyword">{tokens_sortie}</span>"</span>)</div>
+
+    <div class="output-block">R&eacute;ponse : Une list comprehension est une syntaxe concise pour cr&eacute;er
+des listes en Python. Au lieu d'utiliser une boucle for classique,
+vous &eacute;crivez : [expression for item in iterable if condition].
+Tokens entr&eacute;e : 42 | Tokens sortie : 89</div>
+
+    <div class="prof-note">
+        Notez les diff&eacute;rences entre les deux APIs : chez OpenAI, le system prompt est un message dans la liste <code>messages</code>. Chez Anthropic, c'est un param&egrave;tre <code>system</code> s&eacute;par&eacute;. La structure de la r&eacute;ponse diff&egrave;re aussi : <code>response.choices[0].message.content</code> (OpenAI) vs <code>response.content[0].text</code> (Anthropic).
+    </div>
+
+    <div class="svg-container">
+        <svg width="750" height="300" viewBox="0 0 750 300">
+            <defs>
+                <linearGradient id="apiGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#1a1a2e"/>
+                    <stop offset="100%" style="stop-color:#16213e"/>
+                </linearGradient>
+            </defs>
+            <rect x="5" y="5" width="740" height="290" rx="12" fill="url(#apiGrad)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="375" y="35" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Flux d'un appel API LLM</text>
+            <!-- Client -->
+            <rect x="30" y="70" width="130" height="60" rx="10" fill="rgba(86,156,214,0.2)" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="95" y="95" fill="#569cd6" font-size="13" font-weight="bold" text-anchor="middle">Votre Code</text>
+            <text x="95" y="115" fill="#aaa" font-size="10" text-anchor="middle">Python / JS / etc.</text>
+            <!-- Arrow 1 -->
+            <line x1="160" y1="95" x2="220" y2="95" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowOrange)"/>
+            <text x="190" y="85" fill="#aaa" font-size="9" text-anchor="middle">HTTPS POST</text>
+            <defs><marker id="arrowOrange" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker></defs>
+            <!-- API -->
+            <rect x="220" y="60" width="160" height="80" rx="10" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="300" y="90" fill="#ff6b35" font-size="13" font-weight="bold" text-anchor="middle">API Endpoint</text>
+            <text x="300" y="110" fill="#aaa" font-size="10" text-anchor="middle">api.openai.com</text>
+            <text x="300" y="125" fill="#aaa" font-size="10" text-anchor="middle">/v1/chat/completions</text>
+            <!-- Arrow 2 -->
+            <line x1="380" y1="95" x2="440" y2="95" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowOrange)"/>
+            <text x="410" y="85" fill="#aaa" font-size="9" text-anchor="middle">Inference</text>
+            <!-- LLM -->
+            <rect x="440" y="60" width="140" height="80" rx="10" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="510" y="90" fill="#00ff88" font-size="13" font-weight="bold" text-anchor="middle">Mod&egrave;le LLM</text>
+            <text x="510" y="110" fill="#aaa" font-size="10" text-anchor="middle">GPT-4o / Claude</text>
+            <text x="510" y="125" fill="#aaa" font-size="10" text-anchor="middle">GPU Cluster</text>
+            <!-- Arrow 3 (return) -->
+            <line x1="510" y1="140" x2="510" y2="180" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowGreen)"/>
+            <defs><marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/></marker></defs>
+            <!-- Response -->
+            <rect x="420" y="180" width="180" height="70" rx="10" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="1"/>
+            <text x="510" y="205" fill="#00ff88" font-size="12" font-weight="bold" text-anchor="middle">R&eacute;ponse JSON</text>
+            <text x="510" y="225" fill="#aaa" font-size="10" text-anchor="middle">content + usage</text>
+            <text x="510" y="240" fill="#aaa" font-size="10" text-anchor="middle">+ metadata</text>
+            <!-- Arrow back -->
+            <line x1="420" y1="215" x2="95" y2="215" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="6" marker-end="url(#arrowGreen2)"/>
+            <defs><marker id="arrowGreen2" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto"><polygon points="10 0, 0 3.5, 10 7" fill="#00ff88"/></marker></defs>
+            <text x="260" y="208" fill="#aaa" font-size="9" text-anchor="middle">JSON Response (HTTPS)</text>
+            <!-- Params -->
+            <rect x="600" y="60" width="130" height="190" rx="10" fill="rgba(255,140,66,0.1)" stroke="#ff8c42" stroke-width="1"/>
+            <text x="665" y="85" fill="#ff8c42" font-size="12" font-weight="bold" text-anchor="middle">Param&egrave;tres</text>
+            <text x="665" y="110" fill="#e0e0e0" font-size="10" text-anchor="middle">temperature</text>
+            <text x="665" y="130" fill="#e0e0e0" font-size="10" text-anchor="middle">top_p</text>
+            <text x="665" y="150" fill="#e0e0e0" font-size="10" text-anchor="middle">max_tokens</text>
+            <text x="665" y="170" fill="#e0e0e0" font-size="10" text-anchor="middle">stop</text>
+            <text x="665" y="190" fill="#e0e0e0" font-size="10" text-anchor="middle">frequency_penalty</text>
+            <text x="665" y="210" fill="#e0e0e0" font-size="10" text-anchor="middle">presence_penalty</text>
+            <text x="665" y="230" fill="#e0e0e0" font-size="10" text-anchor="middle">stream</text>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2 : TEMPERATURE -->
+    <!-- ============================================================ -->
+    <h2>2. Le param&egrave;tre Temperature</h2>
+
+    <div class="definition">
+        La <strong>temperature</strong> contr&ocirc;le le degr&eacute; d'al&eacute;atoire (ou de "cr&eacute;ativit&eacute;") dans la g&eacute;n&eacute;ration de texte. Elle modifie la <strong>distribution de probabilit&eacute;</strong> des tokens suivants : une temp&eacute;rature basse concentre les probabilit&eacute;s sur les tokens les plus probables, tandis qu'une temp&eacute;rature haute aplatit la distribution, rendant les tokens moins probables plus accessibles.
+    </div>
+
+    <div class="param-box">
+        <h4>Temperature : plage et comportement</h4>
+        <ul>
+            <li><strong>0.0</strong> : D&eacute;terministe - Toujours le m&ecirc;me token le plus probable. Id&eacute;al pour les t&acirc;ches factuelles.</li>
+            <li><strong>0.3 - 0.5</strong> : Peu cr&eacute;atif - R&eacute;ponses coh&eacute;rentes, l&eacute;g&egrave;rement vari&eacute;es. Bon pour le code et l'analyse.</li>
+            <li><strong>0.7</strong> : &Eacute;quilibr&eacute; (valeur par d&eacute;faut courante) - Bon &eacute;quilibre entre coh&eacute;rence et cr&eacute;ativit&eacute;.</li>
+            <li><strong>1.0</strong> : Cr&eacute;atif - Distribution naturelle. Bon pour l'&eacute;criture cr&eacute;ative.</li>
+            <li><strong>1.5 - 2.0</strong> : Tr&egrave;s al&eacute;atoire - Risque d'incoh&eacute;rence. Rarement utile en production.</li>
+        </ul>
+    </div>
+
+    <div class="svg-container">
+        <svg width="750" height="350" viewBox="0 0 750 350">
+            <rect x="5" y="5" width="740" height="340" rx="12" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="375" y="35" fill="#ff8c42" font-size="16" font-weight="bold" text-anchor="middle">Distribution de probabilit&eacute; selon la Temperature</text>
+
+            <!-- Axis labels -->
+            <text x="130" y="320" fill="#aaa" font-size="11" text-anchor="middle">Temp = 0.0</text>
+            <text x="375" y="320" fill="#aaa" font-size="11" text-anchor="middle">Temp = 0.7</text>
+            <text x="620" y="320" fill="#aaa" font-size="11" text-anchor="middle">Temp = 1.5</text>
+
+            <!-- Chart 1 : Temp 0.0 (spike) -->
+            <line x1="40" y1="290" x2="220" y2="290" stroke="#555" stroke-width="1"/>
+            <rect x="60" y="80" width="25" height="210" rx="3" fill="#00ff88" opacity="0.8"/>
+            <rect x="95" y="260" width="25" height="30" rx="3" fill="#569cd6" opacity="0.5"/>
+            <rect x="130" y="275" width="25" height="15" rx="3" fill="#569cd6" opacity="0.3"/>
+            <rect x="165" y="282" width="25" height="8" rx="3" fill="#569cd6" opacity="0.2"/>
+            <text x="72" y="75" fill="#00ff88" font-size="10" text-anchor="middle">92%</text>
+            <text x="107" y="255" fill="#aaa" font-size="9" text-anchor="middle">5%</text>
+            <text x="142" y="270" fill="#aaa" font-size="9" text-anchor="middle">2%</text>
+            <text x="177" y="277" fill="#aaa" font-size="9" text-anchor="middle">1%</text>
+            <text x="72" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">chat</text>
+            <text x="107" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">robot</text>
+            <text x="142" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">IA</text>
+            <text x="177" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">bot</text>
+
+            <!-- Chart 2 : Temp 0.7 (balanced) -->
+            <line x1="285" y1="290" x2="465" y2="290" stroke="#555" stroke-width="1"/>
+            <rect x="305" y="140" width="25" height="150" rx="3" fill="#00ff88" opacity="0.7"/>
+            <rect x="340" y="190" width="25" height="100" rx="3" fill="#569cd6" opacity="0.6"/>
+            <rect x="375" y="230" width="25" height="60" rx="3" fill="#569cd6" opacity="0.5"/>
+            <rect x="410" y="255" width="25" height="35" rx="3" fill="#569cd6" opacity="0.4"/>
+            <text x="317" y="135" fill="#00ff88" font-size="10" text-anchor="middle">45%</text>
+            <text x="352" y="185" fill="#aaa" font-size="9" text-anchor="middle">28%</text>
+            <text x="387" y="225" fill="#aaa" font-size="9" text-anchor="middle">17%</text>
+            <text x="422" y="250" fill="#aaa" font-size="9" text-anchor="middle">10%</text>
+            <text x="317" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">chat</text>
+            <text x="352" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">robot</text>
+            <text x="387" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">IA</text>
+            <text x="422" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">bot</text>
+
+            <!-- Chart 3 : Temp 1.5 (flat) -->
+            <line x1="530" y1="290" x2="710" y2="290" stroke="#555" stroke-width="1"/>
+            <rect x="550" y="215" width="25" height="75" rx="3" fill="#ff4444" opacity="0.6"/>
+            <rect x="585" y="225" width="25" height="65" rx="3" fill="#ff4444" opacity="0.5"/>
+            <rect x="620" y="235" width="25" height="55" rx="3" fill="#ff4444" opacity="0.5"/>
+            <rect x="655" y="240" width="25" height="50" rx="3" fill="#ff4444" opacity="0.4"/>
+            <text x="562" y="210" fill="#ff4444" font-size="10" text-anchor="middle">28%</text>
+            <text x="597" y="220" fill="#aaa" font-size="9" text-anchor="middle">26%</text>
+            <text x="632" y="230" fill="#aaa" font-size="9" text-anchor="middle">24%</text>
+            <text x="667" y="235" fill="#aaa" font-size="9" text-anchor="middle">22%</text>
+            <text x="562" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">chat</text>
+            <text x="597" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">robot</text>
+            <text x="632" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">IA</text>
+            <text x="667" y="305" fill="#e0e0e0" font-size="9" text-anchor="middle">bot</text>
+
+            <!-- Labels -->
+            <text x="130" y="60" fill="#00ff88" font-size="12" font-weight="bold" text-anchor="middle">D&eacute;terministe</text>
+            <text x="375" y="60" fill="#569cd6" font-size="12" font-weight="bold" text-anchor="middle">&Eacute;quilibr&eacute;</text>
+            <text x="620" y="60" fill="#ff4444" font-size="12" font-weight="bold" text-anchor="middle">Al&eacute;atoire</text>
+        </svg>
+    </div>
+
+    <h3>2.1 Comparaison pratique des temp&eacute;ratures</h3>
+
+    <div class="code-block"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+client = <span class="function">OpenAI</span>()
+
+<span class="keyword">def</span> <span class="function">generer_avec_temperature</span>(prompt, temp):
+    <span class="string">"""G&eacute;n&egrave;re une r&eacute;ponse avec une temp&eacute;rature donn&eacute;e."""</span>
+    response = client.chat.completions.<span class="function">create</span>(
+        model=<span class="string">"gpt-4o"</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}],
+        temperature=temp,
+        max_tokens=<span class="number">100</span>
+    )
+    <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.content
+
+prompt = <span class="string">"Invente un nom pour une startup d'IA"</span>
+
+<span class="comment"># Temp&eacute;rature 0.0 - Toujours le m&ecirc;me r&eacute;sultat</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):
+    <span class="function">print</span>(<span class="string">f"Temp 0.0, essai {i+1} :"</span>, <span class="function">generer_avec_temperature</span>(prompt, <span class="number">0.0</span>))
+
+<span class="comment"># Temp&eacute;rature 0.7 - Vari&eacute; mais coh&eacute;rent</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):
+    <span class="function">print</span>(<span class="string">f"Temp 0.7, essai {i+1} :"</span>, <span class="function">generer_avec_temperature</span>(prompt, <span class="number">0.7</span>))
+
+<span class="comment"># Temp&eacute;rature 1.5 - Tr&egrave;s cr&eacute;atif, parfois incoh&eacute;rent</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):
+    <span class="function">print</span>(<span class="string">f"Temp 1.5, essai {i+1} :"</span>, <span class="function">generer_avec_temperature</span>(prompt, <span class="number">1.5</span>))</div>
+
+    <div class="output-block">Temp 0.0, essai 1 : NeuralForge
+Temp 0.0, essai 2 : NeuralForge
+Temp 0.0, essai 3 : NeuralForge
+
+Temp 0.7, essai 1 : CogniWave
+Temp 0.7, essai 2 : SynapTech
+Temp 0.7, essai 3 : MindBridge AI
+
+Temp 1.5, essai 1 : Zephyra Cognit&ecirc;l
+Temp 1.5, essai 2 : QuantumDream Nexus++
+Temp 1.5, essai 3 : Bl&uuml;fyre Synth_Minds</div>
+
+    <div class="effect">
+        &Agrave; temperature 0.0, le r&eacute;sultat est toujours identique. &Agrave; 0.7, les noms sont cr&eacute;atifs et utilisables. &Agrave; 1.5, on obtient des r&eacute;sultats originaux mais parfois bizarres ou mal form&eacute;s.
+    </div>
+
+    <div class="prof-note">
+        Chez Anthropic (Claude), la temperature va de 0.0 &agrave; 1.0 (pas 2.0 comme chez OpenAI). La valeur par d&eacute;faut pour GPT-4o est 1.0. Pour les t&acirc;ches de code ou d'extraction de donn&eacute;es, utilisez toujours 0.0 &agrave; 0.3.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3 : TOP_P -->
+    <!-- ============================================================ -->
+    <h2>3. top_p (Nucleus Sampling)</h2>
+
+    <div class="definition">
+        Le param&egrave;tre <strong>top_p</strong> (aussi appel&eacute; "nucleus sampling") d&eacute;finit un <strong>seuil de probabilit&eacute; cumul&eacute;e</strong>. Le mod&egrave;le ne consid&egrave;re que les tokens dont la probabilit&eacute; cumul&eacute;e atteint <code>p</code>. Par exemple, <code>top_p=0.9</code> signifie que le mod&egrave;le choisit parmi les tokens qui repr&eacute;sentent 90% de la masse de probabilit&eacute;, ignorant les 10% les plus improbables.
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="250" viewBox="0 0 700 250">
+            <rect x="5" y="5" width="690" height="240" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="350" y="35" fill="#569cd6" font-size="15" font-weight="bold" text-anchor="middle">Nucleus Sampling : top_p = 0.9</text>
+            <!-- Bars -->
+            <rect x="60" y="60" width="80" height="140" rx="4" fill="#00ff88" opacity="0.8"/>
+            <text x="100" y="55" fill="#00ff88" font-size="11" text-anchor="middle">40%</text>
+            <text x="100" y="215" fill="#e0e0e0" font-size="10" text-anchor="middle">"bonjour"</text>
+            <rect x="160" y="100" width="80" height="100" rx="4" fill="#00ff88" opacity="0.7"/>
+            <text x="200" y="95" fill="#00ff88" font-size="11" text-anchor="middle">28%</text>
+            <text x="200" y="215" fill="#e0e0e0" font-size="10" text-anchor="middle">"salut"</text>
+            <rect x="260" y="140" width="80" height="60" rx="4" fill="#00ff88" opacity="0.6"/>
+            <text x="300" y="135" fill="#00ff88" font-size="11" text-anchor="middle">15%</text>
+            <text x="300" y="215" fill="#e0e0e0" font-size="10" text-anchor="middle">"coucou"</text>
+            <rect x="360" y="165" width="80" height="35" rx="4" fill="#569cd6" opacity="0.5"/>
+            <text x="400" y="160" fill="#569cd6" font-size="11" text-anchor="middle">7%</text>
+            <text x="400" y="215" fill="#e0e0e0" font-size="10" text-anchor="middle">"hey"</text>
+            <!-- Cutoff line -->
+            <line x1="440" y1="50" x2="440" y2="210" stroke="#ff4444" stroke-width="2" stroke-dasharray="6"/>
+            <text x="445" y="50" fill="#ff4444" font-size="11">Seuil 90%</text>
+            <!-- Excluded -->
+            <rect x="460" y="180" width="80" height="20" rx="4" fill="#ff4444" opacity="0.3"/>
+            <text x="500" y="175" fill="#ff4444" font-size="10" text-anchor="middle">3%</text>
+            <text x="500" y="215" fill="#666" font-size="10" text-anchor="middle">"wesh"</text>
+            <rect x="560" y="185" width="80" height="15" rx="4" fill="#ff4444" opacity="0.2"/>
+            <text x="600" y="180" fill="#ff4444" font-size="10" text-anchor="middle">2%</text>
+            <text x="600" y="215" fill="#666" font-size="10" text-anchor="middle">"yo"</text>
+            <!-- Legend -->
+            <rect x="460" y="230" width="12" height="12" fill="#00ff88" opacity="0.7"/>
+            <text x="478" y="241" fill="#aaa" font-size="10">Inclus (cumul&eacute; &le; 90%)</text>
+            <rect x="580" y="230" width="12" height="12" fill="#ff4444" opacity="0.3"/>
+            <text x="598" y="241" fill="#aaa" font-size="10">Exclus</text>
+        </svg>
+    </div>
+
+    <h3>3.1 Temperature vs top_p</h3>
+
+    <table>
+        <tr>
+            <th>Crit&egrave;re</th>
+            <th>Temperature</th>
+            <th>top_p</th>
+        </tr>
+        <tr>
+            <td><strong>M&eacute;canisme</strong></td>
+            <td>Modifie les probabilit&eacute;s de TOUS les tokens</td>
+            <td>Coupe les tokens les moins probables</td>
+        </tr>
+        <tr>
+            <td><strong>Plage</strong></td>
+            <td>0.0 &agrave; 2.0 (OpenAI) / 0.0 &agrave; 1.0 (Anthropic)</td>
+            <td>0.0 &agrave; 1.0</td>
+        </tr>
+        <tr>
+            <td><strong>Valeur pour d&eacute;terminisme</strong></td>
+            <td>0.0</td>
+            <td>Non applicable (utiliser temperature 0.0)</td>
+        </tr>
+        <tr>
+            <td><strong>Valeur par d&eacute;faut</strong></td>
+            <td>1.0 (OpenAI) / 1.0 (Anthropic)</td>
+            <td>1.0</td>
+        </tr>
+        <tr>
+            <td><strong>Usage recommand&eacute;</strong></td>
+            <td>Contr&ocirc;le g&eacute;n&eacute;ral de la cr&eacute;ativit&eacute;</td>
+            <td>&Eacute;liminer les tokens improbables/aberrants</td>
+        </tr>
+    </table>
+
+    <div class="warning">
+        OpenAI recommande de modifier soit la temperature, soit top_p, mais <strong>pas les deux en m&ecirc;me temps</strong>. Modifier les deux peut cr&eacute;er des interactions impr&eacute;visibles. La bonne pratique : fixez top_p &agrave; 1.0 et ajustez uniquement la temperature (ou inversement).
+    </div>
+
+    <div class="code-block"><span class="comment"># Bonne pratique : ajuster un seul param&egrave;tre &agrave; la fois</span>
+
+<span class="comment"># Option 1 : Utiliser temperature (plus intuitif)</span>
+response = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"&Eacute;cris un po&egrave;me"</span>}],
+    temperature=<span class="number">0.9</span>,   <span class="comment"># Ajust&eacute;</span>
+    top_p=<span class="number">1.0</span>,           <span class="comment"># D&eacute;faut</span>
+)
+
+<span class="comment"># Option 2 : Utiliser top_p (coupe les extr&ecirc;mes)</span>
+response = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Analyse ce contrat"</span>}],
+    temperature=<span class="number">1.0</span>,   <span class="comment"># D&eacute;faut</span>
+    top_p=<span class="number">0.85</span>,         <span class="comment"># Ajust&eacute; : ignore les 15% les moins probables</span>
+)</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4 : MAX_TOKENS -->
+    <!-- ============================================================ -->
+    <h2>4. max_tokens - Contr&ocirc;le de la longueur</h2>
+
+    <div class="definition">
+        Le param&egrave;tre <strong>max_tokens</strong> d&eacute;finit le <strong>nombre maximum de tokens</strong> que le mod&egrave;le peut g&eacute;n&eacute;rer dans sa r&eacute;ponse. Si la r&eacute;ponse atteint cette limite, elle est <strong>tronqu&eacute;e brutalement</strong> (m&ecirc;me en plein milieu d'une phrase).
+    </div>
+
+    <div class="code-block"><span class="comment"># D&eacute;monstration de l'impact de max_tokens</span>
+
+<span class="comment"># R&eacute;ponse courte (50 tokens ~ 35 mots)</span>
+response_courte = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Explique la gravit&eacute;"</span>}],
+    max_tokens=<span class="number">50</span>
+)
+
+<span class="comment"># R&eacute;ponse compl&egrave;te (500 tokens ~ 375 mots)</span>
+response_complete = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Explique la gravit&eacute;"</span>}],
+    max_tokens=<span class="number">500</span>
+)
+
+<span class="comment"># V&eacute;rifier si la r&eacute;ponse a &eacute;t&eacute; tronqu&eacute;e</span>
+finish_reason = response_courte.choices[<span class="number">0</span>].finish_reason
+<span class="function">print</span>(<span class="string">f"Raison d'arr&ecirc;t : <span class="keyword">{finish_reason}</span>"</span>)
+<span class="comment"># "length" = tronqu&eacute;e, "stop" = termin&eacute;e naturellement</span></div>
+
+    <div class="output-block">50 tokens : "La gravit&eacute; est une force fondamentale de la nature qui attire
+les objets ayant une masse les uns vers les autres. D&eacute;crite par Isaac Newton
+puis raffin&eacute;e par Albert Einstein dans sa th&eacute;orie de la relativit&eacute;"
+Raison d'arr&ecirc;t : length (TRONQU&Eacute;E)</div>
+
+    <div class="concept-box">
+        <h3>Estimation tokens vs mots</h3>
+        <table>
+            <tr>
+                <th>Langue</th>
+                <th>Ratio moyen</th>
+                <th>100 tokens &asymp;</th>
+            </tr>
+            <tr>
+                <td>Anglais</td>
+                <td>1 token &asymp; 0.75 mot</td>
+                <td>~75 mots</td>
+            </tr>
+            <tr>
+                <td>Fran&ccedil;ais</td>
+                <td>1 token &asymp; 0.60 mot</td>
+                <td>~60 mots</td>
+            </tr>
+            <tr>
+                <td>Code Python</td>
+                <td>1 token &asymp; 0.40 mot/symbole</td>
+                <td>~3-4 lignes de code</td>
+            </tr>
+        </table>
+        <p>En fran&ccedil;ais, les mots sont souvent plus longs qu'en anglais, donc chaque mot consomme plus de tokens. Pr&eacute;voyez environ <strong>30% de tokens suppl&eacute;mentaires</strong> par rapport &agrave; l'anglais.</p>
+    </div>
+
+    <div class="warning">
+        Le param&egrave;tre <code>max_tokens</code> ne contr&ocirc;le que la <strong>sortie</strong>. Les tokens d'entr&eacute;e (prompt) ne sont pas affect&eacute;s. Le total (entr&eacute;e + sortie) ne doit pas d&eacute;passer la fen&ecirc;tre de contexte du mod&egrave;le (128K pour GPT-4o, 200K pour Claude Sonnet 4.5).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5 : STOP SEQUENCES -->
+    <!-- ============================================================ -->
+    <h2>5. Stop Sequences (S&eacute;quences d'arr&ecirc;t)</h2>
+
+    <div class="definition">
+        Les <strong>stop sequences</strong> sont des cha&icirc;nes de caract&egrave;res qui, lorsqu'elles sont g&eacute;n&eacute;r&eacute;es par le mod&egrave;le, <strong>interrompent imm&eacute;diatement</strong> la g&eacute;n&eacute;ration. La s&eacute;quence d'arr&ecirc;t elle-m&ecirc;me n'est pas incluse dans la r&eacute;ponse.
+    </div>
+
+    <div class="code-block"><span class="comment"># Utilisation de stop sequences</span>
+
+<span class="comment"># Exemple 1 : Arr&ecirc;ter apr&egrave;s la premi&egrave;re r&eacute;ponse dans un format Q&amp;A</span>
+response = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{
+        <span class="string">"role"</span>: <span class="string">"user"</span>,
+        <span class="string">"content"</span>: <span class="string">"""R&eacute;ponds aux questions suivantes :
+Q1: Quelle est la capitale de la France ?
+A1:"""</span>
+    }],
+    stop=[<span class="string">"\nQ2"</span>, <span class="string">"\n\n"</span>],  <span class="comment"># Arr&ecirc;ter avant Q2 ou double saut de ligne</span>
+    max_tokens=<span class="number">100</span>
+)
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block"> Paris est la capitale de la France.</div>
+
+    <div class="code-block"><span class="comment"># Exemple 2 : G&eacute;n&eacute;rer uniquement du code (arr&ecirc;ter &agrave; l'explication)</span>
+response = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{
+        <span class="string">"role"</span>: <span class="string">"user"</span>,
+        <span class="string">"content"</span>: <span class="string">"&Eacute;cris une fonction Python pour calculer le PGCD"</span>
+    }],
+    stop=[<span class="string">"Explication"</span>, <span class="string">"```\n\n"</span>, <span class="string">"Note:"</span>],  <span class="comment"># Arr&ecirc;ter avant les explications</span>
+    max_tokens=<span class="number">200</span>
+)
+
+<span class="comment"># Exemple 3 : Anthropic - m&ecirc;me concept, param&egrave;tre "stop_sequences"</span>
+response_claude = client_anthropic.messages.<span class="function">create</span>(
+    model=<span class="string">"claude-sonnet-4-5-20250514"</span>,
+    max_tokens=<span class="number">200</span>,
+    stop_sequences=[<span class="string">"---FIN---"</span>, <span class="string">"\n\nQuestion"</span>],
+    messages=[{
+        <span class="string">"role"</span>: <span class="string">"user"</span>,
+        <span class="string">"content"</span>: <span class="string">"D&eacute;cris Python en un paragraphe, puis &eacute;cris ---FIN---"</span>
+    }]
+)</div>
+
+    <div class="prof-note">
+        Les stop sequences sont particuli&egrave;rement utiles pour le parsing structur&eacute; : si vous demandez au mod&egrave;le de g&eacute;n&eacute;rer un JSON, utilisez <code>stop=["}"]</code> et ajoutez manuellement le "}" final pour &eacute;viter du texte suppl&eacute;mentaire apr&egrave;s le JSON. OpenAI accepte jusqu'&agrave; 4 stop sequences.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6 : PENALTY -->
+    <!-- ============================================================ -->
+    <h2>6. frequency_penalty et presence_penalty</h2>
+
+    <p>Ces deux param&egrave;tres modifient les probabilit&eacute;s des tokens pour <strong>r&eacute;duire la r&eacute;p&eacute;tition</strong> et <strong>encourager la diversit&eacute;</strong> du vocabulaire.</p>
+
+    <div class="param-box">
+        <h4>frequency_penalty (p&eacute;nalit&eacute; de fr&eacute;quence)</h4>
+        <p><strong>Plage :</strong> -2.0 &agrave; 2.0 (d&eacute;faut : 0.0)</p>
+        <p>P&eacute;nalise les tokens <strong>proportionnellement &agrave; leur nombre d'apparitions</strong> dans le texte g&eacute;n&eacute;r&eacute;. Plus un token a &eacute;t&eacute; utilis&eacute;, plus sa probabilit&eacute; future diminue.</p>
+        <ul>
+            <li><strong>0.0</strong> : Aucune p&eacute;nalit&eacute; (d&eacute;faut)</li>
+            <li><strong>0.5 - 1.0</strong> : R&eacute;duit les r&eacute;p&eacute;titions mod&eacute;r&eacute;ment</li>
+            <li><strong>1.5 - 2.0</strong> : Forte p&eacute;nalit&eacute;, le mod&egrave;le &eacute;vite fortement de r&eacute;utiliser des mots</li>
+        </ul>
+    </div>
+
+    <div class="param-box">
+        <h4>presence_penalty (p&eacute;nalit&eacute; de pr&eacute;sence)</h4>
+        <p><strong>Plage :</strong> -2.0 &agrave; 2.0 (d&eacute;faut : 0.0)</p>
+        <p>P&eacute;nalise les tokens qui ont <strong>d&eacute;j&agrave; apparu au moins une fois</strong>, ind&eacute;pendamment de leur fr&eacute;quence. C'est un signal binaire : pr&eacute;sent ou absent.</p>
+        <ul>
+            <li><strong>0.0</strong> : Aucune p&eacute;nalit&eacute; (d&eacute;faut)</li>
+            <li><strong>0.5 - 1.0</strong> : Encourage le mod&egrave;le &agrave; introduire de nouveaux sujets</li>
+            <li><strong>1.5 - 2.0</strong> : Pousse fortement vers de nouveaux th&egrave;mes &agrave; chaque phrase</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Comparaison sans et avec p&eacute;nalit&eacute;s</span>
+
+<span class="comment"># Sans p&eacute;nalit&eacute; (tend &agrave; r&eacute;p&eacute;ter)</span>
+response_sans = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"&Eacute;cris un texte de 100 mots sur l'oc&eacute;an"</span>}],
+    frequency_penalty=<span class="number">0.0</span>,
+    presence_penalty=<span class="number">0.0</span>,
+    max_tokens=<span class="number">200</span>
+)
+
+<span class="comment"># Avec p&eacute;nalit&eacute;s (vocabulaire plus riche)</span>
+response_avec = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"&Eacute;cris un texte de 100 mots sur l'oc&eacute;an"</span>}],
+    frequency_penalty=<span class="number">0.8</span>,   <span class="comment"># R&eacute;duit les r&eacute;p&eacute;titions de mots</span>
+    presence_penalty=<span class="number">0.6</span>,    <span class="comment"># Encourage de nouveaux sujets</span>
+    max_tokens=<span class="number">200</span>
+)</div>
+
+    <div class="output-block">Sans p&eacute;nalit&eacute; : "L'oc&eacute;an est vaste. L'oc&eacute;an est profond. L'oc&eacute;an abrite
+de nombreuses esp&egrave;ces. L'oc&eacute;an est essentiel pour l'oc&eacute;an..."
+
+Avec p&eacute;nalit&eacute; : "L'oc&eacute;an s'&eacute;tend &agrave; perte de vue. Ses profondeurs abyssales
+recellent une biodiversit&eacute; insoup&ccedil;onn&eacute;e. Des r&eacute;cifs coralliens aux fosses
+marines, chaque strate r&eacute;v&egrave;le un &eacute;cosyst&egrave;me unique..."</div>
+
+    <div class="effect">
+        La combinaison <code>frequency_penalty=0.8</code> + <code>presence_penalty=0.6</code> produit un texte plus riche et vari&eacute;, &eacute;vitant les r&eacute;p&eacute;titions tout en explorant diff&eacute;rents aspects du sujet.
+    </div>
+
+    <div class="warning">
+        Ces param&egrave;tres ne sont pas disponibles dans l'API Anthropic (Claude). Anthropic utilise un m&eacute;canisme interne diff&eacute;rent pour g&eacute;rer la r&eacute;p&eacute;tition. Si vous avez besoin de r&eacute;duire la r&eacute;p&eacute;tition avec Claude, utilisez des instructions explicites dans le prompt.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7 : SYSTEM vs USER -->
+    <!-- ============================================================ -->
+    <h2>7. System message vs User message</h2>
+
+    <p>Les APIs LLM utilisent un syst&egrave;me de <strong>r&ocirc;les</strong> pour diff&eacute;rencier les types de messages :</p>
+
+    <div class="svg-container">
+        <svg width="700" height="320" viewBox="0 0 700 320">
+            <rect x="5" y="5" width="690" height="310" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="350" y="35" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Les r&ocirc;les dans une conversation API</text>
+            <!-- System -->
+            <rect x="30" y="55" width="200" height="120" rx="10" fill="rgba(255,107,53,0.12)" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="130" y="80" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">system</text>
+            <text x="130" y="105" fill="#e0e0e0" font-size="11" text-anchor="middle">D&eacute;finit le comportement</text>
+            <text x="130" y="125" fill="#e0e0e0" font-size="11" text-anchor="middle">global du mod&egrave;le.</text>
+            <text x="130" y="150" fill="#aaa" font-size="10" text-anchor="middle">Priorit&eacute; : HAUTE</text>
+            <text x="130" y="165" fill="#aaa" font-size="10" text-anchor="middle">Invisible pour l'utilisateur</text>
+            <!-- User -->
+            <rect x="250" y="55" width="200" height="120" rx="10" fill="rgba(0,255,136,0.12)" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="350" y="80" fill="#00ff88" font-size="14" font-weight="bold" text-anchor="middle">user</text>
+            <text x="350" y="105" fill="#e0e0e0" font-size="11" text-anchor="middle">Messages de l'utilisateur</text>
+            <text x="350" y="125" fill="#e0e0e0" font-size="11" text-anchor="middle">humain (questions, etc.).</text>
+            <text x="350" y="150" fill="#aaa" font-size="10" text-anchor="middle">Priorit&eacute; : NORMALE</text>
+            <text x="350" y="165" fill="#aaa" font-size="10" text-anchor="middle">La t&acirc;che sp&eacute;cifique</text>
+            <!-- Assistant -->
+            <rect x="470" y="55" width="200" height="120" rx="10" fill="rgba(86,156,214,0.12)" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="570" y="80" fill="#569cd6" font-size="14" font-weight="bold" text-anchor="middle">assistant</text>
+            <text x="570" y="105" fill="#e0e0e0" font-size="11" text-anchor="middle">R&eacute;ponses pr&eacute;c&eacute;dentes du</text>
+            <text x="570" y="125" fill="#e0e0e0" font-size="11" text-anchor="middle">mod&egrave;le (historique).</text>
+            <text x="570" y="150" fill="#aaa" font-size="10" text-anchor="middle">Utilis&eacute; pour le contexte</text>
+            <text x="570" y="165" fill="#aaa" font-size="10" text-anchor="middle">de conversation</text>
+            <!-- Flow arrows -->
+            <line x1="130" y1="190" x2="130" y2="230" stroke="#ff6b35" stroke-width="2"/>
+            <line x1="350" y1="190" x2="350" y2="230" stroke="#00ff88" stroke-width="2"/>
+            <line x1="570" y1="190" x2="570" y2="230" stroke="#569cd6" stroke-width="2"/>
+            <!-- Combined -->
+            <rect x="100" y="230" width="500" height="50" rx="10" fill="rgba(255,140,66,0.1)" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="350" y="258" fill="#ff8c42" font-size="13" font-weight="bold" text-anchor="middle">Mod&egrave;le LLM : g&eacute;n&egrave;re la r&eacute;ponse en tenant compte des 3 r&ocirc;les</text>
+            <text x="350" y="300" fill="#aaa" font-size="11" text-anchor="middle">system a la priorit&eacute; la plus haute, suivi du dernier message user</text>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># Conversation multi-tours avec r&ocirc;les</span>
+messages = [
+    <span class="comment"># R&ocirc;le d&eacute;fini une seule fois</span>
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Tu es un tuteur Python. R&eacute;ponds en fran&ccedil;ais,
+    avec des exemples de code. Niveau : d&eacute;butant."</span>},
+
+    <span class="comment"># Tour 1 : question de l'utilisateur</span>
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"C'est quoi une boucle for ?"</span>},
+
+    <span class="comment"># Tour 1 : r&eacute;ponse du mod&egrave;le (historique)</span>
+    {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"Une boucle for permet de r&eacute;p&eacute;ter
+    une action pour chaque &eacute;l&eacute;ment d'une collection..."</span>},
+
+    <span class="comment"># Tour 2 : question de suivi</span>
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Et une boucle while, c'est quoi la diff&eacute;rence ?"</span>}
+]
+
+response = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=messages,
+    temperature=<span class="number">0.3</span>
+)</div>
+
+    <div class="prof-note">
+        L'historique de conversation (messages user + assistant pr&eacute;c&eacute;dents) permet au mod&egrave;le de maintenir le contexte. Mais attention : chaque message dans l'historique consomme des tokens d'entr&eacute;e, donc des co&ucirc;ts. En production, il faut souvent tronquer l'historique pour les longues conversations.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 8 : STREAMING -->
+    <!-- ============================================================ -->
+    <h2>8. Streaming - R&eacute;ponses en temps r&eacute;el</h2>
+
+    <div class="definition">
+        Le <strong>streaming</strong> permet de recevoir la r&eacute;ponse du mod&egrave;le <strong>token par token</strong> (en temps r&eacute;el) au lieu d'attendre la g&eacute;n&eacute;ration compl&egrave;te. Cela am&eacute;liore consid&eacute;rablement l'exp&eacute;rience utilisateur en r&eacute;duisant le temps d'attente per&ccedil;u.
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="180" viewBox="0 0 700 180">
+            <rect x="5" y="5" width="690" height="170" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <!-- Sans streaming -->
+            <text x="30" y="35" fill="#ff4444" font-size="13" font-weight="bold">Sans streaming :</text>
+            <rect x="30" y="45" width="400" height="30" rx="5" fill="rgba(255,68,68,0.15)" stroke="#ff4444"/>
+            <text x="230" y="65" fill="#ff4444" font-size="11" text-anchor="middle">Attente... (3-10 secondes)</text>
+            <rect x="430" y="45" width="250" height="30" rx="5" fill="rgba(0,255,136,0.15)" stroke="#00ff88"/>
+            <text x="555" y="65" fill="#00ff88" font-size="11" text-anchor="middle">R&eacute;ponse compl&egrave;te d'un coup</text>
+            <!-- Avec streaming -->
+            <text x="30" y="100" fill="#00ff88" font-size="13" font-weight="bold">Avec streaming :</text>
+            <rect x="30" y="110" width="60" height="30" rx="5" fill="rgba(0,255,136,0.3)" stroke="#00ff88"/>
+            <text x="60" y="130" fill="#00ff88" font-size="9" text-anchor="middle">Le</text>
+            <rect x="100" y="110" width="80" height="30" rx="5" fill="rgba(0,255,136,0.25)" stroke="#00ff88"/>
+            <text x="140" y="130" fill="#00ff88" font-size="9" text-anchor="middle">streaming</text>
+            <rect x="190" y="110" width="80" height="30" rx="5" fill="rgba(0,255,136,0.2)" stroke="#00ff88"/>
+            <text x="230" y="130" fill="#00ff88" font-size="9" text-anchor="middle">permet</text>
+            <rect x="280" y="110" width="60" height="30" rx="5" fill="rgba(0,255,136,0.18)" stroke="#00ff88"/>
+            <text x="310" y="130" fill="#00ff88" font-size="9" text-anchor="middle">de</text>
+            <rect x="350" y="110" width="70" height="30" rx="5" fill="rgba(0,255,136,0.15)" stroke="#00ff88"/>
+            <text x="385" y="130" fill="#00ff88" font-size="9" text-anchor="middle">lire</text>
+            <rect x="430" y="110" width="60" height="30" rx="5" fill="rgba(0,255,136,0.12)" stroke="#00ff88"/>
+            <text x="460" y="130" fill="#00ff88" font-size="9" text-anchor="middle">au</text>
+            <rect x="500" y="110" width="50" height="30" rx="5" fill="rgba(0,255,136,0.1)" stroke="#00ff88"/>
+            <text x="525" y="130" fill="#00ff88" font-size="9" text-anchor="middle">fur</text>
+            <rect x="560" y="110" width="50" height="30" rx="5" fill="rgba(0,255,136,0.08)" stroke="#00ff88"/>
+            <text x="585" y="130" fill="#aaa" font-size="9" text-anchor="middle">et &agrave;</text>
+            <rect x="620" y="110" width="60" height="30" rx="5" fill="rgba(0,255,136,0.05)" stroke="#00ff88" stroke-dasharray="4"/>
+            <text x="650" y="130" fill="#aaa" font-size="9" text-anchor="middle">mesure</text>
+            <text x="350" y="165" fill="#aaa" font-size="11" text-anchor="middle">Les tokens arrivent ~50ms entre chaque, l'utilisateur peut commencer &agrave; lire imm&eacute;diatement</text>
+        </svg>
+    </div>
+
+    <h3>8.1 Streaming avec OpenAI</h3>
+
+    <div class="code-block"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+client = <span class="function">OpenAI</span>()
+
+<span class="comment"># Activer le streaming avec stream=True</span>
+stream = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Tu es un conteur."</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Raconte une histoire courte sur un robot."</span>}
+    ],
+    stream=<span class="keyword">True</span>,  <span class="comment"># Active le streaming</span>
+    temperature=<span class="number">0.8</span>,
+    max_tokens=<span class="number">300</span>
+)
+
+<span class="comment"># It&eacute;rer sur les chunks re&ccedil;us</span>
+texte_complet = <span class="string">""</span>
+<span class="keyword">for</span> chunk <span class="keyword">in</span> stream:
+    <span class="comment"># Chaque chunk contient un delta (fragment de texte)</span>
+    delta = chunk.choices[<span class="number">0</span>].delta
+    <span class="keyword">if</span> delta.content <span class="keyword">is not</span> <span class="keyword">None</span>:
+        <span class="function">print</span>(delta.content, end=<span class="string">""</span>, flush=<span class="keyword">True</span>)  <span class="comment"># Affichage en temps r&eacute;el</span>
+        texte_complet += delta.content
+
+<span class="function">print</span>()  <span class="comment"># Saut de ligne final</span>
+<span class="function">print</span>(<span class="string">f"\nTexte complet ({<span class="function">len</span>(texte_complet)} caract&egrave;res) g&eacute;n&eacute;r&eacute;."</span>)</div>
+
+    <h3>8.2 Streaming avec Anthropic (Claude)</h3>
+
+    <div class="code-block"><span class="keyword">import</span> anthropic
+
+client = anthropic.<span class="function">Anthropic</span>()
+
+<span class="comment"># Streaming avec l'API Anthropic</span>
+<span class="keyword">with</span> client.messages.<span class="function">stream</span>(
+    model=<span class="string">"claude-sonnet-4-5-20250514"</span>,
+    max_tokens=<span class="number">300</span>,
+    system=<span class="string">"Tu es un conteur cr&eacute;atif."</span>,
+    messages=[{
+        <span class="string">"role"</span>: <span class="string">"user"</span>,
+        <span class="string">"content"</span>: <span class="string">"Raconte une histoire courte sur un robot."</span>
+    }]
+) <span class="keyword">as</span> stream:
+    <span class="keyword">for</span> text <span class="keyword">in</span> stream.<span class="function">text_stream</span>:
+        <span class="function">print</span>(text, end=<span class="string">""</span>, flush=<span class="keyword">True</span>)
+
+<span class="comment"># Acc&eacute;der aux statistiques apr&egrave;s le streaming</span>
+message = stream.<span class="function">get_final_message</span>()
+<span class="function">print</span>(<span class="string">f"\nTokens utilis&eacute;s : {message.usage.input_tokens} (in) + {message.usage.output_tokens} (out)"</span>)</div>
+
+    <div class="output-block">Il &eacute;tait une fois, dans un laboratoire oubli&eacute;, un petit robot nomm&eacute; Pixel.
+Contrairement &agrave; ses fr&egrave;res m&eacute;talliques, Pixel avait une particularit&eacute; :
+il r&ecirc;vait. Chaque nuit, quand les lumi&egrave;res s'&eacute;teignaient...
+[texte apparaissant progressivement, mot par mot]
+
+Tokens utilis&eacute;s : 35 (in) + 187 (out)</div>
+
+    <div class="prof-note">
+        Le streaming est essentiel pour les applications interactives (chatbots, assistants). Sans streaming, l'utilisateur attend parfois 5-10 secondes sans feedback. Avec le streaming, le premier mot appara&icirc;t en ~200ms, cr&eacute;ant une exp&eacute;rience fluide. Notez que le co&ucirc;t en tokens est identique avec ou sans streaming.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 9 : GESTION DES COUTS -->
+    <!-- ============================================================ -->
+    <h2>9. Gestion des co&ucirc;ts</h2>
+
+    <p>Les APIs LLM facturent <strong>par token</strong>. Comprendre la structure de co&ucirc;ts est essentiel pour contr&ocirc;ler votre budget.</p>
+
+    <h3>9.1 Tarification par mod&egrave;le (mars 2026)</h3>
+
+    <table>
+        <tr>
+            <th>Mod&egrave;le</th>
+            <th>Input ($/1M tokens)</th>
+            <th>Output ($/1M tokens)</th>
+            <th>Contexte max</th>
+        </tr>
+        <tr>
+            <td><strong>GPT-4o</strong></td>
+            <td>$2.50</td>
+            <td>$10.00</td>
+            <td>128K tokens</td>
+        </tr>
+        <tr>
+            <td><strong>GPT-4o-mini</strong></td>
+            <td>$0.15</td>
+            <td>$0.60</td>
+            <td>128K tokens</td>
+        </tr>
+        <tr>
+            <td><strong>Claude Opus 4.5</strong></td>
+            <td>$15.00</td>
+            <td>$75.00</td>
+            <td>200K tokens</td>
+        </tr>
+        <tr>
+            <td><strong>Claude Sonnet 4.5</strong></td>
+            <td>$3.00</td>
+            <td>$15.00</td>
+            <td>200K tokens</td>
+        </tr>
+        <tr>
+            <td><strong>Claude Haiku 4.5</strong></td>
+            <td>$0.80</td>
+            <td>$4.00</td>
+            <td>200K tokens</td>
+        </tr>
+        <tr>
+            <td><strong>Gemini 2.5 Pro</strong></td>
+            <td>$1.25</td>
+            <td>$10.00</td>
+            <td>1M tokens</td>
+        </tr>
+        <tr>
+            <td><strong>Llama 4 (self-hosted)</strong></td>
+            <td>Co&ucirc;t GPU uniquement</td>
+            <td>Co&ucirc;t GPU uniquement</td>
+            <td>Variable</td>
+        </tr>
+    </table>
+
+    <div class="warning">
+        Les tokens d'<strong>output co&ucirc;tent 3 &agrave; 5 fois plus cher</strong> que les tokens d'input. R&eacute;duire la longueur des r&eacute;ponses (via max_tokens et des prompts concis) est le levier d'&eacute;conomie le plus efficace.
+    </div>
+
+    <h3>9.2 Calcul de co&ucirc;t</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">calculer_cout</span>(input_tokens, output_tokens, modele=<span class="string">"gpt-4o"</span>):
+    <span class="string">"""Calcule le co&ucirc;t d'un appel API en dollars."""</span>
+
+    <span class="comment"># Tarifs par million de tokens (mars 2026)</span>
+    tarifs = {
+        <span class="string">"gpt-4o"</span>:             {<span class="string">"input"</span>: <span class="number">2.50</span>,  <span class="string">"output"</span>: <span class="number">10.00</span>},
+        <span class="string">"gpt-4o-mini"</span>:        {<span class="string">"input"</span>: <span class="number">0.15</span>,  <span class="string">"output"</span>: <span class="number">0.60</span>},
+        <span class="string">"claude-sonnet-4.5"</span>:  {<span class="string">"input"</span>: <span class="number">3.00</span>,  <span class="string">"output"</span>: <span class="number">15.00</span>},
+        <span class="string">"claude-haiku-4.5"</span>:   {<span class="string">"input"</span>: <span class="number">0.80</span>,  <span class="string">"output"</span>: <span class="number">4.00</span>},
+    }
+
+    tarif = tarifs[modele]
+    cout_input = (input_tokens / <span class="number">1_000_000</span>) * tarif[<span class="string">"input"</span>]
+    cout_output = (output_tokens / <span class="number">1_000_000</span>) * tarif[<span class="string">"output"</span>]
+    cout_total = cout_input + cout_output
+
+    <span class="keyword">return</span> {
+        <span class="string">"cout_input"</span>: <span class="function">round</span>(cout_input, <span class="number">6</span>),
+        <span class="string">"cout_output"</span>: <span class="function">round</span>(cout_output, <span class="number">6</span>),
+        <span class="string">"cout_total"</span>: <span class="function">round</span>(cout_total, <span class="number">6</span>),
+    }
+
+<span class="comment"># Exemple : 500 tokens input, 200 tokens output avec GPT-4o</span>
+cout = <span class="function">calculer_cout</span>(<span class="number">500</span>, <span class="number">200</span>, <span class="string">"gpt-4o"</span>)
+<span class="function">print</span>(<span class="string">f"Co&ucirc;t total : ${cout['cout_total']:.6f}"</span>)
+<span class="function">print</span>(<span class="string">f"  - Input  : ${cout['cout_input']:.6f}"</span>)
+<span class="function">print</span>(<span class="string">f"  - Output : ${cout['cout_output']:.6f}"</span>)
+
+<span class="comment"># Estimation pour 10 000 requ&ecirc;tes/jour</span>
+cout_journalier = cout[<span class="string">"cout_total"</span>] * <span class="number">10000</span>
+<span class="function">print</span>(<span class="string">f"\nCo&ucirc;t estim&eacute; pour 10K requ&ecirc;tes/jour : ${cout_journalier:.2f}"</span>)</div>
+
+    <div class="output-block">Co&ucirc;t total : $0.003250
+  - Input  : $0.001250
+  - Output : $0.002000
+
+Co&ucirc;t estim&eacute; pour 10K requ&ecirc;tes/jour : $32.50</div>
+
+    <h3>9.3 Strat&eacute;gies d'optimisation des co&ucirc;ts</h3>
+
+    <div class="concept-box green">
+        <h3>7 strat&eacute;gies pour r&eacute;duire vos co&ucirc;ts API</h3>
+
+        <div class="step-box">
+            <strong>1. Choisir le bon mod&egrave;le</strong> : Utilisez GPT-4o-mini ou Claude Haiku pour les t&acirc;ches simples (classification, extraction). R&eacute;servez les mod&egrave;les premium (GPT-4o, Claude Sonnet) pour le raisonnement complexe.
+        </div>
+
+        <div class="step-box">
+            <strong>2. Limiter max_tokens</strong> : Fixez un max_tokens adapt&eacute; &agrave; la t&acirc;che. Pour une classification, 10 tokens suffisent. Ne mettez pas 4096 par d&eacute;faut.
+        </div>
+
+        <div class="step-box">
+            <strong>3. Optimiser les prompts</strong> : Un prompt concis co&ucirc;te moins cher. &Eacute;liminez les instructions redondantes. Chaque mot du prompt consomme des tokens d'input.
+        </div>
+
+        <div class="step-box">
+            <strong>4. Utiliser le cache (Anthropic)</strong> : L'API Anthropic propose le "prompt caching" qui r&eacute;duit le co&ucirc;t des tokens r&eacute;p&eacute;t&eacute;s &agrave; 10% du prix normal (cache read).
+        </div>
+
+        <div class="step-box">
+            <strong>5. Batch API</strong> : Pour le traitement en masse (non temps r&eacute;el), utilisez les APIs batch d'OpenAI et Anthropic pour obtenir <strong>50% de r&eacute;duction</strong>.
+        </div>
+
+        <div class="step-box">
+            <strong>6. Tronquer l'historique</strong> : Dans les conversations longues, gardez uniquement les N derniers tours. Un historique de 50 messages consomme &eacute;norm&eacute;ment de tokens d'input &agrave; chaque requ&ecirc;te.
+        </div>
+
+        <div class="step-box">
+            <strong>7. Mise en cache locale</strong> : Cachez les r&eacute;ponses fr&eacute;quentes avec Redis ou un cache m&eacute;moire. Si 100 utilisateurs posent la m&ecirc;me question, un seul appel API suffit.
+        </div>
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemple : Routeur de mod&egrave;les pour optimiser les co&ucirc;ts</span>
+<span class="keyword">def</span> <span class="function">choisir_modele</span>(tache, complexite):
+    <span class="string">"""S&eacute;lectionne le mod&egrave;le le plus &eacute;conomique pour la t&acirc;che."""</span>
+
+    <span class="comment"># T&acirc;ches simples -&gt; mod&egrave;le &eacute;conomique</span>
+    <span class="keyword">if</span> tache <span class="keyword">in</span> [<span class="string">"classification"</span>, <span class="string">"extraction"</span>, <span class="string">"sentiment"</span>]:
+        <span class="keyword">return</span> <span class="string">"gpt-4o-mini"</span>  <span class="comment"># ~17x moins cher que GPT-4o</span>
+
+    <span class="comment"># T&acirc;ches moyennes -&gt; mod&egrave;le interm&eacute;diaire</span>
+    <span class="keyword">if</span> complexite == <span class="string">"moyenne"</span>:
+        <span class="keyword">return</span> <span class="string">"claude-sonnet-4-5-20250514"</span>
+
+    <span class="comment"># T&acirc;ches complexes -&gt; mod&egrave;le premium</span>
+    <span class="keyword">if</span> complexite == <span class="string">"haute"</span> <span class="keyword">or</span> tache <span class="keyword">in</span> [<span class="string">"raisonnement"</span>, <span class="string">"code_complexe"</span>]:
+        <span class="keyword">return</span> <span class="string">"gpt-4o"</span>
+
+    <span class="keyword">return</span> <span class="string">"gpt-4o-mini"</span>  <span class="comment"># D&eacute;faut &eacute;conomique</span>
+
+<span class="comment"># Utilisation</span>
+modele = <span class="function">choisir_modele</span>(<span class="string">"classification"</span>, <span class="string">"basse"</span>)
+<span class="function">print</span>(<span class="string">f"Mod&egrave;le s&eacute;lectionn&eacute; : {modele}"</span>)  <span class="comment"># gpt-4o-mini</span></div>
+
+    <div class="prof-note">
+        En production, les entreprises utilisent souvent un "routeur de mod&egrave;les" qui s&eacute;lectionne automatiquement le mod&egrave;le le plus &eacute;conomique capable de traiter chaque requ&ecirc;te. Cette approche peut r&eacute;duire les co&ucirc;ts de 60-80% sans impact significatif sur la qualit&eacute;.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 10 : RESUME FINAL -->
+    <!-- ============================================================ -->
+    <h2>10. R&eacute;sum&eacute; - Tableau des param&egrave;tres</h2>
+
+    <div class="concept-box blue">
+        <h3>R&eacute;f&eacute;rence rapide des param&egrave;tres API</h3>
+
+        <table>
+            <tr>
+                <th>Param&egrave;tre</th>
+                <th>Plage</th>
+                <th>D&eacute;faut</th>
+                <th>Impact</th>
+                <th>Conseil</th>
+            </tr>
+            <tr>
+                <td><strong>temperature</strong></td>
+                <td>0.0 - 2.0</td>
+                <td>1.0</td>
+                <td>Cr&eacute;ativit&eacute; / al&eacute;atoire</td>
+                <td>0.0 pour code/facts, 0.7-0.9 pour cr&eacute;atif</td>
+            </tr>
+            <tr>
+                <td><strong>top_p</strong></td>
+                <td>0.0 - 1.0</td>
+                <td>1.0</td>
+                <td>Filtre les tokens improbables</td>
+                <td>Ne pas modifier en m&ecirc;me temps que temperature</td>
+            </tr>
+            <tr>
+                <td><strong>max_tokens</strong></td>
+                <td>1 - contexte max</td>
+                <td>Variable</td>
+                <td>Longueur de la r&eacute;ponse</td>
+                <td>Adapter &agrave; la t&acirc;che, ne pas surdimensionner</td>
+            </tr>
+            <tr>
+                <td><strong>stop</strong></td>
+                <td>Jusqu'&agrave; 4 s&eacute;quences</td>
+                <td>Aucune</td>
+                <td>Arr&ecirc;t conditionnel</td>
+                <td>Utile pour parser du JSON/XML</td>
+            </tr>
+            <tr>
+                <td><strong>frequency_penalty</strong></td>
+                <td>-2.0 &agrave; 2.0</td>
+                <td>0.0</td>
+                <td>R&eacute;duit la r&eacute;p&eacute;tition de mots</td>
+                <td>0.3-0.8 pour texte, 0.0 pour code</td>
+            </tr>
+            <tr>
+                <td><strong>presence_penalty</strong></td>
+                <td>-2.0 &agrave; 2.0</td>
+                <td>0.0</td>
+                <td>Encourage de nouveaux th&egrave;mes</td>
+                <td>0.3-0.6 pour brainstorming</td>
+            </tr>
+            <tr>
+                <td><strong>stream</strong></td>
+                <td>true / false</td>
+                <td>false</td>
+                <td>R&eacute;ponse en temps r&eacute;el</td>
+                <td>Toujours activer pour les chatbots</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box">
+        <h3>Configurations recommand&eacute;es par cas d'usage</h3>
+
+        <table>
+            <tr>
+                <th>Cas d'usage</th>
+                <th>temperature</th>
+                <th>top_p</th>
+                <th>max_tokens</th>
+                <th>Penalties</th>
+            </tr>
+            <tr>
+                <td><strong>G&eacute;n&eacute;ration de code</strong></td>
+                <td>0.0 - 0.2</td>
+                <td>1.0</td>
+                <td>2048</td>
+                <td>0.0 / 0.0</td>
+            </tr>
+            <tr>
+                <td><strong>Classification</strong></td>
+                <td>0.0</td>
+                <td>1.0</td>
+                <td>10</td>
+                <td>0.0 / 0.0</td>
+            </tr>
+            <tr>
+                <td><strong>Chatbot g&eacute;n&eacute;ral</strong></td>
+                <td>0.7</td>
+                <td>0.95</td>
+                <td>1024</td>
+                <td>0.3 / 0.3</td>
+            </tr>
+            <tr>
+                <td><strong>&Eacute;criture cr&eacute;ative</strong></td>
+                <td>0.9 - 1.2</td>
+                <td>1.0</td>
+                <td>4096</td>
+                <td>0.7 / 0.5</td>
+            </tr>
+            <tr>
+                <td><strong>Extraction de donn&eacute;es</strong></td>
+                <td>0.0</td>
+                <td>1.0</td>
+                <td>500</td>
+                <td>0.0 / 0.0</td>
+            </tr>
+            <tr>
+                <td><strong>R&eacute;sum&eacute;</strong></td>
+                <td>0.3</td>
+                <td>0.9</td>
+                <td>300</td>
+                <td>0.5 / 0.0</td>
+            </tr>
+            <tr>
+                <td><strong>Brainstorming</strong></td>
+                <td>1.0</td>
+                <td>1.0</td>
+                <td>2048</td>
+                <td>0.8 / 0.8</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Points cl&eacute;s &agrave; retenir</h3>
+        <ol>
+            <li><strong>Les APIs LLM</strong> sont des interfaces HTTP qui permettent d'envoyer des prompts et recevoir des r&eacute;ponses de mod&egrave;les h&eacute;berg&eacute;s dans le cloud.</li>
+            <li><strong>Temperature</strong> contr&ocirc;le la cr&eacute;ativit&eacute; : 0.0 = d&eacute;terministe, 1.0+ = cr&eacute;atif.</li>
+            <li><strong>top_p</strong> filtre les tokens improbables. Ne pas modifier en m&ecirc;me temps que la temperature.</li>
+            <li><strong>max_tokens</strong> limite la longueur de la r&eacute;ponse. Une r&eacute;ponse tronqu&eacute;e a un <code>finish_reason: "length"</code>.</li>
+            <li><strong>Stop sequences</strong> permettent un arr&ecirc;t conditionnel pr&eacute;cis de la g&eacute;n&eacute;ration.</li>
+            <li><strong>Penalties</strong> r&eacute;duisent la r&eacute;p&eacute;tition et encouragent la diversit&eacute; (OpenAI uniquement).</li>
+            <li><strong>Streaming</strong> am&eacute;liore l'UX en affichant les tokens au fur et &agrave; mesure.</li>
+            <li><strong>Les co&ucirc;ts</strong> sont proportionnels aux tokens. Les tokens de sortie co&ucirc;tent 3-5x plus cher que les tokens d'entr&eacute;e. Optimisez avec le routage de mod&egrave;les, le caching et les API batch.</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        En 2025-2026, l'&eacute;cosyst&egrave;me des APIs LLM &eacute;volue rapidement. De nouvelles fonctionnalit&eacute;s apparaissent r&eacute;guli&egrave;rement : structured outputs, tool use / function calling, vision (images), audio, et m&ecirc;me vid&eacute;o. Ma&icirc;triser les param&egrave;tres fondamentaux vus dans ce cours est le pr&eacute;requis essentiel avant d'explorer ces fonctionnalit&eacute;s avanc&eacute;es.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="llm_04_prompting.html">&larr; Cours pr&eacute;c&eacute;dent : Prompt Engineering</a>
+        <span style="color: #666;">(Fin des cours LLM)</span>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

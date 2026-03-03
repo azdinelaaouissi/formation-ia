@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Agents et Tools avec LangChain</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="main">
+
+        <h1>TD Pratique - Agents et Tools avec LangChain</h1>
+        <p class="subtitle">LangChain v0.3 -- Creer des agents autonomes qui raisonnent et utilisent des outils</p>
+
+        <!-- ============================== SECTION 1 ============================== -->
+        <h2>1. Recapitulatif : Agents, Tools et le Pattern ReAct</h2>
+
+        <div class="definition">
+            Un <strong>Agent</strong> est un systeme qui utilise un LLM comme moteur de raisonnement pour decider dynamiquement quelles actions effectuer, dans quel ordre, et avec quels parametres. Contrairement aux chaines lineaires, un agent peut adapter son comportement en fonction des resultats intermediaires.
+        </div>
+
+        <p>Les trois composants fondamentaux d'un agent LangChain :</p>
+
+        <div class="step-box">
+            <strong>LLM (Cerveau) :</strong> Le modele de langage qui raisonne, planifie et decide. Il recoit le contexte, les outils disponibles et l'historique pour choisir la prochaine action.
+        </div>
+        <div class="step-box">
+            <strong>Tools (Outils) :</strong> Les capacites de l'agent. Chaque outil est une fonction que l'agent peut appeler : calculatrice, recherche web, base de donnees, API externe, etc.
+        </div>
+        <div class="step-box">
+            <strong>AgentExecutor (Moteur) :</strong> L'orchestrateur qui execute la boucle Think-Act-Observe et gere les erreurs, les iterations et la memoire.
+        </div>
+
+        <div class="concept-box blue">
+            <h3>Le Pattern ReAct (Reasoning + Acting)</h3>
+            <p>Le pattern ReAct est le paradigme le plus utilise pour les agents LLM. Il combine :</p>
+            <ul>
+                <li><strong>Reasoning (Raisonnement) :</strong> Le LLM reflechit a ce qu'il doit faire et pourquoi</li>
+                <li><strong>Acting (Action) :</strong> Le LLM choisit un outil et formule les parametres</li>
+                <li><strong>Observation :</strong> Le resultat de l'outil est renvoye au LLM pour la prochaine iteration</li>
+            </ul>
+            <p>Ce cycle se repete jusqu'a ce que l'agent ait suffisamment d'information pour formuler une reponse finale.</p>
+        </div>
+
+        <div class="prof-note">
+            En LangChain v0.3, l'approche recommandee pour les nouveaux projets complexes est LangGraph. Cependant, <code>create_react_agent</code> avec <code>AgentExecutor</code> reste parfaitement valide et plus simple pour apprendre les concepts fondamentaux des agents. C'est ce que nous utiliserons dans ce TD.
+        </div>
+
+        <!-- ============================== SECTION 2 ============================== -->
+        <h2>2. Principe - La Boucle Agent</h2>
+
+        <div class="svg-container">
+            <svg viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
+                <text x="400" y="30" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Boucle ReAct : Think - Act - Observe</text>
+
+                <!-- Entree utilisateur -->
+                <rect x="30" y="60" width="180" height="55" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+                <text x="120" y="83" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">UTILISATEUR</text>
+                <text x="120" y="102" text-anchor="middle" fill="#aaa" font-size="10">"Question..."</text>
+
+                <!-- Fleche vers Agent -->
+                <line x1="210" y1="87" x2="270" y2="87" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowA1)"/>
+
+                <!-- Agent / LLM (Think) -->
+                <rect x="270" y="50" width="220" height="75" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2.5"/>
+                <text x="380" y="77" text-anchor="middle" fill="#569cd6" font-size="14" font-weight="bold">1. THINK</text>
+                <text x="380" y="97" text-anchor="middle" fill="#e0e0e0" font-size="10">LLM raisonne...</text>
+                <text x="380" y="113" text-anchor="middle" fill="#aaa" font-size="9">"J'ai besoin de calculer..."</text>
+
+                <!-- Fleche Think -> Act -->
+                <line x1="490" y1="87" x2="540" y2="87" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowB1)"/>
+
+                <!-- Act -->
+                <rect x="540" y="50" width="220" height="75" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2.5"/>
+                <text x="650" y="77" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">2. ACT</text>
+                <text x="650" y="97" text-anchor="middle" fill="#e0e0e0" font-size="10">Appel d'un outil</text>
+                <text x="650" y="113" text-anchor="middle" fill="#aaa" font-size="9">calculator(42 * 17)</text>
+
+                <!-- Fleche Act -> Tools -->
+                <line x1="650" y1="125" x2="650" y2="170" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowA1)"/>
+
+                <!-- Boite Tools -->
+                <rect x="530" y="170" width="240" height="90" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="650" y="195" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">TOOLS</text>
+                <!-- Tool icons -->
+                <rect x="555" y="205" width="55" height="35" rx="5" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1"/>
+                <text x="582" y="227" text-anchor="middle" fill="#00ff88" font-size="8">Calcul</text>
+                <rect x="620" y="205" width="55" height="35" rx="5" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1"/>
+                <text x="647" y="227" text-anchor="middle" fill="#00ff88" font-size="8">Search</text>
+                <rect x="685" y="205" width="55" height="35" rx="5" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1"/>
+                <text x="712" y="227" text-anchor="middle" fill="#00ff88" font-size="8">Custom</text>
+
+                <!-- Fleche Tools -> Observe -->
+                <line x1="530" y1="215" x2="490" y2="215" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG1)"/>
+
+                <!-- Observe -->
+                <rect x="270" y="180" width="220" height="70" rx="12" fill="#1a1a2e" stroke="#00ff88" stroke-width="2.5"/>
+                <text x="380" y="207" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">3. OBSERVE</text>
+                <text x="380" y="227" text-anchor="middle" fill="#e0e0e0" font-size="10">Resultat: 714</text>
+                <text x="380" y="242" text-anchor="middle" fill="#aaa" font-size="9">L'agent recoit le resultat</text>
+
+                <!-- Fleche boucle Observe -> Think (retour) -->
+                <path d="M 270 215 C 220 215, 220 87, 270 87" fill="none" stroke="#ff8c42" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrowA1)"/>
+                <text x="215" y="155" fill="#ff8c42" font-size="10" font-weight="bold" transform="rotate(-90, 215, 155)">BOUCLE</text>
+
+                <!-- Decision -->
+                <line x1="380" y1="250" x2="380" y2="300" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowB1)"/>
+
+                <!-- Diamant decision -->
+                <polygon points="380,300 430,335 380,370 330,335" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+                <text x="380" y="338" text-anchor="middle" fill="#ff8c42" font-size="10" font-weight="bold">Fini ?</text>
+
+                <!-- Non -> Boucle -->
+                <line x1="330" y1="335" x2="250" y2="335" stroke="#ff4444" stroke-width="1.5"/>
+                <line x1="250" y1="335" x2="250" y2="87" stroke="#ff4444" stroke-width="1.5" marker-end="url(#arrowR1)"/>
+                <text x="275" y="328" fill="#ff4444" font-size="10">Non</text>
+
+                <!-- Oui -> Reponse finale -->
+                <line x1="430" y1="335" x2="520" y2="335" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG1)"/>
+                <text x="460" y="328" fill="#00ff88" font-size="10">Oui</text>
+
+                <rect x="520" y="310" width="220" height="55" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2.5"/>
+                <text x="630" y="335" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">REPONSE FINALE</text>
+                <text x="630" y="353" text-anchor="middle" fill="#aaa" font-size="10">"42 x 17 = 714"</text>
+
+                <!-- Legende -->
+                <rect x="50" y="400" width="700" height="60" rx="8" fill="rgba(26,26,46,0.8)" stroke="#333" stroke-width="1"/>
+                <text x="70" y="425" fill="#569cd6" font-size="11">Think = Raisonnement LLM</text>
+                <text x="280" y="425" fill="#ff6b35" font-size="11">Act = Appel d'outil</text>
+                <text x="460" y="425" fill="#00ff88" font-size="11">Observe = Resultat recu</text>
+                <text x="70" y="448" fill="#aaa" font-size="10">La boucle se repete jusqu'a ce que l'agent ait assez d'informations pour repondre.</text>
+
+                <defs>
+                    <marker id="arrowA1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/>
+                    </marker>
+                    <marker id="arrowB1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                    </marker>
+                    <marker id="arrowG1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                    </marker>
+                    <marker id="arrowR1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+
+        <div class="concept-box green">
+            <h3>Installation des dependances</h3>
+            <div class="code-block"><span class="comment"># Installation des packages necessaires pour les agents</span>
+pip install langchain langchain-community langchain-openai
+pip install langchain-core
+pip install duckduckgo-search wikipedia
+pip install numexpr  <span class="comment"># pour la calculatrice</span></div>
+        </div>
+
+        <!-- ============================== EXERCICE 1 ============================== -->
+        <h2>Exercice 1 - Creer un Tool simple avec @tool</h2>
+
+        <p>Le decorateur <code>@tool</code> est la maniere la plus simple de creer un outil dans LangChain. La docstring de la fonction devient automatiquement la description de l'outil, utilisee par le LLM pour decider quand l'utiliser.</p>
+
+        <div class="param-box">
+            <h4>Regles pour creer un bon outil</h4>
+            <table>
+                <tr><th>Regle</th><th>Explication</th></tr>
+                <tr><td>Docstring claire</td><td>Le LLM lit la description pour choisir l'outil. Soyez precis.</td></tr>
+                <tr><td>Type hints</td><td>Les types definissent le schema d'entree de l'outil.</td></tr>
+                <tr><td>Retour string</td><td>L'outil doit retourner une chaine lisible par le LLM.</td></tr>
+                <tr><td>Gestion d'erreurs</td><td>Retournez un message d'erreur plutot que de lever une exception.</td></tr>
+            </table>
+        </div>
+
+        <div class="code-block"><span class="comment"># Exercice 1 : Creer un outil calculatrice avec @tool</span>
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculer</span>(expression: str) -> str:
+    <span class="string">"""Calcule le resultat d'une expression mathematique.
+
+    Utilise cet outil quand tu as besoin de faire un calcul.
+    L'expression doit etre une expression Python valide.
+
+    Args:
+        expression: Expression mathematique a evaluer (ex: '2 + 3 * 4')
+    """</span>
+    <span class="keyword">try</span>:
+        <span class="comment"># Evaluer de maniere securisee</span>
+        resultat = <span class="function">eval</span>(expression, {<span class="string">"__builtins__"</span>: {}}, {})
+        <span class="keyword">return</span> <span class="string">f"Le resultat de <span class="keyword">{</span>expression<span class="keyword">}</span> est <span class="keyword">{</span>resultat<span class="keyword">}</span>"</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur de calcul : <span class="keyword">{</span>str(e)<span class="keyword">}</span>"</span>
+
+<span class="comment"># Inspecter l'outil cree</span>
+<span class="function">print</span>(<span class="string">f"Nom : <span class="keyword">{</span>calculer.name<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Description : <span class="keyword">{</span>calculer.description<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Schema : <span class="keyword">{</span>calculer.args<span class="keyword">}</span>"</span>)
+
+<span class="comment"># Tester l'outil directement</span>
+<span class="function">print</span>(<span class="string">f"\nTest 1 : <span class="keyword">{</span>calculer.invoke('42 * 17')<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Test 2 : <span class="keyword">{</span>calculer.invoke('2 ** 10')<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Test 3 : <span class="keyword">{</span>calculer.invoke('100 / 3')<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Test 4 (erreur) : <span class="keyword">{</span>calculer.invoke('abc + 1')<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Nom : calculer
+Description : Calcule le resultat d'une expression mathematique.
+
+    Utilise cet outil quand tu as besoin de faire un calcul.
+    L'expression doit etre une expression Python valide.
+Schema : {'expression': {'title': 'Expression', 'type': 'string'}}
+
+Test 1 : Le resultat de 42 * 17 est 714
+Test 2 : Le resultat de 2 ** 10 est 1024
+Test 3 : Le resultat de 100 / 3 est 33.333333333333336
+Test 4 (erreur) : Erreur de calcul : name 'abc' is not defined</div>
+
+        <div class="code-block"><span class="comment"># Creer un deuxieme outil : convertisseur de temperature</span>
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">convertir_temperature</span>(valeur: float, de_unite: str, vers_unite: str) -> str:
+    <span class="string">"""Convertit une temperature entre Celsius, Fahrenheit et Kelvin.
+
+    Args:
+        valeur: La temperature a convertir
+        de_unite: Unite source ('celsius', 'fahrenheit' ou 'kelvin')
+        vers_unite: Unite cible ('celsius', 'fahrenheit' ou 'kelvin')
+    """</span>
+    <span class="comment"># D'abord convertir en Celsius</span>
+    <span class="keyword">if</span> de_unite == <span class="string">"celsius"</span>:
+        celsius = valeur
+    <span class="keyword">elif</span> de_unite == <span class="string">"fahrenheit"</span>:
+        celsius = (valeur - <span class="number">32</span>) * <span class="number">5</span> / <span class="number">9</span>
+    <span class="keyword">elif</span> de_unite == <span class="string">"kelvin"</span>:
+        celsius = valeur - <span class="number">273.15</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">f"Unite inconnue : <span class="keyword">{</span>de_unite<span class="keyword">}</span>"</span>
+
+    <span class="comment"># Puis convertir vers l'unite cible</span>
+    <span class="keyword">if</span> vers_unite == <span class="string">"celsius"</span>:
+        resultat = celsius
+    <span class="keyword">elif</span> vers_unite == <span class="string">"fahrenheit"</span>:
+        resultat = celsius * <span class="number">9</span> / <span class="number">5</span> + <span class="number">32</span>
+    <span class="keyword">elif</span> vers_unite == <span class="string">"kelvin"</span>:
+        resultat = celsius + <span class="number">273.15</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">f"Unite inconnue : <span class="keyword">{</span>vers_unite<span class="keyword">}</span>"</span>
+
+    <span class="keyword">return</span> <span class="string">f"<span class="keyword">{</span>valeur<span class="keyword">}</span> <span class="keyword">{</span>de_unite<span class="keyword">}</span> = <span class="keyword">{</span>resultat:.2f<span class="keyword">}</span> <span class="keyword">{</span>vers_unite<span class="keyword">}</span>"</span>
+
+<span class="comment"># Tester</span>
+<span class="function">print</span>(convertir_temperature.<span class="function">invoke</span>({
+    <span class="string">"valeur"</span>: <span class="number">100</span>,
+    <span class="string">"de_unite"</span>: <span class="string">"celsius"</span>,
+    <span class="string">"vers_unite"</span>: <span class="string">"fahrenheit"</span>
+}))
+<span class="function">print</span>(convertir_temperature.<span class="function">invoke</span>({
+    <span class="string">"valeur"</span>: <span class="number">0</span>,
+    <span class="string">"de_unite"</span>: <span class="string">"kelvin"</span>,
+    <span class="string">"vers_unite"</span>: <span class="string">"celsius"</span>
+}))</div>
+
+        <div class="output-block">100 celsius = 212.00 fahrenheit
+0 kelvin = -273.15 celsius</div>
+
+        <div class="effect">
+            Le decorateur <code>@tool</code> transforme automatiquement la fonction en un objet <code>StructuredTool</code> avec un nom, une description et un schema d'arguments deduits de la signature et de la docstring. Les outils avec plusieurs parametres necessitent un dictionnaire lors de l'appel via <code>invoke()</code>.
+        </div>
+
+        <!-- ============================== EXERCICE 2 ============================== -->
+        <h2>Exercice 2 - StructuredTool.from_function()</h2>
+
+        <p>Pour un controle plus fin sur la configuration de l'outil (nom personnalise, schema Pydantic, <code>return_direct</code>), utilisez <code>StructuredTool.from_function()</code>.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 2 : Creer un outil structure avec validation Pydantic</span>
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> StructuredTool
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field
+
+<span class="comment"># Definir le schema d'entree avec Pydantic</span>
+<span class="keyword">class</span> <span class="function">RechercheInput</span>(BaseModel):
+    query: str = <span class="function">Field</span>(description=<span class="string">"Le terme ou la phrase a rechercher"</span>)
+    max_results: int = <span class="function">Field</span>(
+        default=<span class="number">3</span>,
+        description=<span class="string">"Nombre maximum de resultats a retourner"</span>,
+        ge=<span class="number">1</span>,
+        le=<span class="number">10</span>
+    )
+
+<span class="comment"># Definir la fonction</span>
+<span class="keyword">def</span> <span class="function">recherche_base_connaissances</span>(query: str, max_results: int = <span class="number">3</span>) -> str:
+    <span class="string">"""Recherche dans la base de connaissances interne de l'entreprise."""</span>
+    <span class="comment"># Simulation d'une base de connaissances</span>
+    base = {
+        <span class="string">"python"</span>: [<span class="string">"Python 3.12 est la derniere version stable"</span>,
+                   <span class="string">"Python supporte le typage statique avec mypy"</span>,
+                   <span class="string">"Python est interprete et multi-paradigme"</span>],
+        <span class="string">"ia"</span>: [<span class="string">"L'IA generative cree du contenu nouveau"</span>,
+               <span class="string">"Le RAG ameliore la factualite des LLM"</span>,
+               <span class="string">"Les agents IA peuvent utiliser des outils"</span>],
+        <span class="string">"langchain"</span>: [<span class="string">"LangChain v0.3 est la version actuelle"</span>,
+                     <span class="string">"LangChain supporte les agents ReAct"</span>,
+                     <span class="string">"LangGraph est recommande pour les workflows complexes"</span>],
+    }
+
+    resultats = []
+    <span class="keyword">for</span> cle, docs <span class="keyword">in</span> base.items():
+        <span class="keyword">if</span> cle <span class="keyword">in</span> query.lower():
+            resultats.extend(docs[:max_results])
+
+    <span class="keyword">if</span> <span class="keyword">not</span> resultats:
+        <span class="keyword">return</span> <span class="string">f"Aucun resultat trouve pour '{query}'"</span>
+
+    <span class="keyword">return</span> <span class="string">"\n"</span>.join([<span class="string">f"- <span class="keyword">{</span>r<span class="keyword">}</span>"</span> <span class="keyword">for</span> r <span class="keyword">in</span> resultats[:max_results]])
+
+<span class="comment"># Creer l'outil avec StructuredTool.from_function</span>
+outil_recherche = StructuredTool.<span class="function">from_function</span>(
+    func=recherche_base_connaissances,
+    name=<span class="string">"RechercheInterne"</span>,
+    description=<span class="string">"Recherche dans la base de connaissances interne. "</span>
+                <span class="string">"Utilise quand l'utilisateur pose une question technique."</span>,
+    args_schema=RechercheInput,
+    return_direct=<span class="keyword">False</span>  <span class="comment"># Si True, le resultat est retourne sans passer par le LLM</span>
+)
+
+<span class="comment"># Inspecter</span>
+<span class="function">print</span>(<span class="string">f"Nom : <span class="keyword">{</span>outil_recherche.name<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Description : <span class="keyword">{</span>outil_recherche.description<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Schema args : <span class="keyword">{</span>outil_recherche.args<span class="keyword">}</span>"</span>)
+
+<span class="comment"># Tester</span>
+<span class="function">print</span>(<span class="string">f"\nRecherche 'python' :"</span>)
+<span class="function">print</span>(outil_recherche.<span class="function">invoke</span>({<span class="string">"query"</span>: <span class="string">"python"</span>, <span class="string">"max_results"</span>: <span class="number">2</span>}))
+
+<span class="function">print</span>(<span class="string">f"\nRecherche 'langchain' :"</span>)
+<span class="function">print</span>(outil_recherche.<span class="function">invoke</span>({<span class="string">"query"</span>: <span class="string">"langchain"</span>}))
+
+<span class="function">print</span>(<span class="string">f"\nRecherche inconnue :"</span>)
+<span class="function">print</span>(outil_recherche.<span class="function">invoke</span>({<span class="string">"query"</span>: <span class="string">"cuisine"</span>}))</div>
+
+        <div class="output-block">Nom : RechercheInterne
+Description : Recherche dans la base de connaissances interne. Utilise quand l'utilisateur pose une question technique.
+Schema args : {'query': {'description': "Le terme ou la phrase a rechercher", 'title': 'Query', 'type': 'string'}, 'max_results': {'default': 3, 'description': 'Nombre maximum de resultats a retourner', 'ge': 1, 'le': 10, 'title': 'Max Results', 'type': 'integer'}}
+
+Recherche 'python' :
+- Python 3.12 est la derniere version stable
+- Python supporte le typage statique avec mypy
+
+Recherche 'langchain' :
+- LangChain v0.3 est la version actuelle
+- LangChain supporte les agents ReAct
+- LangGraph est recommande pour les workflows complexes
+
+Recherche inconnue :
+Aucun resultat trouve pour 'cuisine'</div>
+
+        <div class="prof-note">
+            Le parametre <code>return_direct=True</code> est utile quand l'outil retourne deja une reponse formatee pour l'utilisateur. Dans ce cas, l'agent ne reformule pas le resultat. Utilisez-le avec parcimonie car il empeche l'agent de synthetiser les resultats.
+        </div>
+
+        <!-- ============================== EXERCICE 3 ============================== -->
+        <h2>Exercice 3 - Outils integres : Wikipedia et DuckDuckGo</h2>
+
+        <p>LangChain fournit des wrappers pour des services externes populaires. Ces outils sont prets a l'emploi et ne necessitent souvent aucune configuration.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 3a : Recherche Wikipedia</span>
+<span class="keyword">from</span> langchain_community.tools <span class="keyword">import</span> WikipediaQueryRun
+<span class="keyword">from</span> langchain_community.utilities <span class="keyword">import</span> WikipediaAPIWrapper
+
+<span class="comment"># Configurer Wikipedia</span>
+wiki_wrapper = <span class="function">WikipediaAPIWrapper</span>(
+    top_k_results=<span class="number">2</span>,
+    doc_content_chars_max=<span class="number">500</span>,
+    lang=<span class="string">"fr"</span>  <span class="comment"># Wikipedia en francais</span>
+)
+outil_wiki = <span class="function">WikipediaQueryRun</span>(api_wrapper=wiki_wrapper)
+
+<span class="comment"># Tester</span>
+<span class="function">print</span>(<span class="string">f"Nom : <span class="keyword">{</span>outil_wiki.name<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Description : <span class="keyword">{</span>outil_wiki.description[:100]<span class="keyword">}</span>..."</span>)
+<span class="function">print</span>(<span class="string">f"\n--- Recherche : 'Intelligence Artificielle' ---"</span>)
+resultat = outil_wiki.<span class="function">invoke</span>(<span class="string">"Intelligence Artificielle"</span>)
+<span class="function">print</span>(resultat[:400])</div>
+
+        <div class="output-block">Nom : wikipedia
+Description : A wrapper around Wikipedia. Useful for when you need to answer general questions about people, ...
+
+--- Recherche : 'Intelligence Artificielle' ---
+Page: Intelligence artificielle
+Summary: L'intelligence artificielle (IA) est un ensemble de theories et de techniques visant a realiser des machines capables de simuler l'intelligence humaine. Initiee dans le courant des annees 1950, elle a connu un developpement considerable ces dernieres annees grace aux progres de la puissance de calcul...</div>
+
+        <div class="code-block"><span class="comment"># Exercice 3b : Recherche DuckDuckGo (pas de cle API necessaire)</span>
+<span class="keyword">from</span> langchain_community.tools <span class="keyword">import</span> DuckDuckGoSearchRun
+
+outil_ddg = <span class="function">DuckDuckGoSearchRun</span>()
+
+<span class="function">print</span>(<span class="string">f"Nom : <span class="keyword">{</span>outil_ddg.name<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Description : <span class="keyword">{</span>outil_ddg.description[:100]<span class="keyword">}</span>..."</span>)
+
+<span class="comment"># Rechercher des informations recentes</span>
+<span class="function">print</span>(<span class="string">f"\n--- Recherche DuckDuckGo : 'LangChain derniere version 2024' ---"</span>)
+resultat = outil_ddg.<span class="function">invoke</span>(<span class="string">"LangChain derniere version 2024"</span>)
+<span class="function">print</span>(resultat[:500])</div>
+
+        <div class="output-block">Nom : duckduckgo_search
+Description : A wrapper around DuckDuckGo Search. Useful for when you need to answer questions about current ...
+
+--- Recherche DuckDuckGo : 'LangChain derniere version 2024' ---
+LangChain v0.3 a ete publiee en 2024 avec des ameliorations majeures. Le framework continue d'evoluer rapidement avec l'integration de LangGraph pour les workflows avances. La version 0.3 introduit une meilleure gestion des agents, des outils plus performants et une integration poussee avec les principaux fournisseurs de LLM...</div>
+
+        <div class="concept-box">
+            <h3>Outils integres populaires</h3>
+            <table>
+                <tr><th>Outil</th><th>Package</th><th>Cle API</th><th>Usage</th></tr>
+                <tr><td>WikipediaQueryRun</td><td>langchain-community</td><td>Non</td><td>Connaissances generales</td></tr>
+                <tr><td>DuckDuckGoSearchRun</td><td>langchain-community</td><td>Non</td><td>Recherche web recente</td></tr>
+                <tr><td>PythonREPLTool</td><td>langchain-community</td><td>Non</td><td>Executer du code Python</td></tr>
+                <tr><td>SerpAPIWrapper</td><td>langchain-community</td><td>Oui</td><td>Recherche Google</td></tr>
+                <tr><td>ArxivQueryRun</td><td>langchain-community</td><td>Non</td><td>Articles scientifiques</td></tr>
+            </table>
+        </div>
+
+        <!-- ============================== EXERCICE 4 ============================== -->
+        <h2>Exercice 4 - Agent ReAct avec create_react_agent</h2>
+
+        <p>C'est le coeur de ce TD : creer un agent qui raisonne et utilise des outils de maniere autonome avec le pattern ReAct.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 4 : Agent ReAct complet avec verbose</span>
+<span class="keyword">import</span> os
+os.environ[<span class="string">"OPENAI_API_KEY"</span>] = <span class="string">"votre-cle-api"</span>
+
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain.agents <span class="keyword">import</span> create_react_agent, AgentExecutor
+<span class="keyword">from</span> langchain <span class="keyword">import</span> hub
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="comment"># Definir les outils</span>
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculer</span>(expression: str) -> str:
+    <span class="string">"""Calcule une expression mathematique. Utilise pour les operations arithmetiques."""</span>
+    <span class="keyword">try</span>:
+        <span class="keyword">return</span> str(<span class="function">eval</span>(expression, {<span class="string">"__builtins__"</span>: {}}, {}))
+    <span class="keyword">except</span>:
+        <span class="keyword">return</span> <span class="string">"Erreur de calcul"</span>
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">obtenir_meteo</span>(ville: str) -> str:
+    <span class="string">"""Retourne la meteo actuelle pour une ville donnee."""</span>
+    <span class="comment"># Simulation</span>
+    meteos = {
+        <span class="string">"paris"</span>: <span class="string">"Paris : 18C, nuageux, vent 15 km/h"</span>,
+        <span class="string">"lyon"</span>: <span class="string">"Lyon : 22C, ensoleille, vent 8 km/h"</span>,
+        <span class="string">"marseille"</span>: <span class="string">"Marseille : 25C, grand soleil, vent 20 km/h"</span>,
+    }
+    <span class="keyword">return</span> meteos.get(ville.lower(), <span class="string">f"Meteo non disponible pour <span class="keyword">{</span>ville<span class="keyword">}</span>"</span>)
+
+tools = [calculer, obtenir_meteo]
+
+<span class="comment"># Initialiser le LLM</span>
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Charger le prompt ReAct depuis le hub LangChain</span>
+prompt = hub.<span class="function">pull</span>(<span class="string">"hwchase17/react"</span>)
+
+<span class="comment"># Creer l'agent ReAct</span>
+agent = <span class="function">create_react_agent</span>(llm, tools, prompt)
+
+<span class="comment"># Creer l'executeur avec verbose pour voir le raisonnement</span>
+agent_executor = <span class="function">AgentExecutor</span>(
+    agent=agent,
+    tools=tools,
+    verbose=<span class="keyword">True</span>,   <span class="comment"># Affiche les etapes de raisonnement</span>
+    max_iterations=<span class="number">5</span>,
+    handle_parsing_errors=<span class="keyword">True</span>
+)
+
+<span class="comment"># Executer l'agent</span>
+resultat = agent_executor.<span class="function">invoke</span>({
+    <span class="string">"input"</span>: <span class="string">"Quelle est la meteo a Paris ? "</span>
+             <span class="string">"Et si la temperature est en Celsius, combien ca fait en Fahrenheit ?"</span>
+})</div>
+
+        <div class="output-block" style="white-space: pre-wrap;">
+
+> Entering new AgentExecutor chain...
+
+Thought: L'utilisateur veut la meteo a Paris et une conversion de temperature.
+Je dois d'abord obtenir la meteo, puis faire un calcul de conversion.
+
+Action: obtenir_meteo
+Action Input: paris
+
+Observation: Paris : 18C, nuageux, vent 15 km/h
+
+Thought: J'ai la temperature : 18C. Je dois maintenant convertir en Fahrenheit.
+La formule est : F = C * 9/5 + 32
+
+Action: calculer
+Action Input: 18 * 9/5 + 32
+
+Observation: 64.4
+
+Thought: J'ai maintenant toutes les informations pour repondre.
+
+Final Answer: La meteo a Paris est de 18 degres Celsius, nuageux avec un vent
+de 15 km/h. En Fahrenheit, cela correspond a 64.4 degres F.
+
+> Finished chain.</div>
+
+        <div class="effect">
+            L'agent a effectue 2 appels d'outils de maniere autonome. Il a d'abord obtenu la meteo, extrait la temperature, puis utilise la calculatrice pour la conversion. Le mode <code>verbose=True</code> montre chaque etape du raisonnement ReAct.
+        </div>
+
+        <div class="prof-note">
+            Le prompt <code>hwchase17/react</code> est le prompt ReAct officiel heberge sur le LangChain Hub. Il instruit le LLM a suivre le format Thought/Action/Action Input/Observation. Vous pouvez aussi creer votre propre prompt personnalise.
+        </div>
+
+        <!-- ============================== EXERCICE 5 ============================== -->
+        <h2>Exercice 5 - Agent Multi-outils</h2>
+
+        <p>Un agent devient vraiment puissant quand il dispose de plusieurs outils et doit choisir le bon en fonction de la question.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 5 : Agent avec multiple outils et logique de selection</span>
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain.agents <span class="keyword">import</span> create_react_agent, AgentExecutor
+<span class="keyword">from</span> langchain <span class="keyword">import</span> hub
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> langchain_community.tools <span class="keyword">import</span> DuckDuckGoSearchRun
+
+<span class="comment"># Outil 1 : Calculatrice avancee</span>
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculer</span>(expression: str) -> str:
+    <span class="string">"""Calcule des expressions mathematiques. Utilise pour tout calcul numerique.
+    Supporte +, -, *, /, **, sqrt, etc.
+    Exemples: '2+3', '100/7', '2**10'"""</span>
+    <span class="keyword">import</span> math
+    <span class="keyword">try</span>:
+        <span class="keyword">return</span> str(<span class="function">eval</span>(expression, {<span class="string">"__builtins__"</span>: {}, <span class="string">"math"</span>: math}, {}))
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur : <span class="keyword">{</span>e<span class="keyword">}</span>"</span>
+
+<span class="comment"># Outil 2 : Recherche web</span>
+outil_recherche = <span class="function">DuckDuckGoSearchRun</span>()
+
+<span class="comment"># Outil 3 : Base de connaissances interne</span>
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">base_connaissances</span>(sujet: str) -> str:
+    <span class="string">"""Recherche dans la documentation interne de l'entreprise.
+    Utilise pour les questions sur les politiques, procedures ou produits internes.
+    Le sujet doit etre un mot-cle simple."""</span>
+    docs = {
+        <span class="string">"conges"</span>: <span class="string">"Politique conges : 25 jours/an, demande 2 semaines avant, validation manager."</span>,
+        <span class="string">"remote"</span>: <span class="string">"Teletravail : 3 jours/semaine max, accord manager requis, equipement fourni."</span>,
+        <span class="string">"salaire"</span>: <span class="string">"Revisions salariales : annuelles en mars, basees sur performance et marche."</span>,
+        <span class="string">"formation"</span>: <span class="string">"Budget formation : 2000 EUR/an/personne, sur catalogue ou demande speciale."</span>,
+    }
+    <span class="keyword">for</span> cle, val <span class="keyword">in</span> docs.items():
+        <span class="keyword">if</span> cle <span class="keyword">in</span> sujet.lower():
+            <span class="keyword">return</span> val
+    <span class="keyword">return</span> <span class="string">f"Aucune doc interne trouvee pour '{sujet}'. Essayez : conges, remote, salaire, formation."</span>
+
+<span class="comment"># Assembler l'agent multi-outils</span>
+tools = [calculer, outil_recherche, base_connaissances]
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+prompt = hub.<span class="function">pull</span>(<span class="string">"hwchase17/react"</span>)
+agent = <span class="function">create_react_agent</span>(llm, tools, prompt)
+agent_executor = <span class="function">AgentExecutor</span>(
+    agent=agent, tools=tools, verbose=<span class="keyword">True</span>, max_iterations=<span class="number">5</span>
+)
+
+<span class="comment"># Test 1 : Question de calcul</span>
+<span class="function">print</span>(<span class="string">"=== TEST 1 : Calcul ==="</span>)
+r1 = agent_executor.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Combien font 15% de 2500 ?"</span>})
+<span class="function">print</span>(<span class="string">f"Reponse : <span class="keyword">{</span>r1['output']<span class="keyword">}</span>\n"</span>)
+
+<span class="comment"># Test 2 : Question interne</span>
+<span class="function">print</span>(<span class="string">"=== TEST 2 : Documentation interne ==="</span>)
+r2 = agent_executor.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Quelle est la politique de teletravail ?"</span>})
+<span class="function">print</span>(<span class="string">f"Reponse : <span class="keyword">{</span>r2['output']<span class="keyword">}</span>\n"</span>)
+
+<span class="comment"># Test 3 : Question recherche web</span>
+<span class="function">print</span>(<span class="string">"=== TEST 3 : Recherche web ==="</span>)
+r3 = agent_executor.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Quelles sont les nouveautes de Python 3.13 ?"</span>})
+<span class="function">print</span>(<span class="string">f"Reponse : <span class="keyword">{</span>r3['output']<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block" style="white-space: pre-wrap;">=== TEST 1 : Calcul ===
+> Entering new AgentExecutor chain...
+Thought: Je dois calculer 15% de 2500.
+Action: calculer
+Action Input: 0.15 * 2500
+Observation: 375.0
+Thought: J'ai le resultat.
+Final Answer: 15% de 2500 = 375
+> Finished chain.
+Reponse : 15% de 2500 = 375
+
+=== TEST 2 : Documentation interne ===
+> Entering new AgentExecutor chain...
+Thought: C'est une question sur la politique interne, je vais chercher dans la base.
+Action: base_connaissances
+Action Input: remote teletravail
+Observation: Teletravail : 3 jours/semaine max, accord manager requis, equipement fourni.
+Thought: J'ai la reponse.
+Final Answer: La politique de teletravail permet 3 jours par semaine maximum,
+avec l'accord du manager. L'equipement est fourni par l'entreprise.
+> Finished chain.
+Reponse : La politique de teletravail permet 3 jours par semaine maximum...
+
+=== TEST 3 : Recherche web ===
+> Entering new AgentExecutor chain...
+Thought: Je dois chercher sur le web les nouveautes de Python 3.13.
+Action: duckduckgo_search
+Action Input: Python 3.13 nouveautes
+Observation: Python 3.13 introduit un interpreteur experimental avec JIT...
+Thought: J'ai les informations.
+Final Answer: Python 3.13 introduit plusieurs nouveautes majeures, notamment
+un interpreteur JIT experimental et des ameliorations de performance.
+> Finished chain.
+Reponse : Python 3.13 introduit plusieurs nouveautes majeures...</div>
+
+        <div class="prof-note">
+            Observez comment l'agent choisit automatiquement l'outil adapte : <code>calculer</code> pour les maths, <code>base_connaissances</code> pour les questions internes, et <code>duckduckgo_search</code> pour les informations actuelles. La qualite de la description de chaque outil est determinante pour cette selection.
+        </div>
+
+        <!-- ============================== EXERCICE 6 ============================== -->
+        <h2>Exercice 6 - Agent avec Memoire</h2>
+
+        <p>Par defaut, un agent ne se souvient pas des echanges precedents. En ajoutant une <strong>memoire</strong>, l'agent peut maintenir une conversation multi-tours coherente tout en utilisant ses outils.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 6 : Agent avec memoire conversationnelle</span>
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain.agents <span class="keyword">import</span> create_react_agent, AgentExecutor
+<span class="keyword">from</span> langchain <span class="keyword">import</span> hub
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate
+
+<span class="comment"># Outils</span>
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculer</span>(expression: str) -> str:
+    <span class="string">"""Calcule une expression mathematique."""</span>
+    <span class="keyword">try</span>:
+        <span class="keyword">return</span> str(<span class="function">eval</span>(expression, {<span class="string">"__builtins__"</span>: {}}, {}))
+    <span class="keyword">except</span>:
+        <span class="keyword">return</span> <span class="string">"Erreur"</span>
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">recherche_produit</span>(nom: str) -> str:
+    <span class="string">"""Recherche le prix d'un produit dans le catalogue."""</span>
+    catalogue = {
+        <span class="string">"laptop"</span>: <span class="string">"Laptop Pro X1 : 1299 EUR"</span>,
+        <span class="string">"ecran"</span>: <span class="string">"Ecran 27 4K : 449 EUR"</span>,
+        <span class="string">"clavier"</span>: <span class="string">"Clavier mecanique : 129 EUR"</span>,
+        <span class="string">"souris"</span>: <span class="string">"Souris ergonomique : 79 EUR"</span>,
+    }
+    <span class="keyword">for</span> cle, val <span class="keyword">in</span> catalogue.items():
+        <span class="keyword">if</span> cle <span class="keyword">in</span> nom.lower():
+            <span class="keyword">return</span> val
+    <span class="keyword">return</span> <span class="string">f"Produit '{nom}' non trouve."</span>
+
+tools = [calculer, recherche_produit]
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Prompt ReAct adapte pour la memoire (avec chat_history)</span>
+template = <span class="string">"""Reponds au mieux en utilisant les outils disponibles.
+
+Tu as acces aux outils suivants :
+{tools}
+
+Utilise le format suivant :
+
+Question: la question de l'utilisateur
+Thought: reflechis a ce que tu dois faire
+Action: le nom de l'outil a utiliser [{tool_names}]
+Action Input: l'entree de l'outil
+Observation: le resultat de l'outil
+... (ce cycle peut se repeter)
+Thought: j'ai maintenant la reponse finale
+Final Answer: la reponse finale
+
+Historique de conversation :
+{chat_history}
+
+Question: {input}
+{agent_scratchpad}"""</span>
+
+prompt = <span class="function">PromptTemplate</span>(
+    template=template,
+    input_variables=[<span class="string">"input"</span>, <span class="string">"chat_history"</span>, <span class="string">"agent_scratchpad"</span>],
+    partial_variables={
+        <span class="string">"tools"</span>: <span class="string">"\n"</span>.join([<span class="string">f"<span class="keyword">{</span>t.name<span class="keyword">}</span>: <span class="keyword">{</span>t.description<span class="keyword">}</span>"</span> <span class="keyword">for</span> t <span class="keyword">in</span> tools]),
+        <span class="string">"tool_names"</span>: <span class="string">", "</span>.join([t.name <span class="keyword">for</span> t <span class="keyword">in</span> tools])
+    }
+)
+
+<span class="comment"># Creer la memoire</span>
+memory = <span class="function">ConversationBufferMemory</span>(
+    memory_key=<span class="string">"chat_history"</span>,
+    return_messages=<span class="keyword">False</span>
+)
+
+<span class="comment"># Creer l'agent avec memoire</span>
+agent = <span class="function">create_react_agent</span>(llm, tools, prompt)
+agent_executor = <span class="function">AgentExecutor</span>(
+    agent=agent,
+    tools=tools,
+    memory=memory,
+    verbose=<span class="keyword">True</span>,
+    handle_parsing_errors=<span class="keyword">True</span>,
+    max_iterations=<span class="number">5</span>
+)
+
+<span class="comment"># Conversation multi-tours</span>
+<span class="function">print</span>(<span class="string">"=== Tour 1 ==="</span>)
+r1 = agent_executor.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Combien coute le laptop ?"</span>})
+<span class="function">print</span>(<span class="string">f"Agent : <span class="keyword">{</span>r1['output']<span class="keyword">}</span>\n"</span>)
+
+<span class="function">print</span>(<span class="string">"=== Tour 2 ==="</span>)
+r2 = agent_executor.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Et l'ecran ?"</span>})
+<span class="function">print</span>(<span class="string">f"Agent : <span class="keyword">{</span>r2['output']<span class="keyword">}</span>\n"</span>)
+
+<span class="function">print</span>(<span class="string">"=== Tour 3 ==="</span>)
+r3 = agent_executor.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Quel serait le total des deux produits ?"</span>})
+<span class="function">print</span>(<span class="string">f"Agent : <span class="keyword">{</span>r3['output']<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block" style="white-space: pre-wrap;">=== Tour 1 ===
+> Entering new AgentExecutor chain...
+Thought: Je dois chercher le prix du laptop.
+Action: recherche_produit
+Action Input: laptop
+Observation: Laptop Pro X1 : 1299 EUR
+Final Answer: Le Laptop Pro X1 coute 1299 EUR.
+> Finished chain.
+Agent : Le Laptop Pro X1 coute 1299 EUR.
+
+=== Tour 2 ===
+> Entering new AgentExecutor chain...
+Thought: L'utilisateur demande "et l'ecran", c'est un suivi de conversation.
+Action: recherche_produit
+Action Input: ecran
+Observation: Ecran 27 4K : 449 EUR
+Final Answer: L'Ecran 27 pouces 4K coute 449 EUR.
+> Finished chain.
+Agent : L'Ecran 27 pouces 4K coute 449 EUR.
+
+=== Tour 3 ===
+> Entering new AgentExecutor chain...
+Thought: L'utilisateur veut le total. D'apres l'historique : laptop = 1299 EUR,
+ecran = 449 EUR. Je dois additionner.
+Action: calculer
+Action Input: 1299 + 449
+Observation: 1748
+Final Answer: Le total du Laptop Pro X1 (1299 EUR) et de l'Ecran 4K (449 EUR) est de 1748 EUR.
+> Finished chain.
+Agent : Le total du Laptop Pro X1 (1299 EUR) et de l'Ecran 4K (449 EUR) est de 1748 EUR.</div>
+
+        <div class="effect">
+            Au tour 3, l'agent se souvient que le laptop coute 1299 EUR et l'ecran 449 EUR grace a la memoire conversationnelle. Il combine cette information avec un appel a la calculatrice pour donner le total. Sans memoire, il n'aurait pas pu repondre a cette question.
+        </div>
+
+        <!-- ============================== EXERCICE 7 ============================== -->
+        <h2>Exercice 7 - Gestion d'erreurs et robustesse</h2>
+
+        <p>En production, les agents peuvent rencontrer des erreurs : outil indisponible, boucle infinie, format de sortie incorrect. LangChain fournit des mecanismes pour gerer ces situations.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 7 : Gestion des erreurs et parametres de robustesse</span>
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain.agents <span class="keyword">import</span> create_react_agent, AgentExecutor
+<span class="keyword">from</span> langchain <span class="keyword">import</span> hub
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="comment"># Outil qui peut echouer</span>
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">api_instable</span>(query: str) -> str:
+    <span class="string">"""Interroge une API externe (peut echouer parfois)."""</span>
+    <span class="keyword">import</span> random
+    <span class="keyword">if</span> random.<span class="function">random</span>() < <span class="number">0.5</span>:
+        <span class="keyword">raise</span> <span class="function">Exception</span>(<span class="string">"Erreur 503 : Service temporairement indisponible"</span>)
+    <span class="keyword">return</span> <span class="string">f"Resultat de l'API pour '<span class="keyword">{</span>query<span class="keyword">}</span>': donnees disponibles"</span>
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculer</span>(expression: str) -> str:
+    <span class="string">"""Calcule une expression mathematique."""</span>
+    <span class="keyword">try</span>:
+        <span class="keyword">return</span> str(<span class="function">eval</span>(expression, {<span class="string">"__builtins__"</span>: {}}, {}))
+    <span class="keyword">except</span>:
+        <span class="keyword">return</span> <span class="string">"Erreur de calcul"</span>
+
+tools = [api_instable, calculer]
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+prompt = hub.<span class="function">pull</span>(<span class="string">"hwchase17/react"</span>)
+agent = <span class="function">create_react_agent</span>(llm, tools, prompt)
+
+<span class="comment"># === Configuration robuste ===</span>
+agent_executor = <span class="function">AgentExecutor</span>(
+    agent=agent,
+    tools=tools,
+    verbose=<span class="keyword">True</span>,
+
+    <span class="comment"># 1. Limite d'iterations (evite les boucles infinies)</span>
+    max_iterations=<span class="number">5</span>,
+
+    <span class="comment"># 2. Gestion des erreurs de parsing</span>
+    handle_parsing_errors=<span class="keyword">True</span>,
+    <span class="comment"># OU avec un message personnalise :</span>
+    <span class="comment"># handle_parsing_errors="Format incorrect. Utilise le format Thought/Action/..."</span>
+
+    <span class="comment"># 3. Timeout par iteration (en secondes)</span>
+    max_execution_time=<span class="number">30</span>,
+
+    <span class="comment"># 4. Message si max_iterations atteint</span>
+    early_stopping_method=<span class="string">"generate"</span>,  <span class="comment"># "force" ou "generate"</span>
+)
+
+<span class="comment"># Test avec une question qui pourrait causer une erreur</span>
+<span class="function">print</span>(<span class="string">"=== Test avec API instable ==="</span>)
+<span class="keyword">try</span>:
+    resultat = agent_executor.<span class="function">invoke</span>({
+        <span class="string">"input"</span>: <span class="string">"Interroge l'API pour obtenir des donnees sur la France"</span>
+    })
+    <span class="function">print</span>(<span class="string">f"Reponse : <span class="keyword">{</span>resultat['output']<span class="keyword">}</span>"</span>)
+<span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+    <span class="function">print</span>(<span class="string">f"Erreur capturee : <span class="keyword">{</span>e<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block" style="white-space: pre-wrap;">=== Test avec API instable ===
+> Entering new AgentExecutor chain...
+Thought: Je dois interroger l'API pour des donnees sur la France.
+Action: api_instable
+Action Input: France
+Observation: Erreur 503 : Service temporairement indisponible
+Thought: L'API a echoue. Je vais reessayer.
+Action: api_instable
+Action Input: France
+Observation: Resultat de l'API pour 'France': donnees disponibles
+Thought: J'ai obtenu les donnees.
+Final Answer: Les donnees sur la France sont disponibles via l'API.
+> Finished chain.
+Reponse : Les donnees sur la France sont disponibles via l'API.</div>
+
+        <div class="param-box">
+            <h4>Parametres de robustesse d'AgentExecutor</h4>
+            <table>
+                <tr><th>Parametre</th><th>Defaut</th><th>Description</th></tr>
+                <tr><td>max_iterations</td><td>15</td><td>Nombre maximal de cycles Think-Act-Observe</td></tr>
+                <tr><td>max_execution_time</td><td>None</td><td>Timeout global en secondes</td></tr>
+                <tr><td>handle_parsing_errors</td><td>False</td><td>True, ou message personnalise si le LLM genere un format incorrect</td></tr>
+                <tr><td>early_stopping_method</td><td>"force"</td><td>"force" : arrete immediatement. "generate" : demande au LLM une reponse partielle</td></tr>
+                <tr><td>return_intermediate_steps</td><td>False</td><td>Si True, retourne aussi les etapes intermediaires</td></tr>
+            </table>
+        </div>
+
+        <div class="code-block"><span class="comment"># Recuperer les etapes intermediaires pour le debug</span>
+agent_debug = <span class="function">AgentExecutor</span>(
+    agent=agent,
+    tools=tools,
+    verbose=<span class="keyword">False</span>,
+    max_iterations=<span class="number">5</span>,
+    handle_parsing_errors=<span class="keyword">True</span>,
+    return_intermediate_steps=<span class="keyword">True</span>  <span class="comment"># Active le retour des etapes</span>
+)
+
+resultat = agent_debug.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Calcule 2 puissance 16"</span>})
+
+<span class="function">print</span>(<span class="string">f"Reponse finale : <span class="keyword">{</span>resultat['output']<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"\nNombre d'etapes : <span class="keyword">{</span>len(resultat['intermediate_steps'])<span class="keyword">}</span>"</span>)
+
+<span class="keyword">for</span> i, (action, observation) <span class="keyword">in</span> <span class="function">enumerate</span>(resultat[<span class="string">"intermediate_steps"</span>]):
+    <span class="function">print</span>(<span class="string">f"\nEtape <span class="keyword">{</span>i+1<span class="keyword">}</span> :"</span>)
+    <span class="function">print</span>(<span class="string">f"  Tool : <span class="keyword">{</span>action.tool<span class="keyword">}</span>"</span>)
+    <span class="function">print</span>(<span class="string">f"  Input : <span class="keyword">{</span>action.tool_input<span class="keyword">}</span>"</span>)
+    <span class="function">print</span>(<span class="string">f"  Observation : <span class="keyword">{</span>observation<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Reponse finale : 2 puissance 16 = 65536
+
+Nombre d'etapes : 1
+
+Etape 1 :
+  Tool : calculer
+  Input : 2**16
+  Observation : 65536</div>
+
+        <div class="warning">
+            Fixez toujours <code>max_iterations</code> a une valeur raisonnable (3 a 10). Sans cette limite, un agent peut entrer dans une boucle infinie qui consomme des tokens (et donc du budget API) sans fin. En production, ajoutez aussi <code>max_execution_time</code> comme filet de securite.
+        </div>
+
+        <!-- ============================== EXPERIMENTATION ============================== -->
+        <h2>Experimentation - Impact du jeu d'outils</h2>
+
+        <p>L'ensemble d'outils disponibles influence directement le comportement de l'agent. La meme question produit des reponses differentes selon les outils accessibles.</p>
+
+        <div class="code-block"><span class="comment"># Experimentation : Meme question, outils differents</span>
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain.agents <span class="keyword">import</span> create_react_agent, AgentExecutor
+<span class="keyword">from</span> langchain <span class="keyword">import</span> hub
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> langchain_community.tools <span class="keyword">import</span> WikipediaQueryRun, DuckDuckGoSearchRun
+<span class="keyword">from</span> langchain_community.utilities <span class="keyword">import</span> WikipediaAPIWrapper
+
+question = <span class="string">"Quelle est la population de la France et combien cela represente par km2 ?"</span>
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+prompt = hub.<span class="function">pull</span>(<span class="string">"hwchase17/react"</span>)
+
+<span class="comment"># --- Configuration A : Calculatrice seule ---</span>
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calc</span>(expr: str) -> str:
+    <span class="string">"""Calcule une expression mathematique."""</span>
+    <span class="keyword">try</span>: <span class="keyword">return</span> str(<span class="function">eval</span>(expr, {<span class="string">"__builtins__"</span>: {}}, {}))
+    <span class="keyword">except</span>: <span class="keyword">return</span> <span class="string">"Erreur"</span>
+
+agent_a = <span class="function">AgentExecutor</span>(
+    agent=<span class="function">create_react_agent</span>(llm, [calc], prompt),
+    tools=[calc], verbose=<span class="keyword">False</span>, max_iterations=<span class="number">5</span>,
+    handle_parsing_errors=<span class="keyword">True</span>
+)
+
+<span class="comment"># --- Configuration B : Wikipedia + Calculatrice ---</span>
+wiki = <span class="function">WikipediaQueryRun</span>(api_wrapper=<span class="function">WikipediaAPIWrapper</span>(
+    top_k_results=<span class="number">1</span>, doc_content_chars_max=<span class="number">500</span>, lang=<span class="string">"fr"</span>
+))
+
+agent_b = <span class="function">AgentExecutor</span>(
+    agent=<span class="function">create_react_agent</span>(llm, [calc, wiki], prompt),
+    tools=[calc, wiki], verbose=<span class="keyword">False</span>, max_iterations=<span class="number">5</span>,
+    handle_parsing_errors=<span class="keyword">True</span>
+)
+
+<span class="comment"># --- Configuration C : Search + Wikipedia + Calculatrice ---</span>
+ddg = <span class="function">DuckDuckGoSearchRun</span>()
+
+agent_c = <span class="function">AgentExecutor</span>(
+    agent=<span class="function">create_react_agent</span>(llm, [calc, wiki, ddg], prompt),
+    tools=[calc, wiki, ddg], verbose=<span class="keyword">False</span>, max_iterations=<span class="number">5</span>,
+    handle_parsing_errors=<span class="keyword">True</span>
+)
+
+<span class="comment"># Comparer les reponses</span>
+<span class="function">print</span>(<span class="string">f"Question : <span class="keyword">{</span>question<span class="keyword">}</span>\n"</span>)
+<span class="function">print</span>(<span class="string">"=== A (Calculatrice seule) ==="</span>)
+<span class="function">print</span>(agent_a.<span class="function">invoke</span>({<span class="string">"input"</span>: question})[<span class="string">"output"</span>])
+<span class="function">print</span>(<span class="string">"\n=== B (Wikipedia + Calculatrice) ==="</span>)
+<span class="function">print</span>(agent_b.<span class="function">invoke</span>({<span class="string">"input"</span>: question})[<span class="string">"output"</span>])
+<span class="function">print</span>(<span class="string">"\n=== C (Search + Wikipedia + Calculatrice) ==="</span>)
+<span class="function">print</span>(agent_c.<span class="function">invoke</span>({<span class="string">"input"</span>: question})[<span class="string">"output"</span>])</div>
+
+        <div class="output-block" style="white-space: pre-wrap;">Question : Quelle est la population de la France et combien cela represente par km2 ?
+
+=== A (Calculatrice seule) ===
+La population de la France est d'environ 68 millions d'habitants.
+La superficie est d'environ 551 695 km2.
+Densite : 68000000 / 551695 = environ 123 habitants par km2.
+(Note : ces chiffres proviennent de mes connaissances, pas d'un calcul verifie)
+
+=== B (Wikipedia + Calculatrice) ===
+Selon Wikipedia, la France compte environ 68,04 millions d'habitants pour une
+superficie de 643 801 km2 (avec l'outre-mer). La densite est de :
+68040000 / 643801 = 105.7 habitants par km2.
+
+=== C (Search + Wikipedia + Calculatrice) ===
+D'apres les donnees les plus recentes (2024), la population de la France est
+estimee a 68,4 millions d'habitants. Avec une superficie metropolitaine de
+551 695 km2, la densite est de 68400000 / 551695 = 123.97 habitants par km2.</div>
+
+        <div class="prof-note">
+            Configuration A utilise les connaissances internes du LLM (potentiellement obsoletes). Configuration B consulte Wikipedia pour des donnees plus fiables. Configuration C cherche les donnees les plus recentes sur le web. Plus l'agent a d'outils pertinents, plus ses reponses sont precises et a jour.
+        </div>
+
+        <div class="svg-container">
+            <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style="max-width:680px;">
+                <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Impact du nombre d'outils sur la qualite</text>
+
+                <!-- Axe X -->
+                <line x1="80" y1="180" x2="650" y2="180" stroke="#555" stroke-width="1.5"/>
+                <text x="365" y="210" text-anchor="middle" fill="#aaa" font-size="11">Nombre et diversite des outils</text>
+
+                <!-- Axe Y -->
+                <line x1="80" y1="180" x2="80" y2="45" stroke="#555" stroke-width="1.5"/>
+                <text x="30" y="112" fill="#aaa" font-size="11" transform="rotate(-90, 30, 112)">Qualite</text>
+
+                <!-- Barres -->
+                <rect x="140" y="130" width="80" height="50" rx="4" fill="#ff6b35" opacity="0.7"/>
+                <text x="180" y="125" text-anchor="middle" fill="#ff6b35" font-size="10">Moyenne</text>
+                <text x="180" y="195" text-anchor="middle" fill="#aaa" font-size="9">Calc seule</text>
+
+                <rect x="310" y="90" width="80" height="90" rx="4" fill="#569cd6" opacity="0.7"/>
+                <text x="350" y="85" text-anchor="middle" fill="#569cd6" font-size="10">Bonne</text>
+                <text x="350" y="195" text-anchor="middle" fill="#aaa" font-size="9">Wiki + Calc</text>
+
+                <rect x="480" y="60" width="80" height="120" rx="4" fill="#00ff88" opacity="0.7"/>
+                <text x="520" y="55" text-anchor="middle" fill="#00ff88" font-size="10">Excellente</text>
+                <text x="520" y="195" text-anchor="middle" fill="#aaa" font-size="9">Web + Wiki + Calc</text>
+            </svg>
+        </div>
+
+        <!-- ============================== ERREURS COURANTES ============================== -->
+        <h2>Erreurs Courantes</h2>
+
+        <div class="warning">
+            <strong>Description d'outil vague :</strong> Si la description est floue (<code>"Un outil utile"</code>), le LLM ne saura pas quand l'utiliser. Soyez precis : <code>"Calcule des expressions mathematiques. Accepte des expressions Python comme '2+3' ou 'math.sqrt(16)'."</code>
+        </div>
+
+        <div class="warning">
+            <strong>Pas de handle_parsing_errors :</strong> Sans ce parametre, une sortie mal formatee du LLM fait planter tout l'agent. Mettez toujours <code>handle_parsing_errors=True</code> en production.
+        </div>
+
+        <div class="warning">
+            <strong>max_iterations trop haut ou absent :</strong> Un agent avec max_iterations=100 peut consommer des centaines de milliers de tokens en boucle. Commencez a 5, augmentez si necessaire. Chaque iteration = un appel au LLM = un cout.
+        </div>
+
+        <div class="warning">
+            <strong>Outils qui levent des exceptions :</strong> Si un outil fait un <code>raise Exception()</code> non gere, l'agent s'arrete. Encapsulez toujours vos outils dans un <code>try/except</code> et retournez un message d'erreur lisible au lieu de lever une exception.
+        </div>
+
+        <div class="warning">
+            <strong>Trop d'outils :</strong> Avec 20+ outils, le LLM a du mal a choisir le bon (le prompt devient trop long). Regroupez les outils par domaine et limitez a 5-8 outils par agent. Utilisez des sous-agents specialises pour des workflows complexes.
+        </div>
+
+        <div class="warning">
+            <strong>Oublier la memoire pour les conversations :</strong> Sans memoire, l'agent perd tout contexte entre les tours. Si l'utilisateur dit "Et pour l'autre produit ?", l'agent ne sait pas de quoi il parle. Ajoutez <code>ConversationBufferMemory</code> pour tout agent conversationnel.
+        </div>
+
+        <!-- ============================== RESUME ============================== -->
+        <h2>Resume</h2>
+
+        <div class="concept-box green">
+            <h3>Patterns d'Agents</h3>
+            <table>
+                <tr><th>Pattern</th><th>Quand l'utiliser</th><th>Implementation</th></tr>
+                <tr><td>ReAct</td><td>Usage general, raisonnement + outils</td><td><code>create_react_agent()</code></td></tr>
+                <tr><td>Tool Calling</td><td>LLM avec API native d'outils</td><td><code>create_tool_calling_agent()</code></td></tr>
+                <tr><td>Plan-and-Execute</td><td>Taches complexes multi-etapes</td><td>LangGraph recommande</td></tr>
+                <tr><td>Self-Ask</td><td>Decomposition de questions</td><td><code>create_self_ask_with_search()</code></td></tr>
+            </table>
+        </div>
+
+        <div class="concept-box blue">
+            <h3>Cheatsheet : Creation d'outils</h3>
+            <table>
+                <tr><th>Methode</th><th>Complexite</th><th>Cas d'usage</th></tr>
+                <tr><td><code>@tool</code> decorateur</td><td>Simple</td><td>Outils rapides avec peu de parametres</td></tr>
+                <tr><td><code>StructuredTool.from_function()</code></td><td>Moyenne</td><td>Controle sur le nom, le schema et return_direct</td></tr>
+                <tr><td>Classe heritant de <code>BaseTool</code></td><td>Avancee</td><td>Logique complexe, etat interne, async</td></tr>
+                <tr><td>Outils integres</td><td>Simple</td><td>Wikipedia, DuckDuckGo, Arxiv, etc.</td></tr>
+            </table>
+        </div>
+
+        <div class="concept-box">
+            <h3>Agent minimal complet en 15 lignes</h3>
+            <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain.agents <span class="keyword">import</span> create_react_agent, AgentExecutor
+<span class="keyword">from</span> langchain <span class="keyword">import</span> hub
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculer</span>(expr: str) -> str:
+    <span class="string">"""Calcule une expression mathematique."""</span>
+    <span class="keyword">return</span> str(<span class="function">eval</span>(expr, {<span class="string">"__builtins__"</span>: {}}, {}))
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+prompt = hub.<span class="function">pull</span>(<span class="string">"hwchase17/react"</span>)
+agent = <span class="function">create_react_agent</span>(llm, [calculer], prompt)
+executor = <span class="function">AgentExecutor</span>(agent=agent, tools=[calculer],
+                          verbose=<span class="keyword">True</span>, max_iterations=<span class="number">5</span>,
+                          handle_parsing_errors=<span class="keyword">True</span>)
+
+resultat = executor.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Combien font 2^32 ?"</span>})
+<span class="function">print</span>(resultat[<span class="string">"output"</span>])  <span class="comment"># 4294967296</span></div>
+        </div>
+
+        <div class="prof-note">
+            Ce TD vous a donne les bases pour creer des agents LangChain avec le pattern ReAct. Pour aller plus loin, explorez LangGraph pour des workflows plus complexes avec des graphes d'etats, des branches conditionnelles et une gestion fine des erreurs. LangGraph est la recommandation officielle de LangChain pour les agents de production.
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="td_vectorstores.html">&larr; TD VectorStores</a>
+            <a href="#">(Fin des TDs LangChain)</a>
+        </div>
+
+    </div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

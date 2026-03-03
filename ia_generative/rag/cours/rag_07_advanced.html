@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG 07 - Techniques Avancees</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        .formula { background: #1a1a2e; border: 1px solid #569cd6; border-radius: 8px; padding: 15px 20px; margin: 12px 0; text-align: center; font-size: 1.05rem; color: #dcdcaa; font-family: 'Courier New', monospace; }
+    </style>
+</head>
+<body>
+    <div class="main">
+
+        <h1>Chapitre 7 : RAG - Techniques Avancees</h1>
+        <p class="subtitle">HyDE, CRAG, Self-RAG, Agentic RAG, RAG Fusion et architectures de production</p>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 1 : INTRODUCTION AUX TECHNIQUES AVANCEES                       -->
+        <!-- ====================================================================== -->
+        <h2>1. Au-dela du RAG classique</h2>
+
+        <div class="definition">
+            Le RAG classique (naive RAG) suit un pipeline lineaire simple : question -> retrieval -> generation.
+            Les techniques avancees introduisent des boucles de retroaction, des transformations de requetes,
+            des agents decisionnels et des mecanismes d'auto-correction pour depasser les limites
+            du paradigme lineaire.
+        </div>
+
+        <p>Le RAG classique souffre de plusieurs limitations fondamentales que les techniques
+        avancees cherchent a resoudre :</p>
+
+        <div class="param-box">
+            <h3 style="margin-top:0; color:#ff6b35;">Limites du RAG classique</h3>
+            <table>
+                <tr>
+                    <th>Limitation</th>
+                    <th>Description</th>
+                    <th>Technique avancee</th>
+                </tr>
+                <tr>
+                    <td>Ecart semantique</td>
+                    <td>La question et les documents n'utilisent pas les memes termes</td>
+                    <td>HyDE, Step-Back Prompting</td>
+                </tr>
+                <tr>
+                    <td>Documents non pertinents</td>
+                    <td>Le retriever ramene du bruit qui pollue la generation</td>
+                    <td>CRAG, Self-RAG</td>
+                </tr>
+                <tr>
+                    <td>Raisonnement limité</td>
+                    <td>Questions complexes necessitant plusieurs etapes</td>
+                    <td>Agentic RAG, RAG Fusion</td>
+                </tr>
+                <tr>
+                    <td>Donnees multimodales</td>
+                    <td>Images, tableaux, graphiques ignores</td>
+                    <td>Multi-modal RAG</td>
+                </tr>
+                <tr>
+                    <td>Relations complexes</td>
+                    <td>Liens entre entites difficiles a capturer par embeddings</td>
+                    <td>Knowledge Graphs + RAG</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="prof-note">
+            Pensez au RAG classique comme une recherche Google basique : vous tapez des mots-cles
+            et vous obtenez des resultats. Les techniques avancees, c'est comme avoir un assistant
+            de recherche intelligent qui reformule votre question, verifie la qualite des sources,
+            et synthetise les informations de maniere critique. C'est un changement de paradigme.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 2 : HyDE                                                       -->
+        <!-- ====================================================================== -->
+        <h2>2. HyDE - Hypothetical Document Embeddings</h2>
+
+        <div class="definition">
+            <strong>HyDE</strong> (Hypothetical Document Embeddings) est une technique qui comble
+            l'ecart semantique entre la question de l'utilisateur et les documents en demandant
+            au LLM de generer d'abord un <em>document hypothetique</em> qui repondrait a la question,
+            puis utilise ce document comme requete de recherche.
+        </div>
+
+        <h3>2.1 Le probleme de l'ecart semantique</h3>
+
+        <div class="warning">
+            <strong>Probleme du RAG classique :</strong> la question "Quels sont les effets secondaires
+            de l'aspirine ?" est semantiquement differente d'un document medical qui dit "L'acide
+            acetylsalicylique peut provoquer des irritations gastriques, des saignements..."
+            Les embeddings de la question et du document peuvent etre eloignes dans l'espace vectoriel.
+        </div>
+
+        <h3>2.2 Le principe de HyDE</h3>
+
+        <!-- SVG : Diagramme HyDE -->
+        <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="width:100%; margin:20px 0;">
+            <defs>
+                <marker id="arr1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arr2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arr3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+            <!-- Titre -->
+            <text x="450" y="25" fill="#ff6b35" font-size="18" text-anchor="middle" font-weight="bold">Pipeline HyDE : Hypothetical Document Embeddings</text>
+
+            <!-- Etape 1 : Question -->
+            <rect x="20" y="55" width="160" height="55" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="100" y="78" fill="#ff6b35" font-size="12" text-anchor="middle" font-weight="bold">Question</text>
+            <text x="100" y="98" fill="#aaa" font-size="10" text-anchor="middle">"Effets de l'aspirine ?"</text>
+
+            <!-- Fleche 1 -->
+            <line x1="180" y1="82" x2="228" y2="82" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+            <!-- Etape 2 : LLM genere doc hypothetique -->
+            <rect x="230" y="45" width="200" height="75" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="330" y="68" fill="#569cd6" font-size="12" text-anchor="middle" font-weight="bold">LLM Generation</text>
+            <text x="330" y="88" fill="#aaa" font-size="10" text-anchor="middle">"L'aspirine (acide</text>
+            <text x="330" y="103" fill="#aaa" font-size="10" text-anchor="middle">acetylsalicylique) peut..."</text>
+
+            <!-- Fleche 2 -->
+            <line x1="430" y1="82" x2="478" y2="82" stroke="#569cd6" stroke-width="2" marker-end="url(#arr2)"/>
+
+            <!-- Etape 3 : Embedding du doc hypothetique -->
+            <rect x="480" y="55" width="160" height="55" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="560" y="78" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">Embedding</text>
+            <text x="560" y="98" fill="#aaa" font-size="10" text-anchor="middle">[0.23, -0.87, ...]</text>
+
+            <!-- Fleche 3 -->
+            <line x1="640" y1="82" x2="688" y2="82" stroke="#00ff88" stroke-width="2" marker-end="url(#arr3)"/>
+
+            <!-- Etape 4 : Vector DB -->
+            <rect x="690" y="50" width="170" height="65" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="775" y="73" fill="#ff8c42" font-size="12" text-anchor="middle" font-weight="bold">Base Vectorielle</text>
+            <text x="775" y="93" fill="#aaa" font-size="10" text-anchor="middle">Recherche similaire</text>
+            <text x="775" y="108" fill="#aaa" font-size="10" text-anchor="middle">aux docs reels</text>
+
+            <!-- Comparaison RAG classique vs HyDE -->
+            <rect x="50" y="155" width="370" height="80" rx="10" fill="rgba(255,68,68,0.05)" stroke="#ff4444" stroke-width="1.5"/>
+            <text x="235" y="178" fill="#ff4444" font-size="13" text-anchor="middle" font-weight="bold">RAG Classique (question -> embedding)</text>
+            <text x="235" y="200" fill="#aaa" font-size="11" text-anchor="middle">Question courte, vocabulaire utilisateur</text>
+            <text x="235" y="220" fill="#aaa" font-size="11" text-anchor="middle">Eloigne semantiquement des documents</text>
+
+            <rect x="480" y="155" width="370" height="80" rx="10" fill="rgba(0,255,136,0.05)" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="665" y="178" fill="#00ff88" font-size="13" text-anchor="middle" font-weight="bold">HyDE (doc hypothetique -> embedding)</text>
+            <text x="665" y="200" fill="#aaa" font-size="11" text-anchor="middle">Document complet, vocabulaire technique</text>
+            <text x="665" y="220" fill="#aaa" font-size="11" text-anchor="middle">Proche semantiquement des documents reels</text>
+
+            <!-- Conclusion -->
+            <text x="450" y="275" fill="#ff8c42" font-size="13" text-anchor="middle" font-weight="bold">Resultat : l'embedding du document hypothetique est bien plus proche</text>
+            <text x="450" y="295" fill="#ff8c42" font-size="13" text-anchor="middle" font-weight="bold">des documents reels que l'embedding de la question brute</text>
+        </svg>
+
+        <h3>2.3 Implementation avec LangChain</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI, OpenAIEmbeddings
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnablePassthrough
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Etape 1 : Prompt pour generer le document hypothetique</span>
+hyde_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+Ecris un court passage de document technique (3-5 phrases) qui
+repondrait parfaitement a la question suivante.
+N'invente pas de chiffres precis, reste factuel et general.
+
+Question : {question}
+
+Passage :"""</span>)
+
+<span class="comment"># Etape 2 : Chaine HyDE</span>
+hyde_chain = hyde_prompt | llm | <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Etape 3 : Utiliser le document hypothetique comme requete</span>
+<span class="keyword">def</span> <span class="function">hyde_retrieval</span>(question: <span class="function">str</span>, retriever, k: <span class="function">int</span> = <span class="number">4</span>):
+    <span class="string">"""Retrieval augmente par HyDE."""</span>
+    <span class="comment"># Generer le document hypothetique</span>
+    hypothetical_doc = hyde_chain.<span class="function">invoke</span>({<span class="string">"question"</span>: question})
+    <span class="function">print</span>(<span class="string">f"[HyDE] Doc hypothetique : </span>{hypothetical_doc[:100]}<span class="string">..."</span>)
+
+    <span class="comment"># Utiliser le doc hypothetique comme requete de recherche</span>
+    results = retriever.<span class="function">invoke</span>(hypothetical_doc)
+    <span class="keyword">return</span> results[:k]
+
+<span class="comment"># Exemple d'utilisation</span>
+docs = <span class="function">hyde_retrieval</span>(<span class="string">"Quels sont les effets secondaires de l'aspirine ?"</span>, retriever)</div>
+
+        <div class="effect">
+            HyDE ameliore typiquement le recall de 10-25% sur des requetes complexes ou techniques.
+            C'est particulierement efficace pour les domaines specialises (medical, juridique,
+            scientifique) ou l'ecart de vocabulaire entre la question et les documents est important.
+        </div>
+
+        <div class="warning">
+            HyDE ajoute un appel LLM supplementaire avant la recherche, ce qui augmente
+            la latence d'environ 500-1500ms et le cout. De plus, si le LLM genere un document
+            hypothetique incorrect, la recherche peut partir dans la mauvaise direction.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 3 : CRAG                                                       -->
+        <!-- ====================================================================== -->
+        <h2>3. CRAG - Corrective RAG</h2>
+
+        <div class="definition">
+            <strong>CRAG</strong> (Corrective Retrieval Augmented Generation) ajoute un
+            mecanisme d'auto-correction apres le retrieval. Un evaluateur de pertinence
+            note chaque document recupere et decide s'il faut les garder, les affiner
+            ou effectuer une nouvelle recherche (par exemple sur le web).
+        </div>
+
+        <h3>3.1 Le flux CRAG en trois etapes</h3>
+
+        <div class="step-box">
+            <strong>Etape 1 - Retrieval :</strong> Le retriever classique recupere k documents
+            depuis la base vectorielle.
+        </div>
+        <div class="step-box">
+            <strong>Etape 2 - Evaluation :</strong> Un evaluateur de pertinence (LLM ou modele
+            leger) classe chaque document comme "Correct", "Ambigu" ou "Incorrect".
+        </div>
+        <div class="step-box">
+            <strong>Etape 3 - Action corrective :</strong>
+            <br>- Si tous les documents sont "Correct" : generer directement la reponse.
+            <br>- Si certains sont "Ambigu" : extraire les passages pertinents et completer.
+            <br>- Si tous sont "Incorrect" : lancer une recherche web complementaire.
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum
+
+<span class="keyword">class</span> <span class="function">RelevanceGrade</span>(Enum):
+    CORRECT = <span class="string">"correct"</span>
+    AMBIGUOUS = <span class="string">"ambiguous"</span>
+    INCORRECT = <span class="string">"incorrect"</span>
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Evaluateur de pertinence des documents</span>
+relevance_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+Evalue si le document suivant est pertinent pour repondre a la question.
+
+Question : {question}
+Document : {document}
+
+Reponds par un seul mot : CORRECT, AMBIGUOUS ou INCORRECT
+"""</span>)
+
+relevance_chain = relevance_prompt | llm | <span class="function">StrOutputParser</span>()
+
+<span class="keyword">def</span> <span class="function">crag_pipeline</span>(question: <span class="function">str</span>, retriever, web_search_tool=<span class="keyword">None</span>):
+    <span class="string">"""Pipeline CRAG complet avec correction automatique."""</span>
+    <span class="comment"># Etape 1 : Retrieval classique</span>
+    docs = retriever.<span class="function">invoke</span>(question)
+
+    <span class="comment"># Etape 2 : Evaluer chaque document</span>
+    graded_docs = []
+    <span class="keyword">for</span> doc <span class="keyword">in</span> docs:
+        grade = relevance_chain.<span class="function">invoke</span>({
+            <span class="string">"question"</span>: question,
+            <span class="string">"document"</span>: doc.page_content,
+        }).<span class="function">strip</span>().<span class="function">upper</span>()
+        graded_docs.<span class="function">append</span>((doc, grade))
+
+    <span class="comment"># Etape 3 : Decider l'action corrective</span>
+    correct_docs = [d <span class="keyword">for</span> d, g <span class="keyword">in</span> graded_docs <span class="keyword">if</span> g == <span class="string">"CORRECT"</span>]
+    ambiguous_docs = [d <span class="keyword">for</span> d, g <span class="keyword">in</span> graded_docs <span class="keyword">if</span> g == <span class="string">"AMBIGUOUS"</span>]
+
+    <span class="keyword">if</span> <span class="function">len</span>(correct_docs) >= <span class="number">2</span>:
+        <span class="comment"># Suffisamment de documents pertinents</span>
+        context_docs = correct_docs
+        <span class="function">print</span>(<span class="string">"[CRAG] Action : utiliser les documents corrects"</span>)
+    <span class="keyword">elif</span> correct_docs <span class="keyword">or</span> ambiguous_docs:
+        <span class="comment"># Extraire les passages pertinents + completer</span>
+        context_docs = correct_docs + ambiguous_docs
+        <span class="function">print</span>(<span class="string">"[CRAG] Action : extraire passages + completer"</span>)
+    <span class="keyword">else</span>:
+        <span class="comment"># Tous incorrects : recherche web de secours</span>
+        <span class="function">print</span>(<span class="string">"[CRAG] Action : recherche web complementaire"</span>)
+        <span class="keyword">if</span> web_search_tool:
+            web_results = web_search_tool.<span class="function">invoke</span>(question)
+            context_docs = web_results
+        <span class="keyword">else</span>:
+            context_docs = docs  <span class="comment"># fallback</span>
+
+    <span class="keyword">return</span> context_docs</div>
+
+        <div class="prof-note">
+            CRAG est une avancee majeure car il introduit la notion de "doute intelligent".
+            Au lieu de faire aveuglément confiance au retriever, le systeme se pose la question :
+            "Ces documents sont-ils vraiment utiles pour repondre a cette question ?"
+            C'est exactement ce qu'un bon chercheur fait instinctivement.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 4 : SELF-RAG                                                   -->
+        <!-- ====================================================================== -->
+        <h2>4. Self-RAG : le RAG auto-reflexif</h2>
+
+        <div class="definition">
+            <strong>Self-RAG</strong> va plus loin que CRAG en ajoutant des tokens speciaux
+            de reflexion que le LLM genere pour decider : (1) s'il a besoin de retrieval,
+            (2) si les documents recuperes sont pertinents, (3) si la reponse generee est
+            fidelement soutenue par le contexte.
+        </div>
+
+        <h3>4.1 Les quatre tokens de reflexion</h3>
+
+        <div class="concept-box blue">
+            <table>
+                <tr>
+                    <th>Token de reflexion</th>
+                    <th>Question posee</th>
+                    <th>Valeurs possibles</th>
+                </tr>
+                <tr>
+                    <td><strong>[Retrieve]</strong></td>
+                    <td>Faut-il chercher des documents ?</td>
+                    <td>yes / no / continue</td>
+                </tr>
+                <tr>
+                    <td><strong>[IsRelevant]</strong></td>
+                    <td>Ce document est-il pertinent ?</td>
+                    <td>relevant / irrelevant</td>
+                </tr>
+                <tr>
+                    <td><strong>[IsSupported]</strong></td>
+                    <td>La reponse est-elle soutenue ?</td>
+                    <td>fully / partially / no_support</td>
+                </tr>
+                <tr>
+                    <td><strong>[IsUseful]</strong></td>
+                    <td>La reponse est-elle utile ?</td>
+                    <td>5 / 4 / 3 / 2 / 1</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> JsonOutputParser
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Etape 1 : Decide si le retrieval est necessaire</span>
+need_retrieval_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+Analyse la question suivante et decide si une recherche documentaire
+est necessaire pour y repondre correctement.
+
+Question : {question}
+
+Reponds en JSON :
+{{"need_retrieval": true/false, "reason": "explication breve"}}
+"""</span>)
+
+<span class="comment"># Etape 2 : Evalue la pertinence du contexte</span>
+support_check_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+Evalue si la reponse generee est soutenue par le contexte fourni.
+
+Contexte : {context}
+Reponse : {answer}
+
+Reponds en JSON :
+{{
+    "support_level": "fully|partially|no_support",
+    "unsupported_claims": ["liste des affirmations non soutenues"],
+    "confidence": 0.0
+}}
+"""</span>)
+
+<span class="keyword">class</span> <span class="function">SelfRAG</span>:
+    <span class="string">"""Implementation simplifiee de Self-RAG."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, retriever, llm):
+        self.retriever = retriever
+        self.llm = llm
+        self.retrieval_checker = need_retrieval_prompt | llm | <span class="function">JsonOutputParser</span>()
+        self.support_checker = support_check_prompt | llm | <span class="function">JsonOutputParser</span>()
+
+    <span class="keyword">def</span> <span class="function">invoke</span>(self, question: <span class="function">str</span>) -> <span class="function">dict</span>:
+        <span class="comment"># Token [Retrieve] : faut-il chercher ?</span>
+        retrieval_decision = self.retrieval_checker.<span class="function">invoke</span>({<span class="string">"question"</span>: question})
+
+        <span class="keyword">if</span> <span class="keyword">not</span> retrieval_decision[<span class="string">"need_retrieval"</span>]:
+            <span class="comment"># Repondre directement sans retrieval</span>
+            answer = self.llm.<span class="function">invoke</span>(question).content
+            <span class="keyword">return</span> {<span class="string">"answer"</span>: answer, <span class="string">"used_retrieval"</span>: <span class="keyword">False</span>}
+
+        <span class="comment"># Retrieval + generation</span>
+        docs = self.retriever.<span class="function">invoke</span>(question)
+        context = <span class="string">"\n"</span>.<span class="function">join</span>(d.page_content <span class="keyword">for</span> d <span class="keyword">in</span> docs)
+        answer = self.llm.<span class="function">invoke</span>(<span class="string">f"Contexte: </span>{context}<span class="string">\nQuestion: </span>{question}<span class="string">"</span>).content
+
+        <span class="comment"># Token [IsSupported] : la reponse est-elle soutenue ?</span>
+        support = self.support_checker.<span class="function">invoke</span>({
+            <span class="string">"context"</span>: context, <span class="string">"answer"</span>: answer
+        })
+
+        <span class="keyword">if</span> support[<span class="string">"support_level"</span>] == <span class="string">"no_support"</span>:
+            <span class="comment"># Regenerer avec un prompt plus strict</span>
+            answer = self.llm.<span class="function">invoke</span>(
+                <span class="string">f"Reponds UNIQUEMENT avec les infos du contexte.\n</span>{context}<span class="string">\n</span>{question}<span class="string">"</span>
+            ).content
+
+        <span class="keyword">return</span> {<span class="string">"answer"</span>: answer, <span class="string">"support"</span>: support, <span class="string">"used_retrieval"</span>: <span class="keyword">True</span>}</div>
+
+        <div class="effect">
+            Self-RAG reduit les hallucinations de 30-50% par rapport au RAG classique
+            en introduisant une boucle d'auto-verification. Le cout est un nombre accru
+            d'appels au LLM (2 a 4 appels au lieu de 1).
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 5 : AGENTIC RAG                                                -->
+        <!-- ====================================================================== -->
+        <h2>5. Agentic RAG avec LangGraph</h2>
+
+        <div class="definition">
+            L'<strong>Agentic RAG</strong> transforme le pipeline RAG en un agent autonome capable
+            de planifier, executer et corriger ses actions. En utilisant <strong>LangGraph</strong>,
+            on modelise le RAG comme un graphe d'etats avec des noeuds decisionnels et des
+            boucles de retroaction conditionnelles.
+        </div>
+
+        <h3>5.1 Architecture d'un Agentic RAG</h3>
+
+        <!-- SVG : Agentic RAG Graph -->
+        <svg viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg" style="width:100%; margin:20px 0;">
+            <defs>
+                <marker id="agArr" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="agArrG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+                <marker id="agArrR" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/>
+                </marker>
+                <marker id="agArrB" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+            </defs>
+            <!-- Titre -->
+            <text x="450" y="28" fill="#ff6b35" font-size="18" text-anchor="middle" font-weight="bold">Graphe LangGraph : Agentic RAG</text>
+
+            <!-- START -->
+            <circle cx="100" cy="80" r="25" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="100" y="85" fill="#ff6b35" font-size="11" text-anchor="middle" font-weight="bold">START</text>
+
+            <!-- Node: Analyse Question -->
+            <rect x="200" y="55" width="170" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="285" y="75" fill="#569cd6" font-size="12" text-anchor="middle" font-weight="bold">Analyse Question</text>
+            <text x="285" y="93" fill="#aaa" font-size="10" text-anchor="middle">Classifie le type</text>
+
+            <!-- Fleche START -> Analyse -->
+            <line x1="125" y1="80" x2="198" y2="80" stroke="#ff6b35" stroke-width="2" marker-end="url(#agArr)"/>
+
+            <!-- Node: Retrieve -->
+            <rect x="430" y="55" width="150" height="50" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="505" y="75" fill="#ff6b35" font-size="12" text-anchor="middle" font-weight="bold">Retrieve</text>
+            <text x="505" y="93" fill="#aaa" font-size="10" text-anchor="middle">Base vectorielle</text>
+
+            <!-- Fleche Analyse -> Retrieve -->
+            <line x1="370" y1="80" x2="428" y2="80" stroke="#ff6b35" stroke-width="2" marker-end="url(#agArr)"/>
+
+            <!-- Node: Grade Documents -->
+            <rect x="430" y="155" width="150" height="50" rx="10" fill="#1a1a2e" stroke="#dcdcaa" stroke-width="2"/>
+            <text x="505" y="175" fill="#dcdcaa" font-size="12" text-anchor="middle" font-weight="bold">Grade Docs</text>
+            <text x="505" y="193" fill="#aaa" font-size="10" text-anchor="middle">Pertinence ?</text>
+
+            <!-- Fleche Retrieve -> Grade -->
+            <line x1="505" y1="105" x2="505" y2="153" stroke="#ff6b35" stroke-width="2" marker-end="url(#agArr)"/>
+
+            <!-- Decision diamond -->
+            <polygon points="505,250 560,290 505,330 450,290" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="505" y="293" fill="#ff8c42" font-size="11" text-anchor="middle" font-weight="bold">OK ?</text>
+
+            <!-- Fleche Grade -> Decision -->
+            <line x1="505" y1="205" x2="505" y2="252" stroke="#ff8c42" stroke-width="2" marker-end="url(#agArr)"/>
+
+            <!-- Node: Web Search (gauche) -->
+            <rect x="200" y="265" width="160" height="50" rx="10" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="280" y="285" fill="#ff4444" font-size="12" text-anchor="middle" font-weight="bold">Web Search</text>
+            <text x="280" y="303" fill="#aaa" font-size="10" text-anchor="middle">Recherche web</text>
+
+            <!-- Fleche Decision -> Web Search (NON) -->
+            <line x1="450" y1="290" x2="362" y2="290" stroke="#ff4444" stroke-width="2" marker-end="url(#agArrR)"/>
+            <text x="410" y="282" fill="#ff4444" font-size="10" text-anchor="middle">NON</text>
+
+            <!-- Fleche Web Search -> Grade (boucle) -->
+            <line x1="280" y1="265" x2="280" y2="180" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="280" y1="180" x2="428" y2="180" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#agArrR)"/>
+
+            <!-- Node: Generate (droite) -->
+            <rect x="640" y="265" width="150" height="50" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="715" y="285" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">Generate</text>
+            <text x="715" y="303" fill="#aaa" font-size="10" text-anchor="middle">LLM generation</text>
+
+            <!-- Fleche Decision -> Generate (OUI) -->
+            <line x1="560" y1="290" x2="638" y2="290" stroke="#00ff88" stroke-width="2" marker-end="url(#agArrG)"/>
+            <text x="600" y="282" fill="#00ff88" font-size="10" text-anchor="middle">OUI</text>
+
+            <!-- Node: Hallucination Check -->
+            <rect x="640" y="365" width="150" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="715" y="385" fill="#569cd6" font-size="12" text-anchor="middle" font-weight="bold">Check Fidelite</text>
+            <text x="715" y="403" fill="#aaa" font-size="10" text-anchor="middle">Hallucinations ?</text>
+
+            <!-- Fleche Generate -> Check -->
+            <line x1="715" y1="315" x2="715" y2="363" stroke="#00ff88" stroke-width="2" marker-end="url(#agArrG)"/>
+
+            <!-- END -->
+            <circle cx="715" cy="465" r="25" fill="#1a1a2e" stroke="#00ff88" stroke-width="3"/>
+            <text x="715" y="470" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">END</text>
+
+            <!-- Fleche Check -> END -->
+            <line x1="715" y1="415" x2="715" y2="438" stroke="#00ff88" stroke-width="2" marker-end="url(#agArrG)"/>
+            <text x="735" y="430" fill="#00ff88" font-size="10">OK</text>
+
+            <!-- Fleche Check -> Generate (retry) -->
+            <line x1="640" y1="390" x2="610" y2="390" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="610" y1="390" x2="610" y2="290" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="610" y1="290" x2="638" y2="290" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <text x="595" y="340" fill="#ff4444" font-size="9" text-anchor="end">retry</text>
+        </svg>
+
+        <h3>5.2 Implementation avec LangGraph</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, List, Annotated
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+<span class="keyword">import</span> operator
+
+<span class="comment"># Definir l'etat du graphe</span>
+<span class="keyword">class</span> <span class="function">AgenticRAGState</span>(TypedDict):
+    question: <span class="function">str</span>
+    documents: List[Document]
+    generation: <span class="function">str</span>
+    web_search_needed: <span class="function">bool</span>
+    retries: <span class="function">int</span>
+
+<span class="comment"># Noeud 1 : Retrieve</span>
+<span class="keyword">def</span> <span class="function">retrieve</span>(state: AgenticRAGState) -> AgenticRAGState:
+    <span class="string">"""Recupere les documents depuis la base vectorielle."""</span>
+    docs = retriever.<span class="function">invoke</span>(state[<span class="string">"question"</span>])
+    <span class="keyword">return</span> {<span class="string">"documents"</span>: docs}
+
+<span class="comment"># Noeud 2 : Grade documents</span>
+<span class="keyword">def</span> <span class="function">grade_documents</span>(state: AgenticRAGState) -> AgenticRAGState:
+    <span class="string">"""Evalue la pertinence de chaque document recupere."""</span>
+    question = state[<span class="string">"question"</span>]
+    docs = state[<span class="string">"documents"</span>]
+
+    relevant_docs = []
+    <span class="keyword">for</span> doc <span class="keyword">in</span> docs:
+        grade = relevance_chain.<span class="function">invoke</span>({
+            <span class="string">"question"</span>: question,
+            <span class="string">"document"</span>: doc.page_content,
+        })
+        <span class="keyword">if</span> <span class="string">"CORRECT"</span> <span class="keyword">in</span> grade.<span class="function">upper</span>():
+            relevant_docs.<span class="function">append</span>(doc)
+
+    web_needed = <span class="function">len</span>(relevant_docs) < <span class="number">2</span>
+    <span class="keyword">return</span> {<span class="string">"documents"</span>: relevant_docs, <span class="string">"web_search_needed"</span>: web_needed}
+
+<span class="comment"># Noeud 3 : Web search</span>
+<span class="keyword">def</span> <span class="function">web_search</span>(state: AgenticRAGState) -> AgenticRAGState:
+    <span class="string">"""Recherche web complementaire si les docs locaux sont insuffisants."""</span>
+    web_results = web_tool.<span class="function">invoke</span>(state[<span class="string">"question"</span>])
+    web_docs = [Document(page_content=r) <span class="keyword">for</span> r <span class="keyword">in</span> web_results]
+    <span class="keyword">return</span> {<span class="string">"documents"</span>: state[<span class="string">"documents"</span>] + web_docs}
+
+<span class="comment"># Noeud 4 : Generate</span>
+<span class="keyword">def</span> <span class="function">generate</span>(state: AgenticRAGState) -> AgenticRAGState:
+    <span class="string">"""Genere la reponse a partir des documents valides."""</span>
+    context = <span class="string">"\n\n"</span>.<span class="function">join</span>(d.page_content <span class="keyword">for</span> d <span class="keyword">in</span> state[<span class="string">"documents"</span>])
+    answer = llm.<span class="function">invoke</span>(
+        <span class="string">f"Contexte:\n</span>{context}<span class="string">\n\nQuestion: </span>{state[<span class="string">'question'</span>]}<span class="string">"</span>
+    ).content
+    <span class="keyword">return</span> {<span class="string">"generation"</span>: answer}
+
+<span class="comment"># Construire le graphe LangGraph</span>
+workflow = <span class="function">StateGraph</span>(AgenticRAGState)
+workflow.<span class="function">add_node</span>(<span class="string">"retrieve"</span>, retrieve)
+workflow.<span class="function">add_node</span>(<span class="string">"grade_documents"</span>, grade_documents)
+workflow.<span class="function">add_node</span>(<span class="string">"web_search"</span>, web_search)
+workflow.<span class="function">add_node</span>(<span class="string">"generate"</span>, generate)
+
+<span class="comment"># Definir les transitions</span>
+workflow.<span class="function">set_entry_point</span>(<span class="string">"retrieve"</span>)
+workflow.<span class="function">add_edge</span>(<span class="string">"retrieve"</span>, <span class="string">"grade_documents"</span>)
+workflow.<span class="function">add_conditional_edges</span>(
+    <span class="string">"grade_documents"</span>,
+    <span class="keyword">lambda</span> s: <span class="string">"web_search"</span> <span class="keyword">if</span> s[<span class="string">"web_search_needed"</span>] <span class="keyword">else</span> <span class="string">"generate"</span>,
+    {<span class="string">"web_search"</span>: <span class="string">"web_search"</span>, <span class="string">"generate"</span>: <span class="string">"generate"</span>},
+)
+workflow.<span class="function">add_edge</span>(<span class="string">"web_search"</span>, <span class="string">"generate"</span>)
+workflow.<span class="function">add_edge</span>(<span class="string">"generate"</span>, END)
+
+<span class="comment"># Compiler et executer</span>
+app = workflow.<span class="function">compile</span>()
+result = app.<span class="function">invoke</span>({<span class="string">"question"</span>: <span class="string">"Qu'est-ce que le CRAG ?"</span>, <span class="string">"retries"</span>: <span class="number">0</span>})</div>
+
+        <div class="prof-note">
+            LangGraph est un framework de LangChain qui permet de modeliser des workflows
+            complexes sous forme de graphes d'etats. Chaque noeud est une fonction, et les
+            aretes peuvent etre conditionnelles. C'est ideal pour l'Agentic RAG car on peut
+            facilement ajouter des boucles de retroaction et des embranchements decisionnels.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 6 : RAG FUSION                                                 -->
+        <!-- ====================================================================== -->
+        <h2>6. RAG Fusion</h2>
+
+        <div class="definition">
+            <strong>RAG Fusion</strong> combine la generation de requetes multiples avec le
+            Reciprocal Rank Fusion (RRF) pour ameliorer la qualite du retrieval. Le LLM
+            genere plusieurs variantes de la question, chacune est utilisee pour chercher,
+            et les resultats sont fusionnes par RRF.
+        </div>
+
+        <div class="formula">
+            RRF(document) = SUM_q( 1 / (k + rang_du_doc_dans_la_recherche_q) )
+            <br><br>
+            k = constante de lissage (typiquement k = 60)
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> collections <span class="keyword">import</span> defaultdict
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.7</span>)
+
+<span class="comment"># Etape 1 : Generer des variantes de la question</span>
+query_gen_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+Genere 4 reformulations differentes de la question suivante.
+Chaque reformulation doit aborder la question sous un angle different
+ou utiliser un vocabulaire different.
+
+Question originale : {question}
+
+Reponds avec une question par ligne, sans numerotation.
+"""</span>)
+
+query_gen_chain = query_gen_prompt | llm | <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Etape 2 : Reciprocal Rank Fusion</span>
+<span class="keyword">def</span> <span class="function">reciprocal_rank_fusion</span>(results_lists: list, k: <span class="function">int</span> = <span class="number">60</span>) -> list:
+    <span class="string">"""Fusionne plusieurs listes de resultats par RRF.
+
+    Args:
+        results_lists: Liste de listes de documents (une par requete)
+        k: Constante de lissage (defaut=60, standard)
+
+    Returns:
+        Liste de documents tries par score RRF decroissant
+    """</span>
+    rrf_scores = defaultdict(<span class="function">float</span>)
+    doc_map = {}
+
+    <span class="keyword">for</span> results <span class="keyword">in</span> results_lists:
+        <span class="keyword">for</span> rank, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results, <span class="number">1</span>):
+            doc_id = doc.page_content[:<span class="number">100</span>]  <span class="comment"># cle de deduplication</span>
+            rrf_scores[doc_id] += <span class="number">1.0</span> / (k + rank)
+            doc_map[doc_id] = doc
+
+    <span class="comment"># Trier par score RRF decroissant</span>
+    sorted_ids = <span class="function">sorted</span>(rrf_scores, key=rrf_scores.get, reverse=<span class="keyword">True</span>)
+    <span class="keyword">return</span> [doc_map[doc_id] <span class="keyword">for</span> doc_id <span class="keyword">in</span> sorted_ids]
+
+
+<span class="comment"># Pipeline RAG Fusion complet</span>
+<span class="keyword">def</span> <span class="function">rag_fusion</span>(question: <span class="function">str</span>, retriever, top_k: <span class="function">int</span> = <span class="number">5</span>) -> list:
+    <span class="string">"""Pipeline RAG Fusion complet."""</span>
+    <span class="comment"># Generer les variantes</span>
+    variants_text = query_gen_chain.<span class="function">invoke</span>({<span class="string">"question"</span>: question})
+    queries = [question] + [q.<span class="function">strip</span>() <span class="keyword">for</span> q <span class="keyword">in</span> variants_text.<span class="function">split</span>(<span class="string">"\n"</span>) <span class="keyword">if</span> q.<span class="function">strip</span>()]
+
+    <span class="function">print</span>(<span class="string">f"[RAG Fusion] </span>{<span class="function">len</span>(queries)}<span class="string"> requetes generees"</span>)
+
+    <span class="comment"># Rechercher pour chaque variante</span>
+    all_results = []
+    <span class="keyword">for</span> q <span class="keyword">in</span> queries:
+        results = retriever.<span class="function">invoke</span>(q)
+        all_results.<span class="function">append</span>(results)
+
+    <span class="comment"># Fusionner par RRF</span>
+    fused = <span class="function">reciprocal_rank_fusion</span>(all_results)
+    <span class="keyword">return</span> fused[:top_k]</div>
+
+        <div class="effect">
+            RAG Fusion ameliore la diversite des documents retrouves de 20-40% par rapport
+            a une seule requete. En generant des formulations differentes, on couvre un espace
+            semantique plus large et on reduit le risque de manquer un document pertinent.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 7 : STEP-BACK PROMPTING                                        -->
+        <!-- ====================================================================== -->
+        <h2>7. Step-Back Prompting</h2>
+
+        <div class="definition">
+            Le <strong>Step-Back Prompting</strong> consiste a generer une question plus generale
+            et abstraite a partir de la question specifique de l'utilisateur, puis a utiliser
+            les deux questions (specifique + abstraite) pour la recherche. Cela aide a recuperer
+            des documents de contexte plus large.
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Prompt Step-Back : generer une question plus abstraite</span>
+stepback_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+A partir de la question specifique suivante, genere une question plus
+generale et abstraite qui aiderait a comprendre le contexte plus large.
+
+Exemple :
+- Specifique : "Quel est le taux de cholesterol normal pour un homme de 40 ans ?"
+- Step-back : "Quels sont les facteurs de risque cardiovasculaire et les normes biologiques ?"
+
+Question specifique : {question}
+
+Question step-back :"""</span>)
+
+stepback_chain = stepback_prompt | llm | <span class="function">StrOutputParser</span>()
+
+<span class="keyword">def</span> <span class="function">stepback_retrieval</span>(question: <span class="function">str</span>, retriever) -> list:
+    <span class="string">"""Retrieval avec Step-Back Prompting."""</span>
+    <span class="comment"># Generer la question abstraite</span>
+    stepback_question = stepback_chain.<span class="function">invoke</span>({<span class="string">"question"</span>: question})
+    <span class="function">print</span>(<span class="string">f"[Step-Back] Question abstraite : </span>{stepback_question}<span class="string">"</span>)
+
+    <span class="comment"># Chercher avec les deux questions</span>
+    docs_specific = retriever.<span class="function">invoke</span>(question)
+    docs_abstract = retriever.<span class="function">invoke</span>(stepback_question)
+
+    <span class="comment"># Combiner et dedupliquer</span>
+    seen = <span class="function">set</span>()
+    combined = []
+    <span class="keyword">for</span> doc <span class="keyword">in</span> docs_specific + docs_abstract:
+        key = doc.page_content[:<span class="number">100</span>]
+        <span class="keyword">if</span> key <span class="keyword">not in</span> seen:
+            seen.<span class="function">add</span>(key)
+            combined.<span class="function">append</span>(doc)
+    <span class="keyword">return</span> combined
+
+<span class="comment"># Exemple</span>
+docs = <span class="function">stepback_retrieval</span>(
+    <span class="string">"Quelle est la complexite temporelle de l'algorithme de Dijkstra ?"</span>,
+    retriever,
+)</div>
+
+        <div class="output-block">
+[Step-Back] Question abstraite : Quels sont les principaux algorithmes de plus court chemin en theorie des graphes et leurs caracteristiques ?</div>
+
+        <div class="prof-note">
+            Le Step-Back Prompting est particulierement efficace pour les questions tres
+            specifiques ou techniques. En prenant du recul, on recupere des documents
+            de contexte qui aident le LLM a mieux comprendre le domaine avant de repondre
+            a la question precise.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 8 : MULTI-MODAL RAG                                            -->
+        <!-- ====================================================================== -->
+        <h2>8. Multi-modal RAG</h2>
+
+        <div class="definition">
+            Le <strong>Multi-modal RAG</strong> etend le paradigme RAG aux donnees non textuelles :
+            images, tableaux, graphiques, diagrammes. Les documents contenant des figures,
+            des schemas ou des photos peuvent etre indexes et recuperes grace a des modeles
+            multi-modaux comme GPT-4V ou des embeddings multi-modaux (CLIP).
+        </div>
+
+        <h3>8.1 Strategies d'indexation multi-modale</h3>
+
+        <div class="concept-box">
+            <h3 style="margin-top:0; color:#ff8c42;">Trois approches pour le Multi-modal RAG</h3>
+            <br>
+            <table>
+                <tr>
+                    <th>Approche</th>
+                    <th>Methode</th>
+                    <th>Avantages</th>
+                    <th>Inconvenients</th>
+                </tr>
+                <tr>
+                    <td><strong>Description textuelle</strong></td>
+                    <td>LLM multi-modal decrit l'image en texte, puis indexe le texte</td>
+                    <td>Simple, compatible avec tous les retrievers</td>
+                    <td>Perte d'information visuelle</td>
+                </tr>
+                <tr>
+                    <td><strong>Embeddings multi-modaux</strong></td>
+                    <td>CLIP ou similaire pour embedder images et texte dans le meme espace</td>
+                    <td>Recherche cross-modale native</td>
+                    <td>Qualite des embeddings variable</td>
+                </tr>
+                <tr>
+                    <td><strong>Stockage brut + LLM vision</strong></td>
+                    <td>Stocker les images brutes, les passer au LLM multi-modal au moment de la generation</td>
+                    <td>Pas de perte d'information</td>
+                    <td>Cout et latence eleves</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="code-block"><span class="keyword">import</span> base64
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage
+
+<span class="comment"># Strategie 1 : Decrire les images avec un LLM multi-modal</span>
+vision_llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+
+<span class="keyword">def</span> <span class="function">describe_image_for_indexing</span>(image_path: <span class="function">str</span>) -> <span class="function">str</span>:
+    <span class="string">"""Genere une description textuelle d'une image pour l'indexation."""</span>
+    <span class="keyword">with</span> <span class="function">open</span>(image_path, <span class="string">"rb"</span>) <span class="keyword">as</span> f:
+        image_data = base64.<span class="function">b64encode</span>(f.<span class="function">read</span>()).<span class="function">decode</span>()
+
+    message = <span class="function">HumanMessage</span>(content=[
+        {<span class="string">"type"</span>: <span class="string">"text"</span>, <span class="string">"text"</span>: <span class="string">"""Decris cette image en detail pour indexation dans
+        une base de connaissances. Inclus :
+        - Le type de visuel (graphique, schema, photo, tableau)
+        - Les informations cles visibles
+        - Les donnees chiffrees si presentes
+        - Le contexte et le sujet principal"""</span>},
+        {<span class="string">"type"</span>: <span class="string">"image_url"</span>, <span class="string">"image_url"</span>: {
+            <span class="string">"url"</span>: <span class="string">f"data:image/png;base64,</span>{image_data}<span class="string">"</span>
+        }},
+    ])
+
+    description = vision_llm.<span class="function">invoke</span>([message]).content
+    <span class="keyword">return</span> description
+
+<span class="comment"># Indexer l'image comme un document texte</span>
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+image_desc = <span class="function">describe_image_for_indexing</span>(<span class="string">"graphique_ventes.png"</span>)
+doc = <span class="function">Document</span>(
+    page_content=image_desc,
+    metadata={<span class="string">"source"</span>: <span class="string">"graphique_ventes.png"</span>, <span class="string">"type"</span>: <span class="string">"image"</span>}
+)</div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 9 : KNOWLEDGE GRAPHS + RAG                                     -->
+        <!-- ====================================================================== -->
+        <h2>9. Knowledge Graphs + RAG</h2>
+
+        <div class="definition">
+            Le <strong>GraphRAG</strong> combine les graphes de connaissances (Knowledge Graphs)
+            avec le RAG vectoriel pour capturer les relations structurelles entre entites
+            que les embeddings seuls peinent a representer. Un graphe de connaissances
+            stocke des triplets (sujet, relation, objet) qui enrichissent le contexte.
+        </div>
+
+        <h3>9.1 Pourquoi combiner graphes et vecteurs ?</h3>
+
+        <div class="step-box">
+            <strong>Embeddings vectoriels :</strong> Excellents pour la similarite semantique
+            ("ce texte parle de la meme chose que cette requete"), mais ne capturent pas
+            explicitement les relations entre concepts.
+        </div>
+        <div class="step-box">
+            <strong>Graphes de connaissances :</strong> Capturent les relations explicites
+            ("A est auteur de B", "C est un type de D"), mais ne gerent pas la recherche
+            semantique floue.
+        </div>
+        <div class="step-box">
+            <strong>Combinaison :</strong> Le meilleur des deux mondes. On cherche par
+            similarite dans les vecteurs ET par traversee de graphe pour les relations.
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> JsonOutputParser
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Etape 1 : Extraire les triplets d'un texte</span>
+kg_extraction_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""
+Extrait les relations entre entites du texte suivant sous forme de triplets.
+
+Texte : {text}
+
+Reponds en JSON :
+[
+    {{"subject": "...", "relation": "...", "object": "..."}},
+    ...
+]
+
+Exemples de relations : "est_auteur_de", "est_type_de", "fait_partie_de",
+"a_ete_cree_en", "utilise", "est_composant_de"
+"""</span>)
+
+kg_chain = kg_extraction_prompt | llm | <span class="function">JsonOutputParser</span>()
+
+<span class="comment"># Extraire les triplets d'un document</span>
+text = <span class="string">"""Le RAG a ete propose par Lewis et al. en 2020 chez Meta AI Research.
+Il combine FAISS pour la recherche vectorielle et BART pour la generation.
+LangChain est un framework Python qui facilite l'implementation du RAG."""</span>
+
+triplets = kg_chain.<span class="function">invoke</span>({<span class="string">"text"</span>: text})
+<span class="function">print</span>(triplets)</div>
+
+        <div class="output-block">
+[
+  {"subject": "RAG", "relation": "a_ete_propose_par", "object": "Lewis et al."},
+  {"subject": "RAG", "relation": "a_ete_cree_en", "object": "2020"},
+  {"subject": "RAG", "relation": "utilise", "object": "FAISS"},
+  {"subject": "RAG", "relation": "utilise", "object": "BART"},
+  {"subject": "LangChain", "relation": "facilite_implementation_de", "object": "RAG"}
+]</div>
+
+        <div class="code-block"><span class="comment"># Etape 2 : Stocker dans un graphe (NetworkX pour la simplicite)</span>
+<span class="keyword">import</span> networkx <span class="keyword">as</span> nx
+
+graph = nx.<span class="function">DiGraph</span>()
+
+<span class="keyword">for</span> triplet <span class="keyword">in</span> triplets:
+    graph.<span class="function">add_edge</span>(
+        triplet[<span class="string">"subject"</span>],
+        triplet[<span class="string">"object"</span>],
+        relation=triplet[<span class="string">"relation"</span>],
+    )
+
+<span class="comment"># Etape 3 : Retrieval hybride (vecteurs + graphe)</span>
+<span class="keyword">def</span> <span class="function">graph_augmented_retrieval</span>(question: <span class="function">str</span>, retriever, graph: nx.DiGraph) -> <span class="function">str</span>:
+    <span class="string">"""Combine retrieval vectoriel et navigation dans le graphe."""</span>
+    <span class="comment"># Retrieval vectoriel classique</span>
+    vector_docs = retriever.<span class="function">invoke</span>(question)
+
+    <span class="comment"># Extraire les entites mentionnees dans les documents</span>
+    entities_in_docs = <span class="function">set</span>()
+    <span class="keyword">for</span> doc <span class="keyword">in</span> vector_docs:
+        <span class="keyword">for</span> node <span class="keyword">in</span> graph.<span class="function">nodes</span>():
+            <span class="keyword">if</span> node.<span class="function">lower</span>() <span class="keyword">in</span> doc.page_content.<span class="function">lower</span>():
+                entities_in_docs.<span class="function">add</span>(node)
+
+    <span class="comment"># Naviguer dans le graphe pour trouver les relations</span>
+    graph_context = []
+    <span class="keyword">for</span> entity <span class="keyword">in</span> entities_in_docs:
+        <span class="keyword">for</span> _, target, data <span class="keyword">in</span> graph.<span class="function">edges</span>(entity, data=<span class="keyword">True</span>):
+            graph_context.<span class="function">append</span>(<span class="string">f"</span>{entity}<span class="string"> </span>{data[<span class="string">'relation'</span>]}<span class="string"> </span>{target}<span class="string">"</span>)
+        <span class="keyword">for</span> source, _, data <span class="keyword">in</span> graph.<span class="function">in_edges</span>(entity, data=<span class="keyword">True</span>):
+            graph_context.<span class="function">append</span>(<span class="string">f"</span>{source}<span class="string"> </span>{data[<span class="string">'relation'</span>]}<span class="string"> </span>{entity}<span class="string">"</span>)
+
+    <span class="comment"># Combiner le contexte vectoriel et le contexte graphe</span>
+    full_context = <span class="string">"\n"</span>.<span class="function">join</span>(d.page_content <span class="keyword">for</span> d <span class="keyword">in</span> vector_docs)
+    full_context += <span class="string">"\n\nRelations connues :\n"</span> + <span class="string">"\n"</span>.<span class="function">join</span>(graph_context)
+    <span class="keyword">return</span> full_context</div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 10 : FINE-TUNING EMBEDDINGS                                    -->
+        <!-- ====================================================================== -->
+        <h2>10. Fine-tuning des embeddings pour RAG</h2>
+
+        <div class="definition">
+            Le <strong>fine-tuning des embeddings</strong> consiste a adapter un modele d'embedding
+            pre-entraine a votre domaine specifique. Les embeddings generiques (comme text-embedding-3)
+            fonctionnent bien en general, mais un fine-tuning sur votre corpus peut ameliorer
+            le recall du retriever de 5-15% sur des domaines specialises.
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> SentenceTransformer, InputExample, losses
+<span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader
+
+<span class="comment"># Charger un modele d'embedding de base</span>
+model = <span class="function">SentenceTransformer</span>(<span class="string">"all-MiniLM-L6-v2"</span>)
+
+<span class="comment"># Preparer les donnees d'entrainement : paires (question, passage pertinent)</span>
+train_examples = [
+    <span class="function">InputExample</span>(
+        texts=[<span class="string">"Qu'est-ce que le RAG ?"</span>,
+               <span class="string">"Le RAG combine recherche documentaire et generation par LLM"</span>],
+        label=<span class="number">1.0</span>,  <span class="comment"># score de similarite (1.0 = tres pertinent)</span>
+    ),
+    <span class="function">InputExample</span>(
+        texts=[<span class="string">"Qu'est-ce que le RAG ?"</span>,
+               <span class="string">"La cuisine italienne est reputee pour ses pates"</span>],
+        label=<span class="number">0.0</span>,  <span class="comment"># score de similarite (0.0 = non pertinent)</span>
+    ),
+    <span class="comment"># ... des centaines d'exemples supplementaires ...</span>
+]
+
+<span class="comment"># Configurer l'entrainement</span>
+train_dataloader = <span class="function">DataLoader</span>(train_examples, shuffle=<span class="keyword">True</span>, batch_size=<span class="number">16</span>)
+train_loss = losses.<span class="function">CosineSimilarityLoss</span>(model)
+
+<span class="comment"># Fine-tuner le modele</span>
+model.<span class="function">fit</span>(
+    train_objectives=[(train_dataloader, train_loss)],
+    epochs=<span class="number">3</span>,
+    warmup_steps=<span class="number">100</span>,
+    output_path=<span class="string">"./models/rag_embeddings_finetuned"</span>,
+)
+
+<span class="comment"># Utiliser le modele fine-tune dans LangChain</span>
+<span class="keyword">from</span> langchain_huggingface <span class="keyword">import</span> HuggingFaceEmbeddings
+
+custom_embeddings = <span class="function">HuggingFaceEmbeddings</span>(
+    model_name=<span class="string">"./models/rag_embeddings_finetuned"</span>
+)</div>
+
+        <div class="effect">
+            Le fine-tuning est particulierement efficace pour les domaines avec un vocabulaire
+            specifique (medical, juridique, technique). Les embeddings generiques ne comprennent
+            pas toujours que "ACE inhibiteur" et "inhibiteur de l'enzyme de conversion" sont synonymes.
+            Apres fine-tuning, le modele apprend ces equivalences.
+        </div>
+
+        <div class="warning">
+            Le fine-tuning necessite au minimum 500-1000 paires d'entrainement de qualite.
+            Il faut aussi un jeu de validation separe pour eviter le sur-apprentissage.
+            Si vous avez moins de 500 exemples, les embeddings generiques seront probablement
+            meilleurs qu'un modele fine-tune sur trop peu de donnees.
+        </div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 11 : PRODUCTION BEST PRACTICES                                 -->
+        <!-- ====================================================================== -->
+        <h2>11. Bonnes pratiques de production</h2>
+
+        <p>Passer un systeme RAG du prototype a la production necessite d'adresser trois
+        defis majeurs : le caching, le monitoring et le scaling.</p>
+
+        <h3>11.1 Caching intelligent</h3>
+
+        <div class="definition">
+            Le <strong>caching</strong> dans un systeme RAG consiste a stocker les resultats
+            de requetes frequentes (embeddings, documents recuperes, reponses) pour eviter
+            les appels redondants au modele d'embedding et au LLM, reduisant ainsi la latence
+            et les couts.
+        </div>
+
+        <div class="code-block"><span class="keyword">import</span> hashlib
+<span class="keyword">import</span> json
+<span class="keyword">from</span> functools <span class="keyword">import</span> lru_cache
+<span class="keyword">from</span> typing <span class="keyword">import</span> Optional, Dict
+
+<span class="keyword">class</span> <span class="function">RAGCache</span>:
+    <span class="string">"""Cache multi-niveaux pour systeme RAG en production."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, redis_client=<span class="keyword">None</span>, ttl_seconds: <span class="function">int</span> = <span class="number">3600</span>):
+        self.redis = redis_client
+        self.ttl = ttl_seconds
+        self.local_cache: Dict[<span class="function">str</span>, <span class="function">dict</span>] = {}
+
+    <span class="keyword">def</span> <span class="function">_hash_query</span>(self, query: <span class="function">str</span>) -> <span class="function">str</span>:
+        <span class="string">"""Genere un hash deterministe de la requete."""</span>
+        <span class="keyword">return</span> hashlib.<span class="function">sha256</span>(query.<span class="function">strip</span>().<span class="function">lower</span>().<span class="function">encode</span>()).<span class="function">hexdigest</span>()
+
+    <span class="keyword">def</span> <span class="function">get</span>(self, query: <span class="function">str</span>) -> Optional[<span class="function">dict</span>]:
+        <span class="string">"""Cherche dans le cache (local d'abord, puis Redis)."""</span>
+        key = self.<span class="function">_hash_query</span>(query)
+
+        <span class="comment"># Niveau 1 : cache local (en memoire)</span>
+        <span class="keyword">if</span> key <span class="keyword">in</span> self.local_cache:
+            <span class="keyword">return</span> self.local_cache[key]
+
+        <span class="comment"># Niveau 2 : cache distribue (Redis)</span>
+        <span class="keyword">if</span> self.redis:
+            cached = self.redis.<span class="function">get</span>(<span class="string">f"rag:</span>{key}<span class="string">"</span>)
+            <span class="keyword">if</span> cached:
+                result = json.<span class="function">loads</span>(cached)
+                self.local_cache[key] = result  <span class="comment"># propager au cache local</span>
+                <span class="keyword">return</span> result
+
+        <span class="keyword">return</span> <span class="keyword">None</span>
+
+    <span class="keyword">def</span> <span class="function">set</span>(self, query: <span class="function">str</span>, result: <span class="function">dict</span>):
+        <span class="string">"""Stocke le resultat dans les deux niveaux de cache."""</span>
+        key = self.<span class="function">_hash_query</span>(query)
+        self.local_cache[key] = result
+        <span class="keyword">if</span> self.redis:
+            self.redis.<span class="function">setex</span>(<span class="string">f"rag:</span>{key}<span class="string">"</span>, self.ttl, json.<span class="function">dumps</span>(result))
+
+<span class="comment"># Utilisation dans le pipeline RAG</span>
+cache = <span class="function">RAGCache</span>(ttl_seconds=<span class="number">1800</span>)  <span class="comment"># cache de 30 minutes</span>
+
+<span class="keyword">def</span> <span class="function">cached_rag_query</span>(question: <span class="function">str</span>, rag_chain) -> <span class="function">dict</span>:
+    <span class="string">"""Pipeline RAG avec caching transparent."""</span>
+    cached = cache.<span class="function">get</span>(question)
+    <span class="keyword">if</span> cached:
+        <span class="function">print</span>(<span class="string">"[Cache] Hit !"</span>)
+        <span class="keyword">return</span> cached
+
+    <span class="function">print</span>(<span class="string">"[Cache] Miss - execution du pipeline"</span>)
+    result = rag_chain.<span class="function">invoke</span>({<span class="string">"input"</span>: question})
+    cache.<span class="function">set</span>(question, result)
+    <span class="keyword">return</span> result</div>
+
+        <h3>11.2 Monitoring et observabilite</h3>
+
+        <div class="code-block"><span class="keyword">import</span> logging
+<span class="keyword">import</span> time
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field
+<span class="keyword">from</span> typing <span class="keyword">import</span> List
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="keyword">@dataclass</span>
+<span class="keyword">class</span> <span class="function">RAGMetrics</span>:
+    <span class="string">"""Metriques collectees pour chaque requete RAG."""</span>
+    query: <span class="function">str</span>
+    timestamp: <span class="function">str</span>
+    retrieval_latency_ms: <span class="function">float</span>
+    generation_latency_ms: <span class="function">float</span>
+    total_latency_ms: <span class="function">float</span>
+    num_docs_retrieved: <span class="function">int</span>
+    input_tokens: <span class="function">int</span>
+    output_tokens: <span class="function">int</span>
+    cache_hit: <span class="function">bool</span>
+    error: <span class="function">str</span> = <span class="string">""</span>
+
+<span class="keyword">class</span> <span class="function">RAGMonitor</span>:
+    <span class="string">"""Monitoring temps reel d'un systeme RAG en production."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.metrics_log: List[RAGMetrics] = []
+        self.logger = logging.<span class="function">getLogger</span>(<span class="string">"rag_monitor"</span>)
+
+    <span class="keyword">def</span> <span class="function">log_query</span>(self, metrics: RAGMetrics):
+        <span class="string">"""Enregistre les metriques d'une requete."""</span>
+        self.metrics_log.<span class="function">append</span>(metrics)
+
+        <span class="comment"># Alertes automatiques</span>
+        <span class="keyword">if</span> metrics.total_latency_ms > <span class="number">5000</span>:
+            self.logger.<span class="function">warning</span>(
+                <span class="string">f"ALERTE: Latence elevee </span>{metrics.total_latency_ms:<span class="string">.0f}ms "</span>
+                <span class="string">f"pour '{metrics.query[:50]}...'"</span>
+            )
+        <span class="keyword">if</span> metrics.num_docs_retrieved == <span class="number">0</span>:
+            self.logger.<span class="function">warning</span>(
+                <span class="string">f"ALERTE: Aucun document recupere pour '{metrics.query[:50]}...'"</span>
+            )
+
+    <span class="keyword">def</span> <span class="function">get_dashboard_stats</span>(self) -> <span class="function">dict</span>:
+        <span class="string">"""Calcule les statistiques pour le tableau de bord."""</span>
+        <span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+        latencies = [m.total_latency_ms <span class="keyword">for</span> m <span class="keyword">in</span> self.metrics_log]
+        cache_hits = <span class="function">sum</span>(<span class="number">1</span> <span class="keyword">for</span> m <span class="keyword">in</span> self.metrics_log <span class="keyword">if</span> m.cache_hit)
+        errors = <span class="function">sum</span>(<span class="number">1</span> <span class="keyword">for</span> m <span class="keyword">in</span> self.metrics_log <span class="keyword">if</span> m.error)
+
+        <span class="keyword">return</span> {
+            <span class="string">"total_queries"</span>: <span class="function">len</span>(self.metrics_log),
+            <span class="string">"avg_latency_ms"</span>: np.<span class="function">mean</span>(latencies),
+            <span class="string">"p95_latency_ms"</span>: np.<span class="function">percentile</span>(latencies, <span class="number">95</span>),
+            <span class="string">"cache_hit_rate"</span>: cache_hits / <span class="function">len</span>(self.metrics_log),
+            <span class="string">"error_rate"</span>: errors / <span class="function">len</span>(self.metrics_log),
+        }</div>
+
+        <h3>11.3 Scaling et architecture de production</h3>
+
+        <div class="concept-box green">
+            <h3 style="color:#00ff88; margin-top:0;">Architecture de production recommandee</h3>
+
+            <div class="step-box">
+                <strong>Base vectorielle :</strong> Utiliser une solution managee (Pinecone, Weaviate Cloud,
+                Qdrant Cloud) ou auto-hebergee (Milvus, Qdrant) avec replication pour la disponibilite.
+            </div>
+            <div class="step-box">
+                <strong>Cache :</strong> Redis ou Memcached pour le caching des requetes frequentes.
+                Caching semantique possible avec des seuils de similarite.
+            </div>
+            <div class="step-box">
+                <strong>Load Balancer :</strong> Distribuer les requetes entre plusieurs instances
+                du pipeline RAG. Le retrieval et la generation peuvent etre scales independamment.
+            </div>
+            <div class="step-box">
+                <strong>File d'attente :</strong> RabbitMQ ou Kafka pour gerer les pics de charge.
+                Les requetes non urgentes peuvent etre traitees en mode asynchrone.
+            </div>
+            <div class="step-box">
+                <strong>Monitoring :</strong> Prometheus + Grafana pour les metriques techniques.
+                LangSmith ou Langfuse pour le tracing des chaines LangChain.
+            </div>
+            <div class="step-box">
+                <strong>CI/CD de l'evaluation :</strong> A chaque mise a jour du corpus ou du pipeline,
+                le benchmark d'evaluation tourne automatiquement et bloque le deploiement si
+                les metriques descendent sous les seuils definis.
+            </div>
+        </div>
+
+        <div class="code-block"><span class="comment"># Exemple de configuration Docker Compose pour RAG en production</span>
+<span class="comment"># (a titre illustratif)</span>
+
+<span class="comment"># docker-compose.yml</span>
+<span class="comment"># services:</span>
+<span class="comment">#   qdrant:</span>
+<span class="comment">#     image: qdrant/qdrant:latest</span>
+<span class="comment">#     ports: ["6333:6333"]</span>
+<span class="comment">#     volumes: ["qdrant_data:/qdrant/storage"]</span>
+<span class="comment">#</span>
+<span class="comment">#   redis:</span>
+<span class="comment">#     image: redis:7-alpine</span>
+<span class="comment">#     ports: ["6379:6379"]</span>
+<span class="comment">#</span>
+<span class="comment">#   rag-api:</span>
+<span class="comment">#     build: .</span>
+<span class="comment">#     ports: ["8000:8000"]</span>
+<span class="comment">#     environment:</span>
+<span class="comment">#       QDRANT_URL: http://qdrant:6333</span>
+<span class="comment">#       REDIS_URL: redis://redis:6379</span>
+<span class="comment">#       OPENAI_API_KEY: ${OPENAI_API_KEY}</span>
+<span class="comment">#     depends_on: [qdrant, redis]</span>
+<span class="comment">#     deploy:</span>
+<span class="comment">#       replicas: 3  # 3 instances pour le scaling</span></div>
+
+        <!-- ====================================================================== -->
+        <!-- SECTION 12 : RECAPITULATIF                                             -->
+        <!-- ====================================================================== -->
+        <h2>12. Recapitulatif des techniques avancees</h2>
+
+        <div class="param-box">
+            <table>
+                <tr>
+                    <th>Technique</th>
+                    <th>Probleme resolu</th>
+                    <th>Complexite</th>
+                    <th>Gain typique</th>
+                </tr>
+                <tr>
+                    <td><strong>HyDE</strong></td>
+                    <td>Ecart semantique question/document</td>
+                    <td>Faible</td>
+                    <td>+10-25% recall</td>
+                </tr>
+                <tr>
+                    <td><strong>CRAG</strong></td>
+                    <td>Documents non pertinents recuperes</td>
+                    <td>Moyenne</td>
+                    <td>+15-20% precision</td>
+                </tr>
+                <tr>
+                    <td><strong>Self-RAG</strong></td>
+                    <td>Hallucinations, auto-correction</td>
+                    <td>Elevee</td>
+                    <td>-30-50% hallucinations</td>
+                </tr>
+                <tr>
+                    <td><strong>Agentic RAG</strong></td>
+                    <td>Questions complexes multi-etapes</td>
+                    <td>Elevee</td>
+                    <td>+20-35% correctness</td>
+                </tr>
+                <tr>
+                    <td><strong>RAG Fusion</strong></td>
+                    <td>Couverture insuffisante d'une requete unique</td>
+                    <td>Faible</td>
+                    <td>+20-40% diversite</td>
+                </tr>
+                <tr>
+                    <td><strong>Step-Back</strong></td>
+                    <td>Questions trop specifiques</td>
+                    <td>Faible</td>
+                    <td>+10-20% contexte</td>
+                </tr>
+                <tr>
+                    <td><strong>Multi-modal</strong></td>
+                    <td>Images, graphiques non indexes</td>
+                    <td>Moyenne</td>
+                    <td>Couverture +100%</td>
+                </tr>
+                <tr>
+                    <td><strong>GraphRAG</strong></td>
+                    <td>Relations entre entites</td>
+                    <td>Elevee</td>
+                    <td>+15-30% sur Q relationnelles</td>
+                </tr>
+                <tr>
+                    <td><strong>Fine-tuning embed.</strong></td>
+                    <td>Embeddings generiques inadaptes</td>
+                    <td>Moyenne</td>
+                    <td>+5-15% recall domaine</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="prof-note">
+            Ne tentez pas d'implementer toutes ces techniques en meme temps. Commencez par
+            un RAG classique bien optimise (bon chunking, bons embeddings, bon prompt).
+            Puis identifiez votre probleme principal (hallucinations ? recall faible ?
+            questions complexes ?) et choisissez la technique appropriee. Mesurez l'impact
+            avec les metriques du chapitre 6 avant de continuer. L'ingenierie RAG est
+            un processus iteratif d'amelioration continue.
+        </div>
+
+        <div class="warning">
+            Chaque technique avancee ajoute de la complexite, de la latence et des couts.
+            Un pipeline RAG trop complexe est difficile a debugger, a maintenir et a faire
+            evoluer. La simplicite est une vertu en ingenierie : ne complexifiez que quand
+            les metriques montrent un besoin reel.
+        </div>
+
+        <!-- ==================== NAVIGATION ==================== -->
+        <div class="nav">
+            <a href="rag_06_evaluation.html">&#8592; Chapitre 6 : Evaluation et Metriques</a>
+            <a href="rag_08_projet.html">Chapitre 8 : Projet Final &#8594;</a>
+        </div>
+
+    </div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

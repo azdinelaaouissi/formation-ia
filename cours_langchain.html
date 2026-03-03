@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cours Complet LangChain - De Zero a Expert</title>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{--bg:#070b14;--bg2:#0d1422;--bg3:#141e32;--bgc:#0a0f1a;--t:#e2e8f0;--t2:#94a3b8;--t3:#64748b;--blue:#3b82f6;--purple:#8b5cf6;--green:#10b981;--orange:#f59e0b;--red:#ef4444;--cyan:#06b6d4;--pink:#ec4899;--border:#1e293b;--r:16px}
+        html{scroll-behavior:smooth}
+        body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--t);line-height:1.75;font-size:16px}
+        .nav{position:fixed;top:0;left:0;width:280px;height:100vh;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;z-index:1000;padding:20px 0}
+        .nav-head{padding:10px 20px 25px;border-bottom:1px solid var(--border);margin-bottom:10px}
+        .nav-head h2{font-size:1rem;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .nav-head p{font-size:.7rem;color:var(--t3);margin-top:4px}
+        .nl{padding:14px 20px 4px;font-size:.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--t3);font-weight:700}
+        .nav a{display:flex;align-items:center;gap:10px;padding:8px 20px;color:var(--t2);text-decoration:none;font-size:.8rem;border-left:3px solid transparent;transition:all .2s}
+        .nav a:hover{color:var(--t);background:rgba(59,130,246,.06);border-left-color:var(--blue)}
+        .nav a .n{width:20px;height:20px;border-radius:5px;background:var(--bg3);font-size:.65rem;font-weight:700;color:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .main{margin-left:280px;padding:40px 55px 100px;max-width:1100px}
+        .hero{text-align:center;padding:65px 40px;background:linear-gradient(180deg,rgba(59,130,246,.08) 0%,transparent 100%);border-radius:var(--r);border:1px solid var(--border);margin-bottom:60px}
+        .hero-badge{display:inline-block;padding:5px 14px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:20px;font-size:.78rem;color:var(--blue);font-weight:600;margin-bottom:20px}
+        .hero h1{font-size:2.6rem;font-weight:800;line-height:1.2;margin-bottom:18px;background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .hero p{font-size:1.1rem;color:var(--t2);max-width:650px;margin:0 auto}
+        .s{margin-bottom:60px;scroll-margin-top:30px}
+        .sh{display:flex;align-items:center;gap:14px;margin-bottom:25px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+        .sn{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;flex-shrink:0}
+        .sh h2{font-size:1.4rem}
+        .sh .sub{font-size:.8rem;color:var(--t3)}
+        .c{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:16px}
+        .c h3{font-size:1.05rem;margin-bottom:10px}
+        .c p,.c li{color:var(--t2);font-size:.92rem}
+        .c ul,.c ol{padding-left:20px;margin:10px 0}
+        .c li{margin-bottom:6px}
+        .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+        .code{background:var(--bgc);border:1px solid var(--border);border-radius:12px;margin:16px 0;overflow:hidden}
+        .ct{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);font-size:.72rem;color:var(--t3)}
+        .dots{display:flex;gap:5px}
+        .dots span{width:9px;height:9px;border-radius:50%}
+        .dots span:nth-child(1){background:var(--red)}
+        .dots span:nth-child(2){background:var(--orange)}
+        .dots span:nth-child(3){background:var(--green)}
+        .code pre{padding:14px 18px;overflow-x:auto;font-size:.82rem;line-height:1.6}
+        .code code{font-family:'Cascadia Code','Fira Code',monospace;color:var(--t2)}
+        .cm{color:#6a737d}.kw{color:#ff7b72}.st{color:#a5d6ff}.fn{color:#d2a8ff}.nb{color:#79c0ff}.dc{color:#ffa657}
+        .info{border-radius:12px;padding:18px 22px;margin:16px 0;border-left:4px solid;font-size:.87rem}
+        .info.tip{background:rgba(16,185,129,.06);border-color:var(--green)}.info.tip .it{color:var(--green)}
+        .info.warn{background:rgba(245,158,11,.06);border-color:var(--orange)}.info.warn .it{color:var(--orange)}
+        .info.note{background:rgba(59,130,246,.06);border-color:var(--blue)}.info.note .it{color:var(--blue)}
+        .info.hot{background:rgba(239,68,68,.06);border-color:var(--red)}.info.hot .it{color:var(--red)}
+        .it{font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+        .info p{color:var(--t2)}
+        .badge{display:inline-block;padding:3px 10px;border-radius:8px;font-size:.72rem;font-weight:600}
+        .badge.green{background:rgba(16,185,129,.15);color:var(--green)}
+        .badge.blue{background:rgba(59,130,246,.15);color:var(--blue)}
+        .badge.orange{background:rgba(245,158,11,.15);color:var(--orange)}
+        .badge.red{background:rgba(239,68,68,.15);color:var(--red)}
+        .badge.purple{background:rgba(139,92,246,.15);color:var(--purple)}
+        .badge.cyan{background:rgba(6,182,212,.15);color:var(--cyan)}
+        .tbl{width:100%;border-collapse:collapse;margin:16px 0;font-size:.87rem}
+        .tbl th,.tbl td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border)}
+        .tbl th{background:rgba(59,130,246,.08);color:var(--blue);font-weight:700;font-size:.74rem;text-transform:uppercase;letter-spacing:1px}
+        .tbl td{color:var(--t2)}
+        .td-box{background:linear-gradient(135deg,rgba(139,92,246,.06),rgba(236,72,153,.06));border:2px solid var(--purple);border-radius:var(--r);padding:26px;margin:20px 0}
+        .td-box h3{color:var(--purple);font-size:1.1rem;margin-bottom:12px}
+        .td-box p,.td-box li{color:var(--t2);font-size:.92rem}
+        .td-box ol{padding-left:20px;margin:10px 0}
+        .td-box li{margin-bottom:8px}
+        .td-badge{display:inline-block;padding:4px 12px;background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.4);border-radius:8px;font-size:.75rem;color:var(--purple);font-weight:700;margin-bottom:12px}
+        strong{color:var(--t)}
+        .hl{color:var(--blue);font-weight:600}
+        .hl-g{color:var(--green);font-weight:600}
+        .hl-p{color:var(--purple);font-weight:600}
+        .hl-o{color:var(--orange);font-weight:600}
+        .footer{text-align:center;padding:40px;margin-top:60px;border-top:1px solid var(--border);color:var(--t3);font-size:.78rem}
+        .mob-btn{display:none;position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:var(--blue);color:white;border:none;font-size:1.3rem;cursor:pointer;z-index:1001}
+        @media(max-width:900px){.nav{transform:translateX(-100%);transition:transform .3s}.nav.open{transform:translateX(0)}.main{margin-left:0;padding:25px 18px 80px}.g2,.g3{grid-template-columns:1fr}.hero h1{font-size:1.8rem}.mob-btn{display:flex;align-items:center;justify-content:center}}
+    </style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+    <div class="nav-head">
+        <h2>Cours LangChain</h2>
+        <p>De zero a expert + TDs</p>
+    </div>
+    <div class="nl">Fondamentaux</div>
+    <a href="#intro"><span class="n">1</span> C'est quoi LangChain ?</a>
+    <a href="#install"><span class="n">2</span> Installation</a>
+    <a href="#archi"><span class="n">3</span> Architecture</a>
+    <div class="nl">Composants</div>
+    <a href="#llms"><span class="n">4</span> LLMs & Chat Models</a>
+    <a href="#prompts"><span class="n">5</span> Prompt Templates</a>
+    <a href="#chains"><span class="n">6</span> Chains (LCEL)</a>
+    <a href="#loaders"><span class="n">7</span> Document Loaders</a>
+    <a href="#splitters"><span class="n">8</span> Text Splitters</a>
+    <a href="#embeddings"><span class="n">9</span> Embeddings</a>
+    <a href="#vectorstores"><span class="n">10</span> Vector Stores</a>
+    <a href="#retrievers"><span class="n">11</span> Retrievers</a>
+    <a href="#output"><span class="n">12</span> Output Parsers</a>
+    <a href="#memory"><span class="n">13</span> Memory</a>
+    <a href="#tools"><span class="n">14</span> Tools & Agents</a>
+    <div class="nl">LCEL Avance</div>
+    <a href="#lcel"><span class="n">15</span> LCEL en profondeur</a>
+    <a href="#runnable"><span class="n">16</span> Runnables</a>
+    <div class="nl">TDs Pratiques</div>
+    <a href="#td1"><span class="n">TD1</span> Premier chatbot</a>
+    <a href="#td2"><span class="n">TD2</span> Q&A sur PDF</a>
+    <a href="#td3"><span class="n">TD3</span> RAG complet</a>
+    <a href="#td4"><span class="n">TD4</span> Agent avec outils</a>
+</nav>
+
+<button class="mob-btn" onclick="document.getElementById('nav').classList.toggle('open')">&#9776;</button>
+
+<div class="main">
+
+    <div class="hero">
+        <span class="hero-badge">Cours Complet + 4 TDs</span>
+        <h1>LangChain : Le Framework IA</h1>
+        <p>Le guide complet pour maitriser LangChain, le framework #1 pour construire des applications avec des LLM. De l'installation aux agents, avec 4 TDs pratiques.</p>
+    </div>
+
+    <!-- ============ 1. C'EST QUOI LANGCHAIN ============ -->
+    <div class="s" id="intro">
+        <div class="sh">
+            <div class="sn" style="background:rgba(59,130,246,.15);color:var(--blue)">1</div>
+            <div><h2>C'est quoi LangChain ?</h2><div class="sub">Le framework #1 pour les applications LLM</div></div>
+        </div>
+
+        <div class="c">
+            <h3>Definition</h3>
+            <p><strong>LangChain</strong> est un framework Python (et JavaScript) open source qui permet de construire des applications utilisant des <span class="hl">modeles de langage (LLM)</span>. Il fournit des briques reutilisables pour :</p>
+            <ul>
+                <li>Connecter un LLM a vos donnees (RAG)</li>
+                <li>Creer des chatbots intelligents</li>
+                <li>Construire des agents autonomes</li>
+                <li>Chainer des operations complexes</li>
+            </ul>
+        </div>
+
+        <div class="c">
+            <h3>Analogie : Les briques LEGO de l'IA</h3>
+            <p>Imagine que chaque composant (LLM, base de donnees, prompt, etc.) est une <strong>brique LEGO</strong>. LangChain est le <span class="hl-g">systeme d'assemblage</span> qui permet de connecter ces briques entre elles pour construire n'importe quelle application IA.</p>
+        </div>
+
+        <div class="c">
+            <h3>L'ecosysteme LangChain en 2025</h3>
+            <table class="tbl">
+                <thead><tr><th>Package</th><th>Role</th><th>Quand l'utiliser</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>langchain</strong></td><td>Framework de base, chains, prompts</td><td>Toujours</td></tr>
+                    <tr><td><strong>langchain-community</strong></td><td>Integrations communautaires (ChromaDB, etc.)</td><td>Connecter des outils tiers</td></tr>
+                    <tr><td><strong>langchain-openai</strong></td><td>Integration OpenAI (GPT-4, embeddings)</td><td>Si tu utilises OpenAI</td></tr>
+                    <tr><td><strong>langchain-ollama</strong></td><td>Integration Ollama (local)</td><td>Si tu utilises Ollama</td></tr>
+                    <tr><td><strong>langchain-huggingface</strong></td><td>Integration HuggingFace (gratuit)</td><td>Embeddings/LLM gratuits</td></tr>
+                    <tr><td><strong>langgraph</strong></td><td>Pipelines avances avec boucles</td><td>Agents complexes</td></tr>
+                    <tr><td><strong>langsmith</strong></td><td>Monitoring et debugging</td><td>Production</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ============ 2. INSTALLATION ============ -->
+    <div class="s" id="install">
+        <div class="sh">
+            <div class="sn" style="background:rgba(16,185,129,.15);color:var(--green)">2</div>
+            <div><h2>Installation</h2><div class="sub">Tout installer en 5 minutes</div></div>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>Terminal</span></div>
+            <pre><code><span class="cm"># === Installation de base ===</span>
+<span class="kw">pip install</span> langchain
+
+<span class="cm"># === Integrations courantes ===</span>
+<span class="kw">pip install</span> langchain-community         <span class="cm"># Outils communautaires</span>
+<span class="kw">pip install</span> langchain-huggingface        <span class="cm"># Embeddings gratuits</span>
+<span class="kw">pip install</span> langchain-ollama             <span class="cm"># LLM local gratuit</span>
+<span class="kw">pip install</span> langchain-openai             <span class="cm"># OpenAI (payant)</span>
+
+<span class="cm"># === Bases vectorielles ===</span>
+<span class="kw">pip install</span> chromadb                     <span class="cm"># Base vectorielle locale</span>
+<span class="kw">pip install</span> faiss-cpu                    <span class="cm"># FAISS (Facebook)</span>
+
+<span class="cm"># === Utilitaires ===</span>
+<span class="kw">pip install</span> sentence-transformers        <span class="cm"># Modeles d'embedding</span>
+<span class="kw">pip install</span> pypdf                        <span class="cm"># Lire les PDFs</span>
+<span class="kw">pip install</span> python-dotenv                <span class="cm"># Gerer les cles API</span>
+
+<span class="cm"># === Installation tout-en-un (rapide) ===</span>
+<span class="kw">pip install</span> langchain langchain-community langchain-huggingface langchain-ollama chromadb sentence-transformers pypdf</code></pre>
+        </div>
+
+        <div class="info tip">
+            <div class="it">Verifier l'installation</div>
+            <p><code>python -c "import langchain; print(langchain.__version__)"</code> doit afficher un numero de version (ex: 0.3.x). Si ca marche, tout est bon !</p>
+        </div>
+    </div>
+
+    <!-- ============ 3. ARCHITECTURE ============ -->
+    <div class="s" id="archi">
+        <div class="sh">
+            <div class="sn" style="background:rgba(139,92,246,.15);color:var(--purple)">3</div>
+            <div><h2>Architecture de LangChain</h2><div class="sub">Les composants et comment ils s'assemblent</div></div>
+        </div>
+
+        <div class="c">
+            <h3>Les 8 composants principaux</h3>
+            <p>LangChain est organise en <strong>composants modulaires</strong> que tu peux assembler comme des briques :</p>
+        </div>
+
+        <div class="g2">
+            <div class="c" style="border-top:3px solid var(--blue)">
+                <h3 style="color:var(--blue)">1. LLMs / Chat Models</h3>
+                <p>Les modeles d'IA (GPT-4, Claude, Llama, Mistral). C'est le "cerveau" qui genere du texte.</p>
+            </div>
+            <div class="c" style="border-top:3px solid var(--green)">
+                <h3 style="color:var(--green)">2. Prompt Templates</h3>
+                <p>Des modeles de texte avec des variables. Permettent de structurer les instructions envoyees au LLM.</p>
+            </div>
+            <div class="c" style="border-top:3px solid var(--purple)">
+                <h3 style="color:var(--purple)">3. Chains (LCEL)</h3>
+                <p>Enchainer plusieurs etapes : prompt &rarr; LLM &rarr; output parser. Le coeur de LangChain.</p>
+            </div>
+            <div class="c" style="border-top:3px solid var(--orange)">
+                <h3 style="color:var(--orange)">4. Document Loaders</h3>
+                <p>Charger des donnees depuis n'importe quelle source : PDF, CSV, web, base de donnees, etc.</p>
+            </div>
+            <div class="c" style="border-top:3px solid var(--cyan)">
+                <h3 style="color:var(--cyan)">5. Text Splitters</h3>
+                <p>Decouper les documents en chunks pour le RAG. RecursiveCharacterTextSplitter est le plus utilise.</p>
+            </div>
+            <div class="c" style="border-top:3px solid var(--pink)">
+                <h3 style="color:var(--pink)">6. Embeddings + Vector Stores</h3>
+                <p>Transformer le texte en vecteurs et les stocker dans une base vectorielle (ChromaDB, FAISS).</p>
+            </div>
+            <div class="c" style="border-top:3px solid var(--red)">
+                <h3 style="color:var(--red)">7. Retrievers</h3>
+                <p>Chercher les documents pertinents par similarite semantique dans la base vectorielle.</p>
+            </div>
+            <div class="c" style="border-top:3px solid var(--orange)">
+                <h3 style="color:var(--orange)">8. Tools & Agents</h3>
+                <p>Des agents autonomes qui utilisent des outils (calculatrice, recherche web, API) pour resoudre des taches.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ 4. LLMs ============ -->
+    <div class="s" id="llms">
+        <div class="sh">
+            <div class="sn" style="background:rgba(59,130,246,.15);color:var(--blue)">4</div>
+            <div><h2>LLMs & Chat Models</h2><div class="sub">Connecter un modele d'IA</div></div>
+        </div>
+
+        <div class="c">
+            <h3>2 types d'interface</h3>
+            <table class="tbl">
+                <thead><tr><th>Type</th><th>Input</th><th>Output</th><th>Exemple</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>LLM</strong></td><td>String (texte)</td><td>String (texte)</td><td>OllamaLLM, HuggingFacePipeline</td></tr>
+                    <tr><td><strong>Chat Model</strong></td><td>Liste de messages</td><td>AIMessage</td><td>ChatOpenAI, ChatOllama</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>llm_examples.py</span></div>
+            <pre><code><span class="cm"># === Option 1 : Ollama (gratuit, local) ===</span>
+<span class="kw">from</span> langchain_ollama <span class="kw">import</span> OllamaLLM
+
+llm = <span class="fn">OllamaLLM</span>(model=<span class="st">"llama3.2"</span>, temperature=<span class="nb">0</span>)
+response = llm.<span class="fn">invoke</span>(<span class="st">"Explique le RAG en 2 phrases"</span>)
+<span class="fn">print</span>(response)  <span class="cm"># String directement</span>
+
+
+<span class="cm"># === Option 2 : OpenAI (payant, cloud) ===</span>
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+
+llm = <span class="fn">ChatOpenAI</span>(
+    model=<span class="st">"gpt-4o-mini"</span>,
+    api_key=<span class="st">"sk-..."</span>,
+    temperature=<span class="nb">0</span>
+)
+response = llm.<span class="fn">invoke</span>(<span class="st">"Explique le RAG en 2 phrases"</span>)
+<span class="fn">print</span>(response.content)  <span class="cm"># .content car c'est un AIMessage</span>
+
+
+<span class="cm"># === Option 3 : HuggingFace (gratuit, local) ===</span>
+<span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFacePipeline
+
+llm = HuggingFacePipeline.<span class="fn">from_model_id</span>(
+    model_id=<span class="st">"mistralai/Mistral-7B-Instruct-v0.3"</span>,
+    task=<span class="st">"text-generation"</span>,
+    pipeline_kwargs={<span class="st">"max_new_tokens"</span>: <span class="nb">512</span>}
+)</code></pre>
+        </div>
+
+        <div class="info note">
+            <div class="it">invoke() est la methode universelle</div>
+            <p>Tous les composants LangChain utilisent <code>.invoke()</code> pour executer. C'est le standard depuis LangChain v0.2. Les anciennes methodes comme <code>.predict()</code> ou <code>.run()</code> sont deprecees.</p>
+        </div>
+    </div>
+
+    <!-- ============ 5. PROMPT TEMPLATES ============ -->
+    <div class="s" id="prompts">
+        <div class="sh">
+            <div class="sn" style="background:rgba(16,185,129,.15);color:var(--green)">5</div>
+            <div><h2>Prompt Templates</h2><div class="sub">Structurer les instructions pour le LLM</div></div>
+        </div>
+
+        <div class="c">
+            <h3>Pourquoi des templates ?</h3>
+            <p>Au lieu d'ecrire le prompt a chaque fois, on cree un <span class="hl-g">modele reutilisable</span> avec des variables. C'est plus propre, plus maintenable, et plus facile a tester.</p>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>prompts.py</span></div>
+            <pre><code><span class="cm"># === PromptTemplate (pour les LLMs simples) ===</span>
+<span class="kw">from</span> langchain.prompts <span class="kw">import</span> PromptTemplate
+
+<span class="cm"># Template avec 2 variables : {sujet} et {niveau}</span>
+template = <span class="fn">PromptTemplate</span>(
+    input_variables=[<span class="st">"sujet"</span>, <span class="st">"niveau"</span>],
+    template=<span class="st">"""Explique {sujet} pour un {niveau}.
+Donne 3 points cles avec des exemples."""</span>
+)
+
+<span class="cm"># Remplir les variables</span>
+prompt = template.<span class="fn">format</span>(sujet=<span class="st">"le RAG"</span>, niveau=<span class="st">"debutant"</span>)
+<span class="fn">print</span>(prompt)
+<span class="cm"># "Explique le RAG pour un debutant.\nDonne 3 points cles..."</span>
+
+
+<span class="cm"># === ChatPromptTemplate (pour les Chat Models) ===</span>
+<span class="kw">from</span> langchain.prompts <span class="kw">import</span> ChatPromptTemplate
+
+template = <span class="fn">ChatPromptTemplate.from_messages</span>([
+    (<span class="st">"system"</span>, <span class="st">"Tu es un expert en {domaine}. Reponds en francais."</span>),
+    (<span class="st">"human"</span>, <span class="st">"{question}"</span>)
+])
+
+messages = template.<span class="fn">format_messages</span>(
+    domaine=<span class="st">"nutrition"</span>,
+    question=<span class="st">"Quels sont les bienfaits de la vitamine D ?"</span>
+)
+
+
+<span class="cm"># === FewShotPromptTemplate (exemples dans le prompt) ===</span>
+<span class="kw">from</span> langchain.prompts <span class="kw">import</span> FewShotPromptTemplate
+
+examples = [
+    {<span class="st">"input"</span>: <span class="st">"chat"</span>, <span class="st">"output"</span>: <span class="st">"animal domestique felin"</span>},
+    {<span class="st">"input"</span>: <span class="st">"Python"</span>, <span class="st">"output"</span>: <span class="st">"langage de programmation"</span>}
+]
+
+few_shot = <span class="fn">FewShotPromptTemplate</span>(
+    examples=examples,
+    example_prompt=<span class="fn">PromptTemplate</span>(
+        input_variables=[<span class="st">"input"</span>, <span class="st">"output"</span>],
+        template=<span class="st">"Mot: {input}\nDefinition: {output}"</span>
+    ),
+    prefix=<span class="st">"Definis le mot suivant :"</span>,
+    suffix=<span class="st">"Mot: {input}\nDefinition:"</span>,
+    input_variables=[<span class="st">"input"</span>]
+)</code></pre>
+        </div>
+    </div>
+
+    <!-- ============ 6. CHAINS (LCEL) ============ -->
+    <div class="s" id="chains">
+        <div class="sh">
+            <div class="sn" style="background:rgba(139,92,246,.15);color:var(--purple)">6</div>
+            <div><h2>Chains & LCEL</h2><div class="sub">Enchainer les composants avec le pipe operator |</div></div>
+        </div>
+
+        <div class="c">
+            <h3>LCEL : LangChain Expression Language</h3>
+            <p>LCEL est la facon <strong>moderne</strong> de creer des chains dans LangChain. On utilise l'operateur <code class="hl-p">|</code> (pipe) pour connecter les composants, comme dans un terminal Unix.</p>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>chains_lcel.py</span></div>
+            <pre><code><span class="kw">from</span> langchain.prompts <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> langchain_ollama <span class="kw">import</span> OllamaLLM
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> StrOutputParser
+
+<span class="cm"># 1. Les composants</span>
+prompt = <span class="fn">ChatPromptTemplate.from_messages</span>([
+    (<span class="st">"system"</span>, <span class="st">"Tu es un assistant en {domaine}."</span>),
+    (<span class="st">"human"</span>, <span class="st">"{question}"</span>)
+])
+llm = <span class="fn">OllamaLLM</span>(model=<span class="st">"llama3.2"</span>)
+parser = <span class="fn">StrOutputParser</span>()
+
+<span class="cm"># 2. La chain avec LCEL (operateur |)</span>
+chain = prompt | llm | parser
+<span class="cm">#       ^          ^       ^</span>
+<span class="cm">#    Template   Modele   Parser</span>
+<span class="cm"># Le | connecte : la sortie de prompt va dans llm,</span>
+<span class="cm"># la sortie de llm va dans parser</span>
+
+<span class="cm"># 3. Executer la chain</span>
+result = chain.<span class="fn">invoke</span>({
+    <span class="st">"domaine"</span>: <span class="st">"nutrition"</span>,
+    <span class="st">"question"</span>: <span class="st">"Quels aliments sont riches en fer ?"</span>
+})
+<span class="fn">print</span>(result)  <span class="cm"># String de la reponse</span>
+
+
+<span class="cm"># === Chain avec streaming (affichage mot par mot) ===</span>
+<span class="kw">for</span> chunk <span class="kw">in</span> chain.<span class="fn">stream</span>({<span class="st">"domaine"</span>: <span class="st">"nutrition"</span>, <span class="st">"question"</span>: <span class="st">"Le fer ?"</span>}):
+    <span class="fn">print</span>(chunk, end=<span class="st">""</span>, flush=<span class="kw">True</span>)
+
+
+<span class="cm"># === Chain avec batch (plusieurs questions a la fois) ===</span>
+results = chain.<span class="fn">batch</span>([
+    {<span class="st">"domaine"</span>: <span class="st">"nutrition"</span>, <span class="st">"question"</span>: <span class="st">"Le fer ?"</span>},
+    {<span class="st">"domaine"</span>: <span class="st">"nutrition"</span>, <span class="st">"question"</span>: <span class="st">"La vitamine C ?"</span>},
+])</code></pre>
+        </div>
+
+        <div class="info warn">
+            <div class="it">3 methodes d'execution</div>
+            <p><strong>invoke()</strong> : Une seule entree &rarr; une seule sortie.<br>
+            <strong>stream()</strong> : Affiche la reponse mot par mot (streaming).<br>
+            <strong>batch()</strong> : Plusieurs entrees &rarr; plusieurs sorties en parallele.</p>
+        </div>
+    </div>
+
+    <!-- ============ 7-11 : LOADERS, SPLITTERS, EMBEDDINGS, VECTORSTORES, RETRIEVERS ============ -->
+    <div class="s" id="loaders">
+        <div class="sh">
+            <div class="sn" style="background:rgba(245,158,11,.15);color:var(--orange)">7</div>
+            <div><h2>Document Loaders</h2><div class="sub">Charger des donnees depuis n'importe quelle source</div></div>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>all_loaders.py</span></div>
+            <pre><code><span class="cm"># === TXT ===</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> TextLoader
+docs = <span class="fn">TextLoader</span>(<span class="st">"fichier.txt"</span>, encoding=<span class="st">"utf-8"</span>).<span class="fn">load</span>()
+
+<span class="cm"># === PDF ===</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> PyPDFLoader
+docs = <span class="fn">PyPDFLoader</span>(<span class="st">"rapport.pdf"</span>).<span class="fn">load</span>()  <span class="cm"># 1 Document par page</span>
+
+<span class="cm"># === CSV ===</span>
+<span class="kw">from</span> langchain_community.document_loaders.csv_loader <span class="kw">import</span> CSVLoader
+docs = <span class="fn">CSVLoader</span>(<span class="st">"data.csv"</span>).<span class="fn">load</span>()  <span class="cm"># 1 Document par ligne</span>
+
+<span class="cm"># === Page Web ===</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> WebBaseLoader
+docs = <span class="fn">WebBaseLoader</span>(<span class="st">"https://example.com"</span>).<span class="fn">load</span>()
+
+<span class="cm"># === Dossier entier ===</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> DirectoryLoader
+docs = <span class="fn">DirectoryLoader</span>(<span class="st">"./data/"</span>, glob=<span class="st">"**/*.txt"</span>).<span class="fn">load</span>()
+
+<span class="cm"># === Word (.docx) ===</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> Docx2txtLoader
+docs = <span class="fn">Docx2txtLoader</span>(<span class="st">"rapport.docx"</span>).<span class="fn">load</span>()
+
+<span class="cm"># === JSON ===</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> JSONLoader
+docs = <span class="fn">JSONLoader</span>(<span class="st">"data.json"</span>, jq_schema=<span class="st">".data[]"</span>).<span class="fn">load</span>()
+
+<span class="cm"># Chaque loader retourne une liste de Documents :</span>
+<span class="cm"># [Document(page_content="...", metadata={"source": "..."})]</span></code></pre>
+        </div>
+    </div>
+
+    <div class="s" id="splitters">
+        <div class="sh">
+            <div class="sn" style="background:rgba(6,182,212,.15);color:var(--cyan)">8</div>
+            <div><h2>Text Splitters</h2><div class="sub">Decouper les documents intelligemment</div></div>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>splitters.py</span></div>
+            <pre><code><span class="cm"># === Le plus utilise : RecursiveCharacterTextSplitter ===</span>
+<span class="kw">from</span> langchain.text_splitter <span class="kw">import</span> RecursiveCharacterTextSplitter
+
+splitter = <span class="fn">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="nb">500</span>,                       <span class="cm"># Taille max</span>
+    chunk_overlap=<span class="nb">50</span>,                     <span class="cm"># Chevauchement</span>
+    separators=[<span class="st">"\n\n"</span>, <span class="st">"\n"</span>, <span class="st">". "</span>, <span class="st">" "</span>]  <span class="cm"># Priorite de coupe</span>
+)
+chunks = splitter.<span class="fn">split_documents</span>(docs)
+
+<span class="cm"># === Pour du code source ===</span>
+<span class="kw">from</span> langchain.text_splitter <span class="kw">import</span> Language
+
+splitter = RecursiveCharacterTextSplitter.<span class="fn">from_language</span>(
+    language=Language.PYTHON,  <span class="cm"># Coupe aux fonctions/classes</span>
+    chunk_size=<span class="nb">1000</span>,
+    chunk_overlap=<span class="nb">100</span>
+)
+
+<span class="cm"># === Par tokens (plus precis) ===</span>
+<span class="kw">from</span> langchain.text_splitter <span class="kw">import</span> TokenTextSplitter
+
+splitter = <span class="fn">TokenTextSplitter</span>(
+    chunk_size=<span class="nb">256</span>,     <span class="cm"># 256 tokens (pas caracteres !)</span>
+    chunk_overlap=<span class="nb">30</span>
+)</code></pre>
+        </div>
+    </div>
+
+    <div class="s" id="embeddings">
+        <div class="sh">
+            <div class="sn" style="background:rgba(236,72,153,.15);color:var(--pink)">9</div>
+            <div><h2>Embeddings</h2><div class="sub">Transformer du texte en vecteurs</div></div>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>embeddings.py</span></div>
+            <pre><code><span class="cm"># === HuggingFace (gratuit, local) ===</span>
+<span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFaceEmbeddings
+
+embeddings = <span class="fn">HuggingFaceEmbeddings</span>(
+    model_name=<span class="st">"all-MiniLM-L6-v2"</span>,       <span class="cm"># 384 dimensions</span>
+    model_kwargs={<span class="st">"device"</span>: <span class="st">"cpu"</span>},
+    encode_kwargs={<span class="st">"normalize_embeddings"</span>: <span class="kw">True</span>}
+)
+
+<span class="cm"># Transformer UN texte en vecteur</span>
+vector = embeddings.<span class="fn">embed_query</span>(<span class="st">"Le chat dort"</span>)
+<span class="fn">print</span>(<span class="fn">len</span>(vector))  <span class="cm"># 384</span>
+
+<span class="cm"># Transformer PLUSIEURS textes en vecteurs</span>
+vectors = embeddings.<span class="fn">embed_documents</span>([<span class="st">"Texte 1"</span>, <span class="st">"Texte 2"</span>])
+
+<span class="cm"># === OpenAI (payant, cloud) ===</span>
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> OpenAIEmbeddings
+
+embeddings = <span class="fn">OpenAIEmbeddings</span>(
+    model=<span class="st">"text-embedding-3-small"</span>,    <span class="cm"># 1536 dimensions</span>
+    api_key=<span class="st">"sk-..."</span>
+)</code></pre>
+        </div>
+    </div>
+
+    <div class="s" id="vectorstores">
+        <div class="sh">
+            <div class="sn" style="background:rgba(16,185,129,.15);color:var(--green)">10</div>
+            <div><h2>Vector Stores</h2><div class="sub">Stocker et rechercher des vecteurs</div></div>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>vectorstores.py</span></div>
+            <pre><code><span class="cm"># === ChromaDB (recommande pour debuter) ===</span>
+<span class="kw">from</span> langchain_community.vectorstores <span class="kw">import</span> Chroma
+
+<span class="cm"># Creer + indexer</span>
+vectorstore = Chroma.<span class="fn">from_documents</span>(
+    documents=chunks,
+    embedding=embeddings,
+    persist_directory=<span class="st">"./chroma_db"</span>,
+    collection_name=<span class="st">"ma_collection"</span>
+)
+
+<span class="cm"># Recherche directe</span>
+results = vectorstore.<span class="fn">similarity_search</span>(<span class="st">"ma question"</span>, k=<span class="nb">3</span>)
+
+<span class="cm"># Recherche avec score</span>
+results = vectorstore.<span class="fn">similarity_search_with_score</span>(<span class="st">"ma question"</span>, k=<span class="nb">3</span>)
+<span class="kw">for</span> doc, score <span class="kw">in</span> results:
+    <span class="fn">print</span>(<span class="st">f"Score: {score:.3f} | {doc.page_content[:50]}"</span>)
+
+<span class="cm"># Recharger une base existante</span>
+vectorstore = <span class="fn">Chroma</span>(
+    persist_directory=<span class="st">"./chroma_db"</span>,
+    embedding_function=embeddings
+)
+
+<span class="cm"># === FAISS (Facebook, plus rapide) ===</span>
+<span class="kw">from</span> langchain_community.vectorstores <span class="kw">import</span> FAISS
+
+vectorstore = FAISS.<span class="fn">from_documents</span>(chunks, embeddings)
+vectorstore.<span class="fn">save_local</span>(<span class="st">"./faiss_index"</span>)  <span class="cm"># Sauvegarder</span>
+vectorstore = FAISS.<span class="fn">load_local</span>(<span class="st">"./faiss_index"</span>, embeddings)  <span class="cm"># Recharger</span></code></pre>
+        </div>
+    </div>
+
+    <div class="s" id="retrievers">
+        <div class="sh">
+            <div class="sn" style="background:rgba(239,68,68,.15);color:var(--red)">11</div>
+            <div><h2>Retrievers</h2><div class="sub">Chercher les documents pertinents</div></div>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>retrievers.py</span></div>
+            <pre><code><span class="cm"># === Retriever basique ===</span>
+retriever = vectorstore.<span class="fn">as_retriever</span>(
+    search_type=<span class="st">"similarity"</span>,    <span class="cm"># ou "mmr" (Max Marginal Relevance)</span>
+    search_kwargs={<span class="st">"k"</span>: <span class="nb">4</span>}
+)
+docs = retriever.<span class="fn">invoke</span>(<span class="st">"ma question"</span>)
+
+<span class="cm"># === MMR : diversifier les resultats ===</span>
+retriever = vectorstore.<span class="fn">as_retriever</span>(
+    search_type=<span class="st">"mmr"</span>,             <span class="cm"># Max Marginal Relevance</span>
+    search_kwargs={
+        <span class="st">"k"</span>: <span class="nb">4</span>,
+        <span class="st">"fetch_k"</span>: <span class="nb">20</span>,            <span class="cm"># Recuperer 20, garder les 4 plus divers</span>
+        <span class="st">"lambda_mult"</span>: <span class="nb">0.5</span>       <span class="cm"># 0 = max diversite, 1 = max similarite</span>
+    }
+)
+
+<span class="cm"># === Filtrer par metadata ===</span>
+retriever = vectorstore.<span class="fn">as_retriever</span>(
+    search_kwargs={
+        <span class="st">"k"</span>: <span class="nb">3</span>,
+        <span class="st">"filter"</span>: {<span class="st">"source"</span>: <span class="st">"nutrition.txt"</span>}  <span class="cm"># Seulement ce fichier</span>
+    }
+)
+
+<span class="cm"># === Multi-Query Retriever (genere des variantes) ===</span>
+<span class="kw">from</span> langchain.retrievers.multi_query <span class="kw">import</span> MultiQueryRetriever
+
+multi_retriever = <span class="fn">MultiQueryRetriever.from_llm</span>(
+    retriever=retriever,
+    llm=llm   <span class="cm"># Le LLM genere 3 variantes de la question</span>
+)</code></pre>
+        </div>
+    </div>
+
+    <!-- ============ 12. OUTPUT PARSERS ============ -->
+    <div class="s" id="output">
+        <div class="sh">
+            <div class="sn" style="background:rgba(6,182,212,.15);color:var(--cyan)">12</div>
+            <div><h2>Output Parsers</h2><div class="sub">Structurer la sortie du LLM</div></div>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>parsers.py</span></div>
+            <pre><code><span class="cm"># === String (le plus simple) ===</span>
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> StrOutputParser
+parser = <span class="fn">StrOutputParser</span>()
+chain = prompt | llm | parser  <span class="cm"># Retourne un string</span>
+
+<span class="cm"># === JSON ===</span>
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> JsonOutputParser
+
+parser = <span class="fn">JsonOutputParser</span>()
+<span class="cm"># Le LLM retourne du JSON, le parser le convertit en dict Python</span>
+
+<span class="cm"># === Pydantic (structure typee) ===</span>
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> PydanticOutputParser
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, Field
+
+<span class="kw">class</span> <span class="fn">Recette</span>(BaseModel):
+    nom: <span class="fn">str</span> = <span class="fn">Field</span>(description=<span class="st">"Le nom de la recette"</span>)
+    ingredients: <span class="fn">list</span>[<span class="fn">str</span>] = <span class="fn">Field</span>(description=<span class="st">"Liste des ingredients"</span>)
+    temps: <span class="fn">int</span> = <span class="fn">Field</span>(description=<span class="st">"Temps en minutes"</span>)
+
+parser = <span class="fn">PydanticOutputParser</span>(pydantic_object=Recette)
+<span class="cm"># Le parser genere des instructions pour le LLM + parse la sortie</span></code></pre>
+        </div>
+    </div>
+
+    <!-- ============ 13. MEMORY ============ -->
+    <div class="s" id="memory">
+        <div class="sh">
+            <div class="sn" style="background:rgba(245,158,11,.15);color:var(--orange)">13</div>
+            <div><h2>Memory</h2><div class="sub">Se souvenir des conversations precedentes</div></div>
+        </div>
+
+        <div class="c">
+            <h3>Le probleme : les LLM n'ont pas de memoire</h3>
+            <p>Par defaut, chaque appel au LLM est <strong>independant</strong>. Il ne se souvient pas de ce que tu as dit avant. La Memory de LangChain resout ce probleme.</p>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>memory.py</span></div>
+            <pre><code><span class="cm"># === Memoire de conversation basique ===</span>
+<span class="kw">from</span> langchain.memory <span class="kw">import</span> ConversationBufferMemory
+
+memory = <span class="fn">ConversationBufferMemory</span>()
+memory.<span class="fn">save_context</span>(
+    {<span class="st">"input"</span>: <span class="st">"Salut, je m'appelle Azdine"</span>},
+    {<span class="st">"output"</span>: <span class="st">"Bonjour Azdine ! Comment puis-je t'aider ?"</span>}
+)
+
+<span class="cm"># La prochaine question inclura l'historique</span>
+<span class="fn">print</span>(memory.<span class="fn">load_memory_variables</span>({}))
+<span class="cm"># {'history': 'Human: Salut...\nAI: Bonjour...'}</span>
+
+
+<span class="cm"># === Memoire avec fenetre (garder les N derniers messages) ===</span>
+<span class="kw">from</span> langchain.memory <span class="kw">import</span> ConversationBufferWindowMemory
+
+memory = <span class="fn">ConversationBufferWindowMemory</span>(k=<span class="nb">5</span>)
+<span class="cm"># Garde seulement les 5 derniers echanges</span>
+
+
+<span class="cm"># === Memoire avec resume (pour les longues conversations) ===</span>
+<span class="kw">from</span> langchain.memory <span class="kw">import</span> ConversationSummaryMemory
+
+memory = <span class="fn">ConversationSummaryMemory</span>(llm=llm)
+<span class="cm"># Le LLM resume automatiquement la conversation</span></code></pre>
+        </div>
+    </div>
+
+    <!-- ============ 14. TOOLS & AGENTS ============ -->
+    <div class="s" id="tools">
+        <div class="sh">
+            <div class="sn" style="background:rgba(236,72,153,.15);color:var(--pink)">14</div>
+            <div><h2>Tools & Agents</h2><div class="sub">Des agents qui utilisent des outils</div></div>
+        </div>
+
+        <div class="c">
+            <h3>C'est quoi un Agent ?</h3>
+            <p>Un <span class="hl-p">Agent</span> est un LLM qui peut <strong>decider quels outils utiliser</strong> et dans quel ordre pour resoudre une tache. Au lieu de suivre un pipeline fixe, il raisonne et agit de maniere autonome.</p>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>agents.py</span></div>
+            <pre><code><span class="kw">from</span> langchain.tools <span class="kw">import</span> tool
+<span class="kw">from</span> langchain.agents <span class="kw">import</span> create_tool_calling_agent, AgentExecutor
+<span class="kw">from</span> langchain.prompts <span class="kw">import</span> ChatPromptTemplate
+
+<span class="cm"># 1. Definir des outils avec le decorateur @tool</span>
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">calculer</span>(expression: <span class="fn">str</span>) -> <span class="fn">str</span>:
+    <span class="st">"""Calculer une expression mathematique. Ex: '2 + 3 * 4'"""</span>
+    <span class="kw">return</span> <span class="fn">str</span>(<span class="fn">eval</span>(expression))
+
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">rechercher_docs</span>(query: <span class="fn">str</span>) -> <span class="fn">str</span>:
+    <span class="st">"""Rechercher dans la base de documents."""</span>
+    docs = retriever.<span class="fn">invoke</span>(query)
+    <span class="kw">return</span> <span class="st">"\n"</span>.<span class="fn">join</span>([d.page_content <span class="kw">for</span> d <span class="kw">in</span> docs])
+
+<span class="cm"># 2. Creer le prompt de l'agent</span>
+prompt = <span class="fn">ChatPromptTemplate.from_messages</span>([
+    (<span class="st">"system"</span>, <span class="st">"Tu es un assistant. Utilise les outils disponibles."</span>),
+    (<span class="st">"human"</span>, <span class="st">"{input}"</span>),
+    (<span class="st">"placeholder"</span>, <span class="st">"{agent_scratchpad}"</span>)
+])
+
+<span class="cm"># 3. Creer l'agent</span>
+agent = <span class="fn">create_tool_calling_agent</span>(
+    llm=llm,
+    tools=[calculer, rechercher_docs],
+    prompt=prompt
+)
+
+<span class="cm"># 4. L'executor gere la boucle outil &rarr; reflexion &rarr; outil</span>
+executor = <span class="fn">AgentExecutor</span>(agent=agent, tools=[calculer, rechercher_docs])
+
+<span class="cm"># 5. L'agent decide seul quoi faire !</span>
+result = executor.<span class="fn">invoke</span>({<span class="st">"input"</span>: <span class="st">"Combien font 25% de 180 ?"</span>})
+<span class="fn">print</span>(result[<span class="st">"output"</span>])  <span class="cm"># "45" (l'agent a utilise 'calculer')</span></code></pre>
+        </div>
+
+        <div class="info warn">
+            <div class="it">La docstring est cruciale</div>
+            <p>Le texte entre les <code>"""..."""</code> de chaque outil est lu par l'agent pour comprendre <strong>quand et comment</strong> l'utiliser. Une mauvaise docstring = l'agent ne saura pas quand utiliser l'outil.</p>
+        </div>
+    </div>
+
+    <!-- ============ 15. LCEL EN PROFONDEUR ============ -->
+    <div class="s" id="lcel">
+        <div class="sh">
+            <div class="sn" style="background:rgba(139,92,246,.15);color:var(--purple)">15</div>
+            <div><h2>LCEL en profondeur</h2><div class="sub">Patterns avances du pipe operator</div></div>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>lcel_advanced.py</span></div>
+            <pre><code><span class="kw">from</span> langchain_core.runnables <span class="kw">import</span> RunnablePassthrough, RunnableParallel
+
+<span class="cm"># === RAG Chain avec LCEL ===</span>
+rag_chain = (
+    {
+        <span class="st">"context"</span>: retriever | <span class="fn">format_docs</span>,  <span class="cm"># Chercher + formater</span>
+        <span class="st">"question"</span>: RunnablePassthrough()    <span class="cm"># Passer la question telle quelle</span>
+    }
+    | prompt    <span class="cm"># Construire le prompt</span>
+    | llm       <span class="cm"># Generer la reponse</span>
+    | parser    <span class="cm"># Parser la sortie</span>
+)
+
+<span class="kw">def</span> <span class="fn">format_docs</span>(docs):
+    <span class="kw">return</span> <span class="st">"\n\n"</span>.<span class="fn">join</span>(doc.page_content <span class="kw">for</span> doc <span class="kw">in</span> docs)
+
+result = rag_chain.<span class="fn">invoke</span>(<span class="st">"Quels aliments contiennent du fer ?"</span>)
+
+
+<span class="cm"># === Parallel : executer plusieurs branches ===</span>
+parallel = <span class="fn">RunnableParallel</span>(
+    summary=prompt_resume | llm | parser,
+    translation=prompt_traduit | llm | parser
+)
+<span class="cm"># Les 2 branches s'executent en parallele !</span>
+result = parallel.<span class="fn">invoke</span>({<span class="st">"text"</span>: <span class="st">"Mon texte"</span>})
+<span class="cm"># result["summary"], result["translation"]</span>
+
+
+<span class="cm"># === Branching conditionnel ===</span>
+<span class="kw">from</span> langchain_core.runnables <span class="kw">import</span> RunnableBranch
+
+branch = <span class="fn">RunnableBranch</span>(
+    (<span class="kw">lambda</span> x: <span class="st">"code"</span> <span class="kw">in</span> x[<span class="st">"question"</span>], chain_code),     <span class="cm"># Si "code" dans la question</span>
+    (<span class="kw">lambda</span> x: <span class="st">"math"</span> <span class="kw">in</span> x[<span class="st">"question"</span>], chain_math),     <span class="cm"># Si "math" dans la question</span>
+    chain_general                                          <span class="cm"># Sinon, chain par defaut</span>
+)</code></pre>
+        </div>
+    </div>
+
+    <!-- ============ 16. RUNNABLES ============ -->
+    <div class="s" id="runnable">
+        <div class="sh">
+            <div class="sn" style="background:rgba(6,182,212,.15);color:var(--cyan)">16</div>
+            <div><h2>Runnables : Les briques LCEL</h2><div class="sub">Tous les Runnables disponibles</div></div>
+        </div>
+
+        <div class="c">
+            <table class="tbl">
+                <thead><tr><th>Runnable</th><th>Role</th><th>Usage</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>RunnablePassthrough</strong></td><td>Passe l'input tel quel</td><td><code>{"question": RunnablePassthrough()}</code></td></tr>
+                    <tr><td><strong>RunnableParallel</strong></td><td>Execute plusieurs branches en parallele</td><td><code>RunnableParallel(a=chain1, b=chain2)</code></td></tr>
+                    <tr><td><strong>RunnableBranch</strong></td><td>Routing conditionnel (if/else)</td><td><code>RunnableBranch((condition, chain), default)</code></td></tr>
+                    <tr><td><strong>RunnableLambda</strong></td><td>Executer une fonction Python</td><td><code>RunnableLambda(ma_fonction)</code></td></tr>
+                    <tr><td><strong>RunnableSequence</strong></td><td>Chain lineaire (= le pipe |)</td><td><code>prompt | llm | parser</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ============ TD 1 ============ -->
+    <div class="s" id="td1">
+        <div class="sh">
+            <div class="sn" style="background:rgba(139,92,246,.15);color:var(--purple)">TD1</div>
+            <div><h2>TD 1 : Premier chatbot</h2><div class="sub">Exercice pratique - 20 minutes</div></div>
+        </div>
+
+        <div class="td-box">
+            <span class="td-badge">TD 1 - Niveau Debutant</span>
+            <h3>Objectif : Creer un chatbot simple avec LangChain</h3>
+            <p><strong>Ce que tu vas faire :</strong></p>
+            <ol>
+                <li>Creer un fichier <code>chatbot.py</code></li>
+                <li>Configurer un LLM (Ollama ou OpenAI)</li>
+                <li>Creer un ChatPromptTemplate avec un role system</li>
+                <li>Construire une chain LCEL : prompt | llm | parser</li>
+                <li>Creer une boucle interactive (while True / input())</li>
+            </ol>
+
+            <p><strong>Bonus :</strong> Ajouter la ConversationBufferMemory pour que le chatbot se souvienne des messages precedents.</p>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>td1_chatbot.py - Solution</span></div>
+            <pre><code><span class="kw">from</span> langchain.prompts <span class="kw">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="kw">from</span> langchain_ollama <span class="kw">import</span> OllamaLLM
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> StrOutputParser
+
+<span class="cm"># 1. Le LLM</span>
+llm = <span class="fn">OllamaLLM</span>(model=<span class="st">"llama3.2"</span>, temperature=<span class="nb">0.7</span>)
+
+<span class="cm"># 2. Le prompt</span>
+prompt = <span class="fn">ChatPromptTemplate.from_messages</span>([
+    (<span class="st">"system"</span>, <span class="st">"Tu es un assistant amical. Reponds en francais, de facon concise."</span>),
+    (<span class="st">"human"</span>, <span class="st">"{message}"</span>)
+])
+
+<span class="cm"># 3. La chain LCEL</span>
+chain = prompt | llm | <span class="fn">StrOutputParser</span>()
+
+<span class="cm"># 4. Boucle interactive</span>
+<span class="fn">print</span>(<span class="st">"Chatbot LangChain (tape 'quit' pour quitter)\n"</span>)
+
+<span class="kw">while</span> <span class="kw">True</span>:
+    user_input = <span class="fn">input</span>(<span class="st">"Toi : "</span>).<span class="fn">strip</span>()
+    <span class="kw">if</span> user_input.<span class="fn">lower</span>() <span class="kw">in</span> [<span class="st">"quit"</span>, <span class="st">"q"</span>]:
+        <span class="kw">break</span>
+    <span class="kw">if not</span> user_input:
+        <span class="kw">continue</span>
+
+    response = chain.<span class="fn">invoke</span>({<span class="st">"message"</span>: user_input})
+    <span class="fn">print</span>(<span class="st">f"Bot : {response}\n"</span>)</code></pre>
+        </div>
+    </div>
+
+    <!-- ============ TD 2 ============ -->
+    <div class="s" id="td2">
+        <div class="sh">
+            <div class="sn" style="background:rgba(139,92,246,.15);color:var(--purple)">TD2</div>
+            <div><h2>TD 2 : Q&A sur un PDF</h2><div class="sub">Exercice pratique - 30 minutes</div></div>
+        </div>
+
+        <div class="td-box">
+            <span class="td-badge">TD 2 - Niveau Intermediaire</span>
+            <h3>Objectif : Poser des questions sur un fichier PDF</h3>
+            <ol>
+                <li>Charger un PDF avec <code>PyPDFLoader</code></li>
+                <li>Decouper avec <code>RecursiveCharacterTextSplitter</code> (chunk_size=500)</li>
+                <li>Creer les embeddings avec <code>HuggingFaceEmbeddings</code></li>
+                <li>Stocker dans <code>ChromaDB</code></li>
+                <li>Creer un retriever (Top-K = 3)</li>
+                <li>Construire un RAG chain avec LCEL</li>
+                <li>Poser 3 questions et verifier les reponses</li>
+            </ol>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>td2_pdf_qa.py - Solution</span></div>
+            <pre><code><span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> PyPDFLoader
+<span class="kw">from</span> langchain.text_splitter <span class="kw">import</span> RecursiveCharacterTextSplitter
+<span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFaceEmbeddings
+<span class="kw">from</span> langchain_community.vectorstores <span class="kw">import</span> Chroma
+<span class="kw">from</span> langchain_ollama <span class="kw">import</span> OllamaLLM
+<span class="kw">from</span> langchain.prompts <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> StrOutputParser
+<span class="kw">from</span> langchain_core.runnables <span class="kw">import</span> RunnablePassthrough
+
+<span class="cm"># 1. Charger le PDF</span>
+docs = <span class="fn">PyPDFLoader</span>(<span class="st">"mon_document.pdf"</span>).<span class="fn">load</span>()
+<span class="fn">print</span>(<span class="st">f"{<span class="fn">len</span>(docs)} pages chargees"</span>)
+
+<span class="cm"># 2. Decouper</span>
+splitter = <span class="fn">RecursiveCharacterTextSplitter</span>(chunk_size=<span class="nb">500</span>, chunk_overlap=<span class="nb">50</span>)
+chunks = splitter.<span class="fn">split_documents</span>(docs)
+<span class="fn">print</span>(<span class="st">f"{<span class="fn">len</span>(chunks)} chunks"</span>)
+
+<span class="cm"># 3. Embeddings + ChromaDB</span>
+embeddings = <span class="fn">HuggingFaceEmbeddings</span>(model_name=<span class="st">"all-MiniLM-L6-v2"</span>)
+vectorstore = Chroma.<span class="fn">from_documents</span>(chunks, embeddings, persist_directory=<span class="st">"./td2_db"</span>)
+
+<span class="cm"># 4. Retriever</span>
+retriever = vectorstore.<span class="fn">as_retriever</span>(search_kwargs={<span class="st">"k"</span>: <span class="nb">3</span>})
+
+<span class="cm"># 5. RAG Chain avec LCEL</span>
+prompt = <span class="fn">ChatPromptTemplate.from_messages</span>([
+    (<span class="st">"system"</span>, <span class="st">"""Reponds en te basant UNIQUEMENT sur ce contexte :
+{context}
+Si tu ne trouves pas la reponse, dis-le."""</span>),
+    (<span class="st">"human"</span>, <span class="st">"{question}"</span>)
+])
+
+<span class="kw">def</span> <span class="fn">format_docs</span>(docs):
+    <span class="kw">return</span> <span class="st">"\n\n"</span>.<span class="fn">join</span>(d.page_content <span class="kw">for</span> d <span class="kw">in</span> docs)
+
+rag_chain = (
+    {<span class="st">"context"</span>: retriever | format_docs, <span class="st">"question"</span>: <span class="fn">RunnablePassthrough</span>()}
+    | prompt | <span class="fn">OllamaLLM</span>(model=<span class="st">"llama3.2"</span>) | <span class="fn">StrOutputParser</span>()
+)
+
+<span class="cm"># 6. Tester</span>
+answer = rag_chain.<span class="fn">invoke</span>(<span class="st">"De quoi parle ce document ?"</span>)
+<span class="fn">print</span>(answer)</code></pre>
+        </div>
+    </div>
+
+    <!-- ============ TD 3 ============ -->
+    <div class="s" id="td3">
+        <div class="sh">
+            <div class="sn" style="background:rgba(139,92,246,.15);color:var(--purple)">TD3</div>
+            <div><h2>TD 3 : RAG complet avec sources</h2><div class="sub">Exercice pratique - 45 minutes</div></div>
+        </div>
+
+        <div class="td-box">
+            <span class="td-badge">TD 3 - Niveau Intermediaire+</span>
+            <h3>Objectif : Un RAG qui cite ses sources</h3>
+            <ol>
+                <li>Charger 3+ documents de sujets differents</li>
+                <li>Implementer le pipeline complet (loader &rarr; splitter &rarr; embeddings &rarr; vectorstore)</li>
+                <li>Ajouter un retriever MMR (diversite des resultats)</li>
+                <li>Le prompt doit instruire le LLM de <strong>citer les sources</strong></li>
+                <li>Afficher la reponse + les fichiers sources utilises</li>
+                <li><strong>Bonus</strong> : Ajouter un seuil de score minimum (ignorer les chunks score &lt; 0.5)</li>
+            </ol>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>td3_rag_sources.py - Solution</span></div>
+            <pre><code><span class="cm"># Pipeline complet avec sources</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> DirectoryLoader, TextLoader
+<span class="kw">from</span> langchain.text_splitter <span class="kw">import</span> RecursiveCharacterTextSplitter
+<span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFaceEmbeddings
+<span class="kw">from</span> langchain_community.vectorstores <span class="kw">import</span> Chroma
+<span class="kw">from</span> langchain_ollama <span class="kw">import</span> OllamaLLM
+<span class="kw">from</span> langchain.prompts <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> langchain_core.output_parsers <span class="kw">import</span> StrOutputParser
+
+<span class="cm"># 1. Charger TOUS les .txt du dossier data/</span>
+loader = <span class="fn">DirectoryLoader</span>(<span class="st">"./data/"</span>, glob=<span class="st">"**/*.txt"</span>, loader_cls=TextLoader,
+                          loader_kwargs={<span class="st">"encoding"</span>: <span class="st">"utf-8"</span>})
+docs = loader.<span class="fn">load</span>()
+
+<span class="cm"># 2. Chunking + Embeddings + ChromaDB</span>
+chunks = <span class="fn">RecursiveCharacterTextSplitter</span>(chunk_size=<span class="nb">500</span>, chunk_overlap=<span class="nb">50</span>).<span class="fn">split_documents</span>(docs)
+embeddings = <span class="fn">HuggingFaceEmbeddings</span>(model_name=<span class="st">"all-MiniLM-L6-v2"</span>)
+vectorstore = Chroma.<span class="fn">from_documents</span>(chunks, embeddings, persist_directory=<span class="st">"./td3_db"</span>)
+
+<span class="cm"># 3. Retriever MMR (diversifie les resultats)</span>
+retriever = vectorstore.<span class="fn">as_retriever</span>(
+    search_type=<span class="st">"mmr"</span>,
+    search_kwargs={<span class="st">"k"</span>: <span class="nb">4</span>, <span class="st">"fetch_k"</span>: <span class="nb">10</span>}
+)
+
+<span class="cm"># 4. Fonction qui retourne reponse + sources</span>
+<span class="kw">def</span> <span class="fn">ask_with_sources</span>(question):
+    <span class="cm"># Recuperer les chunks</span>
+    docs = retriever.<span class="fn">invoke</span>(question)
+    context = <span class="st">"\n\n"</span>.<span class="fn">join</span>(d.page_content <span class="kw">for</span> d <span class="kw">in</span> docs)
+    sources = <span class="fn">set</span>(d.metadata[<span class="st">"source"</span>] <span class="kw">for</span> d <span class="kw">in</span> docs)
+
+    <span class="cm"># Generer la reponse</span>
+    prompt = <span class="st">f"""Contexte:\n{context}\n\nQuestion: {question}\n
+Reponds en citant les sources entre parentheses."""</span>
+
+    llm = <span class="fn">OllamaLLM</span>(model=<span class="st">"llama3.2"</span>, temperature=<span class="nb">0</span>)
+    answer = llm.<span class="fn">invoke</span>(prompt)
+
+    <span class="kw">return</span> answer, sources
+
+<span class="cm"># 5. Tester</span>
+answer, sources = <span class="fn">ask_with_sources</span>(<span class="st">"Combien d'eau boire par jour ?"</span>)
+<span class="fn">print</span>(<span class="st">f"Reponse: {answer}"</span>)
+<span class="fn">print</span>(<span class="st">f"Sources: {sources}"</span>)</code></pre>
+        </div>
+    </div>
+
+    <!-- ============ TD 4 ============ -->
+    <div class="s" id="td4">
+        <div class="sh">
+            <div class="sn" style="background:rgba(139,92,246,.15);color:var(--purple)">TD4</div>
+            <div><h2>TD 4 : Agent avec outils</h2><div class="sub">Exercice pratique - 45 minutes</div></div>
+        </div>
+
+        <div class="td-box">
+            <span class="td-badge">TD 4 - Niveau Avance</span>
+            <h3>Objectif : Creer un agent qui utilise 3 outils</h3>
+            <ol>
+                <li>Outil 1 : <code>rechercher_docs(query)</code> - Cherche dans la base vectorielle</li>
+                <li>Outil 2 : <code>calculer(expression)</code> - Calcule une expression mathematique</li>
+                <li>Outil 3 : <code>date_actuelle()</code> - Retourne la date d'aujourd'hui</li>
+                <li>Creer un agent avec <code>create_tool_calling_agent</code></li>
+                <li>Tester avec des questions qui necessitent differents outils</li>
+                <li><strong>Bonus</strong> : Ajouter un outil qui fait une requete HTTP vers une API</li>
+            </ol>
+        </div>
+
+        <div class="code">
+            <div class="ct"><div class="dots"><span></span><span></span><span></span></div><span>td4_agent.py - Solution</span></div>
+            <pre><code><span class="kw">from</span> langchain.tools <span class="kw">import</span> tool
+<span class="kw">from</span> langchain.agents <span class="kw">import</span> create_tool_calling_agent, AgentExecutor
+<span class="kw">from</span> langchain.prompts <span class="kw">import</span> ChatPromptTemplate
+<span class="kw">from</span> langchain_ollama <span class="kw">import</span> ChatOllama
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">rechercher_docs</span>(query: <span class="fn">str</span>) -> <span class="fn">str</span>:
+    <span class="st">"""Rechercher des informations dans la base documentaire."""</span>
+    docs = retriever.<span class="fn">invoke</span>(query)
+    <span class="kw">return</span> <span class="st">"\n"</span>.<span class="fn">join</span>(d.page_content <span class="kw">for</span> d <span class="kw">in</span> docs)
+
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">calculer</span>(expression: <span class="fn">str</span>) -> <span class="fn">str</span>:
+    <span class="st">"""Calculer une expression mathematique. Ex: '15 * 3 + 7'"""</span>
+    <span class="kw">try</span>:
+        <span class="kw">return</span> <span class="fn">str</span>(<span class="fn">eval</span>(expression))
+    <span class="kw">except</span>:
+        <span class="kw">return</span> <span class="st">"Erreur de calcul"</span>
+
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">date_actuelle</span>() -> <span class="fn">str</span>:
+    <span class="st">"""Retourner la date et l'heure actuelles."""</span>
+    <span class="kw">return</span> datetime.<span class="fn">now</span>().<span class="fn">strftime</span>(<span class="st">"%d/%m/%Y %H:%M"</span>)
+
+tools = [rechercher_docs, calculer, date_actuelle]
+
+prompt = <span class="fn">ChatPromptTemplate.from_messages</span>([
+    (<span class="st">"system"</span>, <span class="st">"Tu es un assistant intelligent. Utilise les outils pour repondre."</span>),
+    (<span class="st">"human"</span>, <span class="st">"{input}"</span>),
+    (<span class="st">"placeholder"</span>, <span class="st">"{agent_scratchpad}"</span>)
+])
+
+llm = <span class="fn">ChatOllama</span>(model=<span class="st">"llama3.2"</span>)
+agent = <span class="fn">create_tool_calling_agent</span>(llm, tools, prompt)
+executor = <span class="fn">AgentExecutor</span>(agent=agent, tools=tools, verbose=<span class="kw">True</span>)
+
+<span class="cm"># Tests</span>
+<span class="fn">print</span>(executor.<span class="fn">invoke</span>({<span class="st">"input"</span>: <span class="st">"Quelle heure est-il ?"</span>}))
+<span class="fn">print</span>(executor.<span class="fn">invoke</span>({<span class="st">"input"</span>: <span class="st">"Combien font 25% de 340 ?"</span>}))
+<span class="fn">print</span>(executor.<span class="fn">invoke</span>({<span class="st">"input"</span>: <span class="st">"Quels aliments sont riches en fer ?"</span>}))</code></pre>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Cours Complet LangChain + 4 TDs | De Zero a Expert</p>
+    </div>
+</div>
+
+<script>
+const n=document.querySelectorAll('.nav a'),s=document.querySelectorAll('.s');
+window.addEventListener('scroll',()=>{let c='';s.forEach(x=>{if(scrollY>=x.offsetTop-100)c=x.id});n.forEach(l=>{l.style.borderLeftColor=l.getAttribute('href')===`#${c}`?'var(--blue)':'transparent';l.style.color=l.getAttribute('href')===`#${c}`?'var(--t)':''})});
+n.forEach(l=>l.addEventListener('click',()=>document.getElementById('nav').classList.remove('open')));
+</script>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

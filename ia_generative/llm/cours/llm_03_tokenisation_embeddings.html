@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM 03 - Tokenisation et Embeddings : Comment les LLMs "Lisent"</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+        .formula { background: #1a1a2e; border: 2px solid #ffd700; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; font-size: 1.1rem; color: #ffd700; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Tokenisation et Embeddings - Comment les LLMs "Lisent"</h1>
+    <p class="subtitle">Cours 3/3 - Le pont entre le langage humain et les mathematiques</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 1 : POURQUOI TOKENISER ? -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch1">1. Pourquoi tokeniser ?</h2>
+
+    <div class="concept-box">
+        <h3>Le probleme fondamental</h3>
+        <p>Les ordinateurs ne comprennent pas le texte. Ils ne comprennent que des <strong>nombres</strong>. Pour qu'un LLM puisse "lire" la phrase "Bonjour, comment allez-vous ?", il faut la convertir en une sequence de nombres.</p>
+        <p>Ce processus de conversion se fait en plusieurs etapes :</p>
+    </div>
+
+    <div class="svg-container">
+        <svg width="850" height="200" viewBox="0 0 850 200">
+            <rect x="0" y="0" width="850" height="200" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="425" y="28" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Du texte aux vecteurs : le pipeline complet</text>
+
+            <!-- Texte -->
+            <rect x="20" y="65" width="150" height="70" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="95" y="90" fill="#569cd6" text-anchor="middle" font-size="11" font-weight="bold">Texte brut</text>
+            <text x="95" y="115" fill="#aaa" text-anchor="middle" font-size="9">"Bonjour, comment</text>
+            <text x="95" y="128" fill="#aaa" text-anchor="middle" font-size="9">allez-vous ?"</text>
+
+            <!-- Fleche -->
+            <line x1="170" y1="100" x2="200" y2="100" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="205,100 195,95 195,105" fill="#ff6b35"/>
+            <text x="187" y="88" fill="#ff6b35" font-size="8">1</text>
+
+            <!-- Tokens -->
+            <rect x="210" y="65" width="150" height="70" rx="10" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+            <text x="285" y="90" fill="#ff9800" text-anchor="middle" font-size="11" font-weight="bold">Tokens</text>
+            <text x="285" y="115" fill="#aaa" text-anchor="middle" font-size="9">["Bon", "jour", ",",</text>
+            <text x="285" y="128" fill="#aaa" text-anchor="middle" font-size="9">"comment", "allez", ...]</text>
+
+            <!-- Fleche -->
+            <line x1="360" y1="100" x2="390" y2="100" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="395,100 385,95 385,105" fill="#ff6b35"/>
+            <text x="377" y="88" fill="#ff6b35" font-size="8">2</text>
+
+            <!-- Token IDs -->
+            <rect x="400" y="65" width="150" height="70" rx="10" fill="#1a1a2e" stroke="#e91e63" stroke-width="2"/>
+            <text x="475" y="90" fill="#e91e63" text-anchor="middle" font-size="11" font-weight="bold">Token IDs</text>
+            <text x="475" y="115" fill="#aaa" text-anchor="middle" font-size="9">[15836, 9425, 11,</text>
+            <text x="475" y="128" fill="#aaa" text-anchor="middle" font-size="9">4068, 67912, ...]</text>
+
+            <!-- Fleche -->
+            <line x1="550" y1="100" x2="580" y2="100" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="585,100 575,95 575,105" fill="#ff6b35"/>
+            <text x="567" y="88" fill="#ff6b35" font-size="8">3</text>
+
+            <!-- Embeddings -->
+            <rect x="590" y="65" width="240" height="70" rx="10" fill="#1a2e1a" stroke="#4caf50" stroke-width="2"/>
+            <text x="710" y="90" fill="#4caf50" text-anchor="middle" font-size="11" font-weight="bold">Embeddings (vecteurs)</text>
+            <text x="710" y="115" fill="#aaa" text-anchor="middle" font-size="9">[[0.023, -0.156, 0.891, ...],</text>
+            <text x="710" y="128" fill="#aaa" text-anchor="middle" font-size="9"> [0.445, 0.012, -0.367, ...], ...]</text>
+
+            <!-- Legende -->
+            <text x="425" y="170" fill="#aaa" text-anchor="middle" font-size="10">Etape 1: Tokenisation | Etape 2: Lookup dans le vocabulaire | Etape 3: Table d'embeddings</text>
+            <text x="425" y="190" fill="#ffd700" text-anchor="middle" font-size="10">Resultat : chaque token = un vecteur de 768 a 12288 dimensions</text>
+        </svg>
+    </div>
+
+    <div class="analogy">
+        <h4>Analogie : la traduction pour un extra-terrestre</h4>
+        <p>Imaginez que vous devez expliquer un poeme francais a un extra-terrestre qui ne comprend que les nombres :</p>
+        <ol>
+            <li><strong>Tokenisation :</strong> Decouper le poeme en morceaux digestibles (pas forcement des mots entiers)</li>
+            <li><strong>Numerotation :</strong> Donner un numero unique a chaque morceau (son ID dans le dictionnaire)</li>
+            <li><strong>Embedding :</strong> Convertir chaque numero en une "coordonnee GPS" dans un espace mathematique ou les morceaux similaires sont proches</li>
+        </ol>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 2 : METHODES DE TOKENISATION -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch2">2. Methodes de tokenisation</h2>
+
+    <p>Il existe plusieurs facons de decouper du texte en tokens. Voici les principales :</p>
+
+    <h3>Approche 1 : Par caractere (Character-level)</h3>
+
+    <div class="concept-box">
+        <p>Chaque caractere est un token.</p>
+        <p><strong>Exemple :</strong> "Chat" = ["C", "h", "a", "t"] = 4 tokens</p>
+        <ul>
+            <li><strong>Avantage :</strong> Vocabulaire tres petit (~256 caracteres). Pas de mots inconnus.</li>
+            <li><strong>Inconvenient :</strong> Sequences tres longues. "Bonjour" = 7 tokens au lieu de 1-2. Le modele doit apprendre a reconstituer les mots, ce qui est inefficace.</li>
+        </ul>
+    </div>
+
+    <h3>Approche 2 : Par mot (Word-level)</h3>
+
+    <div class="concept-box">
+        <p>Chaque mot est un token.</p>
+        <p><strong>Exemple :</strong> "Le chat mange" = ["Le", "chat", "mange"] = 3 tokens</p>
+        <ul>
+            <li><strong>Avantage :</strong> Intuitif, sequences courtes.</li>
+            <li><strong>Inconvenient :</strong> Vocabulaire enorme (>500K mots en francais). Mots rares ou nouveaux = inconnus. "anticonstitutionnellement" prend 1 seul slot, ce qui est du gachis.</li>
+        </ul>
+    </div>
+
+    <h3>Approche 3 : Par sous-mot (Subword) - la methode utilisee</h3>
+
+    <div class="concept-box green">
+        <p>C'est le <strong>compromis optimal</strong> et la methode utilisee par TOUS les LLMs modernes. Les mots frequents restent entiers, les mots rares sont decomposes en sous-parties connues.</p>
+        <p><strong>Exemple :</strong> "unbelievable" = ["un", "believ", "able"] = 3 tokens</p>
+        <p><strong>Exemple en francais :</strong> "anticonstitutionnellement" = ["anti", "constitu", "tion", "nelle", "ment"] = 5 tokens</p>
+    </div>
+
+    <div class="svg-container">
+        <svg width="800" height="340" viewBox="0 0 800 340">
+            <rect x="0" y="0" width="800" height="340" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="400" y="28" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Tokenisation subword : decomposition intelligente</text>
+
+            <!-- Mot original -->
+            <rect x="250" y="50" width="300" height="40" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="400" y="75" fill="#569cd6" text-anchor="middle" font-size="14" font-weight="bold">"anticonstitutionnellement"</text>
+
+            <!-- Fleche -->
+            <line x1="400" y1="90" x2="400" y2="120" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="400,125 395,115 405,115" fill="#ff6b35"/>
+            <text x="430" y="112" fill="#ff6b35" font-size="10">Tokenisation BPE</text>
+
+            <!-- Tokens resultants -->
+            <rect x="60" y="135" width="90" height="40" rx="8" fill="#2e1a1a" stroke="#e91e63" stroke-width="2"/>
+            <text x="105" y="160" fill="#e91e63" text-anchor="middle" font-size="12" font-weight="bold">anti</text>
+
+            <rect x="175" y="135" width="120" height="40" rx="8" fill="#2e2e1a" stroke="#ffd700" stroke-width="2"/>
+            <text x="235" y="160" fill="#ffd700" text-anchor="middle" font-size="12" font-weight="bold">constitu</text>
+
+            <rect x="320" y="135" width="80" height="40" rx="8" fill="#1a2e1a" stroke="#4caf50" stroke-width="2"/>
+            <text x="360" y="160" fill="#4caf50" text-anchor="middle" font-size="12" font-weight="bold">tion</text>
+
+            <rect x="425" y="135" width="90" height="40" rx="8" fill="#1a1a2e" stroke="#00bcd4" stroke-width="2"/>
+            <text x="470" y="160" fill="#00bcd4" text-anchor="middle" font-size="12" font-weight="bold">nelle</text>
+
+            <rect x="540" y="135" width="90" height="40" rx="8" fill="#2e1a2e" stroke="#9c27b0" stroke-width="2"/>
+            <text x="585" y="160" fill="#9c27b0" text-anchor="middle" font-size="12" font-weight="bold">ment</text>
+
+            <!-- Token IDs -->
+            <text x="105" y="198" fill="#e91e63" text-anchor="middle" font-size="10">ID: 3714</text>
+            <text x="235" y="198" fill="#ffd700" text-anchor="middle" font-size="10">ID: 56231</text>
+            <text x="360" y="198" fill="#4caf50" text-anchor="middle" font-size="10">ID: 867</text>
+            <text x="470" y="198" fill="#00bcd4" text-anchor="middle" font-size="10">ID: 19845</text>
+            <text x="585" y="198" fill="#9c27b0" text-anchor="middle" font-size="10">ID: 434</text>
+
+            <!-- Mot frequent en bas -->
+            <text x="400" y="240" fill="#aaa" text-anchor="middle" font-size="11">Comparaison avec un mot frequent :</text>
+
+            <rect x="300" y="255" width="100" height="40" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+            <text x="350" y="275" fill="#4caf50" text-anchor="middle" font-size="12" font-weight="bold">"Bonjour"</text>
+            <text x="350" y="295" fill="#aaa" text-anchor="middle" font-size="9">= 1 seul token (ID: 42891)</text>
+
+            <rect x="450" y="255" width="100" height="40" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="500" y="275" fill="#569cd6" text-anchor="middle" font-size="12" font-weight="bold">"le"</text>
+            <text x="500" y="295" fill="#aaa" text-anchor="middle" font-size="9">= 1 seul token (ID: 273)</text>
+
+            <text x="400" y="328" fill="#ffd700" text-anchor="middle" font-size="10">Les mots frequents = 1 token | Les mots rares = plusieurs sous-tokens</text>
+        </svg>
+    </div>
+
+    <h3>Les algorithmes de tokenisation subword</h3>
+
+    <table>
+        <tr>
+            <th>Algorithme</th>
+            <th>Utilise par</th>
+            <th>Principe</th>
+        </tr>
+        <tr>
+            <td><strong>BPE (Byte Pair Encoding)</strong></td>
+            <td>GPT-2, GPT-3, GPT-4, Llama</td>
+            <td>Part des caracteres, fusionne iterativement les paires les plus frequentes. "l" + "e" = "le" si tres frequent.</td>
+        </tr>
+        <tr>
+            <td><strong>WordPiece</strong></td>
+            <td>BERT, DistilBERT</td>
+            <td>Similaire a BPE mais maximise la vraisemblance du corpus plutot que la frequence.</td>
+        </tr>
+        <tr>
+            <td><strong>SentencePiece</strong></td>
+            <td>T5, Llama, Mistral</td>
+            <td>Traite le texte comme un flux de bytes/caracteres sans pre-tokenisation par espaces. Ideal pour le multilingue.</td>
+        </tr>
+        <tr>
+            <td><strong>Tiktoken (BPE)</strong></td>
+            <td>GPT-3.5, GPT-4, GPT-4o</td>
+            <td>Implementation rapide en Rust de BPE par OpenAI. Le standard de facto pour compter les tokens.</td>
+        </tr>
+    </table>
+
+    <h3>Code : compter les tokens avec tiktoken</h3>
+
+    <div class="code-block"><span class="comment"># Installation : pip install tiktoken</span>
+<span class="keyword">import</span> tiktoken
+
+<span class="comment"># Charger le tokenizer de GPT-4</span>
+enc = tiktoken.encoding_for_model(<span class="string">"gpt-4"</span>)
+
+<span class="comment"># Tokeniser une phrase</span>
+texte = <span class="string">"Bonjour, comment allez-vous ?"</span>
+tokens = enc.encode(texte)
+
+<span class="function">print</span>(<span class="string">f"Texte : '{texte}'"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de tokens : {len(tokens)}"</span>)
+<span class="function">print</span>(<span class="string">f"Token IDs : {tokens}"</span>)
+
+<span class="comment"># Decoder chaque token pour voir le decoupage</span>
+<span class="keyword">for</span> token_id <span class="keyword">in</span> tokens:
+    <span class="function">print</span>(<span class="string">f"  ID {token_id:>6} -> '{enc.decode([token_id])}'"</span>)
+
+<span class="comment"># Comparer : francais vs anglais</span>
+fr = <span class="string">"Le chat mange la souris dans le jardin."</span>
+en = <span class="string">"The cat eats the mouse in the garden."</span>
+
+tokens_fr = enc.encode(fr)
+tokens_en = enc.encode(en)
+
+<span class="function">print</span>(<span class="string">f"\nFrancais : {len(tokens_fr)} tokens"</span>)
+<span class="function">print</span>(<span class="string">f"Anglais  : {len(tokens_en)} tokens"</span>)
+<span class="function">print</span>(<span class="string">f"Ratio FR/EN : {len(tokens_fr)/len(tokens_en):.2f}x"</span>)</div>
+
+    <div class="output-block">Texte : 'Bonjour, comment allez-vous ?'
+Nombre de tokens : 8
+Token IDs : [42891, 11, 4068, 67912, 12, 29634, 949, 949]
+  ID  42891 -> 'Bonjour'
+  ID     11 -> ','
+  ID   4068 -> ' comment'
+  ID  67912 -> ' allez'
+  ID     12 -> '-'
+  ID  29634 -> 'vous'
+  ID    949 -> ' ?'
+
+Francais : 10 tokens
+Anglais  :  9 tokens
+Ratio FR/EN : 1.11x</div>
+
+    <div class="warning">
+        Le francais consomme generalement <strong>10 a 40% plus de tokens</strong> que l'anglais pour le meme contenu. C'est parce que les tokenizers sont principalement entraines sur des corpus anglophones. Cela signifie que les requetes en francais coutent un peu plus cher en API et prennent un peu plus de place dans la fenetre de contexte.
+    </div>
+
+    <div class="prof-note">
+        Tiktoken est l'outil officiel d'OpenAI pour compter les tokens. Pour les modeles Anthropic (Claude), le comptage est similaire mais utilise un tokenizer different. Pour estimer, la regle approximative est : <strong>1 token = environ 4 caracteres en anglais, 2-3 caracteres en francais</strong>.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 3 : LE VOCABULAIRE -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch3">3. Le vocabulaire</h2>
+
+    <div class="definition">
+        Le <strong>vocabulaire</strong> d'un tokenizer est l'ensemble de tous les tokens connus, chacun associe a un identifiant numerique unique (Token ID). C'est le "dictionnaire" du modele.
+    </div>
+
+    <h3>Taille du vocabulaire par modele</h3>
+
+    <table>
+        <tr><th>Modele</th><th>Tokenizer</th><th>Taille du vocabulaire</th></tr>
+        <tr><td>GPT-2</td><td>BPE</td><td>50 257 tokens</td></tr>
+        <tr><td>GPT-3.5 / GPT-4</td><td>Tiktoken (cl100k_base)</td><td>100 256 tokens</td></tr>
+        <tr><td>GPT-4o</td><td>Tiktoken (o200k_base)</td><td>200 019 tokens</td></tr>
+        <tr><td>BERT</td><td>WordPiece</td><td>30 522 tokens</td></tr>
+        <tr><td>Llama 2</td><td>SentencePiece BPE</td><td>32 000 tokens</td></tr>
+        <tr><td>Llama 3/4</td><td>Tiktoken BPE</td><td>128 256 tokens</td></tr>
+        <tr><td>Mistral</td><td>SentencePiece</td><td>32 768 tokens</td></tr>
+    </table>
+
+    <div class="prof-note">
+        La tendance est a l'augmentation du vocabulaire. GPT-4o est passe a 200K tokens, ce qui permet une meilleure couverture du multilingue et reduit le nombre de tokens necessaires pour encoder le meme texte (donc reduit les couts et augmente la vitesse).
+    </div>
+
+    <h3>Tokens speciaux</h3>
+
+    <p>Les tokenizers incluent des tokens speciaux qui ont des roles particuliers :</p>
+
+    <table>
+        <tr><th>Token</th><th>Role</th><th>Utilise par</th></tr>
+        <tr><td><strong>[CLS]</strong></td><td>Debut de sequence (classification token)</td><td>BERT</td></tr>
+        <tr><td><strong>[SEP]</strong></td><td>Separateur entre deux segments</td><td>BERT</td></tr>
+        <tr><td><strong>[PAD]</strong></td><td>Remplissage pour uniformiser les longueurs</td><td>Tous</td></tr>
+        <tr><td><strong>[MASK]</strong></td><td>Token masque (pour l'entrainement MLM)</td><td>BERT</td></tr>
+        <tr><td><strong>&lt;|endoftext|&gt;</strong></td><td>Fin de texte</td><td>GPT</td></tr>
+        <tr><td><strong>&lt;|im_start|&gt;</strong></td><td>Debut d'un message (chat format)</td><td>GPT-3.5+</td></tr>
+        <tr><td><strong>&lt;s&gt;, &lt;/s&gt;</strong></td><td>Debut et fin de sequence</td><td>Llama, Mistral</td></tr>
+    </table>
+
+    <h3>Comment BPE construit le vocabulaire</h3>
+
+    <div class="step-box">
+        <strong>Etape 1 :</strong> Commencer avec tous les caracteres individuels comme vocabulaire initial : {a, b, c, ..., z, A, B, ..., Z, 0, ..., 9, espace, ponctuation...}
+    </div>
+    <div class="step-box">
+        <strong>Etape 2 :</strong> Compter toutes les paires de tokens adjacentes dans le corpus d'entrainement.
+    </div>
+    <div class="step-box">
+        <strong>Etape 3 :</strong> Fusionner la paire la plus frequente en un nouveau token. Par exemple, si "t" + "h" est la paire la plus frequente, creer le token "th".
+    </div>
+    <div class="step-box">
+        <strong>Etape 4 :</strong> Repeter les etapes 2-3 jusqu'a atteindre la taille de vocabulaire desiree (ex: 100 000 tokens).
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemple simplifie de BPE</span>
+
+corpus = <span class="string">"le chat et le chien"</span>
+
+<span class="comment"># Etape 0 : decoupage en caracteres</span>
+<span class="comment"># ['l','e',' ','c','h','a','t',' ','e','t',' ','l','e',' ','c','h','i','e','n']</span>
+
+<span class="comment"># Compter les paires :</span>
+<span class="comment"># ('l','e') : 2 fois   <- la plus frequente !</span>
+<span class="comment"># ('c','h') : 2 fois</span>
+<span class="comment"># ('e',' ') : 2 fois</span>
+<span class="comment"># ('h','a') : 1 fois</span>
+<span class="comment"># ...</span>
+
+<span class="comment"># Fusion 1 : ('l','e') -> 'le'</span>
+<span class="comment"># ['le',' ','c','h','a','t',' ','e','t',' ','le',' ','c','h','i','e','n']</span>
+
+<span class="comment"># Fusion 2 : ('c','h') -> 'ch'</span>
+<span class="comment"># ['le',' ','ch','a','t',' ','e','t',' ','le',' ','ch','i','e','n']</span>
+
+<span class="comment"># Et ainsi de suite... jusqu'a avoir 100K tokens</span>
+<span class="function">print</span>(<span class="string">"Vocabulaire final : mots frequents en entier, mots rares en morceaux"</span>)</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 4 : EMBEDDINGS -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch4">4. Embeddings : les mots comme vecteurs</h2>
+
+    <div class="definition">
+        Un <strong>embedding</strong> est une representation numerique d'un token (ou d'un texte) sous forme de vecteur dans un espace de haute dimension. Les tokens semantiquement proches ont des vecteurs proches dans cet espace.
+    </div>
+
+    <h3>L'idee cle : la geometrie du sens</h3>
+
+    <div class="analogy">
+        <h4>Les mots vivent dans un espace mathematique</h4>
+        <p>Imaginez un espace en 3D (en realite, c'est 768 a 12288 dimensions, mais le principe est le meme). Dans cet espace :</p>
+        <ul>
+            <li>"chat" et "chien" sont <strong>proches</strong> (ce sont des animaux domestiques)</li>
+            <li>"chat" et "avion" sont <strong>eloignes</strong> (aucun rapport semantique)</li>
+            <li>"roi" et "reine" ont la meme <strong>direction</strong> que "homme" et "femme"</li>
+        </ul>
+        <p>La decouverte la plus celebre de Word2Vec (2013) :</p>
+        <p style="text-align:center; color:#ffd700; font-size:1.1rem;"><strong>roi - homme + femme = reine</strong></p>
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="450" viewBox="0 0 700 450">
+            <rect x="0" y="0" width="700" height="450" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="350" y="28" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Espace vectoriel des embeddings (simplifie en 2D)</text>
+
+            <!-- Axes -->
+            <line x1="80" y1="400" x2="650" y2="400" stroke="#333" stroke-width="1"/>
+            <line x1="80" y1="400" x2="80" y2="50" stroke="#333" stroke-width="1"/>
+            <text x="650" y="420" fill="#aaa" text-anchor="end" font-size="9">Dimension 1</text>
+            <text x="70" y="60" fill="#aaa" text-anchor="end" font-size="9">Dim 2</text>
+
+            <!-- Zone animaux -->
+            <ellipse cx="220" cy="150" rx="120" ry="80" fill="#569cd6" opacity="0.08" stroke="#569cd6" stroke-width="1" stroke-dasharray="4"/>
+            <text x="220" y="80" fill="#569cd6" text-anchor="middle" font-size="10">ANIMAUX</text>
+
+            <!-- Points animaux -->
+            <circle cx="180" cy="130" r="6" fill="#569cd6"/>
+            <text x="180" y="120" fill="#569cd6" text-anchor="middle" font-size="11" font-weight="bold">chat</text>
+            <circle cx="250" cy="140" r="6" fill="#569cd6"/>
+            <text x="250" y="130" fill="#569cd6" text-anchor="middle" font-size="11" font-weight="bold">chien</text>
+            <circle cx="200" cy="180" r="6" fill="#569cd6"/>
+            <text x="200" y="200" fill="#569cd6" text-anchor="middle" font-size="11" font-weight="bold">souris</text>
+            <circle cx="280" cy="170" r="6" fill="#569cd6"/>
+            <text x="290" y="162" fill="#569cd6" text-anchor="middle" font-size="11" font-weight="bold">cheval</text>
+
+            <!-- Zone personnes -->
+            <ellipse cx="480" cy="130" rx="120" ry="80" fill="#e91e63" opacity="0.08" stroke="#e91e63" stroke-width="1" stroke-dasharray="4"/>
+            <text x="480" y="65" fill="#e91e63" text-anchor="middle" font-size="10">PERSONNES / ROYAUTE</text>
+
+            <!-- Points personnes -->
+            <circle cx="430" cy="100" r="6" fill="#e91e63"/>
+            <text x="430" y="90" fill="#e91e63" text-anchor="middle" font-size="11" font-weight="bold">roi</text>
+            <circle cx="530" cy="110" r="6" fill="#e91e63"/>
+            <text x="530" y="100" fill="#e91e63" text-anchor="middle" font-size="11" font-weight="bold">reine</text>
+            <circle cx="440" cy="160" r="6" fill="#e91e63"/>
+            <text x="440" y="175" fill="#e91e63" text-anchor="middle" font-size="11" font-weight="bold">homme</text>
+            <circle cx="540" cy="170" r="6" fill="#e91e63"/>
+            <text x="540" y="185" fill="#e91e63" text-anchor="middle" font-size="11" font-weight="bold">femme</text>
+
+            <!-- Vecteur roi-homme+femme=reine -->
+            <line x1="430" y1="100" x2="440" y2="160" stroke="#ffd700" stroke-width="2" stroke-dasharray="4"/>
+            <line x1="530" y1="110" x2="540" y2="170" stroke="#ffd700" stroke-width="2" stroke-dasharray="4"/>
+            <line x1="430" y1="100" x2="530" y2="110" stroke="#4caf50" stroke-width="2" stroke-dasharray="4"/>
+            <line x1="440" y1="160" x2="540" y2="170" stroke="#4caf50" stroke-width="2" stroke-dasharray="4"/>
+
+            <text x="485" y="140" fill="#ffd700" text-anchor="middle" font-size="9">meme direction !</text>
+
+            <!-- Zone vehicules -->
+            <ellipse cx="450" cy="330" rx="130" ry="70" fill="#4caf50" opacity="0.08" stroke="#4caf50" stroke-width="1" stroke-dasharray="4"/>
+            <text x="450" y="280" fill="#4caf50" text-anchor="middle" font-size="10">VEHICULES</text>
+
+            <circle cx="400" cy="320" r="6" fill="#4caf50"/>
+            <text x="400" y="310" fill="#4caf50" text-anchor="middle" font-size="11" font-weight="bold">voiture</text>
+            <circle cx="470" cy="340" r="6" fill="#4caf50"/>
+            <text x="470" y="360" fill="#4caf50" text-anchor="middle" font-size="11" font-weight="bold">avion</text>
+            <circle cx="510" cy="310" r="6" fill="#4caf50"/>
+            <text x="520" y="300" fill="#4caf50" text-anchor="middle" font-size="11" font-weight="bold">train</text>
+
+            <!-- Zone nourriture -->
+            <ellipse cx="180" cy="330" rx="90" ry="60" fill="#ff9800" opacity="0.08" stroke="#ff9800" stroke-width="1" stroke-dasharray="4"/>
+            <text x="180" y="280" fill="#ff9800" text-anchor="middle" font-size="10">NOURRITURE</text>
+
+            <circle cx="150" cy="320" r="6" fill="#ff9800"/>
+            <text x="150" y="340" fill="#ff9800" text-anchor="middle" font-size="11" font-weight="bold">pomme</text>
+            <circle cx="210" cy="330" r="6" fill="#ff9800"/>
+            <text x="210" y="350" fill="#ff9800" text-anchor="middle" font-size="11" font-weight="bold">banane</text>
+
+            <!-- Note -->
+            <text x="350" y="435" fill="#aaa" text-anchor="middle" font-size="10">En realite : 768 a 12288 dimensions (impossible a visualiser, mais le principe est le meme)</text>
+        </svg>
+    </div>
+
+    <h3>Dimensions des embeddings par modele</h3>
+
+    <table>
+        <tr><th>Modele</th><th>Dimensions</th><th>Type</th></tr>
+        <tr><td>Word2Vec</td><td>100 - 300</td><td>Word embedding (statique)</td></tr>
+        <tr><td>BERT base</td><td>768</td><td>Contextuel</td></tr>
+        <tr><td>BERT large</td><td>1024</td><td>Contextuel</td></tr>
+        <tr><td>GPT-3 (175B)</td><td>12288</td><td>Contextuel</td></tr>
+        <tr><td>OpenAI text-embedding-3-small</td><td>1536</td><td>Sentence embedding</td></tr>
+        <tr><td>OpenAI text-embedding-3-large</td><td>3072</td><td>Sentence embedding</td></tr>
+        <tr><td>Llama 4 (Maverick)</td><td>5120</td><td>Contextuel</td></tr>
+    </table>
+
+    <div class="prof-note">
+        Plus il y a de dimensions, plus le modele peut capturer de nuances semantiques. Mais cela coute plus de memoire et de calcul. Les modeles d'embeddings comme <strong>text-embedding-3-small</strong> d'OpenAI permettent de reduire les dimensions apres coup (par exemple de 1536 a 256) sans trop perdre en qualite, grace a la technique de "Matryoshka".
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 5 : MODELES D'EMBEDDINGS -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch5">5. Modeles d'embeddings</h2>
+
+    <p>Il existe des modeles specialises dans la creation d'embeddings de haute qualite, utilises pour le RAG, la recherche semantique et la classification :</p>
+
+    <table>
+        <tr>
+            <th>Modele</th>
+            <th>Fournisseur</th>
+            <th>Dimensions</th>
+            <th>Prix (par 1M tokens)</th>
+            <th>Forces</th>
+        </tr>
+        <tr>
+            <td><strong>text-embedding-3-large</strong></td>
+            <td>OpenAI</td>
+            <td>3072</td>
+            <td>~$0.13</td>
+            <td>Meilleur rapport qualite/prix, Matryoshka</td>
+        </tr>
+        <tr>
+            <td><strong>text-embedding-3-small</strong></td>
+            <td>OpenAI</td>
+            <td>1536</td>
+            <td>~$0.02</td>
+            <td>Tres economique, bon pour le RAG</td>
+        </tr>
+        <tr>
+            <td><strong>embed-v4</strong></td>
+            <td>Cohere</td>
+            <td>1024</td>
+            <td>~$0.10</td>
+            <td>Excellent multilingue</td>
+        </tr>
+        <tr>
+            <td><strong>all-MiniLM-L6-v2</strong></td>
+            <td>sentence-transformers (open)</td>
+            <td>384</td>
+            <td>Gratuit (local)</td>
+            <td>Leger, rapide, gratuit</td>
+        </tr>
+        <tr>
+            <td><strong>BGE-M3</strong></td>
+            <td>BAAI (open)</td>
+            <td>1024</td>
+            <td>Gratuit (local)</td>
+            <td>Multi-lingue, multi-granularite</td>
+        </tr>
+        <tr>
+            <td><strong>nomic-embed-text</strong></td>
+            <td>Nomic (open)</td>
+            <td>768</td>
+            <td>Gratuit (local)</td>
+            <td>Open source, performant, long contexte</td>
+        </tr>
+    </table>
+
+    <div class="concept-box blue">
+        <h3>Embeddings statiques vs contextuels</h3>
+        <p><strong>Statiques (Word2Vec, GloVe) :</strong> Chaque mot a UN seul vecteur, quel que soit le contexte. Le mot "banque" a le meme embedding qu'il parle de finance ou de riviere.</p>
+        <p><strong>Contextuels (BERT, GPT) :</strong> Le vecteur d'un mot change selon son contexte. "banque" dans "je vais a la banque" (finance) aura un embedding different de "la banque de la riviere" (geographie). C'est un progres majeur.</p>
+    </div>
+
+    <h3>Code : creer des embeddings avec OpenAI</h3>
+
+    <div class="code-block"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+client = OpenAI()
+
+<span class="keyword">def</span> <span class="function">get_embedding</span>(text, model=<span class="string">"text-embedding-3-small"</span>):
+    <span class="string">"""Obtenir l'embedding d'un texte via l'API OpenAI."""</span>
+    response = client.embeddings.create(
+        input=text,
+        model=model
+    )
+    <span class="keyword">return</span> np.array(response.data[<span class="number">0</span>].embedding)
+
+<span class="comment"># Creer des embeddings</span>
+phrases = [
+    <span class="string">"Le chat dort sur le canape"</span>,
+    <span class="string">"Le felin sommeille sur le sofa"</span>,       <span class="comment"># Tres similaire !</span>
+    <span class="string">"La voiture roule sur l'autoroute"</span>,    <span class="comment"># Tres different</span>
+    <span class="string">"Python est un langage de programmation"</span>,
+    <span class="string">"Le serpent python vit en Afrique"</span>,      <span class="comment"># Meme mot, sens different</span>
+]
+
+embeddings = [get_embedding(p) <span class="keyword">for</span> p <span class="keyword">in</span> phrases]
+
+<span class="function">print</span>(<span class="string">f"Dimensions de chaque embedding : {len(embeddings[0])}"</span>)
+<span class="function">print</span>(<span class="string">f"Premiers 5 valeurs du 1er embedding : {embeddings[0][:5].round(4)}"</span>)</div>
+
+    <div class="output-block">Dimensions de chaque embedding : 1536
+Premiers 5 valeurs du 1er embedding : [ 0.0234 -0.0156  0.0891 -0.0412  0.0067]</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 6 : SIMILARITE COSINUS -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch6">6. Similarite cosinus : mesurer la proximite semantique</h2>
+
+    <div class="definition">
+        La <strong>similarite cosinus</strong> mesure l'angle entre deux vecteurs. Elle donne un score entre -1 (opposes) et 1 (identiques). C'est la metrique standard pour comparer des embeddings.
+    </div>
+
+    <div class="formula">
+        cosine_similarity(A, B) = (A . B) / (||A|| * ||B||)
+    </div>
+
+    <p>Ou <strong>A . B</strong> est le produit scalaire et <strong>||A||</strong> est la norme du vecteur.</p>
+
+    <div class="svg-container">
+        <svg width="650" height="350" viewBox="0 0 650 350">
+            <rect x="0" y="0" width="650" height="350" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="325" y="28" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Similarite cosinus : l'angle entre deux vecteurs</text>
+
+            <!-- Axes -->
+            <line x1="100" y1="280" x2="560" y2="280" stroke="#333" stroke-width="1"/>
+            <line x1="100" y1="280" x2="100" y2="60" stroke="#333" stroke-width="1"/>
+
+            <!-- Vecteur A -->
+            <line x1="100" y1="280" x2="350" y2="100" stroke="#4caf50" stroke-width="3"/>
+            <polygon points="350,100 340,115 354,112" fill="#4caf50"/>
+            <text x="240" y="170" fill="#4caf50" font-size="12" font-weight="bold">A = "Le chat dort"</text>
+
+            <!-- Vecteur B (similaire) -->
+            <line x1="100" y1="280" x2="380" y2="120" stroke="#569cd6" stroke-width="3"/>
+            <polygon points="380,120 368,132 382,126" fill="#569cd6"/>
+            <text x="380" y="105" fill="#569cd6" font-size="12" font-weight="bold">B = "Le felin sommeille"</text>
+
+            <!-- Angle petit -->
+            <path d="M140 255 Q160 240 170 250" fill="none" stroke="#ffd700" stroke-width="2"/>
+            <text x="175" y="248" fill="#ffd700" font-size="10">petit angle</text>
+            <text x="175" y="262" fill="#ffd700" font-size="10">= similaires (0.92)</text>
+
+            <!-- Vecteur C (different) -->
+            <line x1="100" y1="280" x2="520" y2="240" stroke="#e91e63" stroke-width="3"/>
+            <polygon points="520,240 506,240 510,252" fill="#e91e63"/>
+            <text x="460" y="225" fill="#e91e63" font-size="12" font-weight="bold">C = "La voiture roule"</text>
+
+            <!-- Angle grand -->
+            <path d="M160 270 Q200 250 250 265" fill="none" stroke="#ff4444" stroke-width="2"/>
+            <text x="210" y="300" fill="#ff4444" font-size="10">grand angle = differents (0.31)</text>
+
+            <!-- Legende -->
+            <rect x="100" y="310" width="450" height="30" rx="5" fill="#1a1a2e" stroke="#333"/>
+            <text x="325" y="330" fill="#aaa" text-anchor="middle" font-size="10">cos(0 deg) = 1.0 (identiques) | cos(90 deg) = 0.0 (aucun rapport) | cos(180 deg) = -1.0 (opposes)</text>
+        </svg>
+    </div>
+
+    <h3>Interpretation des scores</h3>
+
+    <table>
+        <tr><th>Score</th><th>Interpretation</th><th>Exemple</th></tr>
+        <tr><td><strong>0.90 - 1.00</strong></td><td>Quasi-identiques / paraphrases</td><td>"Le chat dort" vs "Le felin sommeille"</td></tr>
+        <tr><td><strong>0.70 - 0.89</strong></td><td>Tres similaires / meme sujet</td><td>"Le chat dort" vs "Mon chat se repose"</td></tr>
+        <tr><td><strong>0.50 - 0.69</strong></td><td>Assez lies / meme domaine</td><td>"Le chat dort" vs "J'ai un animal de compagnie"</td></tr>
+        <tr><td><strong>0.20 - 0.49</strong></td><td>Peu lies</td><td>"Le chat dort" vs "La voiture roule vite"</td></tr>
+        <tr><td><strong>0.00 - 0.19</strong></td><td>Aucun rapport</td><td>"Le chat dort" vs "Les equations differentielles"</td></tr>
+    </table>
+
+    <h3>Code : calculer la similarite cosinus</h3>
+
+    <div class="code-block"><span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+client = OpenAI()
+
+<span class="keyword">def</span> <span class="function">get_embedding</span>(text, model=<span class="string">"text-embedding-3-small"</span>):
+    response = client.embeddings.create(input=text, model=model)
+    <span class="keyword">return</span> np.array(response.data[<span class="number">0</span>].embedding)
+
+<span class="keyword">def</span> <span class="function">cosine_similarity</span>(a, b):
+    <span class="string">"""Calcul de la similarite cosinus entre deux vecteurs."""</span>
+    <span class="keyword">return</span> np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+<span class="comment"># Creer des embeddings</span>
+phrases = {
+    <span class="string">"A"</span>: <span class="string">"Le chat dort sur le canape"</span>,
+    <span class="string">"B"</span>: <span class="string">"Le felin sommeille sur le sofa"</span>,
+    <span class="string">"C"</span>: <span class="string">"La voiture roule sur l'autoroute"</span>,
+    <span class="string">"D"</span>: <span class="string">"Python est un langage de programmation"</span>,
+    <span class="string">"E"</span>: <span class="string">"Le serpent python vit en Afrique"</span>,
+}
+
+embeddings = {k: get_embedding(v) <span class="keyword">for</span> k, v <span class="keyword">in</span> phrases.items()}
+
+<span class="comment"># Matrice de similarite</span>
+<span class="function">print</span>(<span class="string">"Matrice de similarite cosinus :"</span>)
+<span class="function">print</span>(<span class="string">f"{'':>5}"</span>, end=<span class="string">""</span>)
+<span class="keyword">for</span> k <span class="keyword">in</span> phrases:
+    <span class="function">print</span>(<span class="string">f"{k:>8}"</span>, end=<span class="string">""</span>)
+<span class="function">print</span>()
+
+<span class="keyword">for</span> k1, e1 <span class="keyword">in</span> embeddings.items():
+    <span class="function">print</span>(<span class="string">f"{k1:>5}"</span>, end=<span class="string">""</span>)
+    <span class="keyword">for</span> k2, e2 <span class="keyword">in</span> embeddings.items():
+        sim = cosine_similarity(e1, e2)
+        <span class="function">print</span>(<span class="string">f"{sim:>8.3f}"</span>, end=<span class="string">""</span>)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">Matrice de similarite cosinus :
+           A       B       C       D       E
+    A   1.000   0.921   0.312   0.198   0.287
+    B   0.921   1.000   0.298   0.185   0.271
+    C   0.312   0.298   1.000   0.234   0.201
+    D   0.198   0.185   0.234   1.000   0.456
+    E   0.287   0.271   0.201   0.456   1.000
+
+A et B (chat/felin) : 0.921 = quasi-identiques !
+D et E (python code/serpent) : 0.456 = lies par le mot "python"
+A et C (chat/voiture) : 0.312 = peu de rapport</div>
+
+    <div class="effect">
+        On observe que les phrases semantiquement proches (A et B) ont un score tres eleve (0.92), tandis que des phrases sans rapport (A et D) ont un score faible (0.20). C'est exactement ce comportement qu'on exploite dans le RAG pour trouver les documents pertinents.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 7 : WORD VS SENTENCE EMBEDDINGS -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch7">7. Word Embeddings vs Sentence Embeddings</h2>
+
+    <p>Il est crucial de distinguer deux types d'embeddings qui servent a des fins differentes :</p>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Word Embeddings</h4>
+            <p>Un vecteur <strong>par mot</strong></p>
+            <p style="color:#aaa; font-size:0.9rem;">Exemples : Word2Vec, GloVe, couches internes de BERT/GPT</p>
+            <p style="color:#aaa; font-size:0.9rem;">Usage : analogies, NER, POS tagging</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#ff6b35;">Sentence Embeddings</h4>
+            <p>Un vecteur pour <strong>une phrase entiere</strong></p>
+            <p style="color:#aaa; font-size:0.9rem;">Exemples : text-embedding-3, sentence-transformers, BGE-M3</p>
+            <p style="color:#aaa; font-size:0.9rem;">Usage : RAG, recherche semantique, clustering</p>
+        </div>
+    </div>
+
+    <h3>Evolution historique</h3>
+
+    <table>
+        <tr><th>Generation</th><th>Modele</th><th>Annee</th><th>Type</th><th>Limite</th></tr>
+        <tr>
+            <td><strong>1ere gen</strong></td>
+            <td>Word2Vec, GloVe</td>
+            <td>2013-2014</td>
+            <td>Word (statique)</td>
+            <td>Un seul vecteur par mot, pas de contexte</td>
+        </tr>
+        <tr>
+            <td><strong>2eme gen</strong></td>
+            <td>ELMo</td>
+            <td>2018</td>
+            <td>Word (contextuel)</td>
+            <td>Base sur LSTM, lent</td>
+        </tr>
+        <tr>
+            <td><strong>3eme gen</strong></td>
+            <td>BERT</td>
+            <td>2018</td>
+            <td>Word/sentence (contextuel)</td>
+            <td>Pas optimise pour la similarite de phrases</td>
+        </tr>
+        <tr>
+            <td><strong>4eme gen</strong></td>
+            <td>Sentence-BERT, DPR</td>
+            <td>2019-2020</td>
+            <td>Sentence (optimise)</td>
+            <td>Entrainement specifique pour la similarite</td>
+        </tr>
+        <tr>
+            <td><strong>5eme gen</strong></td>
+            <td>OpenAI text-embedding-3, BGE-M3</td>
+            <td>2023-2025</td>
+            <td>Sentence (SOTA)</td>
+            <td>Multilingue, multi-tache, Matryoshka</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        Pour le <strong>RAG</strong> (Retrieval-Augmented Generation), on utilise toujours des <strong>sentence embeddings</strong>. L'idee est de transformer la question de l'utilisateur ET les documents en vecteurs, puis de trouver les documents dont le vecteur est le plus proche de la question. C'est la base de la recherche semantique.
+    </div>
+
+    <h3>Code : sentence-transformers (gratuit et local)</h3>
+
+    <div class="code-block"><span class="comment"># Installation : pip install sentence-transformers</span>
+<span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> SentenceTransformer
+
+<span class="comment"># Charger un modele d'embeddings (gratuit, tourne en local)</span>
+model = SentenceTransformer(<span class="string">'all-MiniLM-L6-v2'</span>)
+
+<span class="comment"># Creer des embeddings pour des phrases</span>
+phrases = [
+    <span class="string">"Le machine learning est une branche de l'IA"</span>,
+    <span class="string">"L'apprentissage automatique fait partie de l'intelligence artificielle"</span>,
+    <span class="string">"La recette du gateau au chocolat est simple"</span>,
+]
+
+embeddings = model.encode(phrases)
+
+<span class="function">print</span>(<span class="string">f"Shape des embeddings : {embeddings.shape}"</span>)
+<span class="comment"># (3, 384) = 3 phrases, 384 dimensions chacune</span>
+
+<span class="comment"># Calculer la similarite</span>
+<span class="keyword">from</span> sklearn.metrics.pairwise <span class="keyword">import</span> cosine_similarity
+
+sim_matrix = cosine_similarity(embeddings)
+<span class="function">print</span>(<span class="string">"\nMatrice de similarite :"</span>)
+<span class="function">print</span>(<span class="string">f"Phrase 1 vs 2 : {sim_matrix[0][1]:.3f}"</span>)  <span class="comment"># Elevee ! (meme sens)</span>
+<span class="function">print</span>(<span class="string">f"Phrase 1 vs 3 : {sim_matrix[0][2]:.3f}"</span>)  <span class="comment"># Basse (aucun rapport)</span></div>
+
+    <div class="output-block">Shape des embeddings : (3, 384)
+
+Matrice de similarite :
+Phrase 1 vs 2 : 0.873  (paraphrases !)
+Phrase 1 vs 3 : 0.142  (aucun rapport)</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 8 : APPLICATION PRATIQUE -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch8">8. Application pratique : recherche semantique</h2>
+
+    <p>Mettons tout ensemble dans un mini-systeme de recherche semantique, le coeur du RAG :</p>
+
+    <div class="svg-container">
+        <svg width="800" height="300" viewBox="0 0 800 300">
+            <rect x="0" y="0" width="800" height="300" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="400" y="28" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Recherche semantique : le principe du RAG</text>
+
+            <!-- Etape 1 : Indexation -->
+            <text x="200" y="55" fill="#569cd6" text-anchor="middle" font-size="12" font-weight="bold">Phase 1 : Indexation (une seule fois)</text>
+
+            <rect x="30" y="70" width="110" height="40" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="85" y="95" fill="#569cd6" text-anchor="middle" font-size="9">Documents</text>
+
+            <line x1="140" y1="90" x2="165" y2="90" stroke="#aaa" stroke-width="2"/>
+            <polygon points="170,90 162,85 162,95" fill="#aaa"/>
+
+            <rect x="175" y="70" width="80" height="40" rx="6" fill="#1a1a2e" stroke="#ff9800" stroke-width="1"/>
+            <text x="215" y="95" fill="#ff9800" text-anchor="middle" font-size="9">Embedding</text>
+
+            <line x1="255" y1="90" x2="280" y2="90" stroke="#aaa" stroke-width="2"/>
+            <polygon points="285,90 277,85 277,95" fill="#aaa"/>
+
+            <rect x="290" y="70" width="110" height="40" rx="6" fill="#1a1a2e" stroke="#4caf50" stroke-width="1"/>
+            <text x="345" y="88" fill="#4caf50" text-anchor="middle" font-size="9">Vector Store</text>
+            <text x="345" y="102" fill="#aaa" text-anchor="middle" font-size="8">(FAISS, ChromaDB...)</text>
+
+            <!-- Etape 2 : Recherche -->
+            <text x="200" y="145" fill="#ff6b35" text-anchor="middle" font-size="12" font-weight="bold">Phase 2 : Recherche (a chaque question)</text>
+
+            <rect x="30" y="160" width="110" height="40" rx="6" fill="#1a1a2e" stroke="#e91e63" stroke-width="1"/>
+            <text x="85" y="185" fill="#e91e63" text-anchor="middle" font-size="9">Question user</text>
+
+            <line x1="140" y1="180" x2="165" y2="180" stroke="#aaa" stroke-width="2"/>
+            <polygon points="170,180 162,175 162,185" fill="#aaa"/>
+
+            <rect x="175" y="160" width="80" height="40" rx="6" fill="#1a1a2e" stroke="#ff9800" stroke-width="1"/>
+            <text x="215" y="185" fill="#ff9800" text-anchor="middle" font-size="9">Embedding</text>
+
+            <line x1="255" y1="180" x2="280" y2="180" stroke="#aaa" stroke-width="2"/>
+            <polygon points="285,180 277,175 277,185" fill="#aaa"/>
+
+            <rect x="290" y="155" width="110" height="50" rx="6" fill="#1a1a2e" stroke="#ffd700" stroke-width="2"/>
+            <text x="345" y="175" fill="#ffd700" text-anchor="middle" font-size="9">Similarite</text>
+            <text x="345" y="192" fill="#aaa" text-anchor="middle" font-size="8">cosinus(Q, docs)</text>
+
+            <!-- Fleche de la vector store vers similarite -->
+            <line x1="345" y1="110" x2="345" y2="155" stroke="#aaa" stroke-width="1" stroke-dasharray="4"/>
+
+            <!-- Resultats -->
+            <line x1="400" y1="180" x2="450" y2="180" stroke="#aaa" stroke-width="2"/>
+            <polygon points="455,180 447,175 447,185" fill="#aaa"/>
+
+            <rect x="460" y="155" width="130" height="50" rx="6" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+            <text x="525" y="175" fill="#4caf50" text-anchor="middle" font-size="9">Top-K documents</text>
+            <text x="525" y="192" fill="#aaa" text-anchor="middle" font-size="8">les plus similaires</text>
+
+            <!-- LLM -->
+            <line x1="590" y1="180" x2="620" y2="180" stroke="#aaa" stroke-width="2"/>
+            <polygon points="625,180 617,175 617,185" fill="#aaa"/>
+
+            <rect x="630" y="150" width="140" height="60" rx="10" fill="#2e1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="700" y="175" fill="#ff6b35" text-anchor="middle" font-size="10" font-weight="bold">LLM</text>
+            <text x="700" y="195" fill="#aaa" text-anchor="middle" font-size="8">Genere la reponse</text>
+
+            <!-- Question injectee dans LLM -->
+            <path d="M85 200 Q85 260 700 240" fill="none" stroke="#e91e63" stroke-width="1" stroke-dasharray="4"/>
+            <text x="400" y="252" fill="#e91e63" text-anchor="middle" font-size="8">question + contexte injectes dans le prompt</text>
+
+            <!-- Reponse finale -->
+            <line x1="700" y1="210" x2="700" y2="260" stroke="#4caf50" stroke-width="2"/>
+            <polygon points="700,265 695,257 705,257" fill="#4caf50"/>
+            <rect x="630" y="268" width="140" height="25" rx="6" fill="#4caf50" opacity="0.2" stroke="#4caf50"/>
+            <text x="700" y="285" fill="#4caf50" text-anchor="middle" font-size="10" font-weight="bold">Reponse fondee</text>
+        </svg>
+    </div>
+
+    <h3>Code complet : mini recherche semantique</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> SentenceTransformer
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># 1. Charger le modele d'embeddings</span>
+model = SentenceTransformer(<span class="string">'all-MiniLM-L6-v2'</span>)
+
+<span class="comment"># 2. Notre "base de connaissances" (dans un vrai RAG, ce sont des documents)</span>
+documents = [
+    <span class="string">"Le machine learning est une branche de l'intelligence artificielle."</span>,
+    <span class="string">"Les reseaux de neurones sont inspires du cerveau humain."</span>,
+    <span class="string">"Le deep learning utilise des reseaux de neurones profonds."</span>,
+    <span class="string">"Python est le langage le plus utilise en data science."</span>,
+    <span class="string">"Le RAG combine la recherche documentaire avec la generation par LLM."</span>,
+    <span class="string">"Les embeddings representent les mots sous forme de vecteurs numeriques."</span>,
+    <span class="string">"GPT-4 est un modele de langage cree par OpenAI."</span>,
+    <span class="string">"La tokenisation decoupe le texte en unites appelees tokens."</span>,
+    <span class="string">"La descente de gradient est l'algorithme d'optimisation principal du ML."</span>,
+    <span class="string">"Le Transformer utilise le mecanisme d'attention pour traiter le texte."</span>,
+]
+
+<span class="comment"># 3. Creer les embeddings des documents (indexation)</span>
+doc_embeddings = model.encode(documents)
+<span class="function">print</span>(<span class="string">f"Base indexee : {len(documents)} documents, {doc_embeddings.shape[1]} dimensions"</span>)
+
+<span class="comment"># 4. Fonction de recherche</span>
+<span class="keyword">def</span> <span class="function">search</span>(query, top_k=<span class="number">3</span>):
+    <span class="string">"""Recherche semantique : trouver les documents les plus similaires."""</span>
+    <span class="comment"># Embedder la question</span>
+    query_embedding = model.encode([query])
+
+    <span class="comment"># Calculer la similarite avec tous les documents</span>
+    similarities = np.dot(doc_embeddings, query_embedding.T).flatten()
+
+    <span class="comment"># Trier par similarite decroissante</span>
+    top_indices = similarities.argsort()[::-<span class="number">1</span>][:top_k]
+
+    <span class="function">print</span>(<span class="string">f"\nQuestion : '{query}'"</span>)
+    <span class="function">print</span>(<span class="string">f"Top {top_k} resultats :"</span>)
+    <span class="keyword">for</span> i, idx <span class="keyword">in</span> <span class="function">enumerate</span>(top_indices, <span class="number">1</span>):
+        <span class="function">print</span>(<span class="string">f"  {i}. [{similarities[idx]:.3f}] {documents[idx]}"</span>)
+
+<span class="comment"># 5. Tester la recherche</span>
+search(<span class="string">"Comment fonctionne l'attention dans les modeles de langage ?"</span>)
+search(<span class="string">"Qu'est-ce que le RAG ?"</span>)
+search(<span class="string">"Comment representer les mots en nombres ?"</span>)</div>
+
+    <div class="output-block">Base indexee : 10 documents, 384 dimensions
+
+Question : 'Comment fonctionne l'attention dans les modeles de langage ?'
+Top 3 resultats :
+  1. [0.712] Le Transformer utilise le mecanisme d'attention pour traiter le texte.
+  2. [0.534] GPT-4 est un modele de langage cree par OpenAI.
+  3. [0.498] Les reseaux de neurones sont inspires du cerveau humain.
+
+Question : 'Qu'est-ce que le RAG ?'
+Top 3 resultats :
+  1. [0.823] Le RAG combine la recherche documentaire avec la generation par LLM.
+  2. [0.412] Les embeddings representent les mots sous forme de vecteurs numeriques.
+  3. [0.387] Le machine learning est une branche de l'intelligence artificielle.
+
+Question : 'Comment representer les mots en nombres ?'
+Top 3 resultats :
+  1. [0.756] Les embeddings representent les mots sous forme de vecteurs numeriques.
+  2. [0.621] La tokenisation decoupe le texte en unites appelees tokens.
+  3. [0.398] Le Transformer utilise le mecanisme d'attention pour traiter le texte.</div>
+
+    <div class="effect">
+        La recherche semantique fonctionne parfaitement : meme si les mots exacts de la question ne sont pas dans le document, le systeme trouve le bon resultat grace a la proximite des embeddings. C'est la magie de la similarite semantique.
+    </div>
+
+    <div class="prof-note">
+        Ce code est une version simplifiee de ce qu'on appelle un <strong>pipeline RAG</strong>. En production, on utilise des bases vectorielles comme <strong>ChromaDB</strong>, <strong>FAISS</strong>, <strong>Pinecone</strong> ou <strong>Weaviate</strong> pour stocker et rechercher efficacement des millions de documents.
+    </div>
+
+    <h3>Resume complet du cours</h3>
+
+    <div class="concept-box green">
+        <h3>Ce qu'il faut retenir</h3>
+        <ul>
+            <li>La <strong>tokenisation</strong> decoupe le texte en sous-unites (tokens) car les modeles ne comprennent que des nombres</li>
+            <li>L'algorithme <strong>BPE</strong> (Byte Pair Encoding) est le standard : mots frequents = 1 token, mots rares = plusieurs sous-tokens</li>
+            <li>Le <strong>vocabulaire</strong> est l'ensemble des tokens connus (50K a 200K selon le modele)</li>
+            <li>Les <strong>embeddings</strong> transforment les tokens en vecteurs dans un espace semantique ou les mots proches sont voisins</li>
+            <li>La <strong>similarite cosinus</strong> mesure la proximite semantique entre deux vecteurs (de 0 a 1)</li>
+            <li>Les <strong>sentence embeddings</strong> (OpenAI, sentence-transformers) sont la base du RAG et de la recherche semantique</li>
+            <li>La formule cle : <strong>roi - homme + femme = reine</strong> illustre la geometrie du sens dans l'espace des embeddings</li>
+            <li>Le pipeline complet : texte -> tokens -> IDs -> embeddings -> Transformer -> probabilites -> texte genere</li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3>Vocabulaire essentiel de ce cours</h3>
+        <table>
+            <tr><th>Terme</th><th>Definition</th></tr>
+            <tr><td><strong>Token</strong></td><td>Unite de base manipulee par le modele (mot, sous-mot, ou caractere)</td></tr>
+            <tr><td><strong>BPE</strong></td><td>Byte Pair Encoding : algorithme qui fusionne les paires les plus frequentes</td></tr>
+            <tr><td><strong>Vocabulaire</strong></td><td>Dictionnaire de tous les tokens connus avec leurs IDs</td></tr>
+            <tr><td><strong>Embedding</strong></td><td>Vecteur numerique representant un token/texte dans un espace semantique</td></tr>
+            <tr><td><strong>Similarite cosinus</strong></td><td>Mesure de l'angle entre deux vecteurs (1 = identiques, 0 = sans rapport)</td></tr>
+            <tr><td><strong>Sentence embedding</strong></td><td>Vecteur representant une phrase entiere (utilise pour le RAG)</td></tr>
+            <tr><td><strong>Vector store</strong></td><td>Base de donnees optimisee pour stocker et rechercher des vecteurs</td></tr>
+            <tr><td><strong>Recherche semantique</strong></td><td>Trouver des documents similaires par le sens, pas par les mots exacts</td></tr>
+        </table>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- NAVIGATION -->
+    <!-- ============================================================ -->
+
+    <div class="nav">
+        <a href="llm_02_transformer.html">&larr; Cours Transformer</a>
+        <span style="color:#666;">Cours suivant : Prompt Engineering &rarr;</span>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

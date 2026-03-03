@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML 03 - Comprendre les Données</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0f0f23;color:#e0e0e0;line-height:1.8}
+nav{position:fixed;top:0;left:0;width:260px;height:100vh;background:#1a1a2e;padding:20px 15px;overflow-y:auto;border-right:2px solid #ff6b35;z-index:10}
+nav h2{color:#ff6b35;font-size:15px;margin-bottom:15px;text-align:center}
+nav a{display:block;color:#aaa;text-decoration:none;padding:5px 10px;font-size:12.5px;border-radius:5px;margin-bottom:2px}
+nav a:hover{background:#16213e;color:#ff6b35}
+main{margin-left:270px;padding:30px 40px;max-width:950px}
+h1{color:#ff6b35;font-size:32px;margin-bottom:10px;border-bottom:3px solid #ff6b35;padding-bottom:10px}
+h2{color:#ff6b35;font-size:24px;margin:45px 0 15px;border-left:4px solid #ff6b35;padding-left:15px}
+h3{color:#ff8c5a;font-size:18px;margin:25px 0 10px}
+p{margin-bottom:12px}
+ul,ol{margin:10px 0 15px 25px}
+li{margin-bottom:6px}
+.box{background:#16213e;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0}
+.box-green{border-left:4px solid #4caf50}
+.box-orange{border-left:4px solid #ff9800}
+.box-red{border-left:4px solid #f44336}
+.box-blue{border-left:4px solid #2196f3}
+.box-purple{border-left:4px solid #9c27b0}
+.box-gold{border-left:4px solid #ffd700}
+table{width:100%;border-collapse:collapse;margin:15px 0}
+th{background:#1a1a2e;color:#ff6b35;padding:12px;text-align:left;border:1px solid #333}
+td{padding:10px;border:1px solid #333;background:#16213e}
+svg{display:block;margin:20px auto}
+svg text{font-family:'Segoe UI',sans-serif}
+.analogy{background:#1a2e1a;border:2px solid #4caf50;border-radius:12px;padding:20px;margin:15px 0}
+.analogy h4{color:#4caf50;margin-top:0}
+</style>
+</head>
+<body>
+
+<nav>
+<h2>📊 ML 03 - Les Données</h2>
+<a href="#ch1">1. Données = le carburant</a>
+<a href="#ch2">2. Types de données</a>
+<a href="#ch3">3. Features et Labels</a>
+<a href="#ch4">4. Datasets célèbres</a>
+<a href="#ch5">5. Train / Test / Validation</a>
+<a href="#ch6">6. Données manquantes</a>
+<a href="#ch7">7. Outliers (valeurs aberrantes)</a>
+<a href="#ch8">8. Normalisation</a>
+<a href="#ch9">9. Encodage catégoriel</a>
+<a href="#ch10">10. Feature Engineering</a>
+<a href="#ch11">11. Biais dans les données</a>
+<a href="#ch12">12. Data Augmentation</a>
+<a href="#ch13">13. Qualité des données</a>
+<a href="#ch14">14. Résumé</a>
+</nav>
+
+<main>
+
+<h1>📊 Comprendre les Données</h1>
+<p>Cours 3/12 - Les données sont le carburant du ML</p>
+
+<!-- CH1 -->
+<h2 id="ch1">1. Les données = le carburant du ML</h2>
+
+<div class="box box-gold">
+<p><strong>Règle n°1 du ML :</strong> Un modèle ne sera JAMAIS meilleur que ses données. Données pourries = modèle pourri. C'est la règle "Garbage In, Garbage Out" (poubelle en entrée = poubelle en sortie).</p>
+</div>
+
+<svg width="700" height="150" viewBox="0 0 700 150">
+<rect x="0" y="0" width="700" height="150" rx="15" fill="#16213e" stroke="#333"/>
+<!-- Bonne donnée -->
+<rect x="30" y="30" width="150" height="45" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="105" y="57" fill="#4caf50" text-anchor="middle" font-size="12">Bonnes données</text>
+<text x="210" y="57" fill="#aaa" font-size="20">→</text>
+<rect x="240" y="30" width="130" height="45" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="305" y="57" fill="#4caf50" text-anchor="middle" font-size="12">Bon modèle</text>
+<text x="400" y="57" fill="#aaa" font-size="20">→</text>
+<rect x="430" y="30" width="150" height="45" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="505" y="57" fill="#4caf50" text-anchor="middle" font-size="12">Bonnes prédictions</text>
+<!-- Mauvaise donnée -->
+<rect x="30" y="90" width="150" height="45" rx="8" fill="#1a1a2e" stroke="#f44336" stroke-width="2"/>
+<text x="105" y="117" fill="#f44336" text-anchor="middle" font-size="12">Mauvaises données</text>
+<text x="210" y="117" fill="#aaa" font-size="20">→</text>
+<rect x="240" y="90" width="130" height="45" rx="8" fill="#1a1a2e" stroke="#f44336" stroke-width="2"/>
+<text x="305" y="117" fill="#f44336" text-anchor="middle" font-size="12">Mauvais modèle</text>
+<text x="400" y="117" fill="#aaa" font-size="20">→</text>
+<rect x="430" y="90" width="150" height="45" rx="8" fill="#1a1a2e" stroke="#f44336" stroke-width="2"/>
+<text x="505" y="117" fill="#f44336" text-anchor="middle" font-size="12">Mauvaises prédictions</text>
+</svg>
+
+<div class="box box-orange">
+<p><strong>Le secret que personne ne dit :</strong> Un Data Scientist passe <strong>80% de son temps</strong> à préparer les données, et seulement 20% sur les modèles.</p>
+</div>
+
+<!-- CH2 -->
+<h2 id="ch2">2. Types de données</h2>
+
+<svg width="800" height="350" viewBox="0 0 800 350">
+<rect x="0" y="0" width="800" height="350" rx="15" fill="#16213e" stroke="#333"/>
+<text x="400" y="30" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Les types de données en ML</text>
+
+<!-- Numériques -->
+<rect x="30" y="50" width="350" height="130" rx="10" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="205" y="75" fill="#4caf50" text-anchor="middle" font-size="14" font-weight="bold">Numériques (chiffres)</text>
+<!-- Continue -->
+<rect x="50" y="90" width="145" height="70" rx="8" fill="#0f0f23" stroke="#4caf50"/>
+<text x="122" y="112" fill="#4caf50" text-anchor="middle" font-size="12">Continue</text>
+<text x="122" y="130" fill="#aaa" text-anchor="middle" font-size="10">Prix : 250 000€</text>
+<text x="122" y="145" fill="#aaa" text-anchor="middle" font-size="10">Taille : 1.75m</text>
+<!-- Discrète -->
+<rect x="215" y="90" width="145" height="70" rx="8" fill="#0f0f23" stroke="#4caf50"/>
+<text x="287" y="112" fill="#4caf50" text-anchor="middle" font-size="12">Discrète</text>
+<text x="287" y="130" fill="#aaa" text-anchor="middle" font-size="10">Chambres : 3</text>
+<text x="287" y="145" fill="#aaa" text-anchor="middle" font-size="10">Enfants : 2</text>
+
+<!-- Catégorielles -->
+<rect x="420" y="50" width="350" height="130" rx="10" fill="#1a1a2e" stroke="#2196f3" stroke-width="2"/>
+<text x="595" y="75" fill="#2196f3" text-anchor="middle" font-size="14" font-weight="bold">Catégorielles (étiquettes)</text>
+<!-- Nominale -->
+<rect x="440" y="90" width="145" height="70" rx="8" fill="#0f0f23" stroke="#2196f3"/>
+<text x="512" y="112" fill="#2196f3" text-anchor="middle" font-size="12">Nominale</text>
+<text x="512" y="130" fill="#aaa" text-anchor="middle" font-size="10">Couleur : rouge, bleu</text>
+<text x="512" y="145" fill="#aaa" text-anchor="middle" font-size="10">Ville : Paris, Lyon</text>
+<!-- Ordinale -->
+<rect x="605" y="90" width="145" height="70" rx="8" fill="#0f0f23" stroke="#2196f3"/>
+<text x="677" y="112" fill="#2196f3" text-anchor="middle" font-size="12">Ordinale</text>
+<text x="677" y="130" fill="#aaa" text-anchor="middle" font-size="10">Taille : S, M, L, XL</text>
+<text x="677" y="145" fill="#aaa" text-anchor="middle" font-size="10">Note : 1, 2, 3, 4, 5</text>
+
+<!-- Autres -->
+<rect x="30" y="210" width="230" height="60" rx="10" fill="#1a1a2e" stroke="#9c27b0" stroke-width="2"/>
+<text x="145" y="237" fill="#9c27b0" text-anchor="middle" font-size="13" font-weight="bold">Texte</text>
+<text x="145" y="255" fill="#aaa" text-anchor="middle" font-size="10">"Le chat est sur le tapis"</text>
+
+<rect x="290" y="210" width="230" height="60" rx="10" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+<text x="405" y="237" fill="#ff9800" text-anchor="middle" font-size="13" font-weight="bold">Images</text>
+<text x="405" y="255" fill="#aaa" text-anchor="middle" font-size="10">Pixels : 224 x 224 x 3 (RGB)</text>
+
+<rect x="550" y="210" width="220" height="60" rx="10" fill="#1a1a2e" stroke="#f44336" stroke-width="2"/>
+<text x="660" y="237" fill="#f44336" text-anchor="middle" font-size="13" font-weight="bold">Temporelles</text>
+<text x="660" y="255" fill="#aaa" text-anchor="middle" font-size="10">Ventes par mois, cours d'action</text>
+
+<text x="400" y="310" fill="#aaa" text-anchor="middle" font-size="11">Les données numériques et catégorielles sont les plus courantes en ML classique.</text>
+<text x="400" y="330" fill="#aaa" text-anchor="middle" font-size="11">Le texte et les images nécessitent du Deep Learning.</text>
+</svg>
+
+<!-- CH3 -->
+<h2 id="ch3">3. Features et Labels</h2>
+
+<svg width="700" height="230" viewBox="0 0 700 230">
+<rect x="0" y="0" width="700" height="230" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Features (X) vs Label (Y)</text>
+
+<!-- Tableau -->
+<rect x="40" y="45" width="540" height="35" rx="5" fill="#2a1a00"/>
+<text x="100" y="68" fill="#4caf50" text-anchor="middle" font-size="12">Surface</text>
+<text x="210" y="68" fill="#4caf50" text-anchor="middle" font-size="12">Chambres</text>
+<text x="320" y="68" fill="#4caf50" text-anchor="middle" font-size="12">Jardin</text>
+<text x="430" y="68" fill="#4caf50" text-anchor="middle" font-size="12">Métro (m)</text>
+<line x1="490" y1="45" x2="490" y2="165" stroke="#ffd700" stroke-width="2"/>
+<text x="540" y="68" fill="#ffd700" text-anchor="middle" font-size="12">Prix €</text>
+
+<!-- Rows -->
+<text x="100" y="100" fill="#ddd" text-anchor="middle" font-size="12">85 m²</text>
+<text x="210" y="100" fill="#ddd" text-anchor="middle" font-size="12">3</text>
+<text x="320" y="100" fill="#ddd" text-anchor="middle" font-size="12">Oui</text>
+<text x="430" y="100" fill="#ddd" text-anchor="middle" font-size="12">500</text>
+<text x="540" y="100" fill="#ffd700" text-anchor="middle" font-size="12">250 000</text>
+
+<text x="100" y="130" fill="#ddd" text-anchor="middle" font-size="12">120 m²</text>
+<text x="210" y="130" fill="#ddd" text-anchor="middle" font-size="12">4</text>
+<text x="320" y="130" fill="#ddd" text-anchor="middle" font-size="12">Non</text>
+<text x="430" y="130" fill="#ddd" text-anchor="middle" font-size="12">200</text>
+<text x="540" y="130" fill="#ffd700" text-anchor="middle" font-size="12">380 000</text>
+
+<text x="100" y="160" fill="#ddd" text-anchor="middle" font-size="12">60 m²</text>
+<text x="210" y="160" fill="#ddd" text-anchor="middle" font-size="12">2</text>
+<text x="320" y="160" fill="#ddd" text-anchor="middle" font-size="12">Non</text>
+<text x="430" y="160" fill="#ddd" text-anchor="middle" font-size="12">1200</text>
+<text x="540" y="160" fill="#ffd700" text-anchor="middle" font-size="12">150 000</text>
+
+<!-- Légendes -->
+<rect x="50" y="180" width="200" height="30" rx="5" fill="#1b3a1b" stroke="#4caf50"/>
+<text x="150" y="200" fill="#4caf50" text-anchor="middle" font-size="11">FEATURES (X) = entrées</text>
+<rect x="460" y="180" width="160" height="30" rx="5" fill="#3a3a1a" stroke="#ffd700"/>
+<text x="540" y="200" fill="#ffd700" text-anchor="middle" font-size="11">LABEL (Y) = sortie</text>
+
+<text x="620" y="105" fill="#aaa" font-size="10">← le modèle</text>
+<text x="620" y="120" fill="#aaa" font-size="10">prédit cette</text>
+<text x="620" y="135" fill="#aaa" font-size="10">colonne</text>
+</svg>
+
+<div class="box box-green">
+<p><strong>Retiens :</strong></p>
+<ul>
+<li><strong>Features (X)</strong> = les informations qu'on donne au modèle (ce qu'il voit)</li>
+<li><strong>Label (Y)</strong> = ce qu'on veut prédire (la bonne réponse)</li>
+<li>En apprentissage non supervisé, il n'y a PAS de label</li>
+</ul>
+</div>
+
+<!-- CH4 -->
+<h2 id="ch4">4. Datasets célèbres</h2>
+
+<table>
+<tr><th>Dataset</th><th>Taille</th><th>Type</th><th>Utilisé pour</th></tr>
+<tr><td><strong>Iris</strong></td><td>150 fleurs</td><td>Classification</td><td>Le "Hello World" du ML : classer 3 types d'iris par taille des pétales</td></tr>
+<tr><td><strong>Titanic</strong></td><td>891 passagers</td><td>Classification</td><td>Prédire qui survit au naufrage selon l'âge, la classe, le sexe</td></tr>
+<tr><td><strong>MNIST</strong></td><td>70 000 images</td><td>Classification</td><td>Reconnaître des chiffres manuscrits (0-9)</td></tr>
+<tr><td><strong>Boston Housing</strong></td><td>506 maisons</td><td>Régression</td><td>Prédire le prix d'une maison</td></tr>
+<tr><td><strong>CIFAR-10</strong></td><td>60 000 images</td><td>Classification</td><td>Reconnaître 10 catégories d'objets (avion, voiture, chat...)</td></tr>
+<tr><td><strong>ImageNet</strong></td><td>14 millions images</td><td>Classification</td><td>Le benchmark des modèles de vision. 1000 catégories</td></tr>
+</table>
+
+<!-- CH5 -->
+<h2 id="ch5">5. Train / Test / Validation Split</h2>
+
+<div class="box box-gold">
+<p><strong>Problème :</strong> Si tu testes le modèle sur les mêmes données qu'il a utilisées pour apprendre, c'est comme faire un examen avec les réponses devant toi. Le résultat ne veut rien dire.</p>
+<p><strong>Solution :</strong> On divise les données en 2 ou 3 groupes.</p>
+</div>
+
+<svg width="700" height="220" viewBox="0 0 700 220">
+<rect x="0" y="0" width="700" height="220" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="30" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Division des données</text>
+
+<!-- Barre complète -->
+<rect x="50" y="55" width="600" height="50" rx="8" fill="#1a1a2e" stroke="#555"/>
+<!-- Train -->
+<rect x="50" y="55" width="360" height="50" rx="8" fill="rgba(76,175,80,0.3)" stroke="#4caf50" stroke-width="2"/>
+<text x="230" y="85" fill="#4caf50" text-anchor="middle" font-size="14" font-weight="bold">TRAIN (60%)</text>
+<!-- Validation -->
+<rect x="410" y="55" width="120" height="50" fill="rgba(255,152,0,0.3)" stroke="#ff9800" stroke-width="2"/>
+<text x="470" y="85" fill="#ff9800" text-anchor="middle" font-size="13" font-weight="bold">VAL (20%)</text>
+<!-- Test -->
+<rect x="530" y="55" width="120" height="50" rx="8" fill="rgba(244,67,54,0.3)" stroke="#f44336" stroke-width="2"/>
+<text x="590" y="85" fill="#f44336" text-anchor="middle" font-size="13" font-weight="bold">TEST (20%)</text>
+
+<!-- Descriptions -->
+<text x="230" y="130" fill="#4caf50" text-anchor="middle" font-size="11">Le modèle APPREND</text>
+<text x="230" y="148" fill="#4caf50" text-anchor="middle" font-size="11">sur ces données</text>
+
+<text x="470" y="130" fill="#ff9800" text-anchor="middle" font-size="11">On AJUSTE</text>
+<text x="470" y="148" fill="#ff9800" text-anchor="middle" font-size="11">les paramètres</text>
+
+<text x="590" y="130" fill="#f44336" text-anchor="middle" font-size="11">On ÉVALUE</text>
+<text x="590" y="148" fill="#f44336" text-anchor="middle" font-size="11">le résultat final</text>
+
+<text x="350" y="185" fill="#aaa" text-anchor="middle" font-size="11">Le modèle ne voit JAMAIS les données de test pendant l'apprentissage !</text>
+<text x="350" y="205" fill="#ffd700" text-anchor="middle" font-size="11">C'est comme cacher une partie de l'examen pour voir si l'élève a vraiment compris</text>
+</svg>
+
+<div class="analogy">
+<h4>🏫 Analogie : L'école</h4>
+<ul>
+<li><strong>Train</strong> = les exercices d'entraînement avec corrections (l'élève apprend)</li>
+<li><strong>Validation</strong> = les devoirs maison (l'élève s'ajuste)</li>
+<li><strong>Test</strong> = l'examen final (on découvre le vrai niveau)</li>
+</ul>
+</div>
+
+<!-- CH6 -->
+<h2 id="ch6">6. Données manquantes</h2>
+
+<p>En pratique, les données sont rarement parfaites. Il manque souvent des valeurs.</p>
+
+<svg width="650" height="200" viewBox="0 0 650 200">
+<rect x="0" y="0" width="650" height="200" rx="15" fill="#16213e" stroke="#333"/>
+<text x="325" y="25" fill="#ff6b35" text-anchor="middle" font-size="13" font-weight="bold">Que faire avec les valeurs manquantes ?</text>
+
+<!-- Supprimer -->
+<rect x="20" y="45" width="190" height="70" rx="8" fill="#1a1a2e" stroke="#f44336" stroke-width="2"/>
+<text x="115" y="70" fill="#f44336" text-anchor="middle" font-size="12" font-weight="bold">Supprimer la ligne</text>
+<text x="115" y="90" fill="#aaa" text-anchor="middle" font-size="10">Simple mais on perd</text>
+<text x="115" y="105" fill="#aaa" text-anchor="middle" font-size="10">des données</text>
+
+<!-- Remplacer moyenne -->
+<rect x="230" y="45" width="190" height="70" rx="8" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+<text x="325" y="70" fill="#ff9800" text-anchor="middle" font-size="12" font-weight="bold">Remplacer par moyenne</text>
+<text x="325" y="90" fill="#aaa" text-anchor="middle" font-size="10">Le plus courant.</text>
+<text x="325" y="105" fill="#aaa" text-anchor="middle" font-size="10">Ou la médiane.</text>
+
+<!-- ML prédire -->
+<rect x="440" y="45" width="190" height="70" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="535" y="70" fill="#4caf50" text-anchor="middle" font-size="12" font-weight="bold">Prédire avec un modèle</text>
+<text x="535" y="90" fill="#aaa" text-anchor="middle" font-size="10">Le plus précis mais</text>
+<text x="535" y="105" fill="#aaa" text-anchor="middle" font-size="10">plus complexe</text>
+
+<text x="325" y="150" fill="#aaa" text-anchor="middle" font-size="11">Exemple : l'âge manque pour certains passagers du Titanic</text>
+<text x="325" y="170" fill="#aaa" text-anchor="middle" font-size="11">→ On remplace par la moyenne d'âge (29 ans) ou on prédit l'âge</text>
+</svg>
+
+<!-- CH7 -->
+<h2 id="ch7">7. Outliers (valeurs aberrantes)</h2>
+
+<div class="box box-blue">
+<p><strong>Un outlier</strong> = une donnée qui est très loin des autres. Exemple : dans un dataset de salaires, tout le monde gagne 30-50k€ sauf une personne qui gagne 5 millions.</p>
+</div>
+
+<svg width="600" height="180" viewBox="0 0 600 180">
+<rect x="0" y="0" width="600" height="180" rx="15" fill="#16213e" stroke="#333"/>
+<text x="300" y="25" fill="#ff6b35" text-anchor="middle" font-size="13" font-weight="bold">Outlier = le point qui ne va pas avec les autres</text>
+<line x1="40" y1="100" x2="560" y2="100" stroke="#555" stroke-width="1"/>
+<!-- Points normaux -->
+<circle cx="100" cy="100" r="6" fill="#4caf50"/>
+<circle cx="130" cy="100" r="6" fill="#4caf50"/>
+<circle cx="150" cy="100" r="6" fill="#4caf50"/>
+<circle cx="175" cy="100" r="6" fill="#4caf50"/>
+<circle cx="200" cy="100" r="6" fill="#4caf50"/>
+<circle cx="220" cy="100" r="6" fill="#4caf50"/>
+<circle cx="250" cy="100" r="6" fill="#4caf50"/>
+<text x="175" y="130" fill="#4caf50" text-anchor="middle" font-size="10">30-50k€ (normal)</text>
+<!-- Outlier -->
+<circle cx="500" cy="100" r="10" fill="#f44336" stroke="#ffd700" stroke-width="2"/>
+<text x="500" y="80" fill="#f44336" text-anchor="middle" font-size="12" font-weight="bold">5M€</text>
+<text x="500" y="130" fill="#f44336" text-anchor="middle" font-size="10">OUTLIER !</text>
+<text x="300" y="165" fill="#aaa" text-anchor="middle" font-size="11">Les outliers peuvent fausser la moyenne et tromper le modèle</text>
+</svg>
+
+<table>
+<tr><th>Stratégie</th><th>Quand</th></tr>
+<tr><td>Supprimer l'outlier</td><td>Si c'est une erreur de saisie (âge = 999)</td></tr>
+<tr><td>Le garder</td><td>Si c'est une vraie valeur (un PDG gagne vraiment beaucoup)</td></tr>
+<tr><td>Le transformer</td><td>Appliquer un log pour réduire l'écart</td></tr>
+</table>
+
+<!-- CH8 -->
+<h2 id="ch8">8. Normalisation et Standardisation</h2>
+
+<div class="box box-gold">
+<p><strong>Le problème :</strong> Si "surface" va de 30 à 200 m² et "chambres" va de 1 à 5, le modèle va penser que la surface est plus importante juste parce que les chiffres sont plus grands. Il faut mettre toutes les features sur la même échelle.</p>
+</div>
+
+<svg width="700" height="240" viewBox="0 0 700 240">
+<rect x="0" y="0" width="700" height="240" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Avant -->
+<text x="170" y="30" fill="#f44336" text-anchor="middle" font-size="13" font-weight="bold">AVANT (échelles différentes)</text>
+<rect x="30" y="50" width="30" height="150" rx="3" fill="rgba(244,67,54,0.3)" stroke="#f44336"/>
+<text x="45" y="210" fill="#aaa" text-anchor="middle" font-size="9">Chambres</text>
+<text x="45" y="60" fill="#f44336" text-anchor="middle" font-size="9">5</text>
+<rect x="80" y="50" width="30" height="150" rx="3" fill="rgba(244,67,54,0.3)" stroke="#f44336"/>
+<rect x="80" y="50" width="30" height="140" rx="3" fill="rgba(244,67,54,0.5)"/>
+<text x="95" y="210" fill="#aaa" text-anchor="middle" font-size="9">Surface</text>
+<text x="95" y="60" fill="#f44336" text-anchor="middle" font-size="9">200</text>
+<rect x="130" y="50" width="30" height="150" rx="3" fill="rgba(244,67,54,0.3)" stroke="#f44336"/>
+<rect x="130" y="50" width="30" height="148" rx="3" fill="rgba(244,67,54,0.7)"/>
+<text x="145" y="210" fill="#aaa" text-anchor="middle" font-size="9">Métro</text>
+<text x="145" y="60" fill="#f44336" text-anchor="middle" font-size="9">5000</text>
+<text x="275" y="130" fill="#aaa" font-size="30">→</text>
+
+<!-- Après -->
+<text x="500" y="30" fill="#4caf50" text-anchor="middle" font-size="13" font-weight="bold">APRÈS (même échelle 0-1)</text>
+<rect x="380" y="50" width="30" height="150" rx="3" fill="rgba(76,175,80,0.1)" stroke="#4caf50"/>
+<rect x="380" y="110" width="30" height="90" rx="3" fill="rgba(76,175,80,0.5)"/>
+<text x="395" y="210" fill="#aaa" text-anchor="middle" font-size="9">Chambres</text>
+<text x="395" y="105" fill="#4caf50" text-anchor="middle" font-size="9">0.6</text>
+<rect x="440" y="50" width="30" height="150" rx="3" fill="rgba(76,175,80,0.1)" stroke="#4caf50"/>
+<rect x="440" y="95" width="30" height="105" rx="3" fill="rgba(76,175,80,0.5)"/>
+<text x="455" y="210" fill="#aaa" text-anchor="middle" font-size="9">Surface</text>
+<text x="455" y="90" fill="#4caf50" text-anchor="middle" font-size="9">0.7</text>
+<rect x="500" y="50" width="30" height="150" rx="3" fill="rgba(76,175,80,0.1)" stroke="#4caf50"/>
+<rect x="500" y="130" width="30" height="70" rx="3" fill="rgba(76,175,80,0.5)"/>
+<text x="515" y="210" fill="#aaa" text-anchor="middle" font-size="9">Métro</text>
+<text x="515" y="125" fill="#4caf50" text-anchor="middle" font-size="9">0.4</text>
+
+<text x="350" y="235" fill="#aaa" text-anchor="middle" font-size="11">Maintenant le modèle peut comparer équitablement toutes les features</text>
+</svg>
+
+<table>
+<tr><th>Technique</th><th>Comment ça marche</th><th>Quand l'utiliser</th></tr>
+<tr><td><strong>Normalisation (Min-Max)</strong></td><td>Ramène toutes les valeurs entre 0 et 1</td><td>Quand les données n'ont pas de distribution normale</td></tr>
+<tr><td><strong>Standardisation (Z-score)</strong></td><td>Centre à 0 avec écart-type = 1</td><td>Quand les données suivent une distribution normale</td></tr>
+</table>
+
+<!-- CH9 -->
+<h2 id="ch9">9. Encodage catégoriel</h2>
+
+<div class="box box-blue">
+<p><strong>Le problème :</strong> Les modèles ML ne comprennent que les NOMBRES. Comment transformer "Paris", "Lyon", "Marseille" en nombres ?</p>
+</div>
+
+<h3>Label Encoding</h3>
+<table>
+<tr><th>Ville (texte)</th><th>Ville (encodée)</th></tr>
+<tr><td>Paris</td><td>0</td></tr>
+<tr><td>Lyon</td><td>1</td></tr>
+<tr><td>Marseille</td><td>2</td></tr>
+</table>
+<div class="box box-red">
+<p><strong>Problème :</strong> Le modèle pense que Marseille (2) > Lyon (1) > Paris (0). Mais il n'y a pas d'ordre ! Solution : One-Hot Encoding.</p>
+</div>
+
+<h3>One-Hot Encoding</h3>
+<table>
+<tr><th>Ville</th><th>est_Paris</th><th>est_Lyon</th><th>est_Marseille</th></tr>
+<tr><td>Paris</td><td style="color:#4caf50"><strong>1</strong></td><td>0</td><td>0</td></tr>
+<tr><td>Lyon</td><td>0</td><td style="color:#4caf50"><strong>1</strong></td><td>0</td></tr>
+<tr><td>Marseille</td><td>0</td><td>0</td><td style="color:#4caf50"><strong>1</strong></td></tr>
+</table>
+<div class="box box-green">
+<p><strong>Chaque catégorie devient une colonne.</strong> 1 = oui, 0 = non. Pas de faux ordre. C'est la méthode la plus utilisée.</p>
+</div>
+
+<!-- CH10 -->
+<h2 id="ch10">10. Feature Engineering</h2>
+
+<div class="box box-gold">
+<p><strong>Feature Engineering</strong> = créer de nouvelles features à partir des existantes pour aider le modèle.</p>
+</div>
+
+<table>
+<tr><th>Feature originale</th><th>Nouvelle feature créée</th><th>Pourquoi c'est utile</th></tr>
+<tr><td>Date de naissance</td><td><strong>Âge</strong></td><td>L'âge est plus utile que la date brute</td></tr>
+<tr><td>Surface + Chambres</td><td><strong>Surface par chambre</strong></td><td>Indicateur d'espace</td></tr>
+<tr><td>Date d'achat</td><td><strong>Jour de la semaine</strong></td><td>Les achats varient selon le jour</td></tr>
+<tr><td>Texte d'un email</td><td><strong>Nombre de mots, "!" count</strong></td><td>Les spams utilisent beaucoup de "!"</td></tr>
+<tr><td>Latitude + Longitude</td><td><strong>Distance au centre-ville</strong></td><td>Plus concret que des coordonnées brutes</td></tr>
+<tr><td>Heure</td><td><strong>Matin/Après-midi/Soir</strong></td><td>Regrouper les heures en catégories utiles</td></tr>
+</table>
+
+<div class="analogy">
+<h4>🍳 Analogie : La cuisine</h4>
+<p>Les features originales = les ingrédients bruts (farine, oeufs, lait).</p>
+<p>Le feature engineering = préparer les ingrédients (mélanger les oeufs, tamiser la farine). Avec des ingrédients bien préparés, le gâteau (le modèle) sera meilleur.</p>
+</div>
+
+<!-- CH11 -->
+<h2 id="ch11">11. Biais dans les données</h2>
+
+<div class="box box-red">
+<p><strong>Le biais</strong> = quand les données ne représentent pas la réalité de manière équitable. Le modèle apprend alors des préjugés.</p>
+</div>
+
+<table>
+<tr><th>Type de biais</th><th>Exemple</th><th>Conséquence</th></tr>
+<tr><td><strong>Biais de sélection</strong></td><td>Dataset de visages avec 90% de personnes blanches</td><td>Le modèle reconnaît mal les autres ethnies</td></tr>
+<tr><td><strong>Biais historique</strong></td><td>Données d'embauche où 80% des ingénieurs sont des hommes</td><td>Le modèle pénalise les candidates femmes</td></tr>
+<tr><td><strong>Biais de survie</strong></td><td>Étudier seulement les entreprises qui ont survécu</td><td>On ignore les facteurs d'échec</td></tr>
+<tr><td><strong>Biais de mesure</strong></td><td>Thermomètre mal calibré</td><td>Toutes les températures sont fausses</td></tr>
+</table>
+
+<div class="box box-green">
+<p><strong>Comment éviter les biais :</strong></p>
+<ul>
+<li>Diversifier les sources de données</li>
+<li>Vérifier la distribution des catégories (équilibré ?)</li>
+<li>Tester le modèle sur des groupes différents</li>
+<li>Avoir une équipe diverse qui vérifie les résultats</li>
+</ul>
+</div>
+
+<!-- CH12 -->
+<h2 id="ch12">12. Data Augmentation</h2>
+
+<div class="box box-blue">
+<p><strong>Data Augmentation</strong> = créer de nouvelles données à partir des existantes quand on n'en a pas assez.</p>
+</div>
+
+<table>
+<tr><th>Type de donnée</th><th>Techniques d'augmentation</th></tr>
+<tr><td><strong>Images</strong></td><td>Rotation, flip horizontal, zoom, changement de luminosité, recadrage</td></tr>
+<tr><td><strong>Texte</strong></td><td>Synonymes, paraphrase, traduction aller-retour, suppression de mots aléatoires</td></tr>
+<tr><td><strong>Audio</strong></td><td>Changement de vitesse, ajout de bruit, changement de pitch</td></tr>
+<tr><td><strong>Tableau</strong></td><td>SMOTE (créer des exemples synthétiques pour les classes minoritaires)</td></tr>
+</table>
+
+<div class="analogy">
+<h4>📸 Analogie : Photos de chat</h4>
+<p>Tu as 100 photos de chat mais il t'en faut 1000. Tu peux prendre chaque photo et la tourner, la retourner, zoomer, changer la luminosité... Tu obtiens 10 variations de chaque photo = 1000 photos.</p>
+<p>Le modèle voit un chat sous tous les angles et apprend mieux.</p>
+</div>
+
+<!-- CH13 -->
+<h2 id="ch13">13. Checklist qualité des données</h2>
+
+<div class="box box-green">
+<p><strong>Avant de lancer un modèle ML, vérifie :</strong></p>
+<ol>
+<li><strong>Taille suffisante ?</strong> Au minimum quelques centaines d'exemples. Idéalement des milliers.</li>
+<li><strong>Équilibré ?</strong> Si 95% classe A et 5% classe B, le modèle ignorera B.</li>
+<li><strong>Valeurs manquantes ?</strong> Les traiter avant de lancer le modèle.</li>
+<li><strong>Outliers ?</strong> Vérifier et décider quoi en faire.</li>
+<li><strong>Doublons ?</strong> Supprimer les lignes identiques.</li>
+<li><strong>Types corrects ?</strong> L'âge est bien un nombre, pas du texte "trente".</li>
+<li><strong>Fuites de données ?</strong> Le label ne se trouve pas caché dans les features.</li>
+<li><strong>Représentatif ?</strong> Les données représentent bien le problème réel.</li>
+</ol>
+</div>
+
+<!-- CH14 -->
+<h2 id="ch14">14. Résumé</h2>
+
+<table>
+<tr><th>Concept</th><th>En une phrase</th></tr>
+<tr><td>Features</td><td>Les colonnes d'entrée (ce que le modèle voit)</td></tr>
+<tr><td>Label</td><td>La colonne de sortie (ce qu'on veut prédire)</td></tr>
+<tr><td>Train/Test Split</td><td>Séparer pour apprendre et pour tester (80/20)</td></tr>
+<tr><td>Valeurs manquantes</td><td>Supprimer, remplacer par la moyenne, ou prédire</td></tr>
+<tr><td>Outliers</td><td>Données anormalement loin des autres</td></tr>
+<tr><td>Normalisation</td><td>Mettre toutes les features sur la même échelle</td></tr>
+<tr><td>One-Hot Encoding</td><td>Transformer les catégories en colonnes 0/1</td></tr>
+<tr><td>Feature Engineering</td><td>Créer de nouvelles features utiles</td></tr>
+<tr><td>Biais</td><td>Quand les données ne représentent pas la réalité équitablement</td></tr>
+<tr><td>Data Augmentation</td><td>Créer plus de données à partir des existantes</td></tr>
+</table>
+
+<div class="box box-green" style="margin-top:30px">
+<p style="font-size:18px"><strong>✅ Cours 3/12 terminé !</strong> Tu comprends maintenant les données de A à Z. Prochain cours : <strong>La Régression</strong></p>
+</div>
+
+</main>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Models et PromptTemplates - Les Fondations de LangChain</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="main">
+
+        <h1>Models et PromptTemplates</h1>
+        <p class="subtitle">Les Fondations de LangChain -- Cours 2/2</p>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 1 : ChatModels -->
+        <!-- ====================================================== -->
+        <h2>1. ChatModels : l'interface unifiée vers les LLM</h2>
+
+        <div class="definition">
+            Un <strong>ChatModel</strong> dans LangChain est un wrapper qui encapsule l'API d'un fournisseur de LLM derrière une interface standardisée. Il prend en entrée une liste de messages (système, humain, IA) et retourne un objet <code>AIMessage</code> contenant la réponse du modèle.
+        </div>
+
+        <p>
+            Les ChatModels sont la brique fondamentale de toute application LangChain. Ils héritent de l'interface <code>Runnable</code>, ce qui signifie qu'ils supportent nativement <code>invoke()</code>, <code>stream()</code>, <code>batch()</code>, ainsi que leurs variantes asynchrones.
+        </p>
+
+        <div class="svg-container">
+            <svg width="780" height="280" viewBox="0 0 780 280" xmlns="http://www.w3.org/2000/svg">
+                <rect width="780" height="280" fill="#0f0f23" rx="12"/>
+                <text x="390" y="30" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Interface ChatModel unifiée</text>
+
+                <!-- Input -->
+                <rect x="30" y="80" width="160" height="120" rx="10" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+                <text x="110" y="105" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Entrée (Messages)</text>
+                <text x="110" y="130" text-anchor="middle" fill="#aaa" font-size="10">SystemMessage</text>
+                <text x="110" y="148" text-anchor="middle" fill="#aaa" font-size="10">HumanMessage</text>
+                <text x="110" y="166" text-anchor="middle" fill="#aaa" font-size="10">AIMessage</text>
+                <text x="110" y="184" text-anchor="middle" fill="#aaa" font-size="10">ToolMessage</text>
+
+                <!-- Arrow -->
+                <line x1="190" y1="140" x2="250" y2="140" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+                <!-- ChatModel interface -->
+                <rect x="250" y="60" width="280" height="160" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2.5"/>
+                <text x="390" y="88" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">BaseChatModel (Runnable)</text>
+                <line x1="270" y1="98" x2="510" y2="98" stroke="#333" stroke-width="1"/>
+                <text x="280" y="120" fill="#dcdcaa" font-size="11">.invoke(messages)</text>
+                <text x="280" y="140" fill="#dcdcaa" font-size="11">.stream(messages)</text>
+                <text x="280" y="160" fill="#dcdcaa" font-size="11">.batch([msgs1, msgs2])</text>
+                <text x="280" y="180" fill="#dcdcaa" font-size="11">.ainvoke(messages)</text>
+                <text x="280" y="200" fill="#dcdcaa" font-size="11">.with_structured_output()</text>
+
+                <!-- Arrow -->
+                <line x1="530" y1="140" x2="590" y2="140" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+                <!-- Output -->
+                <rect x="590" y="90" width="160" height="100" rx="10" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+                <text x="670" y="118" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">AIMessage</text>
+                <text x="670" y="140" text-anchor="middle" fill="#aaa" font-size="10">.content (texte)</text>
+                <text x="670" y="158" text-anchor="middle" fill="#aaa" font-size="10">.usage_metadata</text>
+                <text x="670" y="176" text-anchor="middle" fill="#aaa" font-size="10">.tool_calls</text>
+
+                <text x="390" y="260" text-anchor="middle" fill="#666" font-size="11" font-style="italic">Tous les ChatModels (OpenAI, Anthropic, Ollama) implémentent cette même interface</text>
+
+                <defs>
+                    <marker id="arr1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+
+        <h3>1.1 ChatOpenAI en détail</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+<span class="comment"># Instanciation avec tous les paramètres courants</span>
+llm = <span class="function">ChatOpenAI</span>(
+    model=<span class="string">"gpt-4o-mini"</span>,          <span class="comment"># Nom du modèle</span>
+    temperature=<span class="number">0.7</span>,               <span class="comment"># Créativité : 0 (déterministe) à 2 (très créatif)</span>
+    max_tokens=<span class="number">1000</span>,              <span class="comment"># Nombre max de tokens en sortie</span>
+    top_p=<span class="number">1.0</span>,                    <span class="comment"># Nucleus sampling (alternative à temperature)</span>
+    frequency_penalty=<span class="number">0.0</span>,       <span class="comment"># Pénalité de fréquence (-2 à 2)</span>
+    presence_penalty=<span class="number">0.0</span>,        <span class="comment"># Pénalité de présence (-2 à 2)</span>
+    timeout=<span class="number">60</span>,                   <span class="comment"># Timeout en secondes</span>
+    max_retries=<span class="number">2</span>,               <span class="comment"># Tentatives en cas d'erreur réseau</span>
+    api_key=<span class="string">"sk-..."</span>,             <span class="comment"># Clé API (ou OPENAI_API_KEY env var)</span>
+    streaming=<span class="keyword">True</span>,              <span class="comment"># Activer le streaming par défaut</span>
+)
+
+<span class="comment"># Vérification des paramètres</span>
+<span class="function">print</span>(<span class="string">f"Modèle : {llm.model_name}"</span>)
+<span class="function">print</span>(<span class="string">f"Température : {llm.temperature}"</span>)
+<span class="function">print</span>(<span class="string">f"Max tokens : {llm.max_tokens}"</span>)</div>
+
+        <div class="output-block">Modèle : gpt-4o-mini
+Température : 0.7
+Max tokens : 1000</div>
+
+        <div class="param-box">
+            <h4>Paramètres clés de ChatOpenAI</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Paramètre</th>
+                        <th>Type</th>
+                        <th>Défaut</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>model</code></td>
+                        <td>str</td>
+                        <td>"gpt-4o-mini"</td>
+                        <td>Identifiant du modèle OpenAI à utiliser</td>
+                    </tr>
+                    <tr>
+                        <td><code>temperature</code></td>
+                        <td>float</td>
+                        <td>0.7</td>
+                        <td>Contrôle la créativité. 0 = déterministe, 1+ = plus aléatoire</td>
+                    </tr>
+                    <tr>
+                        <td><code>max_tokens</code></td>
+                        <td>int</td>
+                        <td>None</td>
+                        <td>Limite le nombre de tokens en sortie. Converti en max_completion_tokens depuis sept. 2024</td>
+                    </tr>
+                    <tr>
+                        <td><code>top_p</code></td>
+                        <td>float</td>
+                        <td>1.0</td>
+                        <td>Nucleus sampling. Alternative à temperature (ne pas combiner les deux)</td>
+                    </tr>
+                    <tr>
+                        <td><code>timeout</code></td>
+                        <td>int</td>
+                        <td>None</td>
+                        <td>Délai d'attente maximal en secondes</td>
+                    </tr>
+                    <tr>
+                        <td><code>max_retries</code></td>
+                        <td>int</td>
+                        <td>2</td>
+                        <td>Nombre de tentatives automatiques en cas d'erreur réseau</td>
+                    </tr>
+                    <tr>
+                        <td><code>streaming</code></td>
+                        <td>bool</td>
+                        <td>False</td>
+                        <td>Active le streaming par défaut pour toutes les invocations</td>
+                    </tr>
+                    <tr>
+                        <td><code>stream_usage</code></td>
+                        <td>bool</td>
+                        <td>False</td>
+                        <td>Inclut les métadonnées d'usage dans les chunks de streaming</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>1.2 ChatAnthropic en détail</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_anthropic <span class="keyword">import</span> ChatAnthropic
+
+<span class="comment"># Anthropic a une API légèrement différente</span>
+llm = <span class="function">ChatAnthropic</span>(
+    model=<span class="string">"claude-sonnet-4-20250514"</span>,   <span class="comment"># Modèle Claude</span>
+    temperature=<span class="number">0.7</span>,                    <span class="comment"># Même concept que OpenAI</span>
+    max_tokens=<span class="number">1024</span>,                   <span class="comment"># OBLIGATOIRE pour Anthropic !</span>
+    top_p=<span class="number">1.0</span>,
+    timeout=<span class="number">60</span>,
+    max_retries=<span class="number">2</span>,
+    api_key=<span class="string">"sk-ant-..."</span>,              <span class="comment"># Ou ANTHROPIC_API_KEY env var</span>
+)
+
+<span class="comment"># Utilisation identique à ChatOpenAI</span>
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage
+response = llm.<span class="function">invoke</span>([<span class="function">HumanMessage</span>(content=<span class="string">"Qu'est-ce que le deep learning ?"</span>)])
+<span class="function">print</span>(response.content)</div>
+
+        <div class="output-block">Le deep learning (apprentissage profond) est un sous-domaine du machine learning qui utilise des réseaux de neurones artificiels avec de nombreuses couches cachées. Ces architectures profondes sont capables d'apprendre des représentations hiérarchiques des données, ce qui les rend particulièrement efficaces pour des tâches comme la reconnaissance d'images, le traitement du langage naturel et la génération de contenu.</div>
+
+        <div class="warning">
+            Contrairement à OpenAI, le paramètre <code>max_tokens</code> est <strong>obligatoire</strong> pour ChatAnthropic. Si vous l'omettez, vous obtiendrez une erreur. Utilisez au minimum 1024 pour la plupart des cas d'usage.
+        </div>
+
+        <h3>1.3 ChatOllama pour les modèles locaux</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_ollama <span class="keyword">import</span> ChatOllama
+
+<span class="comment"># Prérequis : Ollama installé + modèle téléchargé</span>
+<span class="comment"># Terminal : ollama pull llama3.2</span>
+
+llm = <span class="function">ChatOllama</span>(
+    model=<span class="string">"llama3.2"</span>,                   <span class="comment"># Modèle local</span>
+    temperature=<span class="number">0.7</span>,
+    base_url=<span class="string">"http://localhost:11434"</span>,  <span class="comment"># Serveur Ollama local</span>
+    num_predict=<span class="number">512</span>,                    <span class="comment"># Équivalent de max_tokens</span>
+    num_ctx=<span class="number">4096</span>,                       <span class="comment"># Taille du contexte</span>
+)
+
+<span class="comment"># Même interface que les autres providers</span>
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage
+response = llm.<span class="function">invoke</span>([<span class="function">HumanMessage</span>(content=<span class="string">"Bonjour !"</span>)])
+<span class="function">print</span>(response.content)</div>
+
+        <div class="output-block">Bonjour ! Comment puis-je vous aider aujourd'hui ? Je suis prêt à répondre à vos questions sur n'importe quel sujet.</div>
+
+        <div class="prof-note">
+            Ollama est un excellent choix pour le développement et l'apprentissage. Les modèles tournent sur votre machine, il n'y a pas de coûts API et pas de dépendance réseau. Pour installer un modèle : <code>ollama pull llama3.2</code> (3.2 Go). Des modèles plus petits comme <code>phi3:mini</code> (2 Go) sont aussi disponibles.
+        </div>
+
+        <h3>1.4 Méthodes communes des ChatModels</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+messages = [<span class="function">HumanMessage</span>(content=<span class="string">"Qu'est-ce qu'une API ?"</span>)]
+
+<span class="comment"># --- invoke : appel unique synchrone ---</span>
+response = llm.<span class="function">invoke</span>(messages)
+<span class="function">print</span>(<span class="string">"invoke:"</span>, response.content[:80], <span class="string">"..."</span>)
+
+<span class="comment"># --- stream : réponse token par token ---</span>
+<span class="function">print</span>(<span class="string">"\nstream:"</span>, end=<span class="string">" "</span>)
+<span class="keyword">for</span> chunk <span class="keyword">in</span> llm.<span class="function">stream</span>(messages):
+    <span class="function">print</span>(chunk.content, end=<span class="string">""</span>, flush=<span class="keyword">True</span>)
+<span class="function">print</span>()
+
+<span class="comment"># --- batch : traitement par lot (plusieurs requêtes en parallèle) ---</span>
+questions = [
+    [<span class="function">HumanMessage</span>(content=<span class="string">"Capital de la France ?"</span>)],
+    [<span class="function">HumanMessage</span>(content=<span class="string">"Capital de l'Allemagne ?"</span>)],
+    [<span class="function">HumanMessage</span>(content=<span class="string">"Capital de l'Italie ?"</span>)],
+]
+responses = llm.<span class="function">batch</span>(questions)
+<span class="keyword">for</span> r <span class="keyword">in</span> responses:
+    <span class="function">print</span>(<span class="string">f"batch: {r.content}"</span>)
+
+<span class="comment"># --- ainvoke : appel asynchrone (dans un contexte async) ---</span>
+<span class="keyword">import</span> asyncio
+
+<span class="keyword">async def</span> <span class="function">main</span>():
+    response = <span class="keyword">await</span> llm.<span class="function">ainvoke</span>(messages)
+    <span class="function">print</span>(<span class="string">f"ainvoke: {response.content[:80]}..."</span>)
+
+asyncio.<span class="function">run</span>(main())</div>
+
+        <div class="output-block">invoke: Une API (Application Programming Interface) est une interface de programmation ...
+stream: Une API (Application Programming Interface) est une interface...
+batch: La capitale de la France est Paris.
+batch: La capitale de l'Allemagne est Berlin.
+batch: La capitale de l'Italie est Rome.
+ainvoke: Une API (Application Programming Interface) est une interface de programmation ...</div>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 2 : Messages -->
+        <!-- ====================================================== -->
+        <h2>2. Les Messages : la structure des conversations</h2>
+
+        <div class="definition">
+            Dans LangChain, une conversation est modélisée comme une <strong>liste de messages typés</strong>. Chaque message a un rôle (système, humain, IA, outil) et un contenu. Cette structure reflète le format utilisé par les APIs de chat des LLM modernes.
+        </div>
+
+        <h3>2.1 Les quatre types de messages</h3>
+
+        <div class="svg-container">
+            <svg width="780" height="320" viewBox="0 0 780 320" xmlns="http://www.w3.org/2000/svg">
+                <rect width="780" height="320" fill="#0f0f23" rx="12"/>
+                <text x="390" y="30" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Types de Messages dans LangChain</text>
+
+                <!-- SystemMessage -->
+                <rect x="30" y="55" width="170" height="110" rx="10" fill="#1a1a2e" stroke="#c586c0" stroke-width="2"/>
+                <text x="115" y="80" text-anchor="middle" fill="#c586c0" font-size="12" font-weight="bold">SystemMessage</text>
+                <line x1="45" y1="88" x2="185" y2="88" stroke="#333" stroke-width="1"/>
+                <text x="115" y="108" text-anchor="middle" fill="#aaa" font-size="10">Instructions globales</text>
+                <text x="115" y="126" text-anchor="middle" fill="#aaa" font-size="10">Personnalité de l'IA</text>
+                <text x="115" y="144" text-anchor="middle" fill="#aaa" font-size="10">Contraintes et règles</text>
+                <text x="115" y="158" text-anchor="middle" fill="#c586c0" font-size="9">role="system"</text>
+
+                <!-- HumanMessage -->
+                <rect x="220" y="55" width="170" height="110" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+                <text x="305" y="80" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">HumanMessage</text>
+                <line x1="235" y1="88" x2="375" y2="88" stroke="#333" stroke-width="1"/>
+                <text x="305" y="108" text-anchor="middle" fill="#aaa" font-size="10">Question/requête</text>
+                <text x="305" y="126" text-anchor="middle" fill="#aaa" font-size="10">de l'utilisateur</text>
+                <text x="305" y="144" text-anchor="middle" fill="#aaa" font-size="10">Données fournies</text>
+                <text x="305" y="158" text-anchor="middle" fill="#569cd6" font-size="9">role="human"</text>
+
+                <!-- AIMessage -->
+                <rect x="410" y="55" width="170" height="110" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="495" y="80" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">AIMessage</text>
+                <line x1="425" y1="88" x2="565" y2="88" stroke="#333" stroke-width="1"/>
+                <text x="495" y="108" text-anchor="middle" fill="#aaa" font-size="10">Réponse du modèle</text>
+                <text x="495" y="126" text-anchor="middle" fill="#aaa" font-size="10">.content (texte)</text>
+                <text x="495" y="144" text-anchor="middle" fill="#aaa" font-size="10">.tool_calls (outils)</text>
+                <text x="495" y="158" text-anchor="middle" fill="#00ff88" font-size="9">role="assistant"</text>
+
+                <!-- ToolMessage -->
+                <rect x="600" y="55" width="155" height="110" rx="10" fill="#1a1a2e" stroke="#dcdcaa" stroke-width="2"/>
+                <text x="677" y="80" text-anchor="middle" fill="#dcdcaa" font-size="12" font-weight="bold">ToolMessage</text>
+                <line x1="615" y1="88" x2="740" y2="88" stroke="#333" stroke-width="1"/>
+                <text x="677" y="108" text-anchor="middle" fill="#aaa" font-size="10">Résultat d'un outil</text>
+                <text x="677" y="126" text-anchor="middle" fill="#aaa" font-size="10">.tool_call_id</text>
+                <text x="677" y="144" text-anchor="middle" fill="#aaa" font-size="10">Données retournées</text>
+                <text x="677" y="158" text-anchor="middle" fill="#dcdcaa" font-size="9">role="tool"</text>
+
+                <!-- Conversation flow -->
+                <rect x="30" y="190" width="725" height="100" rx="10" fill="#16213e" stroke="#333" stroke-width="1"/>
+                <text x="390" y="215" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">Exemple de conversation multi-tours</text>
+
+                <text x="50" y="240" fill="#c586c0" font-size="10" font-weight="bold">System:</text>
+                <text x="105" y="240" fill="#aaa" font-size="10">"Tu es un expert Python"</text>
+
+                <text x="310" y="240" fill="#569cd6" font-size="10" font-weight="bold">Human:</text>
+                <text x="365" y="240" fill="#aaa" font-size="10">"Explique les décorateurs"</text>
+
+                <text x="570" y="240" fill="#00ff88" font-size="10" font-weight="bold">AI:</text>
+                <text x="590" y="240" fill="#aaa" font-size="10">"Un décorateur est..."</text>
+
+                <text x="50" y="270" fill="#569cd6" font-size="10" font-weight="bold">Human:</text>
+                <text x="105" y="270" fill="#aaa" font-size="10">"Donne un exemple"</text>
+
+                <text x="280" y="270" fill="#00ff88" font-size="10" font-weight="bold">AI:</text>
+                <text x="300" y="270" fill="#aaa" font-size="10">"@timer def ma_fonction()..."</text>
+
+                <!-- Arrows -->
+                <text x="280" y="242" fill="#ff6b35" font-size="12">→</text>
+                <text x="545" y="242" fill="#ff6b35" font-size="12">→</text>
+                <text x="250" y="272" fill="#ff6b35" font-size="12">→</text>
+
+                <text x="390" y="310" text-anchor="middle" fill="#555" font-size="10" font-style="italic">Les messages forment l'historique de conversation envoyé au modèle</text>
+            </svg>
+        </div>
+
+        <h3>2.2 Code complet avec messages</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> (
+    SystemMessage,
+    HumanMessage,
+    AIMessage,
+    ToolMessage,
+)
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Conversation structurée avec des messages typés</span>
+messages = [
+    <span class="comment"># Message système : définit le comportement de l'IA</span>
+    <span class="function">SystemMessage</span>(content=<span class="string">"""Tu es un professeur de Python expert.
+Tu réponds toujours en français.
+Tu donnes des exemples de code concrets.
+Tu expliques comme si tu parlais à un débutant."""</span>),
+
+    <span class="comment"># Premier échange</span>
+    <span class="function">HumanMessage</span>(content=<span class="string">"Qu'est-ce qu'une liste en Python ?"</span>),
+    <span class="function">AIMessage</span>(content=<span class="string">"Une liste en Python est une collection ordonnée et modifiable d'éléments. On la crée avec des crochets : ma_liste = [1, 2, 3]"</span>),
+
+    <span class="comment"># Deuxième échange (le modèle voit tout l'historique)</span>
+    <span class="function">HumanMessage</span>(content=<span class="string">"Comment ajouter un élément ?"</span>),
+]
+
+<span class="comment"># Le modèle comprend le contexte grâce à l'historique</span>
+response = llm.<span class="function">invoke</span>(messages)
+<span class="function">print</span>(response.content)</div>
+
+        <div class="output-block">Pour ajouter un élément à une liste en Python, vous avez plusieurs méthodes :
+
+1. **append()** - Ajoute un élément à la fin :
+   ```python
+   ma_liste = [1, 2, 3]
+   ma_liste.append(4)
+   print(ma_liste)  # [1, 2, 3, 4]
+   ```
+
+2. **insert()** - Ajoute un élément à une position spécifique :
+   ```python
+   ma_liste.insert(0, 0)  # Ajoute 0 au début
+   print(ma_liste)  # [0, 1, 2, 3, 4]
+   ```
+
+3. **extend()** - Ajoute plusieurs éléments d'un coup :
+   ```python
+   ma_liste.extend([5, 6])
+   print(ma_liste)  # [0, 1, 2, 3, 4, 5, 6]
+   ```</div>
+
+        <div class="effect">
+            Le modèle répond "à une liste en Python" alors que la deuxième question ne mentionne ni "liste" ni "Python". C'est parce qu'il a accès à tout l'historique de conversation. C'est ainsi que fonctionne la "mémoire" dans les applications LLM : on renvoie les messages précédents.
+        </div>
+
+        <h3>2.3 Syntaxe raccourcie avec des tuples</h3>
+
+        <p>LangChain accepte aussi des tuples <code>(role, content)</code> pour une syntaxe plus concise :</p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>)
+
+<span class="comment"># Syntaxe avec tuples (role, content) - plus concise</span>
+messages = [
+    (<span class="string">"system"</span>, <span class="string">"Tu es un historien spécialisé dans l'Antiquité. Réponds en français."</span>),
+    (<span class="string">"human"</span>, <span class="string">"Qui était Jules César ?"</span>),
+    (<span class="string">"ai"</span>, <span class="string">"Jules César était un général et homme d'État romain né en 100 av. J.-C."</span>),
+    (<span class="string">"human"</span>, <span class="string">"Comment est-il mort ?"</span>),
+]
+
+response = llm.<span class="function">invoke</span>(messages)
+<span class="function">print</span>(response.content)</div>
+
+        <div class="output-block">Jules César a été assassiné le 15 mars 44 av. J.-C. (les Ides de mars) par un groupe de sénateurs romains conspirateurs, dont Brutus et Cassius. Il a été poignardé 23 fois dans le théâtre de Pompée, lors d'une séance du Sénat.</div>
+
+        <div class="prof-note">
+            Les rôles valides pour les tuples sont : <code>"system"</code>, <code>"human"</code> (ou <code>"user"</code>), <code>"ai"</code> (ou <code>"assistant"</code>), et <code>"tool"</code>. Cette syntaxe est pratique pour le prototypage rapide, mais préférez les classes <code>SystemMessage</code>/<code>HumanMessage</code> dans du code de production pour plus de clarté.
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 3 : PromptTemplate -->
+        <!-- ====================================================== -->
+        <h2>3. PromptTemplate : les templates basiques</h2>
+
+        <div class="definition">
+            Un <strong>PromptTemplate</strong> est un objet qui permet de créer des prompts réutilisables avec des variables. Il prend un template avec des placeholders <code>{variable}</code> et les remplace par des valeurs concrètes lors de l'invocation. C'est le composant essentiel pour séparer la logique du prompt de la logique applicative.
+        </div>
+
+        <h3>3.1 Création basique avec from_template</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate
+
+<span class="comment"># Méthode 1 : from_template (détecte les variables automatiquement)</span>
+prompt = PromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Donne-moi {nombre} faits intéressants sur {sujet}."</span>
+)
+
+<span class="comment"># Vérifier les variables détectées</span>
+<span class="function">print</span>(<span class="string">"Variables :"</span>, prompt.input_variables)
+
+<span class="comment"># Formater le prompt</span>
+result = prompt.<span class="function">invoke</span>({
+    <span class="string">"nombre"</span>: <span class="string">"5"</span>,
+    <span class="string">"sujet"</span>: <span class="string">"la Tour Eiffel"</span>
+})
+<span class="function">print</span>(<span class="string">"Prompt formaté :"</span>, result)
+<span class="function">print</span>(<span class="string">"Type :"</span>, <span class="function">type</span>(result))</div>
+
+        <div class="output-block">Variables : ['nombre', 'sujet']
+Prompt formaté : text='Donne-moi 5 faits intéressants sur la Tour Eiffel.'
+Type : &lt;class 'langchain_core.prompt_values.StringPromptValue'&gt;</div>
+
+        <h3>3.2 Création explicite avec le constructeur</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate
+
+<span class="comment"># Méthode 2 : Constructeur explicite (contrôle total)</span>
+prompt = <span class="function">PromptTemplate</span>(
+    template=<span class="string">"Traduis le texte suivant en {langue} :\n\n{texte}\n\nTraduction :"</span>,
+    input_variables=[<span class="string">"langue"</span>, <span class="string">"texte"</span>],
+)
+
+result = prompt.<span class="function">format</span>(
+    langue=<span class="string">"anglais"</span>,
+    texte=<span class="string">"Bonjour, comment allez-vous aujourd'hui ?"</span>
+)
+<span class="function">print</span>(result)</div>
+
+        <div class="output-block">Traduis le texte suivant en anglais :
+
+Bonjour, comment allez-vous aujourd'hui ?
+
+Traduction :</div>
+
+        <h3>3.3 Template multilignes complexes</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+
+<span class="comment"># Template complexe pour l'analyse de code</span>
+prompt = PromptTemplate.<span class="function">from_template</span>(<span class="string">"""Tu es un expert en {langage}.
+
+Analyse le code suivant et fournis :
+1. Une explication de ce que fait le code
+2. Les bugs potentiels
+3. Des suggestions d'amélioration
+
+Code à analyser :
+```{langage}
+{code}
+```
+
+Analyse détaillée :"""</span>)
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+parser = <span class="function">StrOutputParser</span>()
+
+chain = prompt | llm | parser
+
+result = chain.<span class="function">invoke</span>({
+    <span class="string">"langage"</span>: <span class="string">"Python"</span>,
+    <span class="string">"code"</span>: <span class="string">"""def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)"""</span>
+})
+<span class="function">print</span>(result)</div>
+
+        <div class="output-block">**1. Explication :**
+Cette fonction calcule le n-ième nombre de Fibonacci de manière récursive. Elle utilise le cas de base (n &lt;= 1) et l'appel récursif pour calculer la somme des deux termes précédents.
+
+**2. Bugs potentiels :**
+- Pas de validation de l'entrée (n négatif, n non entier)
+- Complexité exponentielle O(2^n) : très lent pour n > 35
+
+**3. Suggestions d'amélioration :**
+- Utiliser la mémoïsation avec @functools.lru_cache
+- Ou une approche itérative pour O(n) en temps et O(1) en espace</div>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 4 : ChatPromptTemplate -->
+        <!-- ====================================================== -->
+        <h2>4. ChatPromptTemplate : templates pour les modèles de chat</h2>
+
+        <div class="definition">
+            <strong>ChatPromptTemplate</strong> est une version spécialisée de PromptTemplate conçue pour les modèles de chat. Au lieu de produire une simple chaîne de texte, il génère une liste de messages typés (System, Human, AI). C'est le template recommandé pour tous les ChatModels modernes.
+        </div>
+
+        <h3>4.1 Création avec from_messages</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+<span class="comment"># ChatPromptTemplate avec des messages structurés</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    <span class="comment"># Message système (contexte global, personnalité)</span>
+    (<span class="string">"system"</span>, <span class="string">"Tu es un assistant spécialisé en {domaine}. Réponds en français, de manière {style}."</span>),
+    <span class="comment"># Message humain (la requête avec variables)</span>
+    (<span class="string">"human"</span>, <span class="string">"{question}"</span>),
+])
+
+<span class="comment"># Vérifier les variables</span>
+<span class="function">print</span>(<span class="string">"Variables :"</span>, prompt.input_variables)
+
+<span class="comment"># Formater</span>
+messages = prompt.<span class="function">invoke</span>({
+    <span class="string">"domaine"</span>: <span class="string">"la cybersécurité"</span>,
+    <span class="string">"style"</span>: <span class="string">"concise et technique"</span>,
+    <span class="string">"question"</span>: <span class="string">"Qu'est-ce qu'une attaque XSS ?"</span>
+})
+
+<span class="comment"># Afficher les messages générés</span>
+<span class="keyword">for</span> msg <span class="keyword">in</span> messages.messages:
+    <span class="function">print</span>(<span class="string">f"[{msg.type}] {msg.content}"</span>)</div>
+
+        <div class="output-block">[system] Tu es un assistant spécialisé en la cybersécurité. Réponds en français, de manière concise et technique.
+[human] Qu'est-ce qu'une attaque XSS ?</div>
+
+        <h3>4.2 Chaîne complète avec ChatPromptTemplate</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+
+<span class="comment"># Template pour un assistant de rédaction</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"""Tu es un rédacteur professionnel.
+Ton style d'écriture est : {style}.
+Tu écris toujours en français.
+Tu structures tes textes avec des paragraphes clairs."""</span>),
+    (<span class="string">"human"</span>, <span class="string">"Rédige un {type_texte} sur le sujet suivant : {sujet}"</span>),
+])
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.8</span>)
+parser = <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Chaîne LCEL</span>
+chain = prompt | llm | parser
+
+<span class="comment"># Invocation</span>
+result = chain.<span class="function">invoke</span>({
+    <span class="string">"style"</span>: <span class="string">"journalistique, engagé"</span>,
+    <span class="string">"type_texte"</span>: <span class="string">"article court (200 mots)"</span>,
+    <span class="string">"sujet"</span>: <span class="string">"L'impact de l'IA sur l'éducation"</span>,
+})
+<span class="function">print</span>(result)</div>
+
+        <div class="output-block">L'intelligence artificielle bouleverse l'éducation à une vitesse vertigineuse. Des salles de classe aux amphithéâtres universitaires, les outils alimentés par l'IA transforment la manière dont nous apprenons et enseignons.
+
+Les tuteurs IA personnalisés s'adaptent au rythme de chaque élève, identifiant ses lacunes et proposant des exercices ciblés. Les enseignants, libérés des tâches répétitives de correction, peuvent enfin se consacrer à ce qui compte vraiment : l'accompagnement humain.
+
+Mais ne soyons pas naïfs. Cette révolution soulève des questions cruciales. Comment garantir l'équité d'accès ? Comment prévenir la dépendance des étudiants à ces outils ? L'esprit critique, la créativité, l'argumentation -- ces compétences fondamentales ne s'enseignent pas par algorithme.
+
+L'IA dans l'éducation n'est ni une menace ni une panacée. C'est un outil puissant qui, bien encadré, peut démocratiser le savoir. À condition de ne jamais oublier que l'éducation est, avant tout, une aventure humaine.</div>
+
+        <h3>4.3 Template avec message IA (pre-remplissage)</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+<span class="comment"># On peut inclure un message AI pour "amorcer" la réponse</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un assistant qui génère des données JSON valides."</span>),
+    (<span class="string">"human"</span>, <span class="string">"Génère un objet JSON pour un {objet} avec les champs : {champs}"</span>),
+    (<span class="string">"ai"</span>, <span class="string">"```json\n{{"</span>),  <span class="comment"># Amorce la réponse en JSON</span>
+])
+
+<span class="comment"># Le modèle continuera naturellement avec du JSON valide</span>
+<span class="function">print</span>(prompt.input_variables)  <span class="comment"># ['objet', 'champs']</span></div>
+
+        <div class="prof-note">
+            L'astuce du pré-remplissage du message IA est très puissante. En commençant la réponse de l'IA par <code>```json\n{</code>, vous forcez le modèle à continuer en JSON. Cette technique fonctionne particulièrement bien avec Claude (Anthropic), qui supporte nativement les "prefilled responses".
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 5 : MessagesPlaceholder -->
+        <!-- ====================================================== -->
+        <h2>5. MessagesPlaceholder : injecter l'historique</h2>
+
+        <div class="definition">
+            <strong>MessagesPlaceholder</strong> est un composant spécial qui réserve une place dans le template pour une liste de messages dynamiques. Il est principalement utilisé pour injecter l'historique de conversation (mémoire) dans le prompt.
+        </div>
+
+        <h3>5.1 Utilisation basique</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, AIMessage
+
+<span class="comment"># Template avec un placeholder pour l'historique</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un assistant utile. Réponds en français."</span>),
+    <span class="comment"># Placeholder : ici seront injectés les messages précédents</span>
+    <span class="function">MessagesPlaceholder</span>(variable_name=<span class="string">"historique"</span>),
+    (<span class="string">"human"</span>, <span class="string">"{question}"</span>),
+])
+
+<span class="function">print</span>(<span class="string">"Variables :"</span>, prompt.input_variables)  <span class="comment"># ['historique', 'question']</span>
+
+<span class="comment"># Simuler un historique de conversation</span>
+historique = [
+    <span class="function">HumanMessage</span>(content=<span class="string">"Je m'appelle Alice."</span>),
+    <span class="function">AIMessage</span>(content=<span class="string">"Bonjour Alice ! Comment puis-je vous aider ?"</span>),
+    <span class="function">HumanMessage</span>(content=<span class="string">"J'apprends Python."</span>),
+    <span class="function">AIMessage</span>(content=<span class="string">"Excellent choix ! Python est un langage très accessible."</span>),
+]
+
+<span class="comment"># Formater le prompt avec l'historique</span>
+messages = prompt.<span class="function">invoke</span>({
+    <span class="string">"historique"</span>: historique,
+    <span class="string">"question"</span>: <span class="string">"Quel est mon prénom ?"</span>,
+})
+
+<span class="comment"># Vérifier les messages générés</span>
+<span class="keyword">for</span> msg <span class="keyword">in</span> messages.messages:
+    <span class="function">print</span>(<span class="string">f"[{msg.type}] {msg.content[:60]}..."</span>)</div>
+
+        <div class="output-block">Variables : ['historique', 'question']
+[system] Tu es un assistant utile. Réponds en français....
+[human] Je m'appelle Alice....
+[ai] Bonjour Alice ! Comment puis-je vous aider ?...
+[human] J'apprends Python....
+[ai] Excellent choix ! Python est un langage très accessible....
+[human] Quel est mon prénom ?...</div>
+
+        <h3>5.2 MessagesPlaceholder avec optional</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate, MessagesPlaceholder
+
+<span class="comment"># Le placeholder peut être optionnel (pas d'historique au premier tour)</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un assistant technique."</span>),
+    <span class="function">MessagesPlaceholder</span>(variable_name=<span class="string">"historique"</span>, optional=<span class="keyword">True</span>),
+    (<span class="string">"human"</span>, <span class="string">"{question}"</span>),
+])
+
+<span class="comment"># Premier appel : pas d'historique</span>
+messages_1 = prompt.<span class="function">invoke</span>({
+    <span class="string">"question"</span>: <span class="string">"Qu'est-ce que Docker ?"</span>,
+    <span class="comment"># Pas besoin de fournir 'historique' grâce à optional=True</span>
+})
+<span class="function">print</span>(<span class="string">f"Nombre de messages (1er appel) : {len(messages_1.messages)}"</span>)
+
+<span class="comment"># Deuxième appel : avec historique</span>
+messages_2 = prompt.<span class="function">invoke</span>({
+    <span class="string">"historique"</span>: [
+        (<span class="string">"human"</span>, <span class="string">"Qu'est-ce que Docker ?"</span>),
+        (<span class="string">"ai"</span>, <span class="string">"Docker est une plateforme de conteneurisation..."</span>),
+    ],
+    <span class="string">"question"</span>: <span class="string">"Comment l'installer ?"</span>,
+})
+<span class="function">print</span>(<span class="string">f"Nombre de messages (2e appel) : {len(messages_2.messages)}"</span>)</div>
+
+        <div class="output-block">Nombre de messages (1er appel) : 2
+Nombre de messages (2e appel) : 4</div>
+
+        <div class="effect">
+            Avec <code>optional=True</code>, le placeholder est ignoré si la variable n'est pas fournie. C'est idéal pour les chatbots où le premier message n'a pas d'historique. Sans cette option, omettre la variable <code>historique</code> provoquerait une erreur.
+        </div>
+
+        <h3>5.3 Chaîne complète avec mémoire manuelle</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, AIMessage
+
+<span class="comment"># Prompt avec placeholder pour l'historique</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un assistant mathématique pédagogue."</span>),
+    <span class="function">MessagesPlaceholder</span>(variable_name=<span class="string">"history"</span>, optional=<span class="keyword">True</span>),
+    (<span class="string">"human"</span>, <span class="string">"{input}"</span>),
+])
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+chain = prompt | llm | <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Simuler une conversation multi-tours</span>
+history = []
+
+<span class="comment"># Tour 1</span>
+question1 = <span class="string">"Qu'est-ce qu'une dérivée ?"</span>
+response1 = chain.<span class="function">invoke</span>({<span class="string">"input"</span>: question1, <span class="string">"history"</span>: history})
+<span class="function">print</span>(<span class="string">f"Q1: {question1}"</span>)
+<span class="function">print</span>(<span class="string">f"R1: {response1[:100]}...\n"</span>)
+
+<span class="comment"># Ajouter à l'historique</span>
+history.append(<span class="function">HumanMessage</span>(content=question1))
+history.append(<span class="function">AIMessage</span>(content=response1))
+
+<span class="comment"># Tour 2 (le modèle voit le tour 1)</span>
+question2 = <span class="string">"Donne-moi un exemple concret."</span>
+response2 = chain.<span class="function">invoke</span>({<span class="string">"input"</span>: question2, <span class="string">"history"</span>: history})
+<span class="function">print</span>(<span class="string">f"Q2: {question2}"</span>)
+<span class="function">print</span>(<span class="string">f"R2: {response2[:100]}..."</span>)</div>
+
+        <div class="output-block">Q1: Qu'est-ce qu'une dérivée ?
+R1: La dérivée d'une fonction mesure le taux de variation instantané de cette fonction. Autrement dit...
+
+Q2: Donne-moi un exemple concret.
+R2: Prenons la fonction f(x) = x². Sa dérivée est f'(x) = 2x. Cela signifie qu'en x = 3, le taux de...</div>
+
+        <div class="prof-note">
+            Cette gestion manuelle de l'historique fonctionne parfaitement pour des cas simples. Pour des chatbots en production, utilisez les abstractions de mémoire de LangChain ou, mieux encore, LangGraph qui gère l'état de manière plus robuste avec un graphe de conversation.
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 6 : OutputParsers -->
+        <!-- ====================================================== -->
+        <h2>6. OutputParsers : structurer les sorties du LLM</h2>
+
+        <div class="definition">
+            Les <strong>OutputParsers</strong> transforment la sortie brute du LLM (texte libre) en un format structuré utilisable par votre application. Ils sont le dernier maillon de la chaîne LCEL <code>prompt | model | parser</code>.
+        </div>
+
+        <div class="svg-container">
+            <svg width="780" height="200" viewBox="0 0 780 200" xmlns="http://www.w3.org/2000/svg">
+                <rect width="780" height="200" fill="#0f0f23" rx="12"/>
+                <text x="390" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Les trois parsers principaux</text>
+
+                <!-- StrOutputParser -->
+                <rect x="30" y="50" width="220" height="110" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="140" y="75" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">StrOutputParser</text>
+                <line x1="45" y1="83" x2="235" y2="83" stroke="#333" stroke-width="1"/>
+                <text x="140" y="103" text-anchor="middle" fill="#aaa" font-size="10">AIMessage → str</text>
+                <text x="140" y="120" text-anchor="middle" fill="#aaa" font-size="10">Extrait .content</text>
+                <text x="140" y="137" text-anchor="middle" fill="#aaa" font-size="10">Le plus simple</text>
+                <text x="140" y="152" text-anchor="middle" fill="#00ff88" font-size="9">Cas d'usage : texte libre</text>
+
+                <!-- JsonOutputParser -->
+                <rect x="280" y="50" width="220" height="110" rx="10" fill="#1a1a2e" stroke="#dcdcaa" stroke-width="2"/>
+                <text x="390" y="75" text-anchor="middle" fill="#dcdcaa" font-size="13" font-weight="bold">JsonOutputParser</text>
+                <line x1="295" y1="83" x2="485" y2="83" stroke="#333" stroke-width="1"/>
+                <text x="390" y="103" text-anchor="middle" fill="#aaa" font-size="10">AIMessage → dict</text>
+                <text x="390" y="120" text-anchor="middle" fill="#aaa" font-size="10">Parse le JSON</text>
+                <text x="390" y="137" text-anchor="middle" fill="#aaa" font-size="10">Avec ou sans schéma</text>
+                <text x="390" y="152" text-anchor="middle" fill="#dcdcaa" font-size="9">Cas d'usage : données structurées</text>
+
+                <!-- PydanticOutputParser -->
+                <rect x="530" y="50" width="220" height="110" rx="10" fill="#1a1a2e" stroke="#c586c0" stroke-width="2"/>
+                <text x="640" y="75" text-anchor="middle" fill="#c586c0" font-size="13" font-weight="bold">PydanticOutputParser</text>
+                <line x1="545" y1="83" x2="735" y2="83" stroke="#333" stroke-width="1"/>
+                <text x="640" y="103" text-anchor="middle" fill="#aaa" font-size="10">AIMessage → Pydantic Model</text>
+                <text x="640" y="120" text-anchor="middle" fill="#aaa" font-size="10">Validation de schéma</text>
+                <text x="640" y="137" text-anchor="middle" fill="#aaa" font-size="10">Type-safe</text>
+                <text x="640" y="152" text-anchor="middle" fill="#c586c0" font-size="9">Cas d'usage : production</text>
+
+                <text x="390" y="190" text-anchor="middle" fill="#666" font-size="11" font-style="italic">Complexité croissante → Robustesse croissante</text>
+            </svg>
+        </div>
+
+        <h3>6.1 StrOutputParser</h3>
+
+        <p>Le parser le plus simple : il extrait la propriété <code>.content</code> de l'<code>AIMessage</code> pour retourner une chaîne de caractères brute.</p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+prompt = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Résume en une phrase : {texte}"</span>
+)
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>)
+parser = <span class="function">StrOutputParser</span>()
+
+chain = prompt | llm | parser
+
+result = chain.<span class="function">invoke</span>({
+    <span class="string">"texte"</span>: <span class="string">"LangChain est un framework open source pour créer des applications avec des LLM. Il fournit des abstractions pour les prompts, les chaînes, la mémoire et les agents."</span>
+})
+
+<span class="function">print</span>(result)
+<span class="function">print</span>(<span class="string">f"Type : {type(result)}"</span>)  <span class="comment"># str</span></div>
+
+        <div class="output-block">LangChain est un framework open source fournissant des abstractions pour construire des applications LLM avec prompts, chaînes, mémoire et agents.
+Type : &lt;class 'str'&gt;</div>
+
+        <h3>6.2 JsonOutputParser</h3>
+
+        <p>Parse la sortie du LLM en tant que dictionnaire Python. Il peut fonctionner avec ou sans schéma Pydantic.</p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> JsonOutputParser
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+<span class="comment"># JsonOutputParser sans schéma (JSON libre)</span>
+parser = <span class="function">JsonOutputParser</span>()
+
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu génères toujours des réponses en JSON valide."</span>),
+    (<span class="string">"human"</span>, <span class="string">"""Génère les informations suivantes pour la ville {ville} :
+- nom
+- pays
+- population (approximative)
+- langue_principale
+- continent
+
+{format_instructions}"""</span>),
+])
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+chain = prompt | llm | parser
+
+result = chain.<span class="function">invoke</span>({
+    <span class="string">"ville"</span>: <span class="string">"Tokyo"</span>,
+    <span class="string">"format_instructions"</span>: parser.<span class="function">get_format_instructions</span>(),
+})
+
+<span class="function">print</span>(<span class="string">f"Type : {type(result)}"</span>)  <span class="comment"># dict</span>
+<span class="function">print</span>(<span class="string">f"Nom : {result['nom']}"</span>)
+<span class="function">print</span>(<span class="string">f"Population : {result['population']}"</span>)
+
+<span class="keyword">import</span> json
+<span class="function">print</span>(<span class="string">"\nJSON complet :"</span>)
+<span class="function">print</span>(json.<span class="function">dumps</span>(result, indent=<span class="number">2</span>, ensure_ascii=<span class="keyword">False</span>))</div>
+
+        <div class="output-block">Type : &lt;class 'dict'&gt;
+Nom : Tokyo
+Population : 14000000
+
+JSON complet :
+{
+  "nom": "Tokyo",
+  "pays": "Japon",
+  "population": 14000000,
+  "langue_principale": "japonais",
+  "continent": "Asie"
+}</div>
+
+        <h3>6.3 PydanticOutputParser</h3>
+
+        <p>Le parser le plus robuste : il valide la sortie contre un schéma Pydantic, garantissant le typage et la structure.</p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> PydanticOutputParser
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field
+<span class="keyword">from</span> typing <span class="keyword">import</span> List
+
+<span class="comment"># 1. Définir le schéma Pydantic</span>
+<span class="keyword">class</span> <span class="function">Recette</span>(BaseModel):
+    <span class="string">"""Schéma d'une recette de cuisine."""</span>
+    nom: str = <span class="function">Field</span>(description=<span class="string">"Le nom de la recette"</span>)
+    temps_preparation: str = <span class="function">Field</span>(description=<span class="string">"Le temps de préparation"</span>)
+    difficulte: str = <span class="function">Field</span>(description=<span class="string">"Niveau de difficulté (facile, moyen, difficile)"</span>)
+    ingredients: List[str] = <span class="function">Field</span>(description=<span class="string">"Liste des ingrédients"</span>)
+    etapes: List[str] = <span class="function">Field</span>(description=<span class="string">"Les étapes de préparation"</span>)
+    calories: int = <span class="function">Field</span>(description=<span class="string">"Nombre approximatif de calories par portion"</span>)
+
+<span class="comment"># 2. Créer le parser</span>
+parser = <span class="function">PydanticOutputParser</span>(pydantic_object=Recette)
+
+<span class="comment"># 3. Créer le prompt avec les instructions de format</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un chef cuisinier expert. Génère des recettes détaillées."</span>),
+    (<span class="string">"human"</span>, <span class="string">"""Donne-moi une recette pour : {plat}
+
+{format_instructions}"""</span>),
+])
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.5</span>)
+
+<span class="comment"># 4. Chaîne complète</span>
+chain = prompt | llm | parser
+
+<span class="comment"># 5. Invocation</span>
+recette = chain.<span class="function">invoke</span>({
+    <span class="string">"plat"</span>: <span class="string">"crêpes bretonnes"</span>,
+    <span class="string">"format_instructions"</span>: parser.<span class="function">get_format_instructions</span>(),
+})
+
+<span class="comment"># Le résultat est un objet Pydantic typé !</span>
+<span class="function">print</span>(<span class="string">f"Type : {type(recette).__name__}"</span>)
+<span class="function">print</span>(<span class="string">f"Nom : {recette.nom}"</span>)
+<span class="function">print</span>(<span class="string">f"Difficulté : {recette.difficulte}"</span>)
+<span class="function">print</span>(<span class="string">f"Temps : {recette.temps_preparation}"</span>)
+<span class="function">print</span>(<span class="string">f"Calories : {recette.calories} kcal"</span>)
+<span class="function">print</span>(<span class="string">f"Ingrédients : {len(recette.ingredients)}"</span>)
+<span class="keyword">for</span> i, etape <span class="keyword">in</span> <span class="function">enumerate</span>(recette.etapes, <span class="number">1</span>):
+    <span class="function">print</span>(<span class="string">f"  Étape {i}: {etape[:60]}..."</span>)</div>
+
+        <div class="output-block">Type : Recette
+Nom : Crêpes Bretonnes Traditionnelles
+Difficulté : facile
+Temps : 30 minutes (+ 1h de repos)
+Calories : 180 kcal
+Ingrédients : 7
+  Étape 1: Mélanger la farine et le sel dans un grand saladier. Creuse...
+  Étape 2: Ajouter les oeufs un à un en mélangeant bien après chaque...
+  Étape 3: Verser progressivement le lait tout en fouettant pour évit...
+  Étape 4: Laisser reposer la pâte au réfrigérateur pendant au moins...
+  Étape 5: Chauffer une poêle antiadhésive (ou une billig) à feu moy...</div>
+
+        <div class="concept-box green">
+            <h3>Avantage du PydanticOutputParser</h3>
+            <p>Le résultat est un <strong>objet Python typé</strong>, pas un simple dictionnaire. Cela signifie :</p>
+            <ul>
+                <li>Autocomplétion dans votre IDE (<code>recette.nom</code>, <code>recette.ingredients</code>)</li>
+                <li>Validation automatique : si le LLM ne fournit pas un champ obligatoire, une erreur est levée</li>
+                <li>Typage vérifiable : <code>recette.calories</code> est garanti être un <code>int</code></li>
+                <li>Sérialisation facile : <code>recette.model_dump()</code> retourne un dictionnaire</li>
+            </ul>
+        </div>
+
+        <h3>6.4 Alternative moderne : with_structured_output</h3>
+
+        <p>Depuis LangChain v0.3, les ChatModels offrent une méthode <code>with_structured_output()</code> qui est souvent plus simple que d'utiliser un PydanticOutputParser :</p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field
+<span class="keyword">from</span> typing <span class="keyword">import</span> List
+
+<span class="keyword">class</span> <span class="function">Personne</span>(BaseModel):
+    <span class="string">"""Informations sur une personne."""</span>
+    nom: str = <span class="function">Field</span>(description=<span class="string">"Le nom complet"</span>)
+    age: int = <span class="function">Field</span>(description=<span class="string">"L'âge estimé"</span>)
+    profession: str = <span class="function">Field</span>(description=<span class="string">"La profession"</span>)
+    competences: List[str] = <span class="function">Field</span>(description=<span class="string">"Liste des compétences principales"</span>)
+
+<span class="comment"># with_structured_output utilise le function calling du LLM</span>
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+structured_llm = llm.<span class="function">with_structured_output</span>(Personne)
+
+<span class="comment"># Pas besoin de format_instructions ni de parser !</span>
+result = structured_llm.<span class="function">invoke</span>(
+    <span class="string">"Décris un développeur Python senior nommé Jean Dupont, 35 ans."</span>
+)
+
+<span class="function">print</span>(<span class="string">f"Type : {type(result).__name__}"</span>)
+<span class="function">print</span>(<span class="string">f"Nom : {result.nom}"</span>)
+<span class="function">print</span>(<span class="string">f"Age : {result.age}"</span>)
+<span class="function">print</span>(<span class="string">f"Profession : {result.profession}"</span>)
+<span class="function">print</span>(<span class="string">f"Compétences : {result.competences}"</span>)</div>
+
+        <div class="output-block">Type : Personne
+Nom : Jean Dupont
+Age : 35
+Profession : Développeur Python Senior
+Compétences : ['Python', 'Django', 'FastAPI', 'PostgreSQL', 'Docker', 'CI/CD']</div>
+
+        <div class="warning">
+            La méthode <code>with_structured_output()</code> utilise le "function calling" / "tool use" natif du LLM, ce qui est plus fiable que de demander au modèle de générer du JSON brut. Cependant, tous les modèles ne supportent pas cette fonctionnalité. Vérifiez la documentation de votre provider.
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 7 : Putting it together -->
+        <!-- ====================================================== -->
+        <h2>7. Assembler le tout : chaînes complètes</h2>
+
+        <p>
+            Maintenant que nous maîtrisons chaque composant individuellement, combinons-les dans des chaînes LCEL plus complexes et réalistes.
+        </p>
+
+        <h3>7.1 Chaîne simple : traducteur automatique</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"""Tu es un traducteur professionnel.
+Tu traduis fidèlement de {langue_source} vers {langue_cible}.
+Tu conserves le ton et le style du texte original.
+Tu retournes uniquement la traduction, sans commentaire."""</span>),
+    (<span class="string">"human"</span>, <span class="string">"{texte}"</span>),
+])
+
+chain = prompt | <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.3</span>) | <span class="function">StrOutputParser</span>()
+
+result = chain.<span class="function">invoke</span>({
+    <span class="string">"langue_source"</span>: <span class="string">"français"</span>,
+    <span class="string">"langue_cible"</span>: <span class="string">"anglais"</span>,
+    <span class="string">"texte"</span>: <span class="string">"L'intelligence artificielle transforme notre manière de travailler et de communiquer."</span>,
+})
+<span class="function">print</span>(result)</div>
+
+        <div class="output-block">Artificial intelligence is transforming the way we work and communicate.</div>
+
+        <h3>7.2 Chaîne séquentielle : analyse puis résumé</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnablePassthrough
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.5</span>)
+parser = <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Chaîne 1 : Analyser un code</span>
+prompt_analyse = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un expert en revue de code. Analyse le code fourni en détail."</span>),
+    (<span class="string">"human"</span>, <span class="string">"Analyse ce code Python :\n```python\n{code}\n```"</span>),
+])
+
+<span class="comment"># Chaîne 2 : Résumer l'analyse</span>
+prompt_resume = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu résumes des analyses techniques en 3 bullet points maximum."</span>),
+    (<span class="string">"human"</span>, <span class="string">"Résume cette analyse :\n{analyse}"</span>),
+])
+
+<span class="comment"># Composition séquentielle</span>
+chain_analyse = prompt_analyse | llm | parser
+chain_resume = prompt_resume | llm | parser
+
+<span class="comment"># Pipeline complet</span>
+chain_complete = (
+    {<span class="string">"analyse"</span>: chain_analyse}  <span class="comment"># Le résultat de chain_analyse est injecté dans "analyse"</span>
+    | chain_resume
+)
+
+result = chain_complete.<span class="function">invoke</span>({
+    <span class="string">"code"</span>: <span class="string">"""def binary_search(arr, target):
+    left, right = 0, len(arr) - 1
+    while left <= right:
+        mid = (left + right) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return -1"""</span>
+})
+
+<span class="function">print</span>(result)</div>
+
+        <div class="output-block">- **Algorithme correct** : implémentation classique et efficace de la recherche binaire avec une complexité O(log n)
+- **Manque de robustesse** : pas de validation des entrées (tableau vide, tableau non trié, type de target incorrect)
+- **Amélioration possible** : ajouter des type hints, une docstring et une gestion des cas limites pour une meilleure maintenabilité</div>
+
+        <h3>7.3 Chaîne parallèle puis fusion</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnableParallel
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.7</span>)
+parser = <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Trois perspectives différentes sur un même sujet</span>
+prompt_technique = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Donne une analyse TECHNIQUE (3 lignes) de : {sujet}"</span>
+)
+prompt_business = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Donne une analyse BUSINESS (3 lignes) de : {sujet}"</span>
+)
+prompt_ethique = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Donne une analyse ÉTHIQUE (3 lignes) de : {sujet}"</span>
+)
+
+<span class="comment"># Exécution en parallèle</span>
+analyses = <span class="function">RunnableParallel</span>(
+    technique=prompt_technique | llm | parser,
+    business=prompt_business | llm | parser,
+    ethique=prompt_ethique | llm | parser,
+)
+
+<span class="comment"># Fusion des résultats</span>
+prompt_synthese = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"""Fais une synthèse en 5 lignes combinant ces 3 analyses :
+
+Analyse technique : {technique}
+
+Analyse business : {business}
+
+Analyse éthique : {ethique}"""</span>
+)
+
+chain = analyses | prompt_synthese | llm | parser
+
+result = chain.<span class="function">invoke</span>({<span class="string">"sujet"</span>: <span class="string">"la reconnaissance faciale"</span>})
+<span class="function">print</span>(result)</div>
+
+        <div class="output-block">La reconnaissance faciale repose sur des algorithmes de deep learning (CNN) capables d'identifier des visages avec une précision supérieure à 99%, ce qui en fait une technologie mature. Sur le plan business, le marché devrait atteindre 12 milliards de dollars d'ici 2028, porté par la sécurité, le commerce et l'authentification. Cependant, les biais algorithmiques persistants (notamment envers les minorités) et les risques de surveillance de masse soulèvent de graves questions éthiques. L'enjeu est de trouver l'équilibre entre innovation technologique, opportunité commerciale et respect des libertés individuelles. Une régulation solide et transparente est indispensable pour encadrer le déploiement de cette technologie.</div>
+
+        <div class="prof-note">
+            Ce pattern "analyse parallèle puis synthèse" est extrêmement utile en production. Les trois branches s'exécutent en parallèle (réduction du temps de réponse), puis une dernière étape fusionne les résultats. C'est une forme de "raisonnement multi-perspective" qui produit des réponses plus nuancées qu'un seul prompt.
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 8 : Few-shot prompts -->
+        <!-- ====================================================== -->
+        <h2>8. Few-shot Prompts : apprendre par l'exemple</h2>
+
+        <div class="definition">
+            Le <strong>few-shot prompting</strong> consiste à fournir au LLM quelques exemples (entrée/sortie attendue) dans le prompt pour guider sa réponse. LangChain propose <code>FewShotPromptTemplate</code> et <code>FewShotChatMessagePromptTemplate</code> pour structurer cette approche.
+        </div>
+
+        <h3>8.1 Few-shot basique avec ChatPromptTemplate</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+
+<span class="comment"># Few-shot : exemples directement dans les messages</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un classificateur de sentiments. Réponds uniquement par : positif, négatif, ou neutre."</span>),
+
+    <span class="comment"># Exemples (few-shot)</span>
+    (<span class="string">"human"</span>, <span class="string">"Ce film était absolument magnifique !"</span>),
+    (<span class="string">"ai"</span>, <span class="string">"positif"</span>),
+
+    (<span class="string">"human"</span>, <span class="string">"Le service client est catastrophique."</span>),
+    (<span class="string">"ai"</span>, <span class="string">"négatif"</span>),
+
+    (<span class="string">"human"</span>, <span class="string">"La réunion est prévue à 14h."</span>),
+    (<span class="string">"ai"</span>, <span class="string">"neutre"</span>),
+
+    <span class="comment"># La vraie question</span>
+    (<span class="string">"human"</span>, <span class="string">"{texte}"</span>),
+])
+
+chain = prompt | <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>) | <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Tests</span>
+textes = [
+    <span class="string">"J'adore cette nouvelle fonctionnalité !"</span>,
+    <span class="string">"Ce produit est une vraie déception."</span>,
+    <span class="string">"Le colis sera livré demain matin."</span>,
+    <span class="string">"Pas mal, mais il y a mieux sur le marché."</span>,
+]
+
+<span class="keyword">for</span> texte <span class="keyword">in</span> textes:
+    sentiment = chain.<span class="function">invoke</span>({<span class="string">"texte"</span>: texte})
+    <span class="function">print</span>(<span class="string">f"'{texte}' → {sentiment}"</span>)</div>
+
+        <div class="output-block">'J'adore cette nouvelle fonctionnalité !' → positif
+'Ce produit est une vraie déception.' → négatif
+'Le colis sera livré demain matin.' → neutre
+'Pas mal, mais il y a mieux sur le marché.' → négatif</div>
+
+        <h3>8.2 FewShotChatMessagePromptTemplate</h3>
+
+        <p>Pour une gestion plus flexible des exemples, utilisez le template dédié :</p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> (
+    ChatPromptTemplate,
+    FewShotChatMessagePromptTemplate,
+)
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+
+<span class="comment"># Définir les exemples comme une liste de dicts</span>
+examples = [
+    {<span class="string">"input"</span>: <span class="string">"2 + 2"</span>, <span class="string">"output"</span>: <span class="string">"4"</span>},
+    {<span class="string">"input"</span>: <span class="string">"la capitale de la France"</span>, <span class="string">"output"</span>: <span class="string">"Paris"</span>},
+    {<span class="string">"input"</span>: <span class="string">"le contraire de grand"</span>, <span class="string">"output"</span>: <span class="string">"petit"</span>},
+]
+
+<span class="comment"># Template pour chaque exemple</span>
+example_prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"human"</span>, <span class="string">"{input}"</span>),
+    (<span class="string">"ai"</span>, <span class="string">"{output}"</span>),
+])
+
+<span class="comment"># Few-shot template</span>
+few_shot_prompt = <span class="function">FewShotChatMessagePromptTemplate</span>(
+    example_prompt=example_prompt,
+    examples=examples,
+)
+
+<span class="comment"># Template final</span>
+final_prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu réponds de manière ultra-concise (1-3 mots maximum)."</span>),
+    few_shot_prompt,
+    (<span class="string">"human"</span>, <span class="string">"{input}"</span>),
+])
+
+chain = final_prompt | <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>) | <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Le modèle a appris le format de réponse concise</span>
+<span class="function">print</span>(chain.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"la couleur du ciel"</span>}))
+<span class="function">print</span>(chain.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"10 * 5"</span>}))
+<span class="function">print</span>(chain.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"le synonyme de content"</span>}))</div>
+
+        <div class="output-block">bleu
+50
+heureux</div>
+
+        <h3>8.3 Sélection dynamique des exemples</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate, FewShotChatMessagePromptTemplate
+<span class="keyword">from</span> langchain_core.example_selectors <span class="keyword">import</span> LengthBasedExampleSelector
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate
+
+<span class="comment"># Beaucoup d'exemples disponibles</span>
+examples = [
+    {<span class="string">"input"</span>: <span class="string">"Bonjour"</span>, <span class="string">"output"</span>: <span class="string">"Hello"</span>},
+    {<span class="string">"input"</span>: <span class="string">"Merci beaucoup"</span>, <span class="string">"output"</span>: <span class="string">"Thank you very much"</span>},
+    {<span class="string">"input"</span>: <span class="string">"Au revoir"</span>, <span class="string">"output"</span>: <span class="string">"Goodbye"</span>},
+    {<span class="string">"input"</span>: <span class="string">"Comment allez-vous ?"</span>, <span class="string">"output"</span>: <span class="string">"How are you?"</span>},
+    {<span class="string">"input"</span>: <span class="string">"S'il vous plaît"</span>, <span class="string">"output"</span>: <span class="string">"Please"</span>},
+    {<span class="string">"input"</span>: <span class="string">"Bonne nuit"</span>, <span class="string">"output"</span>: <span class="string">"Good night"</span>},
+]
+
+<span class="comment"># Sélecteur basé sur la longueur (garde les exemples courts)</span>
+example_selector = <span class="function">LengthBasedExampleSelector</span>(
+    examples=examples,
+    example_prompt=PromptTemplate.<span class="function">from_template</span>(<span class="string">"{input} → {output}"</span>),
+    max_length=<span class="number">50</span>,  <span class="comment"># Limite de mots pour les exemples sélectionnés</span>
+)
+
+<span class="comment"># Le sélecteur choisit automatiquement les exemples</span>
+selected = example_selector.<span class="function">select_examples</span>({<span class="string">"input"</span>: <span class="string">"Bonsoir"</span>})
+<span class="function">print</span>(<span class="string">f"Exemples sélectionnés : {len(selected)}"</span>)
+<span class="keyword">for</span> ex <span class="keyword">in</span> selected:
+    <span class="function">print</span>(<span class="string">f"  {ex['input']} → {ex['output']}"</span>)</div>
+
+        <div class="output-block">Exemples sélectionnés : 4
+  Bonjour → Hello
+  Au revoir → Goodbye
+  S'il vous plaît → Please
+  Bonne nuit → Good night</div>
+
+        <div class="prof-note">
+            En production, le <code>SemanticSimilarityExampleSelector</code> est bien plus puissant : il utilise les embeddings pour sélectionner les exemples les plus similaires à la requête de l'utilisateur. Cela nécessite un vector store, que nous verrons dans le cours sur le RAG.
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 9 : Partial prompts -->
+        <!-- ====================================================== -->
+        <h2>9. Partial Prompts : variables préremplies</h2>
+
+        <div class="definition">
+            Les <strong>partial prompts</strong> permettent de préremplir certaines variables d'un template avant de le passer dans une chaîne. C'est utile quand certaines variables sont connues à l'avance (comme la date du jour) et d'autres ne le sont qu'au moment de l'invocation.
+        </div>
+
+        <h3>9.1 Partial avec des valeurs statiques</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate
+
+<span class="comment"># Template avec 3 variables</span>
+prompt = PromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Tu es un assistant {role}. La date est {date}. Question : {question}"</span>
+)
+
+<span class="function">print</span>(<span class="string">"Variables avant partial :"</span>, prompt.input_variables)
+
+<span class="comment"># Préremplir certaines variables</span>
+partial_prompt = prompt.<span class="function">partial</span>(
+    role=<span class="string">"médical"</span>,
+    date=<span class="string">"2 mars 2026"</span>,
+)
+
+<span class="function">print</span>(<span class="string">"Variables après partial :"</span>, partial_prompt.input_variables)
+
+<span class="comment"># Il ne reste qu'une seule variable à fournir</span>
+result = partial_prompt.<span class="function">format</span>(question=<span class="string">"Qu'est-ce que la grippe ?"</span>)
+<span class="function">print</span>(<span class="string">"\nPrompt final :"</span>, result)</div>
+
+        <div class="output-block">Variables avant partial : ['date', 'question', 'role']
+Variables après partial : ['question']
+
+Prompt final : Tu es un assistant médical. La date est 2 mars 2026. Question : Qu'est-ce que la grippe ?</div>
+
+        <h3>9.2 Partial avec des fonctions</h3>
+
+        <p>Vous pouvez aussi utiliser des fonctions qui seront exécutées au moment du formatage :</p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="comment"># Fonction qui retourne la date/heure actuelle</span>
+<span class="keyword">def</span> <span class="function">get_datetime</span>():
+    <span class="keyword">return</span> datetime.<span class="function">now</span>().<span class="function">strftime</span>(<span class="string">"%d/%m/%Y %H:%M"</span>)
+
+<span class="comment"># Template avec partial_variables (fonctions)</span>
+prompt = PromptTemplate(
+    template=<span class="string">"Date actuelle : {datetime}\n\nQuestion : {question}\nRéponse :"</span>,
+    input_variables=[<span class="string">"question"</span>],
+    partial_variables={<span class="string">"datetime"</span>: get_datetime},  <span class="comment"># Fonction appelée au formatage</span>
+)
+
+<span class="comment"># La date est calculée dynamiquement</span>
+result = prompt.<span class="function">format</span>(question=<span class="string">"Quel jour sommes-nous ?"</span>)
+<span class="function">print</span>(result)</div>
+
+        <div class="output-block">Date actuelle : 02/03/2026 14:30
+
+Question : Quel jour sommes-nous ?
+Réponse :</div>
+
+        <h3>9.3 Partial dans une chaîne LCEL</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="comment"># Template avec variable pré-remplie</span>
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un assistant. Nous sommes le {date}. Réponds en {langue}."</span>),
+    (<span class="string">"human"</span>, <span class="string">"{question}"</span>),
+])
+
+<span class="comment"># Partial : fixer la langue et la date</span>
+prompt_fr = prompt.<span class="function">partial</span>(
+    langue=<span class="string">"français"</span>,
+    date=datetime.<span class="function">now</span>().<span class="function">strftime</span>(<span class="string">"%d %B %Y"</span>),
+)
+
+prompt_en = prompt.<span class="function">partial</span>(
+    langue=<span class="string">"anglais"</span>,
+    date=datetime.<span class="function">now</span>().<span class="function">strftime</span>(<span class="string">"%B %d, %Y"</span>),
+)
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>)
+parser = <span class="function">StrOutputParser</span>()
+
+<span class="comment"># Deux chaînes partant du même template</span>
+chain_fr = prompt_fr | llm | parser
+chain_en = prompt_en | llm | parser
+
+<span class="comment"># Même question, deux langues</span>
+question = <span class="string">"Quel temps fait-il généralement en mars ?"</span>
+<span class="function">print</span>(<span class="string">"FR:"</span>, chain_fr.<span class="function">invoke</span>({<span class="string">"question"</span>: question})[:100], <span class="string">"..."</span>)
+<span class="function">print</span>(<span class="string">"EN:"</span>, chain_en.<span class="function">invoke</span>({<span class="string">"question"</span>: question})[:100], <span class="string">"..."</span>)</div>
+
+        <div class="output-block">FR: En mars, le temps est généralement variable selon les régions. En France, c'est la transition entre ...
+EN: In March, the weather is typically transitional between winter and spring. In many temperate region...</div>
+
+        <div class="effect">
+            Les partial prompts sont très utiles pour créer des "variantes" d'un même template. Vous définissez un template générique une seule fois, puis créez des versions spécialisées avec <code>.partial()</code>. Cela évite la duplication de code et facilite la maintenance.
+        </div>
+
+        <!-- ====================================================== -->
+        <!-- SECTION 10 : Résumé -->
+        <!-- ====================================================== -->
+        <h2>10. Résumé du cours</h2>
+
+        <p>
+            Ce cours a couvert en profondeur les deux fondations de LangChain : les modèles de chat et les templates de prompts. Voici un récapitulatif complet.
+        </p>
+
+        <div class="svg-container">
+            <svg width="780" height="330" viewBox="0 0 780 330" xmlns="http://www.w3.org/2000/svg">
+                <rect width="780" height="330" fill="#0f0f23" rx="12"/>
+                <text x="390" y="30" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Récapitulatif : Models + Prompts + Parsers</text>
+
+                <!-- Layer 1: Prompts -->
+                <rect x="30" y="55" width="220" height="240" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+                <text x="140" y="80" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">Prompts</text>
+                <line x1="45" y1="88" x2="235" y2="88" stroke="#333" stroke-width="1"/>
+                <text x="50" y="110" fill="#aaa" font-size="10">PromptTemplate</text>
+                <text x="50" y="130" fill="#aaa" font-size="10">ChatPromptTemplate</text>
+                <text x="50" y="150" fill="#aaa" font-size="10">MessagesPlaceholder</text>
+                <text x="50" y="170" fill="#aaa" font-size="10">FewShotChatMessage...</text>
+                <text x="50" y="195" fill="#569cd6" font-size="10">Messages :</text>
+                <text x="50" y="215" fill="#aaa" font-size="10">  SystemMessage</text>
+                <text x="50" y="235" fill="#aaa" font-size="10">  HumanMessage</text>
+                <text x="50" y="255" fill="#aaa" font-size="10">  AIMessage</text>
+                <text x="50" y="275" fill="#aaa" font-size="10">  ToolMessage</text>
+
+                <!-- Arrow -->
+                <text x="265" y="175" fill="#ff6b35" font-size="24" font-weight="bold">|</text>
+
+                <!-- Layer 2: Models -->
+                <rect x="285" y="55" width="220" height="240" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+                <text x="395" y="80" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">Models</text>
+                <line x1="300" y1="88" x2="490" y2="88" stroke="#333" stroke-width="1"/>
+                <text x="305" y="110" fill="#aaa" font-size="10">ChatOpenAI (OpenAI)</text>
+                <text x="305" y="130" fill="#aaa" font-size="10">ChatAnthropic (Claude)</text>
+                <text x="305" y="150" fill="#aaa" font-size="10">ChatOllama (local)</text>
+                <text x="305" y="175" fill="#569cd6" font-size="10">Paramètres clés :</text>
+                <text x="305" y="195" fill="#aaa" font-size="10">  model (nom du modèle)</text>
+                <text x="305" y="215" fill="#aaa" font-size="10">  temperature (créativité)</text>
+                <text x="305" y="235" fill="#aaa" font-size="10">  max_tokens (limite)</text>
+                <text x="305" y="255" fill="#aaa" font-size="10">Méthodes : invoke, stream</text>
+                <text x="305" y="275" fill="#aaa" font-size="10">  batch, ainvoke...</text>
+
+                <!-- Arrow -->
+                <text x="520" y="175" fill="#ff6b35" font-size="24" font-weight="bold">|</text>
+
+                <!-- Layer 3: Parsers -->
+                <rect x="540" y="55" width="210" height="240" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="645" y="80" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Parsers</text>
+                <line x1="555" y1="88" x2="735" y2="88" stroke="#333" stroke-width="1"/>
+                <text x="560" y="110" fill="#aaa" font-size="10">StrOutputParser</text>
+                <text x="560" y="128" fill="#888" font-size="9">  → str (texte brut)</text>
+                <text x="560" y="150" fill="#aaa" font-size="10">JsonOutputParser</text>
+                <text x="560" y="168" fill="#888" font-size="9">  → dict (JSON parsé)</text>
+                <text x="560" y="190" fill="#aaa" font-size="10">PydanticOutputParser</text>
+                <text x="560" y="208" fill="#888" font-size="9">  → Pydantic Model (typé)</text>
+                <text x="560" y="235" fill="#569cd6" font-size="10">Alternative moderne :</text>
+                <text x="560" y="255" fill="#aaa" font-size="10">  .with_structured_output()</text>
+                <text x="560" y="275" fill="#888" font-size="9">  (function calling natif)</text>
+
+                <!-- Bottom label -->
+                <text x="390" y="318" text-anchor="middle" fill="#ff6b35" font-family="Courier New" font-size="12">chain = prompt | model | parser</text>
+            </svg>
+        </div>
+
+        <h3>Tableau récapitulatif des composants</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Composant</th>
+                    <th>Import</th>
+                    <th>Quand l'utiliser</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>ChatOpenAI</code></td>
+                    <td><code>langchain_openai</code></td>
+                    <td>Modèles OpenAI (gpt-4o, gpt-4o-mini)</td>
+                </tr>
+                <tr>
+                    <td><code>ChatAnthropic</code></td>
+                    <td><code>langchain_anthropic</code></td>
+                    <td>Modèles Claude (Sonnet, Haiku)</td>
+                </tr>
+                <tr>
+                    <td><code>ChatOllama</code></td>
+                    <td><code>langchain_ollama</code></td>
+                    <td>Modèles locaux (Llama, Mistral)</td>
+                </tr>
+                <tr>
+                    <td><code>PromptTemplate</code></td>
+                    <td><code>langchain_core.prompts</code></td>
+                    <td>Templates basiques (texte simple)</td>
+                </tr>
+                <tr>
+                    <td><code>ChatPromptTemplate</code></td>
+                    <td><code>langchain_core.prompts</code></td>
+                    <td>Templates pour ChatModels (recommandé)</td>
+                </tr>
+                <tr>
+                    <td><code>MessagesPlaceholder</code></td>
+                    <td><code>langchain_core.prompts</code></td>
+                    <td>Injecter l'historique de conversation</td>
+                </tr>
+                <tr>
+                    <td><code>FewShotChatMessagePromptTemplate</code></td>
+                    <td><code>langchain_core.prompts</code></td>
+                    <td>Exemples few-shot dynamiques</td>
+                </tr>
+                <tr>
+                    <td><code>StrOutputParser</code></td>
+                    <td><code>langchain_core.output_parsers</code></td>
+                    <td>Sortie en texte brut</td>
+                </tr>
+                <tr>
+                    <td><code>JsonOutputParser</code></td>
+                    <td><code>langchain_core.output_parsers</code></td>
+                    <td>Sortie en dictionnaire JSON</td>
+                </tr>
+                <tr>
+                    <td><code>PydanticOutputParser</code></td>
+                    <td><code>langchain_core.output_parsers</code></td>
+                    <td>Sortie en objet Pydantic typé</td>
+                </tr>
+                <tr>
+                    <td><code>.with_structured_output()</code></td>
+                    <td>Méthode du ChatModel</td>
+                    <td>Alternative moderne au PydanticOutputParser</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Guide de décision : quel parser choisir ?</h3>
+
+        <div class="concept-box">
+            <div class="step-box">
+                <strong>Vous avez besoin de texte libre ?</strong> → Utilisez <code>StrOutputParser</code>. C'est le défaut pour les chatbots, résumés, traductions.
+            </div>
+            <div class="step-box">
+                <strong>Vous avez besoin de données structurées simples ?</strong> → Utilisez <code>JsonOutputParser</code>. Idéal pour extraire des informations en format clé-valeur.
+            </div>
+            <div class="step-box">
+                <strong>Vous avez besoin de validation et typage fort ?</strong> → Utilisez <code>PydanticOutputParser</code> ou <code>.with_structured_output()</code>. Recommandé pour la production.
+            </div>
+            <div class="step-box">
+                <strong>Votre modèle supporte le function calling ?</strong> → Préférez <code>.with_structured_output()</code>. Plus fiable car utilise les capacités natives du LLM.
+            </div>
+        </div>
+
+        <h3>Checklist des concepts maîtrisés</h3>
+
+        <div class="concept-box green">
+            <ul>
+                <li>Instancier et configurer ChatOpenAI, ChatAnthropic, ChatOllama</li>
+                <li>Comprendre les paramètres : temperature, max_tokens, top_p, streaming</li>
+                <li>Utiliser les 4 méthodes Runnable : invoke, stream, batch, ainvoke</li>
+                <li>Structurer des conversations avec SystemMessage, HumanMessage, AIMessage</li>
+                <li>Créer des templates avec PromptTemplate et ChatPromptTemplate</li>
+                <li>Injecter l'historique avec MessagesPlaceholder</li>
+                <li>Parser les sorties avec StrOutputParser, JsonOutputParser, PydanticOutputParser</li>
+                <li>Utiliser .with_structured_output() pour du parsing natif</li>
+                <li>Construire des chaînes LCEL complètes (prompt | model | parser)</li>
+                <li>Appliquer le few-shot prompting avec FewShotChatMessagePromptTemplate</li>
+                <li>Préremplir des variables avec .partial()</li>
+            </ul>
+        </div>
+
+        <div class="prof-note">
+            Vous maîtrisez maintenant les fondations de LangChain. Avec les Models, les Prompts et les OutputParsers, vous pouvez déjà construire des applications LLM fonctionnelles. Dans le prochain cours, nous approfondirons <strong>LCEL et les Chains avancées</strong> : RunnablePassthrough, RunnableLambda, branchements conditionnels, gestion des erreurs et composition avancée de pipelines.
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="lc_01_introduction.html">← Cours Introduction</a>
+            <a href="lc_03_lcel_chains.html">Cours suivant : LCEL et Chains →</a>
+        </div>
+
+    </div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

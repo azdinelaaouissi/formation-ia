@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cours Complet RAG - Retrieval Augmented Generation</title>
+    <style>
+        /* ===== RESET & BASE ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #1a2235;
+            --bg-code: #0d1117;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-cyan: #06b6d4;
+            --accent-pink: #ec4899;
+            --border: #1e293b;
+            --gradient-1: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient-2: linear-gradient(135deg, #10b981, #06b6d4);
+            --gradient-3: linear-gradient(135deg, #f59e0b, #ef4444);
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 20px 0;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-header {
+            padding: 10px 20px 30px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+
+        .nav-header h2 {
+            font-size: 1.1rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-header p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav a:hover, .nav a.active {
+            color: var(--text-primary);
+            background: rgba(59, 130, 246, 0.08);
+            border-left-color: var(--accent-blue);
+        }
+
+        .nav a .nav-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: var(--bg-card);
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            flex-shrink: 0;
+        }
+
+        .nav-section-title {
+            padding: 15px 20px 5px;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main {
+            margin-left: 280px;
+            padding: 40px 60px 100px;
+            max-width: 1100px;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            text-align: center;
+            padding: 80px 40px;
+            background: linear-gradient(180deg, rgba(59,130,246,0.08) 0%, transparent 100%);
+            border-radius: var(--radius);
+            margin-bottom: 60px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(59,130,246,0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(139,92,246,0.06) 0%, transparent 50%);
+            animation: float 15s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-20px, -20px); }
+        }
+
+        .hero > * { position: relative; z-index: 1; }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: rgba(59,130,246,0.15);
+            border: 1px solid rgba(59,130,246,0.3);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat .num {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ===== SECTIONS ===== */
+        .section {
+            margin-bottom: 70px;
+            scroll-margin-top: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 30px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-num {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .section-num.blue { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+        .section-num.purple { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+        .section-num.green { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+        .section-num.orange { background: rgba(245,158,11,0.15); color: var(--accent-orange); }
+        .section-num.red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+        .section-num.cyan { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
+        .section-num.pink { background: rgba(236,72,153,0.15); color: var(--accent-pink); }
+
+        .section-header h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .section-header .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .card p, .card li {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .card ul, .card ol {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        .card li {
+            margin-bottom: 8px;
+        }
+
+        /* ===== INFO BOXES ===== */
+        .info-box {
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin: 20px 0;
+            border-left: 4px solid;
+            font-size: 0.9rem;
+        }
+
+        .info-box.tip {
+            background: rgba(16,185,129,0.08);
+            border-color: var(--accent-green);
+        }
+
+        .info-box.tip .info-title { color: var(--accent-green); }
+
+        .info-box.warning {
+            background: rgba(245,158,11,0.08);
+            border-color: var(--accent-orange);
+        }
+
+        .info-box.warning .info-title { color: var(--accent-orange); }
+
+        .info-box.important {
+            background: rgba(239,68,68,0.08);
+            border-color: var(--accent-red);
+        }
+
+        .info-box.important .info-title { color: var(--accent-red); }
+
+        .info-box.note {
+            background: rgba(59,130,246,0.08);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box.note .info-title { color: var(--accent-blue); }
+
+        .info-title {
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .info-box p { color: var(--text-secondary); }
+
+        /* ===== CODE BLOCKS ===== */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .code-dots span:nth-child(1) { background: var(--accent-red); }
+        .code-dots span:nth-child(2) { background: var(--accent-orange); }
+        .code-dots span:nth-child(3) { background: var(--accent-green); }
+
+        .code-block pre {
+            padding: 16px 20px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .code-block code {
+            font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+        }
+
+        .code-block .comment { color: #6a737d; }
+        .code-block .keyword { color: #ff7b72; }
+        .code-block .string { color: #a5d6ff; }
+        .code-block .function { color: #d2a8ff; }
+        .code-block .number { color: #79c0ff; }
+        .code-block .decorator { color: #ffa657; }
+
+        /* ===== GRID LAYOUTS ===== */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        /* ===== DIAGRAM / WORKFLOW ===== */
+        .workflow {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin: 30px 0;
+        }
+
+        .workflow-step {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            position: relative;
+            padding-bottom: 35px;
+        }
+
+        .workflow-step:last-child { padding-bottom: 0; }
+
+        .workflow-line {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .workflow-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+        }
+
+        .workflow-connector {
+            width: 2px;
+            flex: 1;
+            min-height: 30px;
+            background: var(--border);
+            margin-top: 4px;
+        }
+
+        .workflow-step:last-child .workflow-connector { display: none; }
+
+        .workflow-content {
+            flex: 1;
+            padding-top: 4px;
+        }
+
+        .workflow-content h4 {
+            font-size: 1.05rem;
+            margin-bottom: 6px;
+        }
+
+        .workflow-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* ===== COMPARISON TABLE ===== */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 14px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background: rgba(59,130,246,0.1);
+            color: var(--accent-blue);
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table td {
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.green { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+        .badge.red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+        .badge.blue { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+        .badge.orange { background: rgba(245,158,11,0.15); color: var(--accent-orange); }
+
+        /* ===== DIAGRAM SVG ===== */
+        .diagram-container {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px 30px;
+            margin: 25px 0;
+            text-align: center;
+            overflow-x: auto;
+        }
+
+        .diagram-container svg text {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        /* ===== PROGRESS TRACKER ===== */
+        .progress-track {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin: 30px 0;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .progress-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .progress-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .progress-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            max-width: 90px;
+        }
+
+        .progress-arrow {
+            width: 40px;
+            height: 2px;
+            background: var(--border);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .progress-arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: var(--border);
+        }
+
+        /* ===== ACCORDION ===== */
+        .accordion {
+            margin: 15px 0;
+        }
+
+        .accordion details {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .accordion summary {
+            padding: 16px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+
+        .accordion summary:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .accordion .details-content {
+            padding: 0 20px 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* ===== QUIZ SECTION ===== */
+        .quiz-question {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin: 15px 0;
+        }
+
+        .quiz-question h4 {
+            color: var(--accent-cyan);
+            margin-bottom: 14px;
+            font-size: 0.95rem;
+        }
+
+        .quiz-options label {
+            display: block;
+            padding: 10px 14px;
+            margin: 6px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .quiz-options label:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59,130,246,0.05);
+        }
+
+        .quiz-options input[type="radio"] {
+            margin-right: 10px;
+            accent-color: var(--accent-blue);
+        }
+
+        .quiz-answer {
+            display: none;
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 8px;
+            background: rgba(16,185,129,0.08);
+            border: 1px solid rgba(16,185,129,0.2);
+            font-size: 0.85rem;
+            color: var(--accent-green);
+        }
+
+        .quiz-btn {
+            margin-top: 12px;
+            padding: 8px 20px;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .quiz-btn:hover { opacity: 0.85; }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            margin-top: 60px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* ===== MOBILE NAV ===== */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 20px rgba(59,130,246,0.4);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .nav { transform: translateX(-100%); }
+            .nav.open { transform: translateX(0); }
+            .main { margin-left: 0; padding: 30px 20px 80px; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2rem; }
+            .mobile-toggle { display: flex; align-items: center; justify-content: center; }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section { animation: fadeInUp 0.5s ease-out; }
+
+        /* ===== HIGHLIGHT ===== */
+        .hl { color: var(--accent-blue); font-weight: 600; }
+        .hl-green { color: var(--accent-green); font-weight: 600; }
+        .hl-purple { color: var(--accent-purple); font-weight: 600; }
+        .hl-orange { color: var(--accent-orange); font-weight: 600; }
+
+        strong { color: var(--text-primary); }
+    </style>
+</head>
+<body>
+
+<!-- ===== NAVIGATION ===== -->
+<nav class="nav" id="nav">
+    <div class="nav-header">
+        <h2>Cours RAG</h2>
+        <p>Guide Complet pour Debutants</p>
+    </div>
+
+    <div class="nav-section-title">Introduction</div>
+    <a href="#intro"><span class="nav-num">1</span> C'est quoi le RAG ?</a>
+    <a href="#why-rag"><span class="nav-num">2</span> Pourquoi le RAG ?</a>
+    <a href="#analogie"><span class="nav-num">3</span> Analogie simple</a>
+
+    <div class="nav-section-title">Concepts Cles</div>
+    <a href="#composants"><span class="nav-num">4</span> Les composants</a>
+    <a href="#embeddings"><span class="nav-num">5</span> Les Embeddings</a>
+    <a href="#vector-db"><span class="nav-num">6</span> Base vectorielle</a>
+    <a href="#chunking"><span class="nav-num">7</span> Le Chunking</a>
+
+    <div class="nav-section-title">Le Workflow</div>
+    <a href="#workflow-complet"><span class="nav-num">8</span> Workflow complet</a>
+    <a href="#indexation"><span class="nav-num">9</span> Phase d'indexation</a>
+    <a href="#retrieval"><span class="nav-num">10</span> Phase de recherche</a>
+    <a href="#generation"><span class="nav-num">11</span> Phase de generation</a>
+
+    <div class="nav-section-title">Avance</div>
+    <a href="#outils"><span class="nav-num">12</span> Outils & Technologies</a>
+    <a href="#patterns"><span class="nav-num">13</span> Patterns avances</a>
+    <a href="#erreurs"><span class="nav-num">14</span> Erreurs courantes</a>
+    <a href="#comparaison"><span class="nav-num">15</span> RAG vs Fine-tuning</a>
+
+    <div class="nav-section-title">Pratique</div>
+    <a href="#quiz"><span class="nav-num">16</span> Quiz</a>
+    <a href="#next"><span class="nav-num">17</span> Prochaines etapes</a>
+</nav>
+
+<!-- Mobile toggle button -->
+<button class="mobile-toggle" id="mobileToggle" onclick="document.getElementById('nav').classList.toggle('open')">
+    &#9776;
+</button>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+
+    <!-- HERO -->
+    <div class="hero" id="top">
+        <span class="hero-badge">Cours Complet 2025</span>
+        <h1>RAG : Retrieval Augmented Generation</h1>
+        <p>Le guide ultime pour comprendre comment donner a une IA acces a <strong>vos propres donnees</strong>, de zero a expert.</p>
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="num">17</div>
+                <div class="label">Chapitres</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">100%</div>
+                <div class="label">En Francais</div>
+            </div>
+            <div class="hero-stat">
+                <div class="num">0</div>
+                <div class="label">Prerequis</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 1 : C'EST QUOI LE RAG ? -->
+    <!-- ======================================================= -->
+    <div class="section" id="intro">
+        <div class="section-header">
+            <div class="section-num blue">1</div>
+            <div>
+                <h2>C'est quoi le RAG ?</h2>
+                <div class="subtitle">Retrieval Augmented Generation - La definition</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Definition simple</h3>
+            <p><strong>RAG</strong> (Retrieval Augmented Generation) est une technique qui permet a un modele d'IA (comme ChatGPT ou Claude) d'aller <span class="hl">chercher des informations dans vos documents</span> avant de repondre a une question.</p>
+            <br>
+            <p>Au lieu de compter uniquement sur ce que l'IA a appris pendant son entrainement, on lui donne acces a <span class="hl-green">une base de connaissances externe</span> (vos fichiers, votre base de donnees, vos PDFs, etc.).</p>
+        </div>
+
+        <div class="card">
+            <h3>En 3 mots : Chercher + Lire + Repondre</h3>
+            <p>Le RAG fonctionne en 3 etapes simples :</p>
+            <ol>
+                <li><strong>Retrieval (Recherche)</strong> : L'IA cherche les informations pertinentes dans vos documents</li>
+                <li><strong>Augmented (Augmentation)</strong> : L'IA enrichit sa reponse avec ces informations trouvees</li>
+                <li><strong>Generation (Generation)</strong> : L'IA genere une reponse naturelle et precise</li>
+            </ol>
+        </div>
+
+        <div class="info-box note">
+            <div class="info-title">A retenir</div>
+            <p>Le RAG ne modifie pas l'IA elle-meme. Il lui donne simplement acces a des documents supplementaires au moment de la question. C'est comme donner un livre a quelqu'un avant de lui poser une question.</p>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 2 : POURQUOI LE RAG ? -->
+    <!-- ======================================================= -->
+    <div class="section" id="why-rag">
+        <div class="section-header">
+            <div class="section-num purple">2</div>
+            <div>
+                <h2>Pourquoi le RAG ?</h2>
+                <div class="subtitle">Les problemes que le RAG resout</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Les limites d'une IA classique (sans RAG)</h3>
+            <p>Les modeles de langage (LLM) comme ChatGPT ont des limitations importantes :</p>
+            <ul>
+                <li><strong>Connaissances figees</strong> : L'IA ne connait que ce qu'elle a appris pendant l'entrainement (date de coupure)</li>
+                <li><strong>Pas vos donnees</strong> : Elle ne connait pas vos documents internes, vos emails, votre base de donnees</li>
+                <li><strong>Hallucinations</strong> : Quand elle ne sait pas, elle invente des reponses qui semblent vraies</li>
+                <li><strong>Pas de sources</strong> : Impossible de verifier d'ou vient l'information</li>
+            </ul>
+        </div>
+
+        <div class="grid-2">
+            <div class="card" style="border-left: 3px solid var(--accent-red);">
+                <h3>Sans RAG</h3>
+                <ul>
+                    <li>Reponses generiques</li>
+                    <li>Pas acces a vos donnees</li>
+                    <li>Risque d'hallucinations</li>
+                    <li>Informations potentiellement obsoletes</li>
+                    <li>Impossible de citer les sources</li>
+                </ul>
+            </div>
+            <div class="card" style="border-left: 3px solid var(--accent-green);">
+                <h3>Avec RAG</h3>
+                <ul>
+                    <li>Reponses precises et contextuelles</li>
+                    <li>Acces a vos documents</li>
+                    <li>Reponses basees sur des faits</li>
+                    <li>Toujours a jour (vos documents)</li>
+                    <li>Sources citees et verifiables</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info-box tip">
+            <div class="info-title">Cas d'usage populaires</div>
+            <p>Chatbot pour votre entreprise, assistant medical, FAQ intelligente, recherche dans des documents juridiques, assistant code base sur votre documentation, support client automatise, etc.</p>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 3 : ANALOGIE SIMPLE -->
+    <!-- ======================================================= -->
+    <div class="section" id="analogie">
+        <div class="section-header">
+            <div class="section-num green">3</div>
+            <div>
+                <h2>Analogie simple</h2>
+                <div class="subtitle">Comprendre le RAG avec un exemple de la vie quotidienne</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>L'analogie de l'etudiant</h3>
+            <p>Imaginons un <strong>examen a livre ouvert</strong> :</p>
+            <br>
+
+            <div class="grid-2">
+                <div class="info-box note" style="margin: 0;">
+                    <div class="info-title">Sans RAG = Examen sans document</div>
+                    <p>L'etudiant repond <strong>uniquement de memoire</strong>. S'il ne se souvient pas, il devine (hallucination). Ses connaissances sont limitees a ce qu'il a revise.</p>
+                </div>
+                <div class="info-box tip" style="margin: 0;">
+                    <div class="info-title">Avec RAG = Examen a livre ouvert</div>
+                    <p>L'etudiant peut <strong>consulter ses notes et livres</strong> pour trouver l'info exacte. Il repond avec precision en citant ses sources.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Le processus detaille (l'etudiant avec ses livres)</h3>
+            <div class="workflow">
+                <div class="workflow-step">
+                    <div class="workflow-line">
+                        <div class="workflow-icon" style="background: rgba(59,130,246,0.15); color: var(--accent-blue);">?</div>
+                        <div class="workflow-connector"></div>
+                    </div>
+                    <div class="workflow-content">
+                        <h4>1. La question arrive</h4>
+                        <p>"Quelle est la posologie du paracetamol pour un adulte ?"</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-line">
+                        <div class="workflow-icon" style="background: rgba(245,158,11,0.15); color: var(--accent-orange);">&#128270;</div>
+                        <div class="workflow-connector"></div>
+                    </div>
+                    <div class="workflow-content">
+                        <h4>2. Recherche dans les documents</h4>
+                        <p>L'etudiant ouvre son livre de pharmacologie et cherche la page sur le paracetamol (= Retrieval)</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-line">
+                        <div class="workflow-icon" style="background: rgba(139,92,246,0.15); color: var(--accent-purple);">&#128218;</div>
+                        <div class="workflow-connector"></div>
+                    </div>
+                    <div class="workflow-content">
+                        <h4>3. Lecture des passages pertinents</h4>
+                        <p>Il lit les paragraphes sur la posologie adulte (= les "chunks" recuperes)</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-line">
+                        <div class="workflow-icon" style="background: rgba(16,185,129,0.15); color: var(--accent-green);">&#9997;</div>
+                    </div>
+                    <div class="workflow-content">
+                        <h4>4. Redaction de la reponse</h4>
+                        <p>Il redige une reponse claire et precise basee sur ce qu'il a lu (= Generation)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 4 : LES COMPOSANTS -->
+    <!-- ======================================================= -->
+    <div class="section" id="composants">
+        <div class="section-header">
+            <div class="section-num orange">4</div>
+            <div>
+                <h2>Les composants du RAG</h2>
+                <div class="subtitle">Les pieces du puzzle</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Les 5 composants essentiels</h3>
+            <p>Un systeme RAG est compose de 5 elements principaux qui travaillent ensemble :</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3>1. Les Documents Sources</h3>
+                <p>Vos donnees brutes : PDFs, fichiers texte, pages web, bases de donnees, emails, etc.</p>
+                <br>
+                <p>Ce sont les <span class="hl">informations que vous voulez rendre accessibles</span> a l'IA.</p>
+            </div>
+            <div class="card">
+                <h3>2. Le Modele d'Embedding</h3>
+                <p>Un modele special qui transforme le texte en <span class="hl-purple">vecteurs numeriques</span> (des listes de nombres).</p>
+                <br>
+                <p>Exemples : <code>text-embedding-ada-002</code> (OpenAI), <code>all-MiniLM-L6-v2</code> (gratuit)</p>
+            </div>
+            <div class="card">
+                <h3>3. La Base Vectorielle</h3>
+                <p>Une base de donnees speciale qui stocke les vecteurs et permet de chercher par <span class="hl-green">similarite semantique</span>.</p>
+                <br>
+                <p>Exemples : ChromaDB, Pinecone, FAISS, Weaviate</p>
+            </div>
+            <div class="card">
+                <h3>4. Le Retriever</h3>
+                <p>Le composant qui <span class="hl-orange">cherche et recupere</span> les documents les plus pertinents par rapport a la question.</p>
+                <br>
+                <p>Il utilise la base vectorielle pour trouver les "voisins les plus proches".</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>5. Le LLM (Large Language Model)</h3>
+            <p>Le cerveau final : le modele d'IA qui recoit la question + les documents trouves et genere la reponse finale en langage naturel.</p>
+            <p>Exemples : GPT-4, Claude, Llama, Mistral, etc.</p>
+        </div>
+
+        <div class="diagram-container">
+            <svg width="800" height="200" viewBox="0 0 800 200">
+                <!-- Documents -->
+                <rect x="10" y="60" width="120" height="80" rx="12" fill="rgba(59,130,246,0.15)" stroke="#3b82f6" stroke-width="1.5"/>
+                <text x="70" y="95" text-anchor="middle" fill="#3b82f6" font-size="12" font-weight="700">Documents</text>
+                <text x="70" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">PDF, TXT, DB...</text>
+
+                <!-- Arrow 1 -->
+                <line x1="130" y1="100" x2="170" y2="100" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+
+                <!-- Embedding -->
+                <rect x="170" y="60" width="120" height="80" rx="12" fill="rgba(139,92,246,0.15)" stroke="#8b5cf6" stroke-width="1.5"/>
+                <text x="230" y="95" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="700">Embedding</text>
+                <text x="230" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">Texte &rarr; Vecteurs</text>
+
+                <!-- Arrow 2 -->
+                <line x1="290" y1="100" x2="330" y2="100" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+
+                <!-- Vector DB -->
+                <rect x="330" y="60" width="120" height="80" rx="12" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="1.5"/>
+                <text x="390" y="95" text-anchor="middle" fill="#10b981" font-size="12" font-weight="700">Vector DB</text>
+                <text x="390" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">ChromaDB, FAISS</text>
+
+                <!-- Arrow 3 -->
+                <line x1="450" y1="100" x2="490" y2="100" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+
+                <!-- Retriever -->
+                <rect x="490" y="60" width="120" height="80" rx="12" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1.5"/>
+                <text x="550" y="95" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="700">Retriever</text>
+                <text x="550" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">Recherche</text>
+
+                <!-- Arrow 4 -->
+                <line x1="610" y1="100" x2="650" y2="100" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow)"/>
+
+                <!-- LLM -->
+                <rect x="650" y="60" width="120" height="80" rx="12" fill="rgba(239,68,68,0.15)" stroke="#ef4444" stroke-width="1.5"/>
+                <text x="710" y="95" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="700">LLM</text>
+                <text x="710" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">GPT-4, Claude</text>
+
+                <!-- Arrow marker -->
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 5 : LES EMBEDDINGS -->
+    <!-- ======================================================= -->
+    <div class="section" id="embeddings">
+        <div class="section-header">
+            <div class="section-num purple">5</div>
+            <div>
+                <h2>Les Embeddings</h2>
+                <div class="subtitle">Le concept le plus important a comprendre</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>C'est quoi un Embedding ?</h3>
+            <p>Un embedding, c'est la <span class="hl">transformation d'un texte en une liste de nombres</span> (un vecteur). Ces nombres representent le <strong>sens</strong> du texte dans un espace mathematique.</p>
+            <br>
+            <p>Pourquoi ? Parce qu'un ordinateur ne comprend pas les mots. Il comprend les nombres. Les embeddings permettent de comparer le <strong>sens</strong> de deux textes en comparant leurs nombres.</p>
+        </div>
+
+        <div class="card">
+            <h3>Exemple concret</h3>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <span>exemple_embedding.py</span>
+                </div>
+                <pre><code><span class="comment"># Le texte "Le chat dort" est transforme en vecteur :</span>
+<span class="string">"Le chat dort"</span>  &rarr;  [<span class="number">0.23</span>, <span class="number">-0.45</span>, <span class="number">0.89</span>, <span class="number">0.12</span>, <span class="number">-0.67</span>, ...]  <span class="comment"># 1536 nombres</span>
+
+<span class="comment"># "Le felin sommeille" (meme sens) donne un vecteur SIMILAIRE :</span>
+<span class="string">"Le felin sommeille"</span>  &rarr;  [<span class="number">0.22</span>, <span class="number">-0.44</span>, <span class="number">0.87</span>, <span class="number">0.13</span>, <span class="number">-0.65</span>, ...]
+
+<span class="comment"># "La voiture roule" (sens different) donne un vecteur DIFFERENT :</span>
+<span class="string">"La voiture roule"</span>  &rarr;  [<span class="number">-0.56</span>, <span class="number">0.78</span>, <span class="number">0.11</span>, <span class="number">-0.34</span>, <span class="number">0.92</span>, ...]</code></pre>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>La similarite cosinus</h3>
+            <p>Pour mesurer si deux textes sont <strong>proches en sens</strong>, on calcule la <span class="hl-purple">similarite cosinus</span> entre leurs vecteurs :</p>
+            <ul>
+                <li><strong>1.0</strong> = textes identiques en sens</li>
+                <li><strong>0.8 - 0.9</strong> = textes tres similaires</li>
+                <li><strong>0.5</strong> = textes vaguement lies</li>
+                <li><strong>0.0</strong> = aucun rapport</li>
+            </ul>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <span>similarite.py</span>
+                </div>
+                <pre><code><span class="keyword">from</span> sklearn.metrics.pairwise <span class="keyword">import</span> cosine_similarity
+
+<span class="comment"># Similarite entre "chat dort" et "felin sommeille"</span>
+similarity = <span class="function">cosine_similarity</span>(vec1, vec2)
+<span class="comment"># Resultat : 0.92 (tres similaire !)</span>
+
+<span class="comment"># Similarite entre "chat dort" et "voiture roule"</span>
+similarity = <span class="function">cosine_similarity</span>(vec1, vec3)
+<span class="comment"># Resultat : 0.15 (pas du tout similaire)</span></code></pre>
+            </div>
+        </div>
+
+        <div class="info-box important">
+            <div class="info-title">Point cle</div>
+            <p>Les embeddings capturent le <strong>SENS</strong>, pas juste les mots. "Docteur" et "Medecin" auront des vecteurs proches, meme si les mots sont differents. C'est ce qui rend la recherche semantique bien plus puissante que la recherche par mots-cles classique.</p>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 6 : BASE VECTORIELLE -->
+    <!-- ======================================================= -->
+    <div class="section" id="vector-db">
+        <div class="section-header">
+            <div class="section-num green">6</div>
+            <div>
+                <h2>La Base de Donnees Vectorielle</h2>
+                <div class="subtitle">Ou sont stockes les embeddings</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>C'est quoi une base vectorielle ?</h3>
+            <p>C'est une base de donnees specialisee pour stocker et rechercher des <span class="hl-green">vecteurs</span> (embeddings). Contrairement a une base SQL classique qui cherche par correspondance exacte, elle cherche par <strong>similarite</strong>.</p>
+        </div>
+
+        <div class="card">
+            <h3>Analogie : La bibliotheque intelligente</h3>
+            <p>Imaginez une bibliotheque ou les livres ne sont pas ranges par ordre alphabetique, mais par <strong>theme et sens</strong>. Les livres sur la cuisine sont tous proches les uns des autres. Un livre sur la "patisserie francaise" sera a cote de "desserts italiens" car ils sont thematiquement proches.</p>
+            <br>
+            <p>Quand vous cherchez "comment faire un gateau ?", le bibliothecaire (le retriever) ne cherche pas le mot exact "gateau" - il va dans la <strong>zone cuisine/patisserie</strong> et vous ramene les livres les plus pertinents.</p>
+        </div>
+
+        <div class="card">
+            <h3>Comparaison des bases vectorielles populaires</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Outil</th>
+                        <th>Type</th>
+                        <th>Difficulte</th>
+                        <th>Prix</th>
+                        <th>Ideal pour</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ChromaDB</strong></td>
+                        <td><span class="badge blue">Local</span></td>
+                        <td><span class="badge green">Facile</span></td>
+                        <td><span class="badge green">Gratuit</span></td>
+                        <td>Debutants, prototypage</td>
+                    </tr>
+                    <tr>
+                        <td><strong>FAISS</strong></td>
+                        <td><span class="badge blue">Local</span></td>
+                        <td><span class="badge orange">Moyen</span></td>
+                        <td><span class="badge green">Gratuit</span></td>
+                        <td>Performance, gros volumes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pinecone</strong></td>
+                        <td><span class="badge orange">Cloud</span></td>
+                        <td><span class="badge green">Facile</span></td>
+                        <td><span class="badge orange">Freemium</span></td>
+                        <td>Production, scalabilite</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Weaviate</strong></td>
+                        <td><span class="badge blue">Les deux</span></td>
+                        <td><span class="badge orange">Moyen</span></td>
+                        <td><span class="badge green">Gratuit</span></td>
+                        <td>Fonctionnalites avancees</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Qdrant</strong></td>
+                        <td><span class="badge blue">Les deux</span></td>
+                        <td><span class="badge orange">Moyen</span></td>
+                        <td><span class="badge green">Gratuit</span></td>
+                        <td>Rust, performance</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-box tip">
+            <div class="info-title">Recommandation debutant</div>
+            <p>Commence avec <strong>ChromaDB</strong>. C'est le plus simple a installer et utiliser. On l'utilisera dans notre projet pratique. <code>pip install chromadb</code> et c'est parti !</p>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 7 : LE CHUNKING -->
+    <!-- ======================================================= -->
+    <div class="section" id="chunking">
+        <div class="section-header">
+            <div class="section-num red">7</div>
+            <div>
+                <h2>Le Chunking (Decoupage)</h2>
+                <div class="subtitle">Comment decouper vos documents</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Pourquoi decouper ?</h3>
+            <p>Les documents sont souvent <strong>trop longs</strong> pour etre traites en une seule fois. On les decoupe en <span class="hl">morceaux (chunks)</span> plus petits pour :</p>
+            <ul>
+                <li>Que chaque morceau soit <strong>assez specifique</strong> pour etre pertinent</li>
+                <li>Respecter les <strong>limites de tokens</strong> du modele d'embedding</li>
+                <li>Avoir une <strong>recherche plus precise</strong> (trouver le bon paragraphe, pas tout le livre)</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>Les strategies de chunking</h3>
+
+            <div class="accordion">
+                <details>
+                    <summary>1. Chunking par taille fixe (le plus simple)</summary>
+                    <div class="details-content">
+                        <p>On decoupe le texte tous les N caracteres (ex: tous les 500 caracteres).</p>
+                        <ul>
+                            <li><strong>Avantage</strong> : Simple a implementer</li>
+                            <li><strong>Inconvenient</strong> : Peut couper une phrase en plein milieu</li>
+                        </ul>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span></span><span></span><span></span></div>
+                                <span>chunking_fixe.py</span>
+                            </div>
+                            <pre><code><span class="keyword">def</span> <span class="function">chunk_by_size</span>(text, chunk_size=<span class="number">500</span>, overlap=<span class="number">50</span>):
+    chunks = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">0</span>, <span class="function">len</span>(text), chunk_size - overlap):
+        chunks.<span class="function">append</span>(text[i:i + chunk_size])
+    <span class="keyword">return</span> chunks</code></pre>
+                        </div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>2. Chunking par separateur (recommande)</summary>
+                    <div class="details-content">
+                        <p>On decoupe a des points naturels : fins de paragraphes, titres, etc.</p>
+                        <ul>
+                            <li><strong>Avantage</strong> : Respecte la structure du texte</li>
+                            <li><strong>Inconvenient</strong> : Taille variable des chunks</li>
+                        </ul>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <div class="code-dots"><span></span><span></span><span></span></div>
+                                <span>chunking_separateur.py</span>
+                            </div>
+                            <pre><code><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">50</span>,
+    separators=[<span class="string">"\n\n"</span>, <span class="string">"\n"</span>, <span class="string">". "</span>, <span class="string">" "</span>]
+)
+
+chunks = splitter.<span class="function">split_text</span>(document_text)</code></pre>
+                        </div>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>3. Chunking semantique (avance)</summary>
+                    <div class="details-content">
+                        <p>On decoupe en fonction du <strong>sens</strong> du texte. Chaque chunk contient une idee complete.</p>
+                        <ul>
+                            <li><strong>Avantage</strong> : Meilleure qualite de retrieval</li>
+                            <li><strong>Inconvenient</strong> : Plus complexe, plus lent</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>L'overlap (chevauchement)</h3>
+            <p>L'overlap est une zone de <span class="hl-orange">chevauchement entre deux chunks consecutifs</span>. Il permet d'eviter de perdre du contexte aux frontieres.</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <span>overlap_illustration.txt</span>
+                </div>
+                <pre><code><span class="comment">Chunk 1 : [============================================]</span>
+<span class="comment">Chunk 2 :                                   [============================================]</span>
+<span class="comment">                                   ^^^^^^^^^^</span>
+<span class="comment">                                   = Overlap  </span>
+<span class="comment"></span>
+<span class="comment">Sans overlap : on risque de couper une info entre 2 chunks</span>
+<span class="comment">Avec overlap : l'info est presente dans les 2 chunks</span></code></pre>
+            </div>
+        </div>
+
+        <div class="info-box warning">
+            <div class="info-title">Bonnes pratiques</div>
+            <p><strong>chunk_size</strong> : 200-1000 caracteres (500 est un bon defaut).<br>
+            <strong>overlap</strong> : 10-20% de la taille du chunk.<br>
+            Trop petit = perte de contexte. Trop grand = bruit et lenteur.</p>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 8 : WORKFLOW COMPLET -->
+    <!-- ======================================================= -->
+    <div class="section" id="workflow-complet">
+        <div class="section-header">
+            <div class="section-num cyan">8</div>
+            <div>
+                <h2>Le Workflow Complet du RAG</h2>
+                <div class="subtitle">Vue d'ensemble de A a Z</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Les 2 grandes phases</h3>
+            <p>Un systeme RAG fonctionne en <strong>2 phases distinctes</strong> :</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="card" style="border-top: 3px solid var(--accent-blue);">
+                <h3>Phase 1 : Indexation (Offline)</h3>
+                <p>Preparation des documents. Se fait <strong>une seule fois</strong> (ou quand les documents changent).</p>
+                <ol>
+                    <li>Charger les documents</li>
+                    <li>Decouper en chunks</li>
+                    <li>Generer les embeddings</li>
+                    <li>Stocker dans la base vectorielle</li>
+                </ol>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--accent-green);">
+                <h3>Phase 2 : Requete (Online)</h3>
+                <p>Repondre aux questions. Se fait <strong>a chaque question</strong> de l'utilisateur.</p>
+                <ol>
+                    <li>Recevoir la question</li>
+                    <li>Convertir en embedding</li>
+                    <li>Chercher les chunks similaires</li>
+                    <li>Envoyer question + chunks au LLM</li>
+                    <li>Generer la reponse</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Grand diagramme workflow -->
+        <div class="diagram-container">
+            <svg width="780" height="520" viewBox="0 0 780 520">
+                <!-- Title Phase 1 -->
+                <text x="390" y="30" text-anchor="middle" fill="#3b82f6" font-size="16" font-weight="700">PHASE 1 : INDEXATION (une seule fois)</text>
+
+                <!-- Step 1: Documents -->
+                <rect x="20" y="55" width="160" height="65" rx="12" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+                <text x="100" y="82" text-anchor="middle" fill="#3b82f6" font-size="13" font-weight="700">Documents</text>
+                <text x="100" y="102" text-anchor="middle" fill="#94a3b8" font-size="10">PDF, TXT, CSV, Web</text>
+
+                <!-- Arrow -->
+                <line x1="180" y1="87" x2="215" y2="87" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+                <!-- Step 2: Chunking -->
+                <rect x="215" y="55" width="160" height="65" rx="12" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.5"/>
+                <text x="295" y="82" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700">Chunking</text>
+                <text x="295" y="102" text-anchor="middle" fill="#94a3b8" font-size="10">Decoupage en morceaux</text>
+
+                <!-- Arrow -->
+                <line x1="375" y1="87" x2="410" y2="87" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+                <!-- Step 3: Embedding -->
+                <rect x="410" y="55" width="160" height="65" rx="12" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6" stroke-width="1.5"/>
+                <text x="490" y="82" text-anchor="middle" fill="#8b5cf6" font-size="13" font-weight="700">Embedding</text>
+                <text x="490" y="102" text-anchor="middle" fill="#94a3b8" font-size="10">Texte &rarr; Vecteurs</text>
+
+                <!-- Arrow -->
+                <line x1="570" y1="87" x2="605" y2="87" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+                <!-- Step 4: Vector DB -->
+                <rect x="605" y="55" width="160" height="65" rx="12" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1.5"/>
+                <text x="685" y="82" text-anchor="middle" fill="#10b981" font-size="13" font-weight="700">Vector DB</text>
+                <text x="685" y="102" text-anchor="middle" fill="#94a3b8" font-size="10">Stockage vecteurs</text>
+
+                <!-- Separator -->
+                <line x1="30" y1="160" x2="750" y2="160" stroke="#1e293b" stroke-width="1" stroke-dasharray="8,4"/>
+
+                <!-- Title Phase 2 -->
+                <text x="390" y="195" text-anchor="middle" fill="#10b981" font-size="16" font-weight="700">PHASE 2 : REQUETE (a chaque question)</text>
+
+                <!-- User Question -->
+                <rect x="20" y="220" width="160" height="65" rx="12" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+                <text x="100" y="247" text-anchor="middle" fill="#06b6d4" font-size="13" font-weight="700">Question</text>
+                <text x="100" y="267" text-anchor="middle" fill="#94a3b8" font-size="10">"Quelle est la dose?"</text>
+
+                <!-- Arrow -->
+                <line x1="180" y1="252" x2="215" y2="252" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+                <!-- Query Embedding -->
+                <rect x="215" y="220" width="160" height="65" rx="12" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6" stroke-width="1.5"/>
+                <text x="295" y="247" text-anchor="middle" fill="#8b5cf6" font-size="13" font-weight="700">Embedding</text>
+                <text x="295" y="267" text-anchor="middle" fill="#94a3b8" font-size="10">Question &rarr; Vecteur</text>
+
+                <!-- Arrow -->
+                <line x1="375" y1="252" x2="410" y2="252" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+                <!-- Search -->
+                <rect x="410" y="220" width="160" height="65" rx="12" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1.5"/>
+                <text x="490" y="247" text-anchor="middle" fill="#10b981" font-size="13" font-weight="700">Recherche</text>
+                <text x="490" y="267" text-anchor="middle" fill="#94a3b8" font-size="10">Top K chunks</text>
+
+                <!-- Arrow down from Vector DB to Search -->
+                <line x1="685" y1="120" x2="685" y2="170" stroke="#64748b" stroke-width="1" stroke-dasharray="4,4"/>
+                <line x1="685" y1="170" x2="570" y2="240" stroke="#64748b" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrow2)"/>
+
+                <!-- Arrow down -->
+                <line x1="490" y1="285" x2="490" y2="330" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+                <!-- Prompt Construction -->
+                <rect x="310" y="330" width="360" height="65" rx="12" fill="rgba(236,72,153,0.12)" stroke="#ec4899" stroke-width="1.5"/>
+                <text x="490" y="355" text-anchor="middle" fill="#ec4899" font-size="13" font-weight="700">Construction du Prompt</text>
+                <text x="490" y="375" text-anchor="middle" fill="#94a3b8" font-size="10">Question + Contexte (chunks trouves) + Instructions</text>
+
+                <!-- Arrow down -->
+                <line x1="490" y1="395" x2="490" y2="430" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow2)"/>
+
+                <!-- LLM -->
+                <rect x="370" y="430" width="240" height="65" rx="12" fill="rgba(239,68,68,0.12)" stroke="#ef4444" stroke-width="1.5"/>
+                <text x="490" y="457" text-anchor="middle" fill="#ef4444" font-size="14" font-weight="700">LLM (GPT-4 / Claude)</text>
+                <text x="490" y="477" text-anchor="middle" fill="#94a3b8" font-size="10">Generation de la reponse finale</text>
+
+                <defs>
+                    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 9 : PHASE D'INDEXATION -->
+    <!-- ======================================================= -->
+    <div class="section" id="indexation">
+        <div class="section-header">
+            <div class="section-num blue">9</div>
+            <div>
+                <h2>Phase d'Indexation (Detail)</h2>
+                <div class="subtitle">Preparer vos documents pour le RAG</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Etape par etape avec du code</h3>
+            <p>Voici le code complet pour indexer des documents :</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <span>indexation.py</span>
+                </div>
+                <pre><code><span class="comment"># ===== ETAPE 1 : Installer les dependances =====</span>
+<span class="comment"># pip install langchain chromadb sentence-transformers</span>
+
+<span class="comment"># ===== ETAPE 2 : Charger les documents =====</span>
+<span class="keyword">from</span> langchain.document_loaders <span class="keyword">import</span> TextLoader, PyPDFLoader
+
+<span class="comment"># Charger un fichier texte</span>
+loader = <span class="function">TextLoader</span>(<span class="string">"mon_document.txt"</span>)
+documents = loader.<span class="function">load</span>()
+
+<span class="comment"># Ou charger un PDF</span>
+loader = <span class="function">PyPDFLoader</span>(<span class="string">"mon_fichier.pdf"</span>)
+documents = loader.<span class="function">load</span>()
+
+<span class="comment"># ===== ETAPE 3 : Decouper en chunks =====</span>
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">500</span>,       <span class="comment"># Taille max d'un chunk</span>
+    chunk_overlap=<span class="number">50</span>,     <span class="comment"># Chevauchement entre chunks</span>
+    separators=[<span class="string">"\n\n"</span>, <span class="string">"\n"</span>, <span class="string">". "</span>, <span class="string">" "</span>]
+)
+chunks = splitter.<span class="function">split_documents</span>(documents)
+<span class="function">print</span>(<span class="string">f"Nombre de chunks : <span class="keyword">{</span><span class="function">len</span>(chunks)<span class="keyword">}</span>"</span>)
+
+<span class="comment"># ===== ETAPE 4 : Creer les embeddings et stocker =====</span>
+<span class="keyword">from</span> langchain.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings
+<span class="keyword">from</span> langchain.vectorstores <span class="keyword">import</span> Chroma
+
+<span class="comment"># Modele d'embedding gratuit (tourne en local)</span>
+embeddings = <span class="function">HuggingFaceEmbeddings</span>(
+    model_name=<span class="string">"all-MiniLM-L6-v2"</span>
+)
+
+<span class="comment"># Creer la base vectorielle ChromaDB</span>
+vectorstore = Chroma.<span class="function">from_documents</span>(
+    documents=chunks,
+    embedding=embeddings,
+    persist_directory=<span class="string">"./ma_base_vectorielle"</span>
+)
+
+<span class="function">print</span>(<span class="string">"Indexation terminee !"</span>)</code></pre>
+            </div>
+        </div>
+
+        <div class="info-box tip">
+            <div class="info-title">Astuce</div>
+            <p>L'indexation se fait <strong>une seule fois</strong>. Ensuite, la base vectorielle est sauvegardee sur disque (<code>persist_directory</code>). Au prochain demarrage, il suffit de la recharger sans tout re-indexer.</p>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 10 : PHASE DE RECHERCHE -->
+    <!-- ======================================================= -->
+    <div class="section" id="retrieval">
+        <div class="section-header">
+            <div class="section-num orange">10</div>
+            <div>
+                <h2>Phase de Recherche (Retrieval)</h2>
+                <div class="subtitle">Trouver les bons documents</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Comment ca marche ?</h3>
+            <p>Quand l'utilisateur pose une question :</p>
+            <ol>
+                <li>La question est transformee en <strong>embedding</strong> (vecteur)</li>
+                <li>Ce vecteur est compare aux vecteurs stockes dans la base</li>
+                <li>Les <strong>K chunks les plus similaires</strong> sont retournes (Top-K)</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <h3>Code de la recherche</h3>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <span>recherche.py</span>
+                </div>
+                <pre><code><span class="comment"># Charger la base existante</span>
+vectorstore = <span class="function">Chroma</span>(
+    persist_directory=<span class="string">"./ma_base_vectorielle"</span>,
+    embedding_function=embeddings
+)
+
+<span class="comment"># Creer un retriever (chercheur)</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity"</span>,    <span class="comment"># Recherche par similarite</span>
+    search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>}       <span class="comment"># Retourner les 4 meilleurs chunks</span>
+)
+
+<span class="comment"># Rechercher</span>
+question = <span class="string">"Quelle est la posologie du paracetamol ?"</span>
+docs = retriever.<span class="function">get_relevant_documents</span>(question)
+
+<span class="comment"># Afficher les resultats</span>
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(docs):
+    <span class="function">print</span>(<span class="string">f"--- Chunk {i+1} ---"</span>)
+    <span class="function">print</span>(doc.page_content)
+    <span class="function">print</span>()</code></pre>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Le parametre K (Top-K)</h3>
+            <p>Le <span class="hl-orange">K</span> determine combien de chunks sont retournes :</p>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Valeur de K</th>
+                        <th>Avantage</th>
+                        <th>Inconvenient</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>K = 2-3</strong></td>
+                        <td>Rapide, moins de bruit</td>
+                        <td>Peut manquer des infos</td>
+                    </tr>
+                    <tr>
+                        <td><strong>K = 4-5</strong> (recommande)</td>
+                        <td>Bon equilibre</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>K = 8-10</strong></td>
+                        <td>Plus de contexte</td>
+                        <td>Plus de bruit, plus lent, plus cher</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 11 : PHASE DE GENERATION -->
+    <!-- ======================================================= -->
+    <div class="section" id="generation">
+        <div class="section-header">
+            <div class="section-num pink">11</div>
+            <div>
+                <h2>Phase de Generation</h2>
+                <div class="subtitle">Construire le prompt et generer la reponse</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Le Prompt Template</h3>
+            <p>C'est ici que la magie opere. On construit un prompt qui contient :</p>
+            <ul>
+                <li>Les <strong>instructions</strong> pour l'IA</li>
+                <li>Le <strong>contexte</strong> (les chunks trouves)</li>
+                <li>La <strong>question</strong> de l'utilisateur</li>
+            </ul>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <span>prompt_template.py</span>
+                </div>
+                <pre><code>prompt_template = <span class="string">"""
+Tu es un assistant specialise. Reponds a la question en te basant
+UNIQUEMENT sur le contexte fourni ci-dessous. Si tu ne trouves pas
+la reponse dans le contexte, dis "Je n'ai pas trouve cette information
+dans les documents disponibles."
+
+CONTEXTE :
+{context}
+
+QUESTION : {question}
+
+REPONSE :
+"""</span></code></pre>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Code complet de la generation</h3>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><span></span><span></span><span></span></div>
+                    <span>generation.py</span>
+                </div>
+                <pre><code><span class="keyword">from</span> langchain.chat_models <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain.chains <span class="keyword">import</span> RetrievalQA
+<span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> PromptTemplate
+
+<span class="comment"># 1. Le modele LLM</span>
+llm = <span class="function">ChatOpenAI</span>(
+    model_name=<span class="string">"gpt-4"</span>,
+    temperature=<span class="number">0</span>    <span class="comment"># 0 = reponses deterministes</span>
+)
+
+<span class="comment"># 2. Le template du prompt</span>
+prompt = <span class="function">PromptTemplate</span>(
+    template=prompt_template,
+    input_variables=[<span class="string">"context"</span>, <span class="string">"question"</span>]
+)
+
+<span class="comment"># 3. La chaine RAG complete</span>
+rag_chain = <span class="function">RetrievalQA.from_chain_type</span>(
+    llm=llm,
+    chain_type=<span class="string">"stuff"</span>,              <span class="comment"># Methode simple</span>
+    retriever=retriever,
+    chain_type_kwargs={<span class="string">"prompt"</span>: prompt},
+    return_source_documents=<span class="keyword">True</span>     <span class="comment"># Retourner les sources</span>
+)
+
+<span class="comment"># 4. Poser une question</span>
+result = <span class="function">rag_chain</span>({<span class="string">"query"</span>: <span class="string">"Quelle est la posologie du paracetamol ?"</span>})
+
+<span class="function">print</span>(<span class="string">"Reponse :"</span>, result[<span class="string">"result"</span>])
+<span class="function">print</span>(<span class="string">"Sources :"</span>, [doc.metadata <span class="keyword">for</span> doc <span class="keyword">in</span> result[<span class="string">"source_documents"</span>]])</code></pre>
+            </div>
+        </div>
+
+        <div class="info-box important">
+            <div class="info-title">Les chain types</div>
+            <p><strong>stuff</strong> : Met tous les chunks dans le prompt (simple, fonctionne pour la plupart des cas).<br>
+            <strong>map_reduce</strong> : Traite chaque chunk separement puis combine (pour de gros volumes).<br>
+            <strong>refine</strong> : Ameliore la reponse iterativement avec chaque chunk.<br>
+            Pour debuter, <strong>stuff</strong> suffit amplement.</p>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 12 : OUTILS & TECHNOLOGIES -->
+    <!-- ======================================================= -->
+    <div class="section" id="outils">
+        <div class="section-header">
+            <div class="section-num cyan">12</div>
+            <div>
+                <h2>Outils & Technologies</h2>
+                <div class="subtitle">L'ecosysteme RAG en 2025</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Les frameworks principaux</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Framework</th>
+                        <th>Description</th>
+                        <th>Difficulte</th>
+                        <th>Pour qui ?</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>LangChain</strong></td>
+                        <td>Le plus populaire. Enchainement de composants IA.</td>
+                        <td><span class="badge green">Facile</span></td>
+                        <td>Debutants, prototypage rapide</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LlamaIndex</strong></td>
+                        <td>Specialise RAG. Gestion avancee des documents.</td>
+                        <td><span class="badge green">Facile</span></td>
+                        <td>Projets centres sur les documents</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Haystack</strong></td>
+                        <td>Framework complet pour la recherche.</td>
+                        <td><span class="badge orange">Moyen</span></td>
+                        <td>Production, recherche avancee</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Custom (sans framework)</strong></td>
+                        <td>Tout coder soi-meme avec les APIs.</td>
+                        <td><span class="badge red">Difficile</span></td>
+                        <td>Controle total, apprentissage</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Les modeles d'embedding</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Modele</th>
+                        <th>Fournisseur</th>
+                        <th>Prix</th>
+                        <th>Qualite</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>text-embedding-3-small</strong></td>
+                        <td>OpenAI</td>
+                        <td><span class="badge orange">Payant</span></td>
+                        <td><span class="badge green">Excellente</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>all-MiniLM-L6-v2</strong></td>
+                        <td>HuggingFace</td>
+                        <td><span class="badge green">Gratuit</span></td>
+                        <td><span class="badge green">Bonne</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>BGE-large-en</strong></td>
+                        <td>BAAI</td>
+                        <td><span class="badge green">Gratuit</span></td>
+                        <td><span class="badge green">Tres bonne</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>nomic-embed-text</strong></td>
+                        <td>Nomic</td>
+                        <td><span class="badge green">Gratuit</span></td>
+                        <td><span class="badge green">Tres bonne</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-box tip">
+            <div class="info-title">Notre stack pour le projet</div>
+            <p>On utilisera : <strong>Python</strong> + <strong>LangChain</strong> + <strong>ChromaDB</strong> + <strong>HuggingFace Embeddings</strong> (tout gratuit et en local). Pour le LLM, on pourra utiliser l'API OpenAI ou un modele local avec Ollama.</p>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 13 : PATTERNS AVANCES -->
+    <!-- ======================================================= -->
+    <div class="section" id="patterns">
+        <div class="section-header">
+            <div class="section-num purple">13</div>
+            <div>
+                <h2>Patterns Avances</h2>
+                <div class="subtitle">Pour aller plus loin</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Les differentes variantes du RAG</h3>
+        </div>
+
+        <div class="accordion">
+            <details>
+                <summary>1. Naive RAG (le basique)</summary>
+                <div class="details-content">
+                    <p>C'est le RAG simple que nous avons vu : Indexation &rarr; Retrieval &rarr; Generation.</p>
+                    <p><strong>Quand l'utiliser</strong> : Projets simples, prototypage, documents de taille moderee.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>2. Advanced RAG (pre et post-retrieval)</summary>
+                <div class="details-content">
+                    <p>Ajoute des etapes d'amelioration :</p>
+                    <ul>
+                        <li><strong>Pre-retrieval</strong> : Reformulation de la question (query rewriting), expansion de la requete</li>
+                        <li><strong>Post-retrieval</strong> : Re-ranking des resultats, filtrage, compression du contexte</li>
+                    </ul>
+                    <p><strong>Quand l'utiliser</strong> : Quand le Naive RAG ne donne pas assez de precision.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>3. Modular RAG (composants modulaires)</summary>
+                <div class="details-content">
+                    <p>Architecture flexible ou chaque composant est independant et interchangeable :</p>
+                    <ul>
+                        <li>Routing : diriger la question vers la bonne source</li>
+                        <li>Multi-source : chercher dans plusieurs bases</li>
+                        <li>Feedback loop : ameliorer les resultats automatiquement</li>
+                    </ul>
+                    <p><strong>Quand l'utiliser</strong> : Systemes complexes en production.</p>
+                </div>
+            </details>
+
+            <details>
+                <summary>4. RAG avec Re-Ranking</summary>
+                <div class="details-content">
+                    <p>Apres la recherche initiale, un <strong>modele de re-ranking</strong> reordonne les resultats pour mettre les plus pertinents en premier.</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><span></span><span></span><span></span></div>
+                            <span>reranking.py</span>
+                        </div>
+                        <pre><code><span class="comment"># Exemple avec un re-ranker</span>
+<span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> CrossEncoder
+
+reranker = <span class="function">CrossEncoder</span>(<span class="string">"cross-encoder/ms-marco-MiniLM-L-6-v2"</span>)
+
+<span class="comment"># Recuperer 20 chunks, puis garder les 5 meilleurs</span>
+initial_docs = retriever.<span class="function">get_relevant_documents</span>(query, k=<span class="number">20</span>)
+scores = reranker.<span class="function">predict</span>([
+    (query, doc.page_content) <span class="keyword">for</span> doc <span class="keyword">in</span> initial_docs
+])
+<span class="comment"># Trier par score et garder le top 5</span></code></pre>
+                    </div>
+                </div>
+            </details>
+
+            <details>
+                <summary>5. Hybrid Search (Vectoriel + Mots-cles)</summary>
+                <div class="details-content">
+                    <p>Combine la <strong>recherche semantique</strong> (vecteurs) avec la <strong>recherche par mots-cles</strong> (BM25) pour de meilleurs resultats.</p>
+                    <ul>
+                        <li>Recherche vectorielle : trouve les documents par sens</li>
+                        <li>BM25 : trouve les documents par mots-cles exacts</li>
+                        <li>Fusion : combine les deux resultats</li>
+                    </ul>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 14 : ERREURS COURANTES -->
+    <!-- ======================================================= -->
+    <div class="section" id="erreurs">
+        <div class="section-header">
+            <div class="section-num red">14</div>
+            <div>
+                <h2>Erreurs Courantes</h2>
+                <div class="subtitle">Les pieges a eviter</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3 style="color: var(--accent-red);">Chunk trop gros</h3>
+                <p>Si vos chunks sont trop grands (ex: 5000 caracteres), la recherche sera imprecise. L'IA recevra trop de bruit.</p>
+                <br>
+                <p><strong>Solution</strong> : Gardez des chunks entre 200-1000 caracteres.</p>
+            </div>
+            <div class="card">
+                <h3 style="color: var(--accent-red);">Chunk trop petit</h3>
+                <p>Si vos chunks sont trop petits (ex: 50 caracteres), ils manqueront de contexte. L'IA ne pourra pas comprendre.</p>
+                <br>
+                <p><strong>Solution</strong> : Utilisez l'overlap et assurez-vous que chaque chunk est comprehensible seul.</p>
+            </div>
+            <div class="card">
+                <h3 style="color: var(--accent-red);">Pas de metadata</h3>
+                <p>Stocker les chunks sans metadata (source, page, date) rend impossible le tracage des sources.</p>
+                <br>
+                <p><strong>Solution</strong> : Ajoutez toujours source, page, date dans les metadata.</p>
+            </div>
+            <div class="card">
+                <h3 style="color: var(--accent-red);">Mauvais prompt</h3>
+                <p>Un prompt qui ne dit pas "base-toi sur le contexte" laisse l'IA inventer des reponses.</p>
+                <br>
+                <p><strong>Solution</strong> : Instruisez clairement l'IA de se baser sur le contexte fourni.</p>
+            </div>
+            <div class="card">
+                <h3 style="color: var(--accent-red);">K trop eleve</h3>
+                <p>Recuperer 20 chunks alors que 4 suffisent ajoute du bruit et augmente les couts.</p>
+                <br>
+                <p><strong>Solution</strong> : Commencez avec K=4, ajustez si necessaire.</p>
+            </div>
+            <div class="card">
+                <h3 style="color: var(--accent-red);">Embedding mal choisi</h3>
+                <p>Utiliser un embedding anglais pour des documents francais reduit la qualite.</p>
+                <br>
+                <p><strong>Solution</strong> : Choisissez un modele multilingue ou adapte a votre langue.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 15 : RAG vs FINE-TUNING -->
+    <!-- ======================================================= -->
+    <div class="section" id="comparaison">
+        <div class="section-header">
+            <div class="section-num orange">15</div>
+            <div>
+                <h2>RAG vs Fine-tuning</h2>
+                <div class="subtitle">Quelle approche choisir ?</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Comparaison detaillee</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Critere</th>
+                        <th>RAG</th>
+                        <th>Fine-tuning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Principe</strong></td>
+                        <td>Donne des documents a l'IA au moment de la question</td>
+                        <td>Re-entraine l'IA sur vos donnees</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mise a jour</strong></td>
+                        <td><span class="badge green">Facile</span> - ajouter des documents</td>
+                        <td><span class="badge red">Difficile</span> - re-entrainer le modele</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cout</strong></td>
+                        <td><span class="badge green">Faible</span> - base vectorielle</td>
+                        <td><span class="badge red">Eleve</span> - GPU, temps</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Precision</strong></td>
+                        <td><span class="badge green">Haute</span> - cite les sources</td>
+                        <td><span class="badge orange">Variable</span> - peut halluciner</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Transparence</strong></td>
+                        <td><span class="badge green">Oui</span> - on voit les sources</td>
+                        <td><span class="badge red">Non</span> - boite noire</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Complexite</strong></td>
+                        <td><span class="badge green">Simple</span></td>
+                        <td><span class="badge red">Complexe</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ideal pour</strong></td>
+                        <td>Questions-reponses sur documents, FAQ, support</td>
+                        <td>Changer le style/comportement de l'IA</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-box note">
+            <div class="info-title">En resume</div>
+            <p><strong>RAG</strong> = "Donner un livre a l'IA" (rapide, pas cher, mis a jour facilement).<br>
+            <strong>Fine-tuning</strong> = "Renvoyer l'IA a l'ecole" (long, couteux, mais modifie l'IA en profondeur).<br>
+            <br>
+            <strong>Dans 90% des cas, le RAG est la meilleure solution.</strong> On peut aussi combiner les deux.</p>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 16 : QUIZ -->
+    <!-- ======================================================= -->
+    <div class="section" id="quiz">
+        <div class="section-header">
+            <div class="section-num cyan">16</div>
+            <div>
+                <h2>Quiz - Teste tes connaissances</h2>
+                <div class="subtitle">Verifie que tu as tout compris</div>
+            </div>
+        </div>
+
+        <div class="quiz-question" id="q1">
+            <h4>Question 1 : Que signifie RAG ?</h4>
+            <div class="quiz-options">
+                <label><input type="radio" name="q1" value="a"> Random Automated Generation</label>
+                <label><input type="radio" name="q1" value="b"> Retrieval Augmented Generation</label>
+                <label><input type="radio" name="q1" value="c"> Rapid AI Generation</label>
+            </div>
+            <button class="quiz-btn" onclick="checkQuiz('q1', 'b', 'Correct ! RAG = Retrieval Augmented Generation. On recupere (Retrieval) des informations pour augmenter (Augmented) la generation de reponses.')">Verifier</button>
+            <div class="quiz-answer" id="q1-answer"></div>
+        </div>
+
+        <div class="quiz-question" id="q2">
+            <h4>Question 2 : Quel est le role de l'embedding ?</h4>
+            <div class="quiz-options">
+                <label><input type="radio" name="q2" value="a"> Compresser les fichiers PDF</label>
+                <label><input type="radio" name="q2" value="b"> Transformer le texte en vecteurs numeriques</label>
+                <label><input type="radio" name="q2" value="c"> Traduire le texte en anglais</label>
+            </div>
+            <button class="quiz-btn" onclick="checkQuiz('q2', 'b', 'Correct ! L\'embedding transforme le texte en vecteurs (listes de nombres) qui representent le sens du texte. Cela permet de comparer le sens de deux textes mathematiquement.')">Verifier</button>
+            <div class="quiz-answer" id="q2-answer"></div>
+        </div>
+
+        <div class="quiz-question" id="q3">
+            <h4>Question 3 : Pourquoi decoupe-t-on les documents en chunks ?</h4>
+            <div class="quiz-options">
+                <label><input type="radio" name="q3" value="a"> Pour economiser de l'espace disque</label>
+                <label><input type="radio" name="q3" value="b"> Pour avoir une recherche plus precise et respecter les limites du modele</label>
+                <label><input type="radio" name="q3" value="c"> Parce que les LLM ne lisent que 10 mots a la fois</label>
+            </div>
+            <button class="quiz-btn" onclick="checkQuiz('q3', 'b', 'Correct ! Le chunking permet une recherche plus precise (trouver le bon paragraphe) et respecte les limites de tokens des modeles d\'embedding.')">Verifier</button>
+            <div class="quiz-answer" id="q3-answer"></div>
+        </div>
+
+        <div class="quiz-question" id="q4">
+            <h4>Question 4 : Combien de phases principales a le workflow RAG ?</h4>
+            <div class="quiz-options">
+                <label><input type="radio" name="q4" value="a"> 1 : la generation</label>
+                <label><input type="radio" name="q4" value="b"> 2 : indexation (offline) et requete (online)</label>
+                <label><input type="radio" name="q4" value="c"> 5 : lecture, parsing, embedding, recherche, generation</label>
+            </div>
+            <button class="quiz-btn" onclick="checkQuiz('q4', 'b', 'Correct ! Le RAG a 2 grandes phases : l\'indexation (preparer les documents, une seule fois) et la requete (repondre aux questions, a chaque question).')">Verifier</button>
+            <div class="quiz-answer" id="q4-answer"></div>
+        </div>
+
+        <div class="quiz-question" id="q5">
+            <h4>Question 5 : Quel outil est recommande pour debuter avec une base vectorielle ?</h4>
+            <div class="quiz-options">
+                <label><input type="radio" name="q5" value="a"> PostgreSQL</label>
+                <label><input type="radio" name="q5" value="b"> ChromaDB</label>
+                <label><input type="radio" name="q5" value="c"> MongoDB</label>
+            </div>
+            <button class="quiz-btn" onclick="checkQuiz('q5', 'b', 'Correct ! ChromaDB est le plus simple pour debuter : gratuit, local, et s\'installe en une ligne (pip install chromadb).')">Verifier</button>
+            <div class="quiz-answer" id="q5-answer"></div>
+        </div>
+
+        <div class="quiz-question" id="q6">
+            <h4>Question 6 : Quelle est la difference entre RAG et Fine-tuning ?</h4>
+            <div class="quiz-options">
+                <label><input type="radio" name="q6" value="a"> RAG donne des documents a l'IA, Fine-tuning re-entraine l'IA</label>
+                <label><input type="radio" name="q6" value="b"> C'est la meme chose</label>
+                <label><input type="radio" name="q6" value="c"> RAG est plus cher que le Fine-tuning</label>
+            </div>
+            <button class="quiz-btn" onclick="checkQuiz('q6', 'a', 'Correct ! RAG = donner un livre a l\'IA au moment de la question. Fine-tuning = renvoyer l\'IA a l\'ecole pour apprendre de nouvelles choses. Le RAG est plus simple et moins cher.')">Verifier</button>
+            <div class="quiz-answer" id="q6-answer"></div>
+        </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 17 : PROCHAINES ETAPES -->
+    <!-- ======================================================= -->
+    <div class="section" id="next">
+        <div class="section-header">
+            <div class="section-num green">17</div>
+            <div>
+                <h2>Prochaines etapes</h2>
+                <div class="subtitle">On passe a la pratique !</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Recapitulatif de ce que tu as appris</h3>
+            <ul>
+                <li><strong>RAG</strong> = Retrieval Augmented Generation (Rechercher + Augmenter + Generer)</li>
+                <li>Les <strong>embeddings</strong> transforment le texte en vecteurs pour comparer le sens</li>
+                <li>La <strong>base vectorielle</strong> stocke et recherche ces vecteurs</li>
+                <li>Le <strong>chunking</strong> decoupe les documents en morceaux digestibles</li>
+                <li>Le <strong>workflow</strong> a 2 phases : indexation (une fois) et requete (a chaque question)</li>
+                <li>Le <strong>prompt</strong> combine question + contexte pour guider l'IA</li>
+            </ul>
+        </div>
+
+        <div class="card" style="border: 2px solid var(--accent-green); background: rgba(16,185,129,0.05);">
+            <h3 style="color: var(--accent-green);">Notre projet pratique : Ce qu'on va construire</h3>
+            <p>Maintenant, on va construire un <strong>systeme RAG complet from scratch</strong>, etape par etape :</p>
+            <br>
+            <div class="workflow">
+                <div class="workflow-step">
+                    <div class="workflow-line">
+                        <div class="workflow-icon" style="background: rgba(59,130,246,0.15); color: var(--accent-blue);">1</div>
+                        <div class="workflow-connector"></div>
+                    </div>
+                    <div class="workflow-content">
+                        <h4>Etape 1 : Environnement</h4>
+                        <p>Installer Python, les bibliotheques, et preparer le dossier de travail</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-line">
+                        <div class="workflow-icon" style="background: rgba(139,92,246,0.15); color: var(--accent-purple);">2</div>
+                        <div class="workflow-connector"></div>
+                    </div>
+                    <div class="workflow-content">
+                        <h4>Etape 2 : Donnees reelles</h4>
+                        <p>Charger de vrais documents (PDF, texte, CSV)</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-line">
+                        <div class="workflow-icon" style="background: rgba(16,185,129,0.15); color: var(--accent-green);">3</div>
+                        <div class="workflow-connector"></div>
+                    </div>
+                    <div class="workflow-content">
+                        <h4>Etape 3 : Indexation</h4>
+                        <p>Chunking + Embedding + Stockage dans ChromaDB</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-line">
+                        <div class="workflow-icon" style="background: rgba(245,158,11,0.15); color: var(--accent-orange);">4</div>
+                        <div class="workflow-connector"></div>
+                    </div>
+                    <div class="workflow-content">
+                        <h4>Etape 4 : Recherche & Generation</h4>
+                        <p>Construire le pipeline de questions-reponses</p>
+                    </div>
+                </div>
+                <div class="workflow-step">
+                    <div class="workflow-line">
+                        <div class="workflow-icon" style="background: rgba(239,68,68,0.15); color: var(--accent-red);">5</div>
+                    </div>
+                    <div class="workflow-content">
+                        <h4>Etape 5 : Interface</h4>
+                        <p>Ajouter une interface web pour interagir avec le systeme</p>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <p style="text-align: center; font-size: 1.1rem;"><strong>Dis-moi quand tu es pret, et on commence l'Etape 1 !</strong></p>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <p>Cours RAG - Retrieval Augmented Generation | Cree en 2025</p>
+        <p style="margin-top: 8px;">De zero a expert, etape par etape.</p>
+    </div>
+
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+    // Quiz checker
+    function checkQuiz(qId, correctAnswer, explanation) {
+        const selected = document.querySelector(`input[name="${qId}"]:checked`);
+        const answerDiv = document.getElementById(`${qId}-answer`);
+
+        if (!selected) {
+            answerDiv.style.display = 'block';
+            answerDiv.style.background = 'rgba(245,158,11,0.08)';
+            answerDiv.style.borderColor = 'rgba(245,158,11,0.2)';
+            answerDiv.style.color = '#f59e0b';
+            answerDiv.textContent = 'Selectionne une reponse d\'abord !';
+            return;
+        }
+
+        answerDiv.style.display = 'block';
+
+        if (selected.value === correctAnswer) {
+            answerDiv.style.background = 'rgba(16,185,129,0.08)';
+            answerDiv.style.borderColor = 'rgba(16,185,129,0.2)';
+            answerDiv.style.color = '#10b981';
+            answerDiv.textContent = explanation;
+        } else {
+            answerDiv.style.background = 'rgba(239,68,68,0.08)';
+            answerDiv.style.borderColor = 'rgba(239,68,68,0.2)';
+            answerDiv.style.color = '#ef4444';
+            answerDiv.textContent = 'Mauvaise reponse ! Relis la section correspondante et reessaie.';
+        }
+    }
+
+    // Active nav link on scroll
+    const sections = document.querySelectorAll('.section');
+    const navLinks = document.querySelectorAll('.nav a');
+
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (window.scrollY >= sectionTop - 100) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    });
+
+    // Close mobile nav on link click
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            document.getElementById('nav').classList.remove('open');
+        });
+    });
+</script>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

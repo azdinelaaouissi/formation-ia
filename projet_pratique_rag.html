@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projet Pratique RAG - Chaque Ligne Expliquee</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #080c14;
+            --bg2: #0e1525;
+            --bg3: #151f33;
+            --bg-code: #0b1018;
+            --text: #e2e8f0;
+            --text2: #94a3b8;
+            --text3: #64748b;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --cyan: #06b6d4;
+            --pink: #ec4899;
+            --lime: #84cc16;
+            --border: #1e293b;
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.75;
+            font-size: 16px;
+        }
+
+        /* === NAV === */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 20px 0;
+        }
+
+        .nav-head {
+            padding: 10px 20px 25px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+
+        .nav-head h2 {
+            font-size: 1rem;
+            background: linear-gradient(135deg, var(--green), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-head p { font-size: 0.7rem; color: var(--text3); margin-top: 4px; }
+
+        .nav-label {
+            padding: 14px 20px 4px;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text3);
+            font-weight: 700;
+        }
+
+        .nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 20px;
+            color: var(--text2);
+            text-decoration: none;
+            font-size: 0.82rem;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav a:hover {
+            color: var(--text);
+            background: rgba(16,185,129,0.06);
+            border-left-color: var(--green);
+        }
+
+        .nav a .n {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            background: var(--bg3);
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* === MAIN === */
+        .main {
+            margin-left: 280px;
+            padding: 40px 55px 100px;
+            max-width: 1100px;
+        }
+
+        /* === HERO === */
+        .hero {
+            text-align: center;
+            padding: 70px 40px;
+            background: linear-gradient(180deg, rgba(16,185,129,0.08) 0%, transparent 100%);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 60px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 20px;
+            font-size: 0.78rem;
+            color: var(--green);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, var(--green), var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p { font-size: 1.1rem; color: var(--text2); max-width: 650px; margin: 0 auto; }
+
+        /* === SECTION === */
+        .section { margin-bottom: 65px; scroll-margin-top: 30px; }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sn {
+            width: 46px;
+            height: 46px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .section-head h2 { font-size: 1.5rem; }
+        .section-head .sub { font-size: 0.82rem; color: var(--text3); }
+
+        /* === CARD === */
+        .card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 26px;
+            margin-bottom: 18px;
+        }
+
+        .card h3 { font-size: 1.1rem; margin-bottom: 10px; }
+        .card p, .card li { color: var(--text2); font-size: 0.93rem; }
+        .card ul, .card ol { padding-left: 20px; margin: 10px 0; }
+        .card li { margin-bottom: 6px; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+        /* === CODE BLOCK === */
+        .code {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 18px 0;
+            overflow: hidden;
+        }
+
+        .code-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 14px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.72rem;
+            color: var(--text3);
+        }
+
+        .dots { display: flex; gap: 5px; }
+        .dots span { width: 9px; height: 9px; border-radius: 50%; }
+        .dots span:nth-child(1) { background: var(--red); }
+        .dots span:nth-child(2) { background: var(--orange); }
+        .dots span:nth-child(3) { background: var(--green); }
+
+        .code pre {
+            padding: 14px 18px;
+            overflow-x: auto;
+            font-size: 0.83rem;
+            line-height: 1.65;
+        }
+
+        .code code {
+            font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+            color: var(--text2);
+        }
+
+        .cm { color: #6a737d; }
+        .kw { color: #ff7b72; }
+        .st { color: #a5d6ff; }
+        .fn { color: #d2a8ff; }
+        .nb { color: #79c0ff; }
+        .dc { color: #ffa657; }
+
+        /* === LINE EXPLAIN === */
+        .line-explain {
+            margin: 12px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .le-code {
+            background: var(--bg-code);
+            padding: 12px 16px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.82rem;
+            color: var(--cyan);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .le-explain {
+            background: var(--bg3);
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            color: var(--text2);
+            display: flex;
+            gap: 10px;
+        }
+
+        .le-explain .le-arrow {
+            color: var(--green);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* === INFO BOX === */
+        .info {
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 18px 0;
+            border-left: 4px solid;
+            font-size: 0.88rem;
+        }
+
+        .info.tip { background: rgba(16,185,129,0.06); border-color: var(--green); }
+        .info.tip .it { color: var(--green); }
+        .info.warn { background: rgba(245,158,11,0.06); border-color: var(--orange); }
+        .info.warn .it { color: var(--orange); }
+        .info.note { background: rgba(59,130,246,0.06); border-color: var(--blue); }
+        .info.note .it { color: var(--blue); }
+        .info.hot { background: rgba(239,68,68,0.06); border-color: var(--red); }
+        .info.hot .it { color: var(--red); }
+
+        .it { font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .info p { color: var(--text2); }
+
+        /* === STEP INDICATOR === */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 22px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+
+        .step-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .step-info h3 { font-size: 1.05rem; }
+        .step-info p { font-size: 0.8rem; color: var(--text3); margin-top: 2px; }
+
+        /* === FILE TREE === */
+        .file-tree {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            font-family: 'Cascadia Code', monospace;
+            font-size: 0.82rem;
+            color: var(--text2);
+            line-height: 2;
+            margin: 18px 0;
+        }
+
+        .file-tree .folder { color: var(--orange); }
+        .file-tree .file-py { color: var(--green); }
+        .file-tree .file-txt { color: var(--blue); }
+        .file-tree .file-other { color: var(--text3); }
+
+        /* === BADGE === */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .badge.green { background: rgba(16,185,129,0.15); color: var(--green); }
+        .badge.blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+        .badge.orange { background: rgba(245,158,11,0.15); color: var(--orange); }
+        .badge.red { background: rgba(239,68,68,0.15); color: var(--red); }
+        .badge.purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+        .badge.cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
+
+        /* === OUTPUT BLOCK === */
+        .output {
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 18px 0;
+            font-family: 'Cascadia Code', monospace;
+            font-size: 0.82rem;
+            color: var(--green);
+            line-height: 1.7;
+            overflow-x: auto;
+        }
+
+        .output .prompt { color: var(--cyan); }
+        .output .result { color: var(--text2); }
+        .output .success { color: var(--green); }
+        .output .error { color: var(--red); }
+
+        /* === HIGHLIGHT === */
+        .hl { color: var(--blue); font-weight: 600; }
+        .hl-g { color: var(--green); font-weight: 600; }
+        .hl-p { color: var(--purple); font-weight: 600; }
+        .hl-o { color: var(--orange); font-weight: 600; }
+        strong { color: var(--text); }
+
+        /* === FOOTER === */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            margin-top: 60px;
+            border-top: 1px solid var(--border);
+            color: var(--text3);
+            font-size: 0.78rem;
+        }
+
+        /* === MOBILE === */
+        .mob-btn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--green);
+            color: white;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        @media (max-width: 900px) {
+            .nav { transform: translateX(-100%); transition: transform 0.3s; }
+            .nav.open { transform: translateX(0); }
+            .main { margin-left: 0; padding: 25px 18px 80px; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.9rem; }
+            .mob-btn { display: flex; align-items: center; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+    <div class="nav-head">
+        <h2>Projet Pratique RAG</h2>
+        <p>Chaque ligne de code expliquee</p>
+    </div>
+
+    <div class="nav-label">Preparation</div>
+    <a href="#overview"><span class="n">1</span> Vue d'ensemble</a>
+    <a href="#structure"><span class="n">2</span> Structure du projet</a>
+    <a href="#install"><span class="n">3</span> Installation</a>
+
+    <div class="nav-label">Les donnees</div>
+    <a href="#data"><span class="n">4</span> Creer les donnees</a>
+
+    <div class="nav-label">Le code</div>
+    <a href="#step1"><span class="n">5</span> Fichier 1 : config.py</a>
+    <a href="#step2"><span class="n">6</span> Fichier 2 : loader.py</a>
+    <a href="#step3"><span class="n">7</span> Fichier 3 : chunker.py</a>
+    <a href="#step4"><span class="n">8</span> Fichier 4 : embedder.py</a>
+    <a href="#step5"><span class="n">9</span> Fichier 5 : retriever.py</a>
+    <a href="#step6"><span class="n">10</span> Fichier 6 : generator.py</a>
+    <a href="#step7"><span class="n">11</span> Fichier 7 : main.py</a>
+
+    <div class="nav-label">Execution</div>
+    <a href="#run"><span class="n">12</span> Lancer le projet</a>
+    <a href="#test"><span class="n">13</span> Tester & resultats</a>
+    <a href="#improve"><span class="n">14</span> Ameliorations</a>
+</nav>
+
+<button class="mob-btn" onclick="document.getElementById('nav').classList.toggle('open')">&#9776;</button>
+
+<div class="main">
+
+    <!-- HERO -->
+    <div class="hero">
+        <span class="hero-badge">Projet From Scratch - Chaque Ligne Expliquee</span>
+        <h1>Projet Pratique RAG</h1>
+        <p>Un mini-projet RAG complet en Python. Chaque fichier, chaque fonction, <strong>chaque ligne de code</strong> est expliquee pour que tu comprennes tout a 100%.</p>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 1. VUE D'ENSEMBLE -->
+    <!-- ================================ -->
+    <div class="section" id="overview">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(16,185,129,0.15); color: var(--green);">1</div>
+            <div>
+                <h2>Vue d'ensemble du projet</h2>
+                <div class="sub">Ce qu'on va construire</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Le projet en bref</h3>
+            <p>On va construire un <span class="hl-g">systeme de questions-reponses</span> qui peut repondre a des questions sur un sujet specifique en se basant sur des documents texte.</p>
+            <br>
+            <p><strong>Theme choisi :</strong> Un assistant qui repond a des questions sur la <span class="hl">nutrition et la sante</span> (tu pourras changer les documents pour n'importe quel sujet).</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="card" style="border-top: 3px solid var(--green);">
+                <h3>Technologies utilisees</h3>
+                <ul>
+                    <li><strong>Python 3.10+</strong></li>
+                    <li><strong>LangChain</strong> - Framework RAG</li>
+                    <li><strong>ChromaDB</strong> - Base vectorielle</li>
+                    <li><strong>HuggingFace</strong> - Embeddings (gratuit)</li>
+                    <li><strong>Ollama</strong> ou <strong>OpenAI</strong> - LLM</li>
+                </ul>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--blue);">
+                <h3>Ce que tu vas apprendre</h3>
+                <ul>
+                    <li>Charger des documents texte</li>
+                    <li>Decouper en chunks intelligemment</li>
+                    <li>Creer des embeddings</li>
+                    <li>Stocker dans ChromaDB</li>
+                    <li>Rechercher par similarite</li>
+                    <li>Generer des reponses avec un LLM</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="info tip">
+            <div class="it">100% Gratuit</div>
+            <p>Ce projet utilise des modeles <strong>100% gratuits et en local</strong> (HuggingFace pour les embeddings, Ollama pour le LLM). Aucune cle API payante requise. Si tu preferes, tu peux aussi utiliser l'API OpenAI - on verra les deux options.</p>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 2. STRUCTURE -->
+    <!-- ================================ -->
+    <div class="section" id="structure">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(245,158,11,0.15); color: var(--orange);">2</div>
+            <div>
+                <h2>Structure du projet</h2>
+                <div class="sub">L'organisation des fichiers</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Arborescence des fichiers</h3>
+            <p>Voici comment notre projet sera organise :</p>
+
+            <div class="file-tree">
+<span class="folder">mon_rag_projet/</span>
+&#9500;&#9472;&#9472; <span class="folder">data/</span>                        <span class="file-other"># Dossier des documents sources</span>
+&#9474;   &#9500;&#9472;&#9472; <span class="file-txt">nutrition.txt</span>             <span class="file-other"># Document sur la nutrition</span>
+&#9474;   &#9500;&#9472;&#9472; <span class="file-txt">vitamines.txt</span>             <span class="file-other"># Document sur les vitamines</span>
+&#9474;   &#9492;&#9472;&#9472; <span class="file-txt">exercice.txt</span>              <span class="file-other"># Document sur l'exercice physique</span>
+&#9500;&#9472;&#9472; <span class="folder">chroma_db/</span>                    <span class="file-other"># Base vectorielle (generee auto)</span>
+&#9500;&#9472;&#9472; <span class="file-py">config.py</span>                     <span class="file-other"># Configuration du projet</span>
+&#9500;&#9472;&#9472; <span class="file-py">loader.py</span>                     <span class="file-other"># Chargement des documents</span>
+&#9500;&#9472;&#9472; <span class="file-py">chunker.py</span>                    <span class="file-other"># Decoupage en chunks</span>
+&#9500;&#9472;&#9472; <span class="file-py">embedder.py</span>                   <span class="file-other"># Embeddings + stockage ChromaDB</span>
+&#9500;&#9472;&#9472; <span class="file-py">retriever.py</span>                  <span class="file-other"># Recherche de documents</span>
+&#9500;&#9472;&#9472; <span class="file-py">generator.py</span>                  <span class="file-other"># Generation de reponses (LLM)</span>
+&#9500;&#9472;&#9472; <span class="file-py">main.py</span>                       <span class="file-other"># Point d'entree du programme</span>
+&#9492;&#9472;&#9472; <span class="file-other">requirements.txt</span>              <span class="file-other"># Dependances Python</span>
+            </div>
+        </div>
+
+        <div class="info note">
+            <div class="it">Pourquoi separer en plusieurs fichiers ?</div>
+            <p>Chaque fichier a <strong>un seul role</strong>. C'est plus facile a comprendre, a debugger, et a modifier. C'est une bonne pratique de programmation appelee <strong>"Separation of Concerns"</strong> (separation des responsabilites).</p>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 3. INSTALLATION -->
+    <!-- ================================ -->
+    <div class="section" id="install">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(59,130,246,0.15); color: var(--blue);">3</div>
+            <div>
+                <h2>Installation</h2>
+                <div class="sub">Preparer l'environnement</div>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(59,130,246,0.15); color: var(--blue);">3.1</div>
+            <div class="step-info">
+                <h3>Creer le dossier du projet</h3>
+                <p>On cree le dossier principal et le sous-dossier data</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>Terminal / CMD</span>
+            </div>
+            <pre><code><span class="cm"># Creer le dossier du projet</span>
+<span class="kw">mkdir</span> mon_rag_projet
+<span class="kw">cd</span> mon_rag_projet
+
+<span class="cm"># Creer le dossier pour les documents</span>
+<span class="kw">mkdir</span> data</code></pre>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">mkdir mon_rag_projet</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>mkdir</strong> = "make directory" (creer un dossier). On cree le dossier principal de notre projet.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">cd mon_rag_projet</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>cd</strong> = "change directory" (changer de dossier). On entre dans le dossier qu'on vient de creer.</span>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(139,92,246,0.15); color: var(--purple);">3.2</div>
+            <div class="step-info">
+                <h3>Creer l'environnement virtuel Python</h3>
+                <p>Isole les dependances du projet</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>Terminal</span>
+            </div>
+            <pre><code><span class="cm"># Creer un environnement virtuel</span>
+<span class="kw">python</span> -m venv venv
+
+<span class="cm"># Activer l'environnement</span>
+<span class="cm"># Sur Windows :</span>
+venv\Scripts\activate
+<span class="cm"># Sur Mac/Linux :</span>
+<span class="kw">source</span> venv/bin/activate</code></pre>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">python -m venv venv</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>venv</strong> = environnement virtuel. C'est un dossier isole qui contient sa propre version de Python et ses propres packages. Cela evite les conflits avec d'autres projets sur ton PC.</span>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(16,185,129,0.15); color: var(--green);">3.3</div>
+            <div class="step-info">
+                <h3>Installer les dependances</h3>
+                <p>Les bibliotheques Python necessaires</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>Terminal</span>
+            </div>
+            <pre><code><span class="cm"># Installer toutes les dependances</span>
+<span class="kw">pip install</span> langchain langchain-community langchain-huggingface
+<span class="kw">pip install</span> chromadb
+<span class="kw">pip install</span> sentence-transformers
+<span class="kw">pip install</span> langchain-ollama    <span class="cm"># Pour Ollama (gratuit, local)</span>
+<span class="cm"># OU</span>
+<span class="kw">pip install</span> langchain-openai    <span class="cm"># Pour OpenAI (payant, cloud)</span></code></pre>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">pip install langchain langchain-community langchain-huggingface</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>langchain</strong> = le framework principal pour construire des pipelines RAG. <strong>langchain-community</strong> = extensions communautaires. <strong>langchain-huggingface</strong> = integration avec les modeles HuggingFace (gratuits).</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">pip install chromadb</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>ChromaDB</strong> = notre base de donnees vectorielle. Elle stocke les embeddings (vecteurs) et permet de faire des recherches par similarite. Gratuite et locale.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">pip install sentence-transformers</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>sentence-transformers</strong> = la bibliotheque qui contient les modeles d'embedding. C'est elle qui transforme le texte en vecteurs numeriques. 100% gratuit.</span>
+            </div>
+        </div>
+
+        <div class="info warn">
+            <div class="it">Pour Ollama (LLM gratuit en local)</div>
+            <p>Si tu veux utiliser un LLM gratuit en local, installe <strong>Ollama</strong> depuis <a href="https://ollama.com" style="color: var(--orange);">ollama.com</a>, puis dans le terminal :<br>
+            <code style="background: var(--bg); padding: 2px 8px; border-radius: 4px;">ollama pull llama3.2</code><br>
+            Cela telecharge le modele Llama 3.2 (environ 2-4 Go).</p>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 4. CREER LES DONNEES -->
+    <!-- ================================ -->
+    <div class="section" id="data">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(6,182,212,0.15); color: var(--cyan);">4</div>
+            <div>
+                <h2>Creer les donnees</h2>
+                <div class="sub">Nos documents sources sur la nutrition</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>3 fichiers texte de donnees reelles</h3>
+            <p>On va creer 3 fichiers texte dans le dossier <code>data/</code>. Ce sont nos <span class="hl">documents sources</span> - la base de connaissances que notre RAG va utiliser pour repondre.</p>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>data/nutrition.txt</span>
+            </div>
+            <pre><code>La nutrition est la science qui etudie les aliments et leur effet sur la sante.
+Une alimentation equilibree comprend des proteines, des glucides, des lipides,
+des vitamines et des mineraux.
+
+Les proteines sont essentielles pour la construction et la reparation des muscles.
+On les trouve dans la viande, le poisson, les oeufs, les legumineuses et les
+produits laitiers. Un adulte a besoin d'environ 0.8g de proteines par kg de
+poids corporel par jour.
+
+Les glucides sont la principale source d'energie du corps. On distingue les
+glucides simples (sucres rapides comme le glucose et le fructose) et les glucides
+complexes (sucres lents comme l'amidon dans le pain, les pates et le riz).
+Il est recommande de privilegier les glucides complexes.
+
+Les lipides (graisses) jouent un role crucial dans l'absorption des vitamines
+liposolubles (A, D, E, K). On distingue les graisses saturees (beurre, fromage)
+des graisses insaturees (huile d'olive, avocat, noix). Les graisses insaturees
+sont considerees comme benefiques pour la sante cardiovasculaire.
+
+L'eau est le nutriment le plus important. Un adulte doit boire environ 1.5 a 2
+litres d'eau par jour. Les besoins augmentent avec l'exercice physique et la
+chaleur. La deshydratation peut causer fatigue, maux de tete et troubles de
+la concentration.</code></pre>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>data/vitamines.txt</span>
+            </div>
+            <pre><code>Les vitamines sont des substances organiques indispensables au bon fonctionnement
+de l'organisme. Elles sont classees en deux categories.
+
+Les vitamines hydrosolubles (solubles dans l'eau) : La vitamine C (acide
+ascorbique) est un puissant antioxydant present dans les agrumes, les kiwis
+et les poivrons. Elle renforce le systeme immunitaire et aide a l'absorption
+du fer. La dose journaliere recommandee est de 110mg pour un adulte.
+
+Les vitamines du groupe B comprennent 8 vitamines differentes. La B12 est
+particulierement importante car elle intervient dans la formation des globules
+rouges et le fonctionnement du systeme nerveux. Les vegetaliens doivent
+prendre des supplements de B12 car elle se trouve principalement dans les
+produits animaux.
+
+Les vitamines liposolubles (solubles dans les graisses) : La vitamine D est
+produite par la peau sous l'action du soleil. Elle est essentielle pour la
+fixation du calcium sur les os. En hiver, une supplementation est souvent
+recommandee. La carence en vitamine D touche environ 80% de la population
+francaise en hiver.
+
+La vitamine A est importante pour la vision, la peau et le systeme immunitaire.
+On la trouve dans le foie, les carottes, les epinards et les patates douces.
+Un exces de vitamine A peut etre toxique, surtout pendant la grossesse.</code></pre>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>data/exercice.txt</span>
+            </div>
+            <pre><code>L'exercice physique regulier est essentiel pour maintenir une bonne sante.
+L'Organisation Mondiale de la Sante recommande au minimum 150 minutes
+d'activite physique moderee par semaine, ou 75 minutes d'activite intense.
+
+Les benefices de l'exercice physique sont nombreux. Il ameliore la sante
+cardiovasculaire en renforçant le coeur et les vaisseaux sanguins. Il aide
+a maintenir un poids sain en brulant des calories. Il renforce les muscles
+et les os, ce qui previent l'osteoporose. Il ameliore la sante mentale en
+reduisant le stress, l'anxiete et la depression grace a la liberation
+d'endorphines.
+
+Il existe differents types d'exercice. L'exercice cardiovasculaire (cardio)
+comprend la course a pied, le velo, la natation et la marche rapide. Il
+ameliore l'endurance et la sante du coeur. L'exercice de musculation (resistance)
+comprend la musculation avec poids, les exercices au poids du corps comme les
+pompes et les squats. Il augmente la masse musculaire et le metabolisme de base.
+
+La recuperation est aussi importante que l'entrainement. Il faut dormir au
+moins 7 a 9 heures par nuit pour permettre au corps de se reparer. L'alimentation
+post-entrainement doit combiner proteines (pour reparer les muscles) et glucides
+(pour restaurer l'energie). Il est conseille de ne pas entrainer le meme groupe
+musculaire deux jours de suite.</code></pre>
+        </div>
+
+        <div class="info tip">
+            <div class="it">Personnalise tes donnees</div>
+            <p>Tu peux remplacer ces fichiers par <strong>n'importe quels documents</strong> : des cours de fac, de la documentation technique, des rapports d'entreprise, des articles de blog, etc. Le RAG marchera de la meme facon !</p>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 5. FICHIER 1 : config.py -->
+    <!-- ================================ -->
+    <div class="section" id="step1">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(139,92,246,0.15); color: var(--purple);">5</div>
+            <div>
+                <h2>Fichier 1 : config.py</h2>
+                <div class="sub">La configuration centrale du projet</div>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(139,92,246,0.15); color: var(--purple);">1</div>
+            <div class="step-info">
+                <h3>Configuration - Le fichier de reglages</h3>
+                <p>Tous les parametres du projet au meme endroit</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>config.py</span>
+            </div>
+            <pre><code><span class="cm"># ============================================================</span>
+<span class="cm"># config.py - Configuration centrale du projet RAG</span>
+<span class="cm"># Ce fichier contient TOUS les parametres du projet.</span>
+<span class="cm"># Modifier les reglages ici affecte tout le projet.</span>
+<span class="cm"># ============================================================</span>
+
+<span class="kw">import</span> os
+
+<span class="cm"># --- Chemins des fichiers ---</span>
+<span class="cm"># os.path.dirname(__file__) = le dossier ou se trouve CE fichier (config.py)</span>
+BASE_DIR = os.path.<span class="fn">dirname</span>(os.path.<span class="fn">abspath</span>(<span class="st">__file__</span>))
+
+<span class="cm"># Le dossier qui contient nos documents texte</span>
+DATA_DIR = os.path.<span class="fn">join</span>(BASE_DIR, <span class="st">"data"</span>)
+
+<span class="cm"># Le dossier ou ChromaDB va stocker sa base de donnees</span>
+CHROMA_DIR = os.path.<span class="fn">join</span>(BASE_DIR, <span class="st">"chroma_db"</span>)
+
+<span class="cm"># --- Parametres de Chunking ---</span>
+CHUNK_SIZE = <span class="nb">500</span>       <span class="cm"># Taille maximale d'un chunk (en caracteres)</span>
+CHUNK_OVERLAP = <span class="nb">50</span>     <span class="cm"># Chevauchement entre chunks (en caracteres)</span>
+
+<span class="cm"># --- Parametres d'Embedding ---</span>
+<span class="cm"># Le modele qui transforme le texte en vecteurs</span>
+<span class="cm"># "all-MiniLM-L6-v2" est petit (80 Mo), rapide, et gratuit</span>
+EMBEDDING_MODEL = <span class="st">"all-MiniLM-L6-v2"</span>
+
+<span class="cm"># --- Parametres de Retrieval ---</span>
+TOP_K = <span class="nb">3</span>  <span class="cm"># Nombre de chunks a recuperer par question</span>
+
+<span class="cm"># --- Parametres du LLM ---</span>
+<span class="cm"># Option 1 : Ollama (gratuit, local)</span>
+LLM_PROVIDER = <span class="st">"ollama"</span>       <span class="cm"># "ollama" ou "openai"</span>
+OLLAMA_MODEL = <span class="st">"llama3.2"</span>     <span class="cm"># Le modele Ollama a utiliser</span>
+
+<span class="cm"># Option 2 : OpenAI (payant, cloud)</span>
+<span class="cm"># LLM_PROVIDER = "openai"</span>
+<span class="cm"># OPENAI_API_KEY = "sk-votre-cle-ici"</span>
+<span class="cm"># OPENAI_MODEL = "gpt-4o-mini"</span>
+
+<span class="cm"># --- Nom de la collection ChromaDB ---</span>
+COLLECTION_NAME = <span class="st">"mon_rag_collection"</span></code></pre>
+        </div>
+
+        <h3 style="margin: 25px 0 15px; font-size: 1.1rem;">Explication ligne par ligne :</h3>
+
+        <div class="line-explain">
+            <div class="le-code">import os</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>On importe le module <strong>os</strong> de Python. Il permet d'interagir avec le systeme de fichiers (chemins, dossiers, etc.). C'est un module standard, pas besoin de l'installer.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">BASE_DIR = os.path.dirname(os.path.abspath(__file__))</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>__file__</strong> = le chemin du fichier actuel (config.py). <strong>abspath()</strong> = le chemin absolu complet. <strong>dirname()</strong> = le dossier parent. Resultat : le chemin du dossier du projet, ex: <code>C:/Users/moi/mon_rag_projet</code>.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">DATA_DIR = os.path.join(BASE_DIR, "data")</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>os.path.join()</strong> combine des chemins de facon compatible tous OS. Resultat : <code>C:/Users/moi/mon_rag_projet/data</code>. Plus fiable que de concatener avec des "/".</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">CHUNK_SIZE = 500</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>Chaque chunk fera au maximum <strong>500 caracteres</strong>. C'est une bonne taille par defaut : assez pour garder du contexte, pas trop pour rester precis. Tu peux experimenter avec 300 ou 800.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">CHUNK_OVERLAP = 50</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>50 caracteres de chevauchement</strong> entre chaque chunk. Cela evite de couper une information importante a la frontiere de deux chunks. C'est 10% de 500 = bonne pratique.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">EMBEDDING_MODEL = "all-MiniLM-L6-v2"</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>Le modele d'embedding <strong>all-MiniLM-L6-v2</strong> de HuggingFace. Il est petit (80 Mo), rapide, et donne de bons resultats. Il transforme le texte en vecteurs de 384 dimensions. 100% gratuit, tourne en local.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">TOP_K = 3</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>On recuperera les <strong>3 chunks les plus similaires</strong> a la question. 3 est un bon compromis : assez de contexte sans surcharger le LLM. Pour des questions complexes, on pourrait monter a 5.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">LLM_PROVIDER = "ollama"</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>On choisit <strong>Ollama</strong> comme fournisseur de LLM. C'est gratuit et tourne en local sur ton PC. L'autre option est "openai" (payant mais plus puissant). Change cette valeur pour switcher.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 6. FICHIER 2 : loader.py -->
+    <!-- ================================ -->
+    <div class="section" id="step2">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(59,130,246,0.15); color: var(--blue);">6</div>
+            <div>
+                <h2>Fichier 2 : loader.py</h2>
+                <div class="sub">Charger les documents texte</div>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(59,130,246,0.15); color: var(--blue);">2</div>
+            <div class="step-info">
+                <h3>Chargement - Lire les fichiers du dossier data/</h3>
+                <p>Parcourir le dossier et charger chaque fichier .txt</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>loader.py</span>
+            </div>
+            <pre><code><span class="cm"># ============================================================</span>
+<span class="cm"># loader.py - Chargement des documents</span>
+<span class="cm"># Ce fichier lit tous les fichiers .txt du dossier data/</span>
+<span class="cm"># et les transforme en objets Document de LangChain.</span>
+<span class="cm"># ============================================================</span>
+
+<span class="kw">import</span> os
+<span class="kw">from</span> langchain.schema <span class="kw">import</span> Document
+<span class="kw">from</span> config <span class="kw">import</span> DATA_DIR
+
+
+<span class="kw">def</span> <span class="fn">load_documents</span>():
+    <span class="st">"""
+    Charge tous les fichiers .txt du dossier data/.
+
+    Retourne:
+        Une liste d'objets Document, chacun contenant
+        le texte du fichier et ses metadata (nom du fichier).
+    """</span>
+
+    <span class="cm"># Liste vide qui va contenir nos documents</span>
+    documents = []
+
+    <span class="cm"># Parcourir tous les fichiers du dossier data/</span>
+    <span class="kw">for</span> filename <span class="kw">in</span> os.<span class="fn">listdir</span>(DATA_DIR):
+
+        <span class="cm"># On ne traite que les fichiers .txt</span>
+        <span class="kw">if</span> filename.<span class="fn">endswith</span>(<span class="st">".txt"</span>):
+
+            <span class="cm"># Construire le chemin complet du fichier</span>
+            file_path = os.path.<span class="fn">join</span>(DATA_DIR, filename)
+
+            <span class="cm"># Ouvrir et lire le contenu du fichier</span>
+            <span class="kw">with</span> <span class="fn">open</span>(file_path, <span class="st">"r"</span>, encoding=<span class="st">"utf-8"</span>) <span class="kw">as</span> f:
+                content = f.<span class="fn">read</span>()
+
+            <span class="cm"># Creer un objet Document de LangChain</span>
+            doc = <span class="fn">Document</span>(
+                page_content=content,       <span class="cm"># Le texte du fichier</span>
+                metadata={<span class="st">"source"</span>: filename}  <span class="cm"># Le nom du fichier</span>
+            )
+
+            <span class="cm"># Ajouter le document a notre liste</span>
+            documents.<span class="fn">append</span>(doc)
+
+            <span class="cm"># Afficher un message de confirmation</span>
+            <span class="fn">print</span>(<span class="st">f"  Charge : {filename} ({<span class="fn">len</span>(content)} caracteres)"</span>)
+
+    <span class="fn">print</span>(<span class="st">f"\nTotal : {<span class="fn">len</span>(documents)} documents charges."</span>)
+    <span class="kw">return</span> documents
+
+
+<span class="cm"># --- Test du module (s'execute seulement si on lance CE fichier) ---</span>
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    docs = <span class="fn">load_documents</span>()
+    <span class="kw">for</span> doc <span class="kw">in</span> docs:
+        <span class="fn">print</span>(<span class="st">f"\n--- {doc.metadata['source']} ---"</span>)
+        <span class="fn">print</span>(doc.page_content[:<span class="nb">100</span>], <span class="st">"..."</span>)</code></pre>
+        </div>
+
+        <h3 style="margin: 25px 0 15px; font-size: 1.1rem;">Explication ligne par ligne :</h3>
+
+        <div class="line-explain">
+            <div class="le-code">from langchain.schema import Document</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>Document</strong> est la classe de LangChain qui represente un document. Elle a deux attributs : <code>page_content</code> (le texte) et <code>metadata</code> (un dictionnaire d'infos comme le nom du fichier, la page, etc.).</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">from config import DATA_DIR</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>On importe la variable <strong>DATA_DIR</strong> depuis notre fichier config.py. C'est le chemin vers le dossier <code>data/</code>. Ainsi, si on change le chemin dans config.py, ca se repercute partout.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">for filename in os.listdir(DATA_DIR):</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>os.listdir()</strong> retourne la liste de tous les fichiers et dossiers dans <code>DATA_DIR</code>. La boucle <code>for</code> parcourt chaque element un par un. <code>filename</code> sera "nutrition.txt", "vitamines.txt", etc.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">if filename.endswith(".txt"):</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>endswith(".txt")</strong> verifie si le nom du fichier se termine par ".txt". On filtre pour ne traiter que les fichiers texte et ignorer les autres (comme .DS_Store, etc.).</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">with open(file_path, "r", encoding="utf-8") as f:</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>open()</strong> ouvre le fichier. <strong>"r"</strong> = mode lecture (read). <strong>encoding="utf-8"</strong> = gere les accents et caracteres speciaux. <strong>with</strong> = ferme le fichier automatiquement a la fin du bloc.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">content = f.read()</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>f.read()</strong> lit TOUT le contenu du fichier d'un coup et le stocke dans la variable <code>content</code> sous forme de chaine de caracteres (string).</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">doc = Document(page_content=content, metadata={"source": filename})</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>On cree un objet <strong>Document</strong> de LangChain avec : le texte du fichier (<code>page_content</code>) et le nom du fichier comme metadata (<code>metadata</code>). Les metadata permettront de savoir de quel fichier vient chaque chunk.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">if __name__ == "__main__":</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>Ce bloc ne s'execute <strong>que si on lance directement ce fichier</strong> (<code>python loader.py</code>). Si on l'importe depuis un autre fichier, ce bloc est ignore. C'est utile pour tester un module individuellement.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 7. FICHIER 3 : chunker.py -->
+    <!-- ================================ -->
+    <div class="section" id="step3">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(245,158,11,0.15); color: var(--orange);">7</div>
+            <div>
+                <h2>Fichier 3 : chunker.py</h2>
+                <div class="sub">Decouper les documents en morceaux</div>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(245,158,11,0.15); color: var(--orange);">3</div>
+            <div class="step-info">
+                <h3>Chunking - Decouper intelligemment</h3>
+                <p>Utilise RecursiveCharacterTextSplitter de LangChain</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>chunker.py</span>
+            </div>
+            <pre><code><span class="cm"># ============================================================</span>
+<span class="cm"># chunker.py - Decoupage des documents en chunks</span>
+<span class="cm"># Ce fichier prend les documents et les decoupe en morceaux</span>
+<span class="cm"># plus petits (chunks) pour une recherche plus precise.</span>
+<span class="cm"># ============================================================</span>
+
+<span class="kw">from</span> langchain.text_splitter <span class="kw">import</span> RecursiveCharacterTextSplitter
+<span class="kw">from</span> config <span class="kw">import</span> CHUNK_SIZE, CHUNK_OVERLAP
+
+
+<span class="kw">def</span> <span class="fn">split_documents</span>(documents):
+    <span class="st">"""
+    Decoupe une liste de documents en chunks plus petits.
+
+    Args:
+        documents: Liste d'objets Document de LangChain
+
+    Retourne:
+        Liste de chunks (aussi des objets Document, mais plus petits)
+    """</span>
+
+    <span class="cm"># Creer le splitter (decoupeur)</span>
+    splitter = <span class="fn">RecursiveCharacterTextSplitter</span>(
+        chunk_size=CHUNK_SIZE,           <span class="cm"># Taille max : 500 caracteres</span>
+        chunk_overlap=CHUNK_OVERLAP,     <span class="cm"># Chevauchement : 50 caracteres</span>
+        length_function=<span class="fn">len</span>,             <span class="cm"># Fonction pour mesurer la taille</span>
+        separators=[<span class="st">"\n\n"</span>, <span class="st">"\n"</span>, <span class="st">". "</span>, <span class="st">" "</span>, <span class="st">""</span>]  <span class="cm"># Ou couper</span>
+    )
+
+    <span class="cm"># Decouper tous les documents en chunks</span>
+    chunks = splitter.<span class="fn">split_documents</span>(documents)
+
+    <span class="cm"># Afficher les statistiques</span>
+    <span class="fn">print</span>(<span class="st">f"  {<span class="fn">len</span>(documents)} documents decoupes en {<span class="fn">len</span>(chunks)} chunks"</span>)
+    <span class="fn">print</span>(<span class="st">f"  Taille chunk : {CHUNK_SIZE} | Overlap : {CHUNK_OVERLAP}"</span>)
+
+    <span class="kw">return</span> chunks
+
+
+<span class="cm"># --- Test du module ---</span>
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    <span class="kw">from</span> loader <span class="kw">import</span> load_documents
+
+    docs = <span class="fn">load_documents</span>()
+    chunks = <span class="fn">split_documents</span>(docs)
+
+    <span class="cm"># Afficher les 3 premiers chunks</span>
+    <span class="kw">for</span> i, chunk <span class="kw">in</span> <span class="fn">enumerate</span>(chunks[:<span class="nb">3</span>]):
+        <span class="fn">print</span>(<span class="st">f"\n--- Chunk {i+1} (source: {chunk.metadata['source']}) ---"</span>)
+        <span class="fn">print</span>(chunk.page_content)
+        <span class="fn">print</span>(<span class="st">f"Taille : {<span class="fn">len</span>(chunk.page_content)} caracteres"</span>)</code></pre>
+        </div>
+
+        <h3 style="margin: 25px 0 15px; font-size: 1.1rem;">Explication ligne par ligne :</h3>
+
+        <div class="line-explain">
+            <div class="le-code">from langchain.text_splitter import RecursiveCharacterTextSplitter</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>RecursiveCharacterTextSplitter</strong> est le meilleur splitter de LangChain. Il essaie d'abord de couper aux paragraphes (\n\n), puis aux retours a la ligne (\n), puis aux points (. ), etc. C'est "recursif" car il descend dans la hierarchie des separateurs.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">separators=["\n\n", "\n", ". ", " ", ""]</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>La <strong>liste des separateurs</strong> par ordre de priorite. Le splitter essaie d'abord <code>\n\n</code> (double saut de ligne = fin de paragraphe). S'il ne peut pas respecter la taille max, il passe a <code>\n</code> (simple saut), puis <code>. </code> (fin de phrase), puis <code>" "</code> (espace), et en dernier recours <code>""</code> (caractere par caractere).</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">length_function=len</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>La <strong>fonction utilisee pour mesurer la taille</strong> d'un chunk. <code>len</code> = la fonction native Python qui compte les caracteres. On pourrait aussi utiliser une fonction qui compte les tokens a la place.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">chunks = splitter.split_documents(documents)</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>split_documents()</strong> prend notre liste de Documents et retourne une <strong>nouvelle liste de Documents plus petits</strong>. Chaque chunk herite des metadata du document parent (le nom du fichier source). C'est LA ligne qui fait le travail de decoupage.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 8. FICHIER 4 : embedder.py -->
+    <!-- ================================ -->
+    <div class="section" id="step4">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(16,185,129,0.15); color: var(--green);">8</div>
+            <div>
+                <h2>Fichier 4 : embedder.py</h2>
+                <div class="sub">Creer les embeddings et stocker dans ChromaDB</div>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(16,185,129,0.15); color: var(--green);">4</div>
+            <div class="step-info">
+                <h3>Embeddings + Stockage - Le coeur du systeme</h3>
+                <p>Transforme le texte en vecteurs et les stocke dans ChromaDB</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>embedder.py</span>
+            </div>
+            <pre><code><span class="cm"># ============================================================</span>
+<span class="cm"># embedder.py - Embeddings et stockage vectoriel</span>
+<span class="cm"># Ce fichier transforme les chunks en vecteurs (embeddings)</span>
+<span class="cm"># et les stocke dans ChromaDB pour la recherche.</span>
+<span class="cm"># ============================================================</span>
+
+<span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFaceEmbeddings
+<span class="kw">from</span> langchain_community.vectorstores <span class="kw">import</span> Chroma
+<span class="kw">from</span> config <span class="kw">import</span> EMBEDDING_MODEL, CHROMA_DIR, COLLECTION_NAME
+
+
+<span class="kw">def</span> <span class="fn">get_embedding_model</span>():
+    <span class="st">"""
+    Cree et retourne le modele d'embedding.
+    Ce modele transforme du texte en vecteurs numeriques.
+    """</span>
+
+    <span class="fn">print</span>(<span class="st">f"  Chargement du modele d'embedding : {EMBEDDING_MODEL}"</span>)
+
+    embeddings = <span class="fn">HuggingFaceEmbeddings</span>(
+        model_name=EMBEDDING_MODEL,    <span class="cm"># "all-MiniLM-L6-v2"</span>
+        model_kwargs={<span class="st">"device"</span>: <span class="st">"cpu"</span>},  <span class="cm"># Utiliser le CPU (pas de GPU)</span>
+        encode_kwargs={<span class="st">"normalize_embeddings"</span>: <span class="kw">True</span>}  <span class="cm"># Normaliser</span>
+    )
+
+    <span class="fn">print</span>(<span class="st">"  Modele d'embedding charge !"</span>)
+    <span class="kw">return</span> embeddings
+
+
+<span class="kw">def</span> <span class="fn">create_vector_store</span>(chunks, embeddings):
+    <span class="st">"""
+    Cree la base vectorielle ChromaDB a partir des chunks.
+
+    Args:
+        chunks: Liste de chunks (objets Document)
+        embeddings: Le modele d'embedding
+
+    Retourne:
+        L'objet vectorstore ChromaDB
+    """</span>
+
+    <span class="fn">print</span>(<span class="st">f"  Creation de la base vectorielle ({<span class="fn">len</span>(chunks)} chunks)..."</span>)
+
+    <span class="cm"># Creer ChromaDB et y stocker les chunks + leurs embeddings</span>
+    vectorstore = Chroma.<span class="fn">from_documents</span>(
+        documents=chunks,              <span class="cm"># Nos chunks de texte</span>
+        embedding=embeddings,          <span class="cm"># Le modele pour creer les vecteurs</span>
+        persist_directory=CHROMA_DIR,  <span class="cm"># Ou sauvegarder sur le disque</span>
+        collection_name=COLLECTION_NAME  <span class="cm"># Nom de la collection</span>
+    )
+
+    <span class="fn">print</span>(<span class="st">f"  Base vectorielle creee dans : {CHROMA_DIR}"</span>)
+    <span class="kw">return</span> vectorstore
+
+
+<span class="kw">def</span> <span class="fn">load_vector_store</span>(embeddings):
+    <span class="st">"""
+    Charge une base vectorielle existante depuis le disque.
+    Utile pour ne pas re-indexer a chaque fois.
+    """</span>
+
+    <span class="fn">print</span>(<span class="st">"  Chargement de la base vectorielle existante..."</span>)
+
+    vectorstore = <span class="fn">Chroma</span>(
+        persist_directory=CHROMA_DIR,    <span class="cm"># Le dossier de la base</span>
+        embedding_function=embeddings,   <span class="cm"># Le meme modele d'embedding</span>
+        collection_name=COLLECTION_NAME  <span class="cm"># Le meme nom de collection</span>
+    )
+
+    <span class="fn">print</span>(<span class="st">"  Base vectorielle chargee !"</span>)
+    <span class="kw">return</span> vectorstore</code></pre>
+        </div>
+
+        <h3 style="margin: 25px 0 15px; font-size: 1.1rem;">Explication ligne par ligne :</h3>
+
+        <div class="line-explain">
+            <div class="le-code">from langchain_huggingface import HuggingFaceEmbeddings</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>HuggingFaceEmbeddings</strong> est la classe qui encapsule les modeles d'embedding de HuggingFace. Elle telecharge le modele la premiere fois, puis le reutilise depuis le cache. 100% gratuit.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">from langchain_community.vectorstores import Chroma</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>Chroma</strong> est l'integration LangChain de ChromaDB. Elle offre une interface simplifiee pour creer, stocker et rechercher dans la base vectorielle. C'est le "pont" entre LangChain et ChromaDB.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">model_kwargs={"device": "cpu"}</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>On force l'utilisation du <strong>CPU</strong> (processeur). Si tu as un GPU NVIDIA avec CUDA, tu peux mettre <code>"cuda"</code> pour aller plus vite. Pour la plupart des projets debutants, le CPU suffit largement.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">encode_kwargs={"normalize_embeddings": True}</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>Normaliser les embeddings</strong> = s'assurer que tous les vecteurs ont la meme "longueur" (norme = 1). C'est important pour que la similarite cosinus fonctionne correctement. Sans normalisation, les resultats peuvent etre biaises.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings, ...)</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>C'est LA ligne magique. <strong>from_documents()</strong> fait 3 choses en une : (1) Prend chaque chunk, (2) Le transforme en vecteur via le modele d'embedding, (3) Stocke le vecteur + le texte original dans ChromaDB. C'est toute l'indexation en une seule ligne.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">persist_directory=CHROMA_DIR</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>Le dossier ou ChromaDB sauvegarde ses donnees sur le disque. Sans ca, la base serait en memoire et disparaitrait quand on ferme le programme. Avec, on peut la <strong>recharger sans tout re-indexer</strong>.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 9. FICHIER 5 : retriever.py -->
+    <!-- ================================ -->
+    <div class="section" id="step5">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(6,182,212,0.15); color: var(--cyan);">9</div>
+            <div>
+                <h2>Fichier 5 : retriever.py</h2>
+                <div class="sub">Chercher les chunks pertinents</div>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(6,182,212,0.15); color: var(--cyan);">5</div>
+            <div class="step-info">
+                <h3>Recherche - Trouver les bons chunks</h3>
+                <p>Recherche par similarite dans ChromaDB</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>retriever.py</span>
+            </div>
+            <pre><code><span class="cm"># ============================================================</span>
+<span class="cm"># retriever.py - Recherche de documents pertinents</span>
+<span class="cm"># Ce fichier contient la logique pour chercher les chunks</span>
+<span class="cm"># les plus similaires a une question donnee.</span>
+<span class="cm"># ============================================================</span>
+
+<span class="kw">from</span> config <span class="kw">import</span> TOP_K
+
+
+<span class="kw">def</span> <span class="fn">get_retriever</span>(vectorstore):
+    <span class="st">"""
+    Cree un retriever a partir de la base vectorielle.
+
+    Args:
+        vectorstore: La base vectorielle ChromaDB
+
+    Retourne:
+        Un objet retriever qui peut chercher des documents
+    """</span>
+
+    <span class="cm"># Transformer la base vectorielle en retriever</span>
+    retriever = vectorstore.<span class="fn">as_retriever</span>(
+        search_type=<span class="st">"similarity"</span>,        <span class="cm"># Recherche par similarite cosinus</span>
+        search_kwargs={<span class="st">"k"</span>: TOP_K}       <span class="cm"># Retourner les TOP_K meilleurs</span>
+    )
+
+    <span class="fn">print</span>(<span class="st">f"  Retriever cree (Top-{TOP_K} resultats)"</span>)
+    <span class="kw">return</span> retriever
+
+
+<span class="kw">def</span> <span class="fn">search</span>(retriever, question):
+    <span class="st">"""
+    Cherche les chunks les plus pertinents pour une question.
+
+    Args:
+        retriever: Le retriever configure
+        question: La question de l'utilisateur (string)
+
+    Retourne:
+        Liste des chunks les plus pertinents
+    """</span>
+
+    <span class="cm"># Lancer la recherche</span>
+    results = retriever.<span class="fn">invoke</span>(question)
+
+    <span class="cm"># Afficher les resultats</span>
+    <span class="fn">print</span>(<span class="st">f"\n  {<span class="fn">len</span>(results)} chunks trouves pour : \"{question}\""</span>)
+    <span class="kw">for</span> i, doc <span class="kw">in</span> <span class="fn">enumerate</span>(results):
+        source = doc.metadata.<span class="fn">get</span>(<span class="st">"source"</span>, <span class="st">"inconnu"</span>)
+        preview = doc.page_content[:<span class="nb">80</span>].<span class="fn">replace</span>(<span class="st">"\n"</span>, <span class="st">" "</span>)
+        <span class="fn">print</span>(<span class="st">f"    [{i+1}] ({source}) {preview}..."</span>)
+
+    <span class="kw">return</span> results</code></pre>
+        </div>
+
+        <h3 style="margin: 25px 0 15px; font-size: 1.1rem;">Explication ligne par ligne :</h3>
+
+        <div class="line-explain">
+            <div class="le-code">retriever = vectorstore.as_retriever(search_type="similarity", ...)</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>as_retriever()</strong> convertit la base vectorielle en un objet "retriever". <strong>search_type="similarity"</strong> = recherche par similarite cosinus (mesure la proximite entre les vecteurs). C'est le type de recherche le plus courant dans le RAG.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">search_kwargs={"k": TOP_K}</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>k</strong> = le nombre de resultats a retourner. Avec TOP_K=3, on recupere les <strong>3 chunks les plus similaires</strong> a la question. <code>search_kwargs</code> est un dictionnaire de parametres supplementaires pour la recherche.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">results = retriever.invoke(question)</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>invoke()</strong> est la methode principale pour lancer une recherche. Elle (1) transforme la question en vecteur, (2) compare avec tous les vecteurs stockes, (3) retourne les K plus proches. C'est tout le processus de retrieval en une ligne.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">source = doc.metadata.get("source", "inconnu")</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>.get()</strong> recupere la valeur de "source" dans les metadata, ou retourne "inconnu" si la cle n'existe pas. C'est plus sur que <code>doc.metadata["source"]</code> qui crasherait si "source" n'existe pas.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 10. FICHIER 6 : generator.py -->
+    <!-- ================================ -->
+    <div class="section" id="step6">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(236,72,153,0.15); color: var(--pink);">10</div>
+            <div>
+                <h2>Fichier 6 : generator.py</h2>
+                <div class="sub">Generer les reponses avec le LLM</div>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(236,72,153,0.15); color: var(--pink);">6</div>
+            <div class="step-info">
+                <h3>Generation - Le LLM repond a la question</h3>
+                <p>Construire le prompt et generer la reponse</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>generator.py</span>
+            </div>
+            <pre><code><span class="cm"># ============================================================</span>
+<span class="cm"># generator.py - Generation de reponses avec le LLM</span>
+<span class="cm"># Ce fichier prend la question + les chunks trouves,</span>
+<span class="cm"># construit un prompt, et genere une reponse via le LLM.</span>
+<span class="cm"># ============================================================</span>
+
+<span class="kw">from</span> config <span class="kw">import</span> LLM_PROVIDER, OLLAMA_MODEL
+
+
+<span class="cm"># --- Le template du prompt ---</span>
+PROMPT_TEMPLATE = <span class="st">"""Tu es un assistant specialise en nutrition et sante.
+Reponds a la question en te basant UNIQUEMENT sur le contexte ci-dessous.
+Si le contexte ne contient pas assez d'informations pour repondre,
+dis clairement "Je n'ai pas trouve cette information dans mes documents."
+
+Contexte :
+{context}
+
+Question : {question}
+
+Reponse (en francais, claire et concise) :"""</span>
+
+
+<span class="kw">def</span> <span class="fn">get_llm</span>():
+    <span class="st">"""
+    Cree et retourne le modele LLM selon la configuration.
+    Supporte Ollama (gratuit) et OpenAI (payant).
+    """</span>
+
+    <span class="kw">if</span> LLM_PROVIDER == <span class="st">"ollama"</span>:
+        <span class="kw">from</span> langchain_ollama <span class="kw">import</span> OllamaLLM
+        llm = <span class="fn">OllamaLLM</span>(
+            model=OLLAMA_MODEL,     <span class="cm"># "llama3.2"</span>
+            temperature=<span class="nb">0</span>           <span class="cm"># 0 = reponses deterministes</span>
+        )
+        <span class="fn">print</span>(<span class="st">f"  LLM charge : Ollama ({OLLAMA_MODEL})"</span>)
+
+    <span class="kw">elif</span> LLM_PROVIDER == <span class="st">"openai"</span>:
+        <span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+        <span class="kw">from</span> config <span class="kw">import</span> OPENAI_API_KEY, OPENAI_MODEL
+        llm = <span class="fn">ChatOpenAI</span>(
+            model=OPENAI_MODEL,          <span class="cm"># "gpt-4o-mini"</span>
+            api_key=OPENAI_API_KEY,      <span class="cm"># Ta cle API</span>
+            temperature=<span class="nb">0</span>
+        )
+        <span class="fn">print</span>(<span class="st">f"  LLM charge : OpenAI ({OPENAI_MODEL})"</span>)
+
+    <span class="kw">return</span> llm
+
+
+<span class="kw">def</span> <span class="fn">build_prompt</span>(question, documents):
+    <span class="st">"""
+    Construit le prompt final en combinant question + contexte.
+
+    Args:
+        question: La question de l'utilisateur
+        documents: Les chunks pertinents trouves
+
+    Retourne:
+        Le prompt complet pret a etre envoye au LLM
+    """</span>
+
+    <span class="cm"># Combiner tous les chunks en un seul texte de contexte</span>
+    context = <span class="st">"\n\n"</span>.<span class="fn">join</span>([doc.page_content <span class="kw">for</span> doc <span class="kw">in</span> documents])
+
+    <span class="cm"># Injecter le contexte et la question dans le template</span>
+    prompt = PROMPT_TEMPLATE.<span class="fn">format</span>(
+        context=context,
+        question=question
+    )
+
+    <span class="kw">return</span> prompt
+
+
+<span class="kw">def</span> <span class="fn">generate_answer</span>(llm, question, documents):
+    <span class="st">"""
+    Genere une reponse a la question en utilisant le LLM.
+
+    Args:
+        llm: Le modele de langage
+        question: La question de l'utilisateur
+        documents: Les chunks pertinents
+
+    Retourne:
+        La reponse generee (string)
+    """</span>
+
+    <span class="cm"># 1. Construire le prompt</span>
+    prompt = <span class="fn">build_prompt</span>(question, documents)
+
+    <span class="cm"># 2. Envoyer au LLM et obtenir la reponse</span>
+    <span class="fn">print</span>(<span class="st">"  Generation de la reponse..."</span>)
+    answer = llm.<span class="fn">invoke</span>(prompt)
+
+    <span class="cm"># 3. Extraire le texte de la reponse</span>
+    <span class="cm"># (ChatOpenAI retourne un objet, OllamaLLM retourne un string)</span>
+    <span class="kw">if</span> <span class="fn">hasattr</span>(answer, <span class="st">"content"</span>):
+        answer = answer.content
+
+    <span class="kw">return</span> answer</code></pre>
+        </div>
+
+        <h3 style="margin: 25px 0 15px; font-size: 1.1rem;">Explication ligne par ligne :</h3>
+
+        <div class="line-explain">
+            <div class="le-code">PROMPT_TEMPLATE = """Tu es un assistant specialise..."""</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>C'est le <strong>template du prompt</strong>. Les <code>{context}</code> et <code>{question}</code> sont des <strong>placeholders</strong> (variables) qui seront remplaces par les vrais contenus. La triple quote <code>"""</code> permet d'ecrire du texte sur plusieurs lignes. Ce prompt est CRUCIAL : il dit a l'IA de se baser UNIQUEMENT sur le contexte fourni.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">temperature=0</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>temperature</strong> controle la "creativite" du LLM. <strong>0</strong> = reponses deterministes et precises (toujours la meme reponse pour la meme question). <strong>1</strong> = reponses plus creatives et variees. Pour un RAG, on veut <strong>0</strong> pour maximiser la precision.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">context = "\n\n".join([doc.page_content for doc in documents])</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>C'est une <strong>list comprehension</strong> Python. Elle prend le texte (<code>page_content</code>) de chaque document et les combine en un seul string, separes par des doubles sauts de ligne (<code>\n\n</code>). Resultat : un seul bloc de contexte avec tous les chunks.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">prompt = PROMPT_TEMPLATE.format(context=context, question=question)</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>.format()</strong> remplace les <code>{context}</code> et <code>{question}</code> dans le template par les vraies valeurs. C'est comme remplir un formulaire a trous. Le resultat est le prompt final complet pret a etre envoye au LLM.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">answer = llm.invoke(prompt)</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>invoke()</strong> envoie le prompt au LLM (Ollama ou OpenAI) et attend la reponse. C'est LA ligne qui fait appel a l'intelligence artificielle. Le LLM lit le contexte + la question et genere une reponse.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">if hasattr(answer, "content"): answer = answer.content</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>hasattr()</strong> verifie si l'objet a un attribut "content". OpenAI retourne un objet <code>AIMessage</code> avec un attribut <code>.content</code>. Ollama retourne directement un string. Ce code gere les deux cas pour que notre code soit compatible avec les deux fournisseurs.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 11. FICHIER 7 : main.py -->
+    <!-- ================================ -->
+    <div class="section" id="step7">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(239,68,68,0.15); color: var(--red);">11</div>
+            <div>
+                <h2>Fichier 7 : main.py</h2>
+                <div class="sub">Le point d'entree - Tout assembler</div>
+            </div>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step-circle" style="background: rgba(239,68,68,0.15); color: var(--red);">7</div>
+            <div class="step-info">
+                <h3>Main - Le chef d'orchestre</h3>
+                <p>Assemble tous les composants et lance le chatbot</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>main.py</span>
+            </div>
+            <pre><code><span class="cm"># ============================================================</span>
+<span class="cm"># main.py - Point d'entree principal du projet RAG</span>
+<span class="cm"># Ce fichier assemble tous les composants et lance</span>
+<span class="cm"># un chatbot interactif dans le terminal.</span>
+<span class="cm"># ============================================================</span>
+
+<span class="kw">import</span> os
+<span class="kw">from</span> config <span class="kw">import</span> CHROMA_DIR
+<span class="kw">from</span> loader <span class="kw">import</span> load_documents
+<span class="kw">from</span> chunker <span class="kw">import</span> split_documents
+<span class="kw">from</span> embedder <span class="kw">import</span> get_embedding_model, create_vector_store, load_vector_store
+<span class="kw">from</span> retriever <span class="kw">import</span> get_retriever, search
+<span class="kw">from</span> generator <span class="kw">import</span> get_llm, generate_answer
+
+
+<span class="kw">def</span> <span class="fn">initialize_rag</span>():
+    <span class="st">"""
+    Initialise tout le systeme RAG.
+    - Charge ou cree la base vectorielle
+    - Prepare le retriever et le LLM
+
+    Retourne:
+        Un tuple (retriever, llm)
+    """</span>
+
+    <span class="fn">print</span>(<span class="st">"=" * 50</span>)
+    <span class="fn">print</span>(<span class="st">"  INITIALISATION DU SYSTEME RAG"</span>)
+    <span class="fn">print</span>(<span class="st">"=" * 50</span>)
+
+    <span class="cm"># Etape 1 : Charger le modele d'embedding</span>
+    <span class="fn">print</span>(<span class="st">"\n[1/4] Modele d'embedding"</span>)
+    embeddings = <span class="fn">get_embedding_model</span>()
+
+    <span class="cm"># Etape 2 : Creer ou charger la base vectorielle</span>
+    <span class="fn">print</span>(<span class="st">"\n[2/4] Base vectorielle"</span>)
+
+    <span class="cm"># Verifier si la base existe deja</span>
+    <span class="kw">if</span> os.path.<span class="fn">exists</span>(CHROMA_DIR) <span class="kw">and</span> os.<span class="fn">listdir</span>(CHROMA_DIR):
+        <span class="cm"># La base existe : la recharger (rapide)</span>
+        <span class="fn">print</span>(<span class="st">"  Base existante trouvee, chargement..."</span>)
+        vectorstore = <span class="fn">load_vector_store</span>(embeddings)
+    <span class="kw">else</span>:
+        <span class="cm"># Premiere execution : creer la base (plus lent)</span>
+        <span class="fn">print</span>(<span class="st">"  Premiere execution, creation de la base..."</span>)
+        documents = <span class="fn">load_documents</span>()
+        chunks = <span class="fn">split_documents</span>(documents)
+        vectorstore = <span class="fn">create_vector_store</span>(chunks, embeddings)
+
+    <span class="cm"># Etape 3 : Creer le retriever</span>
+    <span class="fn">print</span>(<span class="st">"\n[3/4] Retriever"</span>)
+    ret = <span class="fn">get_retriever</span>(vectorstore)
+
+    <span class="cm"># Etape 4 : Charger le LLM</span>
+    <span class="fn">print</span>(<span class="st">"\n[4/4] LLM"</span>)
+    llm = <span class="fn">get_llm</span>()
+
+    <span class="fn">print</span>(<span class="st">"\n" + "=" * 50</span>)
+    <span class="fn">print</span>(<span class="st">"  SYSTEME RAG PRET !"</span>)
+    <span class="fn">print</span>(<span class="st">"=" * 50</span>)
+
+    <span class="kw">return</span> ret, llm
+
+
+<span class="kw">def</span> <span class="fn">ask_question</span>(retriever, llm, question):
+    <span class="st">"""
+    Pipeline complet : question -> recherche -> reponse.
+
+    Args:
+        retriever: Le retriever configure
+        llm: Le modele de langage
+        question: La question de l'utilisateur
+
+    Retourne:
+        La reponse generee
+    """</span>
+
+    <span class="cm"># Phase 1 : Rechercher les chunks pertinents</span>
+    <span class="fn">print</span>(<span class="st">"\n--- RECHERCHE ---"</span>)
+    docs = <span class="fn">search</span>(retriever, question)
+
+    <span class="cm"># Phase 2 : Generer la reponse</span>
+    <span class="fn">print</span>(<span class="st">"\n--- GENERATION ---"</span>)
+    answer = <span class="fn">generate_answer</span>(llm, question, docs)
+
+    <span class="cm"># Phase 3 : Afficher les sources</span>
+    sources = <span class="fn">set</span>([doc.metadata.<span class="fn">get</span>(<span class="st">"source"</span>, <span class="st">"?"</span>) <span class="kw">for</span> doc <span class="kw">in</span> docs])
+
+    <span class="kw">return</span> answer, sources
+
+
+<span class="kw">def</span> <span class="fn">main</span>():
+    <span class="st">"""
+    Boucle principale du chatbot.
+    """</span>
+
+    <span class="cm"># Initialiser le systeme</span>
+    retriever, llm = <span class="fn">initialize_rag</span>()
+
+    <span class="fn">print</span>(<span class="st">"\nPose tes questions ! (tape 'quit' pour quitter)\n"</span>)
+
+    <span class="cm"># Boucle interactive</span>
+    <span class="kw">while</span> <span class="kw">True</span>:
+        <span class="cm"># Lire la question de l'utilisateur</span>
+        question = <span class="fn">input</span>(<span class="st">"Question : "</span>).<span class="fn">strip</span>()
+
+        <span class="cm"># Verifier si l'utilisateur veut quitter</span>
+        <span class="kw">if</span> question.<span class="fn">lower</span>() <span class="kw">in</span> [<span class="st">"quit"</span>, <span class="st">"exit"</span>, <span class="st">"q"</span>]:
+            <span class="fn">print</span>(<span class="st">"Au revoir !"</span>)
+            <span class="kw">break</span>
+
+        <span class="cm"># Ignorer les questions vides</span>
+        <span class="kw">if not</span> question:
+            <span class="kw">continue</span>
+
+        <span class="cm"># Poser la question au systeme RAG</span>
+        answer, sources = <span class="fn">ask_question</span>(retriever, llm, question)
+
+        <span class="cm"># Afficher la reponse</span>
+        <span class="fn">print</span>(<span class="st">f"\n{'='*50}"</span>)
+        <span class="fn">print</span>(<span class="st">f"REPONSE :\n{answer}"</span>)
+        <span class="fn">print</span>(<span class="st">f"\nSources : {', '.<span class="fn">join</span>(sources)}"</span>)
+        <span class="fn">print</span>(<span class="st">f"{'='*50}\n"</span>)
+
+
+<span class="cm"># --- Lancer le programme ---</span>
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    <span class="fn">main</span>()</code></pre>
+        </div>
+
+        <h3 style="margin: 25px 0 15px; font-size: 1.1rem;">Explication des lignes cles :</h3>
+
+        <div class="line-explain">
+            <div class="le-code">if os.path.exists(CHROMA_DIR) and os.listdir(CHROMA_DIR):</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span>On verifie si le dossier de la base vectorielle <strong>existe ET n'est pas vide</strong>. Si oui, on la recharge (rapide). Sinon, on la cree de zero (plus lent car il faut indexer tous les documents). C'est une optimisation pour ne pas re-indexer a chaque lancement.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">sources = set([doc.metadata.get("source", "?") for doc in docs])</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>set()</strong> cree un ensemble (sans doublons). On recupere le nom du fichier source de chaque chunk et on elimine les doublons. Resultat : {"nutrition.txt", "vitamines.txt"} au lieu de ["nutrition.txt", "nutrition.txt", "vitamines.txt"].</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">while True:</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>Boucle infinie</strong> qui continue de poser des questions jusqu'a ce que l'utilisateur tape "quit". C'est le pattern classique d'un chatbot en terminal. Le <code>break</code> sort de la boucle quand l'utilisateur veut quitter.</span>
+            </div>
+        </div>
+
+        <div class="line-explain">
+            <div class="le-code">question = input("Question : ").strip()</div>
+            <div class="le-explain">
+                <span class="le-arrow">&rarr;</span>
+                <span><strong>input()</strong> affiche le texte "Question : " et attend que l'utilisateur tape sa question puis appuie sur Entree. <strong>.strip()</strong> enleve les espaces inutiles au debut et a la fin du texte saisi.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 12. LANCER LE PROJET -->
+    <!-- ================================ -->
+    <div class="section" id="run">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(16,185,129,0.15); color: var(--green);">12</div>
+            <div>
+                <h2>Lancer le projet</h2>
+                <div class="sub">Demarrer le systeme RAG</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Checklist avant de lancer</h3>
+            <ul>
+                <li>Le dossier <code>data/</code> contient les 3 fichiers .txt</li>
+                <li>Les 7 fichiers Python sont crees</li>
+                <li>L'environnement virtuel est active</li>
+                <li>Les dependances sont installees</li>
+                <li>Ollama est lance (<code>ollama serve</code>) OU ta cle OpenAI est configuree</li>
+            </ul>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>Terminal</span>
+            </div>
+            <pre><code><span class="cm"># S'assurer qu'Ollama tourne (dans un autre terminal)</span>
+ollama serve
+
+<span class="cm"># Lancer le projet RAG</span>
+<span class="kw">python</span> main.py</code></pre>
+        </div>
+
+        <div class="card">
+            <h3>Ce qui va se passer</h3>
+            <div class="output">
+<span class="result">==================================================</span>
+<span class="result">  INITIALISATION DU SYSTEME RAG</span>
+<span class="result">==================================================</span>
+
+<span class="result">[1/4] Modele d'embedding</span>
+<span class="success">  Chargement du modele d'embedding : all-MiniLM-L6-v2</span>
+<span class="success">  Modele d'embedding charge !</span>
+
+<span class="result">[2/4] Base vectorielle</span>
+<span class="success">  Premiere execution, creation de la base...</span>
+<span class="success">  Charge : nutrition.txt (891 caracteres)</span>
+<span class="success">  Charge : vitamines.txt (923 caracteres)</span>
+<span class="success">  Charge : exercice.txt (876 caracteres)</span>
+<span class="success">  Total : 3 documents charges.</span>
+<span class="success">  3 documents decoupes en 8 chunks</span>
+<span class="success">  Taille chunk : 500 | Overlap : 50</span>
+<span class="success">  Creation de la base vectorielle (8 chunks)...</span>
+<span class="success">  Base vectorielle creee dans : ./chroma_db</span>
+
+<span class="result">[3/4] Retriever</span>
+<span class="success">  Retriever cree (Top-3 resultats)</span>
+
+<span class="result">[4/4] LLM</span>
+<span class="success">  LLM charge : Ollama (llama3.2)</span>
+
+<span class="result">==================================================</span>
+<span class="result">  SYSTEME RAG PRET !</span>
+<span class="result">==================================================</span>
+
+<span class="result">Pose tes questions ! (tape 'quit' pour quitter)</span>
+
+<span class="prompt">Question : </span><span class="result">_</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 13. TESTER & RESULTATS -->
+    <!-- ================================ -->
+    <div class="section" id="test">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(59,130,246,0.15); color: var(--blue);">13</div>
+            <div>
+                <h2>Tester & Resultats</h2>
+                <div class="sub">Questions et reponses attendues</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Exemples de questions a tester</h3>
+            <p>Essaie ces questions pour verifier que tout fonctionne :</p>
+        </div>
+
+        <div class="card" style="border-left: 3px solid var(--green);">
+            <h3 style="color: var(--cyan);">Q: "Combien de proteines par jour pour un adulte ?"</h3>
+            <p><strong>Reponse attendue :</strong> Un adulte a besoin d'environ 0.8g de proteines par kg de poids corporel par jour. On les trouve dans la viande, le poisson, les oeufs, les legumineuses et les produits laitiers.</p>
+            <p style="font-size: 0.8rem; margin-top: 8px;"><span class="badge green">Source: nutrition.txt</span></p>
+        </div>
+
+        <div class="card" style="border-left: 3px solid var(--green);">
+            <h3 style="color: var(--cyan);">Q: "Quelle est la dose de vitamine C recommandee ?"</h3>
+            <p><strong>Reponse attendue :</strong> La dose journaliere recommandee de vitamine C est de 110mg pour un adulte. On la trouve dans les agrumes, les kiwis et les poivrons.</p>
+            <p style="font-size: 0.8rem; margin-top: 8px;"><span class="badge green">Source: vitamines.txt</span></p>
+        </div>
+
+        <div class="card" style="border-left: 3px solid var(--green);">
+            <h3 style="color: var(--cyan);">Q: "Combien de temps d'exercice par semaine ?"</h3>
+            <p><strong>Reponse attendue :</strong> L'OMS recommande au minimum 150 minutes d'activite physique moderee par semaine, ou 75 minutes d'activite intense.</p>
+            <p style="font-size: 0.8rem; margin-top: 8px;"><span class="badge green">Source: exercice.txt</span></p>
+        </div>
+
+        <div class="card" style="border-left: 3px solid var(--orange);">
+            <h3 style="color: var(--orange);">Q: "Quelle est la capitale de la France ?"</h3>
+            <p><strong>Reponse attendue :</strong> "Je n'ai pas trouve cette information dans mes documents." (car ce n'est pas dans notre base de connaissances)</p>
+            <p style="font-size: 0.8rem; margin-top: 8px;"><span class="badge orange">Hors sujet - le RAG le detecte !</span></p>
+        </div>
+
+        <div class="info tip">
+            <div class="it">C'est le point fort du RAG</div>
+            <p>Contrairement a un ChatGPT classique qui inventerait une reponse, notre RAG dit honnement qu'il ne sait pas quand l'info n'est pas dans ses documents. <strong>Zero hallucination</strong> grace au prompt qui dit "base-toi UNIQUEMENT sur le contexte".</p>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 14. AMELIORATIONS -->
+    <!-- ================================ -->
+    <div class="section" id="improve">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(139,92,246,0.15); color: var(--purple);">14</div>
+            <div>
+                <h2>Ameliorations possibles</h2>
+                <div class="sub">Faire evoluer ton projet</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Niveau 1 : Ameliorations simples</h3>
+            <ul>
+                <li><strong>Ajouter plus de documents</strong> : Mets plus de fichiers .txt dans <code>data/</code></li>
+                <li><strong>Supporter les PDF</strong> : Utilise <code>PyPDFLoader</code> dans loader.py</li>
+                <li><strong>Ajuster chunk_size</strong> : Essaie 300 ou 800 et compare les resultats</li>
+                <li><strong>Changer TOP_K</strong> : Passe a 5 pour plus de contexte</li>
+                <li><strong>Meilleur modele d'embedding</strong> : Essaie <code>BAAI/bge-large-en-v1.5</code></li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>Niveau 2 : Ameliorations intermediaires</h3>
+            <ul>
+                <li><strong>Ajouter le Re-Ranking</strong> : Cross-Encoder pour reordonner les resultats</li>
+                <li><strong>Recherche Hybride</strong> : Combiner semantique + BM25 (mots-cles)</li>
+                <li><strong>Interface Web</strong> : Ajouter Streamlit ou Gradio pour une UI graphique</li>
+                <li><strong>Historique</strong> : Garder la memoire des questions precedentes</li>
+                <li><strong>Metadata enrichies</strong> : Ajouter date, auteur, categorie aux documents</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>Niveau 3 : Ameliorations avancees</h3>
+            <ul>
+                <li><strong>Evaluation RAGAS</strong> : Mesurer la qualite avec des metriques</li>
+                <li><strong>Agentic RAG</strong> : Ajouter un agent qui planifie ses recherches</li>
+                <li><strong>Graph RAG</strong> : Ajouter un graphe de connaissances</li>
+                <li><strong>Multimodal</strong> : Supporter les images et tableaux</li>
+                <li><strong>API REST</strong> : Exposer le RAG comme une API avec FastAPI</li>
+            </ul>
+        </div>
+
+        <div class="info note">
+            <div class="it">Prochaine etape</div>
+            <p>Quand tu es pret, dis-le moi et on passe a la <strong>construction reelle du projet</strong> : on va creer chaque fichier Python dans ton dossier et lancer le systeme ensemble, etape par etape !</p>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <p>Projet Pratique RAG - Chaque Ligne de Code Expliquee</p>
+        <p style="margin-top: 8px;">De zero a un systeme RAG fonctionnel.</p>
+    </div>
+
+</div>
+
+<script>
+    const navLinks = document.querySelectorAll('.nav a');
+    const sections = document.querySelectorAll('.section');
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.id; });
+        navLinks.forEach(l => { l.style.borderLeftColor = l.getAttribute('href') === `#${current}` ? 'var(--green)' : 'transparent'; l.style.color = l.getAttribute('href') === `#${current}` ? 'var(--text)' : ''; });
+    });
+    navLinks.forEach(l => l.addEventListener('click', () => document.getElementById('nav').classList.remove('open')));
+</script>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

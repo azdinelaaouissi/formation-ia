@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Complet Enrichi - Tout ce qui manquait + Sources Web</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #070b12;
+            --bg2: #0d1420;
+            --bg3: #141e30;
+            --bg-code: #0a0f18;
+            --text: #e2e8f0;
+            --text2: #94a3b8;
+            --text3: #64748b;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --cyan: #06b6d4;
+            --pink: #ec4899;
+            --lime: #84cc16;
+            --border: #1e293b;
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.75;
+            font-size: 16px;
+        }
+
+        .nav {
+            position: fixed; top: 0; left: 0; width: 270px; height: 100vh;
+            background: var(--bg2); border-right: 1px solid var(--border);
+            overflow-y: auto; z-index: 1000; padding: 20px 0;
+        }
+        .nav-head { padding: 10px 20px 25px; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+        .nav-head h2 { font-size: 1rem; background: linear-gradient(135deg, var(--orange), var(--red)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .nav-head p { font-size: 0.7rem; color: var(--text3); margin-top: 4px; }
+        .nav-label { padding: 14px 20px 4px; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text3); font-weight: 700; }
+        .nav a { display: flex; align-items: center; gap: 10px; padding: 9px 20px; color: var(--text2); text-decoration: none; font-size: 0.8rem; border-left: 3px solid transparent; transition: all 0.2s; }
+        .nav a:hover { color: var(--text); background: rgba(245,158,11,0.06); border-left-color: var(--orange); }
+        .nav a .n { width: 20px; height: 20px; border-radius: 5px; background: var(--bg3); font-size: 0.65rem; font-weight: 700; color: var(--orange); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        .main { margin-left: 270px; padding: 40px 55px 100px; max-width: 1100px; }
+
+        .hero { text-align: center; padding: 60px 40px; background: linear-gradient(180deg, rgba(245,158,11,0.08) 0%, transparent 100%); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 60px; }
+        .hero-badge { display: inline-block; padding: 5px 14px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 20px; font-size: 0.78rem; color: var(--orange); font-weight: 600; margin-bottom: 20px; }
+        .hero h1 { font-size: 2.4rem; font-weight: 800; line-height: 1.2; margin-bottom: 18px; background: linear-gradient(135deg, var(--orange), var(--red)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .hero p { font-size: 1.05rem; color: var(--text2); max-width: 650px; margin: 0 auto; }
+
+        .section { margin-bottom: 60px; scroll-margin-top: 30px; }
+        .section-head { display: flex; align-items: center; gap: 14px; margin-bottom: 25px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+        .sn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 800; flex-shrink: 0; }
+        .section-head h2 { font-size: 1.4rem; }
+        .section-head .sub { font-size: 0.8rem; color: var(--text3); }
+
+        .card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+        .card h3 { font-size: 1.05rem; margin-bottom: 10px; }
+        .card p, .card li { color: var(--text2); font-size: 0.92rem; }
+        .card ul, .card ol { padding-left: 20px; margin: 10px 0; }
+        .card li { margin-bottom: 6px; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+        .code { background: var(--bg-code); border: 1px solid var(--border); border-radius: 12px; margin: 16px 0; overflow: hidden; }
+        .code-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); font-size: 0.72rem; color: var(--text3); }
+        .dots { display: flex; gap: 5px; }
+        .dots span { width: 9px; height: 9px; border-radius: 50%; }
+        .dots span:nth-child(1) { background: var(--red); }
+        .dots span:nth-child(2) { background: var(--orange); }
+        .dots span:nth-child(3) { background: var(--green); }
+        .code pre { padding: 14px 18px; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; }
+        .code code { font-family: 'Cascadia Code', 'Fira Code', monospace; color: var(--text2); }
+        .cm { color: #6a737d; } .kw { color: #ff7b72; } .st { color: #a5d6ff; } .fn { color: #d2a8ff; } .nb { color: #79c0ff; }
+
+        .info { border-radius: 12px; padding: 18px 22px; margin: 16px 0; border-left: 4px solid; font-size: 0.87rem; }
+        .info.tip { background: rgba(16,185,129,0.06); border-color: var(--green); }
+        .info.tip .it { color: var(--green); }
+        .info.warn { background: rgba(245,158,11,0.06); border-color: var(--orange); }
+        .info.warn .it { color: var(--orange); }
+        .info.note { background: rgba(59,130,246,0.06); border-color: var(--blue); }
+        .info.note .it { color: var(--blue); }
+        .info.hot { background: rgba(239,68,68,0.06); border-color: var(--red); }
+        .info.hot .it { color: var(--red); }
+        .info.src { background: rgba(139,92,246,0.06); border-color: var(--purple); }
+        .info.src .it { color: var(--purple); }
+        .it { font-weight: 700; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .info p { color: var(--text2); }
+        .info a { color: var(--purple); text-decoration: none; }
+        .info a:hover { text-decoration: underline; }
+
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 600; }
+        .badge.green { background: rgba(16,185,129,0.15); color: var(--green); }
+        .badge.blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+        .badge.orange { background: rgba(245,158,11,0.15); color: var(--orange); }
+        .badge.red { background: rgba(239,68,68,0.15); color: var(--red); }
+        .badge.purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+        .badge.cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
+        .badge.pink { background: rgba(236,72,153,0.15); color: var(--pink); }
+
+        .tbl { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.87rem; }
+        .tbl th, .tbl td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        .tbl th { background: rgba(245,158,11,0.08); color: var(--orange); font-weight: 700; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 1px; }
+        .tbl td { color: var(--text2); }
+
+        .wf { display: flex; flex-direction: column; gap: 0; margin: 20px 0; }
+        .wf-step { display: flex; gap: 16px; padding-bottom: 28px; }
+        .wf-step:last-child { padding-bottom: 0; }
+        .wf-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .wf-icon { width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+        .wf-conn { width: 2px; flex: 1; min-height: 20px; background: var(--border); margin-top: 4px; }
+        .wf-step:last-child .wf-conn { display: none; }
+        .wf-body { flex: 1; padding-top: 2px; }
+        .wf-body h4 { font-size: 0.98rem; margin-bottom: 4px; }
+        .wf-body p { font-size: 0.87rem; color: var(--text2); }
+
+        .hl { color: var(--blue); font-weight: 600; }
+        .hl-g { color: var(--green); font-weight: 600; }
+        .hl-p { color: var(--purple); font-weight: 600; }
+        .hl-o { color: var(--orange); font-weight: 600; }
+        strong { color: var(--text); }
+
+        .source-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; display: flex; gap: 14px; align-items: flex-start; }
+        .source-num { width: 28px; height: 28px; border-radius: 8px; background: rgba(139,92,246,0.15); color: var(--purple); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; flex-shrink: 0; }
+        .source-card h4 { font-size: 0.92rem; margin-bottom: 3px; }
+        .source-card p { font-size: 0.8rem; color: var(--text3); }
+        .source-card a { color: var(--purple); font-size: 0.78rem; text-decoration: none; word-break: break-all; }
+
+        .vs-box { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; margin: 16px 0; }
+        .vs-side { background: var(--bg3); border: 1px solid var(--border); padding: 18px; border-radius: 12px; }
+        .vs-mid { display: flex; align-items: center; justify-content: center; padding: 0 14px; font-weight: 800; font-size: 1.2rem; color: var(--text3); }
+
+        .footer { text-align: center; padding: 40px; margin-top: 60px; border-top: 1px solid var(--border); color: var(--text3); font-size: 0.78rem; }
+        .footer a { color: var(--purple); text-decoration: none; }
+
+        .mob-btn { display: none; position: fixed; bottom: 20px; right: 20px; width: 48px; height: 48px; border-radius: 50%; background: var(--orange); color: white; border: none; font-size: 1.3rem; cursor: pointer; z-index: 1001; }
+        @media (max-width: 900px) {
+            .nav { transform: translateX(-100%); transition: transform 0.3s; }
+            .nav.open { transform: translateX(0); }
+            .main { margin-left: 0; padding: 25px 18px 80px; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.8rem; }
+            .mob-btn { display: flex; align-items: center; justify-content: center; }
+            .vs-box { grid-template-columns: 1fr; }
+            .vs-mid { padding: 10px 0; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+    <div class="nav-head">
+        <h2>RAG Enrichi</h2>
+        <p>Infos supplementaires des 10 sources web</p>
+    </div>
+    <div class="nav-label">Sources</div>
+    <a href="#sources"><span class="n">1</span> Les 10 ressources</a>
+    <a href="#gaps"><span class="n">2</span> Ce qui manquait</a>
+    <div class="nav-label">Preprocessing</div>
+    <a href="#scraping"><span class="n">3</span> Web Scraping (Trafilatura)</a>
+    <a href="#nettoyage"><span class="n">4</span> Nettoyage du texte</a>
+    <a href="#preprocessing"><span class="n">5</span> Pipeline preprocessing</a>
+    <div class="nav-label">Concepts enrichis</div>
+    <a href="#loaders"><span class="n">6</span> Document Loaders (tous)</a>
+    <a href="#pinecone"><span class="n">7</span> Pinecone vs ChromaDB</a>
+    <a href="#embedding-models"><span class="n">8</span> Modeles embeddings 2025</a>
+    <a href="#mistral"><span class="n">9</span> LLM locaux : Mistral/Ollama</a>
+    <div class="nav-label">RAG en production</div>
+    <a href="#prod-checklist"><span class="n">10</span> Checklist production</a>
+    <a href="#langsmith"><span class="n">11</span> LangSmith monitoring</a>
+    <a href="#rag-cas"><span class="n">12</span> Cas d'usage detailles</a>
+    <div class="nav-label">Agentique</div>
+    <a href="#agent-code"><span class="n">13</span> RAG Agentique (code)</a>
+    <a href="#langgraph"><span class="n">14</span> LangGraph pipelines</a>
+    <div class="nav-label">Guide officiel</div>
+    <a href="#gouv"><span class="n">15</span> Guide gouvernemental</a>
+    <a href="#glossaire"><span class="n">16</span> Glossaire complet</a>
+</nav>
+
+<button class="mob-btn" onclick="document.getElementById('nav').classList.toggle('open')">&#9776;</button>
+
+<div class="main">
+
+    <div class="hero">
+        <span class="hero-badge">Enrichi avec 10 sources web</span>
+        <h1>RAG Complet Enrichi</h1>
+        <p>Toutes les informations manquantes dans nos cours precedents, extraites de 10 ressources web francophones et anglophones.</p>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 1. LES 10 RESSOURCES -->
+    <!-- =========================================== -->
+    <div class="section" id="sources">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(139,92,246,0.15); color: var(--purple);">1</div>
+            <div>
+                <h2>Les 10 ressources analysees</h2>
+                <div class="sub">D'ou viennent les informations</div>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">1</div>
+            <div>
+                <h4>Stephane Robert - "RAG : augmenter un LLM avec vos donnees"</h4>
+                <p>Guide 6 etapes : scraping Trafilatura, nettoyage, chunking, embedding, FAISS, Ollama</p>
+                <a href="https://blog.stephane-robert.info/docs/developper/programmation/python/rag-introduction/">blog.stephane-robert.info</a>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">2</div>
+            <div>
+                <h4>Blent.ai - "Creer un RAG avec LangChain et Mistral"</h4>
+                <p>Chunking 600 car., BAAI/bge-small-en, Pinecone, Mistral 7B, pipeline complet</p>
+                <a href="https://blent.ai/blog/a/creer-un-rag-avec-langchain">blent.ai</a>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">3</div>
+            <div>
+                <h4>LBKE - "RAG avec LangChain" (intro + agentique)</h4>
+                <p>ChromaDB, CSVLoader, Gemini embeddings, RAG agentique avec create_agent</p>
+                <a href="https://www.lbke.fr/formations/rag-introduction-langchain/rag-avec-langchain">lbke.fr</a>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">4</div>
+            <div>
+                <h4>DataCorner - "Introduction au RAG"</h4>
+                <p>Bases chunking, vectorisation, comparaison LLM vs RAG</p>
+                <a href="https://datacorner.fr/rag/">datacorner.fr</a>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">5</div>
+            <div>
+                <h4>Oracle - "Qu'est-ce que la generation augmentee de recuperation ?"</h4>
+                <p>Definition enterprise, cas d'usage, avantages, recherche semantique</p>
+                <a href="https://www.oracle.com/africa-fr/artificial-intelligence/generative-ai/retrieval-augmented-generation-rag/">oracle.com</a>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">6</div>
+            <div>
+                <h4>GitHub qlfv - "RAG-Samples-Project"</h4>
+                <p>Structure notebooks/scripts, exemples LangChain/LlamaIndex</p>
+                <a href="https://github.com/qlfv/RAG-Samples-Project">github.com/qlfv</a>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">7</div>
+            <div>
+                <h4>DataCamp - "RAG agentique : Tutoriel avec projet"</h4>
+                <p>Pipeline local/web scraping, etapes requete a reponse</p>
+                <a href="https://www.datacamp.com/fr/tutorial/agentic-rag-tutorial">datacamp.com</a>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">8</div>
+            <div>
+                <h4>GitHub luspr - "rag-tutorial"</h4>
+                <p>Implementation RAG from scratch, chatbot tutoriel</p>
+                <a href="https://github.com/luspr/rag-tutorial">github.com/luspr</a>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">9</div>
+            <div>
+                <h4>Entreprises.gouv.fr - "Guide RAG" (PDF officiel)</h4>
+                <p>Modules recuperation/generation, corpus docs, guide gouvernemental</p>
+                <a href="https://www.entreprises.gouv.fr/files/files/Publications/2024/Guides/20241127-bro-guide-ragv4-interactif.pdf">entreprises.gouv.fr</a>
+            </div>
+        </div>
+
+        <div class="source-card">
+            <div class="source-num">10</div>
+            <div>
+                <h4>Medium - "A Comprehensive Guide to RAG"</h4>
+                <p>Guide complet anglophone, workflow, best practices</p>
+                <a href="https://medium.com/@jagadeesan.ganesh/a-comprehensive-guide-to-retrieval-augmented-generation-rag-what-it-is-and-how-to-use-it-ebd5a0ca8a83">medium.com</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 2. CE QUI MANQUAIT -->
+    <!-- =========================================== -->
+    <div class="section" id="gaps">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(239,68,68,0.15); color: var(--red);">2</div>
+            <div>
+                <h2>Ce qui manquait dans nos cours</h2>
+                <div class="sub">Analyse comparative : nos cours vs les 10 sources</div>
+            </div>
+        </div>
+
+        <div class="card" style="overflow-x: auto;">
+            <h3>Tableau comparatif</h3>
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Sujet</th>
+                        <th>Nos cours</th>
+                        <th>Sources web</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Definition RAG, analogies</td>
+                        <td>Oui, detaille</td>
+                        <td>Oui</td>
+                        <td><span class="badge green">Couvert</span></td>
+                    </tr>
+                    <tr>
+                        <td>Embeddings / Similarite</td>
+                        <td>Oui, detaille</td>
+                        <td>Oui</td>
+                        <td><span class="badge green">Couvert</span></td>
+                    </tr>
+                    <tr>
+                        <td>Chunking / Overlap</td>
+                        <td>Oui, detaille</td>
+                        <td>Oui</td>
+                        <td><span class="badge green">Couvert</span></td>
+                    </tr>
+                    <tr>
+                        <td>Types de RAG (9 types)</td>
+                        <td>Oui, cours avance</td>
+                        <td>Oui</td>
+                        <td><span class="badge green">Couvert</span></td>
+                    </tr>
+                    <tr>
+                        <td>Workflows detailles</td>
+                        <td>Oui, 3 workflows</td>
+                        <td>Oui</td>
+                        <td><span class="badge green">Couvert</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Web Scraping (Trafilatura)</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Oui (Stephane Robert)</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nettoyage du texte</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Oui (Stephane Robert, Blent)</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pipeline de preprocessing</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Oui (42% des echecs RAG)</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Document Loaders (CSV, Web, etc.)</strong></td>
+                        <td style="color: var(--orange);">Partiel (TXT/PDF)</td>
+                        <td>Oui (CSV, Web, JSON, HTML)</td>
+                        <td><span class="badge orange">ENRICHI</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Pinecone (cloud vector DB)</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Oui (Blent.ai)</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Modeles BAAI/BGE</strong></td>
+                        <td style="color: var(--orange);">Mentionne</td>
+                        <td>Oui, code (Blent.ai)</td>
+                        <td><span class="badge orange">ENRICHI</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mistral 7B (LLM local)</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Oui (Blent.ai)</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>RAG en production (checklist)</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Oui (Stephane Robert)</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>LangSmith / monitoring</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Oui (LBKE)</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cas d'usage detailles (Oracle)</strong></td>
+                        <td style="color: var(--orange);">Partiel</td>
+                        <td>Oui (Oracle, DataCamp)</td>
+                        <td><span class="badge orange">ENRICHI</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>RAG agentique (code create_agent)</strong></td>
+                        <td style="color: var(--orange);">Concept seul</td>
+                        <td>Oui, code (LBKE, DataCamp)</td>
+                        <td><span class="badge orange">ENRICHI</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>LangGraph</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Oui (LBKE)</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Guide officiel gouv.fr</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Oui (PDF gouv)</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Glossaire complet</strong></td>
+                        <td style="color: var(--red);">Non</td>
+                        <td>Implicite</td>
+                        <td><span class="badge red">AJOUTE</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info hot">
+            <div class="it">12 sujets ajoutes ou enrichis</div>
+            <p>Les sources web couvrent <strong>12 sujets</strong> que nos cours ne traitaient pas ou insuffisamment. Ce fichier HTML les couvre TOUS avec du code et des explications detaillees.</p>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 3. WEB SCRAPING -->
+    <!-- =========================================== -->
+    <div class="section" id="scraping">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(59,130,246,0.15); color: var(--blue);">3</div>
+            <div>
+                <h2>Web Scraping avec Trafilatura</h2>
+                <div class="sub">Source : Stephane Robert - Recuperer du contenu web pour le RAG</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Pourquoi le scraping dans un RAG ?</h3>
+            <p>Souvent, vos donnees ne sont pas dans des fichiers locaux mais sur des <span class="hl">pages web</span> : documentation en ligne, articles de blog, wikis internes, FAQ. Le scraping permet d'extraire ce contenu automatiquement.</p>
+        </div>
+
+        <div class="card">
+            <h3>Trafilatura : L'outil ideal</h3>
+            <p><strong>Trafilatura</strong> est une bibliotheque Python qui extrait le <span class="hl-g">contenu textuel utile</span> d'une page web en ignorant automatiquement les menus, publicites, footers, et code HTML inutile.</p>
+
+            <div class="code">
+                <div class="code-top">
+                    <div class="dots"><span></span><span></span><span></span></div>
+                    <span>Installation</span>
+                </div>
+                <pre><code><span class="kw">pip install</span> trafilatura</code></pre>
+            </div>
+
+            <div class="code">
+                <div class="code-top">
+                    <div class="dots"><span></span><span></span><span></span></div>
+                    <span>scraper.py - Scraping avec Trafilatura</span>
+                </div>
+                <pre><code><span class="kw">import</span> trafilatura
+
+<span class="kw">def</span> <span class="fn">scrape_url</span>(url):
+    <span class="st">"""Extraire le texte propre d'une page web."""</span>
+
+    <span class="cm"># 1. Telecharger la page HTML</span>
+    downloaded = trafilatura.<span class="fn">fetch_url</span>(url)
+
+    <span class="cm"># 2. Extraire le contenu textuel (sans menus, pubs, etc.)</span>
+    text = trafilatura.<span class="fn">extract</span>(
+        downloaded,
+        include_comments=<span class="kw">False</span>,    <span class="cm"># Pas de commentaires</span>
+        include_tables=<span class="kw">True</span>,       <span class="cm"># Garder les tableaux</span>
+        include_links=<span class="kw">False</span>,       <span class="cm"># Pas de liens URL</span>
+        output_format=<span class="st">"txt"</span>        <span class="cm"># Format texte brut</span>
+    )
+
+    <span class="kw">return</span> text
+
+<span class="cm"># Exemple d'utilisation</span>
+url = <span class="st">"https://fr.wikipedia.org/wiki/Nutrition"</span>
+content = <span class="fn">scrape_url</span>(url)
+<span class="fn">print</span>(content[:<span class="nb">500</span>])  <span class="cm"># Les 500 premiers caracteres</span></code></pre>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Scraper plusieurs pages</h3>
+            <div class="code">
+                <div class="code-top">
+                    <div class="dots"><span></span><span></span><span></span></div>
+                    <span>multi_scraper.py</span>
+                </div>
+                <pre><code><span class="kw">import</span> trafilatura
+<span class="kw">from</span> langchain.schema <span class="kw">import</span> Document
+
+<span class="kw">def</span> <span class="fn">scrape_multiple</span>(urls):
+    <span class="st">"""Scraper une liste d'URLs et retourner des Documents."""</span>
+    documents = []
+
+    <span class="kw">for</span> url <span class="kw">in</span> urls:
+        <span class="fn">print</span>(<span class="st">f"Scraping: {url}"</span>)
+        downloaded = trafilatura.<span class="fn">fetch_url</span>(url)
+        text = trafilatura.<span class="fn">extract</span>(downloaded)
+
+        <span class="kw">if</span> text:
+            doc = <span class="fn">Document</span>(
+                page_content=text,
+                metadata={<span class="st">"source"</span>: url, <span class="st">"type"</span>: <span class="st">"web"</span>}
+            )
+            documents.<span class="fn">append</span>(doc)
+
+    <span class="fn">print</span>(<span class="st">f"\n{<span class="fn">len</span>(documents)} pages scrapees."</span>)
+    <span class="kw">return</span> documents
+
+<span class="cm"># Utilisation</span>
+urls = [
+    <span class="st">"https://example.com/article1"</span>,
+    <span class="st">"https://example.com/article2"</span>,
+]
+docs = <span class="fn">scrape_multiple</span>(urls)
+<span class="cm"># Ensuite : chunking -> embedding -> ChromaDB</span></code></pre>
+            </div>
+        </div>
+
+        <div class="info src">
+            <div class="it">Source</div>
+            <p><a href="https://blog.stephane-robert.info/docs/developper/programmation/python/rag-introduction/">Stephane Robert - RAG : augmenter un LLM avec vos donnees</a></p>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 4. NETTOYAGE DU TEXTE -->
+    <!-- =========================================== -->
+    <div class="section" id="nettoyage">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(245,158,11,0.15); color: var(--orange);">4</div>
+            <div>
+                <h2>Nettoyage du texte</h2>
+                <div class="sub">Source : Stephane Robert / Blent.ai - L'etape oubliee mais cruciale</div>
+            </div>
+        </div>
+
+        <div class="info hot">
+            <div class="it">Statistique cle</div>
+            <p>Selon une etude de 2024, <strong>42% des echecs de pipeline RAG</strong> sont dus a un mauvais nettoyage des donnees. Le preprocessing est souvent la cause #1 de mauvais resultats.</p>
+        </div>
+
+        <div class="card">
+            <h3>Pourquoi nettoyer ?</h3>
+            <p>Le texte brut (surtout apres scraping) contient du <span class="hl-o">bruit</span> qui pollue les embeddings :</p>
+            <ul>
+                <li>Espaces multiples, tabulations, retours a la ligne excessifs</li>
+                <li>Caracteres speciaux residuels (HTML, Unicode)</li>
+                <li>Headers, footers, menus repetes</li>
+                <li>Liens URL inutiles dans le texte</li>
+                <li>Numeros de page, copyrights</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>Fonctions de nettoyage</h3>
+            <div class="code">
+                <div class="code-top">
+                    <div class="dots"><span></span><span></span><span></span></div>
+                    <span>cleaner.py - Nettoyage du texte pour RAG</span>
+                </div>
+                <pre><code><span class="kw">import</span> re
+
+<span class="kw">def</span> <span class="fn">clean_text</span>(text):
+    <span class="st">"""
+    Nettoie le texte brut pour le RAG.
+    Supprime le bruit tout en gardant le contenu utile.
+    """</span>
+
+    <span class="cm"># 1. Supprimer les balises HTML residuelles</span>
+    text = re.<span class="fn">sub</span>(<span class="st">r"&lt;[^&gt;]+&gt;"</span>, <span class="st">""</span>, text)
+
+    <span class="cm"># 2. Supprimer les URLs</span>
+    text = re.<span class="fn">sub</span>(<span class="st">r"https?://\S+"</span>, <span class="st">""</span>, text)
+
+    <span class="cm"># 3. Supprimer les caracteres speciaux inutiles</span>
+    text = re.<span class="fn">sub</span>(<span class="st">r"[^\w\s.,;:!?()'\"-]"</span>, <span class="st">" "</span>, text)
+
+    <span class="cm"># 4. Normaliser les espaces (multiples -> un seul)</span>
+    text = re.<span class="fn">sub</span>(<span class="st">r" +"</span>, <span class="st">" "</span>, text)
+
+    <span class="cm"># 5. Normaliser les sauts de ligne (3+ -> 2)</span>
+    text = re.<span class="fn">sub</span>(<span class="st">r"\n{3,}"</span>, <span class="st">"\n\n"</span>, text)
+
+    <span class="cm"># 6. Supprimer les espaces en debut/fin</span>
+    text = text.<span class="fn">strip</span>()
+
+    <span class="kw">return</span> text
+
+
+<span class="kw">def</span> <span class="fn">clean_documents</span>(documents):
+    <span class="st">"""Nettoie une liste de Documents LangChain."""</span>
+    <span class="kw">for</span> doc <span class="kw">in</span> documents:
+        doc.page_content = <span class="fn">clean_text</span>(doc.page_content)
+    <span class="fn">print</span>(<span class="st">f"  {<span class="fn">len</span>(documents)} documents nettoyes."</span>)
+    <span class="kw">return</span> documents</code></pre>
+            </div>
+        </div>
+
+        <div class="info tip">
+            <div class="it">Ordre du pipeline</div>
+            <p>L'ordre correct est : <strong>Charger &rarr; Nettoyer &rarr; Chunker &rarr; Embedder</strong>. Le nettoyage DOIT se faire AVANT le chunking, sinon le bruit se retrouve dans les chunks et pollue la recherche.</p>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 5. PIPELINE PREPROCESSING -->
+    <!-- =========================================== -->
+    <div class="section" id="preprocessing">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(16,185,129,0.15); color: var(--green);">5</div>
+            <div>
+                <h2>Pipeline de preprocessing complet</h2>
+                <div class="sub">Les 6 etapes avant le RAG (source : Stephane Robert)</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Le vrai pipeline complet (pas juste "charger et chunker")</h3>
+            <p>Les sources web revelent que le pipeline avant l'indexation est plus riche que ce qu'on avait :</p>
+
+            <div class="wf">
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(59,130,246,0.15); color: var(--blue);">1</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>Collecte des donnees</h4>
+                        <p>Scraping web (Trafilatura), PDF (PyPDF), CSV, BDD, API, fichiers locaux</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(245,158,11,0.15); color: var(--orange);">2</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4 style="color: var(--orange);">Nettoyage textuel (NOUVEAU)</h4>
+                        <p>Supprimer HTML, URLs, caracteres speciaux, normaliser espaces. <strong>42% des echecs RAG</strong> sont lies a cette etape.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(236,72,153,0.15); color: var(--pink);">3</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4 style="color: var(--pink);">Filtrage de contenu (NOUVEAU)</h4>
+                        <p>Supprimer les documents vides, trop courts, dupliques, ou hors sujet. Filtrer par qualite.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(139,92,246,0.15); color: var(--purple);">4</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>Chunking intelligent</h4>
+                        <p>RecursiveCharacterTextSplitter avec 300-800 tokens, 10-20% overlap. Adapter la taille au contenu.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(6,182,212,0.15); color: var(--cyan);">5</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4 style="color: var(--cyan);">Enrichissement metadata (NOUVEAU)</h4>
+                        <p>Ajouter source, date, auteur, categorie, langue a chaque chunk. Permet le filtrage au retrieval.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(16,185,129,0.15); color: var(--green);">6</div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>Embedding + Stockage</h4>
+                        <p>Vectoriser avec le modele choisi et stocker dans la base vectorielle.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info warn">
+            <div class="it">Lecon cle de Blent.ai</div>
+            <p>"La qualite du chunking et la pertinence des documents impactent directement les performances du systeme, <strong>bien plus que le choix du LLM</strong>. Le goulot d'etranglement est la vectorisation initiale, pas la generation."</p>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 6. DOCUMENT LOADERS -->
+    <!-- =========================================== -->
+    <div class="section" id="loaders">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(6,182,212,0.15); color: var(--cyan);">6</div>
+            <div>
+                <h2>Tous les Document Loaders</h2>
+                <div class="sub">Source : LBKE + Blent.ai - Au-dela du TXT et PDF</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>LangChain supporte des dizaines de formats</h3>
+            <p>Nos cours ne montraient que TextLoader et PyPDFLoader. Voici les autres :</p>
+        </div>
+
+        <div class="card" style="overflow-x: auto;">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Format</th>
+                        <th>Loader</th>
+                        <th>Import</th>
+                        <th>Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>CSV</strong></td>
+                        <td>CSVLoader</td>
+                        <td><code>langchain_community.document_loaders</code></td>
+                        <td>Donnees tabulaires</td>
+                    </tr>
+                    <tr>
+                        <td><strong>JSON</strong></td>
+                        <td>JSONLoader</td>
+                        <td><code>langchain_community.document_loaders</code></td>
+                        <td>APIs, config files</td>
+                    </tr>
+                    <tr>
+                        <td><strong>HTML</strong></td>
+                        <td>BSHTMLLoader</td>
+                        <td><code>langchain_community.document_loaders</code></td>
+                        <td>Pages web locales</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Word (.docx)</strong></td>
+                        <td>Docx2txtLoader</td>
+                        <td><code>langchain_community.document_loaders</code></td>
+                        <td>Documents Word</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Markdown</strong></td>
+                        <td>UnstructuredMarkdownLoader</td>
+                        <td><code>langchain_community.document_loaders</code></td>
+                        <td>README, docs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>URL Web</strong></td>
+                        <td>WebBaseLoader</td>
+                        <td><code>langchain_community.document_loaders</code></td>
+                        <td>Scraping basique</td>
+                    </tr>
+                    <tr>
+                        <td><strong>YouTube</strong></td>
+                        <td>YoutubeLoader</td>
+                        <td><code>langchain_community.document_loaders</code></td>
+                        <td>Transcriptions video</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Notion</strong></td>
+                        <td>NotionDBLoader</td>
+                        <td><code>langchain_community.document_loaders</code></td>
+                        <td>Base Notion</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>exemples_loaders.py - Source : LBKE</span>
+            </div>
+            <pre><code><span class="cm"># === Charger un CSV ===</span>
+<span class="kw">from</span> langchain_community.document_loaders.csv_loader <span class="kw">import</span> CSVLoader
+loader = <span class="fn">CSVLoader</span>(file_path=<span class="st">"./data/clients.csv"</span>)
+docs_csv = loader.<span class="fn">load</span>()
+
+<span class="cm"># === Charger une page web ===</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> WebBaseLoader
+loader = <span class="fn">WebBaseLoader</span>(<span class="st">"https://example.com/article"</span>)
+docs_web = loader.<span class="fn">load</span>()
+
+<span class="cm"># === Charger un Word ===</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> Docx2txtLoader
+loader = <span class="fn">Docx2txtLoader</span>(<span class="st">"./data/rapport.docx"</span>)
+docs_word = loader.<span class="fn">load</span>()
+
+<span class="cm"># === Charger un dossier entier (tous les .txt) ===</span>
+<span class="kw">from</span> langchain_community.document_loaders <span class="kw">import</span> DirectoryLoader
+loader = <span class="fn">DirectoryLoader</span>(<span class="st">"./data/"</span>, glob=<span class="st">"**/*.txt"</span>)
+docs_all = loader.<span class="fn">load</span>()</code></pre>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 7. PINECONE VS CHROMADB -->
+    <!-- =========================================== -->
+    <div class="section" id="pinecone">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(139,92,246,0.15); color: var(--purple);">7</div>
+            <div>
+                <h2>Pinecone vs ChromaDB</h2>
+                <div class="sub">Source : Blent.ai - Quand utiliser une base cloud ?</div>
+            </div>
+        </div>
+
+        <div class="vs-box">
+            <div class="vs-side" style="border-top: 3px solid var(--green);">
+                <h3 style="color: var(--green);">ChromaDB (Local)</h3>
+                <ul style="color: var(--text2); font-size: 0.9rem; padding-left: 18px; margin-top: 10px;">
+                    <li><strong>Gratuit</strong>, open source</li>
+                    <li>Tourne sur ton PC</li>
+                    <li>Simple : <code>pip install chromadb</code></li>
+                    <li>Ideal pour prototypage</li>
+                    <li>Limite : 1 machine seule</li>
+                    <li>Pas de monitoring integre</li>
+                </ul>
+            </div>
+            <div class="vs-mid">VS</div>
+            <div class="vs-side" style="border-top: 3px solid var(--purple);">
+                <h3 style="color: var(--purple);">Pinecone (Cloud)</h3>
+                <ul style="color: var(--text2); font-size: 0.9rem; padding-left: 18px; margin-top: 10px;">
+                    <li><strong>Freemium</strong>, heberge</li>
+                    <li>Tourne dans le cloud AWS</li>
+                    <li>API + dashboard web</li>
+                    <li>Ideal pour production</li>
+                    <li>Scalable : millions de vecteurs</li>
+                    <li>Monitoring et analytics</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>pinecone_exemple.py - Source : Blent.ai</span>
+            </div>
+            <pre><code><span class="cm"># pip install langchain-pinecone pinecone-client</span>
+<span class="kw">from</span> pinecone <span class="kw">import</span> Pinecone, ServerlessSpec
+<span class="kw">from</span> langchain_pinecone <span class="kw">import</span> PineconeVectorStore
+
+<span class="cm"># 1. Connexion a Pinecone</span>
+pc = <span class="fn">Pinecone</span>(api_key=<span class="st">"VOTRE_CLE_API"</span>)
+
+<span class="cm"># 2. Creer un index (si premiere fois)</span>
+pc.<span class="fn">create_index</span>(
+    name=<span class="st">"mon-rag"</span>,
+    dimension=<span class="nb">384</span>,              <span class="cm"># Doit correspondre a votre embedding</span>
+    spec=<span class="fn">ServerlessSpec</span>(
+        cloud=<span class="st">"aws"</span>,
+        region=<span class="st">"us-east-1"</span>
+    )
+)
+
+<span class="cm"># 3. Stocker les embeddings</span>
+index = pc.<span class="fn">Index</span>(<span class="st">"mon-rag"</span>)
+vectorstore = <span class="fn">PineconeVectorStore</span>(index=index, embedding=embeddings)
+vectorstore.<span class="fn">add_documents</span>(chunks)
+
+<span class="cm"># 4. Recherche (identique a ChromaDB !)</span>
+results = vectorstore.<span class="fn">similarity_search</span>(<span class="st">"ma question"</span>, k=<span class="nb">3</span>)</code></pre>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 8. MODELES EMBEDDINGS 2025 -->
+    <!-- =========================================== -->
+    <div class="section" id="embedding-models">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(236,72,153,0.15); color: var(--pink);">8</div>
+            <div>
+                <h2>Modeles d'embedding 2025 (enrichi)</h2>
+                <div class="sub">Source : Blent.ai / LBKE - Les modeles qu'on avait pas montres</div>
+            </div>
+        </div>
+
+        <div class="card" style="overflow-x: auto;">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Modele</th>
+                        <th>Dimensions</th>
+                        <th>Taille</th>
+                        <th>Langue</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>all-MiniLM-L6-v2</strong></td>
+                        <td>384</td>
+                        <td>80 Mo</td>
+                        <td>Multilingue</td>
+                        <td>Notre cours</td>
+                    </tr>
+                    <tr style="background: rgba(139,92,246,0.05);">
+                        <td><strong>BAAI/bge-small-en-v1.5</strong> <span class="badge purple">NOUVEAU</span></td>
+                        <td>384</td>
+                        <td>130 Mo</td>
+                        <td>Anglais</td>
+                        <td>Blent.ai</td>
+                    </tr>
+                    <tr style="background: rgba(139,92,246,0.05);">
+                        <td><strong>BAAI/bge-large-en-v1.5</strong> <span class="badge purple">NOUVEAU</span></td>
+                        <td>1024</td>
+                        <td>1.3 Go</td>
+                        <td>Anglais</td>
+                        <td>Blent.ai</td>
+                    </tr>
+                    <tr style="background: rgba(139,92,246,0.05);">
+                        <td><strong>Gemini Embedding 001</strong> <span class="badge purple">NOUVEAU</span></td>
+                        <td>768</td>
+                        <td>Cloud</td>
+                        <td>Multilingue</td>
+                        <td>LBKE</td>
+                    </tr>
+                    <tr>
+                        <td><strong>text-embedding-3-small</strong></td>
+                        <td>1536</td>
+                        <td>Cloud</td>
+                        <td>Multilingue</td>
+                        <td>Notre cours</td>
+                    </tr>
+                    <tr style="background: rgba(139,92,246,0.05);">
+                        <td><strong>nomic-embed-text-v1.5</strong> <span class="badge purple">NOUVEAU</span></td>
+                        <td>768</td>
+                        <td>550 Mo</td>
+                        <td>Multilingue</td>
+                        <td>Top benchmark 2025</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>embeddings_bge.py - Source : Blent.ai</span>
+            </div>
+            <pre><code><span class="cm"># Utiliser BAAI/bge-small-en-v1.5 (meilleur que MiniLM)</span>
+<span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFaceEmbeddings
+
+embeddings = <span class="fn">HuggingFaceEmbeddings</span>(
+    model_name=<span class="st">"BAAI/bge-small-en-v1.5"</span>,
+    model_kwargs={<span class="st">"device"</span>: <span class="st">"cpu"</span>},
+    encode_kwargs={<span class="st">"normalize_embeddings"</span>: <span class="kw">True</span>}
+)
+
+<span class="cm"># Utiliser Gemini Embedding (Google, cloud)</span>
+<span class="kw">from</span> langchain_google_genai <span class="kw">import</span> GoogleGenerativeAIEmbeddings
+
+embeddings = <span class="fn">GoogleGenerativeAIEmbeddings</span>(
+    model=<span class="st">"models/gemini-embedding-001"</span>
+)
+vector = embeddings.<span class="fn">embed_query</span>(<span class="st">"hello world"</span>)
+<span class="fn">print</span>(<span class="st">f"Dimension: {<span class="fn">len</span>(vector)}"</span>)  <span class="cm"># 768</span></code></pre>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 9. LLM LOCAUX : MISTRAL / OLLAMA -->
+    <!-- =========================================== -->
+    <div class="section" id="mistral">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(59,130,246,0.15); color: var(--blue);">9</div>
+            <div>
+                <h2>LLM locaux : Mistral & Ollama</h2>
+                <div class="sub">Source : Blent.ai / Stephane Robert - Options gratuites detaillees</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Les 3 facons d'utiliser un LLM dans votre RAG</h3>
+        </div>
+
+        <div class="grid-3">
+            <div class="card" style="border-top: 3px solid var(--green);">
+                <h3 style="color: var(--green);">Ollama (le plus simple)</h3>
+                <p>Installe et lance des modeles en 2 commandes. Ideal debutants.</p>
+                <div class="code">
+                    <pre><code><span class="cm"># Terminal</span>
+ollama pull llama3.2
+ollama pull mistral</code></pre>
+                </div>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--purple);">
+                <h3 style="color: var(--purple);">HuggingFace Pipeline</h3>
+                <p>Charge le modele directement dans Python. Plus de controle.</p>
+                <p style="font-size: 0.82rem; color: var(--text3); margin-top: 6px;">Source : Blent.ai</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--blue);">
+                <h3 style="color: var(--blue);">vLLM (production)</h3>
+                <p>Serveur d'inference optimise. Pour la production a haute performance.</p>
+                <p style="font-size: 0.82rem; color: var(--text3); margin-top: 6px;">Source : Stephane Robert</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>mistral_huggingface.py - Source : Blent.ai</span>
+            </div>
+            <pre><code><span class="cm"># Charger Mistral 7B directement avec HuggingFace</span>
+<span class="kw">from</span> langchain_huggingface <span class="kw">import</span> HuggingFacePipeline
+<span class="kw">from</span> transformers <span class="kw">import</span> AutoModelForCausalLM, AutoTokenizer, pipeline
+
+<span class="cm"># 1. Charger le modele et le tokenizer</span>
+model_id = <span class="st">"mistralai/Mistral-7B-Instruct-v0.3"</span>
+tokenizer = AutoTokenizer.<span class="fn">from_pretrained</span>(model_id)
+model = AutoModelForCausalLM.<span class="fn">from_pretrained</span>(model_id)
+
+<span class="cm"># 2. Creer le pipeline de generation</span>
+pipe = <span class="fn">pipeline</span>(
+    <span class="st">"text-generation"</span>,
+    model=model,
+    tokenizer=tokenizer,
+    max_new_tokens=<span class="nb">4096</span>,    <span class="cm"># Longueur max de la reponse</span>
+    do_sample=<span class="kw">False</span>,          <span class="cm"># Pas d'echantillonnage (deterministe)</span>
+    return_full_text=<span class="kw">False</span>   <span class="cm"># Ne pas repeter le prompt</span>
+)
+
+<span class="cm"># 3. Wrapper LangChain</span>
+llm = <span class="fn">HuggingFacePipeline</span>(pipeline=pipe)
+
+<span class="cm"># Utilisation identique a Ollama ou OpenAI !</span>
+response = llm.<span class="fn">invoke</span>(<span class="st">"Quelle est la dose de paracetamol ?"</span>)</code></pre>
+        </div>
+
+        <div class="info note">
+            <div class="it">Point cle de Blent.ai</div>
+            <p>"Les vecteurs stockes de facon permanente eliminent la re-vectorisation repetee, permettant de <strong>modifier le LLM independamment</strong> sans regenerer les embeddings." Autrement dit : tu peux switcher de Llama a Mistral sans retoucher la base vectorielle.</p>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 10. CHECKLIST PRODUCTION -->
+    <!-- =========================================== -->
+    <div class="section" id="prod-checklist">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(239,68,68,0.15); color: var(--red);">10</div>
+            <div>
+                <h2>Checklist RAG en production</h2>
+                <div class="sub">Source : Stephane Robert - De prototype a production</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card" style="border-left: 3px solid var(--green);">
+                <h3>Donnees</h3>
+                <ul>
+                    <li>Nettoyage automatise du texte</li>
+                    <li>Pipeline de mise a jour incrementale</li>
+                    <li>Detection des doublons</li>
+                    <li>Validation de la qualite des chunks</li>
+                    <li>Metadata enrichies (source, date, auteur)</li>
+                </ul>
+            </div>
+            <div class="card" style="border-left: 3px solid var(--blue);">
+                <h3>Retrieval</h3>
+                <ul>
+                    <li>Re-ranking active</li>
+                    <li>Recherche hybride (Dense + Sparse)</li>
+                    <li>Seuil de score minimum</li>
+                    <li>Tests de pertinence reguliers</li>
+                    <li>Monitoring des requetes sans resultats</li>
+                </ul>
+            </div>
+            <div class="card" style="border-left: 3px solid var(--purple);">
+                <h3>Generation</h3>
+                <ul>
+                    <li>Prompt template teste et valide</li>
+                    <li>Temperature = 0 pour le factuel</li>
+                    <li>Guardrails anti-hallucination</li>
+                    <li>Fallback "je ne sais pas"</li>
+                    <li>Citation des sources systematique</li>
+                </ul>
+            </div>
+            <div class="card" style="border-left: 3px solid var(--orange);">
+                <h3>Operations</h3>
+                <ul>
+                    <li>Evaluation RAGAS automatisee</li>
+                    <li>LangSmith pour le monitoring</li>
+                    <li>Logs des questions/reponses</li>
+                    <li>Alertes sur latence anormale</li>
+                    <li>Feedback utilisateur collecte</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 11. LANGSMITH MONITORING -->
+    <!-- =========================================== -->
+    <div class="section" id="langsmith">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(6,182,212,0.15); color: var(--cyan);">11</div>
+            <div>
+                <h2>LangSmith : Monitoring du RAG</h2>
+                <div class="sub">Source : LBKE - Surveiller et optimiser</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>C'est quoi LangSmith ?</h3>
+            <p><strong>LangSmith</strong> est l'outil de <span class="hl">monitoring et debugging</span> officiel de LangChain. Il permet de voir en temps reel :</p>
+            <ul>
+                <li>Chaque etape du pipeline (retrieval, prompt, generation)</li>
+                <li>Le temps de chaque etape (latence)</li>
+                <li>Les tokens consommes et le cout</li>
+                <li>Les chunks recuperes pour chaque question</li>
+                <li>Les erreurs et les requetes echouees</li>
+            </ul>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>langsmith_setup.py</span>
+            </div>
+            <pre><code><span class="cm"># 1. Creer un compte sur smith.langchain.com (gratuit)</span>
+<span class="cm"># 2. Recuperer votre cle API</span>
+
+<span class="kw">import</span> os
+os.environ[<span class="st">"LANGCHAIN_TRACING_V2"</span>] = <span class="st">"true"</span>
+os.environ[<span class="st">"LANGCHAIN_API_KEY"</span>] = <span class="st">"votre-cle"</span>
+os.environ[<span class="st">"LANGCHAIN_PROJECT"</span>] = <span class="st">"mon-rag-projet"</span>
+
+<span class="cm"># C'est tout ! LangChain envoie automatiquement</span>
+<span class="cm"># les traces a LangSmith. Aucun code supplementaire.</span>
+<span class="cm"># Allez sur smith.langchain.com pour voir le dashboard.</span></code></pre>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 12. CAS D'USAGE DETAILLES -->
+    <!-- =========================================== -->
+    <div class="section" id="rag-cas">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(245,158,11,0.15); color: var(--orange);">12</div>
+            <div>
+                <h2>Cas d'usage detailles</h2>
+                <div class="sub">Source : Oracle - Applications concretes du RAG en entreprise</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card" style="border-top: 3px solid var(--blue);">
+                <h3>Chatbot d'entreprise</h3>
+                <p>Un assistant qui repond aux questions des employes en se basant sur les <strong>procedures internes, FAQ, et documentation</strong>. Toujours a jour car les docs sont mis a jour incrementalement.</p>
+                <p style="margin-top: 8px; font-size: 0.82rem; color: var(--text3);"><strong>Source Oracle :</strong> "Incorporates organization and industry-specific information"</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--green);">
+                <h3>Analyse financiere</h3>
+                <p>Indexer des <strong>rapports annuels</strong> (2000+ pages de PDF) et poser des questions comme "Quel etait le montant des prets en 2009 ?". Le RAG retourne les chiffres exacts avec la source.</p>
+                <p style="margin-top: 8px; font-size: 0.82rem; color: var(--text3);"><strong>Source Blent.ai :</strong> Teste sur des rapports bancaires reels</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--purple);">
+                <h3>Support client</h3>
+                <p>Analyser les <strong>transcriptions d'appels</strong> et les tickets de support pour generer des reponses automatiques basees sur les resolutions precedentes.</p>
+                <p style="margin-top: 8px; font-size: 0.82rem; color: var(--text3);"><strong>Source Oracle :</strong> "Examining call transcripts for improved responses"</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--red);">
+                <h3>Recherche medicale</h3>
+                <p>Interroger une base de <strong>publications scientifiques</strong> pour trouver des informations sur des traitements, medicaments, ou pathologies. Citation des sources obligatoire.</p>
+                <p style="margin-top: 8px; font-size: 0.82rem; color: var(--text3);"><strong>Source Oracle :</strong> "Searching relevant documents in databases"</p>
+            </div>
+        </div>
+
+        <div class="info tip">
+            <div class="it">Avantage Oracle</div>
+            <p>"Le RAG fournit <strong>vitesse, contexte et precision appuyee par des preuves</strong>, depassant ce que les LLM seuls peuvent offrir. Contrairement a la recherche par mots-cles, le RAG incorpore la recherche semantique pour comprendre le sens au-dela des mots."</p>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 13. RAG AGENTIQUE (CODE) -->
+    <!-- =========================================== -->
+    <div class="section" id="agent-code">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(139,92,246,0.15); color: var(--purple);">13</div>
+            <div>
+                <h2>RAG Agentique : Le code</h2>
+                <div class="sub">Source : LBKE - create_agent avec outils</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>La difference avec le RAG classique en code</h3>
+            <p>Dans un RAG classique, le retrieval est <strong>toujours execute</strong>. Dans un RAG agentique, <span class="hl-p">l'agent DECIDE</span> s'il a besoin de chercher, et quels outils utiliser.</p>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>agentic_rag.py - Source : LBKE</span>
+            </div>
+            <pre><code><span class="cm"># RAG Agentique : l'agent choisit ses outils</span>
+<span class="kw">import</span> requests
+<span class="kw">from</span> langchain.agents <span class="kw">import</span> create_agent
+<span class="kw">from</span> langchain.tools <span class="kw">import</span> tool
+
+<span class="cm"># 1. Definir un outil de recherche web</span>
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">fetch_url</span>(url: <span class="fn">str</span>) -> <span class="fn">str</span>:
+    <span class="st">"""Recuperer le contenu textuel d'une URL."""</span>
+    response = requests.<span class="fn">get</span>(url, timeout=<span class="nb">10.0</span>)
+    <span class="kw">return</span> response.text
+
+<span class="cm"># 2. Definir un outil de recherche vectorielle</span>
+<span class="dc">@tool</span>
+<span class="kw">def</span> <span class="fn">search_docs</span>(query: <span class="fn">str</span>) -> <span class="fn">str</span>:
+    <span class="st">"""Chercher dans la base de documents indexee."""</span>
+    results = vectorstore.<span class="fn">similarity_search</span>(query, k=<span class="nb">3</span>)
+    <span class="kw">return</span> <span class="st">"\n"</span>.<span class="fn">join</span>([doc.page_content <span class="kw">for</span> doc <span class="kw">in</span> results])
+
+<span class="cm"># 3. Creer l'agent avec ses outils</span>
+agent = <span class="fn">create_agent</span>(
+    model=<span class="st">"claude-sonnet-4-5-20250929"</span>,   <span class="cm"># Le LLM</span>
+    tools=[fetch_url, search_docs],         <span class="cm"># Les outils disponibles</span>
+    system_prompt=<span class="st">"""Tu es un assistant. Utilise search_docs pour
+    chercher dans la base documentaire. Si tu ne trouves pas assez
+    d'info, utilise fetch_url pour chercher sur le web."""</span>
+)
+
+<span class="cm"># 4. L'agent decide seul quoi faire !</span>
+response = agent.<span class="fn">invoke</span>(<span class="st">"Effets du paracetamol chez les diabetiques ?"</span>)
+<span class="cm"># L'agent va automatiquement :</span>
+<span class="cm"># - Chercher d'abord dans search_docs</span>
+<span class="cm"># - Si pas assez d'info, utiliser fetch_url</span>
+<span class="cm"># - Combiner les resultats et repondre</span></code></pre>
+        </div>
+
+        <div class="info warn">
+            <div class="it">Le decorateur @tool</div>
+            <p>Le <code>@tool</code> de LangChain transforme une simple fonction Python en un <strong>outil utilisable par l'agent</strong>. La docstring (texte entre triples guillemets) est lue par l'agent pour comprendre <strong>quand et comment</strong> utiliser l'outil.</p>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 14. LANGGRAPH -->
+    <!-- =========================================== -->
+    <div class="section" id="langgraph">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(236,72,153,0.15); color: var(--pink);">14</div>
+            <div>
+                <h2>LangGraph : Pipelines avances</h2>
+                <div class="sub">Source : LBKE - Le framework pour agents complexes</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>C'est quoi LangGraph ?</h3>
+            <p><strong>LangGraph</strong> est le framework de LangChain pour creer des <span class="hl-p">pipelines complexes avec des boucles et des conditions</span>. Contrairement a LangChain classique (lineaire), LangGraph permet :</p>
+            <ul>
+                <li><strong>Des boucles</strong> : l'agent peut revenir en arriere et re-chercher</li>
+                <li><strong>Des branches conditionnelles</strong> : "si le score < 0.7, chercher sur le web"</li>
+                <li><strong>Un etat partage</strong> : les etapes partagent des informations</li>
+                <li><strong>Persistence</strong> : sauvegarder l'etat entre les sessions</li>
+            </ul>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>langgraph_rag.py - Pipeline conditionnel</span>
+            </div>
+            <pre><code><span class="cm"># pip install langgraph</span>
+<span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, END
+
+<span class="cm"># Definir l'etat partage</span>
+<span class="kw">class</span> <span class="fn">RAGState</span>:
+    question: <span class="fn">str</span>
+    documents: <span class="fn">list</span>
+    answer: <span class="fn">str</span>
+    score: <span class="fn">float</span>
+
+<span class="cm"># Definir les noeuds (etapes)</span>
+<span class="kw">def</span> <span class="fn">retrieve</span>(state):
+    <span class="cm">"""Chercher les documents pertinents."""</span>
+    docs = retriever.<span class="fn">invoke</span>(state.question)
+    <span class="kw">return</span> {<span class="st">"documents"</span>: docs}
+
+<span class="kw">def</span> <span class="fn">evaluate</span>(state):
+    <span class="cm">"""Evaluer la pertinence des resultats."""</span>
+    score = <span class="fn">compute_relevance</span>(state.question, state.documents)
+    <span class="kw">return</span> {<span class="st">"score"</span>: score}
+
+<span class="kw">def</span> <span class="fn">generate</span>(state):
+    <span class="cm">"""Generer la reponse."""</span>
+    answer = llm.<span class="fn">invoke</span>(<span class="fn">build_prompt</span>(state.question, state.documents))
+    <span class="kw">return</span> {<span class="st">"answer"</span>: answer}
+
+<span class="kw">def</span> <span class="fn">web_search</span>(state):
+    <span class="cm">"""Fallback : chercher sur le web."""</span>
+    <span class="cm">...</span>
+
+<span class="cm"># Construire le graphe</span>
+graph = <span class="fn">StateGraph</span>(RAGState)
+graph.<span class="fn">add_node</span>(<span class="st">"retrieve"</span>, retrieve)
+graph.<span class="fn">add_node</span>(<span class="st">"evaluate"</span>, evaluate)
+graph.<span class="fn">add_node</span>(<span class="st">"generate"</span>, generate)
+graph.<span class="fn">add_node</span>(<span class="st">"web_search"</span>, web_search)
+
+<span class="cm"># Definir les transitions conditionnelles</span>
+graph.<span class="fn">add_edge</span>(<span class="st">"retrieve"</span>, <span class="st">"evaluate"</span>)
+graph.<span class="fn">add_conditional_edges</span>(<span class="st">"evaluate"</span>, {
+    <span class="st">"good"</span>: <span class="st">"generate"</span>,       <span class="cm"># Score > 0.7 -> generer</span>
+    <span class="st">"bad"</span>: <span class="st">"web_search"</span>,      <span class="cm"># Score < 0.7 -> web search</span>
+})
+graph.<span class="fn">add_edge</span>(<span class="st">"web_search"</span>, <span class="st">"generate"</span>)
+graph.<span class="fn">add_edge</span>(<span class="st">"generate"</span>, END)</code></pre>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 15. GUIDE GOUVERNEMENTAL -->
+    <!-- =========================================== -->
+    <div class="section" id="gouv">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(16,185,129,0.15); color: var(--green);">15</div>
+            <div>
+                <h2>Guide officiel du gouvernement</h2>
+                <div class="sub">Source : entreprises.gouv.fr - Le RAG vu par l'Etat francais</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Le guide RAG du Ministere de l'Economie</h3>
+            <p>En novembre 2024, le gouvernement francais a publie un <span class="hl-g">guide officiel sur le RAG</span> a destination des entreprises. C'est un PDF interactif de reference qui couvre :</p>
+            <ul>
+                <li><strong>Les modules de recuperation</strong> : comment chercher dans les corpus documentaires</li>
+                <li><strong>Les modules de generation</strong> : comment produire des reponses fiables</li>
+                <li><strong>La gestion des corpus</strong> : comment preparer et maintenir les documents</li>
+                <li><strong>Les bonnes pratiques</strong> : securite, confidentialite, gouvernance des donnees</li>
+                <li><strong>Les cas d'usage publics</strong> : administration, sante, education</li>
+            </ul>
+        </div>
+
+        <div class="info tip">
+            <div class="it">Telecharger le guide</div>
+            <p><a href="https://www.entreprises.gouv.fr/files/files/Publications/2024/Guides/20241127-bro-guide-ragv4-interactif.pdf" style="color: var(--green);">Telecharger le PDF officiel (entreprises.gouv.fr)</a> - Guide gratuit et complet, ideal pour comprendre le RAG dans un contexte professionnel francais.</p>
+        </div>
+    </div>
+
+    <!-- =========================================== -->
+    <!-- 16. GLOSSAIRE COMPLET -->
+    <!-- =========================================== -->
+    <div class="section" id="glossaire">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(245,158,11,0.15); color: var(--orange);">16</div>
+            <div>
+                <h2>Glossaire complet du RAG</h2>
+                <div class="sub">Tous les termes techniques en un coup d'oeil</div>
+            </div>
+        </div>
+
+        <div class="card" style="overflow-x: auto;">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Terme</th>
+                        <th>Definition</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>RAG</strong></td><td>Retrieval Augmented Generation - Technique qui combine recherche documentaire et generation de texte par IA</td></tr>
+                    <tr><td><strong>LLM</strong></td><td>Large Language Model - Modele de langage (GPT-4, Claude, Llama, Mistral)</td></tr>
+                    <tr><td><strong>Embedding</strong></td><td>Representation vectorielle (liste de nombres) qui capture le sens d'un texte</td></tr>
+                    <tr><td><strong>Vecteur</strong></td><td>Liste de nombres representant un texte dans un espace mathematique</td></tr>
+                    <tr><td><strong>Chunk</strong></td><td>Morceau de document decoupe pour l'indexation (200-1000 caracteres)</td></tr>
+                    <tr><td><strong>Overlap</strong></td><td>Zone de chevauchement entre deux chunks consecutifs (10-20% de la taille)</td></tr>
+                    <tr><td><strong>Similarite cosinus</strong></td><td>Mesure de proximite entre deux vecteurs (0 = different, 1 = identique)</td></tr>
+                    <tr><td><strong>Base vectorielle</strong></td><td>Base de donnees specialisee pour stocker et rechercher des vecteurs (ChromaDB, FAISS, Pinecone)</td></tr>
+                    <tr><td><strong>Retriever</strong></td><td>Composant qui cherche les documents les plus pertinents dans la base vectorielle</td></tr>
+                    <tr><td><strong>Top-K</strong></td><td>Le nombre de resultats retournes par le retriever (generalement 3-5)</td></tr>
+                    <tr><td><strong>Prompt template</strong></td><td>Modele de texte avec des variables {context} et {question} a remplir</td></tr>
+                    <tr><td><strong>Temperature</strong></td><td>Parametre du LLM : 0 = precis/deterministe, 1 = creatif/aleatoire</td></tr>
+                    <tr><td><strong>Token</strong></td><td>Unite de texte traitee par le LLM (environ 1 mot = 1.3 tokens)</td></tr>
+                    <tr><td><strong>Hallucination</strong></td><td>Quand l'IA invente une reponse qui semble vraie mais qui est fausse</td></tr>
+                    <tr><td><strong>Re-ranking</strong></td><td>Reordonner les resultats de recherche par pertinence reelle (Cross-Encoder)</td></tr>
+                    <tr><td><strong>BM25</strong></td><td>Algorithme de recherche par mots-cles classique (non-semantique)</td></tr>
+                    <tr><td><strong>Dense retrieval</strong></td><td>Recherche par vecteurs (embeddings) = recherche semantique</td></tr>
+                    <tr><td><strong>Sparse retrieval</strong></td><td>Recherche par mots-cles (BM25, TF-IDF)</td></tr>
+                    <tr><td><strong>Hybrid search</strong></td><td>Combinaison de dense + sparse pour de meilleurs resultats</td></tr>
+                    <tr><td><strong>Knowledge Graph</strong></td><td>Graphe de connaissances : entites + relations (utilise dans Graph RAG)</td></tr>
+                    <tr><td><strong>RAGAS</strong></td><td>Framework d'evaluation du RAG avec 4 metriques (precision, recall, faithfulness, relevancy)</td></tr>
+                    <tr><td><strong>LangChain</strong></td><td>Framework Python pour construire des applications LLM et RAG</td></tr>
+                    <tr><td><strong>LangGraph</strong></td><td>Extension de LangChain pour pipelines avec boucles et conditions</td></tr>
+                    <tr><td><strong>LangSmith</strong></td><td>Outil de monitoring et debugging pour LangChain</td></tr>
+                    <tr><td><strong>Ollama</strong></td><td>Outil pour executer des LLM en local facilement (llama, mistral)</td></tr>
+                    <tr><td><strong>Trafilatura</strong></td><td>Bibliotheque Python pour extraire le texte propre d'une page web</td></tr>
+                    <tr><td><strong>Agentic RAG</strong></td><td>RAG ou un agent autonome planifie, decide et itere ses recherches</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <p>RAG Complet Enrichi - Informations issues de 10 sources web</p>
+        <p style="margin-top: 8px;">Sources principales :
+            <a href="https://blog.stephane-robert.info/docs/developper/programmation/python/rag-introduction/">Stephane Robert</a> |
+            <a href="https://blent.ai/blog/a/creer-un-rag-avec-langchain">Blent.ai</a> |
+            <a href="https://www.lbke.fr/formations/rag-introduction-langchain/rag-avec-langchain">LBKE</a> |
+            <a href="https://www.oracle.com/africa-fr/artificial-intelligence/generative-ai/retrieval-augmented-generation-rag/">Oracle</a> |
+            <a href="https://www.entreprises.gouv.fr/files/files/Publications/2024/Guides/20241127-bro-guide-ragv4-interactif.pdf">Guide gouv.fr</a>
+        </p>
+    </div>
+
+</div>
+
+<script>
+    const navLinks = document.querySelectorAll('.nav a');
+    const sections = document.querySelectorAll('.section');
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.id; });
+        navLinks.forEach(l => { l.style.borderLeftColor = l.getAttribute('href') === `#${current}` ? 'var(--orange)' : 'transparent'; l.style.color = l.getAttribute('href') === `#${current}` ? 'var(--text)' : ''; });
+    });
+    navLinks.forEach(l => l.addEventListener('click', () => document.getElementById('nav').classList.remove('open')));
+</script>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

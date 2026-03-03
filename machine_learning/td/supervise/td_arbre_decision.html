@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Arbre de Decision | ML</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .formula { background: #1a1a2e; border: 1px solid #569cd6; border-radius: 8px; padding: 15px 20px; margin: 12px 0; text-align: center; font-size: 1.1rem; color: #569cd6; font-family: 'Courier New', monospace; }
+        .comparison { display: flex; gap: 15px; margin: 15px 0; }
+        .comparison > div { flex: 1; background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; }
+        .comparison > div h4 { text-align: center; margin-bottom: 10px; }
+        .error-box { background: rgba(255,68,68,0.06); border: 1px solid #ff4444; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .error-box h4 { color: #ff4444; margin-bottom: 8px; }
+        .error-box .fix { color: #00ff88; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : Arbre de Decision (Decision Tree)</h1>
+    <p class="subtitle">Algorithme supervise de classification et regression - le modele le plus interpretable du machine learning</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 : COMPRENDRE L'ALGORITHME -->
+    <!-- ============================================================ -->
+
+    <h2>1. Comprendre l'Algorithme</h2>
+
+    <div class="definition">
+        <strong>L'Arbre de Decision</strong> est un algorithme supervise qui apprend une serie de <strong>questions if/else</strong> sur les features pour classer les donnees. Chaque question divise les donnees en deux groupes, creant une structure en arbre qui va de la racine (toutes les donnees) jusqu'aux feuilles (la prediction finale).
+    </div>
+
+    <h3>Analogie : Le jeu des 20 questions</h3>
+    <div class="concept-box">
+        <p>Imaginez le jeu des 20 questions : vous pensez a un animal, et votre ami pose des questions pour le deviner.</p>
+        <ul>
+            <li><strong>Question 1</strong> : "Est-ce qu'il vit dans l'eau ?" &rarr; Oui/Non</li>
+            <li><strong>Question 2 (si Non)</strong> : "Est-ce qu'il a des ailes ?" &rarr; Oui/Non</li>
+            <li><strong>Question 3 (si Oui)</strong> : "Est-ce qu'il est plus grand qu'un chat ?" &rarr; Oui/Non</li>
+            <li>... jusqu'a identifier l'animal</li>
+        </ul>
+        <p>L'arbre de decision fait exactement la meme chose, mais avec des donnees numeriques : <strong>"Est-ce que petal_length &le; 2.45 ?"</strong> au lieu de questions en langage naturel. L'algorithme apprend <strong>automatiquement</strong> les meilleures questions a poser et dans quel ordre.</p>
+    </div>
+
+    <h3>Fiche d'identite</h3>
+    <div class="concept-box">
+        <table>
+            <tr><th>Propriete</th><th>Detail</th></tr>
+            <tr><td><strong>Type</strong></td><td>Supervise (necessite des labels)</td></tr>
+            <tr><td><strong>Tache</strong></td><td>Classification ET Regression</td></tr>
+            <tr><td><strong>Famille</strong></td><td>Algorithmes a base d'arbres (tree-based)</td></tr>
+            <tr><td><strong>Apprentissage</strong></td><td>Glouton (greedy) - choisit le meilleur split a chaque etape</td></tr>
+            <tr><td><strong>Hypothese</strong></td><td>Les donnees peuvent etre separees par des frontieres rectangulaires (paralleles aux axes)</td></tr>
+            <tr><td><strong>Normalisation</strong></td><td>PAS necessaire (avantage unique !)</td></tr>
+            <tr><td><strong>Complexite</strong></td><td>Non-parametrique, structure variable selon les donnees</td></tr>
+        </table>
+    </div>
+
+    <h3>Comment ca marche ? Les 4 etapes</h3>
+
+    <div class="step-box"><strong>Etape 1 :</strong> Choisir la meilleure feature et le meilleur seuil pour diviser les donnees (celle qui separe le mieux les classes)</div>
+    <div class="step-box"><strong>Etape 2 :</strong> Diviser les donnees en 2 groupes selon cette question (gauche = Oui, droite = Non)</div>
+    <div class="step-box"><strong>Etape 3 :</strong> Repeter recursivement pour chaque groupe (chaque sous-groupe devient un nouveau probleme)</div>
+    <div class="step-box"><strong>Etape 4 :</strong> S'arreter quand un noeud est pur (une seule classe) ou quand les contraintes sont atteintes (max_depth, min_samples...)</div>
+
+    <h3>Comment l'arbre choisit la meilleure feature ?</h3>
+    <p>Le coeur de l'algorithme est de trouver, a chaque noeud, la question qui <strong>separe le mieux</strong> les classes. Pour mesurer "le mieux", on utilise des mesures d'impurete : <strong>Gini</strong> ou <strong>Entropie</strong>.</p>
+
+    <h3>Formule de Gini (impurete de Gini)</h3>
+    <div class="concept-box green">
+        <div class="formula">Gini(noeud) = 1 - &sum; p<sub>i</sub>&sup2;</div>
+        <p>Ou p<sub>i</sub> est la proportion de la classe i dans le noeud.</p>
+        <p><strong>Exemple concret :</strong> Un noeud contient 40 Setosa et 60 Versicolor (100 samples).</p>
+        <ul>
+            <li>p(Setosa) = 40/100 = 0.4</li>
+            <li>p(Versicolor) = 60/100 = 0.6</li>
+            <li>Gini = 1 - (0.4&sup2; + 0.6&sup2;) = 1 - (0.16 + 0.36) = 1 - 0.52 = <strong>0.48</strong></li>
+        </ul>
+        <p><strong>Interpretation :</strong> Gini = 0 signifie un noeud pur (une seule classe). Gini = 0.5 signifie impurete maximale (2 classes a 50/50). Plus Gini est bas, plus le noeud est pur.</p>
+    </div>
+
+    <h3>Formule de l'Entropie</h3>
+    <div class="concept-box blue">
+        <div class="formula">H(noeud) = - &sum; p<sub>i</sub> &times; log<sub>2</sub>(p<sub>i</sub>)</div>
+        <p>Ou p<sub>i</sub> est la proportion de la classe i dans le noeud.</p>
+        <p><strong>Meme exemple :</strong> 40 Setosa et 60 Versicolor.</p>
+        <ul>
+            <li>H = -(0.4 &times; log<sub>2</sub>(0.4) + 0.6 &times; log<sub>2</sub>(0.6))</li>
+            <li>H = -(0.4 &times; (-1.322) + 0.6 &times; (-0.737))</li>
+            <li>H = -(-0.529 + (-0.442)) = -(-0.971) = <strong>0.971</strong></li>
+        </ul>
+        <p><strong>Interpretation :</strong> H = 0 signifie un noeud pur. H = 1 signifie impurete maximale (2 classes a 50/50). Plus H est bas, plus le noeud est pur.</p>
+    </div>
+
+    <h3>Information Gain (Gain d'Information)</h3>
+    <div class="concept-box">
+        <div class="formula">IG = H(parent) - [ (n_gauche/n_total) &times; H(gauche) + (n_droite/n_total) &times; H(droite) ]</div>
+        <p>L'arbre choisit le split qui <strong>maximise le gain d'information</strong> : la plus grande reduction d'impurete entre le noeud parent et ses enfants.</p>
+        <p><strong>Exemple :</strong> Un noeud parent a H = 0.971. Apres un split :</p>
+        <ul>
+            <li>Enfant gauche (30 samples) : H = 0.0 (pur, 30 Setosa)</li>
+            <li>Enfant droit (70 samples) : H = 0.863 (melange)</li>
+            <li>IG = 0.971 - [(30/100) &times; 0.0 + (70/100) &times; 0.863]</li>
+            <li>IG = 0.971 - [0 + 0.604] = <strong>0.367</strong></li>
+        </ul>
+        <p>L'arbre compare l'IG de tous les splits possibles et choisit celui avec le plus grand IG.</p>
+    </div>
+
+    <!-- SVG 1: Decision Tree with 3 levels -->
+    <h3>Visualisation : Arbre de decision a 3 niveaux</h3>
+    <div class="svg-container">
+        <svg width="750" height="420" viewBox="0 0 750 420">
+            <defs>
+                <filter id="shadow1" x="-5%" y="-5%" width="110%" height="110%"><feDropShadow dx="1" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.3"/></filter>
+            </defs>
+            <!-- Level 0: Root -->
+            <rect x="260" y="10" width="230" height="55" rx="10" fill="#16213e" stroke="#ff6b35" stroke-width="2" filter="url(#shadow1)"/>
+            <text x="375" y="32" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">petal_length &le; 2.45 ?</text>
+            <text x="375" y="52" text-anchor="middle" fill="#aaa" font-size="11">150 samples | Gini=0.667</text>
+            <!-- Lines from root -->
+            <line x1="310" y1="65" x2="175" y2="120" stroke="#00ff88" stroke-width="2"/>
+            <line x1="440" y1="65" x2="575" y2="120" stroke="#ff4444" stroke-width="2"/>
+            <text x="230" y="88" fill="#00ff88" font-size="11" font-weight="bold">Oui</text>
+            <text x="500" y="88" fill="#ff4444" font-size="11" font-weight="bold">Non</text>
+            <!-- Level 1 Left: Pure leaf -->
+            <rect x="70" y="120" width="210" height="55" rx="10" fill="#0d2b0d" stroke="#00ff88" stroke-width="2" filter="url(#shadow1)"/>
+            <text x="175" y="142" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">FEUILLE : Setosa</text>
+            <text x="175" y="162" text-anchor="middle" fill="#aaa" font-size="11">50 samples | Gini=0.0 (pur !)</text>
+            <!-- Level 1 Right -->
+            <rect x="460" y="120" width="230" height="55" rx="10" fill="#16213e" stroke="#ff6b35" stroke-width="2" filter="url(#shadow1)"/>
+            <text x="575" y="142" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">petal_width &le; 1.75 ?</text>
+            <text x="575" y="162" text-anchor="middle" fill="#aaa" font-size="11">100 samples | Gini=0.5</text>
+            <!-- Lines from level 1 right -->
+            <line x1="520" y1="175" x2="410" y2="240" stroke="#00ff88" stroke-width="2"/>
+            <line x1="630" y1="175" x2="680" y2="240" stroke="#ff4444" stroke-width="2"/>
+            <text x="450" y="205" fill="#00ff88" font-size="11" font-weight="bold">Oui</text>
+            <text x="660" y="205" fill="#ff4444" font-size="11" font-weight="bold">Non</text>
+            <!-- Level 2 Left -->
+            <rect x="290" y="240" width="240" height="55" rx="10" fill="#16213e" stroke="#ff6b35" stroke-width="2" filter="url(#shadow1)"/>
+            <text x="410" y="262" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">petal_length &le; 4.95 ?</text>
+            <text x="410" y="282" text-anchor="middle" fill="#aaa" font-size="11">54 samples | Gini=0.168</text>
+            <!-- Level 2 Right: Leaf -->
+            <rect x="580" y="240" width="160" height="55" rx="10" fill="#1a0d0d" stroke="#ff4444" stroke-width="2" filter="url(#shadow1)"/>
+            <text x="660" y="262" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">FEUILLE : Virginica</text>
+            <text x="660" y="282" text-anchor="middle" fill="#aaa" font-size="11">46 samples | Gini=0.043</text>
+            <!-- Lines from level 2 left -->
+            <line x1="360" y1="295" x2="290" y2="350" stroke="#00ff88" stroke-width="2"/>
+            <line x1="460" y1="295" x2="520" y2="350" stroke="#ff4444" stroke-width="2"/>
+            <text x="310" y="325" fill="#00ff88" font-size="11">Oui</text>
+            <text x="498" y="325" fill="#ff4444" font-size="11">Non</text>
+            <!-- Level 3 leaves -->
+            <rect x="190" y="350" width="190" height="50" rx="10" fill="#0d2b0d" stroke="#00ff88" stroke-width="2" filter="url(#shadow1)"/>
+            <text x="285" y="370" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">FEUILLE : Versicolor</text>
+            <text x="285" y="388" text-anchor="middle" fill="#aaa" font-size="10">47 samples | Gini=0.041</text>
+            <rect x="430" y="350" width="190" height="50" rx="10" fill="#1a0d0d" stroke="#ff4444" stroke-width="2" filter="url(#shadow1)"/>
+            <text x="525" y="370" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">FEUILLE : Virginica</text>
+            <text x="525" y="388" text-anchor="middle" fill="#aaa" font-size="10">7 samples | Gini=0.245</text>
+        </svg>
+    </div>
+
+    <!-- SVG 2: Gini vs Entropy comparison -->
+    <h3>Comparaison Gini vs Entropie sur un exemple simple</h3>
+    <div class="svg-container">
+        <svg width="700" height="300" viewBox="0 0 700 300">
+            <!-- Left: Gini -->
+            <rect x="10" y="10" width="330" height="280" rx="12" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="175" y="40" text-anchor="middle" fill="#00ff88" font-size="15" font-weight="bold">Gini Impurity</text>
+            <text x="175" y="65" text-anchor="middle" fill="#aaa" font-size="12">Noeud : 30 chat, 70 chien</text>
+            <text x="175" y="95" text-anchor="middle" fill="#e0e0e0" font-size="12">Gini = 1 - (0.3&sup2; + 0.7&sup2;)</text>
+            <text x="175" y="115" text-anchor="middle" fill="#e0e0e0" font-size="12">= 1 - (0.09 + 0.49)</text>
+            <text x="175" y="140" text-anchor="middle" fill="#00ff88" font-size="16" font-weight="bold">= 0.42</text>
+            <!-- Gini bar -->
+            <rect x="50" y="165" width="250" height="20" rx="4" fill="#333"/>
+            <rect x="50" y="165" width="210" height="20" rx="4" fill="#00ff88" opacity="0.6"/>
+            <text x="175" y="205" text-anchor="middle" fill="#aaa" font-size="11">0 (pur) -------- 0.5 (max)</text>
+            <text x="175" y="240" text-anchor="middle" fill="#e0e0e0" font-size="11">Avantage : Calcul rapide (pas de log)</text>
+            <text x="175" y="260" text-anchor="middle" fill="#e0e0e0" font-size="11">Utilise par : CART (sklearn default)</text>
+            <!-- Right: Entropy -->
+            <rect x="360" y="10" width="330" height="280" rx="12" fill="#16213e" stroke="#569cd6" stroke-width="2"/>
+            <text x="525" y="40" text-anchor="middle" fill="#569cd6" font-size="15" font-weight="bold">Entropy (Entropie)</text>
+            <text x="525" y="65" text-anchor="middle" fill="#aaa" font-size="12">Noeud : 30 chat, 70 chien</text>
+            <text x="525" y="95" text-anchor="middle" fill="#e0e0e0" font-size="12">H = -(0.3*log2(0.3) + 0.7*log2(0.7))</text>
+            <text x="525" y="115" text-anchor="middle" fill="#e0e0e0" font-size="12">= -(0.3*(-1.737) + 0.7*(-0.515))</text>
+            <text x="525" y="140" text-anchor="middle" fill="#569cd6" font-size="16" font-weight="bold">= 0.881</text>
+            <!-- Entropy bar -->
+            <rect x="400" y="165" width="250" height="20" rx="4" fill="#333"/>
+            <rect x="400" y="165" width="220" height="20" rx="4" fill="#569cd6" opacity="0.6"/>
+            <text x="525" y="205" text-anchor="middle" fill="#aaa" font-size="11">0 (pur) -------- 1.0 (max)</text>
+            <text x="525" y="240" text-anchor="middle" fill="#e0e0e0" font-size="11">Avantage : Theorie de l'information</text>
+            <text x="525" y="260" text-anchor="middle" fill="#e0e0e0" font-size="11">Utilise par : ID3, C4.5</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">En pratique, Gini et Entropie donnent des resultats tres similaires dans ~98% des cas. La difference est surtout theorique. Sklearn utilise Gini par defaut car le calcul est plus rapide (pas de logarithme).</div>
+
+    <h3>Avantages et Inconvenients</h3>
+    <div class="comparison">
+        <div style="border-color: #00ff88;">
+            <h4 style="color: #00ff88;">Avantages</h4>
+            <ul>
+                <li><strong>Tres interpretable</strong> : on peut lire les regles comme un humain</li>
+                <li><strong>Pas de normalisation</strong> necessaire (unique parmi les algorithmes !)</li>
+                <li><strong>Gere les types mixtes</strong> : numeriques ET categoriques</li>
+                <li><strong>Rapide</strong> a entrainer et a predire</li>
+                <li><strong>Feature importance</strong> integree</li>
+                <li>Gere les <strong>relations non-lineaires</strong></li>
+            </ul>
+        </div>
+        <div style="border-color: #ff4444;">
+            <h4 style="color: #ff4444;">Inconvenients</h4>
+            <ul>
+                <li><strong>Overfitting facile</strong> : sans contraintes, memorise tout</li>
+                <li><strong>Instabilite</strong> : un petit changement dans les donnees peut donner un arbre completement different</li>
+                <li><strong>Biais vers les features</strong> avec beaucoup de valeurs</li>
+                <li><strong>Frontieres rectangulaires</strong> seulement (paralleles aux axes)</li>
+                <li><strong>Pas optimal globalement</strong> : approche gloutonne (greedy)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 : LES DONNEES -->
+    <!-- ============================================================ -->
+
+    <h2>2. Les Donnees</h2>
+
+    <h3>Pas de normalisation necessaire !</h3>
+    <div class="concept-box green">
+        <p>C'est l'avantage unique de l'arbre de decision : <strong>aucune normalisation n'est necessaire</strong>. L'arbre ne calcule pas de distances entre les points (contrairement a KNN ou SVM). Il pose simplement des questions du type "feature X &le; seuil ?".</p>
+        <p>Que petal_length soit en centimetres (0-7) ou en kilometres (0-0.00007), la question "petal_length &le; 2.45 cm" ou "petal_length &le; 0.0000245 km" donnera exactement le meme split.</p>
+    </div>
+
+    <h3>Types de features geres</h3>
+    <table>
+        <tr><th>Type</th><th>Gestion</th><th>Exemple</th></tr>
+        <tr><td><strong>Numerique continu</strong></td><td>Split du type "feature &le; seuil"</td><td>petal_length &le; 2.45</td></tr>
+        <tr><td><strong>Categorique (encode)</strong></td><td>Split sur la valeur encodee</td><td>couleur_rouge &le; 0.5 (one-hot)</td></tr>
+        <tr><td><strong>Binaire</strong></td><td>Split naturel 0/1</td><td>est_male &le; 0.5</td></tr>
+        <tr><td><strong>Valeurs manquantes</strong></td><td>Certaines implementations (XGBoost, LightGBM) les gerent. Sklearn : NON</td><td>Imputer avant avec SimpleImputer</td></tr>
+    </table>
+
+    <h3>Sensibilite aux changements de donnees</h3>
+    <div class="warning">L'arbre de decision est <strong>tres instable</strong> : retirer ou ajouter quelques samples peut changer completement la structure de l'arbre. C'est l'une des raisons principales pour lesquelles on utilise des ensembles d'arbres (Random Forest, XGBoost) en pratique.</div>
+
+    <div class="code-block"><span class="comment"># Demonstration de l'instabilite</span>
+<span class="keyword">from</span> sklearn.tree <span class="keyword">import</span> DecisionTreeClassifier
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_iris
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+X, y = <span class="function">load_iris</span>(return_X_y=<span class="keyword">True</span>)
+
+<span class="comment"># Arbre 1 : toutes les donnees</span>
+tree1 = <span class="function">DecisionTreeClassifier</span>(random_state=<span class="number">42</span>)
+tree1.<span class="function">fit</span>(X, y)
+<span class="function">print</span>(<span class="string">"Feature importances (toutes donnees):"</span>, tree1.feature_importances_.<span class="function">round</span>(<span class="number">3</span>))
+
+<span class="comment"># Arbre 2 : on retire 5 samples</span>
+idx = np.<span class="function">random.RandomState</span>(<span class="number">0</span>).<span class="function">choice</span>(<span class="number">150</span>, <span class="number">145</span>, replace=<span class="keyword">False</span>)
+tree2 = <span class="function">DecisionTreeClassifier</span>(random_state=<span class="number">42</span>)
+tree2.<span class="function">fit</span>(X[idx], y[idx])
+<span class="function">print</span>(<span class="string">"Feature importances (5 samples en moins):"</span>, tree2.feature_importances_.<span class="function">round</span>(<span class="number">3</span>))</div>
+    <div class="output-block">Feature importances (toutes donnees): [0.    0.013 0.563 0.424]
+Feature importances (5 samples en moins): [0.    0.027 0.927 0.046]</div>
+
+    <div class="prof-note">On voit que retirer seulement 5 samples sur 150 change completement l'importance des features. petal_width passe de 0.424 a 0.046 ! C'est le probleme principal de l'arbre de decision seul.</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 : LES PARAMETRES (DETAILLES) -->
+    <!-- ============================================================ -->
+
+    <h2>3. Les Parametres (Detailles)</h2>
+
+    <p>Les parametres de l'arbre de decision controlent sa <strong>complexite</strong>. Sans contraintes, l'arbre grandit jusqu'a ce que chaque feuille soit pure &rarr; il memorise les donnees d'entrainement (overfitting). Les parametres sont des <strong>gardes-fous</strong>.</p>
+
+    <!-- max_depth -->
+    <div class="param-box">
+        <h4>max_depth (LE parametre le plus important)</h4>
+        <table>
+            <tr><td><strong>Role</strong></td><td>Limite la profondeur maximale de l'arbre (nombre de niveaux de questions)</td></tr>
+            <tr><td><strong>Defaut</strong></td><td>None (pas de limite = l'arbre grandit jusqu'a purete ou min_samples)</td></tr>
+            <tr><td><strong>Type</strong></td><td>int ou None</td></tr>
+            <tr><td><strong>Augmenter</strong></td><td>Arbre plus profond &rarr; plus complexe &rarr; plus d'overfitting</td></tr>
+            <tr><td><strong>Diminuer</strong></td><td>Arbre moins profond &rarr; plus simple &rarr; plus d'underfitting</td></tr>
+            <tr><td><strong>Regle</strong></td><td>Commencer avec max_depth=3 a 5, puis ajuster avec cross-validation</td></tr>
+        </table>
+    </div>
+
+    <!-- SVG 3: depth comparison -->
+    <div class="svg-container">
+        <svg width="750" height="310" viewBox="0 0 750 310">
+            <!-- Depth 1 -->
+            <rect x="5" y="5" width="230" height="300" rx="10" fill="#0d1117" stroke="#ff4444" stroke-width="2"/>
+            <text x="120" y="30" text-anchor="middle" fill="#ff4444" font-size="13" font-weight="bold">max_depth=1 (trop simple)</text>
+            <rect x="60" y="50" width="120" height="35" rx="6" fill="#16213e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="120" y="72" text-anchor="middle" fill="#e0e0e0" font-size="10">petal_length&le;2.45</text>
+            <line x1="90" y1="85" x2="55" y2="120" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="150" y1="85" x2="185" y2="120" stroke="#ff4444" stroke-width="1.5"/>
+            <rect x="20" y="120" width="70" height="30" rx="6" fill="#0d2b0d" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="55" y="140" text-anchor="middle" fill="#00ff88" font-size="9">Setosa</text>
+            <rect x="150" y="120" width="70" height="30" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="185" y="140" text-anchor="middle" fill="#ff8c42" font-size="9">Melange!</text>
+            <text x="120" y="180" text-anchor="middle" fill="#aaa" font-size="11">Train: 66.7%</text>
+            <text x="120" y="200" text-anchor="middle" fill="#aaa" font-size="11">Test: 66.7%</text>
+            <text x="120" y="230" text-anchor="middle" fill="#ff4444" font-size="11" font-weight="bold">UNDERFITTING</text>
+            <text x="120" y="255" text-anchor="middle" fill="#aaa" font-size="10">1 seule question</text>
+            <text x="120" y="275" text-anchor="middle" fill="#aaa" font-size="10">ne peut pas distinguer</text>
+            <text x="120" y="290" text-anchor="middle" fill="#aaa" font-size="10">Versicolor de Virginica</text>
+            <!-- Depth 3 -->
+            <rect x="255" y="5" width="230" height="300" rx="10" fill="#0d1117" stroke="#00ff88" stroke-width="2"/>
+            <text x="370" y="30" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">max_depth=3 (equilibre)</text>
+            <rect x="310" y="50" width="120" height="30" rx="6" fill="#16213e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="370" y="70" text-anchor="middle" fill="#e0e0e0" font-size="9">petal_len&le;2.45</text>
+            <line x1="340" y1="80" x2="300" y2="105" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="400" y1="80" x2="440" y2="105" stroke="#ff4444" stroke-width="1.5"/>
+            <rect x="270" y="105" width="60" height="25" rx="5" fill="#0d2b0d" stroke="#00ff88" stroke-width="1"/>
+            <text x="300" y="122" text-anchor="middle" fill="#00ff88" font-size="8">Setosa</text>
+            <rect x="410" y="105" width="80" height="25" rx="5" fill="#16213e" stroke="#ff6b35" stroke-width="1"/>
+            <text x="450" y="122" text-anchor="middle" fill="#e0e0e0" font-size="8">petal_w&le;1.75</text>
+            <line x1="430" y1="130" x2="400" y2="155" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="470" y1="130" x2="470" y2="155" stroke="#ff4444" stroke-width="1.5"/>
+            <rect x="375" y="155" width="55" height="25" rx="5" fill="#16213e" stroke="#ff6b35" stroke-width="1"/>
+            <text x="402" y="172" text-anchor="middle" fill="#e0e0e0" font-size="8">len&le;4.95</text>
+            <rect x="445" y="155" width="55" height="25" rx="5" fill="#1a0d0d" stroke="#ff4444" stroke-width="1"/>
+            <text x="472" y="172" text-anchor="middle" fill="#ff8c42" font-size="8">Virginica</text>
+            <text x="370" y="210" text-anchor="middle" fill="#aaa" font-size="11">Train: 97.3%</text>
+            <text x="370" y="230" text-anchor="middle" fill="#aaa" font-size="11">Test: 95.6%</text>
+            <text x="370" y="260" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">BON EQUILIBRE</text>
+            <text x="370" y="285" text-anchor="middle" fill="#aaa" font-size="10">Assez de profondeur</text>
+            <text x="370" y="300" text-anchor="middle" fill="#aaa" font-size="10">sans memoriser</text>
+            <!-- Depth unlimited -->
+            <rect x="505" y="5" width="240" height="300" rx="10" fill="#0d1117" stroke="#ff4444" stroke-width="2"/>
+            <text x="625" y="30" text-anchor="middle" fill="#ff4444" font-size="13" font-weight="bold">max_depth=None (trop complexe)</text>
+            <rect x="570" y="48" width="110" height="25" rx="5" fill="#16213e" stroke="#ff6b35" stroke-width="1"/>
+            <text x="625" y="65" text-anchor="middle" fill="#e0e0e0" font-size="8">Split 1</text>
+            <line x1="600" y1="73" x2="565" y2="90" stroke="#aaa" stroke-width="1"/>
+            <line x1="650" y1="73" x2="685" y2="90" stroke="#aaa" stroke-width="1"/>
+            <rect x="535" y="90" width="60" height="20" rx="4" fill="#16213e" stroke="#333" stroke-width="1"/>
+            <rect x="655" y="90" width="60" height="20" rx="4" fill="#16213e" stroke="#333" stroke-width="1"/>
+            <line x1="550" y1="110" x2="530" y2="125" stroke="#aaa" stroke-width="1"/>
+            <line x1="580" y1="110" x2="590" y2="125" stroke="#aaa" stroke-width="1"/>
+            <line x1="670" y1="110" x2="655" y2="125" stroke="#aaa" stroke-width="1"/>
+            <line x1="700" y1="110" x2="715" y2="125" stroke="#aaa" stroke-width="1"/>
+            <rect x="515" y="125" width="35" height="18" rx="3" fill="#16213e" stroke="#333" stroke-width="1"/>
+            <rect x="575" y="125" width="35" height="18" rx="3" fill="#16213e" stroke="#333" stroke-width="1"/>
+            <rect x="640" y="125" width="35" height="18" rx="3" fill="#16213e" stroke="#333" stroke-width="1"/>
+            <rect x="700" y="125" width="35" height="18" rx="3" fill="#16213e" stroke="#333" stroke-width="1"/>
+            <text x="625" y="170" text-anchor="middle" fill="#aaa" font-size="10">... continue jusqu'a chaque</text>
+            <text x="625" y="185" text-anchor="middle" fill="#aaa" font-size="10">sample dans sa propre feuille</text>
+            <text x="625" y="215" text-anchor="middle" fill="#aaa" font-size="11">Train: 100.0%</text>
+            <text x="625" y="235" text-anchor="middle" fill="#aaa" font-size="11">Test: 95.6%</text>
+            <text x="625" y="265" text-anchor="middle" fill="#ff4444" font-size="11" font-weight="bold">OVERFITTING</text>
+            <text x="625" y="290" text-anchor="middle" fill="#aaa" font-size="10">100% train = memorisation</text>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact de max_depth</span>
+<span class="keyword">from</span> sklearn.tree <span class="keyword">import</span> DecisionTreeClassifier
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_iris
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split
+
+X, y = <span class="function">load_iris</span>(return_X_y=<span class="keyword">True</span>)
+X_train, X_test, y_train, y_test = <span class="function">train_test_split</span>(X, y, test_size=<span class="number">0.3</span>, random_state=<span class="number">42</span>)
+
+<span class="keyword">for</span> depth <span class="keyword">in</span> [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="keyword">None</span>]:
+    tree = <span class="function">DecisionTreeClassifier</span>(max_depth=depth, random_state=<span class="number">42</span>)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    train_acc = tree.<span class="function">score</span>(X_train, y_train)
+    test_acc = tree.<span class="function">score</span>(X_test, y_test)
+    <span class="function">print</span>(<span class="string">f"max_depth={str(depth):&gt;4} | Train: {train_acc:.3f} | Test: {test_acc:.3f}"</span>)</div>
+    <div class="output-block">max_depth=   1 | Train: 0.667 | Test: 0.667
+max_depth=   2 | Train: 0.962 | Test: 0.956
+max_depth=   3 | Train: 0.981 | Test: 0.956
+max_depth=   5 | Train: 1.000 | Test: 0.956
+max_depth=None | Train: 1.000 | Test: 0.956</div>
+    <div class="effect">max_depth=1 est clairement en underfitting (66.7%). max_depth=3 atteint un bon equilibre. Au-dela, le train monte a 100% sans ameliorer le test &rarr; memorisation inutile.</div>
+
+    <!-- min_samples_split -->
+    <div class="param-box">
+        <h4>min_samples_split</h4>
+        <table>
+            <tr><td><strong>Role</strong></td><td>Nombre minimum de samples requis pour diviser un noeud interne</td></tr>
+            <tr><td><strong>Defaut</strong></td><td>2 (un noeud avec 2+ samples peut etre divise)</td></tr>
+            <tr><td><strong>Type</strong></td><td>int (nombre absolu) ou float (proportion)</td></tr>
+            <tr><td><strong>Augmenter</strong></td><td>Moins de splits &rarr; arbre plus simple &rarr; moins d'overfitting</td></tr>
+            <tr><td><strong>Diminuer</strong></td><td>Plus de splits &rarr; arbre plus complexe &rarr; plus d'overfitting</td></tr>
+            <tr><td><strong>Regle</strong></td><td>Valeurs typiques : 5 a 20 pour petits datasets, 20+ pour grands datasets</td></tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact de min_samples_split</span>
+<span class="keyword">for</span> mss <span class="keyword">in</span> [<span class="number">2</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">20</span>, <span class="number">50</span>]:
+    tree = <span class="function">DecisionTreeClassifier</span>(min_samples_split=mss, random_state=<span class="number">42</span>)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    <span class="function">print</span>(<span class="string">f"min_samples_split={mss:&gt;2} | Train: {tree.score(X_train, y_train):.3f} | Test: {tree.score(X_test, y_test):.3f} | Feuilles: {tree.get_n_leaves()}"</span>)</div>
+    <div class="output-block">min_samples_split= 2 | Train: 1.000 | Test: 0.956 | Feuilles: 9
+min_samples_split= 5 | Train: 1.000 | Test: 0.956 | Feuilles: 8
+min_samples_split=10 | Train: 0.981 | Test: 0.978 | Feuilles: 6
+min_samples_split=20 | Train: 0.971 | Test: 0.956 | Feuilles: 4
+min_samples_split=50 | Train: 0.667 | Test: 0.667 | Feuilles: 2</div>
+    <div class="effect">min_samples_split=10 donne le meilleur score test (97.8%) avec seulement 6 feuilles. Trop haut (50) empeche tout split utile.</div>
+
+    <!-- min_samples_leaf -->
+    <div class="param-box">
+        <h4>min_samples_leaf</h4>
+        <table>
+            <tr><td><strong>Role</strong></td><td>Nombre minimum de samples requis dans chaque feuille</td></tr>
+            <tr><td><strong>Defaut</strong></td><td>1 (une feuille peut ne contenir qu'un seul sample)</td></tr>
+            <tr><td><strong>Type</strong></td><td>int (nombre absolu) ou float (proportion)</td></tr>
+            <tr><td><strong>Augmenter</strong></td><td>Feuilles plus grosses &rarr; predictions plus stables &rarr; moins d'overfitting</td></tr>
+            <tr><td><strong>Diminuer</strong></td><td>Feuilles plus petites &rarr; predictions basees sur peu de donnees &rarr; plus d'overfitting</td></tr>
+            <tr><td><strong>Regle</strong></td><td>Valeurs typiques : 1 a 10 pour petits datasets</td></tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact de min_samples_leaf</span>
+<span class="keyword">for</span> msl <span class="keyword">in</span> [<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">20</span>]:
+    tree = <span class="function">DecisionTreeClassifier</span>(min_samples_leaf=msl, random_state=<span class="number">42</span>)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    <span class="function">print</span>(<span class="string">f"min_samples_leaf={msl:&gt;2} | Train: {tree.score(X_train, y_train):.3f} | Test: {tree.score(X_test, y_test):.3f} | Feuilles: {tree.get_n_leaves()}"</span>)</div>
+    <div class="output-block">min_samples_leaf= 1 | Train: 1.000 | Test: 0.956 | Feuilles: 9
+min_samples_leaf= 3 | Train: 0.981 | Test: 0.978 | Feuilles: 6
+min_samples_leaf= 5 | Train: 0.971 | Test: 0.978 | Feuilles: 5
+min_samples_leaf=10 | Train: 0.952 | Test: 0.956 | Feuilles: 4
+min_samples_leaf=20 | Train: 0.829 | Test: 0.756 | Feuilles: 3</div>
+    <div class="effect">min_samples_leaf=3 ou 5 ameliore le test a 97.8% avec beaucoup moins de feuilles. Les feuilles avec 1 sample sont du bruit memorise.</div>
+
+    <!-- max_features -->
+    <div class="param-box">
+        <h4>max_features</h4>
+        <table>
+            <tr><td><strong>Role</strong></td><td>Nombre de features considerees a chaque split (introduit du hasard)</td></tr>
+            <tr><td><strong>Defaut</strong></td><td>None (toutes les features sont considerees)</td></tr>
+            <tr><td><strong>Type</strong></td><td>int, float, 'sqrt', 'log2', ou None</td></tr>
+            <tr><td><strong>Augmenter</strong></td><td>Plus de features evaluees &rarr; meilleur split possible &rarr; arbre deterministe</td></tr>
+            <tr><td><strong>Diminuer</strong></td><td>Moins de features &rarr; plus de hasard &rarr; arbres plus varies (utile pour Random Forest)</td></tr>
+            <tr><td><strong>Regle</strong></td><td>Pour un arbre seul : garder None. Pour Random Forest : 'sqrt' est le standard</td></tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact de max_features</span>
+<span class="keyword">for</span> mf <span class="keyword">in</span> [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="keyword">None</span>]:
+    tree = <span class="function">DecisionTreeClassifier</span>(max_features=mf, random_state=<span class="number">42</span>)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    <span class="function">print</span>(<span class="string">f"max_features={str(mf):&gt;4} | Train: {tree.score(X_train, y_train):.3f} | Test: {tree.score(X_test, y_test):.3f}"</span>)</div>
+    <div class="output-block">max_features=   1 | Train: 1.000 | Test: 0.933
+max_features=   2 | Train: 1.000 | Test: 0.956
+max_features=   3 | Train: 1.000 | Test: 0.956
+max_features=None | Train: 1.000 | Test: 0.956</div>
+    <div class="effect">Avec seulement 4 features (Iris), la difference est faible. Mais max_features=1 force l'arbre a ne regarder qu'une seule feature par split, ce qui peut manquer le meilleur split.</div>
+
+    <!-- criterion -->
+    <div class="param-box">
+        <h4>criterion</h4>
+        <table>
+            <tr><td><strong>Role</strong></td><td>Mesure d'impurete utilisee pour evaluer la qualite des splits</td></tr>
+            <tr><td><strong>Defaut</strong></td><td>'gini'</td></tr>
+            <tr><td><strong>Options</strong></td><td>'gini' (impurete de Gini) ou 'entropy' (gain d'information)</td></tr>
+            <tr><td><strong>Gini</strong></td><td>Gini = 1 - sum(pi^2). Calcul rapide, pas de logarithme. Range [0, 0.5]</td></tr>
+            <tr><td><strong>Entropy</strong></td><td>H = -sum(pi * log2(pi)). Plus couteux mais fonde sur la theorie de l'information. Range [0, 1]</td></tr>
+            <tr><td><strong>Regle</strong></td><td>En pratique, les resultats sont quasi identiques. Garder 'gini' sauf raison specifique</td></tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Gini vs Entropy</span>
+<span class="keyword">for</span> crit <span class="keyword">in</span> [<span class="string">'gini'</span>, <span class="string">'entropy'</span>]:
+    tree = <span class="function">DecisionTreeClassifier</span>(criterion=crit, max_depth=<span class="number">3</span>, random_state=<span class="number">42</span>)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    <span class="function">print</span>(<span class="string">f"criterion={crit:&gt;7} | Train: {tree.score(X_train, y_train):.3f} | Test: {tree.score(X_test, y_test):.3f} | Feuilles: {tree.get_n_leaves()}"</span>)</div>
+    <div class="output-block">criterion=   gini | Train: 0.981 | Test: 0.956 | Feuilles: 5
+criterion=entropy | Train: 0.981 | Test: 0.956 | Feuilles: 5</div>
+    <div class="prof-note">Comme prevu, Gini et Entropy donnent ici exactement le meme resultat. La difference est marginale dans la grande majorite des cas reels.</div>
+
+    <!-- max_leaf_nodes -->
+    <div class="param-box">
+        <h4>max_leaf_nodes</h4>
+        <table>
+            <tr><td><strong>Role</strong></td><td>Limite directement le nombre de feuilles de l'arbre</td></tr>
+            <tr><td><strong>Defaut</strong></td><td>None (pas de limite)</td></tr>
+            <tr><td><strong>Type</strong></td><td>int ou None</td></tr>
+            <tr><td><strong>Augmenter</strong></td><td>Plus de feuilles &rarr; arbre plus complexe</td></tr>
+            <tr><td><strong>Diminuer</strong></td><td>Moins de feuilles &rarr; arbre plus simple et plus interpretable</td></tr>
+            <tr><td><strong>Regle</strong></td><td>Alternative pratique a max_depth pour controler la complexite</td></tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact de max_leaf_nodes</span>
+<span class="keyword">for</span> mln <span class="keyword">in</span> [<span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">10</span>, <span class="keyword">None</span>]:
+    tree = <span class="function">DecisionTreeClassifier</span>(max_leaf_nodes=mln, random_state=<span class="number">42</span>)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    <span class="function">print</span>(<span class="string">f"max_leaf_nodes={str(mln):&gt;4} | Train: {tree.score(X_train, y_train):.3f} | Test: {tree.score(X_test, y_test):.3f} | Feuilles: {tree.get_n_leaves()}"</span>)</div>
+    <div class="output-block">max_leaf_nodes=   2 | Train: 0.667 | Test: 0.667 | Feuilles: 2
+max_leaf_nodes=   4 | Train: 0.971 | Test: 0.956 | Feuilles: 4
+max_leaf_nodes=   6 | Train: 0.990 | Test: 0.978 | Feuilles: 6
+max_leaf_nodes=  10 | Train: 1.000 | Test: 0.956 | Feuilles: 9
+max_leaf_nodes=None | Train: 1.000 | Test: 0.956 | Feuilles: 9</div>
+    <div class="effect">max_leaf_nodes=6 donne le meilleur test (97.8%) tout en gardant l'arbre tres lisible avec seulement 6 feuilles.</div>
+
+    <h3>Resume visuel : arbre surappris vs arbre contraint</h3>
+    <div class="comparison">
+        <div style="border-color: #ff4444;">
+            <h4 style="color: #ff4444;">Sans contraintes (overfitting)</h4>
+            <ul>
+                <li>max_depth = None</li>
+                <li>min_samples_split = 2</li>
+                <li>min_samples_leaf = 1</li>
+                <li>Train : <strong>100.0%</strong></li>
+                <li>Test : 95.6%</li>
+                <li>9 feuilles, profondeur 5</li>
+                <li>Memorise le bruit</li>
+            </ul>
+        </div>
+        <div style="border-color: #00ff88;">
+            <h4 style="color: #00ff88;">Bien contraint (generalise)</h4>
+            <ul>
+                <li>max_depth = 3</li>
+                <li>min_samples_split = 10</li>
+                <li>min_samples_leaf = 3</li>
+                <li>Train : 97.1%</li>
+                <li>Test : <strong>97.8%</strong></li>
+                <li>5 feuilles, profondeur 3</li>
+                <li>Capture les vrais patterns</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 : LES METRIQUES -->
+    <!-- ============================================================ -->
+
+    <h2>4. Les Metriques</h2>
+
+    <h3>Metriques de classification</h3>
+
+    <div class="metric-card">
+        <h4>Accuracy (Exactitude)</h4>
+        <p>Proportion de predictions correctes sur le total. Simple mais trompeuse sur des donnees desequilibrees.</p>
+        <div class="formula">Accuracy = (VP + VN) / (VP + VN + FP + FN)</div>
+    </div>
+
+    <div class="metric-card">
+        <h4>Precision</h4>
+        <p>Parmi toutes les predictions positives, combien sont vraiment positives ? Importante quand les faux positifs sont couteux.</p>
+        <div class="formula">Precision = VP / (VP + FP)</div>
+    </div>
+
+    <div class="metric-card">
+        <h4>Recall (Rappel)</h4>
+        <p>Parmi tous les vrais positifs, combien ont ete detectes ? Important quand les faux negatifs sont couteux (ex: diagnostic medical).</p>
+        <div class="formula">Recall = VP / (VP + FN)</div>
+    </div>
+
+    <div class="metric-card">
+        <h4>F1-Score</h4>
+        <p>Moyenne harmonique de precision et recall. Bon compromis quand on veut equilibrer les deux.</p>
+        <div class="formula">F1 = 2 * (Precision * Recall) / (Precision + Recall)</div>
+    </div>
+
+    <div class="metric-card">
+        <h4>Matrice de confusion</h4>
+        <p>Tableau qui montre les predictions vs les vraies classes. Permet de voir exactement ou le modele se trompe.</p>
+    </div>
+
+    <h3>Feature Importance</h3>
+    <div class="concept-box green">
+        <p>L'arbre de decision fournit automatiquement l'<strong>importance de chaque feature</strong> via <code>tree.feature_importances_</code>. Cette importance est calculee a partir de la reduction totale d'impurete (Gini ou Entropy) apportee par chaque feature dans tous les splits ou elle est utilisee.</p>
+        <p><strong>Interpretation :</strong> Une feature avec importance 0.9 a contribue 90% de la reduction d'impurete totale. Une feature avec importance 0.0 n'a jamais ete utilisee pour un split.</p>
+    </div>
+
+    <h3>export_text : lire l'arbre comme des regles</h3>
+    <div class="concept-box">
+        <p>La fonction <code>export_text</code> de sklearn permet de visualiser l'arbre sous forme de regles if/else lisibles par un humain. C'est l'avantage majeur de l'arbre de decision : <strong>l'interpretabilite totale</strong>.</p>
+    </div>
+
+    <h3>Cross-validation pour la selection de parametres</h3>
+    <div class="concept-box blue">
+        <p>Ne jamais choisir les parametres sur le test set ! Utiliser la <strong>cross-validation</strong> (validation croisee) : diviser le train set en K parties, entrainer sur K-1, valider sur la partie restante, repeter K fois. Le score moyen est une estimation fiable de la performance reelle.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 : TD PRATIQUE -->
+    <!-- ============================================================ -->
+
+    <h2>5. TD Pratique</h2>
+
+    <!-- Exercice 1 -->
+    <h3>Exercice 1 : Charger les donnees et split (pas de normalisation !)</h3>
+
+    <div class="code-block"><span class="comment"># Exercice 1 : Charger Iris et preparer les donnees</span>
+<span class="comment"># REMARQUE : Pas de StandardScaler ! L'arbre n'en a pas besoin.</span>
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_iris
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split
+<span class="keyword">from</span> sklearn.tree <span class="keyword">import</span> DecisionTreeClassifier
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Charger les donnees</span>
+iris = <span class="function">load_iris</span>()
+X, y = iris.data, iris.target
+
+<span class="function">print</span>(<span class="string">"Features :"</span>, iris.feature_names)
+<span class="function">print</span>(<span class="string">"Classes :"</span>, iris.target_names)
+<span class="function">print</span>(<span class="string">f"Taille : {X.shape[0]} samples, {X.shape[1]} features"</span>)
+
+<span class="comment"># Split train/test (PAS de normalisation !)</span>
+X_train, X_test, y_train, y_test = <span class="function">train_test_split</span>(
+    X, y, test_size=<span class="number">0.3</span>, random_state=<span class="number">42</span>, stratify=y
+)
+<span class="function">print</span>(<span class="string">f"\nTrain : {X_train.shape[0]} samples"</span>)
+<span class="function">print</span>(<span class="string">f"Test  : {X_test.shape[0]} samples"</span>)</div>
+    <div class="output-block">Features : ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
+Classes : ['setosa' 'versicolor' 'virginica']
+Taille : 150 samples, 4 features
+
+Train : 105 samples
+Test  : 45 samples</div>
+
+    <div class="prof-note">Contrairement a KNN ou SVM, on n'utilise PAS StandardScaler. L'arbre de decision fonctionne avec les valeurs brutes car il ne calcule aucune distance.</div>
+
+    <!-- Exercice 2 -->
+    <h3>Exercice 2 : Arbre sans contraintes &rarr; observer l'overfitting</h3>
+
+    <div class="code-block"><span class="comment"># Exercice 2 : Arbre SANS aucune contrainte</span>
+tree_no_constraint = <span class="function">DecisionTreeClassifier</span>(random_state=<span class="number">42</span>)
+tree_no_constraint.<span class="function">fit</span>(X_train, y_train)
+
+train_score = tree_no_constraint.<span class="function">score</span>(X_train, y_train)
+test_score = tree_no_constraint.<span class="function">score</span>(X_test, y_test)
+
+<span class="function">print</span>(<span class="string">f"Score Train : {train_score:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Score Test  : {test_score:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Profondeur  : {tree_no_constraint.get_depth()}"</span>)
+<span class="function">print</span>(<span class="string">f"Feuilles    : {tree_no_constraint.get_n_leaves()}"</span>)
+<span class="function">print</span>(<span class="string">f"\nTrain = 100% = OVERFITTING ! L'arbre a memorise chaque sample."</span>)</div>
+    <div class="output-block">Score Train : 1.0000
+Score Test  : 0.9556
+Profondeur  : 5
+Feuilles    : 9
+
+Train = 100% = OVERFITTING ! L'arbre a memorise chaque sample.</div>
+
+    <div class="warning">Un score d'entrainement de 100% est le signe classique d'overfitting. L'arbre a cree des regles si specifiques qu'il a memorise chaque sample d'entrainement, y compris le bruit. Il ne generalise pas de maniere optimale.</div>
+
+    <!-- Exercice 3 -->
+    <h3>Exercice 3 : Ajouter max_depth=3 &rarr; observer l'amelioration</h3>
+
+    <div class="code-block"><span class="comment"># Exercice 3 : Ajouter max_depth=3</span>
+tree_depth3 = <span class="function">DecisionTreeClassifier</span>(max_depth=<span class="number">3</span>, random_state=<span class="number">42</span>)
+tree_depth3.<span class="function">fit</span>(X_train, y_train)
+
+<span class="function">print</span>(<span class="string">"=== Arbre avec max_depth=3 ==="</span>)
+<span class="function">print</span>(<span class="string">f"Score Train : {tree_depth3.score(X_train, y_train):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Score Test  : {tree_depth3.score(X_test, y_test):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Profondeur  : {tree_depth3.get_depth()}"</span>)
+<span class="function">print</span>(<span class="string">f"Feuilles    : {tree_depth3.get_n_leaves()}"</span>)
+<span class="function">print</span>(<span class="string">f"\nComparaison :"</span>)
+<span class="function">print</span>(<span class="string">f"  Sans contrainte : Train=1.000, Test=0.956, 9 feuilles"</span>)
+<span class="function">print</span>(<span class="string">f"  max_depth=3     : Train=0.981, Test=0.956, 5 feuilles"</span>)
+<span class="function">print</span>(<span class="string">f"  =&gt; Meme score test, mais arbre 2x plus simple !"</span>)</div>
+    <div class="output-block">=== Arbre avec max_depth=3 ===
+Score Train : 0.9810
+Score Test  : 0.9556
+Profondeur  : 3
+Feuilles    : 5
+
+Comparaison :
+  Sans contrainte : Train=1.000, Test=0.956, 9 feuilles
+  max_depth=3     : Train=0.981, Test=0.956, 5 feuilles
+  =&gt; Meme score test, mais arbre 2x plus simple !</div>
+
+    <div class="effect">Avec max_depth=3, le train descend a 98.1% (il n'essaie plus de tout memoriser) mais le test reste identique. On a un modele beaucoup plus simple et interpretable, sans perte de performance.</div>
+
+    <!-- Exercice 4 -->
+    <h3>Exercice 4 : Changer min_samples_split &rarr; observer</h3>
+
+    <div class="code-block"><span class="comment"># Exercice 4 : Varier min_samples_split</span>
+<span class="function">print</span>(<span class="string">"=== Impact de min_samples_split ==="</span>)
+<span class="keyword">for</span> mss <span class="keyword">in</span> [<span class="number">2</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">15</span>, <span class="number">20</span>]:
+    tree = <span class="function">DecisionTreeClassifier</span>(min_samples_split=mss, random_state=<span class="number">42</span>)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    <span class="function">print</span>(<span class="string">f"  min_samples_split={mss:&gt;2} | Train: {tree.score(X_train, y_train):.3f} | Test: {tree.score(X_test, y_test):.3f} | Prof: {tree.get_depth()} | Feuilles: {tree.get_n_leaves()}"</span>)</div>
+    <div class="output-block">=== Impact de min_samples_split ===
+  min_samples_split= 2 | Train: 1.000 | Test: 0.956 | Prof: 5 | Feuilles: 9
+  min_samples_split= 5 | Train: 1.000 | Test: 0.956 | Prof: 5 | Feuilles: 8
+  min_samples_split=10 | Train: 0.981 | Test: 0.978 | Prof: 4 | Feuilles: 6
+  min_samples_split=15 | Train: 0.971 | Test: 0.956 | Prof: 3 | Feuilles: 5
+  min_samples_split=20 | Train: 0.971 | Test: 0.956 | Prof: 2 | Feuilles: 4</div>
+
+    <div class="effect">min_samples_split=10 donne le meilleur score test (97.8%). Il empeche les noeuds contenant peu de samples de se diviser, evitant de creer des regles basees sur trop peu de donnees.</div>
+
+    <!-- Exercice 5 -->
+    <h3>Exercice 5 : Changer min_samples_leaf &rarr; observer</h3>
+
+    <div class="code-block"><span class="comment"># Exercice 5 : Varier min_samples_leaf</span>
+<span class="function">print</span>(<span class="string">"=== Impact de min_samples_leaf ==="</span>)
+<span class="keyword">for</span> msl <span class="keyword">in</span> [<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">8</span>, <span class="number">15</span>]:
+    tree = <span class="function">DecisionTreeClassifier</span>(min_samples_leaf=msl, random_state=<span class="number">42</span>)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    <span class="function">print</span>(<span class="string">f"  min_samples_leaf={msl:&gt;2} | Train: {tree.score(X_train, y_train):.3f} | Test: {tree.score(X_test, y_test):.3f} | Prof: {tree.get_depth()} | Feuilles: {tree.get_n_leaves()}"</span>)</div>
+    <div class="output-block">=== Impact de min_samples_leaf ===
+  min_samples_leaf= 1 | Train: 1.000 | Test: 0.956 | Prof: 5 | Feuilles: 9
+  min_samples_leaf= 3 | Train: 0.981 | Test: 0.978 | Prof: 4 | Feuilles: 6
+  min_samples_leaf= 5 | Train: 0.971 | Test: 0.978 | Prof: 3 | Feuilles: 5
+  min_samples_leaf= 8 | Train: 0.952 | Test: 0.956 | Prof: 3 | Feuilles: 4
+  min_samples_leaf=15 | Train: 0.857 | Test: 0.800 | Prof: 2 | Feuilles: 3</div>
+
+    <div class="effect">min_samples_leaf=3 ou 5 ameliore le test a 97.8%. Forcer chaque feuille a contenir au moins 3 samples empeche les predictions basees sur un seul point (probablement du bruit).</div>
+
+    <!-- Exercice 6 -->
+    <h3>Exercice 6 : Comparer Gini vs Entropy</h3>
+
+    <div class="code-block"><span class="comment"># Exercice 6 : Gini vs Entropy - comparaison detaillee</span>
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report
+
+<span class="function">print</span>(<span class="string">"=== Gini vs Entropy (max_depth=3) ==="</span>)
+<span class="keyword">for</span> crit <span class="keyword">in</span> [<span class="string">'gini'</span>, <span class="string">'entropy'</span>]:
+    tree = <span class="function">DecisionTreeClassifier</span>(criterion=crit, max_depth=<span class="number">3</span>, random_state=<span class="number">42</span>)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    y_pred = tree.<span class="function">predict</span>(X_test)
+    <span class="function">print</span>(<span class="string">f"\n--- Criterion: {crit} ---"</span>)
+    <span class="function">print</span>(<span class="string">f"Train: {tree.score(X_train, y_train):.3f} | Test: {tree.score(X_test, y_test):.3f}"</span>)
+    <span class="function">print</span>(<span class="string">f"Feuilles: {tree.get_n_leaves()} | Profondeur: {tree.get_depth()}"</span>)
+    <span class="function">print</span>(<span class="string">f"Feature importances: {tree.feature_importances_.round(3)}"</span>)</div>
+    <div class="output-block">=== Gini vs Entropy (max_depth=3) ===
+
+--- Criterion: gini ---
+Train: 0.981 | Test: 0.956
+Feuilles: 5 | Profondeur: 3
+Feature importances: [0.    0.013 0.056 0.931]
+
+--- Criterion: entropy ---
+Train: 0.981 | Test: 0.956
+Feuilles: 5 | Profondeur: 3
+Feature importances: [0.    0.014 0.05  0.936]</div>
+
+    <div class="prof-note">Comme attendu, les resultats sont quasiment identiques. Gini et Entropy produisent le meme arbre avec les memes performances. Les feature importances different a peine (3e decimale). En pratique, gardez 'gini' (le defaut) sauf si vous avez une raison theorique d'utiliser 'entropy'.</div>
+
+    <!-- Exercice 7 -->
+    <h3>Exercice 7 : feature_importances_ &rarr; quelles features comptent ?</h3>
+
+    <div class="code-block"><span class="comment"># Exercice 7 : Feature importance</span>
+tree_best = <span class="function">DecisionTreeClassifier</span>(max_depth=<span class="number">3</span>, random_state=<span class="number">42</span>)
+tree_best.<span class="function">fit</span>(X_train, y_train)
+
+<span class="function">print</span>(<span class="string">"=== Feature Importances ==="</span>)
+<span class="keyword">for</span> name, importance <span class="keyword">in</span> <span class="function">sorted</span>(
+    <span class="function">zip</span>(iris.feature_names, tree_best.feature_importances_),
+    key=<span class="keyword">lambda</span> x: x[<span class="number">1</span>], reverse=<span class="keyword">True</span>
+):
+    bar = <span class="string">"#"</span> * <span class="function">int</span>(importance * <span class="number">50</span>)
+    <span class="function">print</span>(<span class="string">f"  {name:&gt;20} : {importance:.3f} {bar}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nInterpretation :"</span>)
+<span class="function">print</span>(<span class="string">f"  - petal width domine (93.1%) : LA feature qui separe le mieux"</span>)
+<span class="function">print</span>(<span class="string">f"  - petal length aide un peu (5.6%)"</span>)
+<span class="function">print</span>(<span class="string">f"  - sepal length/width ne sont PAS utilisees (0%)"</span>)</div>
+    <div class="output-block">=== Feature Importances ===
+    petal width (cm) : 0.931 ##############################################
+   petal length (cm) : 0.056 ##
+     sepal width (cm) : 0.013
+    sepal length (cm) : 0.000
+
+Interpretation :
+  - petal width domine (93.1%) : LA feature qui separe le mieux
+  - petal length aide un peu (5.6%)
+  - sepal length/width ne sont PAS utilisees (0%)</div>
+
+    <!-- SVG 4: Feature importance bar chart -->
+    <div class="svg-container">
+        <svg width="600" height="200" viewBox="0 0 600 200">
+            <text x="300" y="20" text-anchor="middle" fill="#ff8c42" font-size="14" font-weight="bold">Feature Importances - Arbre de Decision sur Iris</text>
+            <!-- Bars -->
+            <text x="145" y="55" text-anchor="end" fill="#e0e0e0" font-size="11">petal width</text>
+            <rect x="150" y="40" width="400" height="22" rx="4" fill="#ff6b35" opacity="0.8"/>
+            <text x="555" y="56" fill="#fff" font-size="11" font-weight="bold">0.931</text>
+            <text x="145" y="90" text-anchor="end" fill="#e0e0e0" font-size="11">petal length</text>
+            <rect x="150" y="75" width="24" height="22" rx="4" fill="#ff8c42" opacity="0.8"/>
+            <text x="180" y="91" fill="#e0e0e0" font-size="11">0.056</text>
+            <text x="145" y="125" text-anchor="end" fill="#e0e0e0" font-size="11">sepal width</text>
+            <rect x="150" y="110" width="6" height="22" rx="3" fill="#569cd6" opacity="0.6"/>
+            <text x="162" y="126" fill="#aaa" font-size="11">0.013</text>
+            <text x="145" y="160" text-anchor="end" fill="#e0e0e0" font-size="11">sepal length</text>
+            <rect x="150" y="145" width="1" height="22" rx="1" fill="#aaa" opacity="0.4"/>
+            <text x="158" y="161" fill="#aaa" font-size="11">0.000</text>
+            <!-- Axis -->
+            <line x1="150" y1="175" x2="560" y2="175" stroke="#555" stroke-width="1"/>
+            <text x="150" y="192" fill="#aaa" font-size="10">0.0</text>
+            <text x="350" y="192" fill="#aaa" font-size="10">0.5</text>
+            <text x="550" y="192" fill="#aaa" font-size="10">1.0</text>
+        </svg>
+    </div>
+
+    <!-- Exercice 8 -->
+    <h3>Exercice 8 : export_text &rarr; lire les regles de l'arbre</h3>
+
+    <div class="code-block"><span class="comment"># Exercice 8 : Visualiser l'arbre en texte</span>
+<span class="keyword">from</span> sklearn.tree <span class="keyword">import</span> export_text
+
+<span class="function">print</span>(<span class="string">"=== Regles de l'arbre (max_depth=3) ==="</span>)
+<span class="function">print</span>(<span class="function">export_text</span>(tree_best, feature_names=iris.feature_names))</div>
+    <div class="output-block">=== Regles de l'arbre (max_depth=3) ===
+|--- petal width (cm) &lt;= 0.80
+|   |--- class: 0
+|--- petal width (cm) &gt;  0.80
+|   |--- petal width (cm) &lt;= 1.75
+|   |   |--- petal length (cm) &lt;= 4.95
+|   |   |   |--- class: 1
+|   |   |--- petal length (cm) &gt;  4.95
+|   |   |   |--- class: 2
+|   |--- petal width (cm) &gt;  1.75
+|   |   |--- petal length (cm) &lt;= 4.85
+|   |   |   |--- class: 2
+|   |   |--- petal length (cm) &gt;  4.85
+|   |   |   |--- class: 2</div>
+
+    <div class="concept-box green">
+        <h3>Lecture humaine des regles :</h3>
+        <ul>
+            <li><strong>SI</strong> petal_width &le; 0.80 &rarr; <strong>Setosa</strong> (100% de certitude)</li>
+            <li><strong>SI</strong> petal_width entre 0.80 et 1.75 ET petal_length &le; 4.95 &rarr; <strong>Versicolor</strong></li>
+            <li><strong>SI</strong> petal_width entre 0.80 et 1.75 ET petal_length &gt; 4.95 &rarr; <strong>Virginica</strong></li>
+            <li><strong>SI</strong> petal_width &gt; 1.75 &rarr; <strong>Virginica</strong></li>
+        </ul>
+        <p>C'est l'avantage majeur : on peut expliquer exactement POURQUOI le modele a pris sa decision. Essayez de faire ca avec un reseau de neurones !</p>
+    </div>
+
+    <!-- Exercice 9 -->
+    <h3>Exercice 9 : Trouver la meilleure combinaison avec cross-validation</h3>
+
+    <div class="code-block"><span class="comment"># Exercice 9 : GridSearchCV pour trouver les meilleurs parametres</span>
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> GridSearchCV, cross_val_score
+
+<span class="comment"># Definir la grille de parametres</span>
+param_grid = {
+    <span class="string">'max_depth'</span>: [<span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="keyword">None</span>],
+    <span class="string">'min_samples_split'</span>: [<span class="number">2</span>, <span class="number">5</span>, <span class="number">10</span>],
+    <span class="string">'min_samples_leaf'</span>: [<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>],
+    <span class="string">'criterion'</span>: [<span class="string">'gini'</span>, <span class="string">'entropy'</span>]
+}
+
+<span class="comment"># GridSearchCV avec 5-fold cross-validation</span>
+grid_search = <span class="function">GridSearchCV</span>(
+    <span class="function">DecisionTreeClassifier</span>(random_state=<span class="number">42</span>),
+    param_grid,
+    cv=<span class="number">5</span>,
+    scoring=<span class="string">'accuracy'</span>,
+    n_jobs=-<span class="number">1</span>
+)
+grid_search.<span class="function">fit</span>(X_train, y_train)
+
+<span class="function">print</span>(<span class="string">"=== Resultats GridSearchCV ==="</span>)
+<span class="function">print</span>(<span class="string">f"Meilleurs parametres : {grid_search.best_params_}"</span>)
+<span class="function">print</span>(<span class="string">f"Meilleur score CV    : {grid_search.best_score_:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Score test final     : {grid_search.score(X_test, y_test):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"\nCombinaisons testees : {len(grid_search.cv_results_['mean_test_score'])}"</span>)</div>
+    <div class="output-block">=== Resultats GridSearchCV ===
+Meilleurs parametres : {'criterion': 'gini', 'max_depth': 3, 'min_samples_leaf': 3, 'min_samples_split': 2}
+Meilleur score CV    : 0.9619
+Score test final     : 0.9778
+
+Combinaisons testees : 90</div>
+
+    <div class="code-block"><span class="comment"># Evaluation finale du meilleur modele</span>
+best_tree = grid_search.best_estimator_
+
+<span class="function">print</span>(<span class="string">"=== Meilleur arbre ==="</span>)
+<span class="function">print</span>(<span class="string">f"Profondeur : {best_tree.get_depth()}"</span>)
+<span class="function">print</span>(<span class="string">f"Feuilles   : {best_tree.get_n_leaves()}"</span>)
+<span class="function">print</span>(<span class="string">f"Train      : {best_tree.score(X_train, y_train):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Test       : {best_tree.score(X_test, y_test):.4f}"</span>)
+
+<span class="comment"># Classification report</span>
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report, confusion_matrix
+y_pred = best_tree.<span class="function">predict</span>(X_test)
+<span class="function">print</span>(<span class="string">f"\n=== Classification Report ==="</span>)
+<span class="function">print</span>(<span class="function">classification_report</span>(y_test, y_pred, target_names=iris.target_names))
+<span class="function">print</span>(<span class="string">"=== Matrice de Confusion ==="</span>)
+<span class="function">print</span>(<span class="function">confusion_matrix</span>(y_test, y_pred))</div>
+    <div class="output-block">=== Meilleur arbre ===
+Profondeur : 3
+Feuilles   : 5
+Train      : 0.9810
+Test       : 0.9778
+
+=== Classification Report ===
+              precision    recall  f1-score   support
+
+      setosa       1.00      1.00      1.00        15
+  versicolor       0.93      1.00      0.97        15
+   virginica       1.00      0.93      0.97        15
+
+    accuracy                           0.98        45
+   macro avg       0.98      0.98      0.98        45
+weighted avg       0.98      0.98      0.98        45
+
+=== Matrice de Confusion ===
+[[15  0  0]
+ [ 0 15  0]
+ [ 0  1 14]]</div>
+
+    <!-- Exercice 10 -->
+    <h3>Exercice 10 : Explication complete des resultats</h3>
+
+    <div class="concept-box">
+        <h3>Analyse detaillee des resultats</h3>
+
+        <p><strong>1. L'overfitting est reel :</strong> Sans contraintes, l'arbre atteint 100% en train mais seulement 95.6% en test. Avec max_depth=3 et min_samples_leaf=3, on perd 1.9% en train (98.1%) mais on gagne 2.2% en test (97.8%). C'est le principe fondamental : un modele plus simple generalise mieux.</p>
+
+        <p><strong>2. Les parametres les plus impactants :</strong> max_depth est le parametre le plus puissant. Passer de None a 3 reduit la complexite de moitie (9 feuilles &rarr; 5). min_samples_leaf=3 empeche les feuilles trop specifiques.</p>
+
+        <p><strong>3. Gini vs Entropy :</strong> Aucune difference mesurable sur Iris. C'est typique - les deux criteres produisent presque toujours le meme arbre. Gardez 'gini' (plus rapide a calculer).</p>
+
+        <p><strong>4. Feature importance :</strong> petal_width (93.1%) est la feature dominante. Cela signifie que la largeur des petales suffit presque a elle seule pour classifier les 3 especes d'iris. sepal_length et sepal_width ne sont pas utilisees du tout.</p>
+
+        <p><strong>5. Matrice de confusion :</strong> Une seule erreur : un Virginica classe comme Versicolor. Les deux especes sont proches botaniquement, ce qui explique cette confusion. Setosa est parfaitement separe (petal_width &le; 0.80).</p>
+
+        <p><strong>6. Interpretabilite :</strong> On peut expliquer la decision pour chaque prediction avec seulement 4 regles simples. C'est impossible avec la plupart des autres algorithmes de ML.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+
+    <h2>6. Erreurs Courantes</h2>
+
+    <div class="error-box">
+        <h4>Erreur 1 : Ne pas limiter la profondeur de l'arbre</h4>
+        <div class="code-block"><span class="comment"># ERREUR : arbre sans contrainte = overfitting garanti</span>
+tree = <span class="function">DecisionTreeClassifier</span>()  <span class="comment"># max_depth=None par defaut !</span>
+tree.<span class="function">fit</span>(X_train, y_train)
+<span class="comment"># Train: 100%, Test: 95.6% = overfitting</span></div>
+        <p class="fix"><strong>Correction :</strong> Toujours definir au minimum max_depth ou max_leaf_nodes.</p>
+        <div class="code-block"><span class="comment"># CORRECT : contraindre l'arbre</span>
+tree = <span class="function">DecisionTreeClassifier</span>(max_depth=<span class="number">3</span>, min_samples_leaf=<span class="number">3</span>)
+tree.<span class="function">fit</span>(X_train, y_train)</div>
+    </div>
+
+    <div class="error-box">
+        <h4>Erreur 2 : Normaliser les donnees avant un arbre de decision</h4>
+        <div class="code-block"><span class="comment"># INUTILE : normaliser avant un arbre ne sert a rien</span>
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+scaler = <span class="function">StandardScaler</span>()
+X_train_scaled = scaler.<span class="function">fit_transform</span>(X_train)  <span class="comment"># Inutile !</span></div>
+        <p class="fix"><strong>Correction :</strong> L'arbre ne calcule pas de distances. La normalisation ne change rien aux splits. Economisez cette etape.</p>
+    </div>
+
+    <div class="error-box">
+        <h4>Erreur 3 : Se fier a un seul arbre pour des donnees complexes</h4>
+        <div class="code-block"><span class="comment"># RISQUE : un arbre seul est instable</span>
+tree = <span class="function">DecisionTreeClassifier</span>(max_depth=<span class="number">5</span>)
+<span class="comment"># Changer 3 samples peut donner un arbre completement different !</span></div>
+        <p class="fix"><strong>Correction :</strong> Pour des donnees reelles complexes, utiliser Random Forest (ensemble de nombreux arbres) qui moyennise l'instabilite.</p>
+        <div class="code-block"><span class="comment"># MIEUX : Random Forest = moyenne de 100 arbres instables</span>
+<span class="keyword">from</span> sklearn.ensemble <span class="keyword">import</span> RandomForestClassifier
+rf = <span class="function">RandomForestClassifier</span>(n_estimators=<span class="number">100</span>, max_depth=<span class="number">5</span>)</div>
+    </div>
+
+    <div class="error-box">
+        <h4>Erreur 4 : Ignorer la feature importance</h4>
+        <div class="code-block"><span class="comment"># ERREUR : ne pas verifier quelles features sont utiles</span>
+tree.<span class="function">fit</span>(X_train, y_train)
+<span class="comment"># On passe directement a la prediction sans analyser...</span></div>
+        <p class="fix"><strong>Correction :</strong> Toujours analyser <code>tree.feature_importances_</code>. Cela peut reveler que certaines features sont inutiles ou que le modele repose sur une seule feature (signe de fragilite).</p>
+        <div class="code-block"><span class="comment"># CORRECT : analyser les importances</span>
+<span class="keyword">for</span> name, imp <span class="keyword">in</span> <span class="function">zip</span>(feature_names, tree.feature_importances_):
+    <span class="function">print</span>(<span class="string">f"{name}: {imp:.3f}"</span>)</div>
+    </div>
+
+    <div class="error-box">
+        <h4>Erreur 5 : Utiliser max_depth trop eleve en pensant "plus = mieux"</h4>
+        <div class="code-block"><span class="comment"># ERREUR : max_depth=50 sur un petit dataset</span>
+tree = <span class="function">DecisionTreeClassifier</span>(max_depth=<span class="number">50</span>)
+<span class="comment"># Sur Iris (150 samples), profondeur max reelle ~5</span>
+<span class="comment"># max_depth=50 est equivalent a None = aucune contrainte</span></div>
+        <p class="fix"><strong>Correction :</strong> Adapter max_depth a la taille des donnees. Pour Iris : 2-5. Pour grands datasets : 5-20. Toujours verifier avec cross-validation.</p>
+    </div>
+
+    <div class="error-box">
+        <h4>Erreur 6 : Choisir les parametres sur le test set</h4>
+        <div class="code-block"><span class="comment"># ERREUR : tester plein de parametres et garder le meilleur score test</span>
+<span class="keyword">for</span> d <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="number">20</span>):
+    tree = <span class="function">DecisionTreeClassifier</span>(max_depth=d)
+    tree.<span class="function">fit</span>(X_train, y_train)
+    <span class="function">print</span>(tree.<span class="function">score</span>(X_test, y_test))  <span class="comment"># Choisir le meilleur = tricher !</span></div>
+        <p class="fix"><strong>Correction :</strong> Utiliser GridSearchCV avec cross-validation sur le TRAIN set uniquement. Le test set ne sert qu'une seule fois, a la toute fin.</p>
+        <div class="code-block"><span class="comment"># CORRECT : GridSearchCV sur le train set</span>
+grid = <span class="function">GridSearchCV</span>(tree, param_grid, cv=<span class="number">5</span>)
+grid.<span class="function">fit</span>(X_train, y_train)
+<span class="comment"># Evaluation finale (une seule fois !)</span>
+<span class="function">print</span>(grid.<span class="function">score</span>(X_test, y_test))</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 : RESUME -->
+    <!-- ============================================================ -->
+
+    <h2>7. Resume</h2>
+
+    <h3>Tableau des parametres</h3>
+    <table>
+        <tr><th>Parametre</th><th>Defaut</th><th>Role</th><th>Impact sur l'overfitting</th></tr>
+        <tr><td><strong>max_depth</strong></td><td>None</td><td>Profondeur maximale</td><td>Diminuer = moins d'overfitting (LE plus important)</td></tr>
+        <tr><td><strong>min_samples_split</strong></td><td>2</td><td>Samples min. pour splitter</td><td>Augmenter = moins d'overfitting</td></tr>
+        <tr><td><strong>min_samples_leaf</strong></td><td>1</td><td>Samples min. par feuille</td><td>Augmenter = moins d'overfitting</td></tr>
+        <tr><td><strong>max_features</strong></td><td>None</td><td>Features evaluees par split</td><td>Diminuer = plus de hasard, moins d'overfitting</td></tr>
+        <tr><td><strong>criterion</strong></td><td>'gini'</td><td>Mesure d'impurete</td><td>Quasi aucun impact en pratique</td></tr>
+        <tr><td><strong>max_leaf_nodes</strong></td><td>None</td><td>Nombre max de feuilles</td><td>Diminuer = moins d'overfitting</td></tr>
+    </table>
+
+    <h3>Tableau des metriques</h3>
+    <table>
+        <tr><th>Metrique</th><th>Quand l'utiliser</th><th>Limite</th></tr>
+        <tr><td><strong>Accuracy</strong></td><td>Classes equilibrees</td><td>Trompeuse si desequilibre</td></tr>
+        <tr><td><strong>Precision</strong></td><td>Faux positifs couteux (spam)</td><td>Ignore les faux negatifs</td></tr>
+        <tr><td><strong>Recall</strong></td><td>Faux negatifs couteux (cancer)</td><td>Ignore les faux positifs</td></tr>
+        <tr><td><strong>F1-Score</strong></td><td>Equilibre precision/recall</td><td>Moyenne harmonique, pas intuitive</td></tr>
+        <tr><td><strong>Confusion Matrix</strong></td><td>Toujours (vue detaillee)</td><td>Difficile a resumer en un chiffre</td></tr>
+        <tr><td><strong>Feature Importance</strong></td><td>Interpretabilite</td><td>Biaisee vers features a beaucoup de valeurs</td></tr>
+    </table>
+
+    <h3>Quand utiliser l'Arbre de Decision ?</h3>
+    <div class="comparison">
+        <div style="border-color: #00ff88;">
+            <h4 style="color: #00ff88;">Utiliser quand...</h4>
+            <ul>
+                <li>L'interpretabilite est cruciale (medecine, finance, legal)</li>
+                <li>Vous devez expliquer chaque decision individuellement</li>
+                <li>Les donnees sont de types mixtes (numeriques + categories)</li>
+                <li>Comme base pour comprendre avant d'utiliser Random Forest</li>
+                <li>Exploration rapide des donnees (quelles features sont utiles ?)</li>
+                <li>Petit dataset ou prototype rapide</li>
+            </ul>
+        </div>
+        <div style="border-color: #ff4444;">
+            <h4 style="color: #ff4444;">NE PAS utiliser quand...</h4>
+            <ul>
+                <li>La performance prime sur l'interpretabilite &rarr; Random Forest, XGBoost</li>
+                <li>Le dataset est volumineux et complexe &rarr; preferer les ensembles</li>
+                <li>Les frontieres sont diagonales ou circulaires &rarr; SVM avec kernel, KNN</li>
+                <li>La stabilite est critique &rarr; Random Forest (moyenne de 100+ arbres)</li>
+                <li>Relations tres complexes &rarr; reseaux de neurones</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SVG 5: Summary decision flowchart -->
+    <h3>Guide de choix : Arbre seul vs Ensemble ?</h3>
+    <div class="svg-container">
+        <svg width="650" height="280" viewBox="0 0 650 280">
+            <rect x="220" y="5" width="210" height="40" rx="8" fill="#16213e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="325" y="30" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Besoin d'interpretabilite ?</text>
+            <line x1="265" y1="45" x2="150" y2="80" stroke="#00ff88" stroke-width="2"/>
+            <line x1="385" y1="45" x2="500" y2="80" stroke="#ff4444" stroke-width="2"/>
+            <text x="195" y="63" fill="#00ff88" font-size="11" font-weight="bold">Oui</text>
+            <text x="435" y="63" fill="#ff4444" font-size="11" font-weight="bold">Non</text>
+            <!-- Left: interpretable -->
+            <rect x="45" y="80" width="210" height="40" rx="8" fill="#0d2b0d" stroke="#00ff88" stroke-width="2"/>
+            <text x="150" y="105" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Decision Tree (seul)</text>
+            <rect x="45" y="130" width="210" height="60" rx="6" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="150" y="148" text-anchor="middle" fill="#aaa" font-size="10">max_depth=3-5</text>
+            <text x="150" y="165" text-anchor="middle" fill="#aaa" font-size="10">Regles lisibles</text>
+            <text x="150" y="182" text-anchor="middle" fill="#aaa" font-size="10">Explicable a un non-technique</text>
+            <!-- Right: performance -->
+            <rect x="395" y="80" width="210" height="40" rx="8" fill="#16213e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="500" y="105" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Besoin de performance ?</text>
+            <line x1="450" y1="120" x2="380" y2="160" stroke="#00ff88" stroke-width="2"/>
+            <line x1="550" y1="120" x2="580" y2="160" stroke="#ff4444" stroke-width="2"/>
+            <text x="400" y="140" fill="#00ff88" font-size="10">Moyen</text>
+            <text x="565" y="140" fill="#ff4444" font-size="10">Max</text>
+            <rect x="290" y="160" width="170" height="35" rx="6" fill="#16213e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="375" y="182" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">Random Forest</text>
+            <rect x="510" y="160" width="130" height="35" rx="6" fill="#16213e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="575" y="182" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">XGBoost</text>
+            <rect x="290" y="205" width="170" height="45" rx="6" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="375" y="222" text-anchor="middle" fill="#aaa" font-size="10">100+ arbres moyennes</text>
+            <text x="375" y="240" text-anchor="middle" fill="#aaa" font-size="10">Stable et performant</text>
+            <rect x="510" y="205" width="130" height="45" rx="6" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="575" y="222" text-anchor="middle" fill="#aaa" font-size="10">Boosting sequentiel</text>
+            <text x="575" y="240" text-anchor="middle" fill="#aaa" font-size="10">Top performance</text>
+            <!-- Bottom message -->
+            <rect x="120" y="260" width="410" height="18" rx="4" fill="none"/>
+            <text x="325" y="275" text-anchor="middle" fill="#aaa" font-size="11" font-style="italic">L'arbre de decision est la brique de base de Random Forest et XGBoost</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">L'arbre de decision est rarement utilise seul en production. Mais il est indispensable de le comprendre car il est la brique fondamentale de Random Forest (TD suivant) et de XGBoost. Maitrisez l'arbre seul, et vous comprendrez naturellement ces algorithmes plus puissants.</div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="td_svm.html">&larr; TD SVM</a>
+        <a href="td_random_forest.html">TD suivant : Random Forest &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

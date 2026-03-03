@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - RAG Basique (Mon Premier RAG)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "D&eacute;finition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - RAG Basique</h1>
+    <p class="subtitle">Mon Premier RAG -- De la theorie a l'implementation complete</p>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 1 : RECAPITULATIF                                -->
+    <!-- ======================================================= -->
+    <h2>1. Recapitulatif -- Qu'est-ce que le RAG ?</h2>
+
+    <div class="definition">
+        <strong>RAG (Retrieval-Augmented Generation)</strong> est une technique qui enrichit les reponses d'un LLM en lui fournissant des documents pertinents extraits d'une base de connaissances externe. Au lieu de se fier uniquement a sa memoire parametrique, le modele genere sa reponse en s'appuyant sur des <em>preuves</em> recuperees dynamiquement.
+    </div>
+
+    <p>Un LLM seul a deux limites majeures :</p>
+    <ul>
+        <li><strong>Hallucination</strong> : il invente des faits avec assurance</li>
+        <li><strong>Connaissances figees</strong> : il ne sait rien de ce qui s'est passe apres son entrainement</li>
+    </ul>
+
+    <p>Le RAG resout ces deux problemes en injectant des informations factuelles et a jour directement dans le prompt.</p>
+
+    <h3>Les 2 phases fondamentales du RAG</h3>
+
+    <div class="concept-box">
+        <h4 style="color:#ff8c42; margin-bottom:12px;">Phase 1 : Indexation (hors ligne)</h4>
+        <ol>
+            <li><strong>Charger</strong> les documents sources (PDF, texte, web...)</li>
+            <li><strong>Decouper</strong> les documents en chunks (morceaux) de taille geerable</li>
+            <li><strong>Vectoriser</strong> chaque chunk grace a un modele d'embeddings</li>
+            <li><strong>Stocker</strong> les vecteurs dans une base vectorielle (FAISS, Chroma...)</li>
+        </ol>
+    </div>
+
+    <div class="concept-box green">
+        <h4 style="color:#00ff88; margin-bottom:12px;">Phase 2 : Requete (en ligne)</h4>
+        <ol>
+            <li><strong>Recevoir</strong> la question de l'utilisateur</li>
+            <li><strong>Vectoriser</strong> la question avec le meme modele d'embeddings</li>
+            <li><strong>Rechercher</strong> les chunks les plus similaires dans la base vectorielle</li>
+            <li><strong>Construire</strong> un prompt enrichi = contexte + question</li>
+            <li><strong>Generer</strong> la reponse avec le LLM</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        La qualite d'un RAG depend de chaque maillon de la chaine. Un mauvais decoupage ou un mauvais modele d'embeddings peut ruiner la qualite finale, meme avec le meilleur LLM du monde.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 2 : PRINCIPE -- SVG PIPELINE                    -->
+    <!-- ======================================================= -->
+    <h2>2. Principe -- Pipeline RAG complet</h2>
+
+    <p>Voici l'architecture complete d'un pipeline RAG basique. Chaque etape sera implementee dans les exercices suivants.</p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg" style="max-width:860px;">
+            <!-- Titre -->
+            <text x="450" y="30" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Pipeline RAG Complet</text>
+
+            <!-- Phase Indexation -->
+            <rect x="20" y="50" width="860" height="200" rx="12" fill="none" stroke="#ff8c42" stroke-width="2" stroke-dasharray="8,4"/>
+            <text x="40" y="75" fill="#ff8c42" font-size="14" font-weight="bold">PHASE INDEXATION (hors ligne)</text>
+
+            <!-- Documents -->
+            <rect x="40" y="95" width="140" height="60" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="110" y="120" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Documents</text>
+            <text x="110" y="138" text-anchor="middle" fill="#aaa" font-size="10">PDF, TXT, Web</text>
+
+            <!-- Fleche -->
+            <line x1="180" y1="125" x2="220" y2="125" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Splitter -->
+            <rect x="220" y="95" width="140" height="60" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="290" y="120" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Text Splitter</text>
+            <text x="290" y="138" text-anchor="middle" fill="#aaa" font-size="10">Chunks</text>
+
+            <!-- Fleche -->
+            <line x1="360" y1="125" x2="400" y2="125" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Embeddings -->
+            <rect x="400" y="95" width="160" height="60" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="480" y="120" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Embedding Model</text>
+            <text x="480" y="138" text-anchor="middle" fill="#aaa" font-size="10">Vecteurs [0.2, -0.1...]</text>
+
+            <!-- Fleche -->
+            <line x1="560" y1="125" x2="600" y2="125" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Vector Store -->
+            <rect x="600" y="85" width="160" height="80" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="680" y="115" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Vector Store</text>
+            <text x="680" y="133" text-anchor="middle" fill="#aaa" font-size="10">FAISS / Chroma</text>
+            <text x="680" y="151" text-anchor="middle" fill="#aaa" font-size="10">Index persistant</text>
+
+            <!-- Phase Requete -->
+            <rect x="20" y="280" width="860" height="220" rx="12" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="8,4"/>
+            <text x="40" y="305" fill="#00ff88" font-size="14" font-weight="bold">PHASE REQUETE (en ligne)</text>
+
+            <!-- Question -->
+            <rect x="40" y="325" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="105" y="350" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Question</text>
+            <text x="105" y="368" text-anchor="middle" fill="#aaa" font-size="10">Utilisateur</text>
+
+            <!-- Fleche -->
+            <line x1="170" y1="355" x2="210" y2="355" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow2)"/>
+
+            <!-- Retriever -->
+            <rect x="210" y="325" width="140" height="60" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="280" y="350" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Retriever</text>
+            <text x="280" y="368" text-anchor="middle" fill="#aaa" font-size="10">Recherche similaire</text>
+
+            <!-- Ligne vers vector store -->
+            <line x1="680" y1="165" x2="680" y2="280" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+            <line x1="350" y1="340" x2="680" y2="290" stroke="#666" stroke-width="1" stroke-dasharray="5,5"/>
+
+            <!-- Fleche -->
+            <line x1="350" y1="355" x2="400" y2="355" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow2)"/>
+
+            <!-- Prompt -->
+            <rect x="400" y="320" width="140" height="70" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="470" y="345" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">Prompt Template</text>
+            <text x="470" y="363" text-anchor="middle" fill="#aaa" font-size="10">Contexte + Question</text>
+            <text x="470" y="378" text-anchor="middle" fill="#aaa" font-size="10">= Prompt enrichi</text>
+
+            <!-- Fleche -->
+            <line x1="540" y1="355" x2="590" y2="355" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow2)"/>
+
+            <!-- LLM -->
+            <rect x="590" y="325" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="655" y="350" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">LLM</text>
+            <text x="655" y="368" text-anchor="middle" fill="#aaa" font-size="10">Generation</text>
+
+            <!-- Fleche -->
+            <line x1="720" y1="355" x2="760" y2="355" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow2)"/>
+
+            <!-- Reponse -->
+            <rect x="760" y="325" width="100" height="60" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="810" y="350" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Reponse</text>
+            <text x="810" y="368" text-anchor="middle" fill="#aaa" font-size="10">Factuelle</text>
+
+            <!-- Fleches (markers) -->
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Memorisez cette architecture : chaque exercice ci-dessous implemente un bloc du schema. A la fin du TD, vous aurez un pipeline RAG fonctionnel de bout en bout.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 3 : EXERCICE 1 -- DOCUMENTS                     -->
+    <!-- ======================================================= -->
+    <h2>3. Exercice 1 -- Creer les documents sources</h2>
+
+    <p>Avant de construire un RAG, il nous faut une <strong>base de connaissances</strong>. Nous allons creer des documents sur une entreprise fictive : <em>NovaTech Solutions</em>.</p>
+
+    <h3>3.1 Installation des dependances</h3>
+
+    <div class="code-block"><span class="comment"># Installation des packages necessaires</span>
+<span class="function">pip install</span> langchain langchain-openai langchain-community faiss-cpu tiktoken</div>
+
+    <div class="prof-note">
+        Nous utilisons <code>faiss-cpu</code> pour la base vectorielle. En production, vous pourriez utiliser <code>faiss-gpu</code> pour de meilleures performances, ou une base managee comme Pinecone ou Weaviate.
+    </div>
+
+    <h3>3.2 Creation des documents</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document
+
+<span class="comment"># Nos documents sur l'entreprise fictive NovaTech Solutions</span>
+documents = [
+    Document(
+        page_content=<span class="string">"""NovaTech Solutions est une entreprise francaise fondee en 2019,
+specialisee dans l'intelligence artificielle appliquee a la sante.
+L'entreprise emploie 150 personnes reparties entre Paris et Lyon.
+Le chiffre d'affaires annuel est de 25 millions d'euros en 2024.
+NovaTech a developpe une plateforme nommee MedIA qui aide les
+radiologues a detecter les anomalies dans les images medicales.
+La precision de MedIA atteint 97.3% sur les mammographies et
+94.8% sur les scanners pulmonaires."""</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"presentation_entreprise.pdf"</span>, <span class="string">"page"</span>: <span class="number">1</span>}
+    ),
+    Document(
+        page_content=<span class="string">"""La plateforme MedIA utilise une architecture basee sur les
+reseaux de neurones convolutifs (CNN) combines avec des
+transformers de vision (ViT). Le modele est entraine sur plus
+de 2 millions d'images medicales anonymisees provenant de 45
+hopitaux partenaires en France et en Europe.
+Le processus d'entrainement dure environ 3 semaines sur un
+cluster de 8 GPU NVIDIA A100. Le modele est mis a jour tous
+les trimestres avec de nouvelles donnees.
+MedIA est certifiee dispositif medical de classe IIa selon
+la reglementation europeenne (MDR 2017/745)."""</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"documentation_technique.pdf"</span>, <span class="string">"page"</span>: <span class="number">3</span>}
+    ),
+    Document(
+        page_content=<span class="string">"""NovaTech Solutions propose trois offres commerciales :
+
+1. MedIA Standard : acces a la plateforme de detection pour
+un etablissement, support email, mises a jour trimestrielles.
+Prix : 2 500 euros par mois.
+
+2. MedIA Pro : acces multi-sites, support prioritaire 24/7,
+integration avec les PACS existants, tableau de bord analytique.
+Prix : 7 500 euros par mois.
+
+3. MedIA Enterprise : solution on-premise, personnalisation
+du modele sur les donnees de l'etablissement, formation sur site,
+SLA garanti a 99.9%. Prix : sur devis (generalement 15 000 a
+25 000 euros par mois)."""</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"offres_commerciales.pdf"</span>, <span class="string">"page"</span>: <span class="number">1</span>}
+    ),
+    Document(
+        page_content=<span class="string">"""L'equipe de direction de NovaTech Solutions est composee de :
+- Dr. Sophie Martin, CEO et co-fondatrice, ancienne chercheuse
+  a l'INRIA en vision par ordinateur.
+- Thomas Dubois, CTO et co-fondateur, ex-ingenieur chez Google
+  DeepMind pendant 5 ans.
+- Marie Chen, Directrice Commerciale, 15 ans d'experience dans
+  le secteur medical.
+- Dr. Ahmed Benali, Directeur Scientifique, professeur associe
+  a l'Universite Paris-Saclay.
+
+L'entreprise a leve 12 millions d'euros en Serie A en 2022
+aupres de Partech et BPI France. Une levee de Serie B de
+30 millions est prevue pour le premier trimestre 2025."""</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"equipe_direction.pdf"</span>, <span class="string">"page"</span>: <span class="number">1</span>}
+    )
+]
+
+<span class="function">print</span>(<span class="string">f"Nombre de documents : <span class="keyword">{</span>len(documents)<span class="keyword">}</span>"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(documents):
+    <span class="function">print</span>(<span class="string">f"\nDocument {i+1} :"</span>)
+    <span class="function">print</span>(<span class="string">f"  Source  : {doc.metadata['source']}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Taille  : {len(doc.page_content)} caracteres"</span>)
+    <span class="function">print</span>(<span class="string">f"  Apercu  : {doc.page_content[:80]}..."</span>)</div>
+
+    <div class="output-block">Nombre de documents : 4
+
+Document 1 :
+  Source  : presentation_entreprise.pdf
+  Taille  : 437 caracteres
+  Apercu  : NovaTech Solutions est une entreprise francaise fondee en 2019,
+specialisee dan...
+
+Document 2 :
+  Source  : documentation_technique.pdf
+  Taille  : 498 caracteres
+  Apercu  : La plateforme MedIA utilise une architecture basee sur les
+reseaux de neurones...
+
+Document 3 :
+  Source  : offres_commerciales.pdf
+  Taille  : 524 caracteres
+  Apercu  : NovaTech Solutions propose trois offres commerciales :
+
+1. MedIA Standard : acce...
+
+Document 4 :
+  Source  : equipe_direction.pdf
+  Taille  : 578 caracteres
+  Apercu  : L'equipe de direction de NovaTech Solutions est composee de :
+- Dr. Sophie Marti...</div>
+
+    <div class="effect">
+        Nous avons 4 documents couvrant differents aspects de l'entreprise : presentation, technique, offres commerciales et equipe. Chaque document possede des metadonnees (source et page).
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 4 : EXERCICE 2 -- CHUNKING                      -->
+    <!-- ======================================================= -->
+    <h2>4. Exercice 2 -- Decoupage en chunks (Text Splitting)</h2>
+
+    <p>Les documents sont souvent trop longs pour etre passes entierement au LLM. Il faut les <strong>decouper en morceaux</strong> (chunks) de taille optimale.</p>
+
+    <div class="definition">
+        Le <strong>chunking</strong> consiste a decouper un document en segments plus petits, chacun suffisamment court pour etre indexe et recupere efficacement, mais suffisamment long pour conserver le contexte semantique.
+    </div>
+
+    <h3>4.1 Decoupage avec RecursiveCharacterTextSplitter</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Configuration du splitter</span>
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">300</span>,        <span class="comment"># Taille max de chaque chunk (en caracteres)</span>
+    chunk_overlap=<span class="number">50</span>,      <span class="comment"># Chevauchement entre chunks consecutifs</span>
+    length_function=len,    <span class="comment"># Fonction pour mesurer la longueur</span>
+    separators=[<span class="string">"\n\n"</span>, <span class="string">"\n"</span>, <span class="string">". "</span>, <span class="string">" "</span>, <span class="string">""</span>]  <span class="comment"># Priorite de coupure</span>
+)
+
+<span class="comment"># Decouper tous les documents</span>
+chunks = text_splitter.split_documents(documents)
+
+<span class="function">print</span>(<span class="string">f"Nombre de chunks : {len(chunks)}"</span>)
+<span class="function">print</span>(<span class="string">f"Taille moyenne   : {sum(len(c.page_content) for c in chunks) // len(chunks)} car."</span>)
+<span class="function">print</span>(<span class="string">"\n--- Detail des chunks ---"</span>)
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="function">print</span>(<span class="string">f"\nChunk {i+1} ({len(chunk.page_content)} car.) [{chunk.metadata['source']}]:"</span>)
+    <span class="function">print</span>(<span class="string">f"  '{chunk.page_content[:100]}...'"</span>)</div>
+
+    <div class="output-block">Nombre de chunks : 12
+Taille moyenne   : 167 car.
+
+--- Detail des chunks ---
+
+Chunk 1 (269 car.) [presentation_entreprise.pdf]:
+  'NovaTech Solutions est une entreprise francaise fondee en 2019,
+specialisee dans l'intelligence ar...'
+
+Chunk 2 (212 car.) [presentation_entreprise.pdf]:
+  'NovaTech a developpe une plateforme nommee MedIA qui aide les
+radiologues a detecter les anomalies...'
+
+Chunk 3 (280 car.) [documentation_technique.pdf]:
+  'La plateforme MedIA utilise une architecture basee sur les
+reseaux de neurones convolutifs (CNN) co...'
+
+Chunk 4 (245 car.) [documentation_technique.pdf]:
+  'Le processus d'entrainement dure environ 3 semaines sur un
+cluster de 8 GPU NVIDIA A100...'
+...</div>
+
+    <h3>4.2 Experimenter avec differentes tailles</h3>
+
+    <div class="code-block"><span class="comment"># Comparaison de differentes tailles de chunks</span>
+<span class="keyword">for</span> size <span class="keyword">in</span> [<span class="number">200</span>, <span class="number">500</span>, <span class="number">1000</span>]:
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=size,
+        chunk_overlap=<span class="number">50</span>
+    )
+    result = splitter.split_documents(documents)
+    <span class="function">print</span>(<span class="string">f"chunk_size={size:>4} -> {len(result):>2} chunks, "</span>
+          <span class="string">f"taille moyenne: {sum(len(c.page_content) for c in result) // len(result)} car."</span>)</div>
+
+    <div class="output-block">chunk_size= 200 ->  16 chunks, taille moyenne: 127 car.
+chunk_size= 500 ->   6 chunks, taille moyenne: 339 car.
+chunk_size=1000 ->   4 chunks, taille moyenne: 509 car.</div>
+
+    <div class="prof-note">
+        Plus le <code>chunk_size</code> est petit, plus on a de chunks (recherche precise) mais moins de contexte par chunk. Plus il est grand, plus chaque chunk est riche mais la recherche est moins precise. En pratique, 300-500 caracteres est un bon point de depart.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 5 : EXERCICE 3 -- EMBEDDINGS + FAISS             -->
+    <!-- ======================================================= -->
+    <h2>5. Exercice 3 -- Embeddings et base vectorielle FAISS</h2>
+
+    <p>Chaque chunk doit etre transforme en un <strong>vecteur numerique</strong> (embedding) pour permettre la recherche par similarite.</p>
+
+    <div class="definition">
+        Un <strong>embedding</strong> est une representation vectorielle dense d'un texte dans un espace a haute dimension (ex: 1536 dimensions pour OpenAI). Des textes semantiquement proches produisent des vecteurs proches dans cet espace.
+    </div>
+
+    <h3>5.1 Creer les embeddings</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+<span class="keyword">import</span> os
+
+<span class="comment"># Configuration de la cle API</span>
+os.environ[<span class="string">"OPENAI_API_KEY"</span>] = <span class="string">"votre-cle-api-ici"</span>
+
+<span class="comment"># Creer le modele d'embeddings</span>
+embeddings_model = OpenAIEmbeddings(
+    model=<span class="string">"text-embedding-3-small"</span>  <span class="comment"># Modele rapide et economique</span>
+)
+
+<span class="comment"># Tester sur un texte</span>
+test_embedding = embeddings_model.embed_query(<span class="string">"Bonjour, ceci est un test"</span>)
+<span class="function">print</span>(<span class="string">f"Dimension du vecteur : {len(test_embedding)}"</span>)
+<span class="function">print</span>(<span class="string">f"Premiers elements   : {test_embedding[:5]}"</span>)</div>
+
+    <div class="output-block">Dimension du vecteur : 1536
+Premiers elements   : [0.0234, -0.0156, 0.0412, -0.0089, 0.0567]</div>
+
+    <h3>5.2 Creer la base vectorielle FAISS</h3>
+
+    <div class="code-block"><span class="comment"># Creer la base FAISS a partir des chunks</span>
+vectorstore = FAISS.from_documents(
+    documents=chunks,            <span class="comment"># Les chunks issus du splitting</span>
+    embedding=embeddings_model   <span class="comment"># Le modele d'embeddings</span>
+)
+
+<span class="function">print</span>(<span class="string">f"Base vectorielle creee avec succes !"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de vecteurs stockes : {vectorstore.index.ntotal}"</span>)</div>
+
+    <div class="output-block">Base vectorielle creee avec succes !
+Nombre de vecteurs stockes : 12</div>
+
+    <div class="effect">
+        FAISS (Facebook AI Similarity Search) stocke les 12 chunks sous forme vectorielle. Chaque chunk est desormais un point dans un espace a 1536 dimensions. La recherche par similarite trouvera les chunks les plus proches de la question.
+    </div>
+
+    <h3>5.3 Visualiser la structure de la base</h3>
+
+    <div class="code-block"><span class="comment"># Explorer la base vectorielle</span>
+<span class="function">print</span>(<span class="string">"=== Structure de la base FAISS ==="</span>)
+<span class="function">print</span>(<span class="string">f"Nombre total de vecteurs : {vectorstore.index.ntotal}"</span>)
+<span class="function">print</span>(<span class="string">f"Dimension des vecteurs   : {vectorstore.index.d}"</span>)
+
+<span class="comment"># Voir les sources indexees</span>
+sources = <span class="function">set</span>(doc.metadata[<span class="string">"source"</span>] <span class="keyword">for</span> doc <span class="keyword">in</span> chunks)
+<span class="function">print</span>(<span class="string">f"Sources indexees          : {sources}"</span>)
+
+<span class="comment"># Compter les chunks par source</span>
+<span class="keyword">from</span> collections <span class="keyword">import</span> Counter
+source_counts = Counter(doc.metadata[<span class="string">"source"</span>] <span class="keyword">for</span> doc <span class="keyword">in</span> chunks)
+<span class="keyword">for</span> src, count <span class="keyword">in</span> source_counts.items():
+    <span class="function">print</span>(<span class="string">f"  {src}: {count} chunks"</span>)</div>
+
+    <div class="output-block">=== Structure de la base FAISS ===
+Nombre total de vecteurs : 12
+Dimension des vecteurs   : 1536
+Sources indexees          : {'presentation_entreprise.pdf', 'documentation_technique.pdf', 'offres_commerciales.pdf', 'equipe_direction.pdf'}
+  presentation_entreprise.pdf: 3 chunks
+  documentation_technique.pdf: 3 chunks
+  offres_commerciales.pdf: 3 chunks
+  equipe_direction.pdf: 3 chunks</div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 6 : EXERCICE 4 -- SIMILARITY SEARCH              -->
+    <!-- ======================================================= -->
+    <h2>6. Exercice 4 -- Recherche par similarite</h2>
+
+    <p>Maintenant que notre base vectorielle est prete, testons la recherche par similarite : poser une question et retrouver les chunks pertinents.</p>
+
+    <h3>6.1 Recherche simple</h3>
+
+    <div class="code-block"><span class="comment"># Recherche par similarite</span>
+question = <span class="string">"Quel est le prix de MedIA Pro ?"</span>
+
+<span class="comment"># Chercher les 3 chunks les plus pertinents</span>
+resultats = vectorstore.similarity_search(question, k=<span class="number">3</span>)
+
+<span class="function">print</span>(<span class="string">f"Question : {question}"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de resultats : {len(resultats)}\n"</span>)
+
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(resultats):
+    <span class="function">print</span>(<span class="string">f"--- Resultat {i+1} (source: {doc.metadata['source']}) ---"</span>)
+    <span class="function">print</span>(doc.page_content)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">Question : Quel est le prix de MedIA Pro ?
+Nombre de resultats : 3
+
+--- Resultat 1 (source: offres_commerciales.pdf) ---
+2. MedIA Pro : acces multi-sites, support prioritaire 24/7,
+integration avec les PACS existants, tableau de bord analytique.
+Prix : 7 500 euros par mois.
+
+--- Resultat 2 (source: offres_commerciales.pdf) ---
+NovaTech Solutions propose trois offres commerciales :
+
+1. MedIA Standard : acces a la plateforme de detection pour
+un etablissement, support email, mises a jour trimestrielles.
+Prix : 2 500 euros par mois.
+
+--- Resultat 3 (source: presentation_entreprise.pdf) ---
+NovaTech a developpe une plateforme nommee MedIA qui aide les
+radiologues a detecter les anomalies dans les images medicales.</div>
+
+    <h3>6.2 Recherche avec scores de similarite</h3>
+
+    <div class="code-block"><span class="comment"># Recherche avec scores</span>
+question2 = <span class="string">"Qui est le CTO de NovaTech ?"</span>
+
+resultats_scores = vectorstore.similarity_search_with_score(question2, k=<span class="number">4</span>)
+
+<span class="function">print</span>(<span class="string">f"Question : {question2}\n"</span>)
+<span class="keyword">for</span> doc, score <span class="keyword">in</span> resultats_scores:
+    <span class="function">print</span>(<span class="string">f"Score: {score:.4f} | Source: {doc.metadata['source']}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Extrait: {doc.page_content[:120]}..."</span>)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">Question : Qui est le CTO de NovaTech ?
+
+Score: 0.3412 | Source: equipe_direction.pdf
+  Extrait: L'equipe de direction de NovaTech Solutions est composee de :
+- Dr. Sophie Martin, CEO et co-fondatrice, ancienne che...
+
+Score: 0.5201 | Source: equipe_direction.pdf
+  Extrait: - Thomas Dubois, CTO et co-fondateur, ex-ingenieur chez Google
+DeepMind pendant 5 ans.
+- Marie Chen, ...
+
+Score: 0.7834 | Source: presentation_entreprise.pdf
+  Extrait: NovaTech Solutions est une entreprise francaise fondee en 2019,
+specialisee dans l'intelligence ar...
+
+Score: 0.8921 | Source: documentation_technique.pdf
+  Extrait: La plateforme MedIA utilise une architecture basee sur les
+reseaux de neurones convolutifs (CNN) co...</div>
+
+    <div class="prof-note">
+        Le score FAISS est une <strong>distance</strong> (L2 par defaut) : plus le score est <em>bas</em>, plus le document est pertinent. Un score de 0.34 est bien meilleur que 0.89. C'est l'inverse d'un score de similarite cosinus ou un score <em>eleve</em> est meilleur.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 7 : EXERCICE 5 -- PROMPT TEMPLATE                -->
+    <!-- ======================================================= -->
+    <h2>7. Exercice 5 -- Creer le prompt template RAG</h2>
+
+    <p>Le prompt template est la piece centrale qui assemble le contexte recupere et la question de l'utilisateur en un prompt coherent pour le LLM.</p>
+
+    <h3>7.1 Prompt template basique</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+<span class="comment"># Template RAG classique</span>
+rag_prompt = ChatPromptTemplate.from_template(
+<span class="string">"""Tu es un assistant specialise qui repond aux questions en se basant
+UNIQUEMENT sur le contexte fourni ci-dessous. Si la reponse n'est pas
+dans le contexte, dis clairement "Je ne trouve pas cette information
+dans les documents disponibles."
+
+Contexte :
+{context}
+
+Question : {question}
+
+Reponse (precise et basee sur le contexte) :"""</span>
+)
+
+<span class="comment"># Tester le formatage du prompt</span>
+prompt_formate = rag_prompt.format(
+    context=<span class="string">"NovaTech a ete fondee en 2019 a Paris."</span>,
+    question=<span class="string">"Quand NovaTech a-t-elle ete fondee ?"</span>
+)
+<span class="function">print</span>(prompt_formate)</div>
+
+    <div class="output-block">Tu es un assistant specialise qui repond aux questions en se basant
+UNIQUEMENT sur le contexte fourni ci-dessous. Si la reponse n'est pas
+dans le contexte, dis clairement "Je ne trouve pas cette information
+dans les documents disponibles."
+
+Contexte :
+NovaTech a ete fondee en 2019 a Paris.
+
+Question : Quand NovaTech a-t-elle ete fondee ?
+
+Reponse (precise et basee sur le contexte) :</div>
+
+    <h3>7.2 Prompt template ameliore avec instructions detaillees</h3>
+
+    <div class="code-block"><span class="comment"># Version amelioree du prompt</span>
+rag_prompt_v2 = ChatPromptTemplate.from_template(
+<span class="string">"""Tu es un assistant expert de l'entreprise NovaTech Solutions.
+Tu reponds aux questions en te basant EXCLUSIVEMENT sur le contexte fourni.
+
+Regles :
+1. Utilise UNIQUEMENT les informations du contexte.
+2. Si l'information n'est pas disponible, reponds : "Cette information
+   ne figure pas dans les documents disponibles."
+3. Cite les chiffres exacts quand ils sont disponibles.
+4. Sois concis mais complet.
+
+Contexte :
+{context}
+
+Question de l'utilisateur : {question}
+
+Reponse :"""</span>
+)
+
+<span class="function">print</span>(<span class="string">"Prompt template v2 cree avec succes."</span>)
+<span class="function">print</span>(<span class="string">f"Variables requises : {rag_prompt_v2.input_variables}"</span>)</div>
+
+    <div class="output-block">Prompt template v2 cree avec succes.
+Variables requises : ['context', 'question']</div>
+
+    <div class="warning">
+        Ne jamais oublier l'instruction "reponds uniquement sur la base du contexte". Sans cette contrainte, le LLM melangera ses connaissances generales avec le contexte fourni et vous ne saurez plus ce qui est factuel.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 8 : EXERCICE 6 -- CHAINE RAG LCEL                -->
+    <!-- ======================================================= -->
+    <h2>8. Exercice 6 -- Construire la chaine RAG avec LCEL</h2>
+
+    <p>Nous allons maintenant assembler toutes les pieces avec <strong>LCEL</strong> (LangChain Expression Language) pour creer une chaine RAG fonctionnelle.</p>
+
+    <div class="definition">
+        <strong>LCEL</strong> (LangChain Expression Language) est un langage declaratif pour composer des chaines de traitement. L'operateur <code>|</code> (pipe) enchaine les composants : la sortie de chacun devient l'entree du suivant.
+    </div>
+
+    <h3>8.1 Les composants de la chaine</h3>
+
+    <div class="concept-box blue">
+        <h4 style="color:#569cd6; margin-bottom:10px;">Architecture de la chaine LCEL</h4>
+        <p><code>{"context": retriever, "question": RunnablePassthrough()} | prompt | llm | parser</code></p>
+        <ul>
+            <li><strong>retriever</strong> : recupere les chunks pertinents depuis FAISS</li>
+            <li><strong>RunnablePassthrough()</strong> : passe la question telle quelle</li>
+            <li><strong>prompt</strong> : assemble le contexte et la question</li>
+            <li><strong>llm</strong> : genere la reponse (ChatOpenAI)</li>
+            <li><strong>parser</strong> : extrait le texte brut de la reponse</li>
+        </ul>
+    </div>
+
+    <h3>8.2 Construction de la chaine</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnablePassthrough
+
+<span class="comment"># 1. Creer le retriever a partir du vector store</span>
+retriever = vectorstore.as_retriever(
+    search_type=<span class="string">"similarity"</span>,
+    search_kwargs={<span class="string">"k"</span>: <span class="number">3</span>}  <span class="comment"># Retourner les 3 meilleurs chunks</span>
+)
+
+<span class="comment"># 2. Creer le LLM</span>
+llm = ChatOpenAI(
+    model=<span class="string">"gpt-4o-mini"</span>,
+    temperature=<span class="number">0</span>  <span class="comment"># Reponses deterministes</span>
+)
+
+<span class="comment"># 3. Fonction pour formater les documents recuperes</span>
+<span class="keyword">def</span> <span class="function">format_docs</span>(docs):
+    <span class="keyword">return</span> <span class="string">"\n\n"</span>.join(doc.page_content <span class="keyword">for</span> doc <span class="keyword">in</span> docs)
+
+<span class="comment"># 4. Construire la chaine RAG avec LCEL</span>
+rag_chain = (
+    {
+        <span class="string">"context"</span>: retriever | format_docs,
+        <span class="string">"question"</span>: RunnablePassthrough()
+    }
+    | rag_prompt_v2
+    | llm
+    | StrOutputParser()
+)
+
+<span class="function">print</span>(<span class="string">"Chaine RAG construite avec succes !"</span>)
+<span class="function">print</span>(<span class="string">f"Type : {type(rag_chain)}"</span>)</div>
+
+    <div class="output-block">Chaine RAG construite avec succes !
+Type : &lt;class 'langchain_core.runnables.base.RunnableSequence'&gt;</div>
+
+    <h3>8.3 Tester la chaine</h3>
+
+    <div class="code-block"><span class="comment"># Premiere question</span>
+reponse = rag_chain.invoke(<span class="string">"Quel est le prix de l'offre MedIA Pro ?"</span>)
+<span class="function">print</span>(<span class="string">f"Q: Quel est le prix de l'offre MedIA Pro ?"</span>)
+<span class="function">print</span>(<span class="string">f"R: {reponse}"</span>)</div>
+
+    <div class="output-block">Q: Quel est le prix de l'offre MedIA Pro ?
+R: L'offre MedIA Pro est proposee a 7 500 euros par mois. Elle comprend
+l'acces multi-sites, un support prioritaire 24/7, l'integration avec
+les PACS existants et un tableau de bord analytique.</div>
+
+    <div class="effect">
+        La chaine RAG fonctionne de bout en bout ! La question est transformee en vecteur, les chunks pertinents sont recuperes, injectes dans le prompt, et le LLM genere une reponse precise et factuelle basee sur nos documents.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 9 : EXERCICE 7 -- TESTS MULTIPLES                -->
+    <!-- ======================================================= -->
+    <h2>9. Exercice 7 -- Tests avec questions multiples</h2>
+
+    <p>Testons notre RAG avec differents types de questions pour voir ses forces et ses limites.</p>
+
+    <h3>9.1 Questions ou le RAG excelle</h3>
+
+    <div class="code-block"><span class="comment"># Batterie de tests</span>
+questions_test = [
+    <span class="string">"Combien d'employes compte NovaTech ?"</span>,
+    <span class="string">"Quelle est la precision de MedIA sur les mammographies ?"</span>,
+    <span class="string">"Qui est le CTO de NovaTech ?"</span>,
+    <span class="string">"Combien NovaTech a-t-elle leve en Serie A ?"</span>,
+    <span class="string">"Sur combien d'images le modele a-t-il ete entraine ?"</span>,
+]
+
+<span class="function">print</span>(<span class="string">"=== Tests du RAG - Questions factuelles ===\n"</span>)
+<span class="keyword">for</span> q <span class="keyword">in</span> questions_test:
+    reponse = rag_chain.invoke(q)
+    <span class="function">print</span>(<span class="string">f"Q: {q}"</span>)
+    <span class="function">print</span>(<span class="string">f"R: {reponse}\n"</span>)</div>
+
+    <div class="output-block">=== Tests du RAG - Questions factuelles ===
+
+Q: Combien d'employes compte NovaTech ?
+R: NovaTech Solutions emploie 150 personnes reparties entre Paris et Lyon.
+
+Q: Quelle est la precision de MedIA sur les mammographies ?
+R: La precision de MedIA atteint 97.3% sur les mammographies.
+
+Q: Qui est le CTO de NovaTech ?
+R: Le CTO de NovaTech Solutions est Thomas Dubois, co-fondateur de
+l'entreprise. Il est ancien ingenieur chez Google DeepMind ou il a
+travaille pendant 5 ans.
+
+Q: Combien NovaTech a-t-elle leve en Serie A ?
+R: NovaTech a leve 12 millions d'euros en Serie A en 2022 aupres de
+Partech et BPI France.
+
+Q: Sur combien d'images le modele a-t-il ete entraine ?
+R: Le modele MedIA est entraine sur plus de 2 millions d'images
+medicales anonymisees provenant de 45 hopitaux partenaires.</div>
+
+    <h3>9.2 Questions ou le RAG echoue (volontairement)</h3>
+
+    <div class="code-block"><span class="comment"># Questions hors du contexte</span>
+questions_hors_contexte = [
+    <span class="string">"Quelle est la capitalisation boursiere de NovaTech ?"</span>,
+    <span class="string">"NovaTech a-t-elle des bureaux en Asie ?"</span>,
+    <span class="string">"Quel est le salaire moyen chez NovaTech ?"</span>,
+]
+
+<span class="function">print</span>(<span class="string">"=== Tests du RAG - Questions hors contexte ===\n"</span>)
+<span class="keyword">for</span> q <span class="keyword">in</span> questions_hors_contexte:
+    reponse = rag_chain.invoke(q)
+    <span class="function">print</span>(<span class="string">f"Q: {q}"</span>)
+    <span class="function">print</span>(<span class="string">f"R: {reponse}\n"</span>)</div>
+
+    <div class="output-block">=== Tests du RAG - Questions hors contexte ===
+
+Q: Quelle est la capitalisation boursiere de NovaTech ?
+R: Cette information ne figure pas dans les documents disponibles.
+
+Q: NovaTech a-t-elle des bureaux en Asie ?
+R: Cette information ne figure pas dans les documents disponibles.
+D'apres les documents, NovaTech a des bureaux a Paris et Lyon.
+
+Q: Quel est le salaire moyen chez NovaTech ?
+R: Cette information ne figure pas dans les documents disponibles.</div>
+
+    <div class="prof-note">
+        Le RAG repond correctement "Je ne sais pas" quand l'information n'est pas dans le contexte. C'est le comportement souhaite ! Un bon RAG sait reconnaitre ses limites. Si le LLM invente des reponses, c'est que votre prompt template n'est pas assez strict.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 10 : EXERCICE 8 -- ATTRIBUTION DES SOURCES       -->
+    <!-- ======================================================= -->
+    <h2>10. Exercice 8 -- Attribution des sources</h2>
+
+    <p>En production, il est essentiel d'indiquer les sources des reponses. Modifions notre chaine pour inclure les references.</p>
+
+    <h3>10.1 Chaine avec sources</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnableParallel
+
+<span class="comment"># Prompt avec instruction de citation</span>
+rag_prompt_sources = ChatPromptTemplate.from_template(
+<span class="string">"""Tu es un assistant expert de NovaTech Solutions.
+Reponds a la question en te basant UNIQUEMENT sur le contexte.
+A la fin de ta reponse, cite les sources utilisees.
+
+Contexte :
+{context}
+
+Question : {question}
+
+Reponse (avec sources) :"""</span>
+)
+
+<span class="comment"># Fonction pour formater les docs avec leur source</span>
+<span class="keyword">def</span> <span class="function">format_docs_with_sources</span>(docs):
+    formatted = []
+    <span class="keyword">for</span> doc <span class="keyword">in</span> docs:
+        source = doc.metadata.get(<span class="string">"source"</span>, <span class="string">"inconnu"</span>)
+        page = doc.metadata.get(<span class="string">"page"</span>, <span class="string">"?"</span>)
+        formatted.append(
+            <span class="string">f"[Source: {source}, page {page}]\n{doc.page_content}"</span>
+        )
+    <span class="keyword">return</span> <span class="string">"\n\n"</span>.join(formatted)
+
+<span class="comment"># Chaine qui retourne aussi les documents sources</span>
+rag_chain_sources = (
+    {
+        <span class="string">"context"</span>: retriever | format_docs_with_sources,
+        <span class="string">"question"</span>: RunnablePassthrough()
+    }
+    | rag_prompt_sources
+    | llm
+    | StrOutputParser()
+)
+
+<span class="comment"># Test</span>
+reponse = rag_chain_sources.invoke(
+    <span class="string">"Quelles sont les offres commerciales de NovaTech ?"</span>
+)
+<span class="function">print</span>(reponse)</div>
+
+    <div class="output-block">NovaTech Solutions propose trois offres commerciales :
+
+1. **MedIA Standard** (2 500 EUR/mois) : acces a la plateforme pour
+   un etablissement, support email, mises a jour trimestrielles.
+
+2. **MedIA Pro** (7 500 EUR/mois) : acces multi-sites, support
+   prioritaire 24/7, integration PACS, tableau de bord analytique.
+
+3. **MedIA Enterprise** (sur devis, 15 000-25 000 EUR/mois) : solution
+   on-premise, personnalisation du modele, formation sur site, SLA 99.9%.
+
+Sources :
+- offres_commerciales.pdf, page 1</div>
+
+    <h3>10.2 Retourner documents et reponse separement</h3>
+
+    <div class="code-block"><span class="comment"># Chaine qui retourne un dictionnaire {reponse, sources}</span>
+<span class="keyword">def</span> <span class="function">extraire_sources</span>(docs):
+    <span class="keyword">return</span> [
+        {<span class="string">"source"</span>: d.metadata[<span class="string">"source"</span>], <span class="string">"page"</span>: d.metadata[<span class="string">"page"</span>]}
+        <span class="keyword">for</span> d <span class="keyword">in</span> docs
+    ]
+
+<span class="comment"># Pipeline parallele : reponse + sources</span>
+rag_with_sources = RunnableParallel(
+    reponse=(
+        {
+            <span class="string">"context"</span>: retriever | format_docs,
+            <span class="string">"question"</span>: RunnablePassthrough()
+        }
+        | rag_prompt_v2
+        | llm
+        | StrOutputParser()
+    ),
+    sources=retriever | extraire_sources
+)
+
+<span class="comment"># Test</span>
+result = rag_with_sources.invoke(<span class="string">"Quelle technologie utilise MedIA ?"</span>)
+
+<span class="function">print</span>(<span class="string">"REPONSE :"</span>)
+<span class="function">print</span>(result[<span class="string">"reponse"</span>])
+<span class="function">print</span>(<span class="string">"\nSOURCES :"</span>)
+<span class="keyword">for</span> src <span class="keyword">in</span> result[<span class="string">"sources"</span>]:
+    <span class="function">print</span>(<span class="string">f"  - {src['source']} (page {src['page']})"</span>)</div>
+
+    <div class="output-block">REPONSE :
+MedIA utilise une architecture basee sur les reseaux de neurones
+convolutifs (CNN) combines avec des transformers de vision (ViT).
+Le modele est entraine sur plus de 2 millions d'images medicales
+anonymisees provenant de 45 hopitaux partenaires.
+
+SOURCES :
+  - documentation_technique.pdf (page 3)
+  - presentation_entreprise.pdf (page 1)
+  - documentation_technique.pdf (page 3)</div>
+
+    <div class="prof-note">
+        L'attribution des sources est essentielle pour la transparence et la confiance. En production, vous pouvez deduplicquer les sources et ajouter un lien cliquable vers le document d'origine. L'utilisateur peut ainsi verifier les informations.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 11 : ERREURS COURANTES                           -->
+    <!-- ======================================================= -->
+    <h2>11. Erreurs Courantes</h2>
+
+    <div class="warning">
+        <strong>Chunks trop grands :</strong> Si vos chunks font plus de 1000 caracteres, la recherche par similarite sera imprecise. Le chunk pertinent sera "noye" dans du texte non pertinent, et le LLM recevra trop de bruit. Commencez avec 300-500 caracteres.
+    </div>
+
+    <div class="warning">
+        <strong>Pas de chunk_overlap :</strong> Sans chevauchement, une information coupee entre deux chunks sera perdue. Utilisez un overlap de 10 a 20% de la taille du chunk (ex: chunk_size=500, overlap=50-100).
+    </div>
+
+    <div class="warning">
+        <strong>Oublier temperature=0 :</strong> Pour un RAG factuel, utilisez toujours <code>temperature=0</code>. Une temperature elevee introduit de l'aleatoire et donc des risques d'hallucination, meme avec un bon contexte.
+    </div>
+
+    <div class="warning">
+        <strong>Prompt trop permissif :</strong> Si votre prompt ne dit pas explicitement "reponds UNIQUEMENT sur la base du contexte", le LLM completera avec ses connaissances generales. Vous perdez alors tout l'interet du RAG.
+    </div>
+
+    <div class="warning">
+        <strong>k trop petit ou trop grand :</strong> Avec k=1, vous risquez de manquer des informations reparties sur plusieurs chunks. Avec k=10, vous noyez le LLM sous trop de contexte. k=3 a 5 est generalement optimal.
+    </div>
+
+    <div class="warning">
+        <strong>Ne pas tester les limites :</strong> Testez toujours avec des questions hors contexte. Si votre RAG invente des reponses, c'est un probleme critique a corriger avant la mise en production.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 12 : RESUME                                      -->
+    <!-- ======================================================= -->
+    <h2>12. Resume -- Checklist RAG Basique</h2>
+
+    <div class="concept-box green">
+        <h4 style="color:#00ff88; margin-bottom:12px;">Checklist de votre premier RAG</h4>
+        <table>
+            <tr><th>Etape</th><th>Composant</th><th>Valide</th></tr>
+            <tr><td>1. Documents</td><td>Documents charges avec metadonnees</td><td>&#9744;</td></tr>
+            <tr><td>2. Splitting</td><td>RecursiveCharacterTextSplitter (300-500 car.)</td><td>&#9744;</td></tr>
+            <tr><td>3. Embeddings</td><td>OpenAIEmbeddings (text-embedding-3-small)</td><td>&#9744;</td></tr>
+            <tr><td>4. Vector Store</td><td>FAISS avec tous les chunks indexes</td><td>&#9744;</td></tr>
+            <tr><td>5. Retriever</td><td>similarity_search avec k=3</td><td>&#9744;</td></tr>
+            <tr><td>6. Prompt</td><td>Template avec contrainte "contexte uniquement"</td><td>&#9744;</td></tr>
+            <tr><td>7. Chaine LCEL</td><td>retriever | prompt | llm | parser</td><td>&#9744;</td></tr>
+            <tr><td>8. Sources</td><td>Attribution des sources dans les reponses</td><td>&#9744;</td></tr>
+            <tr><td>9. Tests</td><td>Questions in-context ET hors-context</td><td>&#9744;</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box">
+        <h4 style="color:#ff8c42; margin-bottom:12px;">Points cles a retenir</h4>
+        <ul>
+            <li><strong>RAG = Retrieval + Generation</strong> : on recupere d'abord, on genere ensuite</li>
+            <li><strong>La qualite du chunking</strong> impacte plus la qualite finale que le choix du LLM</li>
+            <li><strong>LCEL</strong> permet de composer des chaines lisibles et maintenables avec l'operateur <code>|</code></li>
+            <li><strong>Les metadonnees</strong> (source, page) sont essentielles pour la tracabilite</li>
+            <li><strong>Testez les limites</strong> : un bon RAG sait dire "je ne sais pas"</li>
+        </ul>
+    </div>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg" style="max-width:680px;">
+            <rect x="10" y="30" width="120" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="70" y="58" text-anchor="middle" fill="#569cd6" font-size="11">Documents</text>
+
+            <line x1="130" y1="55" x2="170" y2="55" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr)"/>
+
+            <rect x="170" y="30" width="100" height="50" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="220" y="58" text-anchor="middle" fill="#ff6b35" font-size="11">Chunks</text>
+
+            <line x1="270" y1="55" x2="310" y2="55" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr)"/>
+
+            <rect x="310" y="30" width="100" height="50" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="360" y="58" text-anchor="middle" fill="#00ff88" font-size="11">FAISS</text>
+
+            <line x1="410" y1="55" x2="450" y2="55" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr)"/>
+
+            <rect x="450" y="30" width="100" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="500" y="58" text-anchor="middle" fill="#ff8c42" font-size="11">Prompt</text>
+
+            <line x1="550" y1="55" x2="590" y2="55" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr)"/>
+
+            <rect x="590" y="30" width="100" height="50" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="640" y="58" text-anchor="middle" fill="#ff6b35" font-size="11">Reponse</text>
+
+            <defs>
+                <marker id="arr" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <span style="color:#666;">(Premier TD RAG)</span>
+        <a href="td_chunking.html">TD suivant : Strategies de Chunking &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

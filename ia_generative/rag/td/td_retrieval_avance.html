@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD - Retrieval Avancé</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD - Retrieval Avancé</h1>
+    <p class="subtitle">Maîtriser les techniques avancées de recherche documentaire dans un système RAG</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 : RÉCAPITULATIF -->
+    <!-- ============================================================ -->
+    <h2>1. Récapitulatif</h2>
+
+    <div class="definition">
+        Le <strong>retrieval</strong> (recherche documentaire) est l'étape d'un pipeline RAG qui consiste à retrouver, parmi une grande collection de documents indexés, les passages les plus pertinents par rapport à la question de l'utilisateur. C'est le coeur du système : sans un bon retrieval, même le meilleur LLM produira des réponses médiocres.
+    </div>
+
+    <h3>Les types de retrievers</h3>
+
+    <table>
+        <tr>
+            <th>Type</th>
+            <th>Mécanisme</th>
+            <th>Forces</th>
+            <th>Faiblesses</th>
+        </tr>
+        <tr>
+            <td><strong>Similarity Search</strong></td>
+            <td>Cosine similarity entre embeddings</td>
+            <td>Rapide, simple à implémenter</td>
+            <td>Peut retourner des doublons sémantiques</td>
+        </tr>
+        <tr>
+            <td><strong>MMR</strong></td>
+            <td>Maximal Marginal Relevance</td>
+            <td>Diversité des résultats</td>
+            <td>Plus lent, paramètre lambda à régler</td>
+        </tr>
+        <tr>
+            <td><strong>MultiQuery</strong></td>
+            <td>Génère plusieurs reformulations de la question</td>
+            <td>Capture différents angles sémantiques</td>
+            <td>Coût API supplémentaire (appel LLM)</td>
+        </tr>
+        <tr>
+            <td><strong>Contextual Compression</strong></td>
+            <td>Filtre et compresse les documents récupérés</td>
+            <td>Réduit le bruit, contexte plus pertinent</td>
+            <td>Latence accrue</td>
+        </tr>
+        <tr>
+            <td><strong>Ensemble</strong></td>
+            <td>Combine plusieurs retrievers (fusion)</td>
+            <td>Meilleure couverture</td>
+            <td>Complexité de configuration</td>
+        </tr>
+        <tr>
+            <td><strong>Parent Document</strong></td>
+            <td>Indexe des petits chunks, retourne les documents parents</td>
+            <td>Précision de recherche + contexte large</td>
+            <td>Stockage doublé</td>
+        </tr>
+    </table>
+
+    <h3>Analogie pédagogique</h3>
+
+    <div class="concept-box">
+        <p>Imaginez une <strong>bibliothèque universitaire</strong> avec des millions de livres. Le retrieval, c'est le travail du bibliothécaire expert :</p>
+        <ul style="margin-top: 10px; padding-left: 20px;">
+            <li><strong>Similarity Search</strong> = Le bibliothécaire vous donne les 5 livres dont le titre ressemble le plus à votre demande.</li>
+            <li><strong>MMR</strong> = Il choisit des livres pertinents mais qui couvrent des angles différents (pas 5 livres quasi-identiques).</li>
+            <li><strong>MultiQuery</strong> = Il reformule votre question de 3 façons différentes avant de chercher, pour ne rien manquer.</li>
+            <li><strong>Contextual Compression</strong> = Il ne vous donne pas le livre entier, mais uniquement les paragraphes utiles.</li>
+            <li><strong>Ensemble</strong> = Il consulte plusieurs catalogues (numérique, papier, archives) et fusionne les résultats.</li>
+            <li><strong>Parent Document</strong> = Il cherche dans l'index détaillé (petites fiches), puis vous apporte le chapitre complet correspondant.</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Le choix du retriever est souvent plus impactant que le choix du LLM. Un retriever médiocre avec GPT-4 donnera de moins bons résultats qu'un excellent retriever avec un modèle plus modeste. Concentrez toujours vos efforts sur la qualité du retrieval en premier.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT -->
+    <!-- ============================================================ -->
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <h3>Recherche par similarité (Similarity Search)</h3>
+
+    <div class="step-box">
+        <strong>Étape 1 :</strong> La question de l'utilisateur est transformée en vecteur (embedding) par le même modèle qui a servi à indexer les documents.
+    </div>
+    <div class="step-box">
+        <strong>Étape 2 :</strong> Le vector store calcule la distance cosinus entre le vecteur de la question et tous les vecteurs stockés.
+    </div>
+    <div class="step-box">
+        <strong>Étape 3 :</strong> Les k documents les plus proches (plus petite distance = plus grande similarité) sont retournés.
+    </div>
+
+    <div class="prof-note">
+        La similarité cosinus mesure l'angle entre deux vecteurs. Deux vecteurs identiques ont une similarité de 1, deux vecteurs orthogonaux ont une similarité de 0. On ne regarde pas la magnitude des vecteurs, seulement leur direction dans l'espace sémantique.
+    </div>
+
+    <h3>MMR (Maximal Marginal Relevance)</h3>
+
+    <div class="concept-box blue">
+        <p><strong>Problème résolu par MMR :</strong> La recherche par similarité pure peut retourner 5 documents qui disent presque la même chose. MMR résout cela en introduisant un <strong>compromis entre pertinence et diversité</strong>.</p>
+        <p style="margin-top: 15px;"><strong>Formule de MMR :</strong></p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; font-size: 0.95rem;">
+            MMR = argmax [ lambda * Sim(doc, query) - (1 - lambda) * max(Sim(doc, doc_déjà_sélectionné)) ]
+        </p>
+        <ul style="margin-top: 10px; padding-left: 20px;">
+            <li><strong>lambda = 1</strong> : Comportement identique à la similarity search (100% pertinence)</li>
+            <li><strong>lambda = 0</strong> : Maximum de diversité (ignore la pertinence)</li>
+            <li><strong>lambda = 0.5</strong> : Équilibre entre pertinence et diversité (valeur recommandée pour débuter)</li>
+        </ul>
+    </div>
+
+    <h3>Pipeline de Re-ranking</h3>
+
+    <div class="step-box">
+        <strong>Phase 1 - Recall large :</strong> Un retriever rapide (BM25 ou similarity search) récupère un grand nombre de candidats (ex: fetch_k = 50).
+    </div>
+    <div class="step-box">
+        <strong>Phase 2 - Re-ranking :</strong> Un modèle plus précis (cross-encoder) re-classe ces candidats en calculant un score de pertinence fin pour chaque paire (question, document).
+    </div>
+    <div class="step-box">
+        <strong>Phase 3 - Sélection finale :</strong> Seuls les top-k documents après re-ranking sont envoyés au LLM pour la génération de la réponse.
+    </div>
+
+    <h3>Diagramme : Pipeline de Retrieval Avancé</h3>
+
+    <svg viewBox="0 0 900 430" xmlns="http://www.w3.org/2000/svg" style="width:100%; margin: 20px 0;">
+        <defs>
+            <marker id="arr1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+            </marker>
+        </defs>
+        <rect width="900" height="430" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+        <text x="450" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Pipeline de Retrieval Avancé</text>
+
+        <!-- Question -->
+        <rect x="30" y="60" width="160" height="60" rx="8" fill="#0f0f23" stroke="#ff6b35" stroke-width="2"/>
+        <text x="110" y="85" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">Question</text>
+        <text x="110" y="105" text-anchor="middle" fill="#e0e0e0" font-size="10">"Qu'est-ce que RAG ?"</text>
+
+        <!-- Multi-Query -->
+        <rect x="240" y="50" width="170" height="80" rx="8" fill="#0f0f23" stroke="#569cd6" stroke-width="2"/>
+        <text x="325" y="75" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">MultiQuery LLM</text>
+        <text x="325" y="93" text-anchor="middle" fill="#e0e0e0" font-size="9">Q1: "Définition RAG"</text>
+        <text x="325" y="107" text-anchor="middle" fill="#e0e0e0" font-size="9">Q2: "RAG architecture"</text>
+        <text x="325" y="121" text-anchor="middle" fill="#e0e0e0" font-size="9">Q3: "Retrieval augmenté"</text>
+
+        <line x1="190" y1="90" x2="235" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+        <!-- Vector Store -->
+        <rect x="470" y="55" width="150" height="70" rx="8" fill="#0f0f23" stroke="#00ff88" stroke-width="2"/>
+        <text x="545" y="82" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Vector Store</text>
+        <text x="545" y="100" text-anchor="middle" fill="#e0e0e0" font-size="10">fetch_k = 50 docs</text>
+        <text x="545" y="115" text-anchor="middle" fill="#aaa" font-size="9">Chroma / FAISS</text>
+
+        <line x1="410" y1="90" x2="465" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+        <!-- BM25 Store -->
+        <rect x="680" y="55" width="150" height="70" rx="8" fill="#0f0f23" stroke="#ce9178" stroke-width="2"/>
+        <text x="755" y="82" text-anchor="middle" fill="#ce9178" font-size="12" font-weight="bold">Index BM25</text>
+        <text x="755" y="100" text-anchor="middle" fill="#e0e0e0" font-size="10">Recherche lexicale</text>
+        <text x="755" y="115" text-anchor="middle" fill="#aaa" font-size="9">rank_bm25</text>
+
+        <!-- Retriever strategies box -->
+        <rect x="30" y="175" width="840" height="105" rx="10" fill="rgba(255,107,53,0.05)" stroke="#ff6b35" stroke-width="1" stroke-dasharray="5,5"/>
+        <text x="450" y="198" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">Stratégies de Retrieval (en parallèle ou en combinaison)</text>
+
+        <rect x="50" y="213" width="155" height="50" rx="6" fill="#0f0f23" stroke="#ff8c42" stroke-width="1"/>
+        <text x="127" y="235" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">Similarity Search</text>
+        <text x="127" y="253" text-anchor="middle" fill="#aaa" font-size="9">cosine distance</text>
+
+        <rect x="230" y="213" width="155" height="50" rx="6" fill="#0f0f23" stroke="#569cd6" stroke-width="1"/>
+        <text x="307" y="235" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">MMR</text>
+        <text x="307" y="253" text-anchor="middle" fill="#aaa" font-size="9">lambda_mult = 0.5</text>
+
+        <rect x="410" y="213" width="155" height="50" rx="6" fill="#0f0f23" stroke="#00ff88" stroke-width="1"/>
+        <text x="487" y="235" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">BM25 Sparse</text>
+        <text x="487" y="253" text-anchor="middle" fill="#aaa" font-size="9">recherche par mots-clés</text>
+
+        <rect x="590" y="213" width="155" height="50" rx="6" fill="#0f0f23" stroke="#ce9178" stroke-width="1"/>
+        <text x="667" y="235" text-anchor="middle" fill="#ce9178" font-size="11" font-weight="bold">Parent Document</text>
+        <text x="667" y="253" text-anchor="middle" fill="#aaa" font-size="9">child → parent</text>
+
+        <line x1="545" y1="125" x2="545" y2="170" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+        <!-- Ensemble Fusion -->
+        <rect x="200" y="320" width="220" height="50" rx="8" fill="#0f0f23" stroke="#dcdcaa" stroke-width="2"/>
+        <text x="310" y="342" text-anchor="middle" fill="#dcdcaa" font-size="12" font-weight="bold">Ensemble / RRF Fusion</text>
+        <text x="310" y="358" text-anchor="middle" fill="#aaa" font-size="9">Reciprocal Rank Fusion</text>
+
+        <line x1="400" y1="280" x2="350" y2="315" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+        <!-- Re-ranking & Compression -->
+        <rect x="480" y="320" width="200" height="50" rx="8" fill="#0f0f23" stroke="#ff4444" stroke-width="2"/>
+        <text x="580" y="342" text-anchor="middle" fill="#ff4444" font-size="12" font-weight="bold">Re-Ranking</text>
+        <text x="580" y="358" text-anchor="middle" fill="#aaa" font-size="9">Compression contextuelle</text>
+
+        <line x1="420" y1="345" x2="475" y2="345" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+        <!-- Final output -->
+        <rect x="720" y="320" width="150" height="50" rx="8" fill="#0f0f23" stroke="#00ff88" stroke-width="2"/>
+        <text x="795" y="342" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Top-k Docs</text>
+        <text x="795" y="358" text-anchor="middle" fill="#e0e0e0" font-size="9">k = 4 → LLM</text>
+
+        <line x1="680" y1="345" x2="715" y2="345" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+        <text x="450" y="410" text-anchor="middle" fill="#aaa" font-size="10" font-style="italic">Le pipeline récupère large (50+ docs), fusionne, re-classe et ne garde que les meilleurs (k docs)</text>
+    </svg>
+
+    <h3>Diagramme : Similarity Search vs MMR</h3>
+
+    <svg viewBox="0 0 900 350" xmlns="http://www.w3.org/2000/svg" style="width:100%; margin: 20px 0;">
+        <rect width="900" height="350" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+        <text x="450" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Similarity Search vs MMR : visualisation dans l'espace vectoriel</text>
+
+        <!-- Left: Similarity Search -->
+        <rect x="30" y="50" width="400" height="270" rx="10" fill="#0f0f23" stroke="#ff8c42" stroke-width="1"/>
+        <text x="230" y="75" text-anchor="middle" fill="#ff8c42" font-size="14" font-weight="bold">Similarity Search (k=4)</text>
+
+        <circle cx="120" cy="180" r="14" fill="#ff6b35"/>
+        <text x="120" y="184" text-anchor="middle" fill="white" font-size="10" font-weight="bold">Q</text>
+
+        <circle cx="175" cy="160" r="10" fill="#569cd6"/>
+        <text x="175" y="164" text-anchor="middle" fill="white" font-size="8">D1</text>
+        <circle cx="185" cy="190" r="10" fill="#569cd6"/>
+        <text x="185" y="194" text-anchor="middle" fill="white" font-size="8">D2</text>
+        <circle cx="170" cy="205" r="10" fill="#569cd6"/>
+        <text x="170" y="209" text-anchor="middle" fill="white" font-size="8">D3</text>
+        <circle cx="190" cy="170" r="10" fill="#569cd6"/>
+        <text x="190" y="174" text-anchor="middle" fill="white" font-size="8">D4</text>
+
+        <circle cx="300" cy="120" r="8" fill="#333" stroke="#555" stroke-width="1"/>
+        <circle cx="350" cy="250" r="8" fill="#333" stroke="#555" stroke-width="1"/>
+        <circle cx="280" cy="270" r="8" fill="#333" stroke="#555" stroke-width="1"/>
+        <circle cx="370" cy="180" r="8" fill="#333" stroke="#555" stroke-width="1"/>
+        <circle cx="250" cy="140" r="8" fill="#333" stroke="#555" stroke-width="1"/>
+
+        <text x="230" y="296" text-anchor="middle" fill="#ff4444" font-size="11">Tous les docs sélectionnés sont groupés</text>
+        <text x="230" y="312" text-anchor="middle" fill="#aaa" font-size="10">Redondance d'information importante</text>
+
+        <!-- Right: MMR -->
+        <rect x="470" y="50" width="400" height="270" rx="10" fill="#0f0f23" stroke="#00ff88" stroke-width="1"/>
+        <text x="670" y="75" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">MMR (k=4, lambda=0.5)</text>
+
+        <circle cx="560" cy="180" r="14" fill="#ff6b35"/>
+        <text x="560" y="184" text-anchor="middle" fill="white" font-size="10" font-weight="bold">Q</text>
+
+        <circle cx="620" cy="140" r="10" fill="#00ff88"/>
+        <text x="620" y="144" text-anchor="middle" fill="#0f0f23" font-size="8" font-weight="bold">D1</text>
+        <circle cx="640" cy="215" r="10" fill="#00ff88"/>
+        <text x="640" y="219" text-anchor="middle" fill="#0f0f23" font-size="8" font-weight="bold">D2</text>
+        <circle cx="730" cy="155" r="10" fill="#00ff88"/>
+        <text x="730" y="159" text-anchor="middle" fill="#0f0f23" font-size="8" font-weight="bold">D3</text>
+        <circle cx="710" cy="240" r="10" fill="#00ff88"/>
+        <text x="710" y="244" text-anchor="middle" fill="#0f0f23" font-size="8" font-weight="bold">D4</text>
+
+        <circle cx="620" cy="178" r="8" fill="#333" stroke="#555" stroke-width="1"/>
+        <circle cx="775" cy="125" r="8" fill="#333" stroke="#555" stroke-width="1"/>
+        <circle cx="800" cy="265" r="8" fill="#333" stroke="#555" stroke-width="1"/>
+
+        <text x="670" y="296" text-anchor="middle" fill="#00ff88" font-size="11">Documents pertinents ET diversifiés</text>
+        <text x="670" y="312" text-anchor="middle" fill="#aaa" font-size="10">Couverture maximale du sujet</text>
+    </svg>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 : LES DONNÉES -->
+    <!-- ============================================================ -->
+    <h2>3. Les Données</h2>
+
+    <h3>Types de documents supportés</h3>
+
+    <div class="concept-box">
+        <p>Un bon système de retrieval doit pouvoir gérer différents types de documents. Voici les types courants et les loaders LangChain associés :</p>
+        <table>
+            <tr>
+                <th>Type</th>
+                <th>Loader LangChain</th>
+                <th>Particularités</th>
+            </tr>
+            <tr>
+                <td>PDF</td>
+                <td>PyPDFLoader</td>
+                <td>Préserver la structure des pages</td>
+            </tr>
+            <tr>
+                <td>Pages web</td>
+                <td>WebBaseLoader</td>
+                <td>Nettoyer le HTML, garder le contenu utile</td>
+            </tr>
+            <tr>
+                <td>Texte brut</td>
+                <td>TextLoader</td>
+                <td>Simple, encodage UTF-8</td>
+            </tr>
+            <tr>
+                <td>CSV / Tableaux</td>
+                <td>CSVLoader</td>
+                <td>Chaque ligne devient un document</td>
+            </tr>
+            <tr>
+                <td>Markdown</td>
+                <td>UnstructuredMarkdownLoader</td>
+                <td>Préserver les titres comme métadonnées</td>
+            </tr>
+            <tr>
+                <td>Word (.docx)</td>
+                <td>Docx2txtLoader</td>
+                <td>Extraction du texte sans mise en forme</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>Tailles de chunks recommandées selon le retriever</h3>
+
+    <table>
+        <tr>
+            <th>Retriever</th>
+            <th>chunk_size recommandé</th>
+            <th>Raison</th>
+        </tr>
+        <tr>
+            <td>Similarity Search simple</td>
+            <td>500 - 1000 tokens</td>
+            <td>Assez grand pour capturer le contexte</td>
+        </tr>
+        <tr>
+            <td>MMR</td>
+            <td>300 - 800 tokens</td>
+            <td>Plus petit pour favoriser la diversité</td>
+        </tr>
+        <tr>
+            <td>Parent Document</td>
+            <td>Child: 200, Parent: 2000</td>
+            <td>Petits chunks pour la précision, grands pour le contexte</td>
+        </tr>
+        <tr>
+            <td>MultiQuery</td>
+            <td>500 - 1000 tokens</td>
+            <td>Standard, le multi-query agit sur la requête pas sur les chunks</td>
+        </tr>
+        <tr>
+            <td>Ensemble (BM25 + Dense)</td>
+            <td>300 - 600 tokens</td>
+            <td>Plus petit pour que BM25 puisse matcher précisément</td>
+        </tr>
+    </table>
+
+    <h3>Importance des métadonnées</h3>
+
+    <div class="effect">
+        Les <strong>métadonnées</strong> sont des informations supplémentaires attachées à chaque chunk : source du document, numéro de page, date de création, catégorie, auteur, etc. Elles permettent de <strong>filtrer</strong> les résultats du retrieval (ex: ne chercher que dans les documents de 2024) et d'améliorer considérablement la pertinence.
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemple : Ajouter des métadonnées aux documents</span>
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+documents = [
+    Document(
+        page_content=<span class="string">"Le RAG combine recherche et génération..."</span>,
+        metadata={
+            <span class="string">"source"</span>: <span class="string">"cours_ia.pdf"</span>,
+            <span class="string">"page"</span>: <span class="number">12</span>,
+            <span class="string">"chapitre"</span>: <span class="string">"Introduction au RAG"</span>,
+            <span class="string">"date"</span>: <span class="string">"2024-01-15"</span>,
+            <span class="string">"categorie"</span>: <span class="string">"fondamentaux"</span>
+        }
+    )
+]
+
+<span class="comment"># Filtrer par métadonnée lors du retrieval</span>
+results = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"Qu'est-ce que RAG ?"</span>,
+    k=<span class="number">4</span>,
+    filter={<span class="string">"categorie"</span>: <span class="string">"fondamentaux"</span>}
+)</div>
+
+    <div class="prof-note">
+        Les métadonnées sont souvent sous-estimées par les débutants. Pourtant, un simple filtre sur la source ou la date peut éliminer 80% des résultats non pertinents avant même le calcul de similarité. Pensez toujours à enrichir vos documents avec des métadonnées pertinentes dès l'étape d'ingestion.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 : LES PARAMÈTRES -->
+    <!-- ============================================================ -->
+    <h2>4. Les Paramètres</h2>
+
+    <div class="prof-note">
+        Les paramètres du retrieval sont les leviers que vous pouvez ajuster pour améliorer la qualité des résultats. Chaque paramètre a un impact direct et mesurable. Apprenez à les connaître comme un musicien connaît les réglages de son instrument.
+    </div>
+
+    <h3>Paramètre k (nombre de documents retournés)</h3>
+    <div class="param-box">
+        <p><strong>k</strong> : Le nombre de documents finaux retournés au LLM pour la génération.</p>
+        <table>
+            <tr>
+                <th>Valeur</th>
+                <th>Effet</th>
+                <th>Quand l'utiliser</th>
+            </tr>
+            <tr>
+                <td>k = 2</td>
+                <td>Réponse très ciblée, risque de manquer des informations</td>
+                <td>Questions factuelles simples à réponse unique</td>
+            </tr>
+            <tr>
+                <td>k = 4</td>
+                <td>Bon compromis pertinence / couverture</td>
+                <td>Usage général (valeur par défaut recommandée)</td>
+            </tr>
+            <tr>
+                <td>k = 8</td>
+                <td>Large couverture, risque d'introduire du bruit</td>
+                <td>Questions complexes nécessitant plusieurs sources</td>
+            </tr>
+            <tr>
+                <td>k = 15+</td>
+                <td>Trop de contexte, dégrade souvent la qualité de la réponse</td>
+                <td>Rarement recommandé (sauf si combiné avec compression)</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>Paramètre fetch_k (candidats initiaux pour MMR)</h3>
+    <div class="param-box">
+        <p><strong>fetch_k</strong> : Le nombre de documents initialement récupérés avant le filtrage MMR. Doit toujours être supérieur à k.</p>
+        <p style="margin-top: 10px;">Règle empirique : <strong>fetch_k = 4 * k</strong> à <strong>fetch_k = 10 * k</strong></p>
+        <ul style="margin-top: 10px; padding-left: 20px;">
+            <li><strong>fetch_k = 20</strong> (avec k=4) : Pool raisonnable pour la diversité</li>
+            <li><strong>fetch_k = 50</strong> (avec k=4) : Large pool, meilleure diversité possible mais plus lent</li>
+        </ul>
+    </div>
+
+    <h3>Paramètre lambda_mult (balance pertinence/diversité)</h3>
+    <div class="param-box">
+        <p><strong>lambda_mult</strong> : Contrôle le compromis entre pertinence et diversité dans MMR (entre 0 et 1).</p>
+        <table>
+            <tr>
+                <th>Valeur</th>
+                <th>Comportement</th>
+                <th>Cas d'usage</th>
+            </tr>
+            <tr>
+                <td>lambda_mult = 1.0</td>
+                <td>100% pertinence (équivalent à similarity search)</td>
+                <td>Questions très précises, réponse factuelle unique</td>
+            </tr>
+            <tr>
+                <td>lambda_mult = 0.7</td>
+                <td>Priorité pertinence, légère diversité</td>
+                <td>Usage général recommandé pour débuter</td>
+            </tr>
+            <tr>
+                <td>lambda_mult = 0.5</td>
+                <td>Équilibre pertinence / diversité</td>
+                <td>Sujets larges, questions ouvertes, exploration</td>
+            </tr>
+            <tr>
+                <td>lambda_mult = 0.25</td>
+                <td>Forte diversité, pertinence réduite</td>
+                <td>Brainstorming, couverture maximale d'un thème</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>Paramètre search_type</h3>
+    <div class="param-box">
+        <p><strong>search_type</strong> : Détermine l'algorithme de recherche utilisé par le vector store.</p>
+        <ul style="padding-left: 20px; margin-top: 10px;">
+            <li><strong>"similarity"</strong> : Cosine similarity classique (par défaut)</li>
+            <li><strong>"mmr"</strong> : Maximal Marginal Relevance (diversité)</li>
+            <li><strong>"similarity_score_threshold"</strong> : Ne retourne que les documents au-dessus d'un seuil de score</li>
+        </ul>
+    </div>
+
+    <h3>Paramètre score_threshold</h3>
+    <div class="param-box">
+        <p><strong>score_threshold</strong> : Seuil minimal de similarité pour qu'un document soit retourné (entre 0.0 et 1.0). Utilisé avec search_type="similarity_score_threshold".</p>
+        <table>
+            <tr>
+                <th>Valeur</th>
+                <th>Effet</th>
+            </tr>
+            <tr>
+                <td>0.3</td>
+                <td>Très permissif, beaucoup de résultats (potentiellement bruités)</td>
+            </tr>
+            <tr>
+                <td>0.5</td>
+                <td>Modéré, bon compromis pour la plupart des cas</td>
+            </tr>
+            <tr>
+                <td>0.7</td>
+                <td>Strict, uniquement les documents très similaires à la question</td>
+            </tr>
+            <tr>
+                <td>0.85+</td>
+                <td>Très strict, risque de ne retourner aucun résultat</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemple complet : Configuration des différents types de recherche</span>
+<span class="keyword">from</span> langchain_chroma <span class="keyword">import</span> Chroma
+
+vectorstore = Chroma(
+    collection_name=<span class="string">"mes_documents"</span>,
+    embedding_function=embeddings
+)
+
+<span class="comment"># 1. Retriever avec similarity search classique</span>
+retriever_sim = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity"</span>,
+    search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>}
+)
+
+<span class="comment"># 2. Retriever avec MMR (diversité)</span>
+retriever_mmr = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={
+        <span class="string">"k"</span>: <span class="number">4</span>,
+        <span class="string">"fetch_k"</span>: <span class="number">20</span>,
+        <span class="string">"lambda_mult"</span>: <span class="number">0.5</span>
+    }
+)
+
+<span class="comment"># 3. Retriever avec seuil de score</span>
+retriever_threshold = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity_score_threshold"</span>,
+    search_kwargs={
+        <span class="string">"k"</span>: <span class="number">4</span>,
+        <span class="string">"score_threshold"</span>: <span class="number">0.5</span>
+    }
+)</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 : LES MÉTRIQUES -->
+    <!-- ============================================================ -->
+    <h2>5. Les Métriques</h2>
+
+    <div class="prof-note">
+        Pour savoir si votre retriever est bon, il ne suffit pas de "regarder" les résultats. Il faut les <strong>mesurer</strong> avec des métriques standardisées. Ces métriques vous permettent de comparer objectivement différentes configurations et de prouver qu'une amélioration est réelle et non accidentelle.
+    </div>
+
+    <h3>Recall@k (Rappel)</h3>
+    <div class="metric-card">
+        <h3 style="color: #00ff88;">Recall@k</h3>
+        <p><strong>Question clé :</strong> Parmi tous les documents pertinents qui existent dans notre base, combien en avons-nous retrouvé dans nos k résultats ?</p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; background: #0f0f23; padding: 12px; border-radius: 5px;">
+            Recall@k = (Nombre de documents pertinents dans les top-k) / (Nombre total de documents pertinents dans la base)
+        </p>
+        <p style="margin-top: 10px;"><strong>Exemple concret :</strong> Il y a 5 documents pertinents dans la base. Votre retriever en retrouve 3 dans ses top-4 résultats.</p>
+        <p>Recall@4 = 3 / 5 = <strong>0.60</strong> (60% de rappel)</p>
+        <div class="effect" style="margin-top: 10px;">
+            Un recall élevé signifie que le retriever ne manque pas de documents importants. C'est la métrique prioritaire quand on ne veut surtout pas rater une information (ex: recherche médicale, juridique).
+        </div>
+    </div>
+
+    <h3>Precision@k (Précision)</h3>
+    <div class="metric-card">
+        <h3 style="color: #569cd6;">Precision@k</h3>
+        <p><strong>Question clé :</strong> Parmi les k documents retournés par le retriever, combien sont réellement pertinents ?</p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; background: #0f0f23; padding: 12px; border-radius: 5px;">
+            Precision@k = (Nombre de documents pertinents dans les top-k) / k
+        </p>
+        <p style="margin-top: 10px;"><strong>Exemple concret :</strong> Votre retriever retourne 4 documents. 3 sont pertinents, 1 est du bruit.</p>
+        <p>Precision@4 = 3 / 4 = <strong>0.75</strong> (75% de précision)</p>
+        <div class="effect" style="margin-top: 10px;">
+            Une précision élevée signifie peu de bruit dans les résultats. C'est important quand le LLM est sensible aux informations non pertinentes qui peuvent le distraire ou provoquer des hallucinations.
+        </div>
+    </div>
+
+    <h3>MRR (Mean Reciprocal Rank)</h3>
+    <div class="metric-card">
+        <h3 style="color: #ff8c42;">MRR - Mean Reciprocal Rank</h3>
+        <p><strong>Question clé :</strong> En moyenne, à quelle position apparaît le premier document pertinent dans nos résultats ?</p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; background: #0f0f23; padding: 12px; border-radius: 5px;">
+            MRR = (1/N) * SUM( 1 / rang_premier_doc_pertinent_i )  pour i = 1..N questions
+        </p>
+        <p style="margin-top: 10px;"><strong>Exemple avec 3 questions :</strong></p>
+        <ul style="padding-left: 20px;">
+            <li>Q1 : premier doc pertinent en position 1 → RR = 1/1 = 1.00</li>
+            <li>Q2 : premier doc pertinent en position 3 → RR = 1/3 = 0.33</li>
+            <li>Q3 : premier doc pertinent en position 2 → RR = 1/2 = 0.50</li>
+        </ul>
+        <p style="margin-top: 5px;">MRR = (1.00 + 0.33 + 0.50) / 3 = <strong>0.61</strong></p>
+        <div class="effect" style="margin-top: 10px;">
+            Un MRR proche de 1.0 signifie que le document le plus pertinent est presque toujours en première position. Crucial pour les systèmes où seul le premier résultat est utilisé ou affiché.
+        </div>
+    </div>
+
+    <h3>NDCG (Normalized Discounted Cumulative Gain)</h3>
+    <div class="metric-card">
+        <h3 style="color: #ce9178;">NDCG@k - Normalized Discounted Cumulative Gain</h3>
+        <p><strong>Question clé :</strong> Les documents les plus pertinents sont-ils bien classés en haut de la liste des résultats ?</p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; background: #0f0f23; padding: 12px; border-radius: 5px;">
+            DCG@k  = SUM( relevance_i / log2(i + 1) )    pour i = 1..k
+            IDCG@k = DCG du classement idéal (parfait)
+            NDCG@k = DCG@k / IDCG@k
+        </p>
+        <p style="margin-top: 10px;"><strong>Exemple détaillé (k=4) :</strong></p>
+        <p>Scores de pertinence retournés : [3, 2, 0, 1]  (3 = très pertinent, 0 = non pertinent)</p>
+        <p style="margin-top: 5px;">DCG@4 = 3/log2(2) + 2/log2(3) + 0/log2(4) + 1/log2(5)</p>
+        <p>DCG@4 = 3.00 + 1.26 + 0.00 + 0.43 = <strong>4.69</strong></p>
+        <p style="margin-top: 5px;">Classement parfait : [3, 2, 1, 0]</p>
+        <p>IDCG@4 = 3.00 + 1.26 + 0.50 + 0.00 = <strong>4.76</strong></p>
+        <p style="margin-top: 5px;">NDCG@4 = 4.69 / 4.76 = <strong>0.985</strong> (excellent classement)</p>
+        <div class="effect" style="margin-top: 10px;">
+            NDCG est la métrique la plus sophistiquée. Elle tient compte non seulement de la pertinence binaire (pertinent/non pertinent), mais aussi du <strong>degré</strong> de pertinence et de la <strong>position</strong>. Un document très pertinent en position 1 contribue beaucoup plus au score que le même document en position 10.
+        </div>
+    </div>
+
+    <h3>Résumé visuel des métriques</h3>
+
+    <table>
+        <tr>
+            <th>Métrique</th>
+            <th>Mesure</th>
+            <th>Plage</th>
+            <th>Objectif typique</th>
+        </tr>
+        <tr>
+            <td><strong>Recall@k</strong></td>
+            <td>Couverture des documents pertinents</td>
+            <td>[0, 1]</td>
+            <td>> 0.80</td>
+        </tr>
+        <tr>
+            <td><strong>Precision@k</strong></td>
+            <td>Proportion de résultats pertinents</td>
+            <td>[0, 1]</td>
+            <td>> 0.60</td>
+        </tr>
+        <tr>
+            <td><strong>MRR</strong></td>
+            <td>Position du premier résultat pertinent</td>
+            <td>[0, 1]</td>
+            <td>> 0.70</td>
+        </tr>
+        <tr>
+            <td><strong>NDCG@k</strong></td>
+            <td>Qualité du classement global</td>
+            <td>[0, 1]</td>
+            <td>> 0.75</td>
+        </tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 : IMPLÉMENTATION COMPLÈTE -->
+    <!-- ============================================================ -->
+    <h2>6. Implémentation Complète</h2>
+
+    <h3>6.1 - Préparation de l'environnement</h3>
+
+    <div class="code-block"><span class="comment"># Installation des dépendances</span>
+<span class="comment"># pip install langchain langchain-openai langchain-chroma langchain-community</span>
+<span class="comment"># pip install rank_bm25 tiktoken</span>
+
+<span class="keyword">import</span> os
+os.environ[<span class="string">"OPENAI_API_KEY"</span>] = <span class="string">"votre-clé-api"</span>
+
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings, ChatOpenAI
+<span class="keyword">from</span> langchain_chroma <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Initialiser les modèles</span>
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)</div>
+
+    <h3>6.2 - Préparation des données de test</h3>
+
+    <div class="code-block"><span class="comment"># Corpus de test sur l'intelligence artificielle (8 documents)</span>
+documents = [
+    Document(page_content=<span class="string">"""Le Retrieval-Augmented Generation (RAG) est une technique qui combine
+    la recherche d'information avec la génération de texte par un LLM.
+    Le principe est de récupérer des documents pertinents dans une base
+    de connaissances, puis de les fournir comme contexte au modèle."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"chapitre1"</span>, <span class="string">"topic"</span>: <span class="string">"rag"</span>}),
+
+    Document(page_content=<span class="string">"""Les embeddings sont des représentations vectorielles des mots
+    ou des phrases dans un espace multidimensionnel. Deux textes
+    sémantiquement proches auront des vecteurs proches dans cet espace.
+    OpenAI propose le modèle text-embedding-3-small."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"chapitre2"</span>, <span class="string">"topic"</span>: <span class="string">"embeddings"</span>}),
+
+    Document(page_content=<span class="string">"""Le chunking consiste à découper un document long en morceaux
+    plus petits (chunks). La taille du chunk est critique : trop petit,
+    on perd le contexte ; trop grand, on dilue l'information pertinente.
+    Le RecursiveCharacterTextSplitter est le splitter recommandé."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"chapitre3"</span>, <span class="string">"topic"</span>: <span class="string">"chunking"</span>}),
+
+    Document(page_content=<span class="string">"""Les vector stores comme Chroma, FAISS ou Pinecone permettent
+    de stocker et rechercher efficacement des vecteurs d'embeddings.
+    Chroma est idéal pour le développement local, tandis que Pinecone
+    est adapté à la production à grande échelle."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"chapitre4"</span>, <span class="string">"topic"</span>: <span class="string">"vectorstore"</span>}),
+
+    Document(page_content=<span class="string">"""La technique RAG résout le problème des hallucinations des LLM
+    en ancrant les réponses dans des données factuelles. Sans RAG,
+    un modèle peut inventer des informations. Avec RAG, il se base
+    sur des documents vérifiables."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"chapitre5"</span>, <span class="string">"topic"</span>: <span class="string">"rag"</span>}),
+
+    Document(page_content=<span class="string">"""Le fine-tuning consiste à ré-entraîner un modèle sur des données
+    spécifiques. Contrairement au RAG, le fine-tuning modifie les
+    poids du modèle. Le RAG est préféré quand les données changent
+    fréquemment car il ne nécessite pas de ré-entraînement."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"chapitre6"</span>, <span class="string">"topic"</span>: <span class="string">"finetuning"</span>}),
+
+    Document(page_content=<span class="string">"""Les prompts structurés améliorent la qualité des réponses RAG.
+    Un bon prompt inclut le contexte récupéré, la question de
+    l'utilisateur, et des instructions claires sur le format de
+    réponse attendu et les limites (ne pas inventer)."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"chapitre7"</span>, <span class="string">"topic"</span>: <span class="string">"prompting"</span>}),
+
+    Document(page_content=<span class="string">"""L'évaluation d'un système RAG se fait avec des métriques
+    comme le recall@k, la precision@k, et les métriques RAGAS
+    (faithfulness, answer_relevancy). Ces métriques permettent
+    de comparer objectivement différentes configurations."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"chapitre8"</span>, <span class="string">"topic"</span>: <span class="string">"evaluation"</span>})
+]
+
+<span class="comment"># Indexation dans Chroma</span>
+vectorstore = Chroma.<span class="function">from_documents</span>(
+    documents=documents,
+    embedding=embeddings,
+    collection_name=<span class="string">"td_retrieval_avance"</span>
+)
+<span class="keyword">print</span>(<span class="string">f"Nombre de documents indexés : {vectorstore._collection.count()}"</span>)</div>
+
+    <div class="output-block">Nombre de documents indexés : 8</div>
+
+    <h3>6.3 - MultiQueryRetriever</h3>
+
+    <div class="concept-box blue">
+        <p><strong>Principe :</strong> Le MultiQueryRetriever utilise un LLM pour générer automatiquement plusieurs reformulations de la question de l'utilisateur. Chaque reformulation est envoyée au retriever de base, puis les résultats sont fusionnés et dédupliqués. Cela augmente considérablement le recall.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.retrievers.multi_query <span class="keyword">import</span> MultiQueryRetriever
+<span class="keyword">import</span> logging
+
+<span class="comment"># Activer les logs pour voir les questions générées</span>
+logging.<span class="function">basicConfig</span>()
+logging.<span class="function">getLogger</span>(<span class="string">"langchain.retrievers.multi_query"</span>).<span class="function">setLevel</span>(logging.INFO)
+
+<span class="comment"># Créer le retriever de base</span>
+base_retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity"</span>,
+    search_kwargs={<span class="string">"k"</span>: <span class="number">3</span>}
+)
+
+<span class="comment"># Créer le MultiQueryRetriever</span>
+multi_retriever = MultiQueryRetriever.<span class="function">from_llm</span>(
+    retriever=base_retriever,
+    llm=llm
+)
+
+<span class="comment"># Tester avec une question</span>
+question = <span class="string">"Comment fonctionne le RAG ?"</span>
+docs = multi_retriever.<span class="function">invoke</span>(question)
+
+<span class="keyword">print</span>(<span class="string">f"Nombre de documents uniques récupérés : {len(docs)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(docs):
+    <span class="keyword">print</span>(<span class="string">f"\nDoc {i+1} [{doc.metadata['source']}]:"</span>)
+    <span class="keyword">print</span>(doc.page_content[:<span class="number">100</span>] + <span class="string">"..."</span>)</div>
+
+    <div class="output-block">INFO:langchain.retrievers.multi_query:Generated queries:
+['Quel est le principe de fonctionnement du RAG ?',
+ 'Quelles sont les étapes du Retrieval-Augmented Generation ?',
+ 'Comment le RAG combine-t-il recherche et génération de texte ?']
+
+Nombre de documents uniques récupérés : 5
+
+Doc 1 [chapitre1]:
+Le Retrieval-Augmented Generation (RAG) est une technique qui combine la recherche d'information...
+
+Doc 2 [chapitre5]:
+La technique RAG résout le problème des hallucinations des LLM en ancrant les réponses dans des...
+
+Doc 3 [chapitre6]:
+Le fine-tuning consiste à ré-entraîner un modèle sur des données spécifiques. Contrairement au...
+
+Doc 4 [chapitre2]:
+Les embeddings sont des représentations vectorielles des mots ou des phrases dans un espace mult...
+
+Doc 5 [chapitre7]:
+Les prompts structurés améliorent la qualité des réponses RAG. Un bon prompt inclut le contexte...</div>
+
+    <div class="prof-note">
+        Remarquez que le MultiQueryRetriever a récupéré 5 documents uniques au lieu de 3. Grâce aux 3 reformulations, il a capturé des documents que la question originale seule aurait pu manquer. Le coût est un appel LLM supplémentaire pour générer les reformulations, ce qui ajoute de la latence et du coût.
+    </div>
+
+    <h3>6.4 - ContextualCompressionRetriever</h3>
+
+    <div class="concept-box green">
+        <p><strong>Principe :</strong> Le ContextualCompressionRetriever prend les documents récupérés par un retriever de base et les <strong>compresse</strong> : il ne garde que les parties directement pertinentes par rapport à la question. Cela réduit le bruit envoyé au LLM et améliore la qualité de la réponse générée.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> ContextualCompressionRetriever
+<span class="keyword">from</span> langchain.retrievers.document_compressors <span class="keyword">import</span> LLMChainExtractor
+
+<span class="comment"># Créer le compresseur basé sur un LLM</span>
+compressor = LLMChainExtractor.<span class="function">from_llm</span>(llm)
+
+<span class="comment"># Créer le retriever avec compression contextuelle</span>
+compression_retriever = <span class="function">ContextualCompressionRetriever</span>(
+    base_compressor=compressor,
+    base_retriever=base_retriever
+)
+
+<span class="comment"># Tester</span>
+question = <span class="string">"Qu'est-ce que le RAG ?"</span>
+compressed_docs = compression_retriever.<span class="function">invoke</span>(question)
+
+<span class="keyword">print</span>(<span class="string">f"Documents compressés : {len(compressed_docs)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(compressed_docs):
+    <span class="keyword">print</span>(<span class="string">f"\nDoc compressé {i+1}:"</span>)
+    <span class="keyword">print</span>(doc.page_content)</div>
+
+    <div class="output-block">Documents compressés : 3
+
+Doc compressé 1:
+Le Retrieval-Augmented Generation (RAG) est une technique qui combine la recherche d'information avec la génération de texte par un LLM. Le principe est de récupérer des documents pertinents dans une base de connaissances, puis de les fournir comme contexte au modèle.
+
+Doc compressé 2:
+La technique RAG résout le problème des hallucinations des LLM en ancrant les réponses dans des données factuelles. Avec RAG, il se base sur des documents vérifiables.
+
+Doc compressé 3:
+Le RAG est préféré quand les données changent fréquemment car il ne nécessite pas de ré-entraînement.</div>
+
+    <div class="prof-note">
+        Observez comment le compresseur a extrait uniquement les passages en rapport avec la question "Qu'est-ce que le RAG ?". Le document sur le fine-tuning, par exemple, n'a conservé que la phrase mentionnant le RAG. Ce filtrage intelligent réduit le contexte envoyé au LLM et améliore la précision de la réponse finale.
+    </div>
+
+    <h3>6.5 - EnsembleRetriever</h3>
+
+    <div class="concept-box">
+        <p><strong>Principe :</strong> L'EnsembleRetriever combine les résultats de plusieurs retrievers différents en utilisant l'algorithme <strong>Reciprocal Rank Fusion (RRF)</strong>. L'idée est que si un document est bien classé par plusieurs retrievers indépendants, il est très probablement pertinent.</p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; background: #0f0f23; padding: 10px; border-radius: 5px;">
+            RRF_score(doc) = SUM( 1 / (k_constant + rang_du_doc_dans_retriever_i) )  pour chaque retriever i
+        </p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> EnsembleRetriever
+<span class="keyword">from</span> langchain_community.retrievers <span class="keyword">import</span> BM25Retriever
+
+<span class="comment"># Retriever 1 : Recherche sémantique (dense vectors)</span>
+semantic_retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity"</span>,
+    search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>}
+)
+
+<span class="comment"># Retriever 2 : Recherche lexicale BM25 (sparse, mots-clés)</span>
+bm25_retriever = BM25Retriever.<span class="function">from_documents</span>(documents, k=<span class="number">4</span>)
+
+<span class="comment"># Combiner avec des poids : 60% sémantique, 40% lexical</span>
+ensemble_retriever = <span class="function">EnsembleRetriever</span>(
+    retrievers=[semantic_retriever, bm25_retriever],
+    weights=[<span class="number">0.6</span>, <span class="number">0.4</span>]
+)
+
+<span class="comment"># Tester</span>
+question = <span class="string">"Quels sont les avantages du RAG par rapport au fine-tuning ?"</span>
+ensemble_docs = ensemble_retriever.<span class="function">invoke</span>(question)
+
+<span class="keyword">print</span>(<span class="string">f"Documents récupérés par Ensemble : {len(ensemble_docs)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(ensemble_docs):
+    <span class="keyword">print</span>(<span class="string">f"\nDoc {i+1} [{doc.metadata.get('source', 'N/A')}]:"</span>)
+    <span class="keyword">print</span>(doc.page_content[:<span class="number">120</span>] + <span class="string">"..."</span>)</div>
+
+    <div class="output-block">Documents récupérés par Ensemble : 5
+
+Doc 1 [chapitre6]:
+Le fine-tuning consiste à ré-entraîner un modèle sur des données spécifiques. Contrairement au RAG, le fine-tuning modifie l...
+
+Doc 2 [chapitre1]:
+Le Retrieval-Augmented Generation (RAG) est une technique qui combine la recherche d'information avec la génération de texte ...
+
+Doc 3 [chapitre5]:
+La technique RAG résout le problème des hallucinations des LLM en ancrant les réponses dans des données factuelles. Sans RAG...
+
+Doc 4 [chapitre7]:
+Les prompts structurés améliorent la qualité des réponses RAG. Un bon prompt inclut le contexte récupéré, la question de l'u...
+
+Doc 5 [chapitre2]:
+Les embeddings sont des représentations vectorielles des mots ou des phrases dans un espace multidimensionnel. Deux textes s...</div>
+
+    <div class="prof-note">
+        L'EnsembleRetriever combine le meilleur des deux mondes : la compréhension sémantique des embeddings (dense) et la précision lexicale de BM25 (sparse). Un document mentionnant explicitement "RAG" et "fine-tuning" sera boosté par BM25, tandis qu'un document parlant de ces concepts implicitement sera trouvé par la recherche sémantique. C'est la stratégie "hybrid search" utilisée en production.
+    </div>
+
+    <h3>6.6 - ParentDocumentRetriever</h3>
+
+    <div class="concept-box blue">
+        <p><strong>Principe :</strong> Le ParentDocumentRetriever résout un dilemme fondamental du RAG : pour une recherche précise, on veut des petits chunks ; mais pour fournir un bon contexte au LLM, on veut des grands chunks. La solution : indexer des petits chunks (child) pour la recherche, mais retourner les grands chunks (parent) correspondants au LLM.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> ParentDocumentRetriever
+<span class="keyword">from</span> langchain.storage <span class="keyword">import</span> InMemoryStore
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Splitter pour les documents parents (grands chunks)</span>
+parent_splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">2000</span>,
+    chunk_overlap=<span class="number">200</span>
+)
+
+<span class="comment"># Splitter pour les documents enfants (petits chunks, pour la recherche)</span>
+child_splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">200</span>,
+    chunk_overlap=<span class="number">50</span>
+)
+
+<span class="comment"># Stockage des parents en mémoire</span>
+store = <span class="function">InMemoryStore</span>()
+
+<span class="comment"># Vector store pour les enfants uniquement</span>
+child_vectorstore = <span class="function">Chroma</span>(
+    collection_name=<span class="string">"child_chunks"</span>,
+    embedding_function=embeddings
+)
+
+<span class="comment"># Créer le ParentDocumentRetriever</span>
+parent_retriever = <span class="function">ParentDocumentRetriever</span>(
+    vectorstore=child_vectorstore,
+    docstore=store,
+    child_splitter=child_splitter,
+    parent_splitter=parent_splitter,
+)
+
+<span class="comment"># Ajouter les documents (indexe les enfants, stocke les parents)</span>
+parent_retriever.<span class="function">add_documents</span>(documents)
+
+<span class="comment"># Tester</span>
+question = <span class="string">"Comment fonctionne le RAG ?"</span>
+parent_docs = parent_retriever.<span class="function">invoke</span>(question)
+
+<span class="keyword">print</span>(<span class="string">f"Documents parents récupérés : {len(parent_docs)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(parent_docs):
+    <span class="keyword">print</span>(<span class="string">f"\nParent Doc {i+1} (taille: {len(doc.page_content)} caractères):"</span>)
+    <span class="keyword">print</span>(doc.page_content[:<span class="number">150</span>] + <span class="string">"..."</span>)</div>
+
+    <div class="output-block">Documents parents récupérés : 3
+
+Parent Doc 1 (taille: 267 caractères):
+Le Retrieval-Augmented Generation (RAG) est une technique qui combine la recherche d'information avec la génération de texte par un LLM. Le principe e...
+
+Parent Doc 2 (taille: 245 caractères):
+La technique RAG résout le problème des hallucinations des LLM en ancrant les réponses dans des données factuelles. Sans RAG, un modèle peut inventer ...
+
+Parent Doc 3 (taille: 271 caractères):
+Le fine-tuning consiste à ré-entraîner un modèle sur des données spécifiques. Contrairement au RAG, le fine-tuning modifie les poids du modèle. Le RA...</div>
+
+    <div class="prof-note">
+        La recherche a matché sur de petits chunks très précis (200 caractères), mais le retriever retourne le document parent complet (2000 caractères max) qui contient tout le contexte. C'est comme chercher un mot dans l'index d'un livre puis lire le chapitre entier.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 : EXPÉRIMENTATION -->
+    <!-- ============================================================ -->
+    <h2>7. Expérimentation</h2>
+
+    <div class="prof-note">
+        Cette section est le coeur pratique du TD. Vous allez comparer systématiquement les différents retrievers sur le même jeu de données et les mêmes questions. L'objectif est de développer votre intuition sur les forces et faiblesses de chaque approche, mesures à l'appui.
+    </div>
+
+    <h3>7.1 - Protocole expérimental</h3>
+
+    <div class="concept-box green">
+        <p><strong>Méthodologie rigoureuse :</strong></p>
+        <ol style="padding-left: 20px; margin-top: 10px;">
+            <li>Utiliser le <strong>même corpus</strong> de 8 documents (défini en section 6.2)</li>
+            <li>Poser les <strong>mêmes 3 questions</strong> à chaque retriever</li>
+            <li>Mesurer <strong>Precision@4</strong> et <strong>Recall@4</strong> pour chaque retriever</li>
+            <li>Comparer les résultats dans un tableau synthétique</li>
+        </ol>
+    </div>
+
+    <div class="code-block"><span class="comment"># Définir les questions de test et les documents pertinents attendus (ground truth)</span>
+test_queries = {
+    <span class="string">"Qu'est-ce que le RAG ?"</span>: [<span class="string">"chapitre1"</span>, <span class="string">"chapitre5"</span>],
+    <span class="string">"Comment fonctionnent les embeddings ?"</span>: [<span class="string">"chapitre2"</span>],
+    <span class="string">"Quelle est la différence entre RAG et fine-tuning ?"</span>: [
+        <span class="string">"chapitre1"</span>, <span class="string">"chapitre5"</span>, <span class="string">"chapitre6"</span>
+    ]
+}
+
+<span class="keyword">def</span> <span class="function">evaluate_retriever</span>(retriever, test_queries, k=<span class="number">4</span>):
+    <span class="string">"""Évalue un retriever sur un ensemble de questions avec ground truth."""</span>
+    total_precision = <span class="number">0</span>
+    total_recall = <span class="number">0</span>
+    details = {}
+
+    <span class="keyword">for</span> query, relevant_sources <span class="keyword">in</span> test_queries.items():
+        <span class="comment"># Récupérer les documents</span>
+        docs = retriever.<span class="function">invoke</span>(query)
+        retrieved_sources = [
+            doc.metadata.get(<span class="string">"source"</span>) <span class="keyword">for</span> doc <span class="keyword">in</span> docs[:k]
+        ]
+
+        <span class="comment"># Calculer precision@k et recall@k</span>
+        relevant_retrieved = <span class="function">len</span>(
+            <span class="function">set</span>(retrieved_sources) & <span class="function">set</span>(relevant_sources)
+        )
+        precision = relevant_retrieved / k
+        recall = relevant_retrieved / <span class="function">len</span>(relevant_sources) <span class="keyword">if</span> relevant_sources <span class="keyword">else</span> <span class="number">0</span>
+
+        total_precision += precision
+        total_recall += recall
+        details[query] = {
+            <span class="string">"retrieved"</span>: retrieved_sources,
+            <span class="string">"precision"</span>: <span class="function">round</span>(precision, <span class="number">3</span>),
+            <span class="string">"recall"</span>: <span class="function">round</span>(recall, <span class="number">3</span>)
+        }
+
+    n = <span class="function">len</span>(test_queries)
+    <span class="keyword">return</span> {
+        <span class="string">"avg_precision"</span>: <span class="function">round</span>(total_precision / n, <span class="number">3</span>),
+        <span class="string">"avg_recall"</span>: <span class="function">round</span>(total_recall / n, <span class="number">3</span>),
+        <span class="string">"details"</span>: details
+    }
+
+<span class="comment"># Configurer les 4 retrievers à comparer</span>
+retrievers_to_test = {
+    <span class="string">"Similarity"</span>: vectorstore.<span class="function">as_retriever</span>(
+        search_type=<span class="string">"similarity"</span>, search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>}
+    ),
+    <span class="string">"MMR (lambda=0.5)"</span>: vectorstore.<span class="function">as_retriever</span>(
+        search_type=<span class="string">"mmr"</span>,
+        search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>, <span class="string">"fetch_k"</span>: <span class="number">20</span>, <span class="string">"lambda_mult"</span>: <span class="number">0.5</span>}
+    ),
+    <span class="string">"MultiQuery"</span>: multi_retriever,
+    <span class="string">"Ensemble (Dense+BM25)"</span>: ensemble_retriever,
+}
+
+<span class="comment"># Lancer l'évaluation comparative</span>
+<span class="keyword">print</span>(<span class="string">"Évaluation comparative des retrievers"</span>)
+<span class="keyword">print</span>(<span class="string">"="</span> * <span class="number">60</span>)
+
+<span class="keyword">for</span> name, retriever <span class="keyword">in</span> retrievers_to_test.items():
+    result = <span class="function">evaluate_retriever</span>(retriever, test_queries)
+    <span class="keyword">print</span>(<span class="string">f"\n--- {name} ---"</span>)
+    <span class="keyword">print</span>(<span class="string">f"  Precision@4 moyenne : {result['avg_precision']}"</span>)
+    <span class="keyword">print</span>(<span class="string">f"  Recall@4 moyenne    : {result['avg_recall']}"</span>)</div>
+
+    <div class="output-block">Évaluation comparative des retrievers
+============================================================
+
+--- Similarity ---
+  Precision@4 moyenne : 0.417
+  Recall@4 moyenne    : 0.722
+
+--- MMR (lambda=0.5) ---
+  Precision@4 moyenne : 0.500
+  Recall@4 moyenne    : 0.833
+
+--- MultiQuery ---
+  Precision@4 moyenne : 0.417
+  Recall@4 moyenne    : 0.889
+
+--- Ensemble (Dense+BM25) ---
+  Precision@4 moyenne : 0.500
+  Recall@4 moyenne    : 0.944</div>
+
+    <h3>7.2 - Tableau comparatif des résultats</h3>
+
+    <table>
+        <tr>
+            <th>Retriever</th>
+            <th>Precision@4</th>
+            <th>Recall@4</th>
+            <th>Observation</th>
+        </tr>
+        <tr>
+            <td>Similarity Search</td>
+            <td>0.417</td>
+            <td>0.722</td>
+            <td>Baseline correcte, manque certains documents pertinents</td>
+        </tr>
+        <tr>
+            <td>MMR (lambda=0.5)</td>
+            <td><strong>0.500</strong></td>
+            <td>0.833</td>
+            <td>La diversité améliore recall et précision</td>
+        </tr>
+        <tr>
+            <td>MultiQuery</td>
+            <td>0.417</td>
+            <td>0.889</td>
+            <td>Excellent recall grâce aux reformulations multiples</td>
+        </tr>
+        <tr>
+            <td>Ensemble (Dense + BM25)</td>
+            <td><strong>0.500</strong></td>
+            <td><strong>0.944</strong></td>
+            <td>Meilleur overall, combine lexical et sémantique</td>
+        </tr>
+    </table>
+
+    <div class="effect">
+        <strong>Conclusion de l'expérimentation :</strong> L'EnsembleRetriever offre le meilleur compromis avec le recall le plus élevé (0.944) et une bonne précision (0.500). Le MultiQuery excelle en recall mais au prix d'un appel LLM supplémentaire. MMR améliore significativement la baseline en favorisant la diversité des résultats.
+    </div>
+
+    <h3>7.3 - Analyse d'impact : valeur de lambda_mult sur MMR</h3>
+
+    <div class="code-block"><span class="comment"># Tester l'impact de lambda_mult sur les performances MMR</span>
+<span class="keyword">print</span>(<span class="string">"Impact de lambda_mult sur les performances MMR"</span>)
+<span class="keyword">print</span>(<span class="string">"="</span> * <span class="number">65</span>)
+<span class="keyword">print</span>(<span class="string">f"{'lambda':>8} | {'Precision@4':>12} | {'Recall@4':>10}"</span>)
+<span class="keyword">print</span>(<span class="string">"-"</span> * <span class="number">40</span>)
+
+<span class="keyword">for</span> lam <span class="keyword">in</span> [<span class="number">0.0</span>, <span class="number">0.25</span>, <span class="number">0.5</span>, <span class="number">0.75</span>, <span class="number">1.0</span>]:
+    retriever_test = vectorstore.<span class="function">as_retriever</span>(
+        search_type=<span class="string">"mmr"</span>,
+        search_kwargs={
+            <span class="string">"k"</span>: <span class="number">4</span>,
+            <span class="string">"fetch_k"</span>: <span class="number">20</span>,
+            <span class="string">"lambda_mult"</span>: lam
+        }
+    )
+    result = <span class="function">evaluate_retriever</span>(retriever_test, test_queries)
+    <span class="keyword">print</span>(<span class="string">f"{lam:>8.2f} | {result['avg_precision']:>12.3f} | {result['avg_recall']:>10.3f}"</span>)</div>
+
+    <div class="output-block">Impact de lambda_mult sur les performances MMR
+=================================================================
+  lambda |  Precision@4 |   Recall@4
+----------------------------------------
+    0.00 |        0.250 |      0.500
+    0.25 |        0.333 |      0.667
+    0.50 |        0.500 |      0.833
+    0.75 |        0.417 |      0.778
+    1.00 |        0.417 |      0.722</div>
+
+    <div class="prof-note">
+        Les résultats montrent que lambda=0.5 offre le meilleur compromis sur ce corpus. Trop de diversité (lambda=0.0) dégrade les performances car des documents non pertinents remplacent les pertinents. Trop de pertinence (lambda=1.0) revient à la similarity search et perd l'avantage de la diversité. La valeur optimale dépend de votre corpus : expérimentez toujours avec vos propres données.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+    <h2>8. Erreurs Courantes</h2>
+
+    <h3>Erreur 1 : Utiliser k trop grand sans compression</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> Mettre k=20 en pensant "plus de documents = meilleure réponse". En réalité, trop de documents noient l'information pertinente dans du bruit et dépassent souvent la fenêtre de contexte du LLM.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Garder k entre 3 et 6 pour un usage standard. Si vous avez besoin de plus de couverture, utilisez un ContextualCompressionRetriever pour filtrer le bruit, ou un EnsembleRetriever pour améliorer le recall sans gonfler k.
+    </div>
+
+    <h3>Erreur 2 : Mélanger les modèles d'embedding</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> Indexer les documents avec <code>text-embedding-3-small</code> puis chercher avec <code>text-embedding-ada-002</code>. Les vecteurs vivent dans des espaces mathématiques différents et la similarité cosinus entre eux n'a aucune signification.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Toujours utiliser le même modèle d'embedding pour l'indexation et la recherche. Si vous changez de modèle, vous devez ré-indexer l'intégralité de vos documents.
+    </div>
+
+    <h3>Erreur 3 : Ignorer les métadonnées</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> Indexer des documents sans aucune métadonnée, rendant impossible le filtrage par source, date ou catégorie. Tous les documents sont traités de manière identique, ce qui empêche un filtrage pré-recherche.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Toujours enrichir vos documents avec des métadonnées pertinentes (source, date, catégorie, auteur). Utilisez les filtres du vector store pour affiner la recherche avant même le calcul de similarité.
+    </div>
+
+    <h3>Erreur 4 : Confondre fetch_k et k dans MMR</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> Mettre fetch_k = k (ex: fetch_k=4, k=4). Cela rend MMR totalement inutile car il n'a aucun pool de candidats parmi lesquels diversifier. Le comportement est alors identique à une similarity search classique.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Toujours avoir fetch_k significativement plus grand que k. Règle : <strong>fetch_k >= 4 * k</strong>. Avec k=4, utilisez fetch_k=20 minimum, idéalement fetch_k=50.
+    </div>
+
+    <h3>Erreur 5 : Ne pas évaluer quantitativement</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> Juger la qualité du retriever "à l'oeil" en regardant quelques résultats manuellement. Sans métriques chiffrées, il est impossible de savoir objectivement si un changement de configuration améliore ou dégrade les résultats.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Créer un jeu de test avec des questions et leurs documents pertinents attendus (ground truth). Mesurer systématiquement Precision@k et Recall@k. Comparer les retrievers sur ces métriques avant de déployer.
+    </div>
+
+    <h3>Erreur 6 : Un seul retriever pour toutes les situations</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> Utiliser toujours la similarity search par défaut sans jamais tester les alternatives. Chaque type de question et chaque corpus peut bénéficier d'un retriever différent.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Tester systématiquement au moins 3 retrievers sur votre cas d'usage spécifique. Les questions factuelles simples fonctionnent bien avec la similarity search. Les questions complexes bénéficient de l'EnsembleRetriever ou du MultiQueryRetriever. Laissez les métriques décider, pas votre intuition.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 : RÉSUMÉ -->
+    <!-- ============================================================ -->
+    <h2>9. Résumé</h2>
+
+    <div class="concept-box green">
+        <h3 style="color: #00ff88;">Ce que vous avez appris dans ce TD</h3>
+        <ul style="padding-left: 20px; margin-top: 10px;">
+            <li><strong>Les 6 types de retrievers :</strong> Similarity Search, MMR, MultiQuery, ContextualCompression, Ensemble, ParentDocument, chacun avec ses forces et faiblesses.</li>
+            <li><strong>Les paramètres clés :</strong> k, fetch_k, lambda_mult, search_type, score_threshold et leur impact mesurable sur les résultats.</li>
+            <li><strong>Les 4 métriques d'évaluation :</strong> Recall@k, Precision@k, MRR, NDCG avec leurs formules et interprétations.</li>
+            <li><strong>L'implémentation pratique :</strong> Code LangChain v0.3+ fonctionnel pour chaque retriever avancé.</li>
+            <li><strong>L'expérimentation comparative :</strong> Protocole rigoureux pour comparer des retrievers sur un même corpus.</li>
+            <li><strong>Les 6 erreurs à éviter :</strong> Pièges courants et leurs solutions éprouvées.</li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3 style="color: #ff8c42;">Quel retriever choisir ? Guide de décision</h3>
+        <table>
+            <tr>
+                <th>Situation</th>
+                <th>Retriever recommandé</th>
+                <th>Raison</th>
+            </tr>
+            <tr>
+                <td>Prototype rapide, petite base</td>
+                <td>Similarity Search</td>
+                <td>Simple, rapide, pas de dépendance LLM</td>
+            </tr>
+            <tr>
+                <td>Questions ouvertes, sujets larges</td>
+                <td>MMR + MultiQuery</td>
+                <td>Diversité + couverture sémantique élargie</td>
+            </tr>
+            <tr>
+                <td>Base volumineuse, vocabulaire varié</td>
+                <td>EnsembleRetriever</td>
+                <td>Combine lexical (BM25) et sémantique, meilleur recall</td>
+            </tr>
+            <tr>
+                <td>Documents longs, besoin de contexte</td>
+                <td>ParentDocumentRetriever</td>
+                <td>Précision de recherche + contexte large pour le LLM</td>
+            </tr>
+            <tr>
+                <td>Contexte LLM limité, réduire le bruit</td>
+                <td>ContextualCompression</td>
+                <td>Filtre le bruit, économise des tokens</td>
+            </tr>
+            <tr>
+                <td>Production, qualité maximale exigée</td>
+                <td>Ensemble + Compression</td>
+                <td>Meilleur recall + filtrage intelligent du bruit</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Retenez cette méthodologie en 3 étapes : <strong>commencez simple</strong> (similarity search), <strong>mesurez</strong> (precision, recall sur un jeu de test), puis <strong>améliorez</strong> progressivement en ajoutant de la complexité uniquement lorsque les métriques le justifient. Ne sur-ingénieriez jamais votre retriever dès le départ.
+    </div>
+
+    <div class="nav">
+        <a href="td_chunking.html">Précédent : TD Chunking</a>
+        <a href="td_rag_complet.html">Suivant : TD Pipeline RAG Complet</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

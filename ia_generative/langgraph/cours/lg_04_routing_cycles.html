@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangGraph - Routing Conditionnel et Cycles</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Routing Conditionnel et Cycles</h1>
+    <p class="subtitle">Logique de Decision dans LangGraph - Branchement, Boucles et Patterns Avances</p>
+
+    <!-- ========================================== -->
+    <!-- SECTION 1 : ROUTING CONDITIONNEL -->
+    <!-- ========================================== -->
+    <h2>1. Routing Conditionnel</h2>
+
+    <div class="definition">
+        Le <strong>routing conditionnel</strong> est le mecanisme par lequel un graphe LangGraph decide dynamiquement quel noeud executer ensuite, en fonction de l'etat courant. C'est la methode <code>add_conditional_edges()</code> qui rend cela possible.
+    </div>
+
+    <p>Contrairement aux aretes normales (<code>add_edge</code>) qui definissent un chemin fixe entre deux noeuds, les aretes conditionnelles evaluent une <strong>fonction de routage</strong> a chaque execution. Cette fonction recoit l'etat actuel du graphe et retourne le nom du prochain noeud (ou une liste de noeuds) a executer.</p>
+
+    <h3>1.1 Signature de add_conditional_edges()</h3>
+
+    <div class="param-box">
+        <h4>Parametres de add_conditional_edges()</h4>
+        <ul>
+            <li><strong>source</strong> (str) : Le noeud source apres lequel la decision est prise</li>
+            <li><strong>path</strong> (Callable) : La fonction de routage qui recoit le state et retourne un string (nom du noeud suivant)</li>
+            <li><strong>path_map</strong> (dict, optionnel) : Mappage entre les valeurs retournees par la fonction et les noms reels des noeuds</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Literal
+
+<span class="keyword">class</span> <span class="function">State</span>(TypedDict):
+    question: str
+    category: str
+    response: str
+
+<span class="comment"># Fonction de routage : decide le prochain noeud</span>
+<span class="keyword">def</span> <span class="function">route_by_category</span>(state: State) -> Literal[<span class="string">"handle_tech"</span>, <span class="string">"handle_billing"</span>, <span class="string">"handle_general"</span>]:
+    <span class="string">"""Route la question vers le bon gestionnaire."""</span>
+    category = state[<span class="string">"category"</span>]
+    <span class="keyword">if</span> category == <span class="string">"technique"</span>:
+        <span class="keyword">return</span> <span class="string">"handle_tech"</span>
+    <span class="keyword">elif</span> category == <span class="string">"facturation"</span>:
+        <span class="keyword">return</span> <span class="string">"handle_billing"</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">"handle_general"</span>
+
+<span class="comment"># Noeuds du graphe</span>
+<span class="keyword">def</span> <span class="function">classify_question</span>(state: State) -> dict:
+    <span class="comment"># Logique de classification (LLM ou regles)</span>
+    question = state[<span class="string">"question"</span>].lower()
+    <span class="keyword">if</span> <span class="string">"bug"</span> <span class="keyword">in</span> question <span class="keyword">or</span> <span class="string">"erreur"</span> <span class="keyword">in</span> question:
+        <span class="keyword">return</span> {<span class="string">"category"</span>: <span class="string">"technique"</span>}
+    <span class="keyword">elif</span> <span class="string">"facture"</span> <span class="keyword">in</span> question <span class="keyword">or</span> <span class="string">"prix"</span> <span class="keyword">in</span> question:
+        <span class="keyword">return</span> {<span class="string">"category"</span>: <span class="string">"facturation"</span>}
+    <span class="keyword">return</span> {<span class="string">"category"</span>: <span class="string">"general"</span>}
+
+<span class="keyword">def</span> <span class="function">handle_tech</span>(state: State) -> dict:
+    <span class="keyword">return</span> {<span class="string">"response"</span>: <span class="string">"Equipe technique contactee pour votre probleme."</span>}
+
+<span class="keyword">def</span> <span class="function">handle_billing</span>(state: State) -> dict:
+    <span class="keyword">return</span> {<span class="string">"response"</span>: <span class="string">"Service facturation notifie."</span>}
+
+<span class="keyword">def</span> <span class="function">handle_general</span>(state: State) -> dict:
+    <span class="keyword">return</span> {<span class="string">"response"</span>: <span class="string">"Reponse generale fournie."</span>}
+
+<span class="comment"># Construction du graphe</span>
+builder = StateGraph(State)
+builder.<span class="function">add_node</span>(<span class="string">"classify"</span>, classify_question)
+builder.<span class="function">add_node</span>(<span class="string">"handle_tech"</span>, handle_tech)
+builder.<span class="function">add_node</span>(<span class="string">"handle_billing"</span>, handle_billing)
+builder.<span class="function">add_node</span>(<span class="string">"handle_general"</span>, handle_general)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"classify"</span>)
+
+<span class="comment"># Arete conditionnelle : apres "classify", appeler route_by_category</span>
+builder.<span class="function">add_conditional_edges</span>(
+    <span class="string">"classify"</span>,
+    route_by_category
+)
+
+<span class="comment"># Tous les gestionnaires menent a END</span>
+builder.<span class="function">add_edge</span>(<span class="string">"handle_tech"</span>, END)
+builder.<span class="function">add_edge</span>(<span class="string">"handle_billing"</span>, END)
+builder.<span class="function">add_edge</span>(<span class="string">"handle_general"</span>, END)
+
+graph = builder.<span class="function">compile</span>()
+
+<span class="comment"># Execution</span>
+result = graph.<span class="function">invoke</span>({<span class="string">"question"</span>: <span class="string">"J'ai un bug dans l'application"</span>})
+<span class="function">print</span>(result[<span class="string">"response"</span>])</div>
+
+    <div class="output-block">Equipe technique contactee pour votre probleme.</div>
+
+    <h3>1.2 Diagramme du Routing Conditionnel</h3>
+
+    <div class="svg-container">
+        <svg width="700" height="380" viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+            <!-- START -->
+            <circle cx="80" cy="190" r="30" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="80" y="195" text-anchor="middle" fill="#00ff88" font-size="12">START</text>
+            <!-- Classify -->
+            <rect x="170" y="160" width="120" height="60" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="230" y="195" text-anchor="middle" fill="#569cd6" font-size="13">classify</text>
+            <!-- Router diamond -->
+            <polygon points="400,140 450,190 400,240 350,190" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="400" y="195" text-anchor="middle" fill="#ff6b35" font-size="11">route?</text>
+            <!-- Tech node -->
+            <rect x="530" y="60" width="140" height="50" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="600" y="90" text-anchor="middle" fill="#ff8c42" font-size="12">handle_tech</text>
+            <!-- Billing node -->
+            <rect x="530" y="165" width="140" height="50" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="600" y="195" text-anchor="middle" fill="#ff8c42" font-size="12">handle_billing</text>
+            <!-- General node -->
+            <rect x="530" y="270" width="140" height="50" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="600" y="300" text-anchor="middle" fill="#ff8c42" font-size="12">handle_general</text>
+            <!-- Arrows -->
+            <line x1="110" y1="190" x2="168" y2="190" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <line x1="290" y1="190" x2="348" y2="190" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <line x1="450" y1="170" x2="528" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <text x="480" y="115" fill="#aaa" font-size="10">technique</text>
+            <line x1="450" y1="190" x2="528" y2="190" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <text x="475" y="183" fill="#aaa" font-size="10">facturation</text>
+            <line x1="450" y1="210" x2="528" y2="290" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <text x="475" y="265" fill="#aaa" font-size="10">general</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        La fonction de routage doit <strong>toujours</strong> retourner un string correspondant a un nom de noeud valide dans le graphe, ou bien <code>END</code> pour terminer l'execution. Utilisez les <code>Literal</code> type hints pour que LangGraph Studio puisse visualiser les chemins possibles.
+    </div>
+
+    <h3>1.3 Utilisation de path_map</h3>
+
+    <p>Parfois, les valeurs retournees par votre fonction de routage ne correspondent pas directement aux noms des noeuds. Le parametre <code>path_map</code> permet de faire la traduction :</p>
+
+    <div class="code-block"><span class="comment"># La fonction retourne des labels lisibles</span>
+<span class="keyword">def</span> <span class="function">route_by_sentiment</span>(state: State) -> str:
+    sentiment = state[<span class="string">"sentiment"</span>]
+    <span class="keyword">if</span> sentiment > <span class="number">0.7</span>:
+        <span class="keyword">return</span> <span class="string">"positif"</span>
+    <span class="keyword">elif</span> sentiment < <span class="number">0.3</span>:
+        <span class="keyword">return</span> <span class="string">"negatif"</span>
+    <span class="keyword">return</span> <span class="string">"neutre"</span>
+
+<span class="comment"># path_map traduit les retours en noms de noeuds</span>
+builder.<span class="function">add_conditional_edges</span>(
+    <span class="string">"analyze_sentiment"</span>,
+    route_by_sentiment,
+    {
+        <span class="string">"positif"</span>: <span class="string">"respond_positive"</span>,
+        <span class="string">"negatif"</span>: <span class="string">"escalate_to_human"</span>,
+        <span class="string">"neutre"</span>: <span class="string">"respond_neutral"</span>
+    }
+)</div>
+
+    <div class="effect">
+        Le <code>path_map</code> offre une couche d'abstraction entre la logique metier (sentiments) et l'architecture du graphe (noms de noeuds). Cela rend le code plus lisible et maintenable.
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 2 : PATTERNS DE ROUTING -->
+    <!-- ========================================== -->
+    <h2>2. Patterns de Routing</h2>
+
+    <p>Le routing conditionnel se decline en plusieurs patterns recurrents dans les applications d'IA. Voici les plus courants avec leur implementation complete.</p>
+
+    <h3>2.1 Classification Routing (par sujet)</h3>
+
+    <p>Le pattern le plus courant : classifier une entree utilisateur puis la diriger vers le bon gestionnaire specialise.</p>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Literal
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+<span class="keyword">class</span> <span class="function">TopicState</span>(TypedDict):
+    question: str
+    topic: str
+    answer: str
+
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>)
+
+<span class="keyword">def</span> <span class="function">classify_topic</span>(state: TopicState) -> dict:
+    <span class="string">"""Utilise un LLM pour classifier le sujet."""</span>
+    prompt = <span class="string">f"""Classifie cette question dans UNE des categories :
+    - science
+    - histoire
+    - programmation
+
+    Question : {state['question']}
+    Reponds uniquement par le nom de la categorie."""</span>
+
+    response = llm.<span class="function">invoke</span>(prompt)
+    topic = response.content.strip().lower()
+    <span class="keyword">return</span> {<span class="string">"topic"</span>: topic}
+
+<span class="keyword">def</span> <span class="function">route_topic</span>(state: TopicState) -> Literal[<span class="string">"science_expert"</span>, <span class="string">"history_expert"</span>, <span class="string">"code_expert"</span>]:
+    topic = state[<span class="string">"topic"</span>]
+    routes = {
+        <span class="string">"science"</span>: <span class="string">"science_expert"</span>,
+        <span class="string">"histoire"</span>: <span class="string">"history_expert"</span>,
+        <span class="string">"programmation"</span>: <span class="string">"code_expert"</span>
+    }
+    <span class="keyword">return</span> routes.get(topic, <span class="string">"science_expert"</span>)
+
+<span class="keyword">def</span> <span class="function">science_expert</span>(state: TopicState) -> dict:
+    response = llm.<span class="function">invoke</span>(<span class="string">f"En tant qu'expert scientifique, reponds : {state['question']}"</span>)
+    <span class="keyword">return</span> {<span class="string">"answer"</span>: response.content}
+
+<span class="keyword">def</span> <span class="function">history_expert</span>(state: TopicState) -> dict:
+    response = llm.<span class="function">invoke</span>(<span class="string">f"En tant qu'historien, reponds : {state['question']}"</span>)
+    <span class="keyword">return</span> {<span class="string">"answer"</span>: response.content}
+
+<span class="keyword">def</span> <span class="function">code_expert</span>(state: TopicState) -> dict:
+    response = llm.<span class="function">invoke</span>(<span class="string">f"En tant qu'expert en programmation, reponds : {state['question']}"</span>)
+    <span class="keyword">return</span> {<span class="string">"answer"</span>: response.content}
+
+<span class="comment"># Assemblage</span>
+builder = StateGraph(TopicState)
+builder.<span class="function">add_node</span>(<span class="string">"classify"</span>, classify_topic)
+builder.<span class="function">add_node</span>(<span class="string">"science_expert"</span>, science_expert)
+builder.<span class="function">add_node</span>(<span class="string">"history_expert"</span>, history_expert)
+builder.<span class="function">add_node</span>(<span class="string">"code_expert"</span>, code_expert)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"classify"</span>)
+builder.<span class="function">add_conditional_edges</span>(<span class="string">"classify"</span>, route_topic)
+builder.<span class="function">add_edge</span>(<span class="string">"science_expert"</span>, END)
+builder.<span class="function">add_edge</span>(<span class="string">"history_expert"</span>, END)
+builder.<span class="function">add_edge</span>(<span class="string">"code_expert"</span>, END)
+
+graph = builder.<span class="function">compile</span>()</div>
+
+    <h3>2.2 Quality Check Routing (boucle de qualite)</h3>
+
+    <p>Ce pattern verifie la qualite d'une reponse et decide de la renvoyer pour amelioration ou de la valider.</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+
+<span class="keyword">class</span> <span class="function">QualityState</span>(TypedDict):
+    question: str
+    draft: str
+    quality_score: float
+    attempts: int
+    final_answer: str
+
+<span class="keyword">def</span> <span class="function">generate_draft</span>(state: QualityState) -> dict:
+    <span class="string">"""Genere ou regenere une reponse."""</span>
+    attempts = state.get(<span class="string">"attempts"</span>, <span class="number">0</span>) + <span class="number">1</span>
+    response = llm.<span class="function">invoke</span>(
+        <span class="string">f"Reponds a cette question de maniere detaillee : {state['question']}"</span>
+    )
+    <span class="keyword">return</span> {<span class="string">"draft"</span>: response.content, <span class="string">"attempts"</span>: attempts}
+
+<span class="keyword">def</span> <span class="function">check_quality</span>(state: QualityState) -> dict:
+    <span class="string">"""Evalue la qualite de la reponse."""</span>
+    prompt = <span class="string">f"""Evalue cette reponse sur une echelle de 0 a 1.
+    Question : {state['question']}
+    Reponse : {state['draft']}
+    Reponds UNIQUEMENT par un nombre decimal."""</span>
+
+    result = llm.<span class="function">invoke</span>(prompt)
+    score = <span class="function">float</span>(result.content.strip())
+    <span class="keyword">return</span> {<span class="string">"quality_score"</span>: score}
+
+<span class="keyword">def</span> <span class="function">finalize</span>(state: QualityState) -> dict:
+    <span class="keyword">return</span> {<span class="string">"final_answer"</span>: state[<span class="string">"draft"</span>]}
+
+<span class="keyword">def</span> <span class="function">quality_router</span>(state: QualityState) -> Literal[<span class="string">"generate_draft"</span>, <span class="string">"finalize"</span>]:
+    <span class="string">"""Si qualite insuffisante et tentatives restantes, on regenere."""</span>
+    <span class="keyword">if</span> state[<span class="string">"quality_score"</span>] >= <span class="number">0.8</span>:
+        <span class="keyword">return</span> <span class="string">"finalize"</span>
+    <span class="keyword">if</span> state.get(<span class="string">"attempts"</span>, <span class="number">0</span>) >= <span class="number">3</span>:
+        <span class="keyword">return</span> <span class="string">"finalize"</span>  <span class="comment"># Limite atteinte, on accepte</span>
+    <span class="keyword">return</span> <span class="string">"generate_draft"</span>  <span class="comment"># On retente</span>
+
+builder = StateGraph(QualityState)
+builder.<span class="function">add_node</span>(<span class="string">"generate_draft"</span>, generate_draft)
+builder.<span class="function">add_node</span>(<span class="string">"check_quality"</span>, check_quality)
+builder.<span class="function">add_node</span>(<span class="string">"finalize"</span>, finalize)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"generate_draft"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"generate_draft"</span>, <span class="string">"check_quality"</span>)
+builder.<span class="function">add_conditional_edges</span>(<span class="string">"check_quality"</span>, quality_router)
+builder.<span class="function">add_edge</span>(<span class="string">"finalize"</span>, END)
+
+graph = builder.<span class="function">compile</span>()</div>
+
+    <div class="prof-note">
+        Ce pattern de Quality Check est extremement puissant. Il combine routing conditionnel et cycles pour creer un systeme d'auto-amelioration. C'est un pattern fondamental dans la construction d'agents fiables.
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 3 : CYCLES (BOUCLES) -->
+    <!-- ========================================== -->
+    <h2>3. Cycles (Boucles)</h2>
+
+    <div class="definition">
+        Un <strong>cycle</strong> dans LangGraph est une boucle ou un noeud peut etre visite plusieurs fois au cours d'une meme execution. C'est la fonctionnalite qui distingue LangGraph des pipelines lineaires classiques comme les Chains de LangChain.
+    </div>
+
+    <p>Les cycles permettent de modeliser des comportements <strong>iteratifs</strong> : un agent qui reflechit, agit, observe le resultat, et decide de continuer ou de s'arreter. Sans cycles, il serait impossible de construire des agents autonomes capables de raisonnement multi-etapes.</p>
+
+    <h3>3.1 Anatomie d'un Cycle</h3>
+
+    <p>Un cycle se cree naturellement lorsqu'une arete conditionnelle redirige le flux vers un noeud deja visite :</p>
+
+    <div class="svg-container">
+        <svg width="600" height="350" viewBox="0 0 600 350" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+                <marker id="arrow2r" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/>
+                </marker>
+                <marker id="arrow2b" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+            </defs>
+            <!-- Plan -->
+            <rect x="60" y="80" width="120" height="55" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="120" y="112" text-anchor="middle" fill="#569cd6" font-size="14" font-weight="bold">Plan</text>
+            <!-- Execute -->
+            <rect x="240" y="80" width="120" height="55" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="300" y="112" text-anchor="middle" fill="#ff8c42" font-size="14" font-weight="bold">Execute</text>
+            <!-- Check -->
+            <rect x="420" y="80" width="120" height="55" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="480" y="112" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">Check</text>
+            <!-- Decision diamond -->
+            <polygon points="480,200 530,240 480,280 430,240" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="480" y="245" text-anchor="middle" fill="#ff6b35" font-size="11">Done?</text>
+            <!-- END -->
+            <circle cx="480" cy="330" r="25" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="480" y="335" text-anchor="middle" fill="#00ff88" font-size="12">END</text>
+            <!-- Forward arrows -->
+            <line x1="180" y1="107" x2="238" y2="107" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow2b)"/>
+            <line x1="360" y1="107" x2="418" y2="107" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow2)"/>
+            <line x1="480" y1="135" x2="480" y2="198" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <!-- Yes arrow down -->
+            <line x1="480" y1="280" x2="480" y2="303" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow2)"/>
+            <text x="500" y="298" fill="#00ff88" font-size="11">Oui</text>
+            <!-- No arrow - cycle back -->
+            <path d="M430,240 L120,240 L120,137" fill="none" stroke="#ff4444" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow2r)"/>
+            <text x="270" y="232" fill="#ff4444" font-size="11">Non - retour au Plan</text>
+        </svg>
+    </div>
+
+    <h3>3.2 Implementation d'un Cycle Simple</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Literal, List
+
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    task: str
+    plan: str
+    result: str
+    is_complete: bool
+    iterations: int
+    history: List[str]
+
+<span class="keyword">def</span> <span class="function">plan_step</span>(state: AgentState) -> dict:
+    iteration = state.get(<span class="string">"iterations"</span>, <span class="number">0</span>) + <span class="number">1</span>
+    history = state.get(<span class="string">"history"</span>, [])
+
+    <span class="keyword">if</span> iteration == <span class="number">1</span>:
+        plan = <span class="string">f"Plan initial pour : {state['task']}"</span>
+    <span class="keyword">else</span>:
+        plan = <span class="string">f"Plan revise (iteration {iteration}) base sur : {state.get('result', '')}"</span>
+
+    history.append(<span class="string">f"[Plan {iteration}] {plan}"</span>)
+    <span class="keyword">return</span> {<span class="string">"plan"</span>: plan, <span class="string">"iterations"</span>: iteration, <span class="string">"history"</span>: history}
+
+<span class="keyword">def</span> <span class="function">execute_step</span>(state: AgentState) -> dict:
+    result = <span class="string">f"Execution du plan : {state['plan']}"</span>
+    history = state[<span class="string">"history"</span>] + [<span class="string">f"[Exec] {result}"</span>]
+    <span class="keyword">return</span> {<span class="string">"result"</span>: result, <span class="string">"history"</span>: history}
+
+<span class="keyword">def</span> <span class="function">check_step</span>(state: AgentState) -> dict:
+    <span class="comment"># Simuler une verification (en production, un LLM evaluerait)</span>
+    is_done = state[<span class="string">"iterations"</span>] >= <span class="number">3</span>
+    <span class="keyword">return</span> {<span class="string">"is_complete"</span>: is_done}
+
+<span class="keyword">def</span> <span class="function">should_continue</span>(state: AgentState) -> Literal[<span class="string">"plan"</span>, <span class="string">"__end__"</span>]:
+    <span class="keyword">if</span> state[<span class="string">"is_complete"</span>]:
+        <span class="keyword">return</span> <span class="string">"__end__"</span>
+    <span class="keyword">return</span> <span class="string">"plan"</span>
+
+builder = StateGraph(AgentState)
+builder.<span class="function">add_node</span>(<span class="string">"plan"</span>, plan_step)
+builder.<span class="function">add_node</span>(<span class="string">"execute"</span>, execute_step)
+builder.<span class="function">add_node</span>(<span class="string">"check"</span>, check_step)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"plan"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"plan"</span>, <span class="string">"execute"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"execute"</span>, <span class="string">"check"</span>)
+builder.<span class="function">add_conditional_edges</span>(<span class="string">"check"</span>, should_continue)
+
+graph = builder.<span class="function">compile</span>()
+result = graph.<span class="function">invoke</span>({<span class="string">"task"</span>: <span class="string">"Analyser les donnees de vente"</span>})
+<span class="function">print</span>(<span class="string">f"Iterations : {result['iterations']}"</span>)
+<span class="keyword">for</span> entry <span class="keyword">in</span> result[<span class="string">"history"</span>]:
+    <span class="function">print</span>(entry)</div>
+
+    <div class="output-block">Iterations : 3
+[Plan 1] Plan initial pour : Analyser les donnees de vente
+[Exec] Execution du plan : Plan initial pour : Analyser les donnees de vente
+[Plan 2] Plan revise (iteration 2) base sur : Execution du plan : Plan initial pour : Analyser les donnees de vente
+[Exec] Execution du plan : Plan revise (iteration 2)...
+[Plan 3] Plan revise (iteration 3)...
+[Exec] Execution du plan : Plan revise (iteration 3)...</div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 4 : MAX ITERATIONS -->
+    <!-- ========================================== -->
+    <h2>4. Max Iterations et recursion_limit</h2>
+
+    <div class="warning">
+        Les cycles sans condition d'arret valide peuvent provoquer des <strong>boucles infinies</strong>. LangGraph fournit un mecanisme de securite : le parametre <code>recursion_limit</code>. Par defaut, la limite est de <strong>25 etapes</strong>.
+    </div>
+
+    <h3>4.1 Configuration de recursion_limit</h3>
+
+    <div class="code-block"><span class="comment"># Methode 1 : Dans la configuration d'invocation</span>
+config = {<span class="string">"recursion_limit"</span>: <span class="number">50</span>}
+result = graph.<span class="function">invoke</span>(
+    {<span class="string">"task"</span>: <span class="string">"Tache complexe"</span>},
+    config=config
+)
+
+<span class="comment"># Methode 2 : Limiter strictement pour eviter des couts excessifs</span>
+config = {<span class="string">"recursion_limit"</span>: <span class="number">10</span>}
+<span class="keyword">try</span>:
+    result = graph.<span class="function">invoke</span>({<span class="string">"task"</span>: <span class="string">"Tache"</span>}, config=config)
+<span class="keyword">except</span> GraphRecursionError <span class="keyword">as</span> e:
+    <span class="function">print</span>(<span class="string">f"Limite de recursion atteinte : {e}"</span>)
+    <span class="comment"># Gerer gracieusement : retourner le dernier etat valide</span></div>
+
+    <h3>4.2 Strategies Anti-Boucle Infinie</h3>
+
+    <div class="concept-box green">
+        <h3>Trois lignes de defense contre les boucles infinies</h3>
+        <ol>
+            <li><strong>Compteur d'iterations dans le state</strong> : Votre logique metier decide quand s'arreter (recommande)</li>
+            <li><strong>recursion_limit dans config</strong> : Filet de securite global au niveau du graphe</li>
+            <li><strong>Timeouts</strong> : Limite de temps d'execution pour les cas extremes</li>
+        </ol>
+    </div>
+
+    <div class="code-block"><span class="comment"># Approche robuste : combiner compteur interne + recursion_limit</span>
+<span class="keyword">class</span> <span class="function">SafeState</span>(TypedDict):
+    task: str
+    iterations: int
+    max_iterations: int  <span class="comment"># Limite metier</span>
+    result: str
+
+<span class="keyword">def</span> <span class="function">should_continue_safe</span>(state: SafeState) -> Literal[<span class="string">"process"</span>, <span class="string">"__end__"</span>]:
+    <span class="string">"""Double verification avant de continuer."""</span>
+    <span class="keyword">if</span> state[<span class="string">"iterations"</span>] >= state[<span class="string">"max_iterations"</span>]:
+        <span class="keyword">return</span> <span class="string">"__end__"</span>
+    <span class="keyword">if</span> <span class="string">"TERMINE"</span> <span class="keyword">in</span> state.get(<span class="string">"result"</span>, <span class="string">""</span>):
+        <span class="keyword">return</span> <span class="string">"__end__"</span>
+    <span class="keyword">return</span> <span class="string">"process"</span>
+
+<span class="comment"># Execution avec double securite</span>
+result = graph.<span class="function">invoke</span>(
+    {<span class="string">"task"</span>: <span class="string">"Tache"</span>, <span class="string">"max_iterations"</span>: <span class="number">5</span>, <span class="string">"iterations"</span>: <span class="number">0</span>},
+    config={<span class="string">"recursion_limit"</span>: <span class="number">20</span>}  <span class="comment"># Filet de securite</span>
+)</div>
+
+    <div class="prof-note">
+        En production, privilegiez <strong>toujours</strong> un compteur dans le state plutot que de vous reposer uniquement sur <code>recursion_limit</code>. Le compteur vous donne un controle precis et permet de retourner un resultat partiel, tandis que <code>recursion_limit</code> leve une exception brute.
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 5 : AGENT ReAct PATTERN -->
+    <!-- ========================================== -->
+    <h2>5. Agent ReAct Pattern</h2>
+
+    <div class="definition">
+        Le pattern <strong>ReAct</strong> (Reasoning + Acting) est un paradigme d'agent ou le LLM alterne entre <strong>reflexion</strong> (raisonnement sur la situation), <strong>action</strong> (appel d'outil), et <strong>observation</strong> (analyse du resultat). Ce cycle se repete jusqu'a obtenir une reponse finale.
+    </div>
+
+    <h3>5.1 Diagramme du Pattern ReAct</h3>
+
+    <div class="svg-container">
+        <svg width="650" height="420" viewBox="0 0 650 420" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrow3g" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+            <!-- Title -->
+            <text x="325" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Pattern ReAct : Think - Act - Observe</text>
+            <!-- Think -->
+            <rect x="40" y="80" width="160" height="70" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="120" y="108" text-anchor="middle" fill="#569cd6" font-size="14" font-weight="bold">THINK</text>
+            <text x="120" y="132" text-anchor="middle" fill="#aaa" font-size="11">LLM raisonne</text>
+            <!-- Decision -->
+            <polygon points="325,80 400,120 325,160 250,120" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="325" y="118" text-anchor="middle" fill="#ff6b35" font-size="11">Outil?</text>
+            <text x="325" y="133" text-anchor="middle" fill="#ff6b35" font-size="10">ou Final?</text>
+            <!-- Act -->
+            <rect x="440" y="85" width="160" height="70" rx="12" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="520" y="113" text-anchor="middle" fill="#ff8c42" font-size="14" font-weight="bold">ACT</text>
+            <text x="520" y="137" text-anchor="middle" fill="#aaa" font-size="11">Appel d'outil</text>
+            <!-- Observe -->
+            <rect x="440" y="220" width="160" height="70" rx="12" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="520" y="248" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">OBSERVE</text>
+            <text x="520" y="272" text-anchor="middle" fill="#aaa" font-size="11">Resultat outil</text>
+            <!-- END -->
+            <circle cx="325" cy="370" r="30" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="325" y="375" text-anchor="middle" fill="#00ff88" font-size="13">END</text>
+            <!-- Arrows -->
+            <line x1="200" y1="120" x2="248" y2="120" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow3)"/>
+            <line x1="400" y1="120" x2="438" y2="120" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow3)"/>
+            <text x="415" y="110" fill="#aaa" font-size="10">Outil</text>
+            <line x1="520" y1="155" x2="520" y2="218" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow3)"/>
+            <!-- Cycle back -->
+            <path d="M440,255 L120,255 L120,152" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow3g)"/>
+            <text x="270" y="248" fill="#00ff88" font-size="11">Retour a Think</text>
+            <!-- Final answer -->
+            <line x1="325" y1="160" x2="325" y2="338" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow3g)"/>
+            <text x="345" y="250" fill="#00ff88" font-size="10">Final</text>
+        </svg>
+    </div>
+
+    <h3>5.2 Implementation Complete du ReAct Agent</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> ToolNode
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, AIMessage, ToolMessage
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Annotated, Sequence
+<span class="keyword">import</span> operator
+<span class="keyword">import</span> json
+
+<span class="comment"># --- Definition des outils ---</span>
+@tool
+<span class="keyword">def</span> <span class="function">search_web</span>(query: str) -> str:
+    <span class="string">"""Recherche sur le web pour trouver des informations."""</span>
+    <span class="comment"># Simule une recherche</span>
+    <span class="keyword">return</span> <span class="string">f"Resultats pour '{query}': LangGraph est un framework de LangChain pour creer des agents a base de graphes."</span>
+
+@tool
+<span class="keyword">def</span> <span class="function">calculator</span>(expression: str) -> str:
+    <span class="string">"""Evalue une expression mathematique."""</span>
+    <span class="keyword">try</span>:
+        result = <span class="function">eval</span>(expression)
+        <span class="keyword">return</span> <span class="string">f"Resultat : {result}"</span>
+    <span class="keyword">except</span>:
+        <span class="keyword">return</span> <span class="string">"Erreur dans l'expression"</span>
+
+tools = [search_web, calculator]
+
+<span class="comment"># --- State avec liste de messages ---</span>
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    messages: Annotated[Sequence[<span class="keyword">any</span>], operator.add]
+
+<span class="comment"># --- LLM avec outils lies ---</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>)
+llm_with_tools = llm.<span class="function">bind_tools</span>(tools)
+
+<span class="comment"># --- Noeud agent : le LLM reflechit ---</span>
+<span class="keyword">def</span> <span class="function">agent_node</span>(state: AgentState) -> dict:
+    <span class="string">"""Le LLM raisonne et decide d'utiliser un outil ou de repondre."""</span>
+    response = llm_with_tools.<span class="function">invoke</span>(state[<span class="string">"messages"</span>])
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [response]}
+
+<span class="comment"># --- Noeud outils : execute les appels d'outils ---</span>
+tool_node = ToolNode(tools)
+
+<span class="comment"># --- Router : outil appele ou reponse finale ? ---</span>
+<span class="keyword">def</span> <span class="function">should_use_tool</span>(state: AgentState) -> Literal[<span class="string">"tools"</span>, <span class="string">"__end__"</span>]:
+    last_message = state[<span class="string">"messages"</span>][-<span class="number">1</span>]
+    <span class="keyword">if</span> <span class="function">hasattr</span>(last_message, <span class="string">"tool_calls"</span>) <span class="keyword">and</span> last_message.tool_calls:
+        <span class="keyword">return</span> <span class="string">"tools"</span>
+    <span class="keyword">return</span> <span class="string">"__end__"</span>
+
+<span class="comment"># --- Construction du graphe ReAct ---</span>
+builder = StateGraph(AgentState)
+builder.<span class="function">add_node</span>(<span class="string">"agent"</span>, agent_node)
+builder.<span class="function">add_node</span>(<span class="string">"tools"</span>, tool_node)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"agent"</span>)
+
+<span class="comment"># Apres l'agent : soit on appelle un outil, soit on termine</span>
+builder.<span class="function">add_conditional_edges</span>(<span class="string">"agent"</span>, should_use_tool)
+
+<span class="comment"># Apres l'outil, on retourne a l'agent (le cycle !)</span>
+builder.<span class="function">add_edge</span>(<span class="string">"tools"</span>, <span class="string">"agent"</span>)
+
+graph = builder.<span class="function">compile</span>()
+
+<span class="comment"># --- Execution ---</span>
+result = graph.<span class="function">invoke</span>(
+    {<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Qu'est-ce que LangGraph ?"</span>)]},
+    config={<span class="string">"recursion_limit"</span>: <span class="number">15</span>}
+)
+
+<span class="keyword">for</span> msg <span class="keyword">in</span> result[<span class="string">"messages"</span>]:
+    <span class="function">print</span>(<span class="string">f"{msg.__class__.__name__}: {msg.content[:100]}"</span>)</div>
+
+    <div class="output-block">HumanMessage: Qu'est-ce que LangGraph ?
+AIMessage: [tool_call: search_web("LangGraph")]
+ToolMessage: Resultats pour 'LangGraph': LangGraph est un framework...
+AIMessage: LangGraph est un framework de LangChain pour creer des agents a base de graphes...</div>
+
+    <div class="concept-box blue">
+        <h3>Alternative : create_react_agent() prebuilt</h3>
+        <p>LangGraph fournit une fonction utilitaire pour creer rapidement un agent ReAct sans construire le graphe manuellement :</p>
+        <div class="code-block"><span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> create_react_agent
+
+agent = <span class="function">create_react_agent</span>(
+    model=ChatOpenAI(model=<span class="string">"gpt-4o"</span>),
+    tools=[search_web, calculator]
+)
+
+result = agent.<span class="function">invoke</span>({
+    <span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Calcule 25 * 48 + 13"</span>)]
+})</div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 6 : MULTI-PATH ROUTING -->
+    <!-- ========================================== -->
+    <h2>6. Multi-path Routing (Fan-out / Fan-in)</h2>
+
+    <div class="definition">
+        Le <strong>multi-path routing</strong> permet d'envoyer l'etat vers <strong>plusieurs noeuds simultanement</strong> (fan-out), qui s'executent en parallele, puis de fusionner leurs resultats (fan-in). La fonction de routage retourne alors une <strong>liste de noeuds</strong> au lieu d'un seul.
+    </div>
+
+    <h3>6.1 Fan-out avec Send API</h3>
+
+    <p>LangGraph utilise l'objet <code>Send</code> pour le fan-out dynamique. Chaque <code>Send</code> cree une execution parallele avec son propre etat :</p>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.types <span class="keyword">import</span> Send
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, List, Annotated
+<span class="keyword">import</span> operator
+
+<span class="keyword">class</span> <span class="function">FanOutState</span>(TypedDict):
+    topic: str
+    analyses: Annotated[List[str], operator.add]
+
+<span class="keyword">class</span> <span class="function">AnalysisState</span>(TypedDict):
+    topic: str
+    perspective: str
+    analyses: Annotated[List[str], operator.add]
+
+<span class="keyword">def</span> <span class="function">create_analyses</span>(state: FanOutState) -> list:
+    <span class="string">"""Fan-out : creer des analyses paralleles pour chaque perspective."""</span>
+    perspectives = [<span class="string">"technique"</span>, <span class="string">"business"</span>, <span class="string">"ethique"</span>]
+    <span class="keyword">return</span> [
+        Send(<span class="string">"analyze"</span>, {
+            <span class="string">"topic"</span>: state[<span class="string">"topic"</span>],
+            <span class="string">"perspective"</span>: p,
+            <span class="string">"analyses"</span>: []
+        })
+        <span class="keyword">for</span> p <span class="keyword">in</span> perspectives
+    ]
+
+<span class="keyword">def</span> <span class="function">analyze</span>(state: AnalysisState) -> dict:
+    <span class="string">"""Chaque analyse s'execute en parallele."""</span>
+    result = <span class="string">f"Analyse {state['perspective']} de '{state['topic']}' : [resultats detailles]"</span>
+    <span class="keyword">return</span> {<span class="string">"analyses"</span>: [result]}
+
+<span class="keyword">def</span> <span class="function">synthesize</span>(state: FanOutState) -> dict:
+    <span class="string">"""Fan-in : fusionner toutes les analyses."""</span>
+    summary = <span class="string">"Synthese de {} analyses :\n"</span>.<span class="function">format</span>(<span class="function">len</span>(state[<span class="string">"analyses"</span>]))
+    <span class="keyword">for</span> a <span class="keyword">in</span> state[<span class="string">"analyses"</span>]:
+        summary += <span class="string">f"  - {a}\n"</span>
+    <span class="keyword">return</span> {<span class="string">"analyses"</span>: [summary]}
+
+builder = StateGraph(FanOutState)
+builder.<span class="function">add_node</span>(<span class="string">"analyze"</span>, analyze)
+builder.<span class="function">add_node</span>(<span class="string">"synthesize"</span>, synthesize)
+
+<span class="comment"># Fan-out conditionnel avec Send</span>
+builder.<span class="function">add_conditional_edges</span>(<span class="string">"__start__"</span>, create_analyses)
+<span class="comment"># Fan-in : toutes les analyses convergent vers synthesize</span>
+builder.<span class="function">add_edge</span>(<span class="string">"analyze"</span>, <span class="string">"synthesize"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"synthesize"</span>, END)
+
+graph = builder.<span class="function">compile</span>()
+result = graph.<span class="function">invoke</span>({<span class="string">"topic"</span>: <span class="string">"Intelligence Artificielle Generative"</span>})
+<span class="function">print</span>(result[<span class="string">"analyses"</span>][-<span class="number">1</span>])</div>
+
+    <div class="output-block">Synthese de 3 analyses :
+  - Analyse technique de 'Intelligence Artificielle Generative' : [resultats detailles]
+  - Analyse business de 'Intelligence Artificielle Generative' : [resultats detailles]
+  - Analyse ethique de 'Intelligence Artificielle Generative' : [resultats detailles]</div>
+
+    <h3>6.2 Fan-out Statique (retourner une liste de noeuds)</h3>
+
+    <div class="code-block"><span class="comment"># Une fonction de routage peut retourner une liste de noeuds</span>
+<span class="keyword">def</span> <span class="function">multi_route</span>(state: State) -> list:
+    <span class="string">"""Envoie l'etat a plusieurs noeuds simultanement."""</span>
+    nodes = [<span class="string">"check_spelling"</span>, <span class="string">"check_grammar"</span>]
+    <span class="keyword">if</span> state.get(<span class="string">"needs_fact_check"</span>):
+        nodes.append(<span class="string">"fact_check"</span>)
+    <span class="keyword">return</span> nodes
+
+builder.<span class="function">add_conditional_edges</span>(<span class="string">"draft"</span>, multi_route)</div>
+
+    <div class="effect">
+        Les noeuds retournes s'executent en <strong>parallele</strong> dans le meme superstep. LangGraph synchronise automatiquement leurs resultats avant de passer au superstep suivant. Les reducers (comme <code>operator.add</code>) fusionnent les mises a jour concurrentes.
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 7 : ERROR HANDLING -->
+    <!-- ========================================== -->
+    <h2>7. Error Handling dans les Graphes</h2>
+
+    <p>La gestion des erreurs dans LangGraph est critique car les agents interagissent avec des services externes (LLMs, APIs, bases de donnees) qui peuvent echouer a tout moment.</p>
+
+    <h3>7.1 Try/Except dans les Noeuds</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnableConfig
+
+<span class="keyword">class</span> <span class="function">RobustState</span>(TypedDict):
+    query: str
+    result: str
+    error: str
+    retry_count: int
+
+<span class="keyword">def</span> <span class="function">call_api_node</span>(state: RobustState) -> dict:
+    <span class="string">"""Noeud avec gestion d'erreur integree."""</span>
+    retry = state.get(<span class="string">"retry_count"</span>, <span class="number">0</span>)
+    <span class="keyword">try</span>:
+        <span class="comment"># Appel a un service externe</span>
+        response = llm.<span class="function">invoke</span>(state[<span class="string">"query"</span>])
+        <span class="keyword">return</span> {
+            <span class="string">"result"</span>: response.content,
+            <span class="string">"error"</span>: <span class="string">""</span>,
+            <span class="string">"retry_count"</span>: retry
+        }
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> {
+            <span class="string">"result"</span>: <span class="string">""</span>,
+            <span class="string">"error"</span>: <span class="function">str</span>(e),
+            <span class="string">"retry_count"</span>: retry + <span class="number">1</span>
+        }
+
+<span class="keyword">def</span> <span class="function">error_router</span>(state: RobustState) -> Literal[<span class="string">"call_api"</span>, <span class="string">"fallback"</span>, <span class="string">"__end__"</span>]:
+    <span class="string">"""Route en fonction du succes/echec."""</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> state.get(<span class="string">"error"</span>):
+        <span class="keyword">return</span> <span class="string">"__end__"</span>  <span class="comment"># Succes</span>
+    <span class="keyword">if</span> state[<span class="string">"retry_count"</span>] < <span class="number">3</span>:
+        <span class="keyword">return</span> <span class="string">"call_api"</span>  <span class="comment"># Retry</span>
+    <span class="keyword">return</span> <span class="string">"fallback"</span>  <span class="comment"># Abandon, utiliser le fallback</span>
+
+<span class="keyword">def</span> <span class="function">fallback_node</span>(state: RobustState) -> dict:
+    <span class="keyword">return</span> {
+        <span class="string">"result"</span>: <span class="string">"Desole, le service est temporairement indisponible. Veuillez reessayer plus tard."</span>,
+        <span class="string">"error"</span>: <span class="string">""</span>
+    }
+
+builder = StateGraph(RobustState)
+builder.<span class="function">add_node</span>(<span class="string">"call_api"</span>, call_api_node)
+builder.<span class="function">add_node</span>(<span class="string">"fallback"</span>, fallback_node)
+
+builder.<span class="function">set_entry_point</span>(<span class="string">"call_api"</span>)
+builder.<span class="function">add_conditional_edges</span>(<span class="string">"call_api"</span>, error_router)
+builder.<span class="function">add_edge</span>(<span class="string">"fallback"</span>, END)
+
+graph = builder.<span class="function">compile</span>()</div>
+
+    <h3>7.2 Pattern de Retry avec Backoff Exponentiel</h3>
+
+    <div class="code-block"><span class="keyword">import</span> time
+<span class="keyword">import</span> random
+
+<span class="keyword">def</span> <span class="function">call_with_retry</span>(state: RobustState) -> dict:
+    <span class="string">"""Retry avec backoff exponentiel."""</span>
+    retry = state.get(<span class="string">"retry_count"</span>, <span class="number">0</span>)
+
+    <span class="keyword">if</span> retry > <span class="number">0</span>:
+        <span class="comment"># Backoff exponentiel avec jitter</span>
+        wait_time = min(<span class="number">2</span> ** retry + random.<span class="function">uniform</span>(<span class="number">0</span>, <span class="number">1</span>), <span class="number">30</span>)
+        time.<span class="function">sleep</span>(wait_time)
+
+    <span class="keyword">try</span>:
+        result = llm.<span class="function">invoke</span>(state[<span class="string">"query"</span>])
+        <span class="keyword">return</span> {<span class="string">"result"</span>: result.content, <span class="string">"error"</span>: <span class="string">""</span>, <span class="string">"retry_count"</span>: retry}
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> {<span class="string">"error"</span>: <span class="function">str</span>(e), <span class="string">"retry_count"</span>: retry + <span class="number">1</span>}</div>
+
+    <div class="warning">
+        N'utilisez <code>time.sleep()</code> qu'avec moderation dans les noeuds. En production, preferez des mecanismes de retry au niveau du client HTTP (comme <code>tenacity</code> ou les retries integres dans les clients LangChain).
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 8 : STREAMING -->
+    <!-- ========================================== -->
+    <h2>8. Streaming Events</h2>
+
+    <p>LangGraph offre plusieurs modes de streaming qui permettent de suivre l'execution du graphe en temps reel. Cela est essentiel pour les interfaces utilisateur interactives.</p>
+
+    <h3>8.1 Les Modes de Streaming</h3>
+
+    <table>
+        <tr>
+            <th>Mode</th>
+            <th>Description</th>
+            <th>Cas d'usage</th>
+        </tr>
+        <tr>
+            <td><code>"values"</code></td>
+            <td>Emet l'etat complet apres chaque noeud</td>
+            <td>Debug, visualisation d'etat complet</td>
+        </tr>
+        <tr>
+            <td><code>"updates"</code></td>
+            <td>Emet uniquement les changements (deltas)</td>
+            <td>Performance, UI reactives</td>
+        </tr>
+        <tr>
+            <td><code>"messages"</code></td>
+            <td>Emet les messages de chat token par token</td>
+            <td>Chatbots, reponses en streaming</td>
+        </tr>
+        <tr>
+            <td><code>"custom"</code></td>
+            <td>Evenements personnalises emis par les noeuds</td>
+            <td>Suivi de progression, logs</td>
+        </tr>
+    </table>
+
+    <h3>8.2 stream_mode="values"</h3>
+
+    <div class="code-block"><span class="comment"># Mode "values" : etat complet a chaque etape</span>
+<span class="keyword">for</span> state <span class="keyword">in</span> graph.<span class="function">stream</span>(
+    {<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Bonjour"</span>)]},
+    stream_mode=<span class="string">"values"</span>
+):
+    <span class="comment"># state contient TOUT l'etat du graphe</span>
+    <span class="function">print</span>(<span class="string">"=== Etat complet ==="</span>)
+    <span class="keyword">for</span> msg <span class="keyword">in</span> state[<span class="string">"messages"</span>]:
+        <span class="function">print</span>(<span class="string">f"  {msg.__class__.__name__}: {msg.content[:80]}"</span>)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">=== Etat complet ===
+  HumanMessage: Bonjour
+
+=== Etat complet ===
+  HumanMessage: Bonjour
+  AIMessage: Bonjour ! Comment puis-je vous aider aujourd'hui ?</div>
+
+    <h3>8.3 stream_mode="updates"</h3>
+
+    <div class="code-block"><span class="comment"># Mode "updates" : uniquement les deltas</span>
+<span class="keyword">for</span> update <span class="keyword">in</span> graph.<span class="function">stream</span>(
+    {<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Calcule 2+2"</span>)]},
+    stream_mode=<span class="string">"updates"</span>
+):
+    <span class="comment"># update est un dict {nom_noeud: changements}</span>
+    <span class="keyword">for</span> node_name, changes <span class="keyword">in</span> update.items():
+        <span class="function">print</span>(<span class="string">f"Noeud '{node_name}' a produit :"</span>)
+        <span class="keyword">if</span> <span class="string">"messages"</span> <span class="keyword">in</span> changes:
+            <span class="keyword">for</span> msg <span class="keyword">in</span> changes[<span class="string">"messages"</span>]:
+                <span class="function">print</span>(<span class="string">f"  -> {msg.content[:80]}"</span>)</div>
+
+    <div class="output-block">Noeud 'agent' a produit :
+  -> [Appel outil: calculator("2+2")]
+Noeud 'tools' a produit :
+  -> Resultat : 4
+Noeud 'agent' a produit :
+  -> 2 + 2 = 4</div>
+
+    <h3>8.4 stream_mode="messages"</h3>
+
+    <div class="code-block"><span class="comment"># Mode "messages" : streaming token par token (ideal pour chatbots)</span>
+<span class="keyword">for</span> msg, metadata <span class="keyword">in</span> graph.<span class="function">stream</span>(
+    {<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Explique la relativite"</span>)]},
+    stream_mode=<span class="string">"messages"</span>
+):
+    <span class="comment"># msg est un chunk de message (AIMessageChunk)</span>
+    <span class="keyword">if</span> msg.content:
+        <span class="function">print</span>(msg.content, end=<span class="string">""</span>, flush=<span class="keyword">True</span>)
+
+<span class="function">print</span>()  <span class="comment"># Nouvelle ligne a la fin</span></div>
+
+    <div class="output-block">La relativite, proposee par Albert Einstein, comprend deux theories majeures...
+(tokens emis un par un en temps reel)</div>
+
+    <h3>8.5 Combinaison de Modes</h3>
+
+    <div class="code-block"><span class="comment"># On peut combiner plusieurs modes simultanement</span>
+<span class="keyword">for</span> event <span class="keyword">in</span> graph.<span class="function">stream</span>(
+    {<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Bonjour"</span>)]},
+    stream_mode=[<span class="string">"updates"</span>, <span class="string">"messages"</span>]
+):
+    <span class="comment"># Chaque event est un tuple (mode, data)</span>
+    mode, data = event
+    <span class="keyword">if</span> mode == <span class="string">"updates"</span>:
+        <span class="function">print</span>(<span class="string">f"[UPDATE] {data}"</span>)
+    <span class="keyword">elif</span> mode == <span class="string">"messages"</span>:
+        msg, meta = data
+        <span class="keyword">if</span> msg.content:
+            <span class="function">print</span>(<span class="string">f"[MSG] {msg.content}"</span>, end=<span class="string">""</span>)</div>
+
+    <div class="prof-note">
+        Pour les chatbots, utilisez <code>stream_mode="messages"</code> qui offre la meilleure experience utilisateur avec le streaming token par token. Pour le debugging, <code>"values"</code> est ideal car il montre l'etat complet. Pour les tableaux de bord temps reel, <code>"updates"</code> est le plus performant car il n'envoie que les changements.
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 9 : RESUME -->
+    <!-- ========================================== -->
+    <h2>9. Resume</h2>
+
+    <h3>9.1 Tableau Recapitulatif des Patterns de Routing</h3>
+
+    <table>
+        <tr>
+            <th>Pattern</th>
+            <th>Methode</th>
+            <th>Cas d'usage</th>
+        </tr>
+        <tr>
+            <td>Routing Simple</td>
+            <td><code>add_conditional_edges(source, fn)</code></td>
+            <td>Classification, aiguillage par categorie</td>
+        </tr>
+        <tr>
+            <td>Routing avec Map</td>
+            <td><code>add_conditional_edges(source, fn, path_map)</code></td>
+            <td>Traduction labels -> noeuds</td>
+        </tr>
+        <tr>
+            <td>Fan-out Statique</td>
+            <td>Retourner une <code>list</code> de noms</td>
+            <td>Execution parallele planifiee</td>
+        </tr>
+        <tr>
+            <td>Fan-out Dynamique</td>
+            <td><code>Send()</code> API</td>
+            <td>Map-reduce, traitement par lot</td>
+        </tr>
+        <tr>
+            <td>Cycle</td>
+            <td>Arete conditionnelle vers un noeud deja visite</td>
+            <td>Agents, auto-amelioration, retry</td>
+        </tr>
+        <tr>
+            <td>ReAct</td>
+            <td>Agent -> Tools -> Agent (cycle)</td>
+            <td>Agents autonomes avec outils</td>
+        </tr>
+    </table>
+
+    <h3>9.2 Checklist de Securite pour les Cycles</h3>
+
+    <div class="concept-box green">
+        <h3>Avant de mettre un cycle en production, verifiez :</h3>
+        <ul>
+            <li><strong>Condition d'arret explicite</strong> : Votre logique de routage a-t-elle un chemin vers <code>END</code> ?</li>
+            <li><strong>Compteur d'iterations</strong> : Avez-vous un compteur dans le state avec une limite ?</li>
+            <li><strong>recursion_limit configure</strong> : Avez-vous defini un <code>recursion_limit</code> raisonnable dans la config ?</li>
+            <li><strong>Gestion d'erreur</strong> : Les noeuds dans le cycle gerent-ils les exceptions ?</li>
+            <li><strong>Convergence garantie</strong> : La logique du cycle converge-t-elle naturellement vers une solution ?</li>
+            <li><strong>Monitoring</strong> : Avez-vous des logs/traces pour observer le comportement en production ?</li>
+            <li><strong>Couts maitrises</strong> : Chaque iteration appelle-t-elle un LLM ? Si oui, avez-vous estime le cout maximal ?</li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3>Points cles a retenir</h3>
+        <ul>
+            <li><code>add_conditional_edges()</code> est la brique fondamentale du routing dans LangGraph</li>
+            <li>Les <strong>cycles</strong> sont ce qui rend LangGraph unique : ils permettent les agents autonomes</li>
+            <li>Le pattern <strong>ReAct</strong> (Think-Act-Observe) est le pattern agent le plus repandu</li>
+            <li><strong>Fan-out/Fan-in</strong> avec <code>Send</code> permet le traitement parallele</li>
+            <li>Toujours configurer <strong>recursion_limit</strong> et un <strong>compteur interne</strong> pour les cycles</li>
+            <li>Le <strong>streaming</strong> offre 4 modes adaptes a differents cas d'usage</li>
+        </ul>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="#">&larr; Cours State Management</a>
+        <a href="lg_05_human_in_loop.html">Cours suivant : Human-in-the-Loop &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

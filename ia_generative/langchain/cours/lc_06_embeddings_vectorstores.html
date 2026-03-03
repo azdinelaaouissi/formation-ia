@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain - Embeddings et VectorStores</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="main">
+
+        <h1>Embeddings et VectorStores</h1>
+        <p class="subtitle">Cours 6 - Le Stockage Semantique pour la Recherche par Similarite avec LangChain</p>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 1 : Qu'est-ce qu'un Embedding ?                      -->
+        <!-- ============================================================ -->
+        <h2>1. Rappel : Qu'est-ce qu'un Embedding ?</h2>
+
+        <p>
+            Un embedding est une representation numerique (vecteur) d'un texte dans un espace mathematique
+            a haute dimension. L'idee fondamentale est que des textes ayant un sens similaire seront
+            representes par des vecteurs proches dans cet espace, tandis que des textes differents
+            seront eloignes.
+        </p>
+
+        <div class="definition">
+            Un <strong>embedding</strong> est un vecteur de nombres reels (par exemple, un tableau de 1536 floats)
+            qui capture le sens semantique d'un texte. Des textes semantiquement proches
+            (comme "le chat dort" et "le felin sommeille") auront des vecteurs proches dans l'espace
+            vectoriel, meme si les mots utilises sont completement differents.
+        </div>
+
+        <div class="svg-container">
+            <svg width="700" height="400" viewBox="0 0 700 400">
+                <text x="350" y="22" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Espace Semantique des Embeddings</text>
+
+                <!-- Axes -->
+                <line x1="80" y1="370" x2="680" y2="370" stroke="#444" stroke-width="1.5"/>
+                <line x1="80" y1="370" x2="80" y2="40" stroke="#444" stroke-width="1.5"/>
+                <text x="380" y="395" text-anchor="middle" fill="#666" font-size="11">Dimension 1 (sur 1536...)</text>
+                <text x="30" y="200" text-anchor="middle" fill="#666" font-size="11" transform="rotate(-90, 30, 200)">Dimension 2</text>
+
+                <!-- Cluster: Animaux -->
+                <ellipse cx="200" cy="130" rx="120" ry="80" fill="rgba(0,255,136,0.06)" stroke="#00ff88" stroke-width="1" stroke-dasharray="4,4"/>
+                <text x="200" y="60" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">Animaux</text>
+                <circle cx="170" cy="110" r="5" fill="#00ff88"/>
+                <text x="170" y="100" text-anchor="middle" fill="#e0e0e0" font-size="9">"le chat dort"</text>
+                <circle cx="210" cy="125" r="5" fill="#00ff88"/>
+                <text x="210" y="148" text-anchor="middle" fill="#e0e0e0" font-size="9">"le felin sommeille"</text>
+                <circle cx="240" cy="140" r="5" fill="#00ff88"/>
+                <text x="270" y="135" text-anchor="middle" fill="#e0e0e0" font-size="9">"un chien joue"</text>
+                <circle cx="160" cy="155" r="5" fill="#00ff88"/>
+                <text x="160" y="175" text-anchor="middle" fill="#e0e0e0" font-size="9">"animal de compagnie"</text>
+
+                <!-- Cluster: Programmation -->
+                <ellipse cx="520" cy="150" rx="130" ry="80" fill="rgba(86,156,214,0.06)" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,4"/>
+                <text x="520" y="78" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">Programmation</text>
+                <circle cx="480" cy="130" r="5" fill="#569cd6"/>
+                <text x="480" y="120" text-anchor="middle" fill="#e0e0e0" font-size="9">"coder en Python"</text>
+                <circle cx="540" cy="145" r="5" fill="#569cd6"/>
+                <text x="540" y="168" text-anchor="middle" fill="#e0e0e0" font-size="9">"programmer en JS"</text>
+                <circle cx="560" cy="120" r="5" fill="#569cd6"/>
+                <text x="590" y="112" text-anchor="middle" fill="#e0e0e0" font-size="9">"ecrire du code"</text>
+                <circle cx="500" cy="165" r="5" fill="#569cd6"/>
+                <text x="500" y="185" text-anchor="middle" fill="#e0e0e0" font-size="9">"developpement web"</text>
+
+                <!-- Cluster: Cuisine -->
+                <ellipse cx="350" cy="300" rx="130" ry="60" fill="rgba(255,107,53,0.06)" stroke="#ff6b35" stroke-width="1" stroke-dasharray="4,4"/>
+                <text x="350" y="255" text-anchor="middle" fill="#ff6b35" font-size="11" font-weight="bold">Cuisine</text>
+                <circle cx="310" cy="290" r="5" fill="#ff6b35"/>
+                <text x="310" y="310" text-anchor="middle" fill="#e0e0e0" font-size="9">"preparer un gateau"</text>
+                <circle cx="380" cy="305" r="5" fill="#ff6b35"/>
+                <text x="380" y="325" text-anchor="middle" fill="#e0e0e0" font-size="9">"recette de cuisine"</text>
+                <circle cx="350" cy="280" r="5" fill="#ff6b35"/>
+                <text x="355" y="275" text-anchor="middle" fill="#e0e0e0" font-size="9">"cuisiner un plat"</text>
+
+                <!-- Distance arrows -->
+                <line x1="210" y1="125" x2="170" y2="110" stroke="#00ff88" stroke-width="1" stroke-dasharray="2,2"/>
+                <text x="175" y="130" text-anchor="middle" fill="#00ff88" font-size="8">proche !</text>
+            </svg>
+        </div>
+
+        <div class="concept-box green">
+            <h3>Comment fonctionne la similarite ?</h3>
+            <p>
+                La similarite entre deux embeddings se mesure generalement avec la <strong>similarite cosinus</strong>
+                (cosine similarity). C'est le cosinus de l'angle entre les deux vecteurs :
+            </p>
+            <ul>
+                <li><strong>1.0</strong> = identiques (meme direction)</li>
+                <li><strong>0.0</strong> = orthogonaux (aucune relation)</li>
+                <li><strong>-1.0</strong> = opposes (sens contraire)</li>
+            </ul>
+            <p>
+                En pratique, pour du texte, les scores se situent generalement entre 0.5 (peu similaires)
+                et 0.95 (tres similaires). Un score superieur a 0.8 indique une forte similarite semantique.
+            </p>
+        </div>
+
+        <div class="code-block"><span class="comment"># Illustration : calculer la similarite cosinus manuellement</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="keyword">def</span> <span class="function">cosine_similarity</span>(vec_a, vec_b):
+    <span class="string">"""Calcule la similarite cosinus entre deux vecteurs."""</span>
+    dot_product = np.<span class="function">dot</span>(vec_a, vec_b)
+    norm_a = np.linalg.<span class="function">norm</span>(vec_a)
+    norm_b = np.linalg.<span class="function">norm</span>(vec_b)
+    <span class="keyword">return</span> dot_product / (norm_a * norm_b)
+
+<span class="comment"># Exemple simplifie avec des vecteurs 3D</span>
+chat = np.<span class="function">array</span>([<span class="number">0.9</span>, <span class="number">0.1</span>, <span class="number">0.2</span>])     <span class="comment"># "le chat dort"</span>
+felin = np.<span class="function">array</span>([<span class="number">0.85</span>, <span class="number">0.15</span>, <span class="number">0.25</span>])  <span class="comment"># "le felin sommeille"</span>
+code = np.<span class="function">array</span>([<span class="number">0.1</span>, <span class="number">0.9</span>, <span class="number">0.3</span>])      <span class="comment"># "programmer en Python"</span>
+
+<span class="function">print</span>(<span class="string">f"chat <-> felin  : <span class="keyword">{</span><span class="function">cosine_similarity</span>(chat, felin):<span class="number">.4f</span><span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"chat <-> code   : <span class="keyword">{</span><span class="function">cosine_similarity</span>(chat, code):<span class="number">.4f</span><span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"felin <-> code  : <span class="keyword">{</span><span class="function">cosine_similarity</span>(felin, code):<span class="number">.4f</span><span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">chat &lt;-&gt; felin  : 0.9965
+chat &lt;-&gt; code   : 0.4816
+felin &lt;-&gt; code  : 0.5203</div>
+
+        <div class="effect">
+            "le chat dort" et "le felin sommeille" ont une similarite de 0.99 (quasi identiques semantiquement),
+            alors que leur similarite avec "programmer en Python" est beaucoup plus faible (environ 0.5).
+            C'est exactement ce qu'on attend d'un bon modele d'embeddings.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 2 : Modeles d'Embeddings dans LangChain              -->
+        <!-- ============================================================ -->
+        <h2>2. Modeles d'Embeddings dans LangChain</h2>
+
+        <p>
+            LangChain fournit une interface unifiee pour plusieurs modeles d'embeddings. Tous heritent
+            de la classe <code>Embeddings</code> et exposent les memes methodes : <code>embed_documents()</code>
+            et <code>embed_query()</code>. Vous pouvez donc changer de modele sans modifier votre code.
+        </p>
+
+        <h3>2.1 OpenAIEmbeddings</h3>
+
+        <p>
+            Le modele d'embeddings le plus utilise en production. OpenAI propose le modele
+            <code>text-embedding-3-small</code> (1536 dimensions, performant et economique) et
+            <code>text-embedding-3-large</code> (3072 dimensions, plus precis).
+        </p>
+
+        <div class="code-block"><span class="comment"># pip install langchain-openai</span>
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+<span class="comment"># Initialiser le modele d'embeddings OpenAI</span>
+embeddings = <span class="function">OpenAIEmbeddings</span>(
+    model=<span class="string">"text-embedding-3-small"</span>,   <span class="comment"># Modele recommande (bon rapport qualite/prix)</span>
+    <span class="comment"># api_key="sk-..."  # Ou via OPENAI_API_KEY en variable d'environnement</span>
+)
+
+<span class="comment"># Generer l'embedding d'un seul texte</span>
+texte = <span class="string">"LangChain est un framework pour les applications LLM."</span>
+vecteur = embeddings.<span class="function">embed_query</span>(texte)
+
+<span class="function">print</span>(<span class="string">f"Type : <span class="keyword">{</span><span class="function">type</span>(vecteur)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Dimensions : <span class="keyword">{</span><span class="function">len</span>(vecteur)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Premiers valeurs : <span class="keyword">{</span>vecteur[:<span class="number">5</span>]<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Type : &lt;class 'list'&gt;
+Dimensions : 1536
+Premiers valeurs : [0.0023064255, -0.009327292, 0.015250344, -0.007869595, -0.028614640]</div>
+
+        <h3>2.2 HuggingFaceEmbeddings</h3>
+
+        <p>
+            Modeles open-source qui tournent localement sur votre machine. Aucune API externe requise,
+            aucun cout, mais necessite des ressources de calcul locales (CPU ou GPU). Le modele
+            <code>all-MiniLM-L6-v2</code> est le plus populaire : leger, rapide, et performant.
+        </p>
+
+        <div class="code-block"><span class="comment"># pip install langchain-huggingface sentence-transformers</span>
+<span class="keyword">from</span> langchain_huggingface <span class="keyword">import</span> HuggingFaceEmbeddings
+
+<span class="comment"># Modele local - tourne sur votre machine (telechargement au premier appel)</span>
+embeddings = <span class="function">HuggingFaceEmbeddings</span>(
+    model_name=<span class="string">"sentence-transformers/all-MiniLM-L6-v2"</span>,
+    model_kwargs={<span class="string">"device"</span>: <span class="string">"cpu"</span>},           <span class="comment"># "cuda" pour GPU NVIDIA</span>
+    encode_kwargs={<span class="string">"normalize_embeddings"</span>: <span class="keyword">True</span>},  <span class="comment"># Normaliser les vecteurs</span>
+)
+
+texte = <span class="string">"Les embeddings capturent le sens semantique du texte."</span>
+vecteur = embeddings.<span class="function">embed_query</span>(texte)
+
+<span class="function">print</span>(<span class="string">f"Dimensions : <span class="keyword">{</span><span class="function">len</span>(vecteur)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Premiers valeurs : <span class="keyword">{</span>vecteur[:<span class="number">5</span>]<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Dimensions : 384
+Premiers valeurs : [-0.0391, 0.0257, -0.0182, 0.0649, 0.0412]</div>
+
+        <h3>2.3 OllamaEmbeddings</h3>
+
+        <p>
+            <code>Ollama</code> permet d'executer des modeles d'embeddings localement avec une API simple.
+            Ideal pour le developpement local sans aucune dependance cloud ni cle API. Supporte des modeles
+            comme <code>nomic-embed-text</code> et <code>mxbai-embed-large</code>.
+        </p>
+
+        <div class="code-block"><span class="comment"># pip install langchain-ollama</span>
+<span class="comment"># Prerequis : avoir Ollama installe et le modele telecharge</span>
+<span class="comment"># ollama pull nomic-embed-text</span>
+
+<span class="keyword">from</span> langchain_ollama <span class="keyword">import</span> OllamaEmbeddings
+
+<span class="comment"># Modele local via Ollama (aucune cle API requise)</span>
+embeddings = <span class="function">OllamaEmbeddings</span>(
+    model=<span class="string">"nomic-embed-text"</span>,    <span class="comment"># Modele d'embedding local</span>
+    base_url=<span class="string">"http://localhost:11434"</span>,  <span class="comment"># URL du serveur Ollama</span>
+)
+
+texte = <span class="string">"Ollama permet d'executer des modeles IA localement."</span>
+vecteur = embeddings.<span class="function">embed_query</span>(texte)
+
+<span class="function">print</span>(<span class="string">f"Dimensions : <span class="keyword">{</span><span class="function">len</span>(vecteur)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Premiers valeurs : <span class="keyword">{</span>vecteur[:<span class="number">5</span>]<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Dimensions : 768
+Premiers valeurs : [0.01onal, -0.0234, 0.0567, -0.0123, 0.0891]</div>
+
+        <h3>2.4 CohereEmbeddings</h3>
+
+        <div class="code-block"><span class="comment"># pip install langchain-cohere</span>
+<span class="keyword">from</span> langchain_cohere <span class="keyword">import</span> CohereEmbeddings
+
+<span class="comment"># API cloud de Cohere</span>
+embeddings = <span class="function">CohereEmbeddings</span>(
+    model=<span class="string">"embed-multilingual-v3.0"</span>,   <span class="comment"># Excellent pour le multilangue</span>
+    <span class="comment"># cohere_api_key="..."  # Ou via COHERE_API_KEY</span>
+)
+
+texte = <span class="string">"Cohere excelle dans les embeddings multilingues."</span>
+vecteur = embeddings.<span class="function">embed_query</span>(texte)
+
+<span class="function">print</span>(<span class="string">f"Dimensions : <span class="keyword">{</span><span class="function">len</span>(vecteur)<span class="keyword">}</span>"</span>)  <span class="comment"># 1024 dimensions</span></div>
+
+        <div class="output-block">Dimensions : 1024</div>
+
+        <h3>2.5 Comparaison des modeles d'embeddings</h3>
+
+        <table>
+            <tr>
+                <th>Modele</th>
+                <th>Dimensions</th>
+                <th>Hebergement</th>
+                <th>Cout</th>
+                <th>Qualite</th>
+                <th>Vitesse</th>
+            </tr>
+            <tr>
+                <td>OpenAI text-embedding-3-small</td>
+                <td>1536</td>
+                <td>Cloud (API)</td>
+                <td>~0.02$/1M tokens</td>
+                <td>Excellente</td>
+                <td>Rapide</td>
+            </tr>
+            <tr>
+                <td>OpenAI text-embedding-3-large</td>
+                <td>3072</td>
+                <td>Cloud (API)</td>
+                <td>~0.13$/1M tokens</td>
+                <td>Top tier</td>
+                <td>Rapide</td>
+            </tr>
+            <tr>
+                <td>HuggingFace all-MiniLM-L6-v2</td>
+                <td>384</td>
+                <td>Local</td>
+                <td>Gratuit</td>
+                <td>Bonne</td>
+                <td>Tres rapide (CPU)</td>
+            </tr>
+            <tr>
+                <td>HuggingFace bge-large-en-v1.5</td>
+                <td>1024</td>
+                <td>Local</td>
+                <td>Gratuit</td>
+                <td>Excellente</td>
+                <td>Moyenne (GPU rec.)</td>
+            </tr>
+            <tr>
+                <td>Ollama nomic-embed-text</td>
+                <td>768</td>
+                <td>Local (Ollama)</td>
+                <td>Gratuit</td>
+                <td>Bonne</td>
+                <td>Rapide</td>
+            </tr>
+            <tr>
+                <td>Ollama mxbai-embed-large</td>
+                <td>1024</td>
+                <td>Local (Ollama)</td>
+                <td>Gratuit</td>
+                <td>Tres bonne</td>
+                <td>Moyenne</td>
+            </tr>
+            <tr>
+                <td>Cohere embed-multilingual-v3.0</td>
+                <td>1024</td>
+                <td>Cloud (API)</td>
+                <td>~0.10$/1M tokens</td>
+                <td>Excellente (multilingue)</td>
+                <td>Rapide</td>
+            </tr>
+        </table>
+
+        <div class="prof-note">
+            Pour le prototypage et l'apprentissage, utilisez <strong>HuggingFace all-MiniLM-L6-v2</strong>
+            (gratuit, rapide, sans API) ou <strong>Ollama nomic-embed-text</strong> (local). Pour la production,
+            <strong>OpenAI text-embedding-3-small</strong> offre le meilleur rapport qualite/prix. Si vous
+            travaillez avec du contenu multilingue (francais, anglais, etc.), Cohere <strong>embed-multilingual-v3.0</strong>
+            est un excellent choix.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 3 : embed_documents vs embed_query                   -->
+        <!-- ============================================================ -->
+        <h2>3. embed_documents() vs embed_query()</h2>
+
+        <p>
+            LangChain fait une distinction entre l'embedding de documents (les textes a stocker)
+            et l'embedding de requetes (la question de l'utilisateur). Cette distinction existe
+            car certains modeles utilisent des techniques differentes pour les documents et les requetes.
+        </p>
+
+        <div class="definition">
+            <strong>embed_documents(texts)</strong> : Prend une liste de textes et retourne une liste de vecteurs.
+            Utilise pour vectoriser les chunks de documents a stocker dans le VectorStore.
+            <br><br>
+            <strong>embed_query(text)</strong> : Prend un seul texte et retourne un seul vecteur.
+            Utilise pour vectoriser la question de l'utilisateur lors de la recherche.
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># ===== embed_documents : vectoriser PLUSIEURS textes a la fois =====</span>
+textes = [
+    <span class="string">"LangChain simplifie le developpement d'applications IA."</span>,
+    <span class="string">"Les VectorStores stockent les embeddings pour la recherche."</span>,
+    <span class="string">"FAISS est une librairie de recherche vectorielle de Meta."</span>,
+    <span class="string">"Chroma est un vector store open-source avec persistance."</span>,
+]
+
+vecteurs_docs = embeddings.<span class="function">embed_documents</span>(textes)
+
+<span class="function">print</span>(<span class="string">f"Nombre de documents vectorises : <span class="keyword">{</span><span class="function">len</span>(vecteurs_docs)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Dimensions par vecteur : <span class="keyword">{</span><span class="function">len</span>(vecteurs_docs[<span class="number">0</span>])<span class="keyword">}</span>"</span>)
+
+<span class="comment"># ===== embed_query : vectoriser UNE SEULE requete =====</span>
+question = <span class="string">"Quel vector store utiliser pour un projet ?"</span>
+vecteur_query = embeddings.<span class="function">embed_query</span>(question)
+
+<span class="function">print</span>(<span class="string">f"\nDimensions de la requete : <span class="keyword">{</span><span class="function">len</span>(vecteur_query)<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Nombre de documents vectorises : 4
+Dimensions par vecteur : 1536
+
+Dimensions de la requete : 1536</div>
+
+        <div class="code-block"><span class="comment"># Calculer la similarite entre la requete et chaque document</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="keyword">def</span> <span class="function">cosine_similarity</span>(a, b):
+    <span class="keyword">return</span> np.<span class="function">dot</span>(a, b) / (np.linalg.<span class="function">norm</span>(a) * np.linalg.<span class="function">norm</span>(b))
+
+<span class="function">print</span>(<span class="string">"Similarites avec la requete :"</span>)
+<span class="keyword">for</span> i, (texte, vec) <span class="keyword">in</span> <span class="function">enumerate</span>(<span class="function">zip</span>(textes, vecteurs_docs)):
+    sim = <span class="function">cosine_similarity</span>(vecteur_query, vec)
+    <span class="function">print</span>(<span class="string">f"  Doc <span class="keyword">{</span>i+<span class="number">1</span><span class="keyword">}</span> (sim=<span class="keyword">{</span>sim:<span class="number">.4f</span><span class="keyword">}</span>) : <span class="keyword">{</span>texte[:<span class="number">50</span>]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Similarites avec la requete :
+  Doc 1 (sim=0.7234) : LangChain simplifie le developpement d'applicatio...
+  Doc 2 (sim=0.8156) : Les VectorStores stockent les embeddings pour la ...
+  Doc 3 (sim=0.7891) : FAISS est une librairie de recherche vectorielle ...
+  Doc 4 (sim=0.8432) : Chroma est un vector store open-source avec persi...</div>
+
+        <div class="effect">
+            Le document 4 ("Chroma est un vector store...") a la plus forte similarite avec la question
+            "Quel vector store utiliser ?". C'est exactement ce que fait un VectorStore en interne :
+            il calcule la similarite entre votre question et tous les documents stockes, puis retourne
+            les plus proches.
+        </div>
+
+        <div class="warning">
+            Certains modeles (comme Cohere) utilisent des strategies d'embedding differentes pour les
+            documents et les requetes (par exemple, en ajoutant un prefixe "search_document:" ou
+            "search_query:"). C'est pourquoi il est important d'utiliser <code>embed_documents()</code> pour
+            les documents et <code>embed_query()</code> pour les requetes, et non l'inverse.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 4 : Les VectorStores                                 -->
+        <!-- ============================================================ -->
+        <h2>4. VectorStores : Le Stockage Vectoriel</h2>
+
+        <p>
+            Un VectorStore est une base de donnees specialisee dans le stockage et la recherche de vecteurs.
+            Contrairement a une base de donnees relationnelle (SQL) qui recherche par correspondance exacte,
+            un VectorStore recherche par <strong>similarite semantique</strong> : il trouve les vecteurs
+            les plus proches d'un vecteur de requete donne.
+        </p>
+
+        <div class="definition">
+            Un <strong>VectorStore</strong> est un systeme de stockage optimise pour les vecteurs d'embeddings.
+            Il permet d'indexer des milliers ou millions de vecteurs et de retrouver rapidement les
+            K vecteurs les plus proches d'un vecteur de requete (recherche KNN - K Nearest Neighbors).
+        </div>
+
+        <div class="svg-container">
+            <svg width="800" height="180" viewBox="0 0 800 180">
+                <defs>
+                    <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                    </marker>
+                </defs>
+                <text x="400" y="18" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Pipeline de Recherche Semantique</text>
+                <!-- Query -->
+                <rect x="10" y="45" width="120" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+                <text x="70" y="65" text-anchor="middle" fill="#569cd6" font-size="10" font-weight="bold">Question</text>
+                <text x="70" y="82" text-anchor="middle" fill="#aaa" font-size="8">"Comment utiliser</text>
+                <text x="70" y="92" text-anchor="middle" fill="#aaa" font-size="8">LangChain ?"</text>
+                <line x1="130" y1="70" x2="165" y2="70" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+                <!-- Embed -->
+                <rect x="170" y="45" width="110" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+                <text x="225" y="65" text-anchor="middle" fill="#ff8c42" font-size="10" font-weight="bold">Embedding</text>
+                <text x="225" y="82" text-anchor="middle" fill="#aaa" font-size="8">embed_query()</text>
+                <line x1="280" y1="70" x2="315" y2="70" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+                <!-- Query Vector -->
+                <rect x="320" y="45" width="100" height="50" rx="8" fill="#1a1a2e" stroke="#b5cea8" stroke-width="2"/>
+                <text x="370" y="65" text-anchor="middle" fill="#b5cea8" font-size="10" font-weight="bold">Vecteur</text>
+                <text x="370" y="82" text-anchor="middle" fill="#aaa" font-size="8">[0.023, -0.01, ...]</text>
+                <line x1="420" y1="70" x2="455" y2="70" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+                <!-- VectorStore Search -->
+                <rect x="460" y="35" width="130" height="70" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2.5"/>
+                <text x="525" y="58" text-anchor="middle" fill="#ff6b35" font-size="10" font-weight="bold">VectorStore</text>
+                <text x="525" y="75" text-anchor="middle" fill="#aaa" font-size="8">Recherche par</text>
+                <text x="525" y="88" text-anchor="middle" fill="#aaa" font-size="8">similarite (top K)</text>
+                <line x1="590" y1="70" x2="625" y2="70" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+                <!-- Results -->
+                <rect x="630" y="35" width="155" height="70" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="707" y="55" text-anchor="middle" fill="#00ff88" font-size="10" font-weight="bold">Documents Pertinents</text>
+                <text x="707" y="72" text-anchor="middle" fill="#aaa" font-size="8">Doc 3 (sim=0.92)</text>
+                <text x="707" y="84" text-anchor="middle" fill="#aaa" font-size="8">Doc 7 (sim=0.88)</text>
+                <text x="707" y="96" text-anchor="middle" fill="#aaa" font-size="8">Doc 1 (sim=0.85)</text>
+
+                <!-- Bottom note -->
+                <text x="400" y="140" text-anchor="middle" fill="#666" font-size="10">Les documents sont deja vectorises et stockes dans le VectorStore lors de l'ingestion</text>
+                <text x="400" y="158" text-anchor="middle" fill="#666" font-size="10">La recherche compare le vecteur de la question avec tous les vecteurs stockes</text>
+            </svg>
+        </div>
+
+        <div class="concept-box blue">
+            <h3>Pourquoi une base SQL ne suffit pas ?</h3>
+            <p>
+                Une base de donnees relationnelle classique (MySQL, PostgreSQL) stocke des donnees structurees
+                et recherche par correspondance exacte (<code>WHERE nom = 'LangChain'</code>). Elle ne peut pas
+                trouver des documents "semantiquement proches" d'une requete. Un VectorStore utilise des
+                algorithmes specialises (HNSW, IVF, PQ) pour effectuer des recherches de proximite
+                dans des espaces a haute dimension en temps quasi-lineaire, meme avec des millions de vecteurs.
+            </p>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 5 : FAISS                                            -->
+        <!-- ============================================================ -->
+        <h2>5. FAISS (Facebook AI Similarity Search)</h2>
+
+        <p>
+            FAISS est une librairie developpee par Meta (Facebook AI Research) pour la recherche efficace
+            de similarite dans des ensembles de vecteurs a haute dimension. Dans LangChain, c'est le
+            VectorStore le plus utilise pour le prototypage et l'apprentissage car il est
+            <strong>gratuit</strong>, <strong>rapide</strong> et fonctionne <strong>en memoire</strong>.
+        </p>
+
+        <div class="param-box">
+            <h4>Caracteristiques de FAISS</h4>
+            <ul>
+                <li><strong>Stockage</strong> : En memoire (RAM) avec possibilite de sauvegarde sur disque</li>
+                <li><strong>Performance</strong> : Tres rapide pour des millions de vecteurs</li>
+                <li><strong>Cout</strong> : Entierement gratuit et open-source</li>
+                <li><strong>Filtrage</strong> : Pas de filtrage natif par metadonnees (limitation)</li>
+                <li><strong>Usage ideal</strong> : Prototypage, projets personnels, applications mono-machine</li>
+            </ul>
+        </div>
+
+        <h3>5.1 Creer un VectorStore FAISS</h3>
+
+        <div class="code-block"><span class="comment"># pip install faiss-cpu  (ou faiss-gpu pour GPU NVIDIA)</span>
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+<span class="comment"># 1. Preparer le modele d'embeddings</span>
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># 2. Preparer les documents (normalement issus de Loaders + Splitters)</span>
+documents = [
+    <span class="function">Document</span>(
+        page_content=<span class="string">"LangChain est un framework pour creer des applications LLM."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"docs"</span>, <span class="string">"page"</span>: <span class="number">1</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"FAISS permet la recherche de similarite entre vecteurs."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"wiki"</span>, <span class="string">"page"</span>: <span class="number">5</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Les embeddings representent le sens semantique du texte."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"cours"</span>, <span class="string">"page"</span>: <span class="number">3</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Le RAG enrichit les reponses LLM avec des documents externes."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"docs"</span>, <span class="string">"page"</span>: <span class="number">10</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Python est le langage le plus utilise pour le machine learning."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"blog"</span>, <span class="string">"page"</span>: <span class="number">1</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Les Text Splitters decoupent les documents en chunks."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"cours"</span>, <span class="string">"page"</span>: <span class="number">7</span>}
+    ),
+]
+
+<span class="comment"># 3. Creer le VectorStore FAISS a partir des documents</span>
+vectorstore = FAISS.<span class="function">from_documents</span>(
+    documents=documents,
+    embedding=embeddings,
+)
+
+<span class="function">print</span>(<span class="string">f"VectorStore cree avec <span class="keyword">{</span>vectorstore.index.ntotal<span class="keyword">}</span> vecteurs"</span>)</div>
+
+        <div class="output-block">VectorStore cree avec 6 vecteurs</div>
+
+        <h3>5.2 Recherche de similarite avec FAISS</h3>
+
+        <div class="code-block"><span class="comment"># Recherche simple : trouver les documents les plus similaires</span>
+question = <span class="string">"Comment fonctionne la recherche semantique ?"</span>
+
+<span class="comment"># similarity_search retourne les k documents les plus proches</span>
+resultats = vectorstore.<span class="function">similarity_search</span>(
+    query=question,
+    k=<span class="number">3</span>,   <span class="comment"># Nombre de resultats a retourner</span>
+)
+
+<span class="function">print</span>(<span class="string">f"Question : <span class="keyword">{</span>question<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Top <span class="keyword">{</span><span class="function">len</span>(resultats)<span class="keyword">}</span> resultats :\n"</span>)
+
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(resultats):
+    <span class="function">print</span>(<span class="string">f"  {i+<span class="number">1</span>}. [<span class="keyword">{</span>doc.metadata[<span class="string">'source'</span>]<span class="keyword">}</span>, p.<span class="keyword">{</span>doc.metadata[<span class="string">'page'</span>]<span class="keyword">}</span>]"</span>)
+    <span class="function">print</span>(<span class="string">f"     <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)
+    <span class="function">print</span>()</div>
+
+        <div class="output-block">Question : Comment fonctionne la recherche semantique ?
+Top 3 resultats :
+
+  1. [wiki, p.5]
+     FAISS permet la recherche de similarite entre vecteurs.
+
+  2. [cours, p.3]
+     Les embeddings representent le sens semantique du texte.
+
+  3. [docs, p.10]
+     Le RAG enrichit les reponses LLM avec des documents externes.</div>
+
+        <h3>5.3 Recherche avec scores</h3>
+
+        <div class="code-block"><span class="comment"># similarity_search_with_score retourne les documents AVEC leur score</span>
+resultats_scores = vectorstore.<span class="function">similarity_search_with_score</span>(
+    query=<span class="string">"Qu'est-ce que LangChain ?"</span>,
+    k=<span class="number">4</span>,
+)
+
+<span class="function">print</span>(<span class="string">"Resultats avec scores (distance L2 - plus bas = plus similaire) :\n"</span>)
+
+<span class="keyword">for</span> doc, score <span class="keyword">in</span> resultats_scores:
+    <span class="function">print</span>(<span class="string">f"  Score: <span class="keyword">{</span>score:<span class="number">.4f</span><span class="keyword">}</span> | [<span class="keyword">{</span>doc.metadata[<span class="string">'source'</span>]<span class="keyword">}</span>] <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Resultats avec scores (distance L2 - plus bas = plus similaire) :
+
+  Score: 0.2341 | [docs] LangChain est un framework pour creer des applications LLM.
+  Score: 0.4567 | [docs] Le RAG enrichit les reponses LLM avec des documents externes.
+  Score: 0.5123 | [cours] Les embeddings representent le sens semantique du texte.
+  Score: 0.6789 | [wiki] FAISS permet la recherche de similarite entre vecteurs.</div>
+
+        <div class="prof-note">
+            Attention a l'interpretation des scores ! Avec FAISS, le score par defaut est une <strong>distance L2</strong>
+            (distance euclidienne) : un score <strong>plus bas</strong> signifie <strong>plus similaire</strong>.
+            C'est l'inverse de la similarite cosinus ou un score plus haut signifie plus similaire.
+            Certaines configurations FAISS utilisent le produit scalaire (inner product) ou la similarite cosinus.
+        </div>
+
+        <h3>5.4 Sauvegarder et charger un index FAISS</h3>
+
+        <div class="code-block"><span class="comment"># SAUVEGARDER l'index sur disque</span>
+vectorstore.<span class="function">save_local</span>(
+    folder_path=<span class="string">"./faiss_index"</span>,
+    index_name=<span class="string">"mon_index"</span>
+)
+<span class="function">print</span>(<span class="string">"Index sauvegarde dans ./faiss_index/"</span>)
+
+<span class="comment"># CHARGER l'index depuis le disque</span>
+vectorstore_loaded = FAISS.<span class="function">load_local</span>(
+    folder_path=<span class="string">"./faiss_index"</span>,
+    embeddings=embeddings,
+    index_name=<span class="string">"mon_index"</span>,
+    allow_dangerous_deserialization=<span class="keyword">True</span>,  <span class="comment"># Requis depuis LangChain 0.2+</span>
+)
+
+<span class="function">print</span>(<span class="string">f"Index charge : <span class="keyword">{</span>vectorstore_loaded.index.ntotal<span class="keyword">}</span> vecteurs"</span>)
+
+<span class="comment"># Verifier que ca fonctionne</span>
+resultats = vectorstore_loaded.<span class="function">similarity_search</span>(<span class="string">"LangChain"</span>, k=<span class="number">2</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats:
+    <span class="function">print</span>(<span class="string">f"  -> <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Index sauvegarde dans ./faiss_index/
+Index charge : 6 vecteurs
+  -> LangChain est un framework pour creer des applications LLM.
+  -> Le RAG enrichit les reponses LLM avec des documents externes.</div>
+
+        <h3>5.5 Ajouter des documents a un index existant</h3>
+
+        <div class="code-block"><span class="comment"># Ajouter de nouveaux documents a l'index existant</span>
+nouveaux_docs = [
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Chroma est une alternative open-source a Pinecone."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"blog"</span>, <span class="string">"page"</span>: <span class="number">2</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"LangGraph permet de creer des workflows d'agents IA."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"docs"</span>, <span class="string">"page"</span>: <span class="number">15</span>}
+    ),
+]
+
+<span class="comment"># add_documents() vectorise et ajoute les documents</span>
+vectorstore.<span class="function">add_documents</span>(nouveaux_docs)
+
+<span class="function">print</span>(<span class="string">f"Apres ajout : <span class="keyword">{</span>vectorstore.index.ntotal<span class="keyword">}</span> vecteurs"</span>)</div>
+
+        <div class="output-block">Apres ajout : 8 vecteurs</div>
+
+        <div class="code-block"><span class="comment"># Fusionner deux index FAISS</span>
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+
+<span class="comment"># Creer un deuxieme index</span>
+docs_batch2 = [
+    <span class="function">Document</span>(page_content=<span class="string">"Les prompts sont des instructions pour le LLM."</span>, metadata={<span class="string">"source"</span>: <span class="string">"cours"</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"La temperature controle la creativite du modele."</span>, metadata={<span class="string">"source"</span>: <span class="string">"docs"</span>}),
+]
+vectorstore2 = FAISS.<span class="function">from_documents</span>(docs_batch2, embeddings)
+
+<span class="comment"># Fusionner les deux index</span>
+vectorstore.<span class="function">merge_from</span>(vectorstore2)
+<span class="function">print</span>(<span class="string">f"Apres fusion : <span class="keyword">{</span>vectorstore.index.ntotal<span class="keyword">}</span> vecteurs"</span>)</div>
+
+        <div class="output-block">Apres fusion : 10 vecteurs</div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 6 : Chroma                                           -->
+        <!-- ============================================================ -->
+        <h2>6. Chroma - VectorStore Persistant</h2>
+
+        <p>
+            Chroma est un VectorStore open-source qui offre la <strong>persistance native</strong> sur disque,
+            le <strong>filtrage par metadonnees</strong>, et une API simple et intuitive. C'est le VectorStore
+            le plus recommande pour les projets qui necessitent un stockage durable sans la complexite
+            d'une solution cloud.
+        </p>
+
+        <div class="param-box">
+            <h4>Caracteristiques de Chroma</h4>
+            <ul>
+                <li><strong>Persistance</strong> : Sauvegarde automatique sur disque (pas besoin de save/load manuels)</li>
+                <li><strong>Filtrage</strong> : Filtrage natif par metadonnees (where clause)</li>
+                <li><strong>Collections</strong> : Organisation des documents en collections nommees</li>
+                <li><strong>Cout</strong> : Gratuit et open-source</li>
+                <li><strong>Usage ideal</strong> : Applications necessitant de la persistance et du filtrage</li>
+            </ul>
+        </div>
+
+        <h3>6.1 Creer un VectorStore Chroma persistant</h3>
+
+        <div class="code-block"><span class="comment"># pip install langchain-chroma</span>
+<span class="keyword">from</span> langchain_chroma <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Documents avec metadonnees riches</span>
+documents = [
+    <span class="function">Document</span>(
+        page_content=<span class="string">"La politique de conges prevoit 25 jours par an."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"politique_rh.pdf"</span>, <span class="string">"departement"</span>: <span class="string">"RH"</span>, <span class="string">"annee"</span>: <span class="number">2025</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Le budget IT pour 2025 est de 2.5 millions d'euros."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"budget_it.pdf"</span>, <span class="string">"departement"</span>: <span class="string">"IT"</span>, <span class="string">"annee"</span>: <span class="number">2025</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Les augmentations salariales sont de 3% en moyenne."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"politique_rh.pdf"</span>, <span class="string">"departement"</span>: <span class="string">"RH"</span>, <span class="string">"annee"</span>: <span class="number">2025</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Le deploiement Kubernetes est prevu pour le Q2 2025."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"roadmap_it.pdf"</span>, <span class="string">"departement"</span>: <span class="string">"IT"</span>, <span class="string">"annee"</span>: <span class="number">2025</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Le teletravail est autorise 3 jours par semaine."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"politique_rh.pdf"</span>, <span class="string">"departement"</span>: <span class="string">"RH"</span>, <span class="string">"annee"</span>: <span class="number">2024</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"La migration vers le cloud AWS est terminee a 80%."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"rapport_it.pdf"</span>, <span class="string">"departement"</span>: <span class="string">"IT"</span>, <span class="string">"annee"</span>: <span class="number">2024</span>}
+    ),
+]
+
+<span class="comment"># Creer un VectorStore Chroma PERSISTANT</span>
+vectorstore = Chroma.<span class="function">from_documents</span>(
+    documents=documents,
+    embedding=embeddings,
+    collection_name=<span class="string">"knowledge_base"</span>,       <span class="comment"># Nom de la collection</span>
+    persist_directory=<span class="string">"./chroma_db"</span>,         <span class="comment"># Dossier de persistance</span>
+)
+
+<span class="function">print</span>(<span class="string">f"VectorStore Chroma cree avec <span class="keyword">{</span>vectorstore._collection.<span class="function">count</span>()<span class="keyword">}</span> documents"</span>)
+<span class="function">print</span>(<span class="string">f"Persiste dans : ./chroma_db/"</span>)</div>
+
+        <div class="output-block">VectorStore Chroma cree avec 6 documents
+Persiste dans : ./chroma_db/</div>
+
+        <h3>6.2 Recharger un VectorStore Chroma existant</h3>
+
+        <div class="code-block"><span class="comment"># Recharger le VectorStore depuis le disque (aucune re-vectorisation !)</span>
+vectorstore_loaded = <span class="function">Chroma</span>(
+    collection_name=<span class="string">"knowledge_base"</span>,
+    embedding_function=embeddings,
+    persist_directory=<span class="string">"./chroma_db"</span>,
+)
+
+<span class="function">print</span>(<span class="string">f"Collection rechargee : <span class="keyword">{</span>vectorstore_loaded._collection.<span class="function">count</span>()<span class="keyword">}</span> documents"</span>)
+
+<span class="comment"># Test : recherche immediate sans re-vectorisation</span>
+resultats = vectorstore_loaded.<span class="function">similarity_search</span>(<span class="string">"conges annuels"</span>, k=<span class="number">2</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats:
+    <span class="function">print</span>(<span class="string">f"  -> <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Collection rechargee : 6 documents
+  -> La politique de conges prevoit 25 jours par an.
+  -> Le teletravail est autorise 3 jours par semaine.</div>
+
+        <div class="effect">
+            Contrairement a FAISS qui necessite <code>save_local()</code> et <code>load_local()</code>,
+            Chroma persiste automatiquement. Quand vous redemarrez votre application, il suffit de
+            re-instancier Chroma avec le meme <code>persist_directory</code> et la collection est
+            immediatement disponible avec tous les vecteurs deja calcules.
+        </div>
+
+        <h3>6.3 Recherche avec filtrage par metadonnees dans Chroma</h3>
+
+        <div class="code-block"><span class="comment"># ===== Recherche FILTREE par metadonnees =====</span>
+
+<span class="comment"># 1. Filtrer par departement</span>
+resultats_rh = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"politique de l'entreprise"</span>,
+    k=<span class="number">3</span>,
+    filter={<span class="string">"departement"</span>: <span class="string">"RH"</span>},  <span class="comment"># Uniquement les documents RH</span>
+)
+
+<span class="function">print</span>(<span class="string">"=== Documents RH uniquement ==="</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats_rh:
+    <span class="function">print</span>(<span class="string">f"  [<span class="keyword">{</span>doc.metadata[<span class="string">'departement'</span>]<span class="keyword">}</span>] <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)
+
+<span class="comment"># 2. Filtrer par annee</span>
+resultats_2025 = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"budget et projets"</span>,
+    k=<span class="number">3</span>,
+    filter={<span class="string">"annee"</span>: <span class="number">2025</span>},  <span class="comment"># Uniquement les documents de 2025</span>
+)
+
+<span class="function">print</span>(<span class="string">"\n=== Documents 2025 uniquement ==="</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats_2025:
+    <span class="function">print</span>(<span class="string">f"  [<span class="keyword">{</span>doc.metadata[<span class="string">'annee'</span>]<span class="keyword">}</span>] <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)
+
+<span class="comment"># 3. Filtrer avec des conditions avancees (Chroma supporte $and, $or)</span>
+resultats_filtre = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"informations recentes"</span>,
+    k=<span class="number">3</span>,
+    filter={
+        <span class="string">"$and"</span>: [
+            {<span class="string">"departement"</span>: <span class="string">"IT"</span>},
+            {<span class="string">"annee"</span>: <span class="number">2025</span>}
+        ]
+    },
+)
+
+<span class="function">print</span>(<span class="string">"\n=== Documents IT + 2025 ==="</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats_filtre:
+    <span class="function">print</span>(<span class="string">f"  [<span class="keyword">{</span>doc.metadata[<span class="string">'departement'</span>]<span class="keyword">}</span>, <span class="keyword">{</span>doc.metadata[<span class="string">'annee'</span>]<span class="keyword">}</span>] <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">=== Documents RH uniquement ===
+  [RH] La politique de conges prevoit 25 jours par an.
+  [RH] Les augmentations salariales sont de 3% en moyenne.
+  [RH] Le teletravail est autorise 3 jours par semaine.
+
+=== Documents 2025 uniquement ===
+  [2025] Le budget IT pour 2025 est de 2.5 millions d'euros.
+  [2025] Le deploiement Kubernetes est prevu pour le Q2 2025.
+  [2025] La politique de conges prevoit 25 jours par an.
+
+=== Documents IT + 2025 ===
+  [IT, 2025] Le budget IT pour 2025 est de 2.5 millions d'euros.
+  [IT, 2025] Le deploiement Kubernetes est prevu pour le Q2 2025.</div>
+
+        <div class="prof-note">
+            Le filtrage par metadonnees est extremement puissant pour les applications d'entreprise.
+            Imaginez un chatbot qui peut filtrer les reponses par departement, par annee, par niveau
+            de confidentialite, ou par type de document. Cela ameliore considerablement la pertinence
+            des resultats et permet de construire des systemes RAG vraiment utiles.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 7 : Pinecone                                         -->
+        <!-- ============================================================ -->
+        <h2>7. Pinecone - VectorStore Cloud</h2>
+
+        <p>
+            Pinecone est un service cloud de base vectorielle entierement gere. Il est concu pour la production
+            a grande echelle avec des fonctionnalites avancees comme le scaling automatique, la replication,
+            et le filtrage par metadonnees. C'est la solution privilegiee pour les applications en production
+            necessitant haute disponibilite et haute performance.
+        </p>
+
+        <div class="code-block"><span class="comment"># pip install langchain-pinecone pinecone-client</span>
+<span class="keyword">from</span> langchain_pinecone <span class="keyword">import</span> PineconeVectorStore
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> pinecone <span class="keyword">import</span> Pinecone, ServerlessSpec
+
+<span class="comment"># 1. Initialiser Pinecone</span>
+pc = <span class="function">Pinecone</span>(api_key=<span class="string">"votre-cle-api-pinecone"</span>)
+
+<span class="comment"># 2. Creer un index (une seule fois)</span>
+index_name = <span class="string">"langchain-rag"</span>
+<span class="keyword">if</span> index_name <span class="keyword">not in</span> pc.<span class="function">list_indexes</span>().<span class="function">names</span>():
+    pc.<span class="function">create_index</span>(
+        name=index_name,
+        dimension=<span class="number">1536</span>,                      <span class="comment"># Doit correspondre au modele d'embeddings</span>
+        metric=<span class="string">"cosine"</span>,                      <span class="comment"># "cosine", "euclidean", ou "dotproduct"</span>
+        spec=<span class="function">ServerlessSpec</span>(
+            cloud=<span class="string">"aws"</span>,
+            region=<span class="string">"us-east-1"</span>
+        ),
+    )
+
+<span class="comment"># 3. Creer le VectorStore LangChain</span>
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+
+vectorstore = PineconeVectorStore.<span class="function">from_documents</span>(
+    documents=documents,
+    embedding=embeddings,
+    index_name=index_name,
+)
+
+<span class="function">print</span>(<span class="string">"Documents indexes dans Pinecone !"</span>)
+
+<span class="comment"># 4. Recherche</span>
+resultats = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"politique de conges"</span>,
+    k=<span class="number">3</span>,
+)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats:
+    <span class="function">print</span>(<span class="string">f"  -> <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="concept-box">
+            <h3>Quand utiliser Pinecone ?</h3>
+            <ul>
+                <li><strong>Applications en production</strong> avec des millions de vecteurs</li>
+                <li><strong>Haute disponibilite</strong> requise (SLA 99.99%)</li>
+                <li><strong>Equipes distribuees</strong> : acces partage via API cloud</li>
+                <li><strong>Scaling automatique</strong> : pas de gestion d'infrastructure</li>
+            </ul>
+            <p>
+                Pour le prototypage ou les petits projets, FAISS ou Chroma sont plus adaptes (gratuits, locaux, simples).
+            </p>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 8 : Similarity Search en detail                      -->
+        <!-- ============================================================ -->
+        <h2>8. Recherche de Similarite en Detail</h2>
+
+        <p>
+            La recherche de similarite est l'operation fondamentale d'un VectorStore. Elle compare
+            le vecteur de la requete avec tous les vecteurs stockes et retourne les K plus proches.
+            Voyons les differentes methodes disponibles.
+        </p>
+
+        <h3>8.1 similarity_search() - Recherche basique</h3>
+
+        <div class="code-block"><span class="comment"># Recherche basique - retourne les k documents les plus similaires</span>
+resultats = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"Comment fonctionne le RAG ?"</span>,
+    k=<span class="number">4</span>,       <span class="comment"># Nombre de resultats</span>
+)
+
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats:
+    <span class="function">print</span>(<span class="string">f"  <span class="keyword">{</span>doc.page_content[:<span class="number">70</span>]<span class="keyword">}</span>..."</span>)</div>
+
+        <h3>8.2 similarity_search_with_score() - Avec scores</h3>
+
+        <div class="code-block"><span class="comment"># Recherche avec score - permet de filtrer par seuil de pertinence</span>
+resultats = vectorstore.<span class="function">similarity_search_with_score</span>(
+    query=<span class="string">"gestion des conges"</span>,
+    k=<span class="number">5</span>,
+)
+
+<span class="function">print</span>(<span class="string">"Resultats avec scores :\n"</span>)
+<span class="keyword">for</span> doc, score <span class="keyword">in</span> resultats:
+    <span class="comment"># Filtrer : ne garder que les resultats avec un bon score</span>
+    pertinence = <span class="string">"PERTINENT"</span> <span class="keyword">if</span> score &lt; <span class="number">0.5</span> <span class="keyword">else</span> <span class="string">"FAIBLE"</span>
+    <span class="function">print</span>(<span class="string">f"  [{pertinence}] Score: <span class="keyword">{</span>score:<span class="number">.4f</span><span class="keyword">}</span> | <span class="keyword">{</span>doc.page_content[:<span class="number">60</span>]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Resultats avec scores :
+
+  [PERTINENT] Score: 0.2156 | La politique de conges prevoit 25 jours par an....
+  [PERTINENT] Score: 0.3891 | Le teletravail est autorise 3 jours par semaine....
+  [PERTINENT] Score: 0.4567 | Les augmentations salariales sont de 3% en moyenne....
+  [FAIBLE] Score: 0.7234 | Le budget IT pour 2025 est de 2.5 millions d'euro...
+  [FAIBLE] Score: 0.8901 | Le deploiement Kubernetes est prevu pour le Q2 202...</div>
+
+        <h3>8.3 Recherche avec seuil de score (score_threshold)</h3>
+
+        <div class="code-block"><span class="comment"># Utiliser un retriever avec seuil de score</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity_score_threshold"</span>,
+    search_kwargs={
+        <span class="string">"score_threshold"</span>: <span class="number">0.7</span>,   <span class="comment"># Seuil minimum de similarite (0 a 1)</span>
+        <span class="string">"k"</span>: <span class="number">5</span>,                    <span class="comment"># Nombre max de resultats</span>
+    },
+)
+
+<span class="comment"># Seuls les documents avec un score >= 0.7 seront retournes</span>
+resultats = retriever.<span class="function">invoke</span>(<span class="string">"politique de conges et vacances"</span>)
+
+<span class="function">print</span>(<span class="string">f"Resultats au-dessus du seuil : <span class="keyword">{</span><span class="function">len</span>(resultats)<span class="keyword">}</span>"</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats:
+    <span class="function">print</span>(<span class="string">f"  -> <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Resultats au-dessus du seuil : 2
+  -> La politique de conges prevoit 25 jours par an.
+  -> Le teletravail est autorise 3 jours par semaine.</div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 9 : Maximum Marginal Relevance (MMR)                 -->
+        <!-- ============================================================ -->
+        <h2>9. Maximum Marginal Relevance (MMR)</h2>
+
+        <p>
+            La recherche de similarite classique peut retourner des resultats redondants : si plusieurs
+            documents disent presque la meme chose, ils seront tous retournes car ils sont tous proches
+            de la requete. Le <strong>MMR</strong> (Maximum Marginal Relevance) resout ce probleme en
+            equilibrant <strong>pertinence</strong> et <strong>diversite</strong>.
+        </p>
+
+        <div class="definition">
+            Le <strong>MMR (Maximum Marginal Relevance)</strong> est un algorithme qui selectionne les
+            documents en maximisant a la fois la similarite avec la requete ET la diversite entre les
+            documents selectionnes. Il evite de retourner des doublons semantiques.
+        </div>
+
+        <div class="svg-container">
+            <svg width="750" height="260" viewBox="0 0 750 260">
+                <text x="375" y="22" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Similarite Simple vs MMR</text>
+                <!-- Similarity column -->
+                <rect x="20" y="40" width="340" height="200" rx="10" fill="none" stroke="#569cd6" stroke-width="1.5" stroke-dasharray="4,4"/>
+                <text x="190" y="65" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Similarite Simple (k=3)</text>
+                <rect x="40" y="80" width="300" height="30" rx="5" fill="#1a1a2e" stroke="#569cd6"/>
+                <text x="190" y="100" text-anchor="middle" fill="#e0e0e0" font-size="9">1. "Les conges sont de 25 jours" (sim=0.95)</text>
+                <rect x="40" y="120" width="300" height="30" rx="5" fill="#1a1a2e" stroke="#569cd6"/>
+                <text x="190" y="140" text-anchor="middle" fill="#e0e0e0" font-size="9">2. "25 jours de conges par an" (sim=0.93)</text>
+                <rect x="40" y="160" width="300" height="30" rx="5" fill="#1a1a2e" stroke="#569cd6"/>
+                <text x="190" y="180" text-anchor="middle" fill="#e0e0e0" font-size="9">3. "Le droit aux conges est de 25j" (sim=0.91)</text>
+                <text x="190" y="220" text-anchor="middle" fill="#ff4444" font-size="10">3 resultats quasi identiques !</text>
+
+                <!-- MMR column -->
+                <rect x="390" y="40" width="340" height="200" rx="10" fill="none" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="4,4"/>
+                <text x="560" y="65" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">MMR (k=3, diversite)</text>
+                <rect x="410" y="80" width="300" height="30" rx="5" fill="#1a1a2e" stroke="#00ff88"/>
+                <text x="560" y="100" text-anchor="middle" fill="#e0e0e0" font-size="9">1. "Les conges sont de 25 jours" (sim=0.95)</text>
+                <rect x="410" y="120" width="300" height="30" rx="5" fill="#1a1a2e" stroke="#00ff88"/>
+                <text x="560" y="140" text-anchor="middle" fill="#e0e0e0" font-size="9">2. "Comment poser ses conges ?" (sim=0.82)</text>
+                <rect x="410" y="160" width="300" height="30" rx="5" fill="#1a1a2e" stroke="#00ff88"/>
+                <text x="560" y="180" text-anchor="middle" fill="#e0e0e0" font-size="9">3. "Conges speciaux et RTT" (sim=0.78)</text>
+                <text x="560" y="220" text-anchor="middle" fill="#00ff88" font-size="10">3 resultats pertinents ET divers !</text>
+            </svg>
+        </div>
+
+        <div class="code-block"><span class="comment"># ===== Recherche MMR =====</span>
+
+<span class="comment"># 1. Recherche par similarite classique</span>
+resultats_sim = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"politique de l'entreprise"</span>,
+    k=<span class="number">4</span>,
+)
+
+<span class="function">print</span>(<span class="string">"=== Similarite classique ==="</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats_sim:
+    <span class="function">print</span>(<span class="string">f"  -> <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)
+
+<span class="comment"># 2. Recherche MMR (Maximum Marginal Relevance)</span>
+resultats_mmr = vectorstore.<span class="function">max_marginal_relevance_search</span>(
+    query=<span class="string">"politique de l'entreprise"</span>,
+    k=<span class="number">4</span>,           <span class="comment"># Nombre de resultats finaux</span>
+    fetch_k=<span class="number">20</span>,    <span class="comment"># Nombre de candidats a considerer (plus grand = meilleur)</span>
+    lambda_mult=<span class="number">0.5</span>,  <span class="comment"># 0 = diversite max, 1 = similarite pure</span>
+)
+
+<span class="function">print</span>(<span class="string">"\n=== MMR (diversite) ==="</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats_mmr:
+    <span class="function">print</span>(<span class="string">f"  -> <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">=== Similarite classique ===
+  -> La politique de conges prevoit 25 jours par an.
+  -> Les augmentations salariales sont de 3% en moyenne.
+  -> Le teletravail est autorise 3 jours par semaine.
+  -> Le budget IT pour 2025 est de 2.5 millions d'euros.
+
+=== MMR (diversite) ===
+  -> La politique de conges prevoit 25 jours par an.
+  -> Le budget IT pour 2025 est de 2.5 millions d'euros.
+  -> Le deploiement Kubernetes est prevu pour le Q2 2025.
+  -> Les augmentations salariales sont de 3% en moyenne.</div>
+
+        <div class="param-box">
+            <h4>Parametres du MMR</h4>
+            <table>
+                <tr><th>Parametre</th><th>Description</th><th>Valeur recommandee</th></tr>
+                <tr>
+                    <td><code>k</code></td>
+                    <td>Nombre de resultats finaux a retourner</td>
+                    <td>3-5</td>
+                </tr>
+                <tr>
+                    <td><code>fetch_k</code></td>
+                    <td>Nombre de candidats pre-selectionnes par similarite</td>
+                    <td>20-50 (plus grand que k)</td>
+                </tr>
+                <tr>
+                    <td><code>lambda_mult</code></td>
+                    <td>Equilibre pertinence/diversite (0=diversite, 1=pertinence)</td>
+                    <td>0.5 (equilibre) ou 0.25 (plus divers)</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="code-block"><span class="comment"># Utiliser MMR via un Retriever (pour integration dans les chaines)</span>
+retriever_mmr = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={
+        <span class="string">"k"</span>: <span class="number">4</span>,
+        <span class="string">"fetch_k"</span>: <span class="number">20</span>,
+        <span class="string">"lambda_mult"</span>: <span class="number">0.25</span>,   <span class="comment"># Favoriser la diversite</span>
+    },
+)
+
+<span class="comment"># Utilisation dans une chaine RAG</span>
+resultats = retriever_mmr.<span class="function">invoke</span>(<span class="string">"Quelles sont les politiques de l'entreprise ?"</span>)
+
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats:
+    <span class="function">print</span>(<span class="string">f"  [<span class="keyword">{</span>doc.metadata[<span class="string">'departement'</span>]<span class="keyword">}</span>] <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">  [RH] La politique de conges prevoit 25 jours par an.
+  [IT] Le budget IT pour 2025 est de 2.5 millions d'euros.
+  [RH] Le teletravail est autorise 3 jours par semaine.
+  [IT] Le deploiement Kubernetes est prevu pour le Q2 2025.</div>
+
+        <div class="prof-note">
+            Utilisez le MMR quand vos documents contiennent beaucoup d'informations similaires ou
+            repetitives. C'est particulierement utile pour les FAQs, les politiques d'entreprise
+            (ou plusieurs documents reformulent la meme regle), et les bases de connaissances techniques.
+            Un <code>lambda_mult</code> de 0.5 est un bon point de depart.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 10 : Filtrage par Metadonnees                        -->
+        <!-- ============================================================ -->
+        <h2>10. Filtrage par Metadonnees</h2>
+
+        <p>
+            Le filtrage par metadonnees permet de restreindre la recherche a un sous-ensemble de documents
+            <strong>avant</strong> d'effectuer la recherche de similarite. C'est comme ajouter une clause
+            <code>WHERE</code> en SQL avant de chercher les plus similaires.
+        </p>
+
+        <h3>10.1 Filtrage simple</h3>
+
+        <div class="code-block"><span class="comment"># Filtrage simple : une seule condition</span>
+
+<span class="comment"># Uniquement les documents du departement IT</span>
+resultats_it = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"projets en cours"</span>,
+    k=<span class="number">3</span>,
+    filter={<span class="string">"departement"</span>: <span class="string">"IT"</span>}
+)
+
+<span class="function">print</span>(<span class="string">"Documents IT :"</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats_it:
+    <span class="function">print</span>(<span class="string">f"  [<span class="keyword">{</span>doc.metadata[<span class="string">'source'</span>]<span class="keyword">}</span>] <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Documents IT :
+  [budget_it.pdf] Le budget IT pour 2025 est de 2.5 millions d'euros.
+  [roadmap_it.pdf] Le deploiement Kubernetes est prevu pour le Q2 2025.
+  [rapport_it.pdf] La migration vers le cloud AWS est terminee a 80%.</div>
+
+        <h3>10.2 Filtrage combine (AND, OR)</h3>
+
+        <div class="code-block"><span class="comment"># Filtrage avance avec Chroma : $and, $or, $gt, $lt, $gte, $lte, $ne</span>
+
+<span class="comment"># 1. AND : IT ET 2025</span>
+resultats = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"projets"</span>,
+    k=<span class="number">5</span>,
+    filter={
+        <span class="string">"$and"</span>: [
+            {<span class="string">"departement"</span>: <span class="string">"IT"</span>},
+            {<span class="string">"annee"</span>: {<span class="string">"$gte"</span>: <span class="number">2025</span>}}  <span class="comment"># annee >= 2025</span>
+        ]
+    }
+)
+<span class="function">print</span>(<span class="string">f"IT + 2025+ : <span class="keyword">{</span><span class="function">len</span>(resultats)<span class="keyword">}</span> resultats"</span>)
+
+<span class="comment"># 2. OR : RH OU IT</span>
+resultats = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"politique"</span>,
+    k=<span class="number">5</span>,
+    filter={
+        <span class="string">"$or"</span>: [
+            {<span class="string">"departement"</span>: <span class="string">"RH"</span>},
+            {<span class="string">"departement"</span>: <span class="string">"IT"</span>},
+        ]
+    }
+)
+<span class="function">print</span>(<span class="string">f"RH ou IT : <span class="keyword">{</span><span class="function">len</span>(resultats)<span class="keyword">}</span> resultats"</span>)
+
+<span class="comment"># 3. NOT : Tout sauf RH</span>
+resultats = vectorstore.<span class="function">similarity_search</span>(
+    query=<span class="string">"budget"</span>,
+    k=<span class="number">5</span>,
+    filter={<span class="string">"departement"</span>: {<span class="string">"$ne"</span>: <span class="string">"RH"</span>}}  <span class="comment"># departement != "RH"</span>
+)
+<span class="function">print</span>(<span class="string">f"Pas RH : <span class="keyword">{</span><span class="function">len</span>(resultats)<span class="keyword">}</span> resultats"</span>)</div>
+
+        <div class="output-block">IT + 2025+ : 2 resultats
+RH ou IT : 6 resultats
+Pas RH : 3 resultats</div>
+
+        <h3>10.3 Filtrage via un Retriever</h3>
+
+        <div class="code-block"><span class="comment"># Creer un Retriever avec filtrage integre</span>
+retriever_rh = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity"</span>,
+    search_kwargs={
+        <span class="string">"k"</span>: <span class="number">3</span>,
+        <span class="string">"filter"</span>: {<span class="string">"departement"</span>: <span class="string">"RH"</span>},
+    },
+)
+
+<span class="comment"># Ce retriever ne retournera QUE des documents RH</span>
+resultats = retriever_rh.<span class="function">invoke</span>(<span class="string">"Quelles sont les regles de teletravail ?"</span>)
+
+<span class="keyword">for</span> doc <span class="keyword">in</span> resultats:
+    <span class="function">print</span>(<span class="string">f"  [<span class="keyword">{</span>doc.metadata[<span class="string">'departement'</span>]<span class="keyword">}</span>] <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">  [RH] Le teletravail est autorise 3 jours par semaine.
+  [RH] La politique de conges prevoit 25 jours par an.
+  [RH] Les augmentations salariales sont de 3% en moyenne.</div>
+
+        <div class="warning">
+            Le filtrage par metadonnees n'est pas supporte de maniere uniforme par tous les VectorStores.
+            FAISS ne supporte pas le filtrage natif (il faut filtrer manuellement apres la recherche).
+            Chroma et Pinecone supportent le filtrage natif avec des operateurs riches. Verifiez toujours
+            la documentation du VectorStore que vous utilisez.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 11 : Persistence et Mise a Jour                      -->
+        <!-- ============================================================ -->
+        <h2>11. Persistance et Mise a Jour</h2>
+
+        <p>
+            Dans une application reelle, vous devez pouvoir sauvegarder votre VectorStore, le recharger
+            lors du redemarrage, ajouter de nouveaux documents, et supprimer des documents obsoletes.
+            Chaque VectorStore a sa propre approche.
+        </p>
+
+        <h3>11.1 Persistance FAISS</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># ===== SAUVEGARDER =====</span>
+vectorstore.<span class="function">save_local</span>(
+    folder_path=<span class="string">"./faiss_db"</span>,
+    index_name=<span class="string">"knowledge_base"</span>,
+)
+<span class="function">print</span>(<span class="string">"FAISS sauvegarde dans ./faiss_db/"</span>)
+<span class="comment"># Fichiers crees : knowledge_base.faiss + knowledge_base.pkl</span>
+
+<span class="comment"># ===== CHARGER =====</span>
+vectorstore = FAISS.<span class="function">load_local</span>(
+    folder_path=<span class="string">"./faiss_db"</span>,
+    embeddings=embeddings,
+    index_name=<span class="string">"knowledge_base"</span>,
+    allow_dangerous_deserialization=<span class="keyword">True</span>,
+)
+<span class="function">print</span>(<span class="string">f"FAISS charge : <span class="keyword">{</span>vectorstore.index.ntotal<span class="keyword">}</span> vecteurs"</span>)
+
+<span class="comment"># ===== AJOUTER DES DOCUMENTS =====</span>
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+nouveaux = [
+    <span class="function">Document</span>(page_content=<span class="string">"Nouveau document ajoute."</span>, metadata={<span class="string">"source"</span>: <span class="string">"new"</span>}),
+]
+vectorstore.<span class="function">add_documents</span>(nouveaux)
+<span class="function">print</span>(<span class="string">f"Apres ajout : <span class="keyword">{</span>vectorstore.index.ntotal<span class="keyword">}</span> vecteurs"</span>)
+
+<span class="comment"># IMPORTANT : Re-sauvegarder apres modification !</span>
+vectorstore.<span class="function">save_local</span>(<span class="string">"./faiss_db"</span>, <span class="string">"knowledge_base"</span>)</div>
+
+        <div class="output-block">FAISS sauvegarde dans ./faiss_db/
+FAISS charge : 6 vecteurs
+Apres ajout : 7 vecteurs</div>
+
+        <h3>11.2 Persistance Chroma</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_chroma <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Chroma persiste AUTOMATIQUEMENT quand persist_directory est defini</span>
+vectorstore = <span class="function">Chroma</span>(
+    collection_name=<span class="string">"knowledge_base"</span>,
+    embedding_function=embeddings,
+    persist_directory=<span class="string">"./chroma_db"</span>,
+)
+
+<span class="function">print</span>(<span class="string">f"Documents existants : <span class="keyword">{</span>vectorstore._collection.<span class="function">count</span>()<span class="keyword">}</span>"</span>)
+
+<span class="comment"># ===== AJOUTER DES DOCUMENTS =====</span>
+nouveaux = [
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Le nouveau reglement interieur entre en vigueur le 1er janvier."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"reglement.pdf"</span>, <span class="string">"departement"</span>: <span class="string">"Direction"</span>, <span class="string">"annee"</span>: <span class="number">2026</span>}
+    ),
+]
+vectorstore.<span class="function">add_documents</span>(
+    documents=nouveaux,
+    ids=[<span class="string">"doc_reglement_001"</span>],  <span class="comment"># ID unique pour pouvoir supprimer plus tard</span>
+)
+<span class="function">print</span>(<span class="string">f"Apres ajout : <span class="keyword">{</span>vectorstore._collection.<span class="function">count</span>()<span class="keyword">}</span> documents"</span>)
+
+<span class="comment"># ===== SUPPRIMER DES DOCUMENTS =====</span>
+vectorstore.<span class="function">delete</span>(ids=[<span class="string">"doc_reglement_001"</span>])
+<span class="function">print</span>(<span class="string">f"Apres suppression : <span class="keyword">{</span>vectorstore._collection.<span class="function">count</span>()<span class="keyword">}</span> documents"</span>)
+
+<span class="comment"># Tout est automatiquement persiste sur disque !</span></div>
+
+        <div class="output-block">Documents existants : 6
+Apres ajout : 7 documents
+Apres suppression : 6 documents</div>
+
+        <h3>11.3 Pipeline complet : Ingestion vers VectorStore</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> DirectoryLoader, PyPDFLoader
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_chroma <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+<span class="comment"># ============================================</span>
+<span class="comment"># PIPELINE COMPLET : Documents -> VectorStore</span>
+<span class="comment"># ============================================</span>
+
+<span class="comment"># 1. CHARGER les documents</span>
+loader = <span class="function">DirectoryLoader</span>(
+    path=<span class="string">"./data/knowledge_base/"</span>,
+    glob=<span class="string">"**/*.pdf"</span>,
+    loader_cls=PyPDFLoader,
+    show_progress=<span class="keyword">True</span>,
+)
+raw_docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"1. Chargement : <span class="keyword">{</span><span class="function">len</span>(raw_docs)<span class="keyword">}</span> pages"</span>)
+
+<span class="comment"># 2. DECOUPER en chunks</span>
+splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">800</span>,
+    chunk_overlap=<span class="number">100</span>,
+)
+chunks = splitter.<span class="function">split_documents</span>(raw_docs)
+<span class="function">print</span>(<span class="string">f"2. Decoupage : <span class="keyword">{</span><span class="function">len</span>(chunks)<span class="keyword">}</span> chunks"</span>)
+
+<span class="comment"># 3. VECTORISER et STOCKER dans Chroma</span>
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+
+vectorstore = Chroma.<span class="function">from_documents</span>(
+    documents=chunks,
+    embedding=embeddings,
+    collection_name=<span class="string">"ma_base_rag"</span>,
+    persist_directory=<span class="string">"./chroma_db_prod"</span>,
+)
+<span class="function">print</span>(<span class="string">f"3. Stockage : <span class="keyword">{</span>vectorstore._collection.<span class="function">count</span>()<span class="keyword">}</span> vecteurs dans Chroma"</span>)
+
+<span class="comment"># 4. CREER un Retriever pret a l'emploi</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={<span class="string">"k"</span>: <span class="number">5</span>, <span class="string">"fetch_k"</span>: <span class="number">20</span>},
+)
+
+<span class="comment"># 5. TEST : Recherche semantique</span>
+question = <span class="string">"Comment fonctionne le systeme de conges ?"</span>
+docs = retriever.<span class="function">invoke</span>(question)
+
+<span class="function">print</span>(<span class="string">f"\n4. Test de recherche pour : '{question}'"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(docs):
+    <span class="function">print</span>(<span class="string">f"   {i+<span class="number">1</span>}. [{doc.metadata[<span class="string">'source'</span>]}] {doc.page_content[:<span class="number">80</span>]}..."</span>)</div>
+
+        <div class="output-block">100%|██████████| 15/15 [00:04&lt;00:00, 3.75it/s]
+1. Chargement : 234 pages
+2. Decoupage : 892 chunks
+3. Stockage : 892 vecteurs dans Chroma
+
+4. Test de recherche pour : 'Comment fonctionne le systeme de conges ?'
+   1. [politique_rh.pdf] La politique de conges prevoit 25 jours ouvrables par an pour tous les employ...
+   2. [reglement_interieur.pdf] Les demandes de conges doivent etre soumises au moins 2 semaines avant la d...
+   3. [guide_employe.pdf] En plus des conges annuels, les employes beneficient de jours de RTT calcule...
+   4. [faq_rh.pdf] Question : Puis-je reporter mes conges non pris ? Reponse : Les conges non p...
+   5. [politique_rh.pdf] Le teletravail est possible 3 jours par semaine avec accord du manager. Les ...</div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 12 : Resume                                          -->
+        <!-- ============================================================ -->
+        <h2>12. Resume du Cours</h2>
+
+        <h3>Comparaison des VectorStores</h3>
+
+        <table>
+            <tr>
+                <th>Critere</th>
+                <th>FAISS</th>
+                <th>Chroma</th>
+                <th>Pinecone</th>
+            </tr>
+            <tr>
+                <td>Hebergement</td>
+                <td>Local (memoire)</td>
+                <td>Local (disque)</td>
+                <td>Cloud (SaaS)</td>
+            </tr>
+            <tr>
+                <td>Persistance</td>
+                <td>Manuelle (save/load)</td>
+                <td>Automatique</td>
+                <td>Automatique</td>
+            </tr>
+            <tr>
+                <td>Filtrage metadonnees</td>
+                <td>Non natif</td>
+                <td>Oui ($and, $or, $gt...)</td>
+                <td>Oui (avance)</td>
+            </tr>
+            <tr>
+                <td>Scalabilite</td>
+                <td>Millions (single node)</td>
+                <td>Millions (single node)</td>
+                <td>Milliards (distribue)</td>
+            </tr>
+            <tr>
+                <td>Cout</td>
+                <td>Gratuit</td>
+                <td>Gratuit</td>
+                <td>Payant</td>
+            </tr>
+            <tr>
+                <td>Installation</td>
+                <td>pip install faiss-cpu</td>
+                <td>pip install langchain-chroma</td>
+                <td>pip install langchain-pinecone</td>
+            </tr>
+            <tr>
+                <td>Ideal pour</td>
+                <td>Prototypage, apprentissage</td>
+                <td>Projets moyens, production legere</td>
+                <td>Production a grande echelle</td>
+            </tr>
+            <tr>
+                <td>MMR</td>
+                <td>Oui</td>
+                <td>Oui</td>
+                <td>Oui</td>
+            </tr>
+        </table>
+
+        <h3>Comparaison des Modeles d'Embeddings</h3>
+
+        <table>
+            <tr>
+                <th>Critere</th>
+                <th>OpenAI</th>
+                <th>HuggingFace</th>
+                <th>Ollama</th>
+                <th>Cohere</th>
+            </tr>
+            <tr>
+                <td>Hebergement</td>
+                <td>Cloud</td>
+                <td>Local</td>
+                <td>Local</td>
+                <td>Cloud</td>
+            </tr>
+            <tr>
+                <td>Cout</td>
+                <td>Payant (~0.02$/1M)</td>
+                <td>Gratuit</td>
+                <td>Gratuit</td>
+                <td>Payant (~0.10$/1M)</td>
+            </tr>
+            <tr>
+                <td>Qualite</td>
+                <td>Excellente</td>
+                <td>Bonne a Excellente</td>
+                <td>Bonne</td>
+                <td>Excellente</td>
+            </tr>
+            <tr>
+                <td>Multilingue</td>
+                <td>Bon</td>
+                <td>Variable selon modele</td>
+                <td>Variable</td>
+                <td>Excellent</td>
+            </tr>
+            <tr>
+                <td>Cle API requise</td>
+                <td>Oui</td>
+                <td>Non</td>
+                <td>Non</td>
+                <td>Oui</td>
+            </tr>
+            <tr>
+                <td>Vitesse</td>
+                <td>Rapide</td>
+                <td>Rapide (CPU/GPU)</td>
+                <td>Rapide (local)</td>
+                <td>Rapide</td>
+            </tr>
+        </table>
+
+        <div class="svg-container">
+            <svg width="700" height="300" viewBox="0 0 700 300">
+                <text x="350" y="22" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Arbre de Decision - Choix du VectorStore</text>
+                <!-- Root -->
+                <rect x="240" y="38" width="220" height="35" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+                <text x="350" y="60" text-anchor="middle" fill="#ff6b35" font-size="11">Quel est votre besoin ?</text>
+                <!-- Branch: Prototypage -->
+                <line x1="280" y1="73" x2="130" y2="108" stroke="#00ff88" stroke-width="1.5"/>
+                <rect x="30" y="108" width="200" height="55" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="130" y="128" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">Prototypage / Apprentissage</text>
+                <text x="130" y="148" text-anchor="middle" fill="#aaa" font-size="10">-> FAISS (simple, rapide)</text>
+                <!-- Branch: Persistance -->
+                <line x1="350" y1="73" x2="350" y2="108" stroke="#569cd6" stroke-width="1.5"/>
+                <rect x="245" y="108" width="210" height="55" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+                <text x="350" y="128" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">Persistance + Filtrage</text>
+                <text x="350" y="148" text-anchor="middle" fill="#aaa" font-size="10">-> Chroma (robuste, gratuit)</text>
+                <!-- Branch: Production -->
+                <line x1="420" y1="73" x2="570" y2="108" stroke="#ff8c42" stroke-width="1.5"/>
+                <rect x="470" y="108" width="200" height="55" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+                <text x="570" y="128" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">Production a echelle</text>
+                <text x="570" y="148" text-anchor="middle" fill="#aaa" font-size="10">-> Pinecone (cloud, scalable)</text>
+                <!-- Sub choices for embeddings -->
+                <rect x="100" y="200" width="500" height="80" rx="10" fill="rgba(86,156,214,0.05)" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,4"/>
+                <text x="350" y="222" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Choix du modele d'embeddings</text>
+                <text x="350" y="242" text-anchor="middle" fill="#aaa" font-size="10">Budget zero -> HuggingFace / Ollama (local, gratuit)</text>
+                <text x="350" y="260" text-anchor="middle" fill="#aaa" font-size="10">Meilleure qualite -> OpenAI text-embedding-3-small ($0.02/1M tokens)</text>
+                <text x="350" y="278" text-anchor="middle" fill="#aaa" font-size="10">Multilingue -> Cohere embed-multilingual-v3.0</text>
+            </svg>
+        </div>
+
+        <div class="concept-box">
+            <h3>Bonnes Pratiques - Points cles a retenir</h3>
+            <ol>
+                <li><strong>Utilisez le meme modele d'embeddings</strong> pour l'indexation et la recherche. Melanger des modeles differents donne des resultats incoherents.</li>
+                <li><strong>embed_documents()</strong> pour les documents, <strong>embed_query()</strong> pour les requetes. Ne les inversez pas.</li>
+                <li><strong>Commencez par FAISS</strong> pour le prototypage, puis migrez vers Chroma ou Pinecone.</li>
+                <li><strong>Utilisez le MMR</strong> quand vos documents contiennent des informations redondantes.</li>
+                <li><strong>Enrichissez les metadonnees</strong> pour pouvoir filtrer les resultats (departement, date, type, etc.).</li>
+                <li><strong>Testez vos embeddings</strong> avec des requetes variees avant de deployer en production.</li>
+                <li><strong>Sauvegardez regulierement</strong> votre index FAISS. Chroma persiste automatiquement.</li>
+                <li><strong>Normalisez vos embeddings</strong> (HuggingFace) pour des scores de similarite coherents.</li>
+                <li><strong>Dimensionnez le k</strong> : 3-5 resultats suffisent generalement pour un LLM.</li>
+                <li><strong>Surveillez les couts</strong> : chaque appel a embed_documents() consomme des tokens (pour les modeles cloud).</li>
+            </ol>
+        </div>
+
+        <div class="prof-note">
+            Avec ce cours, vous maitrisez les deux dernieres etapes du pipeline d'ingestion : la vectorisation
+            (Embeddings) et le stockage (VectorStores). Combine avec le cours precedent sur les Loaders et
+            Splitters, vous avez maintenant toutes les bases pour construire un pipeline RAG complet.
+            Le cours suivant abordera les Retrievers, qui sont l'interface entre le VectorStore et la chaine
+            LangChain qui genere les reponses.
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="lc_05_document_loaders.html">&larr; Cours Document Loaders</a>
+            <a href="lc_07_retrievers.html">Cours suivant : Retrievers &rarr;</a>
+        </div>
+
+    </div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

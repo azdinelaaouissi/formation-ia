@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM 01 - Introduction aux Large Language Models</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        h4 { color: #ffab76; font-size: 1.05rem; margin: 15px 0 8px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+        .timeline-item { display: flex; align-items: flex-start; gap: 15px; margin: 12px 0; padding-left: 20px; border-left: 3px solid #ff6b35; }
+        .timeline-year { background: #ff6b35; color: #fff; padding: 3px 12px; border-radius: 15px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+        .analogy { background: #1a2e1a; border: 2px solid #4caf50; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .analogy h4 { color: #4caf50; margin-top: 0; }
+        .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .compare-card { background: #16213e; border: 1px solid #333; border-radius: 10px; padding: 15px; text-align: center; }
+        strong { color: #fff; }
+        svg text { font-family: 'Segoe UI', sans-serif; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Introduction aux LLMs (Large Language Models)</h1>
+    <p class="subtitle">Cours 1/3 - Comprendre les modeles de langage qui revolutionnent l'IA</p>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 1 : QU'EST-CE QU'UN LLM ? -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch1">1. Qu'est-ce qu'un LLM ?</h2>
+
+    <div class="definition">
+        Un <strong>Large Language Model (LLM)</strong> est un modele d'intelligence artificielle entraine sur d'enormes quantites de texte (des milliards de pages web, livres, articles) capable de comprendre et generer du langage naturel. "Large" fait reference a la taille du modele (des milliards de parametres) et au volume de donnees d'entrainement.
+    </div>
+
+    <h3>L'analogie de la bibliotheque</h3>
+
+    <div class="analogy">
+        <h4>Imaginez une bibliotheque qui a lu tout Internet</h4>
+        <p>Un LLM, c'est comme un <strong>etudiant prodige</strong> qui aurait lu l'integralite d'Internet, de Wikipedia, de millions de livres, d'articles scientifiques et de forums. Il ne memorise pas tout mot pour mot, mais il a <strong>compris les patterns du langage</strong> : comment les mots s'enchainent, comment les idees se structurent, comment raisonner sur un sujet.</p>
+        <p>Quand vous lui posez une question, il ne "cherche" pas la reponse dans une base de donnees. Il <strong>genere</strong> une reponse en predisant, mot par mot, ce qui devrait logiquement suivre votre question, en se basant sur tout ce qu'il a appris.</p>
+    </div>
+
+    <h3>Difference avec un programme classique</h3>
+
+    <div class="svg-container">
+        <svg width="820" height="320" viewBox="0 0 820 320">
+            <rect x="0" y="0" width="820" height="320" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="200" y="30" fill="#f44336" text-anchor="middle" font-size="14" font-weight="bold">Programme classique</text>
+            <text x="620" y="30" fill="#4caf50" text-anchor="middle" font-size="14" font-weight="bold">LLM (IA Generative)</text>
+
+            <!-- Programme classique -->
+            <rect x="40" y="50" width="140" height="45" rx="8" fill="#1a1a2e" stroke="#f44336" stroke-width="2"/>
+            <text x="110" y="77" fill="#f44336" text-anchor="middle" font-size="12">REGLES CODEES</text>
+            <text x="110" y="65" fill="#aaa" text-anchor="middle" font-size="9">if/else par l'humain</text>
+            <rect x="210" y="50" width="140" height="45" rx="8" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+            <text x="280" y="77" fill="#ff9800" text-anchor="middle" font-size="12">ENTREE UTILISATEUR</text>
+            <line x1="180" y1="72" x2="210" y2="72" stroke="#aaa" stroke-width="2"/>
+            <text x="195" y="65" fill="#aaa" font-size="10">+</text>
+
+            <rect x="110" y="120" width="180" height="40" rx="8" fill="#2e1a1a" stroke="#f44336" stroke-width="2"/>
+            <text x="200" y="145" fill="#f44336" text-anchor="middle" font-size="12">EXECUTION DETERMINISTE</text>
+            <line x1="200" y1="95" x2="200" y2="120" stroke="#aaa" stroke-width="2"/>
+
+            <rect x="130" y="185" width="140" height="40" rx="8" fill="#1a1a2e" stroke="#aaa" stroke-width="2"/>
+            <text x="200" y="210" fill="#aaa" text-anchor="middle" font-size="12">Meme sortie a chaque fois</text>
+            <line x1="200" y1="160" x2="200" y2="185" stroke="#aaa" stroke-width="2"/>
+
+            <!-- LLM -->
+            <rect x="460" y="50" width="140" height="45" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+            <text x="530" y="77" fill="#4caf50" text-anchor="middle" font-size="12">MODELE ENTRAINE</text>
+            <text x="530" y="65" fill="#aaa" text-anchor="middle" font-size="9">milliards de parametres</text>
+            <rect x="630" y="50" width="140" height="45" rx="8" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+            <text x="700" y="77" fill="#ff9800" text-anchor="middle" font-size="12">PROMPT (texte)</text>
+            <line x1="600" y1="72" x2="630" y2="72" stroke="#aaa" stroke-width="2"/>
+            <text x="615" y="65" fill="#aaa" font-size="10">+</text>
+
+            <rect x="530" y="120" width="180" height="40" rx="8" fill="#1a2e1a" stroke="#4caf50" stroke-width="2"/>
+            <text x="620" y="145" fill="#4caf50" text-anchor="middle" font-size="12">GENERATION PROBABILISTE</text>
+            <line x1="620" y1="95" x2="620" y2="120" stroke="#aaa" stroke-width="2"/>
+
+            <rect x="540" y="185" width="160" height="40" rx="8" fill="#1a1a2e" stroke="#ffd700" stroke-width="2"/>
+            <text x="620" y="210" fill="#ffd700" text-anchor="middle" font-size="12">Reponse creative et variee</text>
+            <line x1="620" y1="160" x2="620" y2="185" stroke="#aaa" stroke-width="2"/>
+
+            <!-- Resume -->
+            <rect x="160" y="260" width="500" height="35" rx="5" fill="#0f0f23" stroke="#ffd700"/>
+            <text x="410" y="282" fill="#ffd700" text-anchor="middle" font-size="12">Classique : deterministe et rigide | LLM : probabiliste et creatif</text>
+
+            <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#aaa"/></marker></defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Un programme classique fait toujours la meme chose avec la meme entree. Un LLM, lui, peut generer des reponses differentes a chaque fois, car il echantillonne parmi des probabilites. C'est ce qui le rend creatif, mais aussi parfois imprevisible.
+    </div>
+
+    <h3>Les chiffres qui donnent le vertige</h3>
+
+    <div class="concept-box">
+        <table>
+            <tr><th>Metrique</th><th>Ordre de grandeur</th></tr>
+            <tr><td><strong>Donnees d'entrainement</strong></td><td>Des trillions de tokens (tout Internet, Wikipedia, livres, code...)</td></tr>
+            <tr><td><strong>Parametres</strong></td><td>De 7 milliards a plus de 1 800 milliards (GPT-4 estime a ~1.8T)</td></tr>
+            <tr><td><strong>Cout d'entrainement</strong></td><td>De 1 million a plus de 100 millions de dollars</td></tr>
+            <tr><td><strong>GPUs utilises</strong></td><td>Des milliers de GPUs H100/A100 pendant des mois</td></tr>
+            <tr><td><strong>Energie</strong></td><td>L'equivalent de la consommation d'une petite ville pendant des semaines</td></tr>
+        </table>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 2 : HISTORIQUE -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch2">2. Historique des LLMs</h2>
+
+    <p>L'histoire des LLMs est une acceleration spectaculaire sur seulement 10 ans. Voici les etapes cles :</p>
+
+    <div class="svg-container">
+        <svg width="860" height="520" viewBox="0 0 860 520">
+            <rect x="0" y="0" width="860" height="520" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="430" y="30" fill="#ff6b35" text-anchor="middle" font-size="16" font-weight="bold">Timeline : L'Evolution des LLMs</text>
+
+            <!-- Ligne horizontale -->
+            <line x1="60" y1="260" x2="800" y2="260" stroke="#ff6b35" stroke-width="3"/>
+
+            <!-- 2013 - Word2Vec -->
+            <circle cx="100" cy="260" r="8" fill="#ff6b35"/>
+            <text x="100" y="245" fill="#ff6b35" text-anchor="middle" font-size="11" font-weight="bold">2013</text>
+            <text x="100" y="290" fill="#e0e0e0" text-anchor="middle" font-size="10">Word2Vec</text>
+            <text x="100" y="305" fill="#aaa" text-anchor="middle" font-size="8">Les mots deviennent</text>
+            <text x="100" y="317" fill="#aaa" text-anchor="middle" font-size="8">des vecteurs</text>
+
+            <!-- 2017 - Transformer -->
+            <circle cx="220" cy="260" r="10" fill="#ffd700" stroke="#ffd700" stroke-width="2"/>
+            <text x="220" y="245" fill="#ffd700" text-anchor="middle" font-size="11" font-weight="bold">2017</text>
+            <text x="220" y="220" fill="#ffd700" text-anchor="middle" font-size="10" font-weight="bold">TRANSFORMER</text>
+            <text x="220" y="205" fill="#aaa" text-anchor="middle" font-size="8">"Attention is All</text>
+            <text x="220" y="195" fill="#aaa" text-anchor="middle" font-size="8">You Need"</text>
+            <rect x="175" y="210" width="90" height="25" rx="4" fill="none" stroke="#ffd700" stroke-width="1" stroke-dasharray="4"/>
+
+            <!-- 2018 - GPT-1 & BERT -->
+            <circle cx="310" cy="260" r="8" fill="#ff6b35"/>
+            <text x="310" y="245" fill="#ff6b35" text-anchor="middle" font-size="11" font-weight="bold">2018</text>
+            <text x="310" y="290" fill="#e0e0e0" text-anchor="middle" font-size="10">GPT-1 + BERT</text>
+            <text x="310" y="305" fill="#aaa" text-anchor="middle" font-size="8">117M parametres</text>
+
+            <!-- 2020 - GPT-3 -->
+            <circle cx="400" cy="260" r="8" fill="#ff6b35"/>
+            <text x="400" y="245" fill="#ff6b35" text-anchor="middle" font-size="11" font-weight="bold">2020</text>
+            <text x="400" y="220" fill="#e0e0e0" text-anchor="middle" font-size="10">GPT-3</text>
+            <text x="400" y="205" fill="#aaa" text-anchor="middle" font-size="8">175 milliards params</text>
+            <text x="400" y="193" fill="#aaa" text-anchor="middle" font-size="8">Le choc !</text>
+
+            <!-- 2022 - ChatGPT -->
+            <circle cx="490" cy="260" r="10" fill="#ffd700" stroke="#ffd700" stroke-width="2"/>
+            <text x="490" y="245" fill="#ffd700" text-anchor="middle" font-size="11" font-weight="bold">2022</text>
+            <text x="490" y="290" fill="#ffd700" text-anchor="middle" font-size="10" font-weight="bold">ChatGPT</text>
+            <text x="490" y="305" fill="#aaa" text-anchor="middle" font-size="8">Revolution grand public</text>
+            <text x="490" y="317" fill="#aaa" text-anchor="middle" font-size="8">100M users en 2 mois</text>
+            <rect x="445" y="278" width="90" height="25" rx="4" fill="none" stroke="#ffd700" stroke-width="1" stroke-dasharray="4"/>
+
+            <!-- 2023 - GPT-4 & Claude -->
+            <circle cx="580" cy="260" r="8" fill="#ff6b35"/>
+            <text x="580" y="245" fill="#ff6b35" text-anchor="middle" font-size="11" font-weight="bold">2023</text>
+            <text x="580" y="220" fill="#e0e0e0" text-anchor="middle" font-size="10">GPT-4 + Claude 2</text>
+            <text x="580" y="205" fill="#aaa" text-anchor="middle" font-size="8">+ Llama 2 (open source)</text>
+            <text x="580" y="193" fill="#aaa" text-anchor="middle" font-size="8">Multimodal</text>
+
+            <!-- 2024 - Claude 3 / Gemini -->
+            <circle cx="670" cy="260" r="8" fill="#ff6b35"/>
+            <text x="670" y="245" fill="#ff6b35" text-anchor="middle" font-size="11" font-weight="bold">2024</text>
+            <text x="670" y="290" fill="#e0e0e0" text-anchor="middle" font-size="10">Claude 3 + Gemini</text>
+            <text x="670" y="305" fill="#aaa" text-anchor="middle" font-size="8">DeepSeek + Mistral</text>
+            <text x="670" y="317" fill="#aaa" text-anchor="middle" font-size="8">Open source explose</text>
+
+            <!-- 2025 - GPT-5 / Claude 4 -->
+            <circle cx="770" cy="260" r="10" fill="#4caf50" stroke="#4caf50" stroke-width="2"/>
+            <text x="770" y="245" fill="#4caf50" text-anchor="middle" font-size="11" font-weight="bold">2025</text>
+            <text x="770" y="220" fill="#4caf50" text-anchor="middle" font-size="10" font-weight="bold">GPT-5 + Claude 4</text>
+            <text x="770" y="205" fill="#aaa" text-anchor="middle" font-size="8">Gemini 3 + Llama 4</text>
+            <text x="770" y="193" fill="#aaa" text-anchor="middle" font-size="8">Raisonnement avance</text>
+            <rect x="720" y="210" width="100" height="25" rx="4" fill="none" stroke="#4caf50" stroke-width="1" stroke-dasharray="4"/>
+
+            <!-- Fleche de progression exponentielle -->
+            <path d="M80 420 Q200 410 300 390 Q400 360 500 310 Q600 270 750 180" fill="none" stroke="#ff6b35" stroke-width="2" stroke-dasharray="6,3"/>
+            <text x="450" y="450" fill="#aaa" text-anchor="middle" font-size="11">Croissance exponentielle des capacites</text>
+
+            <!-- Fleche -->
+            <polygon points="750,180 758,190 748,188" fill="#ff6b35"/>
+        </svg>
+    </div>
+
+    <h3>Les etapes detaillees</h3>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2013</span>
+        <div><strong>Word2Vec (Google)</strong> - Premiere fois que les mots sont representes comme des vecteurs. Decouverte celebre : roi - homme + femme = reine. C'est le debut des embeddings.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2015</span>
+        <div><strong>RNN / LSTM</strong> - Les reseaux recurrents traitent le texte mot par mot, en sequence. Limites : lents, oublient les mots lointains (probleme du gradient qui disparait).</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2017</span>
+        <div><strong>Transformer - "Attention is All You Need"</strong> - La revolution ! Google publie le papier fondateur. Le mecanisme d'attention permet de traiter tous les mots en parallele et de capturer les relations a longue distance. C'est l'architecture derriere TOUS les LLMs modernes.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2018</span>
+        <div><strong>GPT-1 (OpenAI) + BERT (Google)</strong> - GPT-1 utilise le decoder du Transformer (117M parametres). BERT utilise l'encoder (340M parametres). Deux approches complementaires qui prouvent la puissance des Transformers pour le NLP.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2020</span>
+        <div><strong>GPT-3 (OpenAI)</strong> - 175 milliards de parametres. Le monde decouvre le "few-shot learning" : on peut donner quelques exemples dans le prompt et le modele comprend la tache. Premier modele a generer du texte quasi-humain.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2022</span>
+        <div><strong>ChatGPT (OpenAI)</strong> - Interface conversationnelle basee sur GPT-3.5 + RLHF. 100 millions d'utilisateurs en 2 mois. L'IA generative entre dans le grand public. Debut de la course aux LLMs entre toutes les entreprises tech.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2023</span>
+        <div><strong>GPT-4, Claude 2, Llama 2</strong> - GPT-4 est multimodal (texte + images). Meta libere Llama 2 en open source. Anthropic lance Claude 2. L'ecosysteme LLM explose.</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2024</span>
+        <div><strong>Claude 3, Gemini 1.5, DeepSeek, Mistral</strong> - Multiplication des acteurs. DeepSeek prouve qu'on peut entrainer des LLMs competitifs a moindre cout. Mistral (startup francaise) rivalise avec les geants. Les contextes s'allongent (1M+ tokens).</div>
+    </div>
+
+    <div class="timeline-item">
+        <span class="timeline-year">2025</span>
+        <div><strong>GPT-5, Claude 4 (Opus/Sonnet), Gemini 3, Llama 4</strong> - Les modeles integrent le raisonnement avance ("extended thinking"). GPT-5.2 atteint 400K tokens de contexte. Claude 4 propose un mode de reflexion deliberee. Llama 4 Maverick rivalise avec les modeles proprietaires.</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 3 : LES PRINCIPAUX MODELES -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch3">3. Les principaux modeles (2025)</h2>
+
+    <p>Le paysage des LLMs en 2025 est domine par plusieurs families de modeles, chacun avec ses forces :</p>
+
+    <h3>Modeles proprietaires (API payante)</h3>
+
+    <table>
+        <tr>
+            <th>Modele</th>
+            <th>Entreprise</th>
+            <th>Parametres (estime)</th>
+            <th>Contexte</th>
+            <th>Forces</th>
+        </tr>
+        <tr>
+            <td><strong>GPT-5.2</strong></td>
+            <td>OpenAI</td>
+            <td>~2T+ (MoE)</td>
+            <td>400K tokens</td>
+            <td>Raisonnement, maths, multimodal</td>
+        </tr>
+        <tr>
+            <td><strong>GPT-4o</strong></td>
+            <td>OpenAI</td>
+            <td>~1.8T (MoE)</td>
+            <td>128K tokens</td>
+            <td>Polyvalent, rapide, omnimodal</td>
+        </tr>
+        <tr>
+            <td><strong>Claude Opus 4</strong></td>
+            <td>Anthropic</td>
+            <td>Non divulgue</td>
+            <td>1M tokens</td>
+            <td>Raisonnement long, surete, code, thinking mode</td>
+        </tr>
+        <tr>
+            <td><strong>Claude Sonnet 4.5</strong></td>
+            <td>Anthropic</td>
+            <td>Non divulgue</td>
+            <td>1M tokens</td>
+            <td>Equilibre vitesse/qualite, agents</td>
+        </tr>
+        <tr>
+            <td><strong>Gemini 3</strong></td>
+            <td>Google</td>
+            <td>Non divulgue</td>
+            <td>1M+ tokens</td>
+            <td>Multimodal natif, video, integration Google</td>
+        </tr>
+    </table>
+
+    <h3>Modeles open source / open weights</h3>
+
+    <table>
+        <tr>
+            <th>Modele</th>
+            <th>Entreprise</th>
+            <th>Parametres</th>
+            <th>Contexte</th>
+            <th>Forces</th>
+        </tr>
+        <tr>
+            <td><strong>Llama 4 Maverick</strong></td>
+            <td>Meta</td>
+            <td>400B (MoE, 17B actifs)</td>
+            <td>1M tokens</td>
+            <td>Multilingue, raisonnement, open weights</td>
+        </tr>
+        <tr>
+            <td><strong>Llama 4 Scout</strong></td>
+            <td>Meta</td>
+            <td>109B (MoE, 17B actifs)</td>
+            <td>10M tokens</td>
+            <td>Contexte ultra-long, efficace</td>
+        </tr>
+        <tr>
+            <td><strong>DeepSeek-V3.2</strong></td>
+            <td>DeepSeek</td>
+            <td>671B (MoE)</td>
+            <td>128K tokens</td>
+            <td>Raisonnement, cout reduit, open source</td>
+        </tr>
+        <tr>
+            <td><strong>Mistral Large 3</strong></td>
+            <td>Mistral (France)</td>
+            <td>675B (MoE)</td>
+            <td>128K tokens</td>
+            <td>92% de GPT-5.2 a 15% du prix</td>
+        </tr>
+        <tr>
+            <td><strong>Qwen3</strong></td>
+            <td>Alibaba</td>
+            <td>Divers (7B a 235B)</td>
+            <td>128K tokens</td>
+            <td>Multilingue, dense et MoE</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        MoE = Mixture of Experts. C'est une architecture ou le modele a beaucoup de parametres au total, mais seule une fraction est activee pour chaque requete. Par exemple, Llama 4 Maverick a 400B parametres mais n'en utilise que 17B par inference, ce qui le rend rapide malgre sa taille.
+    </div>
+
+    <div class="warning">
+        Les chiffres de parametres pour les modeles proprietaires (GPT, Claude, Gemini) ne sont pas officiellement divulgues. Les estimations circulant en ligne proviennent de fuites ou d'analyses externes. Prenez-les avec precaution.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 4 : COMMENT FONCTIONNE UN LLM -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch4">4. Comment fonctionne un LLM (simplifie)</h2>
+
+    <div class="concept-box green">
+        <h3>L'idee fondamentale : predire le prochain mot</h3>
+        <p>A la base, un LLM fait une seule chose : etant donne une sequence de mots, il predit <strong>le mot suivant le plus probable</strong>. Il repete cette operation mot par mot pour generer du texte complet.</p>
+    </div>
+
+    <h3>Exemple concret</h3>
+
+    <div class="step-box">
+        <strong>Entree :</strong> "La capitale de la France est"
+    </div>
+    <div class="step-box">
+        <strong>Le LLM calcule les probabilites :</strong>
+        <ul>
+            <li>"Paris" : <strong>92%</strong></li>
+            <li>"une" : 2%</li>
+            <li>"connue" : 1.5%</li>
+            <li>"la" : 1%</li>
+            <li>... des milliers d'autres mots avec des probabilites tres faibles</li>
+        </ul>
+    </div>
+    <div class="step-box">
+        <strong>Le LLM choisit "Paris"</strong>, puis recommence avec "La capitale de la France est Paris" pour generer le mot suivant, et ainsi de suite.
+    </div>
+
+    <div class="svg-container">
+        <svg width="800" height="280" viewBox="0 0 800 280">
+            <rect x="0" y="0" width="800" height="280" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="400" y="30" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Generation autoregresssive : mot par mot</text>
+
+            <!-- Tokens d'entree -->
+            <rect x="30" y="60" width="50" height="35" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="55" y="82" fill="#569cd6" text-anchor="middle" font-size="10">La</text>
+            <rect x="90" y="60" width="80" height="35" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="130" y="82" fill="#569cd6" text-anchor="middle" font-size="10">capitale</text>
+            <rect x="180" y="60" width="45" height="35" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="203" y="82" fill="#569cd6" text-anchor="middle" font-size="10">de</text>
+            <rect x="235" y="60" width="40" height="35" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="255" y="82" fill="#569cd6" text-anchor="middle" font-size="10">la</text>
+            <rect x="285" y="60" width="70" height="35" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="320" y="82" fill="#569cd6" text-anchor="middle" font-size="10">France</text>
+            <rect x="365" y="60" width="45" height="35" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="388" y="82" fill="#569cd6" text-anchor="middle" font-size="10">est</text>
+
+            <!-- Fleche vers le modele -->
+            <line x1="220" y1="95" x2="220" y2="130" stroke="#aaa" stroke-width="2"/>
+            <polygon points="220,135 215,125 225,125" fill="#aaa"/>
+
+            <!-- Boite LLM -->
+            <rect x="120" y="135" width="200" height="50" rx="10" fill="#2e1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="220" y="165" fill="#ff6b35" text-anchor="middle" font-size="13" font-weight="bold">LLM (Transformer)</text>
+
+            <!-- Fleche vers probabilites -->
+            <line x1="220" y1="185" x2="220" y2="210" stroke="#aaa" stroke-width="2"/>
+            <polygon points="220,215 215,205 225,205" fill="#aaa"/>
+
+            <!-- Probabilites -->
+            <rect x="440" y="60" width="340" height="160" rx="10" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+            <text x="610" y="85" fill="#4caf50" text-anchor="middle" font-size="12" font-weight="bold">Probabilites du prochain token :</text>
+
+            <!-- Barres de probabilite -->
+            <rect x="470" y="100" width="276" height="18" rx="3" fill="#4caf50" opacity="0.8"/>
+            <text x="475" y="114" fill="#fff" font-size="10">Paris (92%)</text>
+
+            <rect x="470" y="125" width="30" height="18" rx="3" fill="#ff9800" opacity="0.6"/>
+            <text x="510" y="139" fill="#aaa" font-size="10">une (2%)</text>
+
+            <rect x="470" y="150" width="22" height="18" rx="3" fill="#ff9800" opacity="0.4"/>
+            <text x="510" y="164" fill="#aaa" font-size="10">connue (1.5%)</text>
+
+            <rect x="470" y="175" width="15" height="18" rx="3" fill="#ff9800" opacity="0.3"/>
+            <text x="510" y="189" fill="#aaa" font-size="10">la (1%) ...</text>
+
+            <!-- Token genere -->
+            <rect x="170" y="220" width="100" height="40" rx="8" fill="#4caf50" opacity="0.3" stroke="#4caf50" stroke-width="2"/>
+            <text x="220" y="245" fill="#4caf50" text-anchor="middle" font-size="14" font-weight="bold">Paris</text>
+        </svg>
+    </div>
+
+    <h3>Le role de la temperature</h3>
+
+    <p>La <strong>temperature</strong> controle le degre d'aleatoire dans le choix du prochain mot :</p>
+
+    <div class="compare">
+        <div class="compare-card">
+            <h4 style="color:#569cd6;">Temperature basse (0.0 - 0.3)</h4>
+            <p>Le modele choisit presque toujours le mot le plus probable. Reponses <strong>deterministes</strong>, precises, repetitives.</p>
+            <p style="color:#569cd6;">Ideal pour : code, maths, questions factuelles</p>
+        </div>
+        <div class="compare-card">
+            <h4 style="color:#ff6b35;">Temperature haute (0.7 - 1.5)</h4>
+            <p>Le modele explore des mots moins probables. Reponses <strong>creatives</strong>, variees, parfois surprenantes.</p>
+            <p style="color:#ff6b35;">Ideal pour : ecriture creative, brainstorming</p>
+        </div>
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemple avec l'API OpenAI</span>
+<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+client = OpenAI()
+
+<span class="comment"># Temperature basse = reponse factuelle et previsible</span>
+response_precise = client.chat.completions.create(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Quelle est la capitale de la France ?"</span>}],
+    temperature=<span class="number">0.0</span>   <span class="comment"># Toujours "Paris"</span>
+)
+
+<span class="comment"># Temperature haute = reponse creative et variee</span>
+response_creative = client.chat.completions.create(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Ecris un poeme sur Paris"</span>}],
+    temperature=<span class="number">1.0</span>   <span class="comment"># Different a chaque fois</span>
+)</div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 5 : CAS D'UTILISATION -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch5">5. Cas d'utilisation des LLMs</h2>
+
+    <p>Les LLMs sont devenus des outils polyvalents. Voici les principaux cas d'usage :</p>
+
+    <div class="svg-container">
+        <svg width="800" height="420" viewBox="0 0 800 420">
+            <rect x="0" y="0" width="800" height="420" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="400" y="30" fill="#ff6b35" text-anchor="middle" font-size="15" font-weight="bold">Ecosysteme des cas d'utilisation des LLMs</text>
+
+            <!-- Centre : LLM -->
+            <circle cx="400" cy="210" r="55" fill="#1a1a2e" stroke="#ff6b35" stroke-width="3"/>
+            <text x="400" y="205" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">LLM</text>
+            <text x="400" y="222" fill="#aaa" text-anchor="middle" font-size="9">Modele de langage</text>
+
+            <!-- Generation de texte -->
+            <line x1="350" y1="170" x2="200" y2="80" stroke="#4caf50" stroke-width="2"/>
+            <rect x="100" y="55" width="150" height="50" rx="10" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+            <text x="175" y="77" fill="#4caf50" text-anchor="middle" font-size="11" font-weight="bold">Generation de texte</text>
+            <text x="175" y="93" fill="#aaa" text-anchor="middle" font-size="9">Articles, emails, rapports</text>
+
+            <!-- Resume -->
+            <line x1="445" y1="168" x2="580" y2="80" stroke="#569cd6" stroke-width="2"/>
+            <rect x="510" y="55" width="150" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="585" y="77" fill="#569cd6" text-anchor="middle" font-size="11" font-weight="bold">Resume</text>
+            <text x="585" y="93" fill="#aaa" text-anchor="middle" font-size="9">Condenser des documents</text>
+
+            <!-- Traduction -->
+            <line x1="455" y1="200" x2="620" y2="180" stroke="#ff9800" stroke-width="2"/>
+            <rect x="590" y="155" width="150" height="50" rx="10" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+            <text x="665" y="177" fill="#ff9800" text-anchor="middle" font-size="11" font-weight="bold">Traduction</text>
+            <text x="665" y="193" fill="#aaa" text-anchor="middle" font-size="9">100+ langues</text>
+
+            <!-- Code -->
+            <line x1="455" y1="230" x2="620" y2="280" stroke="#e91e63" stroke-width="2"/>
+            <rect x="590" y="260" width="150" height="50" rx="10" fill="#1a1a2e" stroke="#e91e63" stroke-width="2"/>
+            <text x="665" y="282" fill="#e91e63" text-anchor="middle" font-size="11" font-weight="bold">Generation de code</text>
+            <text x="665" y="298" fill="#aaa" text-anchor="middle" font-size="9">Python, JS, SQL...</text>
+
+            <!-- Chatbot -->
+            <line x1="400" y1="265" x2="400" y2="340" stroke="#9c27b0" stroke-width="2"/>
+            <rect x="325" y="340" width="150" height="50" rx="10" fill="#1a1a2e" stroke="#9c27b0" stroke-width="2"/>
+            <text x="400" y="362" fill="#9c27b0" text-anchor="middle" font-size="11" font-weight="bold">Chatbot / Assistant</text>
+            <text x="400" y="378" fill="#aaa" text-anchor="middle" font-size="9">Support client, FAQ</text>
+
+            <!-- RAG -->
+            <line x1="345" y1="230" x2="180" y2="280" stroke="#ffd700" stroke-width="2"/>
+            <rect x="60" y="260" width="180" height="50" rx="10" fill="#1a1a2e" stroke="#ffd700" stroke-width="2"/>
+            <text x="150" y="282" fill="#ffd700" text-anchor="middle" font-size="11" font-weight="bold">RAG (Retrieval)</text>
+            <text x="150" y="298" fill="#aaa" text-anchor="middle" font-size="9">Recherche + Generation</text>
+
+            <!-- Analyse -->
+            <line x1="345" y1="200" x2="180" y2="180" stroke="#00bcd4" stroke-width="2"/>
+            <rect x="50" y="155" width="180" height="50" rx="10" fill="#1a1a2e" stroke="#00bcd4" stroke-width="2"/>
+            <text x="140" y="177" fill="#00bcd4" text-anchor="middle" font-size="11" font-weight="bold">Analyse / Extraction</text>
+            <text x="140" y="193" fill="#aaa" text-anchor="middle" font-size="9">Sentiment, entites, classification</text>
+        </svg>
+    </div>
+
+    <h3>Detail des cas d'usage</h3>
+
+    <div class="metric-card">
+        <h4>Generation de texte</h4>
+        <p>Ecriture d'articles, d'emails, de rapports, de descriptions de produits. Le LLM peut adapter son style (formel, decontracte, technique) selon les instructions du prompt.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Resume et synthese</h4>
+        <p>Condenser un document de 50 pages en quelques paragraphes. Tres utile en entreprise pour les comptes-rendus de reunions, les revues de presse ou l'analyse de contrats.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Traduction</h4>
+        <p>Les LLMs modernes rivalisent avec les traducteurs specialises pour plus de 100 langues, et sont souvent meilleurs pour le contexte et les nuances culturelles.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Generation et analyse de code</h4>
+        <p>Ecrire du code, trouver des bugs, refactoriser, expliquer du code existant. Claude, GPT-4 et Gemini sont particulierement forts en Python, JavaScript, SQL, et bien d'autres langages.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>RAG (Retrieval-Augmented Generation)</h4>
+        <p>Combiner un LLM avec une base de connaissances externe. Le systeme recherche d'abord les documents pertinents, puis le LLM genere une reponse basee sur ces documents. C'est la methode la plus fiable pour donner des informations a jour et specifiques a une entreprise.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Agents IA</h4>
+        <p>Les LLMs peuvent utiliser des outils (recherche web, execution de code, appels API) pour accomplir des taches complexes de maniere autonome. C'est l'une des tendances majeures de 2025.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 6 : LIMITES -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch6">6. Limites des LLMs</h2>
+
+    <p>Malgre leurs capacites impressionnantes, les LLMs ont des limites importantes qu'il faut connaitre :</p>
+
+    <h3>Les hallucinations</h3>
+
+    <div class="warning">
+        Les LLMs peuvent <strong>inventer des informations fausses</strong> avec une grande assurance. On appelle cela des "hallucinations". Le modele ne "sait" pas qu'il ment : il genere simplement la suite de mots la plus probable, meme si cette suite est factuellement incorrecte.
+    </div>
+
+    <div class="concept-box">
+        <h3>Exemples d'hallucinations</h3>
+        <ul>
+            <li>Inventer des references bibliographiques qui n'existent pas (avec des titres, auteurs et annees plausibles)</li>
+            <li>Donner des chiffres faux avec beaucoup de confiance ("La tour Eiffel mesure 412 metres" au lieu de 330m)</li>
+            <li>Attribuer des citations a des personnes qui ne les ont jamais dites</li>
+            <li>Creer des liens URL qui n'existent pas</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        C'est pour cela que le RAG (Retrieval-Augmented Generation) est si important : en donnant au LLM des documents sources, on reduit drastiquement les hallucinations car il peut s'appuyer sur des faits verifies.
+    </div>
+
+    <h3>Contexte limite</h3>
+
+    <div class="param-box">
+        <h4>La fenetre de contexte</h4>
+        <p>Un LLM ne peut traiter qu'une quantite limitee de texte a la fois (sa "fenetre de contexte"). Meme si les modeles recents ont des fenetres de plus en plus grandes (1M+ tokens pour Claude 4), cela reste une limite.</p>
+        <table>
+            <tr><th>Modele</th><th>Fenetre de contexte</th><th>Equivalent approximatif</th></tr>
+            <tr><td>GPT-3.5</td><td>4K - 16K tokens</td><td>~10-40 pages</td></tr>
+            <tr><td>GPT-4o</td><td>128K tokens</td><td>~300 pages</td></tr>
+            <tr><td>GPT-5.2</td><td>400K tokens</td><td>~1000 pages</td></tr>
+            <tr><td>Claude 4 Opus</td><td>1M tokens</td><td>~2500 pages</td></tr>
+            <tr><td>Llama 4 Scout</td><td>10M tokens</td><td>~25000 pages</td></tr>
+        </table>
+    </div>
+
+    <h3>Pas de memoire persistante</h3>
+
+    <div class="concept-box blue">
+        <p>Un LLM <strong>n'a pas de memoire entre les conversations</strong>. Chaque nouvelle conversation repart de zero. Si vous avez discute pendant 2 heures avec un LLM, il ne se souviendra de rien lors de la prochaine session.</p>
+        <p><strong>Solutions emergentes :</strong> Les systemes de memoire externe (comme ceux de ChatGPT ou Claude) stockent un resume des conversations precedentes et le reinjectent dans le contexte. Mais c'est un palliatif, pas une vraie memoire.</p>
+    </div>
+
+    <h3>Autres limites importantes</h3>
+
+    <table>
+        <tr><th>Limite</th><th>Description</th></tr>
+        <tr><td><strong>Connaissances figees</strong></td><td>Le modele ne connait que ce qu'il a appris pendant l'entrainement. Il ne sait pas ce qui s'est passe hier (sauf avec RAG ou recherche web).</td></tr>
+        <tr><td><strong>Cout</strong></td><td>Les LLMs les plus puissants coutent cher a utiliser (GPT-4o : ~$5/M tokens en entree). A grande echelle, la facture peut devenir enorme.</td></tr>
+        <tr><td><strong>Latence</strong></td><td>Generer du texte prend du temps (surtout les modeles de raisonnement). Pas ideal pour les applications temps-reel critiques.</td></tr>
+        <tr><td><strong>Biais</strong></td><td>Les LLMs reproduisent les biais presents dans leurs donnees d'entrainement (stereotypes, opinions predominantes sur Internet).</td></tr>
+        <tr><td><strong>Securite</strong></td><td>Risques de "jailbreak" (contournement des garde-fous) et de fuite de donnees sensibles dans le prompt.</td></tr>
+        <tr><td><strong>Raisonnement logique</strong></td><td>Malgre des progres enormes, les LLMs peuvent encore echouer sur des problemes de logique simples ou des calculs arithmetiques.</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- CHAPITRE 7 : VOCABULAIRE ESSENTIEL -->
+    <!-- ============================================================ -->
+
+    <h2 id="ch7">7. Vocabulaire essentiel</h2>
+
+    <p>Avant d'aller plus loin dans les cours suivants, voici les termes fondamentaux que vous devez maitriser :</p>
+
+    <div class="definition">
+        <strong>Token</strong> : L'unite de base que le LLM manipule. Ce n'est pas exactement un mot : un token peut etre un mot, une partie de mot, ou un caractere de ponctuation. En moyenne, 1 token = 0.75 mot en anglais, environ 0.5 mot en francais. Exemple : "Bonjour" = 1-2 tokens, "anticonstitutionnellement" = 5-6 tokens.
+    </div>
+
+    <div class="definition">
+        <strong>Embedding</strong> : La representation numerique d'un token ou d'un texte sous forme de vecteur (liste de nombres). Par exemple, le mot "chat" pourrait etre represente par un vecteur de 1536 dimensions : [0.023, -0.156, 0.891, ...]. Les mots similaires ont des embeddings proches.
+    </div>
+
+    <div class="definition">
+        <strong>Prompt</strong> : Le texte d'entree que vous envoyez au LLM. C'est votre question, instruction ou contexte. L'art de bien formuler ses prompts s'appelle le "prompt engineering".
+    </div>
+
+    <div class="definition">
+        <strong>Completion</strong> : La reponse generee par le LLM en reponse a votre prompt. On parle aussi de "generation" ou "output".
+    </div>
+
+    <div class="definition">
+        <strong>Context Window (fenetre de contexte)</strong> : La quantite maximale de texte (en tokens) que le LLM peut traiter en une seule fois. Cela inclut le prompt ET la reponse generee.
+    </div>
+
+    <div class="definition">
+        <strong>Temperature</strong> : Parametre qui controle l'aleatoire de la generation. 0 = deterministe (toujours le mot le plus probable), 1+ = creatif (explore des mots moins probables).
+    </div>
+
+    <div class="definition">
+        <strong>Fine-tuning</strong> : Processus d'adaptation d'un LLM pre-entraine a une tache ou un domaine specifique, en le re-entrainant sur un jeu de donnees specialise. Comme apprendre une specialite medicale apres des etudes generales.
+    </div>
+
+    <div class="definition">
+        <strong>RLHF (Reinforcement Learning from Human Feedback)</strong> : Technique d'entrainement ou des humains evaluent les reponses du modele pour l'aider a s'ameliorer. C'est ce qui a rendu ChatGPT si naturel et "poli" par rapport a GPT-3 brut.
+    </div>
+
+    <div class="definition">
+        <strong>Inference</strong> : Le processus d'utilisation d'un LLM deja entraine pour generer des reponses. L'entrainement se fait une fois (et coute des millions), l'inference se fait a chaque requete (et coute quelques centimes).
+    </div>
+
+    <div class="definition">
+        <strong>RAG (Retrieval-Augmented Generation)</strong> : Architecture qui combine un systeme de recherche documentaire avec un LLM. On recherche d'abord les documents pertinents, puis on les injecte dans le prompt du LLM pour qu'il genere une reponse fondee sur des sources.
+    </div>
+
+    <h3>Recapitulatif visuel</h3>
+
+    <div class="svg-container">
+        <svg width="800" height="300" viewBox="0 0 800 300">
+            <rect x="0" y="0" width="800" height="300" rx="15" fill="#16213e" stroke="#333"/>
+            <text x="400" y="28" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Le flux complet d'un LLM</text>
+
+            <!-- Prompt -->
+            <rect x="20" y="60" width="130" height="55" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="85" y="82" fill="#569cd6" text-anchor="middle" font-size="11" font-weight="bold">PROMPT</text>
+            <text x="85" y="100" fill="#aaa" text-anchor="middle" font-size="9">"Explique le ML"</text>
+
+            <!-- Fleche -->
+            <line x1="150" y1="87" x2="180" y2="87" stroke="#aaa" stroke-width="2"/>
+            <polygon points="185,87 175,82 175,92" fill="#aaa"/>
+
+            <!-- Tokenisation -->
+            <rect x="190" y="60" width="110" height="55" rx="8" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+            <text x="245" y="82" fill="#ff9800" text-anchor="middle" font-size="11" font-weight="bold">TOKENISATION</text>
+            <text x="245" y="100" fill="#aaa" text-anchor="middle" font-size="9">[Expl, ique, le, ML]</text>
+
+            <!-- Fleche -->
+            <line x1="300" y1="87" x2="330" y2="87" stroke="#aaa" stroke-width="2"/>
+            <polygon points="335,87 325,82 325,92" fill="#aaa"/>
+
+            <!-- Embeddings -->
+            <rect x="340" y="60" width="110" height="55" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+            <text x="395" y="82" fill="#4caf50" text-anchor="middle" font-size="11" font-weight="bold">EMBEDDINGS</text>
+            <text x="395" y="100" fill="#aaa" text-anchor="middle" font-size="9">[0.12, -0.5, ...]</text>
+
+            <!-- Fleche -->
+            <line x1="450" y1="87" x2="480" y2="87" stroke="#aaa" stroke-width="2"/>
+            <polygon points="485,87 475,82 475,92" fill="#aaa"/>
+
+            <!-- Transformer -->
+            <rect x="490" y="50" width="130" height="75" rx="10" fill="#2e1a2e" stroke="#ff6b35" stroke-width="3"/>
+            <text x="555" y="78" fill="#ff6b35" text-anchor="middle" font-size="12" font-weight="bold">TRANSFORMER</text>
+            <text x="555" y="95" fill="#aaa" text-anchor="middle" font-size="9">Attention + FFN</text>
+            <text x="555" y="110" fill="#aaa" text-anchor="middle" font-size="8">x N couches</text>
+
+            <!-- Fleche -->
+            <line x1="620" y1="87" x2="650" y2="87" stroke="#aaa" stroke-width="2"/>
+            <polygon points="655,87 645,82 645,92" fill="#aaa"/>
+
+            <!-- Probabilites -->
+            <rect x="660" y="60" width="120" height="55" rx="8" fill="#1a1a2e" stroke="#e91e63" stroke-width="2"/>
+            <text x="720" y="82" fill="#e91e63" text-anchor="middle" font-size="11" font-weight="bold">PROBABILITES</text>
+            <text x="720" y="100" fill="#aaa" text-anchor="middle" font-size="9">P(prochain mot)</text>
+
+            <!-- Fleche vers le bas -->
+            <line x1="720" y1="115" x2="720" y2="145" stroke="#aaa" stroke-width="2"/>
+            <polygon points="720,150 715,140 725,140" fill="#aaa"/>
+
+            <!-- Temperature -->
+            <rect x="660" y="155" width="120" height="40" rx="8" fill="#1a1a2e" stroke="#ffd700" stroke-width="2"/>
+            <text x="720" y="180" fill="#ffd700" text-anchor="middle" font-size="11">Temperature: 0.7</text>
+
+            <!-- Fleche vers le bas -->
+            <line x1="720" y1="195" x2="720" y2="220" stroke="#aaa" stroke-width="2"/>
+            <polygon points="720,225 715,215 725,215" fill="#aaa"/>
+
+            <!-- Completion -->
+            <rect x="610" y="230" width="170" height="50" rx="10" fill="#4caf50" opacity="0.2" stroke="#4caf50" stroke-width="2"/>
+            <text x="695" y="252" fill="#4caf50" text-anchor="middle" font-size="11" font-weight="bold">COMPLETION</text>
+            <text x="695" y="270" fill="#aaa" text-anchor="middle" font-size="9">"Le ML est une branche..."</text>
+
+            <!-- Boucle autoregresssive -->
+            <path d="M610 255 Q400 280 350 255 Q300 230 300 180 Q300 130 340 115" fill="none" stroke="#4caf50" stroke-width="1.5" stroke-dasharray="6,3"/>
+            <text x="350" y="270" fill="#4caf50" text-anchor="middle" font-size="9">boucle autoregresssive (mot par mot)</text>
+            <polygon points="340,115 335,125 345,125" fill="#4caf50"/>
+        </svg>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Resume du chapitre</h3>
+        <ul>
+            <li>Un <strong>LLM</strong> est un reseau de neurones massif entraine sur du texte pour predire le prochain mot</li>
+            <li>Il ne "comprend" pas comme un humain, mais ses <strong>predictions</strong> sont si bonnes qu'il semble comprendre</li>
+            <li>La <strong>temperature</strong> controle la creativite vs la precision</li>
+            <li>Les principales limites sont les <strong>hallucinations</strong>, le contexte limite et l'absence de memoire</li>
+            <li>Le <strong>RAG</strong> permet de contourner beaucoup de ces limites en donnant des sources au LLM</li>
+            <li>Les modeles leaders en 2025 sont <strong>GPT-5</strong>, <strong>Claude 4</strong>, <strong>Gemini 3</strong> et <strong>Llama 4</strong></li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Dans le prochain cours, nous allons plonger dans l'architecture <strong>Transformer</strong>, le moteur qui fait fonctionner tous ces LLMs. C'est la brique fondamentale a comprendre pour vraiment saisir comment ces modeles fonctionnent.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- NAVIGATION -->
+    <!-- ============================================================ -->
+
+    <div class="nav">
+        <span style="color:#666;">(Premier cours LLM)</span>
+        <a href="llm_02_transformer.html">Cours suivant : Architecture Transformer &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

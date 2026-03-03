@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Avance - Types, Workflows & Nouveautes 2025-2026</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #06090f;
+            --bg2: #0c1220;
+            --bg3: #131c2e;
+            --bg-code: #0a0f1a;
+            --text: #e2e8f0;
+            --text2: #94a3b8;
+            --text3: #64748b;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --green: #10b981;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --cyan: #06b6d4;
+            --pink: #ec4899;
+            --lime: #84cc16;
+            --border: #1e293b;
+            --radius: 16px;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.75;
+            font-size: 16px;
+        }
+
+        /* === NAV === */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 270px;
+            height: 100vh;
+            background: var(--bg2);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 20px 0;
+        }
+
+        .nav-head {
+            padding: 10px 20px 25px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+
+        .nav-head h2 {
+            font-size: 1rem;
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-head p { font-size: 0.7rem; color: var(--text3); margin-top: 4px; }
+
+        .nav-label {
+            padding: 14px 20px 4px;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text3);
+            font-weight: 700;
+        }
+
+        .nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 20px;
+            color: var(--text2);
+            text-decoration: none;
+            font-size: 0.82rem;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav a:hover {
+            color: var(--text);
+            background: rgba(139,92,246,0.06);
+            border-left-color: var(--purple);
+        }
+
+        .nav a .n {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            background: var(--bg3);
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* === MAIN === */
+        .main {
+            margin-left: 270px;
+            padding: 40px 55px 100px;
+            max-width: 1050px;
+        }
+
+        /* === HERO === */
+        .hero {
+            text-align: center;
+            padding: 70px 40px;
+            background: linear-gradient(180deg, rgba(139,92,246,0.08) 0%, transparent 100%);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 60px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            background: rgba(139,92,246,0.15);
+            border: 1px solid rgba(139,92,246,0.3);
+            border-radius: 20px;
+            font-size: 0.78rem;
+            color: var(--purple);
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p { font-size: 1.1rem; color: var(--text2); max-width: 600px; margin: 0 auto; }
+
+        /* === SECTION === */
+        .section { margin-bottom: 65px; scroll-margin-top: 30px; }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sn {
+            width: 46px;
+            height: 46px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .section-head h2 { font-size: 1.5rem; }
+        .section-head .sub { font-size: 0.82rem; color: var(--text3); }
+
+        /* === CARD === */
+        .card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 26px;
+            margin-bottom: 18px;
+        }
+
+        .card h3 { font-size: 1.1rem; margin-bottom: 10px; }
+        .card p, .card li { color: var(--text2); font-size: 0.93rem; }
+        .card ul, .card ol { padding-left: 20px; margin: 10px 0; }
+        .card li { margin-bottom: 6px; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+        /* === TYPE CARD (special styling) === */
+        .type-card {
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .type-card-header {
+            padding: 22px 26px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .type-card-header .type-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .type-card-header h3 { font-size: 1.25rem; }
+        .type-card-header .type-level { font-size: 0.75rem; }
+
+        .type-card-body { padding: 24px 26px; }
+        .type-card-body p, .type-card-body li { color: var(--text2); font-size: 0.93rem; }
+        .type-card-body ul { padding-left: 20px; margin: 10px 0; }
+        .type-card-body li { margin-bottom: 6px; }
+
+        .type-card-footer {
+            padding: 16px 26px;
+            background: rgba(255,255,255,0.015);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* === BADGES === */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        .badge.green { background: rgba(16,185,129,0.15); color: var(--green); }
+        .badge.red { background: rgba(239,68,68,0.15); color: var(--red); }
+        .badge.blue { background: rgba(59,130,246,0.15); color: var(--blue); }
+        .badge.orange { background: rgba(245,158,11,0.15); color: var(--orange); }
+        .badge.purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+        .badge.cyan { background: rgba(6,182,212,0.15); color: var(--cyan); }
+        .badge.pink { background: rgba(236,72,153,0.15); color: var(--pink); }
+        .badge.lime { background: rgba(132,204,22,0.15); color: var(--lime); }
+
+        /* === INFO BOX === */
+        .info {
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin: 18px 0;
+            border-left: 4px solid;
+            font-size: 0.88rem;
+        }
+
+        .info.tip { background: rgba(16,185,129,0.06); border-color: var(--green); }
+        .info.tip .it { color: var(--green); }
+        .info.warn { background: rgba(245,158,11,0.06); border-color: var(--orange); }
+        .info.warn .it { color: var(--orange); }
+        .info.note { background: rgba(59,130,246,0.06); border-color: var(--blue); }
+        .info.note .it { color: var(--blue); }
+        .info.hot { background: rgba(239,68,68,0.06); border-color: var(--red); }
+        .info.hot .it { color: var(--red); }
+        .info.new { background: rgba(139,92,246,0.06); border-color: var(--purple); }
+        .info.new .it { color: var(--purple); }
+
+        .it { font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .info p { color: var(--text2); }
+
+        /* === WORKFLOW (vertical) === */
+        .wf { display: flex; flex-direction: column; gap: 0; margin: 25px 0; }
+
+        .wf-step {
+            display: flex;
+            gap: 18px;
+            padding-bottom: 30px;
+        }
+
+        .wf-step:last-child { padding-bottom: 0; }
+
+        .wf-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+
+        .wf-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .wf-conn {
+            width: 2px;
+            flex: 1;
+            min-height: 20px;
+            background: var(--border);
+            margin-top: 4px;
+        }
+
+        .wf-step:last-child .wf-conn { display: none; }
+
+        .wf-body { flex: 1; padding-top: 4px; }
+        .wf-body h4 { font-size: 1rem; margin-bottom: 5px; }
+        .wf-body p { font-size: 0.88rem; color: var(--text2); }
+
+        /* === DIAGRAM === */
+        .diagram {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 35px 25px;
+            margin: 22px 0;
+            text-align: center;
+            overflow-x: auto;
+        }
+
+        /* === TABLE === */
+        .tbl {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 0.88rem;
+        }
+
+        .tbl th, .tbl td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tbl th {
+            background: rgba(139,92,246,0.08);
+            color: var(--purple);
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tbl td { color: var(--text2); }
+
+        /* === TIMELINE === */
+        .timeline { margin: 25px 0; }
+
+        .tl-item {
+            display: flex;
+            gap: 18px;
+            padding-bottom: 28px;
+            position: relative;
+        }
+
+        .tl-item:last-child { padding-bottom: 0; }
+
+        .tl-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+            position: relative;
+        }
+
+        .tl-item:not(:last-child) .tl-dot::after {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 6px;
+            width: 2px;
+            height: calc(100% + 14px);
+            background: var(--border);
+        }
+
+        .tl-content h4 { font-size: 0.95rem; margin-bottom: 4px; }
+        .tl-content p { font-size: 0.85rem; color: var(--text2); }
+
+        /* === CODE === */
+        .code {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 18px 0;
+            overflow: hidden;
+        }
+
+        .code-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 14px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.72rem;
+            color: var(--text3);
+        }
+
+        .dots { display: flex; gap: 5px; }
+        .dots span { width: 9px; height: 9px; border-radius: 50%; }
+        .dots span:nth-child(1) { background: var(--red); }
+        .dots span:nth-child(2) { background: var(--orange); }
+        .dots span:nth-child(3) { background: var(--green); }
+
+        .code pre {
+            padding: 14px 18px;
+            overflow-x: auto;
+            font-size: 0.83rem;
+            line-height: 1.6;
+        }
+
+        .code code {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            color: var(--text2);
+        }
+
+        .cm { color: #6a737d; }
+        .kw { color: #ff7b72; }
+        .st { color: #a5d6ff; }
+        .fn { color: #d2a8ff; }
+        .nb { color: #79c0ff; }
+
+        /* === HIGHLIGHT === */
+        .hl { color: var(--blue); font-weight: 600; }
+        .hl-p { color: var(--purple); font-weight: 600; }
+        .hl-g { color: var(--green); font-weight: 600; }
+        .hl-o { color: var(--orange); font-weight: 600; }
+
+        strong { color: var(--text); }
+
+        /* === FOOTER === */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            margin-top: 60px;
+            border-top: 1px solid var(--border);
+            color: var(--text3);
+            font-size: 0.78rem;
+        }
+
+        .footer a { color: var(--purple); text-decoration: none; }
+
+        /* === MOBILE === */
+        .mob-btn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--purple);
+            color: white;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        @media (max-width: 900px) {
+            .nav { transform: translateX(-100%); transition: transform 0.3s; }
+            .nav.open { transform: translateX(0); }
+            .main { margin-left: 0; padding: 25px 18px 80px; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.9rem; }
+            .mob-btn { display: flex; align-items: center; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+    <div class="nav-head">
+        <h2>RAG Avance</h2>
+        <p>Types, Workflows & Nouveautes 2025-2026</p>
+    </div>
+
+    <div class="nav-label">Vue d'ensemble</div>
+    <a href="#evolution"><span class="n">1</span> Evolution du RAG</a>
+    <a href="#tableau"><span class="n">2</span> Tableau comparatif</a>
+
+    <div class="nav-label">Les types de RAG</div>
+    <a href="#naive"><span class="n">3</span> Naive RAG</a>
+    <a href="#advanced"><span class="n">4</span> Advanced RAG</a>
+    <a href="#modular"><span class="n">5</span> Modular RAG</a>
+    <a href="#agentic"><span class="n">6</span> Agentic RAG</a>
+    <a href="#graph"><span class="n">7</span> Graph RAG</a>
+    <a href="#corrective"><span class="n">8</span> Corrective RAG</a>
+    <a href="#self-rag"><span class="n">9</span> Self-RAG</a>
+    <a href="#hybrid"><span class="n">10</span> Hybrid RAG</a>
+    <a href="#multimodal"><span class="n">11</span> Multimodal RAG</a>
+
+    <div class="nav-label">Workflows</div>
+    <a href="#wf-naive"><span class="n">12</span> Workflow Naive</a>
+    <a href="#wf-advanced"><span class="n">13</span> Workflow Advanced</a>
+    <a href="#wf-agentic"><span class="n">14</span> Workflow Agentic</a>
+
+    <div class="nav-label">Nouveautes</div>
+    <a href="#trends-2025"><span class="n">15</span> Tendances 2025</a>
+    <a href="#trends-2026"><span class="n">16</span> Tendances 2026</a>
+    <a href="#eval"><span class="n">17</span> Evaluer un RAG</a>
+    <a href="#choisir"><span class="n">18</span> Quel RAG choisir ?</a>
+</nav>
+
+<button class="mob-btn" onclick="document.getElementById('nav').classList.toggle('open')">&#9776;</button>
+
+<div class="main">
+
+    <!-- HERO -->
+    <div class="hero">
+        <span class="hero-badge">Niveau Avance - 2025/2026</span>
+        <h1>RAG Avance : Les Types & Workflows</h1>
+        <p>Naive, Advanced, Modular, Agentic, Graph, Self-RAG, Corrective... Tous les types de RAG expliques avec leurs workflows detailles et les dernieres nouveautes.</p>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 1. EVOLUTION DU RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="evolution">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(139,92,246,0.15); color: var(--purple);">1</div>
+            <div>
+                <h2>L'Evolution du RAG</h2>
+                <div class="sub">De 2020 a 2026</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>La timeline du RAG</h3>
+            <p>Le RAG a evolue rapidement depuis sa creation par Facebook AI Research en 2020 :</p>
+        </div>
+
+        <div class="timeline">
+            <div class="tl-item">
+                <div class="tl-dot" style="background: var(--blue);"></div>
+                <div class="tl-content">
+                    <h4>2020 - Naissance du RAG</h4>
+                    <p>Facebook AI Research publie le paper original "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks". Le concept de base est pose : chercher des documents pour augmenter les reponses d'un LLM.</p>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot" style="background: var(--green);"></div>
+                <div class="tl-content">
+                    <h4>2022-2023 - Explosion avec ChatGPT</h4>
+                    <p>L'arrivee de ChatGPT propulse le RAG. LangChain et LlamaIndex emergent. C'est l'ere du <span class="hl">Naive RAG</span> : simple mais efficace.</p>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot" style="background: var(--orange);"></div>
+                <div class="tl-content">
+                    <h4>2024 - Maturation</h4>
+                    <p>Apparition de l'<span class="hl-p">Advanced RAG</span> (re-ranking, query rewriting) et du <span class="hl-g">Modular RAG</span>. Les entreprises l'adoptent en production. GraphRAG de Microsoft fait sensation.</p>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot" style="background: var(--purple);"></div>
+                <div class="tl-content">
+                    <h4>2025 - L'ere Agentic</h4>
+                    <p>Le <span class="hl-o">Agentic RAG</span> emerge : des agents autonomes qui planifient, cherchent, et raisonnent. Self-RAG et Corrective RAG deviennent standards. Multimodal RAG (images, video) se developpe.</p>
+                </div>
+            </div>
+            <div class="tl-item">
+                <div class="tl-dot" style="background: var(--pink);"></div>
+                <div class="tl-content">
+                    <h4>2026 - Context Engine</h4>
+                    <p>Le RAG evolue vers un "Context Engine" : moteur de contexte intelligent qui combine recherche semantique, graphes de connaissances, et raisonnement multi-etapes. Les systemes deviennent auto-ameliorants grace au reinforcement learning.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 2. TABLEAU COMPARATIF -->
+    <!-- ======================================== -->
+    <div class="section" id="tableau">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(59,130,246,0.15); color: var(--blue);">2</div>
+            <div>
+                <h2>Tableau Comparatif</h2>
+                <div class="sub">Tous les types de RAG en un coup d'oeil</div>
+            </div>
+        </div>
+
+        <div class="card" style="overflow-x: auto;">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Complexite</th>
+                        <th>Precision</th>
+                        <th>Cas d'usage</th>
+                        <th>Difficulte</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Naive RAG</strong></td>
+                        <td><span class="badge green">Simple</span></td>
+                        <td><span class="badge orange">Moyenne</span></td>
+                        <td>Prototypage, FAQ, petits projets</td>
+                        <td><span class="badge green">Debutant</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Advanced RAG</strong></td>
+                        <td><span class="badge orange">Moyen</span></td>
+                        <td><span class="badge green">Bonne</span></td>
+                        <td>Production, documents complexes</td>
+                        <td><span class="badge orange">Intermediaire</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Modular RAG</strong></td>
+                        <td><span class="badge orange">Moyen</span></td>
+                        <td><span class="badge green">Bonne</span></td>
+                        <td>Systemes flexibles, multi-sources</td>
+                        <td><span class="badge orange">Intermediaire</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Agentic RAG</strong></td>
+                        <td><span class="badge red">Eleve</span></td>
+                        <td><span class="badge green">Excellente</span></td>
+                        <td>Questions complexes, multi-hop</td>
+                        <td><span class="badge red">Avance</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Graph RAG</strong></td>
+                        <td><span class="badge red">Eleve</span></td>
+                        <td><span class="badge green">Excellente</span></td>
+                        <td>Relations entre entites, KB</td>
+                        <td><span class="badge red">Avance</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Corrective RAG</strong></td>
+                        <td><span class="badge orange">Moyen</span></td>
+                        <td><span class="badge green">Tres bonne</span></td>
+                        <td>Fiabilite critique (medical, legal)</td>
+                        <td><span class="badge orange">Intermediaire</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Self-RAG</strong></td>
+                        <td><span class="badge orange">Moyen</span></td>
+                        <td><span class="badge green">Tres bonne</span></td>
+                        <td>Reduction des hallucinations</td>
+                        <td><span class="badge orange">Intermediaire</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hybrid RAG</strong></td>
+                        <td><span class="badge orange">Moyen</span></td>
+                        <td><span class="badge green">Tres bonne</span></td>
+                        <td>Recherche precise (mots-cles + sens)</td>
+                        <td><span class="badge orange">Intermediaire</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Multimodal RAG</strong></td>
+                        <td><span class="badge red">Eleve</span></td>
+                        <td><span class="badge green">Bonne</span></td>
+                        <td>Images, audio, video + texte</td>
+                        <td><span class="badge red">Avance</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 3. NAIVE RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="naive">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(16,185,129,0.15); color: var(--green);">3</div>
+            <div>
+                <h2>Naive RAG</h2>
+                <div class="sub">Le modele de base - Point de depart</div>
+            </div>
+        </div>
+
+        <div class="type-card">
+            <div class="type-card-header">
+                <div class="type-icon" style="background: rgba(16,185,129,0.15); color: var(--green); font-size: 1.8rem;">&#9889;</div>
+                <div>
+                    <h3>Naive RAG (RAG Basique)</h3>
+                    <div class="type-level"><span class="badge green">Debutant</span> &nbsp; Le point de depart pour tous</div>
+                </div>
+            </div>
+            <div class="type-card-body">
+                <p><strong>Principe :</strong> Le Naive RAG suit le processus le plus simple : <span class="hl-g">Indexer &rarr; Chercher &rarr; Generer</span>. Pas d'optimisation, pas de re-ranking, pas de verification.</p>
+                <br>
+                <p><strong>Comment ca marche :</strong></p>
+                <ol>
+                    <li>Les documents sont decoupes et indexes dans une base vectorielle</li>
+                    <li>La question de l'utilisateur est convertie en vecteur</li>
+                    <li>Les chunks les plus proches sont recuperes</li>
+                    <li>Question + chunks sont envoyes directement au LLM</li>
+                </ol>
+                <br>
+                <p><strong>Limites :</strong></p>
+                <ul>
+                    <li><span class="hl-o">Precision limitee</span> : les chunks recuperes ne sont pas toujours les plus pertinents</li>
+                    <li><span class="hl-o">Pas de verification</span> : aucun controle de qualite des resultats</li>
+                    <li><span class="hl-o">Sensible au bruit</span> : des chunks non pertinents polluent la reponse</li>
+                    <li><span class="hl-o">Questions complexes</span> : echoue sur les questions multi-hop</li>
+                </ul>
+            </div>
+            <div class="type-card-footer">
+                <span class="badge green">Simple</span>
+                <span class="badge blue">Prototypage</span>
+                <span class="badge orange">Precision moyenne</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 4. ADVANCED RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="advanced">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(59,130,246,0.15); color: var(--blue);">4</div>
+            <div>
+                <h2>Advanced RAG</h2>
+                <div class="sub">Optimisations pre et post-retrieval</div>
+            </div>
+        </div>
+
+        <div class="type-card">
+            <div class="type-card-header">
+                <div class="type-icon" style="background: rgba(59,130,246,0.15); color: var(--blue); font-size: 1.8rem;">&#128640;</div>
+                <div>
+                    <h3>Advanced RAG</h3>
+                    <div class="type-level"><span class="badge blue">Intermediaire</span> &nbsp; Le RAG optimise pour la production</div>
+                </div>
+            </div>
+            <div class="type-card-body">
+                <p><strong>Principe :</strong> L'Advanced RAG ajoute des <span class="hl">etapes d'optimisation</span> avant et apres la recherche pour ameliorer la qualite des resultats.</p>
+
+                <br>
+                <h4 style="color: var(--blue);">Optimisations PRE-Retrieval (avant la recherche)</h4>
+                <ul>
+                    <li><strong>Query Rewriting</strong> : Reformuler la question pour la rendre plus precise</li>
+                    <li><strong>Query Expansion</strong> : Generer des variantes de la question (HyDE, Multi-Query)</li>
+                    <li><strong>Query Routing</strong> : Diriger la question vers la bonne base de donnees</li>
+                    <li><strong>Step-back Prompting</strong> : Poser une question plus generale d'abord</li>
+                </ul>
+
+                <br>
+                <h4 style="color: var(--green);">Optimisations POST-Retrieval (apres la recherche)</h4>
+                <ul>
+                    <li><strong>Re-ranking</strong> : Reordonner les resultats par pertinence (Cross-Encoder)</li>
+                    <li><strong>Compression</strong> : Reduire les chunks au contenu pertinent uniquement</li>
+                    <li><strong>Filtrage</strong> : Supprimer les chunks avec un score trop bas</li>
+                    <li><strong>Fusion</strong> : Combiner les resultats de plusieurs recherches</li>
+                </ul>
+            </div>
+            <div class="type-card-footer">
+                <span class="badge blue">Re-ranking</span>
+                <span class="badge green">Query Rewriting</span>
+                <span class="badge purple">Production-ready</span>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>advanced_rag_reranking.py</span>
+            </div>
+            <pre><code><span class="cm"># Exemple : Advanced RAG avec Re-ranking</span>
+<span class="kw">from</span> langchain.retrievers <span class="kw">import</span> ContextualCompressionRetriever
+<span class="kw">from</span> langchain.retrievers.document_compressors <span class="kw">import</span> CrossEncoderReranker
+<span class="kw">from</span> langchain_community.cross_encoders <span class="kw">import</span> HuggingFaceCrossEncoder
+
+<span class="cm"># 1. Le modele de re-ranking</span>
+reranker = <span class="fn">HuggingFaceCrossEncoder</span>(model_name=<span class="st">"cross-encoder/ms-marco-MiniLM-L-6-v2"</span>)
+compressor = <span class="fn">CrossEncoderReranker</span>(model=reranker, top_n=<span class="nb">3</span>)
+
+<span class="cm"># 2. Retriever avec compression/re-ranking</span>
+advanced_retriever = <span class="fn">ContextualCompressionRetriever</span>(
+    base_compressor=compressor,
+    base_retriever=base_retriever  <span class="cm"># Le retriever de base (ChromaDB)</span>
+)
+
+<span class="cm"># Resultat : les 3 chunks les plus pertinents apres re-ranking</span>
+docs = advanced_retriever.<span class="fn">get_relevant_documents</span>(<span class="st">"Ma question"</span>)</code></pre>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 5. MODULAR RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="modular">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(245,158,11,0.15); color: var(--orange);">5</div>
+            <div>
+                <h2>Modular RAG</h2>
+                <div class="sub">Architecture flexible a composants interchangeables</div>
+            </div>
+        </div>
+
+        <div class="type-card">
+            <div class="type-card-header">
+                <div class="type-icon" style="background: rgba(245,158,11,0.15); color: var(--orange); font-size: 1.8rem;">&#128295;</div>
+                <div>
+                    <h3>Modular RAG</h3>
+                    <div class="type-level"><span class="badge orange">Intermediaire</span> &nbsp; LEGO de l'IA - Composants modulaires</div>
+                </div>
+            </div>
+            <div class="type-card-body">
+                <p><strong>Principe :</strong> Le Modular RAG decompose le pipeline en <span class="hl-o">modules independants et interchangeables</span>. Chaque module a un role specifique et peut etre remplace ou ajoute selon les besoins.</p>
+
+                <br>
+                <p><strong>Les modules disponibles :</strong></p>
+
+                <div class="grid-3" style="margin-top: 12px;">
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--blue);">Search</strong>
+                        <p style="font-size: 0.8rem; color: var(--text3);">Recherche dans differentes sources (web, DB, API)</p>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--purple);">Memory</strong>
+                        <p style="font-size: 0.8rem; color: var(--text3);">Memoire des conversations precedentes</p>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--green);">Fusion</strong>
+                        <p style="font-size: 0.8rem; color: var(--text3);">Combine les resultats de plusieurs sources</p>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--orange);">Routing</strong>
+                        <p style="font-size: 0.8rem; color: var(--text3);">Dirige vers la bonne source/strategie</p>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--cyan);">Predict</strong>
+                        <p style="font-size: 0.8rem; color: var(--text3);">Predit si une recherche est necessaire</p>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--pink);">Task Adapter</strong>
+                        <p style="font-size: 0.8rem; color: var(--text3);">Adapte le pipeline selon la tache</p>
+                    </div>
+                </div>
+            </div>
+            <div class="type-card-footer">
+                <span class="badge orange">Flexible</span>
+                <span class="badge blue">Multi-sources</span>
+                <span class="badge green">Interchangeable</span>
+            </div>
+        </div>
+
+        <div class="info tip">
+            <div class="it">Analogie</div>
+            <p>Le Modular RAG est comme un <strong>kit LEGO</strong>. Tu choisis les briques (modules) dont tu as besoin et tu les assembles comme tu veux. Tu peux ajouter un module de memoire, remplacer le moteur de recherche, ou ajouter un module de fusion - le tout sans reconstruire le systeme entier.</p>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 6. AGENTIC RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="agentic">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(139,92,246,0.15); color: var(--purple);">6</div>
+            <div>
+                <h2>Agentic RAG</h2>
+                <div class="sub">L'IA qui reflechit, planifie et agit</div>
+            </div>
+        </div>
+
+        <div class="type-card">
+            <div class="type-card-header">
+                <div class="type-icon" style="background: rgba(139,92,246,0.15); color: var(--purple); font-size: 1.8rem;">&#129302;</div>
+                <div>
+                    <h3>Agentic RAG</h3>
+                    <div class="type-level"><span class="badge purple">Avance</span> &nbsp; La revolution 2025 - L'agent autonome</div>
+                </div>
+            </div>
+            <div class="type-card-body">
+                <p><strong>Principe :</strong> L'Agentic RAG transforme le RAG en un <span class="hl-p">agent intelligent</span> capable de :</p>
+                <ul>
+                    <li><strong>Planifier</strong> : Decomposer une question complexe en sous-etapes</li>
+                    <li><strong>Decider</strong> : Choisir quelle source interroger et quelle strategie utiliser</li>
+                    <li><strong>Agir</strong> : Executer des recherches, appeler des outils, des APIs</li>
+                    <li><strong>Evaluer</strong> : Verifier si la reponse est suffisante, sinon continuer</li>
+                    <li><strong>Iterer</strong> : Boucler jusqu'a obtenir une reponse satisfaisante</li>
+                </ul>
+
+                <br>
+                <p><strong>Difference cle avec les autres RAG :</strong></p>
+                <p>Les RAG classiques font une seule recherche puis generent. L'Agentic RAG fait <span class="hl-p">plusieurs boucles de recherche</span>, evalue les resultats, et decide dynamiquement quoi faire ensuite. C'est comme un chercheur humain vs un robot qui suit des instructions.</p>
+
+                <br>
+                <p><strong>Exemple concret :</strong></p>
+                <div class="info note" style="margin: 10px 0;">
+                    <div class="it">Question complexe</div>
+                    <p>"Comparer les effets secondaires du paracetamol et de l'ibuprofene chez les patients diabetiques de plus de 65 ans"</p>
+                </div>
+                <p><strong>Naive RAG</strong> : Cherche tout en une seule fois &rarr; resultats mediocres.</p>
+                <p><strong>Agentic RAG</strong> :</p>
+                <ol>
+                    <li>Decompose : "effets paracetamol" + "effets ibuprofene" + "patients diabetiques 65+"</li>
+                    <li>Cherche chaque sous-question separement</li>
+                    <li>Evalue : "Ai-je assez d'info sur les diabetiques ?" &rarr; Non &rarr; Cherche encore</li>
+                    <li>Synthetise une reponse complete et precise</li>
+                </ol>
+            </div>
+            <div class="type-card-footer">
+                <span class="badge purple">Agent autonome</span>
+                <span class="badge pink">Multi-hop</span>
+                <span class="badge blue">Raisonnement</span>
+                <span class="badge green">2025</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 7. GRAPH RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="graph">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(6,182,212,0.15); color: var(--cyan);">7</div>
+            <div>
+                <h2>Graph RAG</h2>
+                <div class="sub">Les graphes de connaissances au service du RAG</div>
+            </div>
+        </div>
+
+        <div class="type-card">
+            <div class="type-card-header">
+                <div class="type-icon" style="background: rgba(6,182,212,0.15); color: var(--cyan); font-size: 1.8rem;">&#128296;</div>
+                <div>
+                    <h3>Graph RAG (Knowledge Graph RAG)</h3>
+                    <div class="type-level"><span class="badge cyan">Avance</span> &nbsp; Popularise par Microsoft en 2024</div>
+                </div>
+            </div>
+            <div class="type-card-body">
+                <p><strong>Principe :</strong> Le Graph RAG combine la recherche vectorielle classique avec un <span class="hl">graphe de connaissances</span> (Knowledge Graph). Au lieu de juste chercher des textes similaires, il comprend les <strong>relations entre les entites</strong>.</p>
+
+                <br>
+                <p><strong>C'est quoi un graphe de connaissances ?</strong></p>
+                <p>Un graphe ou les <strong>noeuds</strong> sont des entites (personnes, concepts, medicaments...) et les <strong>aretes</strong> sont les relations entre eux.</p>
+
+                <div class="code">
+                    <div class="code-top">
+                        <div class="dots"><span></span><span></span><span></span></div>
+                        <span>knowledge_graph_exemple.txt</span>
+                    </div>
+                    <pre><code><span class="cm"># Exemple de graphe de connaissances medical :</span>
+
+  [Paracetamol] ---traite---&gt; [Douleur]
+  [Paracetamol] ---a_effet---&gt; [Hepatotoxicite]
+  [Paracetamol] ---interagit---&gt; [Alcool]
+  [Ibuprofene] ---traite---&gt; [Inflammation]
+  [Ibuprofene] ---appartient---&gt; [AINS]
+  [AINS] ---contre_indique---&gt; [Ulcere gastrique]
+
+<span class="cm"># Question : "Le paracetamol est-il dangereux avec l'alcool ?"</span>
+<span class="cm"># Le graphe suit le chemin :</span>
+<span class="cm"># Paracetamol &rarr; interagit &rarr; Alcool</span>
+<span class="cm"># Paracetamol &rarr; a_effet &rarr; Hepatotoxicite</span>
+<span class="cm"># = Reponse precise et tracable !</span></code></pre>
+                </div>
+
+                <br>
+                <p><strong>Avantages par rapport au RAG vectoriel pur :</strong></p>
+                <ul>
+                    <li><strong>Relations</strong> : Comprend les liens entre concepts (cause/effet, hierarchie)</li>
+                    <li><strong>Precision jusqu'a 99%</strong> : En combinant vecteurs + graphe</li>
+                    <li><strong>Raisonnement</strong> : Peut suivre des chaines de relations</li>
+                    <li><strong>Questions globales</strong> : Repond aux questions de synthese ("Resume tous les risques")</li>
+                </ul>
+            </div>
+            <div class="type-card-footer">
+                <span class="badge cyan">Knowledge Graph</span>
+                <span class="badge blue">Relations</span>
+                <span class="badge green">99% precision</span>
+                <span class="badge purple">Microsoft</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 8. CORRECTIVE RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="corrective">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(239,68,68,0.15); color: var(--red);">8</div>
+            <div>
+                <h2>Corrective RAG (CRAG)</h2>
+                <div class="sub">L'auto-correction des resultats</div>
+            </div>
+        </div>
+
+        <div class="type-card">
+            <div class="type-card-header">
+                <div class="type-icon" style="background: rgba(239,68,68,0.15); color: var(--red); font-size: 1.8rem;">&#9888;</div>
+                <div>
+                    <h3>Corrective RAG (CRAG)</h3>
+                    <div class="type-level"><span class="badge red">Intermediaire+</span> &nbsp; Fiabilite maximale</div>
+                </div>
+            </div>
+            <div class="type-card-body">
+                <p><strong>Principe :</strong> Le CRAG ajoute un <span class="hl-o">evaluateur de pertinence</span> qui note la qualite des documents recuperes. Selon le score, il decide quoi faire :</p>
+
+                <br>
+                <div class="grid-3">
+                    <div style="padding: 16px; background: rgba(16,185,129,0.06); border-radius: 10px; border: 1px solid rgba(16,185,129,0.2);">
+                        <strong style="color: var(--green);">CORRECT</strong>
+                        <p style="font-size: 0.82rem; color: var(--text2); margin-top: 6px;">Score eleve &rarr; Utiliser les documents tels quels pour generer la reponse</p>
+                    </div>
+                    <div style="padding: 16px; background: rgba(245,158,11,0.06); border-radius: 10px; border: 1px solid rgba(245,158,11,0.2);">
+                        <strong style="color: var(--orange);">AMBIGU</strong>
+                        <p style="font-size: 0.82rem; color: var(--text2); margin-top: 6px;">Score moyen &rarr; Raffiner la recherche, reformuler, chercher dans d'autres sources</p>
+                    </div>
+                    <div style="padding: 16px; background: rgba(239,68,68,0.06); border-radius: 10px; border: 1px solid rgba(239,68,68,0.2);">
+                        <strong style="color: var(--red);">INCORRECT</strong>
+                        <p style="font-size: 0.82rem; color: var(--text2); margin-top: 6px;">Score bas &rarr; Rejeter les documents, chercher sur le web, ou dire "je ne sais pas"</p>
+                    </div>
+                </div>
+
+                <br>
+                <p><strong>Pourquoi c'est important :</strong></p>
+                <p>Dans un RAG classique, si les documents recuperes sont mauvais, la reponse sera mauvaise. Le CRAG <strong>detecte le probleme avant</strong> de generer la reponse, evitant ainsi les hallucinations et les reponses incorrectes.</p>
+            </div>
+            <div class="type-card-footer">
+                <span class="badge red">Auto-correction</span>
+                <span class="badge orange">Evaluateur</span>
+                <span class="badge green">Fiabilite</span>
+            </div>
+        </div>
+
+        <div class="diagram">
+            <svg width="700" height="320" viewBox="0 0 700 320">
+                <!-- Question -->
+                <rect x="260" y="10" width="180" height="45" rx="10" fill="rgba(6,182,212,0.12)" stroke="#06b6d4" stroke-width="1.5"/>
+                <text x="350" y="38" text-anchor="middle" fill="#06b6d4" font-size="13" font-weight="700">Question</text>
+
+                <line x1="350" y1="55" x2="350" y2="80" stroke="#64748b" stroke-width="1.5" marker-end="url(#ar)"/>
+
+                <!-- Retrieval -->
+                <rect x="260" y="80" width="180" height="45" rx="10" fill="rgba(59,130,246,0.12)" stroke="#3b82f6" stroke-width="1.5"/>
+                <text x="350" y="108" text-anchor="middle" fill="#3b82f6" font-size="13" font-weight="700">Retrieval (recherche)</text>
+
+                <line x1="350" y1="125" x2="350" y2="150" stroke="#64748b" stroke-width="1.5" marker-end="url(#ar)"/>
+
+                <!-- Evaluator -->
+                <rect x="235" y="150" width="230" height="45" rx="10" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="2"/>
+                <text x="350" y="178" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="700">Evaluateur de Pertinence</text>
+
+                <!-- 3 branches -->
+                <!-- Correct -->
+                <line x1="280" y1="195" x2="100" y2="240" stroke="#10b981" stroke-width="1.5" marker-end="url(#ar)"/>
+                <rect x="20" y="240" width="160" height="55" rx="10" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1.5"/>
+                <text x="100" y="263" text-anchor="middle" fill="#10b981" font-size="11" font-weight="700">CORRECT</text>
+                <text x="100" y="280" text-anchor="middle" fill="#94a3b8" font-size="10">Generer la reponse</text>
+
+                <!-- Ambigu -->
+                <line x1="350" y1="195" x2="350" y2="240" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ar)"/>
+                <rect x="270" y="240" width="160" height="55" rx="10" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="1.5"/>
+                <text x="350" y="263" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">AMBIGU</text>
+                <text x="350" y="280" text-anchor="middle" fill="#94a3b8" font-size="10">Raffiner la recherche</text>
+
+                <!-- Incorrect -->
+                <line x1="420" y1="195" x2="600" y2="240" stroke="#ef4444" stroke-width="1.5" marker-end="url(#ar)"/>
+                <rect x="520" y="240" width="160" height="55" rx="10" fill="rgba(239,68,68,0.12)" stroke="#ef4444" stroke-width="1.5"/>
+                <text x="600" y="263" text-anchor="middle" fill="#ef4444" font-size="11" font-weight="700">INCORRECT</text>
+                <text x="600" y="280" text-anchor="middle" fill="#94a3b8" font-size="10">Rejeter / Web search</text>
+
+                <defs>
+                    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 9. SELF-RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="self-rag">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(236,72,153,0.15); color: var(--pink);">9</div>
+            <div>
+                <h2>Self-RAG</h2>
+                <div class="sub">L'IA qui decide elle-meme si elle a besoin de chercher</div>
+            </div>
+        </div>
+
+        <div class="type-card">
+            <div class="type-card-header">
+                <div class="type-icon" style="background: rgba(236,72,153,0.15); color: var(--pink); font-size: 1.8rem;">&#129504;</div>
+                <div>
+                    <h3>Self-RAG (Self-Reflective RAG)</h3>
+                    <div class="type-level"><span class="badge pink">Intermediaire+</span> &nbsp; L'auto-reflexion intelligente</div>
+                </div>
+            </div>
+            <div class="type-card-body">
+                <p><strong>Principe :</strong> Le Self-RAG donne au LLM la capacite de <span class="hl-p">reflechir sur lui-meme</span> a travers des "tokens de reflexion" speciaux :</p>
+
+                <br>
+                <div class="grid-2">
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--cyan);">[Retrieve]</strong>
+                        <p style="font-size: 0.82rem; color: var(--text2);">"Ai-je besoin de chercher des documents pour repondre ?" &rarr; Oui/Non</p>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--green);">[ISREL]</strong>
+                        <p style="font-size: 0.82rem; color: var(--text2);">"Ce document est-il pertinent pour ma question ?" &rarr; Pertinent/Non pertinent</p>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--orange);">[ISSUP]</strong>
+                        <p style="font-size: 0.82rem; color: var(--text2);">"Ma reponse est-elle supportee par les documents ?" &rarr; Oui/Partiellement/Non</p>
+                    </div>
+                    <div style="padding: 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);">
+                        <strong style="color: var(--pink);">[ISUSE]</strong>
+                        <p style="font-size: 0.82rem; color: var(--text2);">"Ma reponse est-elle utile pour l'utilisateur ?" &rarr; Score 1 a 5</p>
+                    </div>
+                </div>
+
+                <br>
+                <p><strong>Avantage majeur :</strong> Le Self-RAG ne fait une recherche <strong>que quand c'est necessaire</strong>. Pour une question simple ("Quelle est la capitale de la France ?"), il repond directement. Pour une question complexe, il cherche, verifie, et s'auto-corrige.</p>
+            </div>
+            <div class="type-card-footer">
+                <span class="badge pink">Self-reflection</span>
+                <span class="badge cyan">Tokens speciaux</span>
+                <span class="badge green">Anti-hallucination</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 10. HYBRID RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="hybrid">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(132,204,22,0.15); color: var(--lime);">10</div>
+            <div>
+                <h2>Hybrid RAG</h2>
+                <div class="sub">Le meilleur des deux mondes : semantique + mots-cles</div>
+            </div>
+        </div>
+
+        <div class="type-card">
+            <div class="type-card-header">
+                <div class="type-icon" style="background: rgba(132,204,22,0.15); color: var(--lime); font-size: 1.8rem;">&#128256;</div>
+                <div>
+                    <h3>Hybrid RAG (Recherche Hybride)</h3>
+                    <div class="type-level"><span class="badge lime">Intermediaire</span> &nbsp; Vectoriel + BM25</div>
+                </div>
+            </div>
+            <div class="type-card-body">
+                <p><strong>Principe :</strong> Combine <span class="hl-g">deux types de recherche</span> pour de meilleurs resultats :</p>
+
+                <br>
+                <div class="grid-2">
+                    <div style="padding: 16px; background: rgba(139,92,246,0.06); border-radius: 10px; border: 1px solid rgba(139,92,246,0.2);">
+                        <strong style="color: var(--purple);">Recherche Semantique (Dense)</strong>
+                        <p style="font-size: 0.82rem; color: var(--text2); margin-top: 6px;">Trouve les documents par <strong>sens</strong>. "Medecin" &rarr; trouve aussi "docteur", "praticien"</p>
+                    </div>
+                    <div style="padding: 16px; background: rgba(245,158,11,0.06); border-radius: 10px; border: 1px solid rgba(245,158,11,0.2);">
+                        <strong style="color: var(--orange);">Recherche par Mots-Cles (Sparse/BM25)</strong>
+                        <p style="font-size: 0.82rem; color: var(--text2); margin-top: 6px;">Trouve les documents avec les <strong>mots exacts</strong>. Ideal pour les codes, noms propres, references</p>
+                    </div>
+                </div>
+
+                <br>
+                <p>La <strong>Reciprocal Rank Fusion (RRF)</strong> combine les resultats des deux recherches en un classement unique optimise.</p>
+
+                <div class="code">
+                    <div class="code-top">
+                        <div class="dots"><span></span><span></span><span></span></div>
+                        <span>hybrid_search.py</span>
+                    </div>
+                    <pre><code><span class="cm"># Recherche hybride avec LangChain</span>
+<span class="kw">from</span> langchain.retrievers <span class="kw">import</span> EnsembleRetriever
+<span class="kw">from</span> langchain_community.retrievers <span class="kw">import</span> BM25Retriever
+
+<span class="cm"># Retriever semantique (vecteurs)</span>
+vector_retriever = vectorstore.<span class="fn">as_retriever</span>(search_kwargs={<span class="st">"k"</span>: <span class="nb">5</span>})
+
+<span class="cm"># Retriever BM25 (mots-cles)</span>
+bm25_retriever = <span class="fn">BM25Retriever.from_documents</span>(documents, k=<span class="nb">5</span>)
+
+<span class="cm"># Hybrid : combine les deux (50/50)</span>
+hybrid_retriever = <span class="fn">EnsembleRetriever</span>(
+    retrievers=[vector_retriever, bm25_retriever],
+    weights=[<span class="nb">0.5</span>, <span class="nb">0.5</span>]  <span class="cm"># Poids egal</span>
+)</code></pre>
+                </div>
+            </div>
+            <div class="type-card-footer">
+                <span class="badge lime">Dense + Sparse</span>
+                <span class="badge purple">BM25</span>
+                <span class="badge blue">RRF Fusion</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 11. MULTIMODAL RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="multimodal">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(236,72,153,0.15); color: var(--pink);">11</div>
+            <div>
+                <h2>Multimodal RAG</h2>
+                <div class="sub">Au-dela du texte : images, audio, video</div>
+            </div>
+        </div>
+
+        <div class="type-card">
+            <div class="type-card-header">
+                <div class="type-icon" style="background: rgba(236,72,153,0.15); color: var(--pink); font-size: 1.8rem;">&#127912;</div>
+                <div>
+                    <h3>Multimodal RAG</h3>
+                    <div class="type-level"><span class="badge pink">Avance</span> &nbsp; Tendance forte 2025-2026</div>
+                </div>
+            </div>
+            <div class="type-card-body">
+                <p><strong>Principe :</strong> Le Multimodal RAG etend le RAG au-dela du texte pour inclure <span class="hl-p">images, tableaux, graphiques, audio et meme video</span> dans la base de connaissances.</p>
+
+                <br>
+                <p><strong>Approches possibles :</strong></p>
+                <ul>
+                    <li><strong>Images &rarr; Texte</strong> : Extraire le texte des images (OCR, description par LLM multimodal)</li>
+                    <li><strong>Images &rarr; Vecteurs</strong> : Utiliser CLIP pour creer des embeddings d'images</li>
+                    <li><strong>Tableaux</strong> : Parser les tableaux PDF en donnees structurees</li>
+                    <li><strong>Audio</strong> : Transcrire avec Whisper puis indexer</li>
+                    <li><strong>Video</strong> : Extraire les frames + transcrire l'audio</li>
+                </ul>
+
+                <br>
+                <p><strong>Cas d'usage :</strong></p>
+                <ul>
+                    <li>Documentation technique avec schemas et diagrammes</li>
+                    <li>Dossiers medicaux (radiographies, scanners + notes)</li>
+                    <li>E-commerce (recherche par image de produit)</li>
+                    <li>Formation (cours video + transcriptions + slides)</li>
+                </ul>
+            </div>
+            <div class="type-card-footer">
+                <span class="badge pink">Images</span>
+                <span class="badge cyan">Audio</span>
+                <span class="badge purple">Video</span>
+                <span class="badge orange">CLIP</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 12. WORKFLOW NAIVE RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="wf-naive">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(16,185,129,0.15); color: var(--green);">12</div>
+            <div>
+                <h2>Workflow : Naive RAG</h2>
+                <div class="sub">Le flux complet etape par etape</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Le pipeline lineaire (simple)</h3>
+            <p>Le Naive RAG suit un flux <strong>lineaire sans boucle</strong> :</p>
+
+            <div class="wf">
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(6,182,212,0.15); color: var(--cyan);">Q</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>1. Question de l'utilisateur</h4>
+                        <p>"Quels sont les effets secondaires du paracetamol ?"</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(139,92,246,0.15); color: var(--purple);">E</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>2. Embedding de la question</h4>
+                        <p>Transformation en vecteur [0.23, -0.45, 0.89, ...]</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(59,130,246,0.15); color: var(--blue);">R</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>3. Retrieval (Top-K)</h4>
+                        <p>Recherche des 4 chunks les plus similaires dans la base vectorielle</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(245,158,11,0.15); color: var(--orange);">P</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>4. Prompt = Question + Contexte</h4>
+                        <p>"Voici le contexte : [chunks]. Question : Quels sont les effets secondaires ?"</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(16,185,129,0.15); color: var(--green);">G</div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>5. Generation par le LLM</h4>
+                        <p>Le LLM genere la reponse finale basee sur le contexte</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 13. WORKFLOW ADVANCED RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="wf-advanced">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(59,130,246,0.15); color: var(--blue);">13</div>
+            <div>
+                <h2>Workflow : Advanced RAG</h2>
+                <div class="sub">Avec les optimisations pre et post-retrieval</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Le pipeline optimise</h3>
+            <p>L'Advanced RAG ajoute des etapes <span class="hl">avant</span> et <span class="hl-g">apres</span> la recherche :</p>
+
+            <div class="wf">
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(6,182,212,0.15); color: var(--cyan);">Q</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>1. Question originale</h4>
+                        <p>"Les effets du paracetamol chez les personnes agees ?"</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(236,72,153,0.15); color: var(--pink);">QR</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4 style="color: var(--pink);">2. PRE-RETRIEVAL : Query Rewriting</h4>
+                        <p>Reformulation : "Effets secondaires paracetamol geriatrie posologie senior"<br>
+                        Multi-query : 3 variantes de la question generees</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(59,130,246,0.15); color: var(--blue);">R</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>3. Retrieval (Top-20)</h4>
+                        <p>On recupere PLUS de chunks (20) pour avoir un large pool de candidats</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(245,158,11,0.15); color: var(--orange);">RR</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4 style="color: var(--orange);">4. POST-RETRIEVAL : Re-Ranking</h4>
+                        <p>Un Cross-Encoder reordonne les 20 chunks par pertinence reelle.<br>
+                        On garde les <strong>Top 5</strong> les plus pertinents.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(139,92,246,0.15); color: var(--purple);">C</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4 style="color: var(--purple);">5. POST-RETRIEVAL : Compression</h4>
+                        <p>Les chunks sont compresses pour ne garder que les passages directement pertinents</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(16,185,129,0.15); color: var(--green);">G</div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>6. Generation finale</h4>
+                        <p>Le LLM recoit un contexte propre, pertinent et bien ordonne</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 14. WORKFLOW AGENTIC RAG -->
+    <!-- ======================================== -->
+    <div class="section" id="wf-agentic">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(139,92,246,0.15); color: var(--purple);">14</div>
+            <div>
+                <h2>Workflow : Agentic RAG</h2>
+                <div class="sub">Le flux avec boucles de decision</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Le pipeline dynamique avec boucles</h3>
+            <p>L'Agentic RAG est <strong>non-lineaire</strong> : l'agent decide a chaque etape ce qu'il fait ensuite.</p>
+
+            <div class="wf">
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(6,182,212,0.15); color: var(--cyan);">Q</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>1. Question complexe</h4>
+                        <p>"Comparer l'efficacite du paracetamol vs ibuprofene pour la fievre chez l'enfant de 2 ans"</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(139,92,246,0.15); color: var(--purple);">P</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4 style="color: var(--purple);">2. Planification (Agent)</h4>
+                        <p>L'agent decompose :<br>
+                        - Sous-question 1 : "Paracetamol fievre enfant 2 ans"<br>
+                        - Sous-question 2 : "Ibuprofene fievre enfant 2 ans"<br>
+                        - Sous-question 3 : "Etudes comparatives paracetamol vs ibuprofene pediatrie"</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(59,130,246,0.15); color: var(--blue);">R1</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>3. Recherche itere 1 : Paracetamol</h4>
+                        <p>Cherche dans la base vectorielle &rarr; Evalue : "Suffisant ?" &rarr; Oui</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(59,130,246,0.15); color: var(--blue);">R2</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>4. Recherche itere 2 : Ibuprofene</h4>
+                        <p>Cherche &rarr; Evalue : "Suffisant ?" &rarr; Non, pas assez de details &rarr; <strong>Recherche web</strong></p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(245,158,11,0.15); color: var(--orange);">T</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4 style="color: var(--orange);">5. Utilisation d'outils</h4>
+                        <p>L'agent utilise un outil "web search" pour completer. Peut aussi appeler une API, une calculatrice, une base SQL...</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(236,72,153,0.15); color: var(--pink);">E</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4 style="color: var(--pink);">6. Evaluation globale</h4>
+                        <p>"Ai-je assez d'info pour une comparaison complete ?" &rarr; Oui &rarr; Passer a la generation</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(16,185,129,0.15); color: var(--green);">G</div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>7. Generation synthetique</h4>
+                        <p>Synthese de toutes les informations collectees en une reponse structuree et complete</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info note">
+            <div class="it">Point cle</div>
+            <p>La difference fondamentale : le Naive/Advanced RAG fait <strong>un seul passage</strong>. L'Agentic RAG fait <strong>plusieurs boucles</strong> avec des decisions a chaque etape. C'est plus lent mais beaucoup plus precis pour les questions complexes.</p>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 15. TENDANCES 2025 -->
+    <!-- ======================================== -->
+    <div class="section" id="trends-2025">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(245,158,11,0.15); color: var(--orange);">15</div>
+            <div>
+                <h2>Tendances 2025</h2>
+                <div class="sub">Les nouvelles de l'annee en cours</div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card" style="border-top: 3px solid var(--purple);">
+                <h3 style="color: var(--purple);">Agentic RAG explose</h3>
+                <p>2025 est l'annee de l'Agentic RAG. Les frameworks comme <strong>LangGraph</strong>, <strong>CrewAI</strong> et <strong>AutoGen</strong> permettent de creer des agents RAG sophistiques. Les agents peuvent planifier, iterer, et utiliser des outils.</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--cyan);">
+                <h3 style="color: var(--cyan);">GraphRAG se democratise</h3>
+                <p>Apres le lancement par Microsoft en 2024, GraphRAG est devenu accessible. Des outils comme <strong>Neo4j + LangChain</strong> permettent de combiner graphes de connaissances et recherche vectorielle avec une precision jusqu'a 99%.</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--green);">
+                <h3 style="color: var(--green);">Semantic Chunking</h3>
+                <p>Fini le chunking par taille fixe ! Le <strong>semantic chunking</strong> decoupe les documents par sens : chaque chunk contient une idee complete. Les "Contextual Headers" ajoutent le contexte du document a chaque chunk.</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--orange);">
+                <h3 style="color: var(--orange);">Evaluation avec RAGAS</h3>
+                <p><strong>RAGAS</strong> est devenu le standard pour evaluer les pipelines RAG. 4 metriques : Context Precision, Context Recall, Faithfulness, Answer Relevancy. Indispensable en production.</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--pink);">
+                <h3 style="color: var(--pink);">Long Context vs RAG</h3>
+                <p>Les modeles avec <strong>contexte de 1M+ tokens</strong> (Gemini, Claude) posent la question : "A-t-on encore besoin du RAG ?" Reponse : OUI, car le RAG reste plus precis, moins cher, et plus scalable pour les gros volumes.</p>
+            </div>
+            <div class="card" style="border-top: 3px solid var(--blue);">
+                <h3 style="color: var(--blue);">LLM Agnostic</h3>
+                <p>Les systemes RAG modernes sont <strong>agnostiques au LLM</strong> : ils fonctionnent avec n'importe quel modele (OpenAI, Claude, Llama, Mistral). Cela permet de changer de modele sans reconstruire le pipeline.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 16. TENDANCES 2026 -->
+    <!-- ======================================== -->
+    <div class="section" id="trends-2026">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(236,72,153,0.15); color: var(--pink);">16</div>
+            <div>
+                <h2>Tendances 2026</h2>
+                <div class="sub">L'avenir du RAG</div>
+            </div>
+        </div>
+
+        <div class="card" style="border: 2px solid var(--pink);">
+            <h3>Le RAG devient un "Context Engine"</h3>
+            <p>En 2026, le RAG evolue vers un <span class="hl-p">moteur de contexte intelligent</span> qui ne se contente plus de chercher des documents, mais qui :</p>
+            <ul>
+                <li><strong>Memoire a long terme</strong> : Se souvient des conversations precedentes</li>
+                <li><strong>Multimodal natif</strong> : Texte, images, audio, video dans un meme systeme</li>
+                <li><strong>Auto-ameliorant</strong> : Utilise le reinforcement learning pour s'ameliorer automatiquement</li>
+                <li><strong>Cross-lingual</strong> : Recherche dans plusieurs langues simultanément (MultiRAG, CrossRAG, tRAG)</li>
+                <li><strong>Temps reel</strong> : Mise a jour en continu des connaissances</li>
+            </ul>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3 style="color: var(--cyan);">Multimodal Memory</h3>
+                <p>Des systemes capables de comprendre et se souvenir simultanement de texte, images et video. Deja en phase de prototypage chez les grands acteurs.</p>
+            </div>
+            <div class="card">
+                <h3 style="color: var(--green);">Self-Improving RAG</h3>
+                <p>Les systemes RAG qui s'ameliorent automatiquement grace au <strong>reinforcement learning</strong> et aux feedbacks utilisateurs, sans intervention humaine.</p>
+            </div>
+        </div>
+
+        <div class="info new">
+            <div class="it">Sources</div>
+            <p>
+                <a href="https://squirro.com/squirro-blog/state-of-rag-genai" style="color: var(--purple);">RAG in 2026: Bridging Knowledge and Generative AI - Squirro</a><br>
+                <a href="https://ragflow.io/blog/rag-review-2025-from-rag-to-context" style="color: var(--purple);">From RAG to Context - RAGFlow 2025 Review</a><br>
+                <a href="https://www.signitysolutions.com/blog/trends-in-active-retrieval-augmented-generation" style="color: var(--purple);">Trends in Active RAG: 2025 and Beyond</a><br>
+                <a href="https://dev.to/suraj_khaitan_f893c243958/-rag-in-2026-a-practical-blueprint-for-retrieval-augmented-generation-16pp" style="color: var(--purple);">RAG in 2026: A Practical Blueprint - DEV Community</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 17. EVALUATION -->
+    <!-- ======================================== -->
+    <div class="section" id="eval">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(6,182,212,0.15); color: var(--cyan);">17</div>
+            <div>
+                <h2>Evaluer un systeme RAG</h2>
+                <div class="sub">Les metriques RAGAS</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Les 4 metriques RAGAS</h3>
+            <p><strong>RAGAS</strong> (Retrieval Augmented Generation Assessment) est le framework standard pour evaluer un pipeline RAG :</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="card" style="border-left: 3px solid var(--blue);">
+                <h3 style="color: var(--blue);">1. Context Precision</h3>
+                <p>"Les documents recuperes sont-ils <strong>vraiment pertinents</strong> pour la question ?"</p>
+                <p style="margin-top: 8px;"><strong>Score</strong> : 0 a 1 (1 = tous les docs sont pertinents)</p>
+            </div>
+            <div class="card" style="border-left: 3px solid var(--green);">
+                <h3 style="color: var(--green);">2. Context Recall</h3>
+                <p>"A-t-on recupere <strong>TOUS</strong> les documents necessaires pour repondre ?"</p>
+                <p style="margin-top: 8px;"><strong>Score</strong> : 0 a 1 (1 = rien n'a ete oublie)</p>
+            </div>
+            <div class="card" style="border-left: 3px solid var(--orange);">
+                <h3 style="color: var(--orange);">3. Faithfulness</h3>
+                <p>"La reponse est-elle <strong>fidele</strong> aux documents ? Pas d'hallucination ?"</p>
+                <p style="margin-top: 8px;"><strong>Score</strong> : 0 a 1 (1 = 100% fidele au contexte)</p>
+            </div>
+            <div class="card" style="border-left: 3px solid var(--purple);">
+                <h3 style="color: var(--purple);">4. Answer Relevancy</h3>
+                <p>"La reponse est-elle <strong>utile et pertinente</strong> pour la question posee ?"</p>
+                <p style="margin-top: 8px;"><strong>Score</strong> : 0 a 1 (1 = parfaitement utile)</p>
+            </div>
+        </div>
+
+        <div class="code">
+            <div class="code-top">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span>evaluation_ragas.py</span>
+            </div>
+            <pre><code><span class="cm"># Evaluer votre RAG avec RAGAS</span>
+<span class="kw">from</span> ragas <span class="kw">import</span> evaluate
+<span class="kw">from</span> ragas.metrics <span class="kw">import</span> (
+    context_precision,
+    context_recall,
+    faithfulness,
+    answer_relevancy
+)
+
+<span class="cm"># Preparer les donnees de test</span>
+result = <span class="fn">evaluate</span>(
+    dataset=test_dataset,  <span class="cm"># Questions + reponses attendues</span>
+    metrics=[context_precision, context_recall, faithfulness, answer_relevancy]
+)
+
+<span class="fn">print</span>(result)
+<span class="cm"># {'context_precision': 0.87, 'context_recall': 0.92,</span>
+<span class="cm">#  'faithfulness': 0.95, 'answer_relevancy': 0.89}</span></code></pre>
+        </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 18. QUEL RAG CHOISIR ? -->
+    <!-- ======================================== -->
+    <div class="section" id="choisir">
+        <div class="section-head">
+            <div class="sn" style="background: rgba(16,185,129,0.15); color: var(--green);">18</div>
+            <div>
+                <h2>Quel RAG choisir ?</h2>
+                <div class="sub">Guide de decision selon ton besoin</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Arbre de decision</h3>
+
+            <div class="wf">
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(6,182,212,0.15); color: var(--cyan);">?</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>Tu debutes ou tu fais un prototype ?</h4>
+                        <p>&rarr; <span class="badge green">Naive RAG</span> Simple, rapide, ideal pour apprendre et tester.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(59,130,246,0.15); color: var(--blue);">?</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>Tu veux de la qualite en production ?</h4>
+                        <p>&rarr; <span class="badge blue">Advanced RAG</span> + Re-ranking. Le standard pour la plupart des projets serieux.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(245,158,11,0.15); color: var(--orange);">?</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>Tu as plusieurs sources de donnees ?</h4>
+                        <p>&rarr; <span class="badge orange">Modular RAG</span> Architecture flexible, multi-sources, routing.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(139,92,246,0.15); color: var(--purple);">?</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>Tes questions sont complexes / multi-hop ?</h4>
+                        <p>&rarr; <span class="badge purple">Agentic RAG</span> L'agent decompose, cherche, evalue et itere.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(6,182,212,0.15); color: var(--cyan);">?</div>
+                        <div class="wf-conn"></div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>Tes donnees ont des relations complexes ?</h4>
+                        <p>&rarr; <span class="badge cyan">Graph RAG</span> Ideal pour medical, juridique, entites liees.</p>
+                    </div>
+                </div>
+                <div class="wf-step">
+                    <div class="wf-line">
+                        <div class="wf-icon" style="background: rgba(239,68,68,0.15); color: var(--red);">?</div>
+                    </div>
+                    <div class="wf-body">
+                        <h4>La fiabilite est critique (medical, legal) ?</h4>
+                        <p>&rarr; <span class="badge red">Corrective RAG</span> + <span class="badge pink">Self-RAG</span> Auto-verification et auto-correction.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info tip">
+            <div class="it">Conseil final</div>
+            <p><strong>Commence TOUJOURS par un Naive RAG</strong>, puis ameliore progressivement. N'essaie pas de construire un Agentic RAG des le depart. Le chemin est : Naive &rarr; Advanced (re-ranking) &rarr; Hybrid &rarr; Modular &rarr; Agentic. Chaque etape resout un probleme specifique.</p>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <p>Cours RAG Avance - 2025/2026</p>
+        <p style="margin-top: 8px;">Sources :
+            <a href="https://www.meilisearch.com/blog/rag-types">Meilisearch - 14 Types of RAG</a> |
+            <a href="https://zilliz.com/blog/advancing-llms-native-advanced-modular-rag-approaches">Zilliz - Naive vs Advanced vs Modular</a> |
+            <a href="https://arxiv.org/html/2501.09136v1">ArXiv - Agentic RAG Survey</a> |
+            <a href="https://squirro.com/squirro-blog/state-of-rag-genai">Squirro - RAG in 2026</a>
+        </p>
+    </div>
+
+</div>
+
+<script>
+    const navLinks = document.querySelectorAll('.nav a');
+    const sections = document.querySelectorAll('.section');
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) current = s.id; });
+        navLinks.forEach(l => { l.style.borderLeftColor = l.getAttribute('href') === `#${current}` ? 'var(--purple)' : 'transparent'; l.style.color = l.getAttribute('href') === `#${current}` ? 'var(--text)' : ''; });
+    });
+    navLinks.forEach(l => l.addEventListener('click', () => document.getElementById('nav').classList.remove('open')));
+</script>
+
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

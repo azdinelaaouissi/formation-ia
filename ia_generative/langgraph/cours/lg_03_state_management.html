@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangGraph - Cours 3 : Gestion de l'État (State Management)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Gestion de l'État (State Management)</h1>
+    <p class="subtitle">Cours 3 — L'état est le cœur de tout graphe LangGraph</p>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1 : INTRODUCTION À L'ÉTAT -->
+    <!-- ============================================================ -->
+    <h2>1. Le rôle central de l'état dans LangGraph</h2>
+
+    <div class="definition">
+        L'<strong>état</strong> (state) dans LangGraph est un objet structuré qui contient toutes les données
+        partagées entre les nœuds du graphe. Chaque nœud lit des valeurs depuis l'état, effectue un traitement,
+        puis retourne un dictionnaire de mises à jour qui sera <em>fusionné</em> dans l'état global.
+    </div>
+
+    <p>Dans LangGraph, l'état n'est pas un simple dictionnaire. C'est un schéma typé qui définit :</p>
+    <ul>
+        <li><strong>Les clés</strong> — quelles données le graphe manipule</li>
+        <li><strong>Les types</strong> — quel type Python chaque clé attend</li>
+        <li><strong>Les reducers</strong> — comment fusionner les nouvelles valeurs avec les anciennes</li>
+    </ul>
+
+    <div class="prof-note">
+        Imaginez l'état comme un <strong>tableau blanc partagé</strong> dans une salle de classe. Chaque nœud
+        est un élève qui peut lire ce qui est écrit, ajouter ses propres notes, et passer le tableau au suivant.
+        Les <em>reducers</em> définissent les règles : est-ce qu'on efface l'ancien texte (remplacement) ou
+        est-ce qu'on ajoute à la suite (accumulation) ?
+    </div>
+
+    <!-- SVG : Flux de l'état -->
+    <div class="svg-container">
+        <svg width="800" height="200" viewBox="0 0 800 200">
+            <defs>
+                <marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+            <!-- État initial -->
+            <rect x="10" y="70" width="130" height="60" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="75" y="95" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">État Initial</text>
+            <text x="75" y="115" text-anchor="middle" fill="#aaa" font-size="10">{question: "..."}</text>
+            <!-- Nœud A -->
+            <rect x="200" y="70" width="120" height="60" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="260" y="95" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Nœud A</text>
+            <text x="260" y="115" text-anchor="middle" fill="#aaa" font-size="10">Lit + Écrit</text>
+            <line x1="140" y1="100" x2="195" y2="100" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <!-- État fusionné -->
+            <rect x="380" y="50" width="140" height="100" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="450" y="80" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">État Fusionné</text>
+            <text x="450" y="100" text-anchor="middle" fill="#aaa" font-size="10">{question: "..."</text>
+            <text x="450" y="118" text-anchor="middle" fill="#aaa" font-size="10"> réponse: "..."}</text>
+            <text x="450" y="138" text-anchor="middle" fill="#6a9955" font-size="9">reducer appliqué</text>
+            <line x1="320" y1="100" x2="375" y2="100" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <!-- Nœud B -->
+            <rect x="580" y="70" width="120" height="60" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="640" y="95" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Nœud B</text>
+            <text x="640" y="115" text-anchor="middle" fill="#aaa" font-size="10">Lit + Écrit</text>
+            <line x1="520" y1="100" x2="575" y2="100" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2 : TYPEDDICT -->
+    <!-- ============================================================ -->
+    <h2>2. Définir l'état avec TypedDict</h2>
+
+    <p>La manière la plus courante de définir un état dans LangGraph est d'utiliser <code>TypedDict</code>
+    de la bibliothèque standard Python. C'est un dictionnaire typé qui déclare les clés attendues et leurs types.</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+
+<span class="comment"># Définition simple de l'état</span>
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    question: <span class="function">str</span>              <span class="comment"># La question de l'utilisateur</span>
+    contexte: <span class="function">str</span>              <span class="comment"># Le contexte récupéré</span>
+    reponse: <span class="function">str</span>               <span class="comment"># La réponse générée</span>
+    score_confiance: <span class="function">float</span>     <span class="comment"># Score de confiance (0.0 à 1.0)</span></div>
+
+    <div class="prof-note">
+        <code>TypedDict</code> ne fait <strong>aucune validation à l'exécution</strong>. Il sert uniquement
+        de documentation et d'aide à l'auto-complétion dans votre IDE. Si vous avez besoin d'une validation
+        stricte, utilisez plutôt <code>Pydantic BaseModel</code> (que nous verrons dans la section 7).
+    </div>
+
+    <h3>2.1 Types courants pour les champs d'état</h3>
+
+    <table>
+        <tr><th>Type Python</th><th>Usage</th><th>Exemple</th></tr>
+        <tr><td><code>str</code></td><td>Texte, questions, réponses</td><td><code>question: str</code></td></tr>
+        <tr><td><code>int</code></td><td>Compteurs, itérations</td><td><code>nb_essais: int</code></td></tr>
+        <tr><td><code>float</code></td><td>Scores, probabilités</td><td><code>score: float</code></td></tr>
+        <tr><td><code>bool</code></td><td>Drapeaux, conditions</td><td><code>est_valide: bool</code></td></tr>
+        <tr><td><code>list[str]</code></td><td>Listes de messages, documents</td><td><code>messages: list[str]</code></td></tr>
+        <tr><td><code>dict</code></td><td>Données structurées</td><td><code>metadata: dict</code></td></tr>
+        <tr><td><code>list[BaseMessage]</code></td><td>Historique de chat</td><td><code>messages: list[BaseMessage]</code></td></tr>
+    </table>
+
+    <h3>2.2 Nœud et mise à jour de l'état</h3>
+
+    <p>Chaque nœud reçoit l'état complet en entrée et retourne un dictionnaire <strong>partiel</strong>
+    contenant uniquement les clés à mettre à jour :</p>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">noeud_recherche</span>(state: AgentState) -&gt; <span class="function">dict</span>:
+    <span class="comment"># Lire depuis l'état</span>
+    question = state[<span class="string">"question"</span>]
+
+    <span class="comment"># Effectuer le traitement</span>
+    contexte = rechercher_documents(question)
+
+    <span class="comment"># Retourner UNIQUEMENT les clés à mettre à jour</span>
+    <span class="keyword">return</span> {<span class="string">"contexte"</span>: contexte}
+
+<span class="keyword">def</span> <span class="function">noeud_generation</span>(state: AgentState) -&gt; <span class="function">dict</span>:
+    question = state[<span class="string">"question"</span>]
+    contexte = state[<span class="string">"contexte"</span>]
+
+    reponse = llm.invoke(f<span class="string">"Contexte: {contexte}\nQuestion: {question}"</span>)
+
+    <span class="keyword">return</span> {
+        <span class="string">"reponse"</span>: reponse.content,
+        <span class="string">"score_confiance"</span>: <span class="number">0.85</span>
+    }</div>
+
+    <div class="effect">
+        Quand <code>noeud_recherche</code> retourne <code>{"contexte": "..."}</code>, LangGraph fusionne
+        cette valeur dans l'état global. Les autres clés (<code>question</code>, <code>reponse</code>,
+        <code>score_confiance</code>) restent inchangées.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3 : ANNOTATED ET REDUCERS -->
+    <!-- ============================================================ -->
+    <h2>3. Annotated et les Reducers</h2>
+
+    <div class="definition">
+        Un <strong>reducer</strong> est une fonction qui définit <em>comment</em> une nouvelle valeur retournée
+        par un nœud est fusionnée avec la valeur existante dans l'état. Sans reducer, le comportement par
+        défaut est le <strong>remplacement</strong> : la nouvelle valeur écrase l'ancienne.
+    </div>
+
+    <p>Pour attacher un reducer à un champ, on utilise <code>Annotated</code> de la bibliothèque <code>typing</code> :</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">import</span> operator
+
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    <span class="comment"># Sans reducer : remplacement (comportement par défaut)</span>
+    question: <span class="function">str</span>
+
+    <span class="comment"># Avec reducer operator.add : accumulation dans une liste</span>
+    messages: Annotated[<span class="function">list</span>, operator.add]
+
+    <span class="comment"># Avec reducer personnalisé</span>
+    compteur: Annotated[<span class="function">int</span>, <span class="keyword">lambda</span> ancien, nouveau: ancien + nouveau]</div>
+
+    <!-- SVG : Reducer comportement -->
+    <div class="svg-container">
+        <svg width="750" height="220" viewBox="0 0 750 220">
+            <defs>
+                <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+            <text x="375" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Remplacement vs Accumulation</text>
+            <!-- Remplacement -->
+            <rect x="20" y="50" width="330" height="155" rx="10" fill="none" stroke="#ff4444" stroke-width="1" stroke-dasharray="5,5"/>
+            <text x="185" y="75" text-anchor="middle" fill="#ff4444" font-size="12" font-weight="bold">Sans Reducer (Remplacement)</text>
+            <rect x="40" y="90" width="120" height="40" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="100" y="115" text-anchor="middle" fill="#569cd6" font-size="11">question: "A"</text>
+            <line x1="160" y1="110" x2="200" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+            <rect x="205" y="90" width="130" height="40" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1"/>
+            <text x="270" y="115" text-anchor="middle" fill="#00ff88" font-size="11">question: "B"</text>
+            <text x="185" y="160" text-anchor="middle" fill="#aaa" font-size="11">Nœud retourne {"question": "B"}</text>
+            <text x="185" y="185" text-anchor="middle" fill="#ff4444" font-size="11">"A" est écrasé par "B"</text>
+            <!-- Accumulation -->
+            <rect x="400" y="50" width="330" height="155" rx="10" fill="none" stroke="#00ff88" stroke-width="1" stroke-dasharray="5,5"/>
+            <text x="565" y="75" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Avec Reducer (Accumulation)</text>
+            <rect x="420" y="90" width="120" height="40" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="480" y="115" text-anchor="middle" fill="#569cd6" font-size="11">msgs: ["A"]</text>
+            <line x1="540" y1="110" x2="580" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow2)"/>
+            <rect x="585" y="90" width="130" height="40" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1"/>
+            <text x="650" y="115" text-anchor="middle" fill="#00ff88" font-size="11">msgs: ["A","B"]</text>
+            <text x="565" y="160" text-anchor="middle" fill="#aaa" font-size="11">Nœud retourne {"msgs": ["B"]}</text>
+            <text x="565" y="185" text-anchor="middle" fill="#00ff88" font-size="11">"B" est ajouté à la liste</text>
+        </svg>
+    </div>
+
+    <h3>3.1 Le reducer <code>operator.add</code></h3>
+
+    <p>C'est le reducer le plus utilisé dans LangGraph. Il <strong>concatène</strong> les listes ensemble
+    au lieu de les remplacer :</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">import</span> operator
+
+<span class="keyword">class</span> <span class="function">ChatState</span>(TypedDict):
+    messages: Annotated[<span class="function">list</span>, operator.add]
+
+<span class="comment"># Nœud 1 retourne : {"messages": ["Bonjour"]}</span>
+<span class="comment"># État après Nœud 1 : {"messages": ["Bonjour"]}</span>
+
+<span class="comment"># Nœud 2 retourne : {"messages": ["Comment allez-vous ?"]}</span>
+<span class="comment"># État après Nœud 2 : {"messages": ["Bonjour", "Comment allez-vous ?"]}</span>
+
+<span class="comment"># operator.add sur des listes = list.__add__ = concaténation</span></div>
+
+    <div class="warning">
+        <code>operator.add</code> fonctionne aussi sur les entiers et les chaînes, mais attention au
+        comportement ! Pour des <code>int</code>, c'est une addition arithmétique. Pour des <code>str</code>,
+        c'est une concaténation de texte. Assurez-vous que le type et le reducer correspondent à votre intention.
+    </div>
+
+    <h3>3.2 Le reducer de remplacement (par défaut)</h3>
+
+    <p>Sans <code>Annotated</code>, la nouvelle valeur écrase simplement l'ancienne. C'est le comportement
+    le plus intuitif et le plus courant pour les champs scalaires :</p>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">State</span>(TypedDict):
+    reponse: <span class="function">str</span>  <span class="comment"># Pas de reducer = remplacement</span>
+
+<span class="comment"># Nœud 1 retourne : {"reponse": "Première version"}</span>
+<span class="comment"># État : {"reponse": "Première version"}</span>
+
+<span class="comment"># Nœud 2 retourne : {"reponse": "Version améliorée"}</span>
+<span class="comment"># État : {"reponse": "Version améliorée"}  (l'ancien est perdu)</span></div>
+
+    <h3>3.3 Reducers personnalisés</h3>
+
+    <p>Vous pouvez écrire votre propre reducer pour n'importe quelle logique de fusion :</p>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">reducer_max_score</span>(ancien: <span class="function">float</span>, nouveau: <span class="function">float</span>) -&gt; <span class="function">float</span>:
+    <span class="string">"""Garde toujours le score le plus élevé."""</span>
+    <span class="keyword">return</span> <span class="function">max</span>(ancien, nouveau)
+
+<span class="keyword">def</span> <span class="function">reducer_derniers_n</span>(ancien: <span class="function">list</span>, nouveau: <span class="function">list</span>) -&gt; <span class="function">list</span>:
+    <span class="string">"""Garde uniquement les 10 derniers éléments."""</span>
+    combined = ancien + nouveau
+    <span class="keyword">return</span> combined[-<span class="number">10</span>:]
+
+<span class="keyword">def</span> <span class="function">reducer_union</span>(ancien: <span class="function">set</span>, nouveau: <span class="function">set</span>) -&gt; <span class="function">set</span>:
+    <span class="string">"""Fusionne deux ensembles (union)."""</span>
+    <span class="keyword">return</span> ancien | nouveau
+
+<span class="keyword">class</span> <span class="function">State</span>(TypedDict):
+    meilleur_score: Annotated[<span class="function">float</span>, reducer_max_score]
+    historique: Annotated[<span class="function">list</span>, reducer_derniers_n]
+    sources_vues: Annotated[<span class="function">set</span>, reducer_union]</div>
+
+    <div class="concept-box green">
+        <h3>Règles d'un reducer</h3>
+        <p>Un reducer est une fonction qui prend <strong>exactement deux arguments</strong> :</p>
+        <ol>
+            <li><strong>ancien</strong> — la valeur actuelle dans l'état</li>
+            <li><strong>nouveau</strong> — la valeur retournée par le nœud</li>
+        </ol>
+        <p>Elle retourne la valeur fusionnée qui sera stockée dans l'état. Le reducer doit être
+        <strong>déterministe</strong> et <strong>sans effets de bord</strong>.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4 : MESSAGESSTATE -->
+    <!-- ============================================================ -->
+    <h2>4. MessagesState — L'état pré-construit pour le chat</h2>
+
+    <div class="definition">
+        <strong>MessagesState</strong> est un état pré-défini par LangGraph qui contient un champ
+        <code>messages</code> avec un reducer intelligent capable de gérer l'ajout, la suppression et
+        la mise à jour de messages par ID.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> MessagesState, StateGraph, START, END
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, AIMessage
+
+<span class="comment"># MessagesState est équivalent à :</span>
+<span class="comment"># class MessagesState(TypedDict):</span>
+<span class="comment">#     messages: Annotated[list[AnyMessage], add_messages]</span>
+
+<span class="keyword">class</span> <span class="function">MonState</span>(MessagesState):
+    <span class="comment"># On hérite de messages et on ajoute nos propres champs</span>
+    contexte: <span class="function">str</span>
+    score: <span class="function">float</span></div>
+
+    <p>Le reducer <code>add_messages</code> est plus intelligent que <code>operator.add</code> :</p>
+
+    <table>
+        <tr><th>Fonctionnalité</th><th>operator.add</th><th>add_messages</th></tr>
+        <tr><td>Ajout de messages</td><td>Oui</td><td>Oui</td></tr>
+        <tr><td>Mise à jour par ID</td><td>Non</td><td>Oui</td></tr>
+        <tr><td>Suppression par ID</td><td>Non</td><td>Oui (avec RemoveMessage)</td></tr>
+        <tr><td>Déduplications</td><td>Non</td><td>Oui (par ID)</td></tr>
+    </table>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> RemoveMessage
+
+<span class="keyword">def</span> <span class="function">noeud_nettoyage</span>(state: MonState) -&gt; <span class="function">dict</span>:
+    <span class="comment"># Supprimer les 5 premiers messages pour libérer le contexte</span>
+    messages_a_supprimer = state[<span class="string">"messages"</span>][:<span class="number">5</span>]
+    <span class="keyword">return</span> {
+        <span class="string">"messages"</span>: [RemoveMessage(id=m.id) <span class="keyword">for</span> m <span class="keyword">in</span> messages_a_supprimer]
+    }</div>
+
+    <div class="prof-note">
+        Utilisez toujours <code>MessagesState</code> quand vous construisez un chatbot ou un agent conversationnel.
+        Il gère automatiquement les subtilités de l'historique de messages, comme la déduplication et la mise
+        à jour partielle. Ne réinventez pas la roue !
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5 : STATE CHANNELS -->
+    <!-- ============================================================ -->
+    <h2>5. State Channels (Canaux d'état)</h2>
+
+    <div class="definition">
+        Un <strong>canal d'état</strong> (state channel) est le mécanisme interne de LangGraph qui gère
+        la lecture, l'écriture et la fusion de chaque champ de l'état. Chaque clé du TypedDict correspond
+        à un canal distinct.
+    </div>
+
+    <p>LangGraph utilise trois types de canaux :</p>
+
+    <div class="step-box">
+        <strong>1. LastValue Channel</strong> — Conserve uniquement la dernière valeur écrite. C'est le
+        canal par défaut pour les champs sans reducer.
+    </div>
+
+    <div class="step-box">
+        <strong>2. BinaryOperator Channel</strong> — Applique un reducer (fonction binaire) pour fusionner
+        l'ancienne et la nouvelle valeur. Créé automatiquement quand vous utilisez <code>Annotated</code>.
+    </div>
+
+    <div class="step-box">
+        <strong>3. Context Channel</strong> — Un canal en lecture seule qui est défini une fois à
+        l'invocation du graphe et ne peut pas être modifié par les nœuds.
+    </div>
+
+    <!-- SVG : State channels -->
+    <div class="svg-container">
+        <svg width="700" height="280" viewBox="0 0 700 280">
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Architecture des State Channels</text>
+            <!-- State container -->
+            <rect x="220" y="45" width="260" height="220" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="350" y="70" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">State</text>
+            <!-- LastValue -->
+            <rect x="240" y="85" width="220" height="40" rx="6" fill="none" stroke="#569cd6" stroke-width="1"/>
+            <text x="350" y="100" text-anchor="middle" fill="#569cd6" font-size="11">question: str</text>
+            <text x="350" y="118" text-anchor="middle" fill="#6a9955" font-size="9">LastValue Channel</text>
+            <!-- BinaryOperator -->
+            <rect x="240" y="135" width="220" height="40" rx="6" fill="none" stroke="#00ff88" stroke-width="1"/>
+            <text x="350" y="150" text-anchor="middle" fill="#00ff88" font-size="11">messages: Annotated[list, add]</text>
+            <text x="350" y="168" text-anchor="middle" fill="#6a9955" font-size="9">BinaryOperator Channel</text>
+            <!-- Context -->
+            <rect x="240" y="185" width="220" height="40" rx="6" fill="none" stroke="#ff8c42" stroke-width="1"/>
+            <text x="350" y="200" text-anchor="middle" fill="#ff8c42" font-size="11">config: dict (lecture seule)</text>
+            <text x="350" y="218" text-anchor="middle" fill="#6a9955" font-size="9">Context Channel</text>
+            <!-- Nœuds -->
+            <rect x="30" y="120" width="140" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="100" y="150" text-anchor="middle" fill="#569cd6" font-size="11">Nœud (lecture/écriture)</text>
+            <rect x="530" y="120" width="140" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1"/>
+            <text x="600" y="150" text-anchor="middle" fill="#569cd6" font-size="11">Nœud (lecture/écriture)</text>
+            <!-- Flèches -->
+            <line x1="170" y1="145" x2="218" y2="145" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#arrow1)"/>
+            <line x1="482" y1="145" x2="528" y2="145" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#arrow1)"/>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6 : PASSAGE DE DONNÉES ENTRE NŒUDS -->
+    <!-- ============================================================ -->
+    <h2>6. Passer des données entre nœuds</h2>
+
+    <p>Les nœuds ne communiquent <strong>jamais directement</strong> entre eux. Toute communication passe
+    par l'état. Voici un exemple complet d'un pipeline RAG où chaque nœud
+    lit et écrit dans l'état partagé :</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+<span class="keyword">import</span> operator
+
+<span class="keyword">class</span> <span class="function">RAGState</span>(TypedDict):
+    question: <span class="function">str</span>
+    documents: Annotated[<span class="function">list</span>, operator.add]
+    reponse: <span class="function">str</span>
+    sources: Annotated[<span class="function">list</span>, operator.add]
+
+<span class="keyword">def</span> <span class="function">recuperer</span>(state: RAGState) -&gt; <span class="function">dict</span>:
+    <span class="comment"># Lit 'question', écrit 'documents' et 'sources'</span>
+    docs = vectorstore.similarity_search(state[<span class="string">"question"</span>], k=<span class="number">3</span>)
+    <span class="keyword">return</span> {
+        <span class="string">"documents"</span>: [d.page_content <span class="keyword">for</span> d <span class="keyword">in</span> docs],
+        <span class="string">"sources"</span>: [d.metadata[<span class="string">"source"</span>] <span class="keyword">for</span> d <span class="keyword">in</span> docs]
+    }
+
+<span class="keyword">def</span> <span class="function">generer</span>(state: RAGState) -&gt; <span class="function">dict</span>:
+    <span class="comment"># Lit 'question' et 'documents', écrit 'reponse'</span>
+    contexte = <span class="string">"\n"</span>.join(state[<span class="string">"documents"</span>])
+    prompt = f<span class="string">"Contexte:\n{contexte}\n\nQuestion: {state['question']}"</span>
+    reponse = llm.invoke(prompt)
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: reponse.content}
+
+<span class="comment"># Construction du graphe</span>
+builder = StateGraph(RAGState)
+builder.add_node(<span class="string">"recuperer"</span>, recuperer)
+builder.add_node(<span class="string">"generer"</span>, generer)
+
+builder.add_edge(START, <span class="string">"recuperer"</span>)
+builder.add_edge(<span class="string">"recuperer"</span>, <span class="string">"generer"</span>)
+builder.add_edge(<span class="string">"generer"</span>, END)
+
+graph = builder.compile()
+
+<span class="comment"># Invocation</span>
+resultat = graph.invoke({<span class="string">"question"</span>: <span class="string">"Qu'est-ce que LangGraph ?"</span>})</div>
+
+    <div class="output-block">{'question': "Qu'est-ce que LangGraph ?",
+ 'documents': ['LangGraph est un framework...', 'Il permet de créer...', 'Basé sur les graphes...'],
+ 'reponse': 'LangGraph est un framework Python qui...',
+ 'sources': ['doc1.pdf', 'doc2.pdf', 'doc3.pdf']}</div>
+
+    <div class="concept-box blue">
+        <h3>Principe fondamental</h3>
+        <p>Un nœud n'a <strong>aucune connaissance</strong> des autres nœuds. Il connaît uniquement la
+        structure de l'état. C'est ce qui rend les nœuds <strong>modulaires</strong> et
+        <strong>réutilisables</strong> : vous pouvez réorganiser le graphe sans toucher au code des nœuds.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7 : VALIDATION -->
+    <!-- ============================================================ -->
+    <h2>7. Validation de l'état avec Pydantic</h2>
+
+    <p>Pour une validation stricte à l'exécution, vous pouvez utiliser un modèle Pydantic
+    au lieu d'un TypedDict :</p>
+
+    <div class="code-block"><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field, field_validator
+<span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">import</span> operator
+
+<span class="keyword">class</span> <span class="function">AgentStateValide</span>(BaseModel):
+    question: <span class="function">str</span> = Field(
+        description=<span class="string">"La question de l'utilisateur"</span>,
+        min_length=<span class="number">1</span>,
+        max_length=<span class="number">1000</span>
+    )
+    messages: Annotated[<span class="function">list</span>, operator.add] = Field(
+        default_factory=<span class="function">list</span>,
+        description=<span class="string">"Historique des messages"</span>
+    )
+    temperature: <span class="function">float</span> = Field(
+        default=<span class="number">0.7</span>,
+        ge=<span class="number">0.0</span>,
+        le=<span class="number">2.0</span>,
+        description=<span class="string">"Température du LLM"</span>
+    )
+    nb_resultats: <span class="function">int</span> = Field(
+        default=<span class="number">5</span>,
+        ge=<span class="number">1</span>,
+        le=<span class="number">20</span>,
+        description=<span class="string">"Nombre de documents à récupérer"</span>
+    )
+
+    <span class="keyword">@field_validator</span>(<span class="string">"question"</span>)
+    <span class="keyword">@classmethod</span>
+    <span class="keyword">def</span> <span class="function">question_non_vide</span>(cls, v):
+        <span class="keyword">if</span> <span class="keyword">not</span> v.strip():
+            <span class="keyword">raise</span> ValueError(<span class="string">"La question ne peut pas être vide"</span>)
+        <span class="keyword">return</span> v.strip()</div>
+
+    <div class="prof-note">
+        La validation Pydantic est particulièrement utile en <strong>production</strong> où les entrées
+        utilisateur sont imprévisibles. En phase de prototypage, <code>TypedDict</code> suffit largement
+        et offre une meilleure performance (pas de validation à chaque écriture).
+    </div>
+
+    <table>
+        <tr><th>Critère</th><th>TypedDict</th><th>Pydantic BaseModel</th></tr>
+        <tr><td>Validation à l'exécution</td><td>Non</td><td>Oui</td></tr>
+        <tr><td>Valeurs par défaut</td><td>Non natif</td><td>Oui (Field)</td></tr>
+        <tr><td>Validators personnalisés</td><td>Non</td><td>Oui (@field_validator)</td></tr>
+        <tr><td>Performance</td><td>Excellente</td><td>Bonne (overhead de validation)</td></tr>
+        <tr><td>Compatibilité IDE</td><td>Bonne</td><td>Excellente</td></tr>
+        <tr><td>Sérialisation JSON</td><td>Manuelle</td><td>model_dump_json()</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 8 : ÉTAT IMBRIQUÉ -->
+    <!-- ============================================================ -->
+    <h2>8. État imbriqué (Nested State)</h2>
+
+    <p>Pour des applications complexes, vous pouvez structurer votre état avec des sous-objets imbriqués :</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">import</span> operator
+
+<span class="keyword">class</span> <span class="function">UserInfo</span>(TypedDict):
+    nom: <span class="function">str</span>
+    email: <span class="function">str</span>
+    langue: <span class="function">str</span>
+
+<span class="keyword">class</span> <span class="function">SearchResult</span>(TypedDict):
+    titre: <span class="function">str</span>
+    contenu: <span class="function">str</span>
+    score: <span class="function">float</span>
+
+<span class="keyword">class</span> <span class="function">AppState</span>(TypedDict):
+    <span class="comment"># Sous-objet imbriqué</span>
+    utilisateur: UserInfo
+    <span class="comment"># Liste d'objets structurés avec accumulation</span>
+    resultats: Annotated[<span class="function">list</span>[SearchResult], operator.add]
+    <span class="comment"># Champs simples</span>
+    question: <span class="function">str</span>
+    reponse: <span class="function">str</span></div>
+
+    <div class="warning">
+        Quand vous utilisez un état imbriqué <strong>sans reducer</strong>, la mise à jour d'un sous-champ
+        nécessite de retourner l'objet imbriqué <strong>en entier</strong>. LangGraph ne fait pas de fusion
+        profonde (deep merge) par défaut.
+    </div>
+
+    <div class="code-block"><span class="comment"># CORRECT : retourner l'objet imbriqué complet</span>
+<span class="keyword">def</span> <span class="function">mettre_a_jour_langue</span>(state: AppState) -&gt; <span class="function">dict</span>:
+    user = state[<span class="string">"utilisateur"</span>].copy()  <span class="comment"># Copier l'objet existant</span>
+    user[<span class="string">"langue"</span>] = <span class="string">"fr"</span>              <span class="comment"># Modifier le champ voulu</span>
+    <span class="keyword">return</span> {<span class="string">"utilisateur"</span>: user}       <span class="comment"># Retourner l'objet complet</span>
+
+<span class="comment"># INCORRECT : retourner uniquement le sous-champ</span>
+<span class="comment"># return {"utilisateur": {"langue": "fr"}}  # Écrase nom et email !</span></div>
+
+    <h3>8.1 Pattern : Deep Merge avec un reducer personnalisé</h3>
+
+    <p>Si vous souhaitez une fusion profonde automatique, créez un reducer dédié :</p>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">deep_merge</span>(ancien: <span class="function">dict</span>, nouveau: <span class="function">dict</span>) -&gt; <span class="function">dict</span>:
+    <span class="string">"""Fusionne récursivement deux dictionnaires."""</span>
+    resultat = ancien.copy()
+    <span class="keyword">for</span> cle, valeur <span class="keyword">in</span> nouveau.items():
+        <span class="keyword">if</span> cle <span class="keyword">in</span> resultat <span class="keyword">and</span> <span class="function">isinstance</span>(resultat[cle], <span class="function">dict</span>) <span class="keyword">and</span> <span class="function">isinstance</span>(valeur, <span class="function">dict</span>):
+            resultat[cle] = deep_merge(resultat[cle], valeur)
+        <span class="keyword">else</span>:
+            resultat[cle] = valeur
+    <span class="keyword">return</span> resultat
+
+<span class="keyword">class</span> <span class="function">AppState</span>(TypedDict):
+    utilisateur: Annotated[<span class="function">dict</span>, deep_merge]
+
+<span class="comment"># Maintenant on peut faire :</span>
+<span class="comment"># return {"utilisateur": {"langue": "fr"}}  # Fusionne sans écraser !</span></div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 9 : INPUT/OUTPUT SCHEMA -->
+    <!-- ============================================================ -->
+    <h2>9. Schémas d'entrée et de sortie</h2>
+
+    <p>LangGraph permet de définir des schémas distincts pour l'entrée et la sortie du graphe,
+    ce qui est essentiel pour les APIs et la documentation :</p>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">InputState</span>(TypedDict):
+    <span class="comment"># Ce que l'utilisateur fournit</span>
+    question: <span class="function">str</span>
+
+<span class="keyword">class</span> <span class="function">OutputState</span>(TypedDict):
+    <span class="comment"># Ce que le graphe retourne</span>
+    reponse: <span class="function">str</span>
+    sources: <span class="function">list</span>[<span class="function">str</span>]
+
+<span class="keyword">class</span> <span class="function">OverallState</span>(TypedDict):
+    <span class="comment"># L'état complet interne (superset des deux)</span>
+    question: <span class="function">str</span>
+    documents: <span class="function">list</span>[<span class="function">str</span>]
+    reponse: <span class="function">str</span>
+    sources: <span class="function">list</span>[<span class="function">str</span>]
+    score_interne: <span class="function">float</span>  <span class="comment"># Pas exposé à l'utilisateur</span>
+
+<span class="comment"># Spécifier les schémas au moment de la construction</span>
+builder = StateGraph(OverallState, input=InputState, output=OutputState)
+
+<span class="comment"># L'invocation ne retournera que les champs de OutputState</span>
+resultat = graph.invoke({<span class="string">"question"</span>: <span class="string">"..."</span>})
+<span class="comment"># resultat = {"reponse": "...", "sources": [...]}</span>
+<span class="comment"># score_interne et documents ne sont PAS exposés</span></div>
+
+    <div class="effect">
+        Les schémas d'entrée/sortie permettent de masquer les détails d'implémentation internes
+        et de fournir une interface propre aux consommateurs du graphe. C'est une bonne pratique
+        pour tout graphe destiné à être utilisé comme API.
+    </div>
+
+    <!-- SVG : Input / Output schema -->
+    <div class="svg-container">
+        <svg width="700" height="200" viewBox="0 0 700 200">
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Schémas d'entrée / sortie</text>
+            <!-- InputState -->
+            <rect x="30" y="50" width="160" height="80" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="110" y="75" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">InputState</text>
+            <text x="110" y="100" text-anchor="middle" fill="#aaa" font-size="10">question: str</text>
+            <text x="110" y="120" text-anchor="middle" fill="#6a9955" font-size="9">Ce que l'utilisateur envoie</text>
+            <!-- OverallState -->
+            <rect x="240" y="40" width="220" height="120" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="350" y="65" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">OverallState (interne)</text>
+            <text x="350" y="87" text-anchor="middle" fill="#aaa" font-size="10">question, documents,</text>
+            <text x="350" y="105" text-anchor="middle" fill="#aaa" font-size="10">reponse, sources,</text>
+            <text x="350" y="123" text-anchor="middle" fill="#aaa" font-size="10">score_interne</text>
+            <text x="350" y="148" text-anchor="middle" fill="#6a9955" font-size="9">Tous les champs internes</text>
+            <!-- OutputState -->
+            <rect x="510" y="50" width="160" height="80" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="590" y="75" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">OutputState</text>
+            <text x="590" y="100" text-anchor="middle" fill="#aaa" font-size="10">reponse, sources</text>
+            <text x="590" y="120" text-anchor="middle" fill="#6a9955" font-size="9">Ce que l'utilisateur reçoit</text>
+            <!-- Flèches -->
+            <line x1="190" y1="90" x2="238" y2="90" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow1)"/>
+            <line x1="462" y1="90" x2="508" y2="90" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow1)"/>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 10 : PATTERNS COURANTS -->
+    <!-- ============================================================ -->
+    <h2>10. Patterns courants de gestion d'état</h2>
+
+    <h3>10.1 Pattern Compteur d'itérations</h3>
+
+    <p>Ce pattern est essentiel pour limiter les boucles dans les graphes cycliques :</p>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">State</span>(TypedDict):
+    messages: Annotated[<span class="function">list</span>, operator.add]
+    iteration: Annotated[<span class="function">int</span>, <span class="keyword">lambda</span> a, b: a + b]
+    max_iterations: <span class="function">int</span>
+
+<span class="keyword">def</span> <span class="function">agent</span>(state: State) -&gt; <span class="function">dict</span>:
+    <span class="comment"># Incrémenter le compteur à chaque passage</span>
+    <span class="keyword">return</span> {
+        <span class="string">"messages"</span>: [<span class="string">"Action effectuée"</span>],
+        <span class="string">"iteration"</span>: <span class="number">1</span>  <span class="comment"># Le reducer fait : ancien + 1</span>
+    }
+
+<span class="keyword">def</span> <span class="function">doit_continuer</span>(state: State) -&gt; <span class="function">str</span>:
+    <span class="keyword">if</span> state[<span class="string">"iteration"</span>] &gt;= state[<span class="string">"max_iterations"</span>]:
+        <span class="keyword">return</span> <span class="string">"fin"</span>
+    <span class="keyword">return</span> <span class="string">"continuer"</span></div>
+
+    <h3>10.2 Pattern Collecteur de résultats</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">State</span>(TypedDict):
+    taches: <span class="function">list</span>[<span class="function">str</span>]
+    resultats: Annotated[<span class="function">list</span>[<span class="function">dict</span>], operator.add]
+    erreurs: Annotated[<span class="function">list</span>[<span class="function">str</span>], operator.add]
+
+<span class="keyword">def</span> <span class="function">executer_tache</span>(state: State) -&gt; <span class="function">dict</span>:
+    <span class="keyword">try</span>:
+        resultat = traiter(state[<span class="string">"taches"</span>][<span class="number">0</span>])
+        <span class="keyword">return</span> {<span class="string">"resultats"</span>: [{<span class="string">"tache"</span>: state[<span class="string">"taches"</span>][<span class="number">0</span>], <span class="string">"succes"</span>: <span class="keyword">True</span>, <span class="string">"data"</span>: resultat}]}
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> {<span class="string">"erreurs"</span>: [f<span class="string">"Erreur sur {state['taches'][0]}: {e}"</span>]}</div>
+
+    <h3>10.3 Pattern Drapeaux de contrôle</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">State</span>(TypedDict):
+    question: <span class="function">str</span>
+    reponse: <span class="function">str</span>
+    <span class="comment"># Drapeaux de contrôle</span>
+    besoin_recherche: <span class="function">bool</span>
+    est_valide: <span class="function">bool</span>
+    langue_detectee: <span class="function">str</span>
+
+<span class="keyword">def</span> <span class="function">classifier</span>(state: State) -&gt; <span class="function">dict</span>:
+    <span class="comment"># Analyser la question et définir les drapeaux</span>
+    <span class="keyword">return</span> {
+        <span class="string">"besoin_recherche"</span>: <span class="string">"recherche"</span> <span class="keyword">in</span> state[<span class="string">"question"</span>].lower(),
+        <span class="string">"langue_detectee"</span>: detecter_langue(state[<span class="string">"question"</span>])
+    }
+
+<span class="keyword">def</span> <span class="function">router</span>(state: State) -&gt; <span class="function">str</span>:
+    <span class="keyword">if</span> state[<span class="string">"besoin_recherche"</span>]:
+        <span class="keyword">return</span> <span class="string">"recherche"</span>
+    <span class="keyword">return</span> <span class="string">"generation_directe"</span></div>
+
+    <!-- SVG : Patterns summary -->
+    <div class="svg-container">
+        <svg width="750" height="200" viewBox="0 0 750 200">
+            <text x="375" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Résumé des patterns de State Management</text>
+            <!-- Pattern 1 -->
+            <rect x="20" y="50" width="210" height="130" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="125" y="75" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">Compteur</text>
+            <text x="125" y="100" text-anchor="middle" fill="#aaa" font-size="10">Annotated[int, lambda]</text>
+            <text x="125" y="120" text-anchor="middle" fill="#aaa" font-size="10">Limite les boucles</text>
+            <text x="125" y="140" text-anchor="middle" fill="#aaa" font-size="10">Suit la progression</text>
+            <text x="125" y="165" text-anchor="middle" fill="#00ff88" font-size="10">Reducer: lambda a,b: a+b</text>
+            <!-- Pattern 2 -->
+            <rect x="270" y="50" width="210" height="130" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="375" y="75" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Collecteur</text>
+            <text x="375" y="100" text-anchor="middle" fill="#aaa" font-size="10">Annotated[list, operator.add]</text>
+            <text x="375" y="120" text-anchor="middle" fill="#aaa" font-size="10">Accumule les résultats</text>
+            <text x="375" y="140" text-anchor="middle" fill="#aaa" font-size="10">Garde l'historique</text>
+            <text x="375" y="165" text-anchor="middle" fill="#00ff88" font-size="10">Reducer: operator.add</text>
+            <!-- Pattern 3 -->
+            <rect x="520" y="50" width="210" height="130" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="625" y="75" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Drapeaux</text>
+            <text x="625" y="100" text-anchor="middle" fill="#aaa" font-size="10">bool / str (pas de reducer)</text>
+            <text x="625" y="120" text-anchor="middle" fill="#aaa" font-size="10">Contrôle le routing</text>
+            <text x="625" y="140" text-anchor="middle" fill="#aaa" font-size="10">Conditions dynamiques</text>
+            <text x="625" y="165" text-anchor="middle" fill="#00ff88" font-size="10">Reducer: remplacement</text>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 11 : EXEMPLE COMPLET -->
+    <!-- ============================================================ -->
+    <h2>11. Exemple complet : Agent avec gestion d'état avancée</h2>
+
+    <p>Voici un exemple qui combine tous les concepts vus dans ce cours :</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+<span class="keyword">import</span> operator
+
+<span class="comment"># --- Reducer personnalisé ---</span>
+<span class="keyword">def</span> <span class="function">garder_meilleur</span>(ancien: <span class="function">float</span>, nouveau: <span class="function">float</span>) -&gt; <span class="function">float</span>:
+    <span class="keyword">return</span> <span class="function">max</span>(ancien, nouveau)
+
+<span class="comment"># --- Définition de l'état ---</span>
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    question: <span class="function">str</span>                                          <span class="comment"># Remplacement</span>
+    messages: Annotated[<span class="function">list</span>, operator.add]                 <span class="comment"># Accumulation</span>
+    documents: Annotated[<span class="function">list</span>, operator.add]                <span class="comment"># Accumulation</span>
+    reponse: <span class="function">str</span>                                           <span class="comment"># Remplacement</span>
+    meilleur_score: Annotated[<span class="function">float</span>, garder_meilleur]       <span class="comment"># Garde le max</span>
+    iteration: Annotated[<span class="function">int</span>, <span class="keyword">lambda</span> a, b: a + b]          <span class="comment"># Compteur</span>
+
+<span class="comment"># --- Nœuds ---</span>
+<span class="keyword">def</span> <span class="function">rechercher</span>(state: AgentState) -&gt; <span class="function">dict</span>:
+    docs = [<span class="string">"Doc pertinent sur "</span> + state[<span class="string">"question"</span>]]
+    <span class="keyword">return</span> {
+        <span class="string">"documents"</span>: docs,
+        <span class="string">"messages"</span>: [<span class="string">"Recherche effectuée"</span>],
+        <span class="string">"iteration"</span>: <span class="number">1</span>
+    }
+
+<span class="keyword">def</span> <span class="function">evaluer</span>(state: AgentState) -&gt; <span class="function">dict</span>:
+    score = <span class="number">0.75</span> <span class="keyword">if</span> <span class="function">len</span>(state[<span class="string">"documents"</span>]) &gt; <span class="number">0</span> <span class="keyword">else</span> <span class="number">0.2</span>
+    <span class="keyword">return</span> {
+        <span class="string">"meilleur_score"</span>: score,
+        <span class="string">"messages"</span>: [f<span class="string">"Score évalué : {score}"</span>]
+    }
+
+<span class="keyword">def</span> <span class="function">generer</span>(state: AgentState) -&gt; <span class="function">dict</span>:
+    <span class="keyword">return</span> {
+        <span class="string">"reponse"</span>: f<span class="string">"Réponse basée sur {len(state['documents'])} documents"</span>,
+        <span class="string">"messages"</span>: [<span class="string">"Réponse générée"</span>]
+    }
+
+<span class="keyword">def</span> <span class="function">router</span>(state: AgentState) -&gt; <span class="function">str</span>:
+    <span class="keyword">if</span> state[<span class="string">"meilleur_score"</span>] &lt; <span class="number">0.5</span> <span class="keyword">and</span> state[<span class="string">"iteration"</span>] &lt; <span class="number">3</span>:
+        <span class="keyword">return</span> <span class="string">"rechercher"</span>  <span class="comment"># Boucle : re-rechercher</span>
+    <span class="keyword">return</span> <span class="string">"generer"</span>
+
+<span class="comment"># --- Construction du graphe ---</span>
+builder = StateGraph(AgentState)
+builder.add_node(<span class="string">"rechercher"</span>, rechercher)
+builder.add_node(<span class="string">"evaluer"</span>, evaluer)
+builder.add_node(<span class="string">"generer"</span>, generer)
+
+builder.add_edge(START, <span class="string">"rechercher"</span>)
+builder.add_edge(<span class="string">"rechercher"</span>, <span class="string">"evaluer"</span>)
+builder.add_conditional_edges(<span class="string">"evaluer"</span>, router)
+builder.add_edge(<span class="string">"generer"</span>, END)
+
+graph = builder.compile()
+
+<span class="comment"># --- Invocation ---</span>
+resultat = graph.invoke({
+    <span class="string">"question"</span>: <span class="string">"Comment fonctionne LangGraph ?"</span>,
+    <span class="string">"meilleur_score"</span>: <span class="number">0.0</span>,
+    <span class="string">"iteration"</span>: <span class="number">0</span>
+})
+
+<span class="function">print</span>(resultat[<span class="string">"reponse"</span>])
+<span class="function">print</span>(f<span class="string">"Itérations : {resultat['iteration']}"</span>)
+<span class="function">print</span>(f<span class="string">"Messages : {resultat['messages']}"</span>)</div>
+
+    <div class="output-block">Réponse basée sur 1 documents
+Itérations : 1
+Messages : ['Recherche effectuée', 'Score évalué : 0.75', 'Réponse générée']</div>
+
+    <!-- ============================================================ -->
+    <!-- RÉSUMÉ -->
+    <!-- ============================================================ -->
+    <h2>12. Résumé du cours</h2>
+
+    <div class="concept-box">
+        <h3>Points clés à retenir</h3>
+        <ul>
+            <li>L'<strong>état</strong> est le cœur de LangGraph — toutes les données transitent par lui</li>
+            <li><strong>TypedDict</strong> est le moyen standard de définir un schéma d'état</li>
+            <li><strong>Annotated</strong> permet d'attacher un reducer à un champ pour contrôler la fusion</li>
+            <li><strong>operator.add</strong> est le reducer le plus courant pour accumuler des listes</li>
+            <li>Sans reducer, le comportement est le <strong>remplacement</strong> de l'ancienne valeur</li>
+            <li><strong>MessagesState</strong> fournit un état pré-construit pour les chatbots</li>
+            <li>Les schémas <strong>input/output</strong> permettent de masquer les détails internes</li>
+            <li>La <strong>validation Pydantic</strong> est recommandée pour la production</li>
+            <li>Les nœuds communiquent <strong>uniquement</strong> à travers l'état, jamais directement</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Maîtriser la gestion de l'état est <strong>la compétence la plus importante</strong> dans LangGraph.
+        Un état bien conçu rend votre graphe modulaire, testable et facile à déboguer. Dans le prochain
+        cours, nous verrons comment utiliser le routing conditionnel et les cycles pour créer des agents
+        véritablement autonomes.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="lg_02_state_graph.html">&larr; Cours StateGraph, Nœuds et Edges</a>
+        <a href="lg_04_routing_cycles.html">Cours suivant : Routing &amp; Cycles &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

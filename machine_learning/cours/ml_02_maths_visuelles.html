@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML 02 - Les Maths du ML (version visuelle)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0f0f23;color:#e0e0e0;line-height:1.8}
+nav{position:fixed;top:0;left:0;width:260px;height:100vh;background:#1a1a2e;padding:20px 15px;overflow-y:auto;border-right:2px solid #ff6b35;z-index:10}
+nav h2{color:#ff6b35;font-size:15px;margin-bottom:15px;text-align:center}
+nav a{display:block;color:#aaa;text-decoration:none;padding:5px 10px;font-size:12.5px;border-radius:5px;margin-bottom:2px}
+nav a:hover{background:#16213e;color:#ff6b35}
+main{margin-left:270px;padding:30px 40px;max-width:950px}
+h1{color:#ff6b35;font-size:32px;margin-bottom:10px;border-bottom:3px solid #ff6b35;padding-bottom:10px}
+h2{color:#ff6b35;font-size:24px;margin:45px 0 15px;border-left:4px solid #ff6b35;padding-left:15px}
+h3{color:#ff8c5a;font-size:18px;margin:25px 0 10px}
+p{margin-bottom:12px}
+ul,ol{margin:10px 0 15px 25px}
+li{margin-bottom:6px}
+.box{background:#16213e;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0}
+.box-green{border-left:4px solid #4caf50}
+.box-orange{border-left:4px solid #ff9800}
+.box-red{border-left:4px solid #f44336}
+.box-blue{border-left:4px solid #2196f3}
+.box-purple{border-left:4px solid #9c27b0}
+.box-gold{border-left:4px solid #ffd700}
+table{width:100%;border-collapse:collapse;margin:15px 0}
+th{background:#1a1a2e;color:#ff6b35;padding:12px;text-align:left;border:1px solid #333}
+td{padding:10px;border:1px solid #333;background:#16213e}
+.emoji{font-size:20px;margin-right:8px}
+svg{display:block;margin:20px auto}
+svg text{font-family:'Segoe UI',sans-serif}
+.analogy{background:#1a2e1a;border:2px solid #4caf50;border-radius:12px;padding:20px;margin:15px 0}
+.analogy h4{color:#4caf50;margin-top:0}
+</style>
+</head>
+<body>
+
+<nav>
+<h2>🔢 ML 02 - Maths visuelles</h2>
+<a href="#ch1">1. Pourquoi les maths ?</a>
+<a href="#ch2">2. Les vecteurs</a>
+<a href="#ch3">3. Les matrices</a>
+<a href="#ch4">4. La moyenne et médiane</a>
+<a href="#ch5">5. Écart-type et variance</a>
+<a href="#ch6">6. La distribution normale</a>
+<a href="#ch7">7. Les probabilités</a>
+<a href="#ch8">8. Corrélation</a>
+<a href="#ch9">9. Les fonctions</a>
+<a href="#ch10">10. Le gradient descent</a>
+<a href="#ch11">11. La fonction de coût</a>
+<a href="#ch12">12. Résumé visuel</a>
+</nav>
+
+<main>
+
+<h1>🔢 Les Maths du ML (version visuelle)</h1>
+<p>Cours 2/12 - Pas de formules complexes, que des dessins et des analogies</p>
+
+<div class="box box-gold">
+<p><span class="emoji">🎯</span><strong>Objectif :</strong> Tu n'as PAS besoin d'être un génie en maths. Tu as juste besoin de <strong>comprendre visuellement</strong> ce que font ces concepts. Ce cours explique chaque notion avec des schémas, pas des formules.</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch1">1. Pourquoi les maths en ML ?</h2>
+
+<div class="analogy">
+<h4>🚗 Analogie : Conduire une voiture</h4>
+<p>Pour conduire, tu n'as pas besoin de comprendre comment fonctionne un moteur à combustion interne. Mais si tu comprends les <strong>bases</strong> (l'essence fait tourner le moteur, les freins utilisent la friction), tu seras un meilleur conducteur.</p>
+<p>C'est pareil en ML : tu n'as pas besoin de maîtriser les formules, mais comprendre les <strong>intuitions</strong> te rendra meilleur.</p>
+</div>
+
+<table>
+<tr><th>Concept math</th><th>Où c'est utilisé en ML</th></tr>
+<tr><td>Vecteurs</td><td>Les embeddings (texte → vecteur), les features d'une donnée</td></tr>
+<tr><td>Matrices</td><td>Les datasets (tableau lignes × colonnes), les poids des neurones</td></tr>
+<tr><td>Statistiques</td><td>Comprendre les données (moyenne, distribution, outliers)</td></tr>
+<tr><td>Probabilités</td><td>Classification (70% chat, 30% chien), Naive Bayes</td></tr>
+<tr><td>Fonctions et dérivées</td><td>Gradient descent (comment le modèle apprend)</td></tr>
+<tr><td>Distance</td><td>Similarité entre documents (cosine), KNN</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="ch2">2. Les vecteurs</h2>
+
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>Un vecteur</strong> = une liste ordonnée de nombres. C'est tout. C'est comme une adresse GPS avec plusieurs coordonnées.</p>
+</div>
+
+<svg width="750" height="300" viewBox="0 0 750 300">
+<rect x="0" y="0" width="750" height="300" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Vecteur simple -->
+<text x="130" y="30" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Vecteur 2D</text>
+<!-- Axes -->
+<line x1="30" y1="250" x2="250" y2="250" stroke="#555" stroke-width="2"/>
+<line x1="30" y1="250" x2="30" y2="50" stroke="#555" stroke-width="2"/>
+<text x="250" y="270" fill="#555" font-size="11">x</text>
+<text x="15" y="55" fill="#555" font-size="11">y</text>
+<!-- Flèche vecteur -->
+<line x1="30" y1="250" x2="180" y2="100" stroke="#4caf50" stroke-width="3" marker-end="url(#arv)"/>
+<text x="120" y="160" fill="#4caf50" font-size="12">[3, 5]</text>
+<!-- Points -->
+<circle cx="180" cy="100" r="5" fill="#4caf50"/>
+<line x1="180" y1="250" x2="180" y2="105" stroke="#4caf50" stroke-width="1" stroke-dasharray="5,5"/>
+<line x1="30" y1="100" x2="175" y2="100" stroke="#4caf50" stroke-width="1" stroke-dasharray="5,5"/>
+<text x="180" y="270" fill="#aaa" font-size="10">3</text>
+<text x="10" y="105" fill="#aaa" font-size="10">5</text>
+
+<!-- Exemple concret -->
+<rect x="300" y="40" width="420" height="240" rx="10" fill="#1a1a2e" stroke="#333"/>
+<text x="510" y="70" fill="#ff9800" text-anchor="middle" font-size="14" font-weight="bold">Les vecteurs en ML</text>
+
+<text x="320" y="100" fill="#ddd" font-size="12">Une maison = un vecteur de features :</text>
+<text x="340" y="125" fill="#4caf50" font-size="12">[surface, chambres, âge, distance_métro]</text>
+<text x="340" y="150" fill="#aaa" font-size="12">[   85,      3,     10,      500       ]</text>
+
+<text x="320" y="185" fill="#ddd" font-size="12">Un mot en embedding = un vecteur :</text>
+<text x="340" y="210" fill="#2196f3" font-size="12">"chat" → [0.2, -0.5, 0.8, 0.1, ...]</text>
+<text x="340" y="235" fill="#2196f3" font-size="12">"chien" → [0.3, -0.4, 0.7, 0.2, ...]</text>
+<text x="340" y="260" fill="#aaa" font-size="11">Proches dans l'espace = sens similaire !</text>
+
+<defs><marker id="arv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4caf50"/></marker></defs>
+</svg>
+
+<h3>Cosine Similarity (le lien avec le RAG)</h3>
+
+<svg width="600" height="250" viewBox="0 0 600 250">
+<rect x="0" y="0" width="600" height="250" rx="15" fill="#16213e" stroke="#333"/>
+<text x="300" y="30" fill="#ffd700" text-anchor="middle" font-size="14" font-weight="bold">Cosine Similarity = l'angle entre 2 vecteurs</text>
+
+<!-- Axes -->
+<line x1="50" y1="200" x2="280" y2="200" stroke="#555" stroke-width="1"/>
+<line x1="50" y1="200" x2="50" y2="50" stroke="#555" stroke-width="1"/>
+
+<!-- Vecteur A (similaire) -->
+<line x1="50" y1="200" x2="200" y2="80" stroke="#4caf50" stroke-width="3" marker-end="url(#arv)"/>
+<text x="210" y="75" fill="#4caf50" font-size="12">A "chat"</text>
+<!-- Vecteur B (similaire) -->
+<line x1="50" y1="200" x2="220" y2="100" stroke="#2196f3" stroke-width="3"/>
+<text x="230" y="100" fill="#2196f3" font-size="12">B "chaton"</text>
+<!-- Angle petit -->
+<path d="M80 175 A30 30 0 0 1 95 165" stroke="#ffd700" stroke-width="2" fill="none"/>
+<text x="105" y="168" fill="#ffd700" font-size="10">petit angle</text>
+
+<!-- À droite : non similaire -->
+<line x1="350" y1="200" x2="500" y2="80" stroke="#4caf50" stroke-width="3" marker-end="url(#arv)"/>
+<text x="510" y="75" fill="#4caf50" font-size="12">A "chat"</text>
+<line x1="350" y1="200" x2="530" y2="190" stroke="#f44336" stroke-width="3"/>
+<text x="540" y="190" fill="#f44336" font-size="12">C "voiture"</text>
+<path d="M385 180 A50 50 0 0 1 400 195" stroke="#ffd700" stroke-width="2" fill="none"/>
+<text x="420" y="180" fill="#ffd700" font-size="10">grand angle</text>
+
+<text x="140" y="240" fill="#4caf50" text-anchor="middle" font-size="11">Similaire = angle petit = score ~ 1</text>
+<text x="440" y="240" fill="#f44336" text-anchor="middle" font-size="11">Différent = angle grand = score ~ 0</text>
+</svg>
+
+<div class="box box-green">
+<p><span class="emoji">💡</span><strong>Retiens :</strong> Dans le RAG, quand on cherche des documents similaires à ta question, on compare les <strong>angles entre vecteurs</strong>. Plus l'angle est petit, plus c'est similaire. C'est la cosine similarity.</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch3">3. Les matrices</h2>
+
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>Une matrice</strong> = un tableau de nombres organisé en lignes et colonnes. Un dataset en ML, c'est une matrice !</p>
+</div>
+
+<svg width="700" height="260" viewBox="0 0 700 260">
+<rect x="0" y="0" width="700" height="260" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="30" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Un dataset = une matrice</text>
+
+<!-- Tableau -->
+<rect x="50" y="50" width="600" height="190" rx="5" fill="#1a1a2e" stroke="#555"/>
+<!-- Header -->
+<rect x="50" y="50" width="600" height="35" rx="5" fill="#2a1a00"/>
+<text x="120" y="73" fill="#ff6b35" text-anchor="middle" font-size="12">Surface</text>
+<text x="240" y="73" fill="#ff6b35" text-anchor="middle" font-size="12">Chambres</text>
+<text x="370" y="73" fill="#ff6b35" text-anchor="middle" font-size="12">Âge</text>
+<text x="500" y="73" fill="#ff6b35" text-anchor="middle" font-size="12">Métro (m)</text>
+<text x="610" y="73" fill="#ffd700" text-anchor="middle" font-size="12">Prix €</text>
+<!-- Row 1 -->
+<text x="120" y="110" fill="#ddd" text-anchor="middle" font-size="12">85</text>
+<text x="240" y="110" fill="#ddd" text-anchor="middle" font-size="12">3</text>
+<text x="370" y="110" fill="#ddd" text-anchor="middle" font-size="12">10</text>
+<text x="500" y="110" fill="#ddd" text-anchor="middle" font-size="12">500</text>
+<text x="610" y="110" fill="#ffd700" text-anchor="middle" font-size="12">250 000</text>
+<!-- Row 2 -->
+<text x="120" y="145" fill="#ddd" text-anchor="middle" font-size="12">120</text>
+<text x="240" y="145" fill="#ddd" text-anchor="middle" font-size="12">4</text>
+<text x="370" y="145" fill="#ddd" text-anchor="middle" font-size="12">5</text>
+<text x="500" y="145" fill="#ddd" text-anchor="middle" font-size="12">200</text>
+<text x="610" y="145" fill="#ffd700" text-anchor="middle" font-size="12">380 000</text>
+<!-- Row 3 -->
+<text x="120" y="180" fill="#ddd" text-anchor="middle" font-size="12">60</text>
+<text x="240" y="180" fill="#ddd" text-anchor="middle" font-size="12">2</text>
+<text x="370" y="180" fill="#ddd" text-anchor="middle" font-size="12">25</text>
+<text x="500" y="180" fill="#ddd" text-anchor="middle" font-size="12">1200</text>
+<text x="610" y="180" fill="#ffd700" text-anchor="middle" font-size="12">150 000</text>
+
+<!-- Labels -->
+<text x="55" y="110" fill="#4caf50" font-size="10">→ ligne = 1 maison (1 exemple)</text>
+<text x="350" y="210" fill="#2196f3" text-anchor="middle" font-size="10">↑ colonnes = features (caractéristiques)</text>
+<line x1="560" y1="55" x2="560" y2="195" stroke="#ffd700" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="610" y="225" fill="#ffd700" text-anchor="middle" font-size="10">← label (ce qu'on prédit)</text>
+
+<text x="350" y="250" fill="#aaa" text-anchor="middle" font-size="11">Chaque ligne = un vecteur. Le dataset complet = une matrice.</text>
+</svg>
+
+<!-- ============================================ -->
+<h2 id="ch4">4. La moyenne et la médiane</h2>
+
+<svg width="700" height="280" viewBox="0 0 700 280">
+<rect x="0" y="0" width="700" height="280" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Moyenne -->
+<text x="180" y="30" fill="#4caf50" text-anchor="middle" font-size="14" font-weight="bold">Moyenne</text>
+<text x="180" y="50" fill="#aaa" text-anchor="middle" font-size="11">"Le centre de gravité"</text>
+<!-- Points -->
+<line x1="30" y1="100" x2="330" y2="100" stroke="#555" stroke-width="2"/>
+<circle cx="60" cy="100" r="6" fill="#4caf50"/>
+<text x="60" y="85" fill="#aaa" text-anchor="middle" font-size="10">2</text>
+<circle cx="110" cy="100" r="6" fill="#4caf50"/>
+<text x="110" y="85" fill="#aaa" text-anchor="middle" font-size="10">4</text>
+<circle cx="160" cy="100" r="6" fill="#4caf50"/>
+<text x="160" y="85" fill="#aaa" text-anchor="middle" font-size="10">6</text>
+<circle cx="210" cy="100" r="6" fill="#4caf50"/>
+<text x="210" y="85" fill="#aaa" text-anchor="middle" font-size="10">8</text>
+<circle cx="310" cy="100" r="6" fill="#4caf50"/>
+<text x="310" y="85" fill="#aaa" text-anchor="middle" font-size="10">15</text>
+<!-- Moyenne marker -->
+<line x1="170" y1="110" x2="170" y2="140" stroke="#ffd700" stroke-width="3"/>
+<polygon points="160,140 180,140 170,155" fill="#ffd700"/>
+<text x="170" y="175" fill="#ffd700" text-anchor="middle" font-size="12">Moyenne = 7</text>
+<text x="170" y="195" fill="#aaa" text-anchor="middle" font-size="10">(2+4+6+8+15) / 5</text>
+<text x="170" y="220" fill="#f44336" text-anchor="middle" font-size="10">⚠️ Tirée vers le 15 (valeur extrême)</text>
+
+<!-- Médiane -->
+<text x="530" y="30" fill="#2196f3" text-anchor="middle" font-size="14" font-weight="bold">Médiane</text>
+<text x="530" y="50" fill="#aaa" text-anchor="middle" font-size="11">"La valeur du milieu"</text>
+<line x1="380" y1="100" x2="680" y2="100" stroke="#555" stroke-width="2"/>
+<circle cx="410" cy="100" r="6" fill="#aaa"/>
+<text x="410" y="85" fill="#aaa" text-anchor="middle" font-size="10">2</text>
+<circle cx="460" cy="100" r="6" fill="#aaa"/>
+<text x="460" y="85" fill="#aaa" text-anchor="middle" font-size="10">4</text>
+<circle cx="510" cy="100" r="6" fill="#2196f3" stroke="#ffd700" stroke-width="3"/>
+<text x="510" y="85" fill="#2196f3" text-anchor="middle" font-size="10">6</text>
+<circle cx="560" cy="100" r="6" fill="#aaa"/>
+<text x="560" y="85" fill="#aaa" text-anchor="middle" font-size="10">8</text>
+<circle cx="660" cy="100" r="6" fill="#aaa"/>
+<text x="660" y="85" fill="#aaa" text-anchor="middle" font-size="10">15</text>
+<line x1="510" y1="110" x2="510" y2="140" stroke="#ffd700" stroke-width="3"/>
+<polygon points="500,140 520,140 510,155" fill="#ffd700"/>
+<text x="530" y="175" fill="#ffd700" text-anchor="middle" font-size="12">Médiane = 6</text>
+<text x="530" y="195" fill="#aaa" text-anchor="middle" font-size="10">La valeur exactement au milieu</text>
+<text x="530" y="220" fill="#4caf50" text-anchor="middle" font-size="10">✅ Pas affectée par le 15</text>
+
+<text x="350" y="265" fill="#ff9800" text-anchor="middle" font-size="12">En ML : la médiane résiste mieux aux valeurs extrêmes (outliers)</text>
+</svg>
+
+<!-- ============================================ -->
+<h2 id="ch5">5. Écart-type et variance</h2>
+
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>L'écart-type</strong> mesure à quel point les données sont <strong>dispersées</strong> autour de la moyenne. Petit écart-type = données groupées. Grand écart-type = données éparpillées.</p>
+</div>
+
+<svg width="700" height="220" viewBox="0 0 700 220">
+<rect x="0" y="0" width="700" height="220" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Petit écart-type -->
+<text x="170" y="30" fill="#4caf50" text-anchor="middle" font-size="13" font-weight="bold">Petit écart-type</text>
+<text x="170" y="48" fill="#aaa" text-anchor="middle" font-size="10">"Les notes sont groupées"</text>
+<line x1="30" y1="100" x2="330" y2="100" stroke="#555" stroke-width="1"/>
+<circle cx="140" cy="100" r="5" fill="#4caf50"/>
+<circle cx="155" cy="100" r="5" fill="#4caf50"/>
+<circle cx="170" cy="100" r="5" fill="#4caf50"/>
+<circle cx="180" cy="100" r="5" fill="#4caf50"/>
+<circle cx="195" cy="100" r="5" fill="#4caf50"/>
+<line x1="170" y1="110" x2="170" y2="130" stroke="#ffd700" stroke-width="2"/>
+<text x="170" y="145" fill="#ffd700" text-anchor="middle" font-size="10">moyenne</text>
+<text x="170" y="175" fill="#4caf50" text-anchor="middle" font-size="11">Classe 1 : tous entre 14 et 16</text>
+<text x="170" y="195" fill="#4caf50" text-anchor="middle" font-size="11">= résultats homogènes</text>
+
+<!-- Grand écart-type -->
+<text x="530" y="30" fill="#f44336" text-anchor="middle" font-size="13" font-weight="bold">Grand écart-type</text>
+<text x="530" y="48" fill="#aaa" text-anchor="middle" font-size="10">"Les notes sont dispersées"</text>
+<line x1="380" y1="100" x2="680" y2="100" stroke="#555" stroke-width="1"/>
+<circle cx="400" cy="100" r="5" fill="#f44336"/>
+<circle cx="450" cy="100" r="5" fill="#f44336"/>
+<circle cx="530" cy="100" r="5" fill="#f44336"/>
+<circle cx="600" cy="100" r="5" fill="#f44336"/>
+<circle cx="660" cy="100" r="5" fill="#f44336"/>
+<line x1="530" y1="110" x2="530" y2="130" stroke="#ffd700" stroke-width="2"/>
+<text x="530" y="145" fill="#ffd700" text-anchor="middle" font-size="10">moyenne</text>
+<text x="530" y="175" fill="#f44336" text-anchor="middle" font-size="11">Classe 2 : notes de 4 à 19</text>
+<text x="530" y="195" fill="#f44336" text-anchor="middle" font-size="11">= résultats très variés</text>
+</svg>
+
+<div class="box box-green">
+<p><span class="emoji">💡</span><strong>En ML :</strong> L'écart-type aide à détecter les <strong>outliers</strong> (valeurs aberrantes). Une donnée qui est à plus de 3 écarts-types de la moyenne est souvent un outlier.</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch6">6. La distribution normale (courbe en cloche)</h2>
+
+<svg width="600" height="280" viewBox="0 0 600 280">
+<rect x="0" y="0" width="600" height="280" rx="15" fill="#16213e" stroke="#333"/>
+<text x="300" y="30" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Distribution Normale (Gaussienne)</text>
+
+<!-- Axe -->
+<line x1="50" y1="220" x2="550" y2="220" stroke="#555" stroke-width="2"/>
+
+<!-- Courbe en cloche -->
+<path d="M80 220 Q120 215 160 190 Q200 140 240 90 Q270 55 300 45 Q330 55 360 90 Q400 140 440 190 Q480 215 520 220" stroke="#4caf50" stroke-width="3" fill="rgba(76,175,80,0.1)"/>
+
+<!-- Moyenne -->
+<line x1="300" y1="220" x2="300" y2="40" stroke="#ffd700" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="300" y="240" fill="#ffd700" text-anchor="middle" font-size="11">Moyenne (μ)</text>
+
+<!-- Écart-types -->
+<line x1="200" y1="220" x2="200" y2="145" stroke="#2196f3" stroke-width="1" stroke-dasharray="3,3"/>
+<line x1="400" y1="220" x2="400" y2="145" stroke="#2196f3" stroke-width="1" stroke-dasharray="3,3"/>
+<text x="200" y="250" fill="#2196f3" text-anchor="middle" font-size="9">-1σ</text>
+<text x="400" y="250" fill="#2196f3" text-anchor="middle" font-size="9">+1σ</text>
+
+<!-- Zone 68% -->
+<text x="300" y="170" fill="#fff" text-anchor="middle" font-size="14" font-weight="bold">68%</text>
+<text x="300" y="188" fill="#aaa" text-anchor="middle" font-size="10">des données</text>
+
+<text x="140" y="210" fill="#aaa" font-size="9">rare</text>
+<text x="460" y="210" fill="#aaa" font-size="9">rare</text>
+
+<text x="300" y="275" fill="#aaa" text-anchor="middle" font-size="11">La plupart des données sont proches de la moyenne. Les extrêmes sont rares.</text>
+</svg>
+
+<div class="analogy">
+<h4>📏 Analogie : La taille des gens</h4>
+<p>Si tu mesures la taille de 1000 personnes en France :</p>
+<ul>
+<li>La <strong>majorité</strong> mesure entre 1m65 et 1m80 (autour de la moyenne)</li>
+<li><strong>Peu</strong> de gens mesurent moins de 1m50 ou plus de 2m00 (les extrêmes)</li>
+<li>La distribution forme naturellement une <strong>cloche</strong></li>
+</ul>
+<p>En ML, beaucoup de données suivent cette distribution. C'est utile pour détecter les anomalies (un prix de maison 10x supérieur à la moyenne est suspect).</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch7">7. Les probabilités</h2>
+
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>Une probabilité</strong> = un nombre entre 0 et 1 qui exprime la chance qu'un événement se produise. 0 = impossible. 1 = certain. 0.5 = 50% de chance.</p>
+</div>
+
+<svg width="700" height="200" viewBox="0 0 700 200">
+<rect x="0" y="0" width="700" height="200" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="30" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">La probabilité en ML = le score de confiance</text>
+
+<!-- Barre de probabilité -->
+<rect x="50" y="60" width="600" height="40" rx="8" fill="#1a1a2e" stroke="#555"/>
+<rect x="50" y="60" width="510" height="40" rx="8" fill="rgba(76,175,80,0.3)" stroke="#4caf50"/>
+<text x="350" y="85" fill="#fff" text-anchor="middle" font-size="14" font-weight="bold">Le modèle dit : 85% chat</text>
+
+<rect x="50" y="115" width="600" height="40" rx="8" fill="#1a1a2e" stroke="#555"/>
+<rect x="50" y="115" width="90" height="40" rx="8" fill="rgba(244,67,54,0.3)" stroke="#f44336"/>
+<text x="350" y="140" fill="#fff" text-anchor="middle" font-size="14">Le modèle dit : 15% chien</text>
+
+<text x="350" y="180" fill="#aaa" text-anchor="middle" font-size="11">En classification, le modèle donne une probabilité pour chaque classe. Il choisit la plus haute.</text>
+</svg>
+
+<div class="box box-green">
+<p><span class="emoji">💡</span><strong>En ML :</strong></p>
+<ul>
+<li>Le modèle ne dit pas "c'est un chat". Il dit "<strong>85% de chance</strong> que ce soit un chat"</li>
+<li>Le <strong>seuil de décision</strong> est souvent 0.5 (50%). Si &gt; 0.5 → classe A, sinon → classe B</li>
+<li>On peut ajuster ce seuil selon le besoin (en médecine, on préfère un seuil bas pour ne rater aucune maladie)</li>
+</ul>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch8">8. Corrélation</h2>
+
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>La corrélation</strong> mesure si deux variables bougent ensemble. Quand A monte, est-ce que B monte aussi ?</p>
+</div>
+
+<svg width="750" height="220" viewBox="0 0 750 220">
+<rect x="0" y="0" width="750" height="220" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Corrélation positive -->
+<text x="120" y="25" fill="#4caf50" text-anchor="middle" font-size="12" font-weight="bold">Positive (+1)</text>
+<line x1="30" y1="180" x2="230" y2="180" stroke="#555" stroke-width="1"/>
+<line x1="30" y1="180" x2="30" y2="40" stroke="#555" stroke-width="1"/>
+<circle cx="50" cy="170" r="4" fill="#4caf50"/>
+<circle cx="80" cy="150" r="4" fill="#4caf50"/>
+<circle cx="110" cy="120" r="4" fill="#4caf50"/>
+<circle cx="140" cy="100" r="4" fill="#4caf50"/>
+<circle cx="180" cy="70" r="4" fill="#4caf50"/>
+<line x1="40" y1="175" x2="200" y2="55" stroke="#4caf50" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="120" y="205" fill="#aaa" text-anchor="middle" font-size="10">Surface ↑ = Prix ↑</text>
+
+<!-- Pas de corrélation -->
+<text x="380" y="25" fill="#ff9800" text-anchor="middle" font-size="12" font-weight="bold">Aucune (0)</text>
+<line x1="280" y1="180" x2="480" y2="180" stroke="#555" stroke-width="1"/>
+<line x1="280" y1="180" x2="280" y2="40" stroke="#555" stroke-width="1"/>
+<circle cx="300" cy="70" r="4" fill="#ff9800"/>
+<circle cx="340" cy="160" r="4" fill="#ff9800"/>
+<circle cx="370" cy="90" r="4" fill="#ff9800"/>
+<circle cx="410" cy="140" r="4" fill="#ff9800"/>
+<circle cx="450" cy="80" r="4" fill="#ff9800"/>
+<text x="380" y="205" fill="#aaa" text-anchor="middle" font-size="10">Couleur yeux vs salaire = 0</text>
+
+<!-- Corrélation négative -->
+<text x="630" y="25" fill="#f44336" text-anchor="middle" font-size="12" font-weight="bold">Négative (-1)</text>
+<line x1="530" y1="180" x2="730" y2="180" stroke="#555" stroke-width="1"/>
+<line x1="530" y1="180" x2="530" y2="40" stroke="#555" stroke-width="1"/>
+<circle cx="560" cy="60" r="4" fill="#f44336"/>
+<circle cx="600" cy="90" r="4" fill="#f44336"/>
+<circle cx="630" cy="120" r="4" fill="#f44336"/>
+<circle cx="670" cy="140" r="4" fill="#f44336"/>
+<circle cx="700" cy="170" r="4" fill="#f44336"/>
+<line x1="545" y1="50" x2="715" y2="175" stroke="#f44336" stroke-width="2" stroke-dasharray="5,5"/>
+<text x="630" y="205" fill="#aaa" text-anchor="middle" font-size="10">Distance métro ↑ = Prix ↓</text>
+</svg>
+
+<div class="box box-green">
+<p><span class="emoji">💡</span><strong>En ML :</strong> La corrélation aide à choisir quelles features sont utiles. Si une feature n'a aucune corrélation avec le label, elle n'aidera pas le modèle à prédire.</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch9">9. Les fonctions</h2>
+
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>Une fonction</strong> = une machine qui prend une entrée et donne une sortie. En ML, un modèle EST une fonction : il prend des features et donne une prédiction.</p>
+</div>
+
+<svg width="500" height="150" viewBox="0 0 500 150">
+<rect x="0" y="0" width="500" height="150" rx="15" fill="#16213e" stroke="#333"/>
+<!-- Input -->
+<rect x="30" y="50" width="100" height="50" rx="8" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="80" y="80" fill="#4caf50" text-anchor="middle" font-size="12">Entrée (x)</text>
+<!-- Fonction -->
+<rect x="180" y="40" width="140" height="70" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+<text x="250" y="70" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">f(x)</text>
+<text x="250" y="90" fill="#aaa" text-anchor="middle" font-size="10">le modèle</text>
+<!-- Output -->
+<rect x="370" y="50" width="100" height="50" rx="8" fill="#1a1a2e" stroke="#ffd700" stroke-width="2"/>
+<text x="420" y="80" fill="#ffd700" text-anchor="middle" font-size="12">Sortie (y)</text>
+<!-- Flèches -->
+<line x1="130" y1="75" x2="180" y2="75" stroke="#aaa" stroke-width="2" marker-end="url(#arr)"/>
+<line x1="320" y1="75" x2="370" y2="75" stroke="#aaa" stroke-width="2" marker-end="url(#arr)"/>
+
+<text x="250" y="140" fill="#aaa" text-anchor="middle" font-size="11">Modèle(surface, chambres, âge) → prix prédit</text>
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#aaa"/></marker></defs>
+</svg>
+
+<!-- ============================================ -->
+<h2 id="ch10">10. Le Gradient Descent (la bille qui roule)</h2>
+
+<p>C'est le concept <strong>le plus important</strong> en ML. C'est COMMENT le modèle apprend.</p>
+
+<div class="box box-gold">
+<p><span class="emoji">🎯</span><strong>Idée :</strong> Le modèle commence avec des paramètres aléatoires (= mauvais). Il calcule son erreur, puis ajuste ses paramètres petit à petit pour réduire l'erreur. C'est comme une bille qui roule vers le point le plus bas d'une cuvette.</p>
+</div>
+
+<svg width="700" height="350" viewBox="0 0 700 350">
+<rect x="0" y="0" width="700" height="350" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="30" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Gradient Descent = la bille qui cherche le fond</text>
+
+<!-- La courbe (vallée) -->
+<path d="M80 80 Q150 280 250 200 Q320 150 350 140 Q400 150 450 200 Q550 280 620 80" stroke="#555" stroke-width="3" fill="none"/>
+
+<!-- Bille position 1 -->
+<circle cx="130" cy="160" r="10" fill="#f44336"/>
+<text x="130" y="145" fill="#f44336" text-anchor="middle" font-size="11">Début</text>
+<text x="130" y="135" fill="#aaa" text-anchor="middle" font-size="9">(erreur haute)</text>
+
+<!-- Bille position 2 -->
+<circle cx="220" cy="195" r="8" fill="#ff9800"/>
+<text x="220" y="220" fill="#ff9800" text-anchor="middle" font-size="10">Étape 2</text>
+
+<!-- Bille position 3 -->
+<circle cx="290" cy="175" r="8" fill="#ffd700"/>
+<text x="290" y="200" fill="#ffd700" text-anchor="middle" font-size="10">Étape 3</text>
+
+<!-- Bille position 4 (minimum) -->
+<circle cx="350" cy="140" r="12" fill="#4caf50" stroke="#fff" stroke-width="2"/>
+<text x="350" y="125" fill="#4caf50" text-anchor="middle" font-size="12" font-weight="bold">Minimum !</text>
+<text x="350" y="112" fill="#aaa" text-anchor="middle" font-size="9">(erreur la plus basse)</text>
+
+<!-- Flèches de descente -->
+<path d="M130 165 Q175 185 215 193" stroke="#ff9800" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+<path d="M225 193 Q255 190 285 178" stroke="#ffd700" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+<path d="M295 175 Q320 155 345 143" stroke="#4caf50" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+
+<!-- Learning Rate -->
+<text x="350" y="270" fill="#ff9800" text-anchor="middle" font-size="12" font-weight="bold">Learning Rate = la taille des pas</text>
+
+<!-- Trop grand -->
+<rect x="50" y="285" width="180" height="50" rx="8" fill="#1a1a2e" stroke="#f44336"/>
+<text x="140" y="305" fill="#f44336" text-anchor="middle" font-size="11">Trop grand ?</text>
+<text x="140" y="322" fill="#aaa" text-anchor="middle" font-size="10">La bille saute partout</text>
+
+<!-- Bon -->
+<rect x="260" y="285" width="180" height="50" rx="8" fill="#1a1a2e" stroke="#4caf50"/>
+<text x="350" y="305" fill="#4caf50" text-anchor="middle" font-size="11">Juste bien ?</text>
+<text x="350" y="322" fill="#aaa" text-anchor="middle" font-size="10">Descente régulière</text>
+
+<!-- Trop petit -->
+<rect x="470" y="285" width="180" height="50" rx="8" fill="#1a1a2e" stroke="#ff9800"/>
+<text x="560" y="305" fill="#ff9800" text-anchor="middle" font-size="11">Trop petit ?</text>
+<text x="560" y="322" fill="#aaa" text-anchor="middle" font-size="10">Trop lent, 1000 ans</text>
+</svg>
+
+<div class="analogy">
+<h4>⛷️ Analogie : Le skieur aveugle</h4>
+<p>Imagine un skieur les yeux bandés au sommet d'une montagne. Il veut descendre au point le plus bas.</p>
+<ol>
+<li>Il <strong>sent la pente</strong> sous ses pieds (= calcul du gradient)</li>
+<li>Il fait un <strong>pas</strong> dans la direction de la descente (= mise à jour des paramètres)</li>
+<li>Il <strong>recommence</strong> jusqu'à sentir qu'il ne descend plus (= minimum trouvé)</li>
+</ol>
+<p>Le <strong>learning rate</strong> = la taille de ses pas. Trop grands : il manque la vallée. Trop petits : il met des heures.</p>
+</div>
+
+<!-- ============================================ -->
+<h2 id="ch11">11. La fonction de coût (Loss)</h2>
+
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>La fonction de coût (loss)</strong> mesure à quel point le modèle se trompe. Plus le coût est bas, meilleur est le modèle. Le gradient descent essaie de <strong>minimiser</strong> cette fonction.</p>
+</div>
+
+<svg width="600" height="200" viewBox="0 0 600 200">
+<rect x="0" y="0" width="600" height="200" rx="15" fill="#16213e" stroke="#333"/>
+<text x="300" y="30" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Erreur = distance entre prédiction et réalité</text>
+
+<!-- Points réels -->
+<line x1="50" y1="160" x2="550" y2="160" stroke="#555" stroke-width="1"/>
+<line x1="50" y1="160" x2="50" y2="40" stroke="#555" stroke-width="1"/>
+
+<circle cx="120" cy="130" r="5" fill="#4caf50"/>
+<circle cx="200" cy="100" r="5" fill="#4caf50"/>
+<circle cx="300" cy="80" r="5" fill="#4caf50"/>
+<circle cx="400" cy="60" r="5" fill="#4caf50"/>
+<circle cx="480" cy="50" r="5" fill="#4caf50"/>
+
+<!-- Ligne de prédiction -->
+<line x1="80" y1="140" x2="520" y2="45" stroke="#f44336" stroke-width="2"/>
+
+<!-- Erreurs (lignes verticales) -->
+<line x1="120" y1="130" x2="120" y2="128" stroke="#ffd700" stroke-width="2"/>
+<line x1="200" y1="100" x2="200" y2="110" stroke="#ffd700" stroke-width="2"/>
+<line x1="300" y1="80" x2="300" y2="88" stroke="#ffd700" stroke-width="2"/>
+<line x1="400" y1="60" x2="400" y2="68" stroke="#ffd700" stroke-width="2"/>
+
+<text x="520" y="75" fill="#4caf50" font-size="10">● Réel</text>
+<text x="520" y="55" fill="#f44336" font-size="10">— Prédiction</text>
+<text x="520" y="95" fill="#ffd700" font-size="10">| Erreur</text>
+
+<text x="300" y="190" fill="#aaa" text-anchor="middle" font-size="11">Objectif : réduire la somme de toutes les erreurs (les lignes jaunes)</text>
+</svg>
+
+<!-- ============================================ -->
+<h2 id="ch12">12. Résumé visuel</h2>
+
+<table>
+<tr><th>Concept</th><th>En une phrase</th><th>Utilité en ML</th></tr>
+<tr><td><strong>Vecteur</strong></td><td>Liste de nombres</td><td>Représenter une donnée (features, embedding)</td></tr>
+<tr><td><strong>Matrice</strong></td><td>Tableau de nombres</td><td>Le dataset complet, les poids du modèle</td></tr>
+<tr><td><strong>Moyenne</strong></td><td>Le centre des données</td><td>Comprendre les données</td></tr>
+<tr><td><strong>Médiane</strong></td><td>La valeur du milieu</td><td>Résiste aux outliers</td></tr>
+<tr><td><strong>Écart-type</strong></td><td>Dispersion autour de la moyenne</td><td>Détecter les anomalies</td></tr>
+<tr><td><strong>Distribution normale</strong></td><td>Courbe en cloche</td><td>La plupart des données suivent ce pattern</td></tr>
+<tr><td><strong>Probabilité</strong></td><td>Chance (0 à 1)</td><td>Score de confiance du modèle</td></tr>
+<tr><td><strong>Corrélation</strong></td><td>Deux variables liées ?</td><td>Sélection des features utiles</td></tr>
+<tr><td><strong>Fonction</strong></td><td>Entrée → sortie</td><td>Un modèle ML = une fonction</td></tr>
+<tr><td><strong>Gradient Descent</strong></td><td>Descendre la pente</td><td>Comment le modèle apprend</td></tr>
+<tr><td><strong>Loss / Coût</strong></td><td>Mesure de l'erreur</td><td>Ce qu'on minimise</td></tr>
+<tr><td><strong>Learning Rate</strong></td><td>Taille des pas</td><td>Vitesse d'apprentissage</td></tr>
+<tr><td><strong>Cosine Similarity</strong></td><td>Angle entre vecteurs</td><td>Recherche sémantique (RAG)</td></tr>
+</table>
+
+<div class="box box-green" style="margin-top:30px">
+<p style="font-size:18px"><strong>✅ Bravo !</strong> Tu as terminé le cours 2/12. Tu comprends visuellement TOUTES les maths nécessaires pour le ML. Prochain cours : <strong>Comprendre les Données</strong></p>
+</div>
+
+</main>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

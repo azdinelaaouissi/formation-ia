@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Utilisation des APIs LLM | LLM</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : Utilisation des APIs LLM</h1>
+    <p class="subtitle">Maitriser les appels API, les parametres de generation et l'integration en production</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 : RECAPITULATIF -->
+    <!-- ============================================================ -->
+
+    <h2>1. Recapitulatif des APIs LLM</h2>
+
+    <div class="definition">
+        <strong>Une API LLM</strong> (Application Programming Interface) est un point d'acces HTTP qui permet d'envoyer du texte a un grand modele de langage et de recevoir une reponse generee. Au lieu d'installer le modele localement (ce qui necesite des GPUs couteux), vous envoyez une requete a un serveur distant qui execute le modele et vous retourne le resultat.
+    </div>
+
+    <div class="concept-box">
+        <h3>Fiche d'identite</h3>
+        <table>
+            <tr><th>Propriete</th><th>Detail</th></tr>
+            <tr><td><strong>Protocole</strong></td><td>API REST (requetes HTTP POST avec JSON)</td></tr>
+            <tr><td><strong>Authentification</strong></td><td>Cle API (API key) a inclure dans chaque requete</td></tr>
+            <tr><td><strong>Entree</strong></td><td>Tableau de messages (system, user, assistant) + parametres</td></tr>
+            <tr><td><strong>Sortie</strong></td><td>Texte genere, nombre de tokens utilises, metadata</td></tr>
+            <tr><td><strong>Facturation</strong></td><td>Par token (generalement : X$ / 1 million de tokens)</td></tr>
+            <tr><td><strong>Fournisseurs</strong></td><td>OpenAI (GPT), Anthropic (Claude), Google (Gemini), Mistral, etc.</td></tr>
+        </table>
+    </div>
+
+    <h3>Pourquoi utiliser une API plutot qu'un modele local ?</h3>
+    <ul>
+        <li><strong>Pas d'infrastructure GPU</strong> : GPT-4 necessite ~1.8 To de VRAM. Via API, vous n'avez besoin que d'une connexion internet.</li>
+        <li><strong>Toujours a jour</strong> : le fournisseur met a jour le modele sans action de votre part</li>
+        <li><strong>Scalabilite instantanee</strong> : 1 requete ou 10 000 requetes/minute, l'API gere la charge</li>
+        <li><strong>Pay-per-use</strong> : vous ne payez que ce que vous consommez (pas de cout fixe de serveur)</li>
+    </ul>
+
+    <h3>Les principaux fournisseurs</h3>
+    <table>
+        <tr><th>Fournisseur</th><th>Modele phare</th><th>Prix (input/output par 1M tokens)</th><th>Specialite</th></tr>
+        <tr><td>OpenAI</td><td>GPT-4o</td><td>$2.50 / $10.00</td><td>Polyvalent, le plus repandu</td></tr>
+        <tr><td>Anthropic</td><td>Claude 3.5 Sonnet</td><td>$3.00 / $15.00</td><td>Raisonnement, longs contextes</td></tr>
+        <tr><td>Google</td><td>Gemini 1.5 Pro</td><td>$1.25 / $5.00</td><td>Multimodal, contexte 1M tokens</td></tr>
+        <tr><td>Mistral</td><td>Mistral Large</td><td>$2.00 / $6.00</td><td>Open-source, Europe</td></tr>
+    </table>
+
+    <div class="prof-note">
+        Les prix evoluent rapidement (a la baisse). En 2024, GPT-4 coutait $30/1M tokens en sortie. En 2025, GPT-4o coute $10/1M tokens. Cette tendance se poursuit. Verifiez toujours les prix actuels sur le site du fournisseur avant d'estimer vos couts.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT -->
+    <!-- ============================================================ -->
+
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <p>L'interaction avec une API LLM suit un cycle requete/reponse HTTP classique. Voici les etapes detaillees :</p>
+
+    <div class="step-box">
+        <strong>Etape 1 - Authentification :</strong> Vous obtenez une cle API (API key) depuis le tableau de bord du fournisseur. Cette cle identifie votre compte et autorise les appels. Elle doit rester <strong>secrete</strong> et ne jamais apparaitre dans le code source public.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 2 - Construction de la requete :</strong> Vous creez un objet JSON avec le modele choisi, le tableau de messages (system/user/assistant) et les parametres de generation (temperature, max_tokens, etc.).
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 3 - Envoi HTTP POST :</strong> La requete est envoyee au endpoint de l'API (ex: https://api.openai.com/v1/chat/completions). Le header contient votre cle API.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 4 - Traitement serveur :</strong> Le serveur recoit la requete, tokenise le texte, execute le modele, et genere la reponse token par token.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 5 - Reponse JSON :</strong> Le serveur retourne un JSON contenant le texte genere, le nombre de tokens consommes (input + output), et des metadonnees (model, id, finish_reason).
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="380" viewBox="0 0 700 380">
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Cycle Requete/Reponse d'une API LLM</text>
+
+            <!-- Client -->
+            <rect x="30" y="60" width="200" height="260" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="130" y="85" text-anchor="middle" fill="#569cd6" font-size="14" font-weight="bold">Votre Application</text>
+
+            <!-- API Key -->
+            <rect x="50" y="100" width="160" height="30" rx="6" fill="rgba(255,68,68,0.1)" stroke="#ff4444" stroke-width="1"/>
+            <text x="130" y="120" text-anchor="middle" fill="#ff4444" font-size="10">API Key: sk-abc...xyz</text>
+
+            <!-- Request body -->
+            <rect x="50" y="140" width="160" height="80" rx="6" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="1"/>
+            <text x="60" y="158" fill="#00ff88" font-size="9">model: "gpt-4o"</text>
+            <text x="60" y="174" fill="#00ff88" font-size="9">messages: [...]</text>
+            <text x="60" y="190" fill="#00ff88" font-size="9">temperature: 0.7</text>
+            <text x="60" y="206" fill="#00ff88" font-size="9">max_tokens: 500</text>
+
+            <!-- Tokens out -->
+            <rect x="50" y="240" width="160" height="65" rx="6" fill="rgba(255,140,66,0.1)" stroke="#ff8c42" stroke-width="1"/>
+            <text x="60" y="260" fill="#ff8c42" font-size="9">Reponse recue :</text>
+            <text x="60" y="276" fill="#e0e0e0" font-size="9">content: "Le sentiment..."</text>
+            <text x="60" y="292" fill="#e0e0e0" font-size="9">tokens: {in: 45, out: 82}</text>
+
+            <!-- Serveur -->
+            <rect x="470" y="60" width="200" height="260" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="570" y="85" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Serveur LLM</text>
+
+            <!-- GPU -->
+            <rect x="490" y="105" width="160" height="35" rx="6" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="1"/>
+            <text x="570" y="127" text-anchor="middle" fill="#ff6b35" font-size="10">GPU Cluster (A100/H100)</text>
+
+            <!-- Model -->
+            <rect x="490" y="150" width="160" height="35" rx="6" fill="rgba(86,156,214,0.15)" stroke="#569cd6" stroke-width="1"/>
+            <text x="570" y="172" text-anchor="middle" fill="#569cd6" font-size="10">Modele GPT-4o (1.8T params)</text>
+
+            <!-- Tokenizer -->
+            <rect x="490" y="195" width="160" height="30" rx="6" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="1"/>
+            <text x="570" y="215" text-anchor="middle" fill="#00ff88" font-size="10">Tokenizer (BPE)</text>
+
+            <!-- Sampling -->
+            <rect x="490" y="235" width="160" height="30" rx="6" fill="rgba(255,140,66,0.1)" stroke="#ff8c42" stroke-width="1"/>
+            <text x="570" y="255" text-anchor="middle" fill="#ff8c42" font-size="10">Sampling (temp, top_p)</text>
+
+            <!-- Rate limiter -->
+            <rect x="490" y="275" width="160" height="30" rx="6" fill="rgba(255,68,68,0.1)" stroke="#ff4444" stroke-width="1"/>
+            <text x="570" y="295" text-anchor="middle" fill="#ff4444" font-size="10">Rate Limiter / Billing</text>
+
+            <!-- Fleches -->
+            <!-- Requete -->
+            <line x1="230" y1="160" x2="470" y2="160" stroke="#00ff88" stroke-width="2"/>
+            <polygon points="465,155 475,160 465,165" fill="#00ff88"/>
+            <text x="350" y="150" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">POST /v1/chat/completions</text>
+
+            <!-- Reponse -->
+            <line x1="470" y1="270" x2="230" y2="270" stroke="#ff8c42" stroke-width="2"/>
+            <polygon points="235,265 225,270 235,275" fill="#ff8c42"/>
+            <text x="350" y="260" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">JSON Response (200 OK)</text>
+
+            <!-- Latence -->
+            <text x="350" y="345" text-anchor="middle" fill="#aaa" font-size="11">Latence typique : 200ms - 5s (selon la longueur de la reponse)</text>
+            <text x="350" y="365" text-anchor="middle" fill="#aaa" font-size="11">Cout : tokens_input * prix_in + tokens_output * prix_out</text>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+<span class="comment"># Initialiser le client (la cle API est lue depuis la variable d'environnement OPENAI_API_KEY)</span>
+client = OpenAI()
+
+<span class="comment"># Appel API basique</span>
+response = client.<span class="function">chat.completions.create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Tu es un assistant concis."</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Qu'est-ce qu'un token en NLP ?"</span>}
+    ],
+    temperature=<span class="number">0.3</span>,
+    max_tokens=<span class="number">200</span>
+)
+
+<span class="comment"># Extraire la reponse</span>
+texte = response.choices[<span class="number">0</span>].message.content
+tokens_in = response.usage.prompt_tokens
+tokens_out = response.usage.completion_tokens
+cout_total = response.usage.total_tokens
+
+<span class="function">print</span>(<span class="function">f</span><span class="string">"Reponse : {texte}"</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"\n--- Statistiques ---"</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"Tokens entree  : {tokens_in}"</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"Tokens sortie  : {tokens_out}"</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"Tokens total   : {cout_total}"</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"Cout estime    : ${cout_total / 1_000_000 * 10:.6f}"</span>)</div>
+
+    <div class="output-block">
+Reponse : Un token est l'unite de base qu'un modele de langage manipule. Ce n'est pas exactement un mot : c'est un fragment de texte issu de la tokenisation (souvent BPE). Par exemple, "bonjour" est 1 token, mais "anticonstitutionnellement" est decompose en 4-5 tokens. En moyenne, 1 token = 0.75 mot en francais et 1 token = 4 caracteres en anglais.
+
+--- Statistiques ---
+Tokens entree  : 28
+Tokens sortie  : 87
+Tokens total   : 115
+Cout estime    : $0.001150</div>
+
+    <div class="prof-note">
+        Remarquez que le francais consomme plus de tokens que l'anglais pour exprimer la meme idee (environ 30% de plus). C'est parce que les tokenizers des LLMs sont majoritairement entraines sur du texte anglais. Ce surcoute est a prendre en compte dans vos estimations budgetaires.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 : LES DONNEES -->
+    <!-- ============================================================ -->
+
+    <h2>3. Les Donnees : Format d'Entree et Tokens</h2>
+
+    <h3>Format du tableau de messages</h3>
+
+    <p>L'entree principale d'une API LLM est un tableau de messages. Chaque message a un <strong>role</strong> et un <strong>content</strong>. Les trois roles sont :</p>
+
+    <table>
+        <tr><th>Role</th><th>Description</th><th>Obligatoire ?</th><th>Nombre</th></tr>
+        <tr><td><strong>system</strong></td><td>Definit le comportement et les regles du modele</td><td>Non (mais fortement recommande)</td><td>1 seul (au debut)</td></tr>
+        <tr><td><strong>user</strong></td><td>Message de l'utilisateur (question, tache, texte a analyser)</td><td>Oui</td><td>1 ou plus</td></tr>
+        <tr><td><strong>assistant</strong></td><td>Reponse du modele (ou reponse pre-remplie pour le few-shot)</td><td>Non</td><td>0 ou plus</td></tr>
+    </table>
+
+    <div class="code-block"><span class="comment"># Structure complete d'un tableau de messages avec historique</span>
+messages = [
+    <span class="comment"># 1. System prompt (unique, en premier)</span>
+    {
+        <span class="string">"role"</span>: <span class="string">"system"</span>,
+        <span class="string">"content"</span>: <span class="string">"Tu es un traducteur professionnel francais-anglais. Tu ne traduis que le texte demande, sans commentaire."</span>
+    },
+    <span class="comment"># 2. Premier echange (historique)</span>
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Traduis : 'Bonjour, comment allez-vous ?'"</span>},
+    {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"Hello, how are you?"</span>},
+    <span class="comment"># 3. Deuxieme echange (nouvelle requete)</span>
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Traduis : 'Le chat dort sur le canape.'"</span>}
+]
+
+<span class="comment"># Le modele voit tout l'historique et comprend le contexte</span>
+response = client.<span class="function">chat.completions.create</span>(model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.0</span>)
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block">The cat is sleeping on the couch.</div>
+
+    <h3>Comprendre les tokens</h3>
+
+    <div class="definition">
+        <strong>Un token</strong> est l'unite de texte minimale traitee par le modele. Ce n'est ni un mot, ni un caractere, mais un fragment intermediaire issu de l'algorithme BPE (Byte Pair Encoding). Le nombre de tokens determine le cout et la limite de la fenetre de contexte.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> tiktoken
+
+<span class="comment"># Charger le tokenizer de GPT-4o</span>
+enc = tiktoken.<span class="function">encoding_for_model</span>(<span class="string">"gpt-4o"</span>)
+
+textes = [
+    <span class="string">"Hello world"</span>,
+    <span class="string">"Bonjour le monde"</span>,
+    <span class="string">"anticonstitutionnellement"</span>,
+    <span class="string">"L'intelligence artificielle transforme le monde."</span>,
+    <span class="string">"{'sentiment': 'positif', 'score': 0.95}"</span>,
+]
+
+<span class="function">print</span>(<span class="function">f</span><span class="string">"{'Texte':&lt;50} | {'Tokens':>6} | {'Ratio c/t':>9}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 75</span>)
+
+<span class="keyword">for</span> texte <span class="keyword">in</span> textes:
+    tokens = enc.<span class="function">encode</span>(texte)
+    ratio = <span class="function">len</span>(texte) / <span class="function">len</span>(tokens)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"{texte:&lt;50} | {len(tokens):>6} | {ratio:>7.1f} c/t"</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"  Tokens detailles : {[enc.decode([t]) for t in tokens]}"</span>)</div>
+
+    <div class="output-block">
+Texte                                              | Tokens | Ratio c/t
+---------------------------------------------------------------------------
+Hello world                                        |      2 |     5.5 c/t
+  Tokens detailles : ['Hello', ' world']
+Bonjour le monde                                   |      3 |     5.3 c/t
+  Tokens detailles : ['Bon', 'jour', ' le monde']
+anticonstitutionnellement                          |      5 |     5.0 c/t
+  Tokens detailles : ['anti', 'constit', 'ut', 'ionnellement', '']
+L'intelligence artificielle transforme le monde.   |      7 |     7.0 c/t
+  Tokens detailles : ["L'", 'intelligence', ' artifici', 'elle', ' transforme', ' le', ' monde.']
+{'sentiment': 'positif', 'score': 0.95}            |     13 |     3.1 c/t
+  Tokens detailles : ["{'", 'sent', 'iment', "':", " '", 'posit', 'if', "',", " '", 'score', "':", ' 0', '.95}']</div>
+
+    <div class="prof-note">
+        Points cles a retenir : (1) Le francais produit ~30% plus de tokens que l'anglais pour le meme sens. (2) Le JSON est tres couteux en tokens a cause de la ponctuation (accolades, guillemets, deux-points). (3) Les mots courants anglais ("Hello", "world") sont souvent 1 seul token. (4) Les mots francais longs sont decomposes en sous-tokens.
+    </div>
+
+    <h3>Fenetres de contexte</h3>
+    <table>
+        <tr><th>Modele</th><th>Fenetre de contexte</th><th>Equivalent en mots</th><th>Equivalent en pages A4</th></tr>
+        <tr><td>GPT-4o</td><td>128 000 tokens</td><td>~96 000 mots</td><td>~190 pages</td></tr>
+        <tr><td>Claude 3.5 Sonnet</td><td>200 000 tokens</td><td>~150 000 mots</td><td>~300 pages</td></tr>
+        <tr><td>Gemini 1.5 Pro</td><td>1 000 000 tokens</td><td>~750 000 mots</td><td>~1 500 pages</td></tr>
+        <tr><td>GPT-3.5 Turbo</td><td>16 384 tokens</td><td>~12 000 mots</td><td>~24 pages</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 : LES PARAMETRES -->
+    <!-- ============================================================ -->
+
+    <h2>4. Les Parametres de l'API (en detail)</h2>
+
+    <p>L'API LLM offre plusieurs parametres qui controlent le comportement de la generation. Chaque parametre influence la qualite, la creativite et le cout de la reponse. Voici les 5 parametres essentiels :</p>
+
+    <!-- Parametre 1 : temperature -->
+    <div class="param-box">
+        <h4>Parametre 1 : temperature - LE plus important</h4>
+        <p><strong>Role :</strong> Controle le degre d'aleatoire dans la generation. A chaque token, le modele calcule une distribution de probabilites sur tous les tokens possibles. La temperature modifie cette distribution avant l'echantillonnage.</p>
+        <p><strong>Plage :</strong> 0.0 a 2.0 (defaut : 1.0)</p>
+        <p><strong>Impact :</strong></p>
+        <ul>
+            <li><strong>temperature = 0.0</strong> : Le modele choisit TOUJOURS le token le plus probable. Reponses deterministes et reproductibles. Ideal pour les taches factuelles et le JSON.</li>
+            <li><strong>temperature = 0.3</strong> : Presque deterministe avec une legere variation. Bon pour les taches structurees qui tolerent un peu de creativite.</li>
+            <li><strong>temperature = 0.7</strong> : Bon equilibre creativite/coherence. Recommande pour la generation de texte general, les chatbots conversationnels.</li>
+            <li><strong>temperature = 1.0</strong> : Distribution originale du modele. Plus creatif mais risque d'incoherences. Bon pour le brainstorming.</li>
+            <li><strong>temperature = 1.5+</strong> : Tres aleatoire. Les reponses deviennent souvent incoherentes ou absurdes. A eviter en production.</li>
+        </ul>
+        <p><strong>Regle pratique :</strong> temperature = 0.0 pour les taches deterministes (classification, extraction, JSON). temperature = 0.7 pour les taches creatives (redaction, dialogue).</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Tester differentes temperatures sur le meme prompt</span>
+prompt = <span class="string">"Ecris une metaphore originale pour decrire l'intelligence artificielle."</span>
+
+<span class="function">print</span>(<span class="string">"=== Impact de la Temperature ==="</span>)
+<span class="function">print</span>()
+
+<span class="keyword">for</span> temp <span class="keyword">in</span> [<span class="number">0.0</span>, <span class="number">0.3</span>, <span class="number">0.7</span>, <span class="number">1.0</span>, <span class="number">1.5</span>]:
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"--- temperature = {temp} ---"</span>)
+
+    <span class="comment"># Executer 3 fois pour voir la variabilite</span>
+    <span class="keyword">for</span> run <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):
+        response = client.<span class="function">chat.completions.create</span>(
+            model=<span class="string">"gpt-4o"</span>,
+            messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}],
+            temperature=temp,
+            max_tokens=<span class="number">60</span>
+        )
+        texte = response.choices[<span class="number">0</span>].message.content.strip()
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"  Run {run+1}: {texte[:80]}..."</span>)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">
+=== Impact de la Temperature ===
+
+--- temperature = 0.0 ---
+  Run 1: L'IA est un miroir qui ne reflete pas ce que nous sommes, mais ce que nos donn...
+  Run 2: L'IA est un miroir qui ne reflete pas ce que nous sommes, mais ce que nos donn...
+  Run 3: L'IA est un miroir qui ne reflete pas ce que nous sommes, mais ce que nos donn...
+
+--- temperature = 0.3 ---
+  Run 1: L'IA est un miroir qui ne reflete pas ce que nous sommes, mais ce que nos donn...
+  Run 2: L'IA est comme un ocean de calculs : en surface, les vagues semblent simples,...
+  Run 3: L'IA est un miroir qui ne reflete pas ce que nous sommes, mais ce que nos donn...
+
+--- temperature = 0.7 ---
+  Run 1: L'IA est une bibliotheque infinie dont les livres s'ecrivent eux-memes a mesu...
+  Run 2: L'intelligence artificielle est un tisserand aveugle qui cree des tapisseries...
+  Run 3: L'IA est comme un enfant prodige qui a lu tous les livres du monde mais n'a j...
+
+--- temperature = 1.0 ---
+  Run 1: L'IA est le reve lucide d'une calculatrice qui s'est endormie sur un tas de p...
+  Run 2: L'intelligence artificielle est un sculpteur de brouillard : elle donne forme ...
+  Run 3: L'IA est une constellation de probabilites qui dessine des etoiles que personn...
+
+--- temperature = 1.5 ---
+  Run 1: L'intelligence est un papillon de fer eclos d'une chrysalide de logarithmes d...
+  Run 2: Un orchestre de chiffres hagards qui decouvre soudain qu'il peut chanter du Ve...
+  Run 3: Elle est comme un jardin quantique ou les fleurs poussent par consensus statist...</div>
+
+    <div class="effect">
+        A temperature 0, les 3 executions produisent un texte <strong>identique</strong>. A 0.7, chaque execution est differente mais coherente. A 1.5, les metaphores deviennent poetiques mais parfois difficiles a comprendre ("papillon de fer", "orchestre de chiffres hagards"). La temperature est le curseur entre reproductibilite et creativite.
+    </div>
+
+    <!-- Parametre 2 : max_tokens -->
+    <div class="param-box">
+        <h4>Parametre 2 : max_tokens - Controle de la longueur</h4>
+        <p><strong>Role :</strong> Fixe le nombre maximum de tokens que le modele peut generer dans sa reponse. Le modele s'arrete des qu'il atteint cette limite, meme au milieu d'un mot ou d'une phrase.</p>
+        <p><strong>Plage :</strong> 1 a la limite du modele (ex: 4096 pour GPT-4o par defaut)</p>
+        <p><strong>Impact :</strong></p>
+        <ul>
+            <li><strong>max_tokens = 50</strong> : Reponses tres courtes. Risque de troncature en plein milieu d'une phrase.</li>
+            <li><strong>max_tokens = 200</strong> : Suffisant pour un paragraphe. Bon pour les classifications, extractions et reponses courtes.</li>
+            <li><strong>max_tokens = 1000</strong> : Un texte complet d'une page. Suffisant pour la plupart des taches.</li>
+            <li><strong>max_tokens non defini</strong> : Le modele genere jusqu'a sa limite par defaut ou jusqu'au token de fin.</li>
+        </ul>
+        <p><strong>Regle pratique :</strong> Toujours definir max_tokens pour controler le cout et eviter les reponses trop longues. Estimez la longueur attendue et ajoutez 20% de marge.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Demonstration de l'effet de max_tokens</span>
+prompt = <span class="string">"Explique le fonctionnement d'un reseau de neurones en 5 points."</span>
+
+<span class="keyword">for</span> max_tok <span class="keyword">in</span> [<span class="number">50</span>, <span class="number">200</span>, <span class="number">1000</span>]:
+    response = client.<span class="function">chat.completions.create</span>(
+        model=<span class="string">"gpt-4o"</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}],
+        temperature=<span class="number">0.0</span>,
+        max_tokens=max_tok
+    )
+
+    texte = response.choices[<span class="number">0</span>].message.content
+    finish = response.choices[<span class="number">0</span>].finish_reason
+    tokens_out = response.usage.completion_tokens
+
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"=== max_tokens = {max_tok} ==="</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"Tokens generes : {tokens_out} | Raison d'arret : {finish}"</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"Reponse : {texte[:150]}..."</span>)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">
+=== max_tokens = 50 ===
+Tokens generes : 50 | Raison d'arret : length
+Reponse : 1. **Neurones artificiels** : Un reseau de neurones est compose de couches de neurones artificiels. Chaque neurone recoit des entrees, les multiplie par...
+
+=== max_tokens = 200 ===
+Tokens generes : 187 | Raison d'arret : stop
+Reponse : 1. **Neurones artificiels** : Un reseau de neurones est compose de couches de neurones artificiels. Chaque neurone recoit des entrees, les multiplie par...
+
+=== max_tokens = 1000 ===
+Tokens generes : 187 | Raison d'arret : stop
+Reponse : 1. **Neurones artificiels** : Un reseau de neurones est compose de couches de neurones artificiels. Chaque neurone recoit des entrees, les multiplie par...</div>
+
+    <div class="warning">
+        Quand <code>finish_reason = "length"</code>, cela signifie que la reponse a ete <strong>tronquee</strong>. Le modele n'a pas pu finir sa phrase. Quand <code>finish_reason = "stop"</code>, le modele a termine naturellement. Notez que 200 et 1000 produisent le meme resultat (187 tokens) car le modele a fini avant la limite. Mais avec 50, il est coupe en plein milieu.
+    </div>
+
+    <!-- Parametre 3 : top_p -->
+    <div class="param-box">
+        <h4>Parametre 3 : top_p (Nucleus Sampling)</h4>
+        <p><strong>Role :</strong> A chaque etape de generation, le modele trie les tokens par probabilite decroissante et ne considere que le sous-ensemble minimal dont la somme des probabilites atteint le seuil top_p. Les tokens en dehors de ce "noyau" sont exclus.</p>
+        <p><strong>Plage :</strong> 0.0 a 1.0 (defaut : 1.0)</p>
+        <p><strong>Impact :</strong></p>
+        <ul>
+            <li><strong>top_p = 0.1</strong> : Seuls les tokens les plus probables (couvrant 10% de la masse de probabilites) sont consideres. Tres deterministe.</li>
+            <li><strong>top_p = 0.5</strong> : On considere les tokens couvrant 50% de la masse. Equilibre entre diversite et coherence.</li>
+            <li><strong>top_p = 0.9</strong> : On considere 90% de la masse. Plus de diversite, mais on exclut les tokens tres improbables ("queue" de distribution).</li>
+            <li><strong>top_p = 1.0</strong> : Aucun filtrage. Tous les tokens sont consideres (la temperature seule controle l'aleatoire).</li>
+        </ul>
+        <p><strong>Regle pratique :</strong> Modifier temperature OU top_p, mais pas les deux en meme temps. En production, la plupart des praticiens utilisent temperature et laissent top_p a 1.0.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Comparaison de top_p avec temperature fixe a 1.0</span>
+prompt = <span class="string">"Complete cette phrase de maniere creative : 'Le futur de la programmation est'"</span>
+
+<span class="function">print</span>(<span class="string">"=== Comparaison de top_p (temperature fixe a 1.0) ===\n"</span>)
+
+<span class="keyword">for</span> tp <span class="keyword">in</span> [<span class="number">0.1</span>, <span class="number">0.5</span>, <span class="number">0.9</span>]:
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"--- top_p = {tp} ---"</span>)
+    <span class="keyword">for</span> run <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):
+        response = client.<span class="function">chat.completions.create</span>(
+            model=<span class="string">"gpt-4o"</span>,
+            messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}],
+            temperature=<span class="number">1.0</span>,
+            top_p=tp,
+            max_tokens=<span class="number">40</span>
+        )
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"  Run {run+1}: {response.choices[0].message.content.strip()[:75]}"</span>)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">
+=== Comparaison de top_p (temperature fixe a 1.0) ===
+
+--- top_p = 0.1 ---
+  Run 1: Le futur de la programmation est dans l'abstraction : les developpeurs ne
+  Run 2: Le futur de la programmation est dans l'abstraction : les developpeurs ne
+  Run 3: Le futur de la programmation est dans l'abstraction : les developpeurs ne
+
+--- top_p = 0.5 ---
+  Run 1: Le futur de la programmation est collaboratif : les developpeurs et l'IA co-
+  Run 2: Le futur de la programmation est dans l'abstraction : les langages deviennent
+  Run 3: Le futur de la programmation est conversationnel : on decrira ce qu'on veut
+
+--- top_p = 0.9 ---
+  Run 1: Le futur de la programmation est un dialogue avec des machines intuitives qui
+  Run 2: Le futur de la programmation est organique, comme cultiver un jardin de logic
+  Run 3: Le futur de la programmation est quantique, telepathique et probablement redige</div>
+
+    <div class="prof-note">
+        Observez que top_p = 0.1 avec temperature = 1.0 se comporte presque comme temperature = 0 : les reponses sont identiques. C'est parce que top_p filtre drastiquement les tokens possibles, ne laissant que les plus probables. top_p = 0.9 permet une grande diversite car 90% de la masse de probabilites est accessible.
+    </div>
+
+    <!-- Parametre 4 : Penalties -->
+    <div class="param-box">
+        <h4>Parametre 4 : frequency_penalty et presence_penalty</h4>
+        <p><strong>Role :</strong> Ces deux parametres penalisent la repetition de tokens deja generes.</p>
+        <p><strong>frequency_penalty</strong> (0.0 a 2.0, defaut 0.0) : Penalise un token proportionnellement au nombre de fois qu'il apparait deja dans la reponse. Plus un mot est repete, plus il est penalise.</p>
+        <p><strong>presence_penalty</strong> (0.0 a 2.0, defaut 0.0) : Penalise un token des sa premiere apparition (presence binaire : present ou absent, peu importe le nombre d'occurrences).</p>
+        <p><strong>Difference cle :</strong></p>
+        <ul>
+            <li><strong>frequency_penalty</strong> : "le mot X est apparu 5 fois, je le penalise fortement" (penalite croissante)</li>
+            <li><strong>presence_penalty</strong> : "le mot X est deja apparu, je le penalise un peu" (penalite fixe)</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact des penalties sur la diversite lexicale</span>
+prompt = <span class="string">"Liste 10 synonymes du mot 'intelligent'."</span>
+
+configs = [
+    (<span class="string">"Sans penalty"</span>,          <span class="number">0.0</span>, <span class="number">0.0</span>),
+    (<span class="string">"frequency_penalty=1.5"</span>,  <span class="number">1.5</span>, <span class="number">0.0</span>),
+    (<span class="string">"presence_penalty=1.5"</span>,   <span class="number">0.0</span>, <span class="number">1.5</span>),
+    (<span class="string">"Les deux a 1.0"</span>,         <span class="number">1.0</span>, <span class="number">1.0</span>),
+]
+
+<span class="keyword">for</span> nom, freq_p, pres_p <span class="keyword">in</span> configs:
+    response = client.<span class="function">chat.completions.create</span>(
+        model=<span class="string">"gpt-4o"</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: prompt}],
+        temperature=<span class="number">0.7</span>,
+        frequency_penalty=freq_p,
+        presence_penalty=pres_p,
+        max_tokens=<span class="number">100</span>
+    )
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"=== {nom} ==="</span>)
+    <span class="function">print</span>(response.choices[<span class="number">0</span>].message.content.strip()[:120])
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">
+=== Sans penalty ===
+1. Brillant 2. Astucieux 3. Ingenieux 4. Perspicace 5. Sage 6. Avise 7. Malin 8. Futé 9. Clever 10. Eveille
+
+=== frequency_penalty=1.5 ===
+1. Brillant 2. Astucieux 3. Perspicace 4. Sage 5. Ingenieux 6. Vif 7. Malin 8. Subtil 9. Avise 10. Lucide
+
+=== presence_penalty=1.5 ===
+1. Brillant 2. Astucieux 3. Perspicace 4. Avise 5. Ingenieux 6. Malin 7. Futé 8. Sagace 9. Habile 10. Subtil
+
+=== Les deux a 1.0 ===
+1. Brillant 2. Astucieux 3. Perspicace 4. Sage 5. Ingenieux 6. Vif d'esprit 7. Sagace 8. Lucide 9. Habile 10. Subtil</div>
+
+    <div class="effect">
+        Avec les penalties, le modele evite les repetitions et explore un vocabulaire plus large. Sans penalty, il peut repeter des structures syntaxiques similaires. Les penalties sont surtout utiles pour la generation longue (articles, histoires) ou le brainstorming.
+    </div>
+
+    <!-- Parametre 5 : Stop sequences -->
+    <div class="param-box">
+        <h4>Parametre 5 : stop - Sequences d'arret</h4>
+        <p><strong>Role :</strong> Definit une ou plusieurs chaines de caracteres qui, si generees par le modele, provoquent l'arret immediat de la generation. Le texte d'arret n'est PAS inclus dans la reponse.</p>
+        <p><strong>Plage :</strong> Liste de 1 a 4 strings</p>
+        <p><strong>Cas d'usage :</strong></p>
+        <ul>
+            <li>Empecher le modele de generer du texte apres un delimiteur (ex: "---")</li>
+            <li>Limiter la reponse a un seul element (arreter apres "\n")</li>
+            <li>Forcer le modele a s'arreter apres avoir genere un bloc specifique (ex: "```")</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Utiliser stop pour extraire uniquement la premiere ligne</span>
+response = client.<span class="function">chat.completions.create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Donne 5 noms de villes francaises."</span>}],
+    temperature=<span class="number">0.0</span>,
+    stop=[<span class="string">"\n\n"</span>]  <span class="comment"># Arreter apres le premier paragraphe</span>
+)
+<span class="function">print</span>(<span class="string">"Avec stop=['\\n\\n'] :"</span>)
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"Finish reason: {response.choices[0].finish_reason}"</span>)
+
+<span class="function">print</span>()
+
+<span class="comment"># Arreter apres le 3eme element d'une liste numerotee</span>
+response2 = client.<span class="function">chat.completions.create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Donne 5 noms de villes francaises, une par ligne."</span>}],
+    temperature=<span class="number">0.0</span>,
+    stop=[<span class="string">"4."</span>]  <span class="comment"># Arreter avant le 4eme element</span>
+)
+<span class="function">print</span>(<span class="string">"Avec stop=['4.'] (seulement 3 villes) :"</span>)
+<span class="function">print</span>(response2.choices[<span class="number">0</span>].message.content)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"Finish reason: {response2.choices[0].finish_reason}"</span>)</div>
+
+    <div class="output-block">
+Avec stop=['\n\n'] :
+1. Paris  2. Lyon  3. Marseille  4. Toulouse  5. Bordeaux
+Finish reason: stop
+
+Avec stop=['4.'] (seulement 3 villes) :
+1. Paris
+2. Lyon
+3. Marseille
+Finish reason: stop</div>
+
+    <div class="prof-note">
+        Les stop sequences sont un outil puissant mais sous-utilise. Elles permettent de controler precisement ou le modele s'arrete, sans gaspiller de tokens. Par exemple, dans un chatbot, vous pouvez utiliser <code>stop=["User:", "Human:"]</code> pour empecher le modele de generer des faux messages utilisateur.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 : LES METRIQUES -->
+    <!-- ============================================================ -->
+
+    <h2>5. Les Metriques de Performance de l'API</h2>
+
+    <p>Pour optimiser vos appels API en production, vous devez suivre 4 metriques cles :</p>
+
+    <div class="metric-card">
+        <h4>Metrique 1 : Comptage de Tokens</h4>
+        <p>Le nombre total de tokens (input + output) determine directement votre facture. Chaque appel API retourne les compteurs dans <code>response.usage</code>.</p>
+        <p><strong>Formule :</strong> Tokens total = prompt_tokens + completion_tokens</p>
+        <p><strong>Optimiser :</strong> Reduire la longueur du system prompt, limiter max_tokens, utiliser des modeles moins chers pour les taches simples.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Metrique 2 : Latence (temps de reponse)</h4>
+        <p>Le temps entre l'envoi de la requete et la reception de la reponse complete. La latence depend principalement du nombre de tokens generes (output).</p>
+        <p><strong>Typiquement :</strong> 50-100ms pour le premier token (TTFT), puis ~30-50 tokens/seconde pour le reste.</p>
+        <p><strong>Optimiser :</strong> Utiliser le streaming pour afficher les premiers tokens immediatement, reduire max_tokens.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Metrique 3 : Cout par Requete</h4>
+        <p>Le cout monetaire de chaque appel API. Varie selon le modele, le nombre de tokens input et le nombre de tokens output.</p>
+        <p><strong>Formule :</strong> Cout = (prompt_tokens * prix_input / 1M) + (completion_tokens * prix_output / 1M)</p>
+        <p><strong>Optimiser :</strong> Utiliser GPT-4o-mini pour les taches simples ($0.15/$0.60 par 1M) au lieu de GPT-4o ($2.50/$10.00 par 1M).</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Metrique 4 : Taux de Succes</h4>
+        <p>Le pourcentage de requetes qui retournent une reponse valide (pas d'erreur HTTP, JSON parsable, reponse pertinente).</p>
+        <p><strong>Cible :</strong> >= 99.5% en production. En dessous, il faut ameliorer le retry logic et le prompt.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> time
+<span class="keyword">import</span> json
+
+<span class="keyword">def</span> <span class="function">benchmark_api</span>(client, messages, model=<span class="string">"gpt-4o"</span>, n_runs=<span class="number">5</span>, prix_in=<span class="number">2.50</span>, prix_out=<span class="number">10.00</span>):
+    <span class="string">"""Benchmark complet d'un appel API : tokens, latence, cout."""</span>
+    resultats = []
+
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n_runs):
+        start = time.time()
+        <span class="keyword">try</span>:
+            resp = client.<span class="function">chat.completions.create</span>(
+                model=model, messages=messages, temperature=<span class="number">0.0</span>, max_tokens=<span class="number">200</span>
+            )
+            latence = time.time() - start
+            resultats.append({
+                <span class="string">"tokens_in"</span>: resp.usage.prompt_tokens,
+                <span class="string">"tokens_out"</span>: resp.usage.completion_tokens,
+                <span class="string">"latence"</span>: latence,
+                <span class="string">"succes"</span>: <span class="keyword">True</span>,
+                <span class="string">"finish"</span>: resp.choices[<span class="number">0</span>].finish_reason
+            })
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            resultats.append({<span class="string">"succes"</span>: <span class="keyword">False</span>, <span class="string">"erreur"</span>: <span class="function">str</span>(e)})
+
+    <span class="comment"># Calculer les statistiques</span>
+    succes = [r <span class="keyword">for</span> r <span class="keyword">in</span> resultats <span class="keyword">if</span> r[<span class="string">"succes"</span>]]
+    taux_succes = <span class="function">len</span>(succes) / <span class="function">len</span>(resultats) * <span class="number">100</span>
+
+    <span class="keyword">if</span> succes:
+        avg_in = <span class="function">sum</span>(r[<span class="string">"tokens_in"</span>] <span class="keyword">for</span> r <span class="keyword">in</span> succes) / <span class="function">len</span>(succes)
+        avg_out = <span class="function">sum</span>(r[<span class="string">"tokens_out"</span>] <span class="keyword">for</span> r <span class="keyword">in</span> succes) / <span class="function">len</span>(succes)
+        avg_latence = <span class="function">sum</span>(r[<span class="string">"latence"</span>] <span class="keyword">for</span> r <span class="keyword">in</span> succes) / <span class="function">len</span>(succes)
+        cout_moyen = (avg_in * prix_in + avg_out * prix_out) / <span class="number">1_000_000</span>
+
+        <span class="function">print</span>(<span class="string">"=== Benchmark API ==="</span>)
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"Modele         : {model}"</span>)
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"Runs           : {n_runs}"</span>)
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"Taux de succes : {taux_succes:.1f}%"</span>)
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"Tokens moyens  : {avg_in:.0f} in + {avg_out:.0f} out = {avg_in+avg_out:.0f} total"</span>)
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"Latence moy.   : {avg_latence:.2f}s"</span>)
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"Cout moyen     : ${cout_moyen:.6f} par requete"</span>)
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"Cout pour 10K  : ${cout_moyen * 10000:.2f}"</span>)
+
+<span class="comment"># Benchmark</span>
+msgs = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Classifie le sentiment en JSON : {\"sentiment\": \"...\", \"score\": ...}"</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Texte : 'Ce produit est fantastique, je le recommande !'"</span>}
+]
+<span class="function">benchmark_api</span>(client, msgs)</div>
+
+    <div class="output-block">
+=== Benchmark API ===
+Modele         : gpt-4o
+Runs           : 5
+Taux de succes : 100.0%
+Tokens moyens  : 42 in + 23 out = 65 total
+Latence moy.   : 0.72s
+Cout moyen     : $0.000335 par requete
+Cout pour 10K  : $3.35</div>
+
+    <div class="prof-note">
+        10 000 appels de classification coute environ $3.35 avec GPT-4o. Avec GPT-4o-mini, ce serait ~$0.10. Pour des taches simples (classification, extraction), preferez les modeles economiques. Reservez les modeles puissants (GPT-4o, Claude 3.5) aux taches complexes (raisonnement, generation longue).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 : IMPLEMENTATION COMPLETE -->
+    <!-- ============================================================ -->
+
+    <h2>6. Implementation Complete : API en Production</h2>
+
+    <p>Voici une implementation robuste couvrant les 4 aspects essentiels d'une utilisation en production : setup securise, appel basique, streaming, et gestion des erreurs avec retry logic.</p>
+
+    <h3>6.1 Setup securise</h3>
+
+    <div class="code-block"><span class="keyword">import</span> os
+<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+<span class="comment"># ---- MAUVAIS : cle en dur dans le code ----</span>
+<span class="comment"># client = OpenAI(api_key="sk-abc123...")  # JAMAIS FAIRE CA !</span>
+
+<span class="comment"># ---- BON : cle dans les variables d'environnement ----</span>
+<span class="comment"># Dans le terminal : export OPENAI_API_KEY="sk-votre-cle"</span>
+<span class="comment"># Ou dans un fichier .env :</span>
+<span class="comment"># OPENAI_API_KEY=sk-votre-cle</span>
+
+<span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+load_dotenv()  <span class="comment"># Charge le fichier .env</span>
+
+client = OpenAI()  <span class="comment"># Lit automatiquement OPENAI_API_KEY depuis l'environnement</span>
+
+<span class="comment"># Verifier que la cle est configuree</span>
+<span class="keyword">if</span> <span class="keyword">not</span> os.getenv(<span class="string">"OPENAI_API_KEY"</span>):
+    <span class="keyword">raise</span> ValueError(<span class="string">"OPENAI_API_KEY non definie ! Configurez-la dans .env ou les variables d'environnement."</span>)
+
+<span class="function">print</span>(<span class="string">"Client OpenAI initialise avec succes."</span>)</div>
+
+    <h3>6.2 Appel basique avec validation</h3>
+
+    <div class="code-block"><span class="keyword">import</span> json
+<span class="keyword">from</span> typing <span class="keyword">import</span> Optional
+
+<span class="keyword">def</span> <span class="function">appel_llm</span>(
+    messages: <span class="function">list</span>,
+    model: <span class="function">str</span> = <span class="string">"gpt-4o"</span>,
+    temperature: <span class="function">float</span> = <span class="number">0.0</span>,
+    max_tokens: <span class="function">int</span> = <span class="number">500</span>,
+    json_mode: <span class="function">bool</span> = <span class="keyword">False</span>
+) -> <span class="function">dict</span>:
+    <span class="string">"""Appel API propre avec validation et metadata."""</span>
+
+    kwargs = {
+        <span class="string">"model"</span>: model,
+        <span class="string">"messages"</span>: messages,
+        <span class="string">"temperature"</span>: temperature,
+        <span class="string">"max_tokens"</span>: max_tokens,
+    }
+
+    <span class="comment"># Activer le mode JSON si demande</span>
+    <span class="keyword">if</span> json_mode:
+        kwargs[<span class="string">"response_format"</span>] = {<span class="string">"type"</span>: <span class="string">"json_object"</span>}
+
+    response = client.<span class="function">chat.completions.create</span>(**kwargs)
+
+    contenu = response.choices[<span class="number">0</span>].message.content
+    resultat = {
+        <span class="string">"contenu"</span>: contenu,
+        <span class="string">"tokens_in"</span>: response.usage.prompt_tokens,
+        <span class="string">"tokens_out"</span>: response.usage.completion_tokens,
+        <span class="string">"finish_reason"</span>: response.choices[<span class="number">0</span>].finish_reason,
+        <span class="string">"model"</span>: response.model,
+    }
+
+    <span class="comment"># Parser le JSON si mode JSON actif</span>
+    <span class="keyword">if</span> json_mode:
+        <span class="keyword">try</span>:
+            resultat[<span class="string">"json"</span>] = json.loads(contenu)
+        <span class="keyword">except</span> json.JSONDecodeError:
+            resultat[<span class="string">"json"</span>] = <span class="keyword">None</span>
+            resultat[<span class="string">"erreur_json"</span>] = <span class="string">"Reponse non parsable en JSON"</span>
+
+    <span class="keyword">return</span> resultat
+
+<span class="comment"># Utilisation</span>
+result = <span class="function">appel_llm</span>(
+    messages=[
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Reponds en JSON avec les champs : sentiment, score, explication."</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Analyse : 'Excellent produit, livraison rapide !'"</span>}
+    ],
+    json_mode=<span class="keyword">True</span>
+)
+
+<span class="function">print</span>(<span class="function">f</span><span class="string">"JSON parse : {json.dumps(result['json'], indent=2, ensure_ascii=False)}"</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"Tokens : {result['tokens_in']} in + {result['tokens_out']} out"</span>)</div>
+
+    <div class="output-block">
+JSON parse : {
+  "sentiment": "positif",
+  "score": 0.92,
+  "explication": "L'adjectif 'excellent' et l'expression 'livraison rapide' indiquent une forte satisfaction client."
+}
+Tokens : 38 in + 42 out</div>
+
+    <h3>6.3 Streaming (reponse en temps reel)</h3>
+
+    <div class="code-block"><span class="comment"># Streaming : recevoir la reponse token par token (pour l'affichage en temps reel)</span>
+<span class="keyword">import</span> sys
+
+<span class="keyword">def</span> <span class="function">appel_streaming</span>(messages, model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0.7</span>, max_tokens=<span class="number">300</span>):
+    <span class="string">"""Appel API en streaming : affiche les tokens au fur et a mesure."""</span>
+    stream = client.<span class="function">chat.completions.create</span>(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        stream=<span class="keyword">True</span>  <span class="comment"># Active le streaming</span>
+    )
+
+    texte_complet = <span class="string">""</span>
+    <span class="function">print</span>(<span class="string">"Reponse (streaming) : "</span>, end=<span class="string">""</span>)
+
+    <span class="keyword">for</span> chunk <span class="keyword">in</span> stream:
+        <span class="comment"># Chaque chunk contient un ou plusieurs tokens</span>
+        <span class="keyword">if</span> chunk.choices[<span class="number">0</span>].delta.content <span class="keyword">is not</span> <span class="keyword">None</span>:
+            token = chunk.choices[<span class="number">0</span>].delta.content
+            <span class="function">print</span>(token, end=<span class="string">""</span>, flush=<span class="keyword">True</span>)  <span class="comment"># Affichage immediat</span>
+            texte_complet += token
+
+    <span class="function">print</span>()  <span class="comment"># Nouvelle ligne a la fin</span>
+    <span class="keyword">return</span> texte_complet
+
+<span class="comment"># Utilisation : l'utilisateur voit les mots apparaitre progressivement</span>
+resultat = <span class="function">appel_streaming</span>([
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Explique en 3 phrases pourquoi le streaming est utile pour les APIs LLM."</span>}
+])</div>
+
+    <div class="output-block">
+Reponse (streaming) : Le streaming permet d'afficher les premiers mots de la reponse en quelques millisecondes au lieu d'attendre parfois plusieurs secondes pour la reponse complete. Cela ameliore considerablement l'experience utilisateur car l'attente percue est reduite : l'utilisateur commence a lire immediatement. En production, c'est essentiel pour les chatbots et les interfaces conversationnelles ou la reactivite est primordiale.</div>
+
+    <h3>6.4 Gestion des erreurs et retry logic</h3>
+
+    <div class="code-block"><span class="keyword">import</span> time
+<span class="keyword">import</span> random
+<span class="keyword">from</span> openai <span class="keyword">import</span> (
+    APIError,
+    APIConnectionError,
+    RateLimitError,
+    APITimeoutError,
+)
+
+<span class="keyword">def</span> <span class="function">appel_robuste</span>(
+    messages,
+    model=<span class="string">"gpt-4o"</span>,
+    max_retries=<span class="number">5</span>,
+    base_delay=<span class="number">1.0</span>,
+    temperature=<span class="number">0.0</span>,
+    max_tokens=<span class="number">500</span>,
+):
+    <span class="string">"""Appel API avec retry exponential backoff + jitter."""</span>
+
+    <span class="keyword">for</span> attempt <span class="keyword">in</span> <span class="function">range</span>(max_retries):
+        <span class="keyword">try</span>:
+            response = client.<span class="function">chat.completions.create</span>(
+                model=model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+            <span class="keyword">return</span> response  <span class="comment"># Succes !</span>
+
+        <span class="keyword">except</span> RateLimitError <span class="keyword">as</span> e:
+            <span class="comment"># HTTP 429 : trop de requetes. Attendre et reessayer.</span>
+            delay = base_delay * (<span class="number">2</span> ** attempt) + random.uniform(<span class="number">0</span>, <span class="number">1</span>)
+            <span class="function">print</span>(<span class="function">f</span><span class="string">"[429] Rate limit. Retry {attempt+1}/{max_retries} dans {delay:.1f}s"</span>)
+            time.sleep(delay)
+
+        <span class="keyword">except</span> APITimeoutError <span class="keyword">as</span> e:
+            <span class="comment"># Timeout : le serveur n'a pas repondu a temps</span>
+            delay = base_delay * (<span class="number">2</span> ** attempt)
+            <span class="function">print</span>(<span class="function">f</span><span class="string">"[Timeout] Retry {attempt+1}/{max_retries} dans {delay:.1f}s"</span>)
+            time.sleep(delay)
+
+        <span class="keyword">except</span> APIConnectionError <span class="keyword">as</span> e:
+            <span class="comment"># Erreur reseau : pas de connexion au serveur</span>
+            delay = base_delay * (<span class="number">2</span> ** attempt)
+            <span class="function">print</span>(<span class="function">f</span><span class="string">"[Connexion] Retry {attempt+1}/{max_retries} dans {delay:.1f}s"</span>)
+            time.sleep(delay)
+
+        <span class="keyword">except</span> APIError <span class="keyword">as</span> e:
+            <span class="comment"># Erreur serveur (500, 503) : reessayer</span>
+            <span class="keyword">if</span> e.status_code <span class="keyword">in</span> [<span class="number">500</span>, <span class="number">502</span>, <span class="number">503</span>]:
+                delay = base_delay * (<span class="number">2</span> ** attempt)
+                <span class="function">print</span>(<span class="function">f</span><span class="string">"[{e.status_code}] Erreur serveur. Retry {attempt+1}/{max_retries} dans {delay:.1f}s"</span>)
+                time.sleep(delay)
+            <span class="keyword">else</span>:
+                <span class="comment"># Erreur client (400, 401, 403) : ne PAS reessayer</span>
+                <span class="function">print</span>(<span class="function">f</span><span class="string">"[{e.status_code}] Erreur client non retriable : {e.message}"</span>)
+                <span class="keyword">raise</span>
+
+    <span class="comment"># Toutes les tentatives ont echoue</span>
+    <span class="keyword">raise</span> Exception(<span class="function">f</span><span class="string">"Echec apres {max_retries} tentatives"</span>)
+
+<span class="comment"># Utilisation</span>
+response = <span class="function">appel_robuste</span>(
+    messages=[
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Sois concis."</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Qu'est-ce que le backoff exponentiel ?"</span>}
+    ]
+)
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block">
+Le backoff exponentiel est une strategie de retry ou le delai entre chaque tentative double a chaque echec : 1s, 2s, 4s, 8s, 16s... On ajoute souvent du "jitter" (delai aleatoire) pour eviter que tous les clients retentent au meme moment. Cela evite de surcharger un serveur deja en difficulte.</div>
+
+    <div class="prof-note">
+        Les etudes montrent que 70-80% des erreurs transitoires (rate limit, timeout, erreur serveur) se resolvent en quelques secondes. Le retry avec backoff exponentiel est la strategie standard en production. Ne jamais reessayer les erreurs 400 (bad request) ou 401 (authentification) car elles indiquent un probleme dans votre code, pas un probleme temporaire du serveur.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 : EXPERIMENTATION -->
+    <!-- ============================================================ -->
+
+    <h2>7. Experimentation : Comparaison de Tous les Parametres</h2>
+
+    <p>Testons le meme prompt avec toutes les variations de parametres pour voir l'impact reel sur la qualite, le cout et la latence.</p>
+
+    <div class="code-block"><span class="keyword">import</span> time
+<span class="keyword">import</span> json
+
+prompt_base = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Tu es un redacteur publicitaire. Ecris un slogan pour un cafe bio."</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Cree un slogan percutant en une phrase."</span>}
+]
+
+<span class="comment"># ===== Test 1 : Variation de temperature =====</span>
+<span class="function">print</span>(<span class="string">"=== TEST 1 : TEMPERATURE ==="</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"{'Temp':>5} | {'Slogan':&lt;60} | {'Tokens':>6} | {'Latence':>8}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 90</span>)
+
+<span class="keyword">for</span> temp <span class="keyword">in</span> [<span class="number">0.0</span>, <span class="number">0.3</span>, <span class="number">0.7</span>, <span class="number">1.0</span>, <span class="number">1.5</span>]:
+    start = time.time()
+    resp = client.<span class="function">chat.completions.create</span>(
+        model=<span class="string">"gpt-4o"</span>, messages=prompt_base, temperature=temp, max_tokens=<span class="number">50</span>
+    )
+    lat = time.time() - start
+    txt = resp.choices[<span class="number">0</span>].message.content.strip()[:58]
+    tok = resp.usage.total_tokens
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"{temp:>5.1f} | {txt:&lt;60} | {tok:>6} | {lat:>6.2f}s"</span>)
+
+<span class="function">print</span>()
+
+<span class="comment"># ===== Test 2 : Variation de max_tokens =====</span>
+<span class="function">print</span>(<span class="string">"=== TEST 2 : MAX_TOKENS ==="</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"{'Max':>5} | {'Tokens out':>10} | {'Tronque':>8} | {'Slogan'}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 80</span>)
+
+<span class="keyword">for</span> max_t <span class="keyword">in</span> [<span class="number">10</span>, <span class="number">25</span>, <span class="number">50</span>, <span class="number">100</span>, <span class="number">200</span>]:
+    resp = client.<span class="function">chat.completions.create</span>(
+        model=<span class="string">"gpt-4o"</span>, messages=prompt_base, temperature=<span class="number">0.0</span>, max_tokens=max_t
+    )
+    tok_out = resp.usage.completion_tokens
+    finish = resp.choices[<span class="number">0</span>].finish_reason
+    txt = resp.choices[<span class="number">0</span>].message.content.strip()[:55]
+    tronque = "OUI" <span class="keyword">if</span> finish == <span class="string">"length"</span> <span class="keyword">else</span> "non"
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"{max_t:>5} | {tok_out:>10} | {tronque:>8} | {txt}"</span>)
+
+<span class="function">print</span>()
+
+<span class="comment"># ===== Test 3 : Variation de top_p =====</span>
+<span class="function">print</span>(<span class="string">"=== TEST 3 : TOP_P (temp fixe a 1.0) ==="</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"{'top_p':>5} | {'Slogan'}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 70</span>)
+
+<span class="keyword">for</span> tp <span class="keyword">in</span> [<span class="number">0.1</span>, <span class="number">0.3</span>, <span class="number">0.5</span>, <span class="number">0.7</span>, <span class="number">0.9</span>]:
+    resp = client.<span class="function">chat.completions.create</span>(
+        model=<span class="string">"gpt-4o"</span>, messages=prompt_base, temperature=<span class="number">1.0</span>, top_p=tp, max_tokens=<span class="number">50</span>
+    )
+    txt = resp.choices[<span class="number">0</span>].message.content.strip()[:65]
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"{tp:>5.1f} | {txt}"</span>)
+
+<span class="function">print</span>()
+
+<span class="comment"># ===== Test 4 : Comparaison de modeles =====</span>
+<span class="function">print</span>(<span class="string">"=== TEST 4 : COMPARAISON DE MODELES ==="</span>)
+<span class="function">print</span>(<span class="function">f</span><span class="string">"{'Modele':&lt;20} | {'Tokens':>6} | {'Latence':>8} | {'Cout':>10} | Slogan"</span>)
+<span class="function">print</span>(<span class="string">"-" * 100</span>)
+
+modeles = [
+    (<span class="string">"gpt-4o-mini"</span>, <span class="number">0.15</span>, <span class="number">0.60</span>),
+    (<span class="string">"gpt-4o"</span>, <span class="number">2.50</span>, <span class="number">10.00</span>),
+]
+
+<span class="keyword">for</span> model, prix_in, prix_out <span class="keyword">in</span> modeles:
+    start = time.time()
+    resp = client.<span class="function">chat.completions.create</span>(
+        model=model, messages=prompt_base, temperature=<span class="number">0.7</span>, max_tokens=<span class="number">50</span>
+    )
+    lat = time.time() - start
+    tok_in = resp.usage.prompt_tokens
+    tok_out = resp.usage.completion_tokens
+    cout = (tok_in * prix_in + tok_out * prix_out) / <span class="number">1_000_000</span>
+    txt = resp.choices[<span class="number">0</span>].message.content.strip()[:45]
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"{model:&lt;20} | {tok_in+tok_out:>6} | {lat:>6.2f}s | ${cout:>.6f} | {txt}"</span>)</div>
+
+    <div class="output-block">
+=== TEST 1 : TEMPERATURE ===
+ Temp | Slogan                                                       | Tokens | Latence
+------------------------------------------------------------------------------------------
+  0.0 | "Nature en tasse : le gout pur, l'energie vraie."            |     52 |   0.68s
+  0.3 | "Nature en tasse : le gout pur, l'energie vraie."            |     52 |   0.71s
+  0.7 | "Reveillez vos matins avec la purete de la terre."           |     53 |   0.65s
+  1.0 | "Chaque gorgee est un voyage au coeur de la nature."         |     54 |   0.73s
+  1.5 | "Laissez infuser l'aube sauvage dans votre quotidien rebel." |     55 |   0.69s
+
+=== TEST 2 : MAX_TOKENS ===
+  Max | Tokens out |  Tronque | Slogan
+--------------------------------------------------------------------------------
+   10 |         10 |      OUI | "Nature en tasse : le go
+   25 |         18 |      non | "Nature en tasse : le gout pur, l'energie vraie.
+   50 |         18 |      non | "Nature en tasse : le gout pur, l'energie vraie.
+  100 |         18 |      non | "Nature en tasse : le gout pur, l'energie vraie.
+  200 |         18 |      non | "Nature en tasse : le gout pur, l'energie vraie.
+
+=== TEST 3 : TOP_P (temp fixe a 1.0) ===
+top_p | Slogan
+----------------------------------------------------------------------
+  0.1 | "Nature en tasse : le gout pur, l'energie vraie."
+  0.3 | "Nature en tasse : savourez l'essentiel."
+  0.5 | "Reveillez-vous bio, savourez l'authentique."
+  0.7 | "Du grain a la tasse, savourez la purete de la nature."
+  0.9 | "Saveur sauvage, conscience tranquille : votre cafe pense vert."
+
+=== TEST 4 : COMPARAISON DE MODELES ===
+Modele               | Tokens | Latence |       Cout | Slogan
+----------------------------------------------------------------------------------------------------
+gpt-4o-mini          |     50 |   0.45s |  $0.000016 | "Savourez la nature, tasse apres tasse."
+gpt-4o               |     52 |   0.71s |  $0.000255 | "Nature en tasse : le gout pur, l'energi</div>
+
+    <div class="concept-box green">
+        <h3>Tableau Recapitulatif des Experiences</h3>
+        <table>
+            <tr><th>Parametre</th><th>Valeur basse</th><th>Valeur haute</th><th>Observation</th></tr>
+            <tr><td><strong>temperature</strong></td><td>0.0 (deterministe)</td><td>1.5 (tres creatif)</td><td>Les slogans deviennent plus originaux mais parfois obscurs</td></tr>
+            <tr><td><strong>max_tokens</strong></td><td>10 (tronque)</td><td>200 (aucun effet)</td><td>Au-dela du necessaire, augmenter max_tokens ne change rien</td></tr>
+            <tr><td><strong>top_p</strong></td><td>0.1 (tres restreint)</td><td>0.9 (divers)</td><td>Effet similaire a temperature mais avec un filtrage different</td></tr>
+            <tr><td><strong>modele</strong></td><td>gpt-4o-mini (rapide, bon marche)</td><td>gpt-4o (lent, cher)</td><td>16x plus cher pour une qualite marginalement superieure ici</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        L'experience la plus revelante est le Test 4 (comparaison de modeles). Pour une tache simple comme un slogan, GPT-4o-mini est <strong>16 fois moins cher</strong> et <strong>40% plus rapide</strong> que GPT-4o, pour une qualite comparable. La regle d'or en production : toujours commencer avec le modele le moins cher qui atteint la qualite requise, puis monter en gamme uniquement si necessaire.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+
+    <h2>8. Erreurs Courantes de Debutant</h2>
+
+    <div class="warning">
+        <strong>Erreur 1 : Cle API exposee dans le code source.</strong> Si votre cle API est dans un fichier Python commite sur GitHub, n'importe qui peut l'utiliser et vous facturer des milliers d'euros. <strong>Toujours utiliser des variables d'environnement ou un fichier .env (ajoute au .gitignore).</strong> Si votre cle est compromise, revoquez-la immediatement dans le dashboard du fournisseur.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 2 : Pas de gestion d'erreurs.</strong> Les APIs LLM echouent regulierement : rate limits (429), timeouts, erreurs serveur (500/503). Sans retry logic, votre application plante a la premiere erreur. <strong>Implementez toujours un backoff exponentiel avec au moins 3-5 retries.</strong> 70-80% des erreurs transitoires se resolvent en quelques secondes.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 3 : Ne pas definir max_tokens.</strong> Sans limite, le modele peut generer des milliers de tokens pour une question simple, explosant votre facture. Pour une classification qui devrait retourner un mot, le modele peut generer un paragraphe d'explication. <strong>Toujours fixer max_tokens a la longueur attendue + 20% de marge.</strong>
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 4 : Utiliser GPT-4o pour tout.</strong> GPT-4o coute ~16x plus que GPT-4o-mini. Pour des taches simples (classification, extraction de mots-cles, reformulation), GPT-4o-mini suffit largement. <strong>Reservez les modeles premium aux taches complexes (raisonnement multi-etapes, generation longue, analyse fine).</strong> Cette seule optimisation peut diviser votre facture par 10.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 5 : Ignorer le finish_reason.</strong> Quand <code>finish_reason = "length"</code>, la reponse a ete tronquee. Si vous parsez cette reponse tronquee comme du JSON, <code>json.loads()</code> va echouer. <strong>Toujours verifier que <code>finish_reason == "stop"</code> avant de traiter la reponse.</strong> Si la reponse est tronquee, augmentez max_tokens ou reduisez le prompt.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 6 : Modifier temperature ET top_p en meme temps.</strong> Ces deux parametres controlent l'aleatoire de maniere differente. Les modifier simultanement produit des effets imprevisibles et difficiles a debugger. <strong>Choisissez un parametre (generalement temperature) et laissez l'autre a sa valeur par defaut.</strong> OpenAI recommande explicitement cette approche.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 : RESUME COMPLET -->
+    <!-- ============================================================ -->
+
+    <h2>9. Resume Complet</h2>
+
+    <div class="concept-box green">
+        <h3>Cheatsheet des Parametres API</h3>
+        <table>
+            <tr><th>Parametre</th><th>Plage</th><th>Defaut</th><th>Impact</th><th>Conseil production</th></tr>
+            <tr>
+                <td><strong>temperature</strong></td>
+                <td>0.0 - 2.0</td>
+                <td>1.0</td>
+                <td>Aleatoire de la generation</td>
+                <td>0.0 pour JSON/classification, 0.7 pour redaction</td>
+            </tr>
+            <tr>
+                <td><strong>max_tokens</strong></td>
+                <td>1 - limite modele</td>
+                <td>4096</td>
+                <td>Longueur max de la reponse</td>
+                <td>Toujours definir ! Longueur attendue + 20%</td>
+            </tr>
+            <tr>
+                <td><strong>top_p</strong></td>
+                <td>0.0 - 1.0</td>
+                <td>1.0</td>
+                <td>Filtrage des tokens probables</td>
+                <td>Laisser a 1.0, utiliser temperature a la place</td>
+            </tr>
+            <tr>
+                <td><strong>frequency_penalty</strong></td>
+                <td>0.0 - 2.0</td>
+                <td>0.0</td>
+                <td>Penalise la repetition (proportionnel)</td>
+                <td>0.3-0.8 pour la generation longue</td>
+            </tr>
+            <tr>
+                <td><strong>presence_penalty</strong></td>
+                <td>0.0 - 2.0</td>
+                <td>0.0</td>
+                <td>Penalise la repetition (binaire)</td>
+                <td>0.3-0.6 pour encourager la diversite</td>
+            </tr>
+            <tr>
+                <td><strong>stop</strong></td>
+                <td>1-4 strings</td>
+                <td>aucun</td>
+                <td>Arrete la generation a la sequence</td>
+                <td>Utile pour limiter aux delimiteurs</td>
+            </tr>
+            <tr>
+                <td><strong>stream</strong></td>
+                <td>true/false</td>
+                <td>false</td>
+                <td>Reception token par token</td>
+                <td>true pour les chatbots, false pour les pipelines</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box">
+        <h3>Tableau d'Optimisation des Couts</h3>
+        <table>
+            <tr><th>Strategie</th><th>Economie estimee</th><th>Effort</th><th>Impact qualite</th></tr>
+            <tr>
+                <td><strong>Utiliser le bon modele</strong> (mini vs full)</td>
+                <td>-80% a -95%</td>
+                <td>Faible</td>
+                <td>Nul a leger sur les taches simples</td>
+            </tr>
+            <tr>
+                <td><strong>Definir max_tokens</strong></td>
+                <td>-20% a -50%</td>
+                <td>Faible</td>
+                <td>Nul</td>
+            </tr>
+            <tr>
+                <td><strong>Reduire le system prompt</strong></td>
+                <td>-10% a -30%</td>
+                <td>Moyen</td>
+                <td>Nul si bien fait</td>
+            </tr>
+            <tr>
+                <td><strong>Cacher les reponses</strong> (memoisation)</td>
+                <td>-30% a -70%</td>
+                <td>Moyen</td>
+                <td>Nul (meme requete = meme reponse)</td>
+            </tr>
+            <tr>
+                <td><strong>Batching</strong> (traiter en lots)</td>
+                <td>-50% (API Batch OpenAI)</td>
+                <td>Moyen</td>
+                <td>Nul (latence augmentee)</td>
+            </tr>
+            <tr>
+                <td><strong>Few-shot au lieu de fine-tuning</strong></td>
+                <td>Variable</td>
+                <td>Faible</td>
+                <td>Nul a leger pour 80% des taches</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box blue">
+        <h3>Checklist de Deploiement en Production</h3>
+        <ol>
+            <li><strong>Securite :</strong> Cle API dans les variables d'environnement, jamais dans le code</li>
+            <li><strong>Resilience :</strong> Retry avec backoff exponentiel (3-5 tentatives)</li>
+            <li><strong>Cout :</strong> Modele adapte a la tache, max_tokens defini, monitoring des depenses</li>
+            <li><strong>Performance :</strong> Streaming pour les interfaces utilisateur, batch pour le traitement de masse</li>
+            <li><strong>Qualite :</strong> Verification du finish_reason, validation du JSON, tests automatises</li>
+            <li><strong>Monitoring :</strong> Logger les tokens, la latence, le taux d'erreur et le cout par requete</li>
+            <li><strong>Fallback :</strong> Si le modele principal echoue apres tous les retries, basculer sur un modele de secours</li>
+            <li><strong>Rate limiting :</strong> Implementer votre propre rate limiter cote client pour rester sous les limites de l'API</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        Ce TD vous a appris a maitriser les APIs LLM de bout en bout : de l'appel basique a l'implementation robuste en production. Les deux competences cles a retenir sont : (1) <strong>choisir les bons parametres</strong> (temperature, max_tokens) pour chaque tache, et (2) <strong>implementer une gestion d'erreurs robuste</strong> (retry, fallback, monitoring). En combinant ces competences avec le prompt engineering du TD precedent, vous avez tous les outils pour construire des applications LLM fiables et economiques.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="td_prompting.html">&larr; TD Prompting</a>
+        <span style="color: #555;">(Fin des TDs LLM)</span>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

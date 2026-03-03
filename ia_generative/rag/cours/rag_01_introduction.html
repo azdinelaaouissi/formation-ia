@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introduction au RAG - Retrieval-Augmented Generation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Introduction au RAG - Retrieval-Augmented Generation</h1>
+    <p class="subtitle">Cours 1/4 -- Comprendre l'architecture qui revolutionne l'utilisation des LLMs</p>
+
+    <!-- ============================================================ -->
+    <h2>1. Qu'est-ce que le RAG ?</h2>
+
+    <div class="definition">
+        <strong>RAG (Retrieval-Augmented Generation)</strong> est une architecture d'intelligence artificielle qui ameliore les reponses d'un grand modele de langage (LLM) en lui donnant acces a des sources de connaissances externes. Au lieu de se fier uniquement a sa memoire parametrique (les poids appris pendant l'entrainement), le modele <strong>recherche</strong> d'abord des documents pertinents dans une base de connaissances, puis les <strong>injecte dans le contexte</strong> du prompt avant de generer sa reponse.
+    </div>
+
+    <p>Le terme RAG a ete introduit par Patrick Lewis et al. (Meta AI) dans leur article fondateur de 2020 : <em>"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"</em>. L'idee centrale est simple mais puissante : plutot que de demander a un LLM de "tout savoir", on lui donne la capacite de "chercher avant de repondre".</p>
+
+    <p>Pensez-y comme un etudiant qui passe un examen. Un LLM classique est un etudiant qui doit tout memoriser et repondre de memoire. Un systeme RAG est un etudiant qui a le droit d'ouvrir ses livres et ses notes pendant l'examen -- il peut chercher l'information exacte dont il a besoin avant de formuler sa reponse.</p>
+
+    <div class="prof-note">
+        Le RAG est devenu en 2024-2025 la technique la plus utilisee en entreprise pour deployer des LLMs sur des donnees privees. C'est LE pattern architectural que vous devez maitriser absolument. Selon les derniers rapports, plus de 80% des applications LLM en production utilisent une forme de RAG.
+    </div>
+
+    <h3>1.1 Le flux fondamental du RAG</h3>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="max-width:850px;">
+            <!-- Background -->
+            <rect width="900" height="320" fill="#0f0f23" rx="12"/>
+
+            <!-- Step 1: Question -->
+            <rect x="30" y="120" width="140" height="70" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="100" y="148" fill="#ff6b35" font-size="12" text-anchor="middle" font-weight="bold">Question</text>
+            <text x="100" y="170" fill="#e0e0e0" font-size="10" text-anchor="middle">"Comment fonctionne</text>
+            <text x="100" y="182" fill="#e0e0e0" font-size="10" text-anchor="middle">le RAG ?"</text>
+
+            <!-- Arrow 1 -->
+            <line x1="170" y1="155" x2="210" y2="155" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Step 2: Retrieve -->
+            <rect x="210" y="90" width="160" height="130" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="290" y="115" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">Retrieval</text>
+            <text x="290" y="135" fill="#e0e0e0" font-size="10" text-anchor="middle">Rechercher les</text>
+            <text x="290" y="150" fill="#e0e0e0" font-size="10" text-anchor="middle">documents pertinents</text>
+            <rect x="225" y="160" width="130" height="18" rx="4" fill="#16213e" stroke="#333"/>
+            <text x="290" y="174" fill="#aaa" font-size="9" text-anchor="middle">Doc 1: RAG combine...</text>
+            <rect x="225" y="182" width="130" height="18" rx="4" fill="#16213e" stroke="#333"/>
+            <text x="290" y="196" fill="#aaa" font-size="9" text-anchor="middle">Doc 2: L'architecture...</text>
+
+            <!-- Arrow 2 -->
+            <line x1="370" y1="155" x2="410" y2="155" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Step 3: Augment -->
+            <rect x="410" y="100" width="160" height="110" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="490" y="125" fill="#569cd6" font-size="12" text-anchor="middle" font-weight="bold">Augmentation</text>
+            <text x="490" y="145" fill="#e0e0e0" font-size="10" text-anchor="middle">Injecter contexte</text>
+            <text x="490" y="160" fill="#e0e0e0" font-size="10" text-anchor="middle">dans le prompt</text>
+            <rect x="425" y="170" width="130" height="26" rx="4" fill="#16213e" stroke="#569cd6"/>
+            <text x="490" y="187" fill="#569cd6" font-size="9" text-anchor="middle">Prompt + Contexte</text>
+
+            <!-- Arrow 3 -->
+            <line x1="570" y1="155" x2="610" y2="155" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Step 4: Generate -->
+            <rect x="610" y="110" width="140" height="90" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="680" y="140" fill="#ff6b35" font-size="12" text-anchor="middle" font-weight="bold">Generation</text>
+            <text x="680" y="160" fill="#e0e0e0" font-size="10" text-anchor="middle">LLM genere une</text>
+            <text x="680" y="175" fill="#e0e0e0" font-size="10" text-anchor="middle">reponse fondee</text>
+            <text x="680" y="190" fill="#e0e0e0" font-size="10" text-anchor="middle">sur les sources</text>
+
+            <!-- Arrow 4 output -->
+            <line x1="750" y1="155" x2="790" y2="155" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+
+            <!-- Step 5: Answer -->
+            <rect x="790" y="125" width="90" height="60" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="835" y="152" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">Reponse</text>
+            <text x="835" y="170" fill="#e0e0e0" font-size="9" text-anchor="middle">+ Sources</text>
+
+            <!-- Title -->
+            <text x="450" y="35" fill="#ff6b35" font-size="16" text-anchor="middle" font-weight="bold">Le Flux RAG : Retrieval-Augmented Generation</text>
+            <text x="450" y="55" fill="#aaa" font-size="11" text-anchor="middle">Question -> Recherche -> Augmentation -> Generation -> Reponse sourcee</text>
+
+            <!-- VectorStore -->
+            <rect x="220" y="250" width="140" height="45" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="290" y="270" fill="#00ff88" font-size="10" text-anchor="middle">Vector Store</text>
+            <text x="290" y="285" fill="#aaa" font-size="9" text-anchor="middle">(Base vectorielle)</text>
+            <line x1="290" y1="250" x2="290" y2="220" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrowG)"/>
+
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrowG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <p>Le schema ci-dessus illustre les trois mots qui composent RAG :</p>
+    <ul>
+        <li><strong>Retrieval (Recherche)</strong> : On cherche les documents les plus pertinents par rapport a la question de l'utilisateur dans une base vectorielle.</li>
+        <li><strong>Augmented (Augmentation)</strong> : On injecte ces documents dans le prompt du LLM comme contexte supplementaire.</li>
+        <li><strong>Generation</strong> : Le LLM genere une reponse en se basant sur ce contexte, produisant une reponse fondee et sourcee.</li>
+    </ul>
+
+    <h3>1.2 Exemple concret minimal</h3>
+
+    <div class="code-block"><span class="comment"># Exemple simplifie d'un pipeline RAG avec LangChain</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings, ChatOpenAI
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+<span class="keyword">from</span> langchain.chains <span class="keyword">import</span> RetrievalQA
+
+<span class="comment"># 1. Charger le document</span>
+loader = TextLoader(<span class="string">"documentation_produit.txt"</span>)
+documents = loader.<span class="function">load</span>()
+
+<span class="comment"># 2. Decouper en chunks</span>
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">50</span>
+)
+chunks = splitter.<span class="function">split_documents</span>(documents)
+<span class="function">print</span>(<span class="string">f"Nombre de chunks : <span class="number">{len(chunks)}</span>"</span>)
+
+<span class="comment"># 3. Creer les embeddings et le vector store</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+vectorstore = FAISS.<span class="function">from_documents</span>(chunks, embeddings)
+
+<span class="comment"># 4. Creer la chaine RAG</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+qa_chain = RetrievalQA.<span class="function">from_chain_type</span>(
+    llm=llm,
+    retriever=vectorstore.<span class="function">as_retriever</span>(search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>}),
+    return_source_documents=<span class="keyword">True</span>
+)
+
+<span class="comment"># 5. Poser une question</span>
+result = qa_chain.<span class="function">invoke</span>({<span class="string">"query"</span>: <span class="string">"Quelle est la politique de retour ?"</span>})
+<span class="function">print</span>(result[<span class="string">"result"</span>])
+<span class="function">print</span>(<span class="string">"Sources :"</span>, [doc.metadata[<span class="string">"source"</span>] <span class="keyword">for</span> doc <span class="keyword">in</span> result[<span class="string">"source_documents"</span>]])</div>
+
+    <div class="output-block">Nombre de chunks : 47
+La politique de retour permet un remboursement complet dans les 30 jours
+suivant l'achat. Le produit doit etre retourne dans son emballage d'origine.
+Les frais de retour sont a la charge du client sauf en cas de defaut.
+Sources : ['documentation_produit.txt', 'documentation_produit.txt']</div>
+
+    <div class="effect">
+        En seulement 15 lignes de code, nous avons un systeme RAG fonctionnel qui peut repondre a des questions sur n'importe quel document texte, avec des sources citees. C'est la puissance du pattern RAG.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>2. Pourquoi le RAG ? Les problemes des LLMs</h2>
+
+    <p>Les grands modeles de langage (GPT-4, Claude, Gemini, Llama) sont remarquablement puissants, mais ils souffrent de plusieurs limitations fondamentales qui rendent le RAG indispensable pour les applications en production :</p>
+
+    <h3>2.1 Les 4 problemes majeurs des LLMs</h3>
+
+    <div class="concept-box">
+        <h3 style="color:#ff4444;">Probleme 1 : Hallucinations</h3>
+        <p>Les LLMs generent parfois des informations completement fausses mais qui <em>semblent</em> plausibles et confiantes. C'est le probleme le plus critique pour les applications d'entreprise. Un LLM peut inventer des faits, des chiffres, voire des references bibliographiques qui n'existent pas.</p>
+        <p><strong>Exemple :</strong> "Selon l'article 42-B du code du travail..." -- cet article n'existe pas, mais le LLM le presente comme un fait.</p>
+    </div>
+
+    <div class="concept-box">
+        <h3 style="color:#ff4444;">Probleme 2 : Connaissances obsoletes</h3>
+        <p>Un LLM est entraine sur des donnees avec une date de coupure (knowledge cutoff). GPT-4 a ete entraine sur des donnees jusqu'a avril 2024, Claude sur des donnees jusqu'en 2025. Toute information apparue apres cette date est inconnue du modele.</p>
+        <p><strong>Exemple :</strong> Un LLM ne peut pas connaitre les resultats financiers du dernier trimestre ou les dernieres mises a jour de votre produit.</p>
+    </div>
+
+    <div class="concept-box">
+        <h3 style="color:#ff4444;">Probleme 3 : Pas de connaissances specifiques au domaine</h3>
+        <p>Les LLMs sont entraines sur des donnees publiques (Internet). Ils ne connaissent pas vos documents internes, votre base de connaissances client, votre documentation technique privee, vos contrats, vos procedures.</p>
+        <p><strong>Exemple :</strong> "Quelle est la procedure de validation des commandes chez nous ?" -- le LLM ne peut pas repondre car cette info est interne.</p>
+    </div>
+
+    <div class="concept-box">
+        <h3 style="color:#ff4444;">Probleme 4 : Pas de sources citables</h3>
+        <p>Un LLM genere du texte "de memoire" sans pouvoir citer ses sources. En entreprise, la tracabilite est essentielle : on doit savoir d'ou vient l'information pour pouvoir la verifier.</p>
+        <p><strong>Exemple :</strong> Un chatbot juridique doit citer les articles de loi exacts sur lesquels il base son avis.</p>
+    </div>
+
+    <h3>2.2 Comment le RAG resout chaque probleme</h3>
+
+    <table>
+        <tr>
+            <th>Probleme LLM</th>
+            <th>Solution RAG</th>
+            <th>Mecanisme</th>
+        </tr>
+        <tr>
+            <td>Hallucinations</td>
+            <td>Grounding (ancrage factuel)</td>
+            <td>Le LLM base sa reponse sur les documents fournis, pas sur sa memoire. On peut instruire : "Reponds uniquement a partir du contexte fourni"</td>
+        </tr>
+        <tr>
+            <td>Connaissances obsoletes</td>
+            <td>Donnees toujours a jour</td>
+            <td>La base vectorielle peut etre mise a jour en continu avec les derniers documents, sans reentrainer le modele</td>
+        </tr>
+        <tr>
+            <td>Pas de donnees privees</td>
+            <td>Acces aux documents internes</td>
+            <td>On indexe les documents proprietaires dans le vector store. Le LLM y accede au moment de la requete sans jamais stocker ces donnees dans ses poids</td>
+        </tr>
+        <tr>
+            <td>Pas de sources</td>
+            <td>Citations et tracabilite</td>
+            <td>Chaque chunk recupere porte des metadonnees (source, page, date). Le systeme peut citer exactement d'ou vient chaque information</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        Le RAG ne supprime pas totalement les hallucinations, il les reduit considerablement. Un LLM peut encore halluciner meme avec du contexte pertinent, par exemple en melangeant des informations de differents chunks. C'est pourquoi les strategies de retrieval avancees (cours 4) et l'evaluation (metriques de faithfulness) sont cruciales.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>3. Architecture globale du RAG</h2>
+
+    <p>L'architecture RAG se decompose en deux phases distinctes qui operent a des moments differents : la phase d'<strong>indexation</strong> (hors-ligne, une seule fois) et la phase de <strong>requete</strong> (en ligne, a chaque question).</p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 920 550" xmlns="http://www.w3.org/2000/svg" style="max-width:900px;">
+            <rect width="920" height="550" fill="#0f0f23" rx="12"/>
+
+            <!-- Title -->
+            <text x="460" y="30" fill="#ff6b35" font-size="16" text-anchor="middle" font-weight="bold">Architecture Complète du RAG - 2 Phases</text>
+
+            <!-- Phase 1: Indexation -->
+            <rect x="20" y="50" width="880" height="190" rx="10" fill="none" stroke="#569cd6" stroke-width="2" stroke-dasharray="8,4"/>
+            <text x="460" y="72" fill="#569cd6" font-size="14" text-anchor="middle" font-weight="bold">PHASE 1 : INDEXATION (Hors-ligne)</text>
+
+            <!-- Documents -->
+            <rect x="40" y="90" width="120" height="60" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="100" y="115" fill="#ff8c42" font-size="11" text-anchor="middle" font-weight="bold">Documents</text>
+            <text x="100" y="132" fill="#aaa" font-size="9" text-anchor="middle">PDF, TXT, HTML...</text>
+
+            <!-- Arrow -->
+            <line x1="160" y1="120" x2="195" y2="120" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr)"/>
+
+            <!-- Loader -->
+            <rect x="195" y="95" width="110" height="50" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="250" y="117" fill="#ff6b35" font-size="10" text-anchor="middle" font-weight="bold">Document</text>
+            <text x="250" y="132" fill="#ff6b35" font-size="10" text-anchor="middle" font-weight="bold">Loader</text>
+
+            <line x1="305" y1="120" x2="340" y2="120" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr)"/>
+
+            <!-- Splitter -->
+            <rect x="340" y="90" width="120" height="60" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="400" y="115" fill="#ff6b35" font-size="10" text-anchor="middle" font-weight="bold">Text Splitter</text>
+            <text x="400" y="132" fill="#aaa" font-size="9" text-anchor="middle">Chunks de texte</text>
+
+            <line x1="460" y1="120" x2="495" y2="120" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr)"/>
+
+            <!-- Embedding Model -->
+            <rect x="495" y="90" width="120" height="60" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="555" y="112" fill="#569cd6" font-size="10" text-anchor="middle" font-weight="bold">Embedding</text>
+            <text x="555" y="127" fill="#569cd6" font-size="10" text-anchor="middle" font-weight="bold">Model</text>
+            <text x="555" y="142" fill="#aaa" font-size="8" text-anchor="middle">text -> vecteur</text>
+
+            <line x1="615" y1="120" x2="660" y2="120" stroke="#569cd6" stroke-width="2" marker-end="url(#arrB)"/>
+
+            <!-- Vector Store -->
+            <rect x="660" y="82" width="140" height="75" rx="10" fill="#16213e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="730" y="110" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">Vector Store</text>
+            <text x="730" y="127" fill="#aaa" font-size="9" text-anchor="middle">FAISS / Chroma /</text>
+            <text x="730" y="142" fill="#aaa" font-size="9" text-anchor="middle">Pinecone / Qdrant</text>
+
+            <!-- Metadata -->
+            <rect x="40" y="170" width="260" height="55" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1"/>
+            <text x="170" y="192" fill="#ff8c42" font-size="10" text-anchor="middle">Metadonnees : source, page, date, section</text>
+            <text x="170" y="210" fill="#aaa" font-size="9" text-anchor="middle">Attachees a chaque chunk pour la tracabilite</text>
+            <line x1="300" y1="197" x2="400" y2="148" stroke="#ff8c42" stroke-width="1" stroke-dasharray="4,3"/>
+
+            <!-- Phase 2: Query -->
+            <rect x="20" y="260" width="880" height="270" rx="10" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="8,4"/>
+            <text x="460" y="282" fill="#00ff88" font-size="14" text-anchor="middle" font-weight="bold">PHASE 2 : REQUETE (En ligne - a chaque question)</text>
+
+            <!-- User Question -->
+            <rect x="40" y="300" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="105" y="325" fill="#ff6b35" font-size="11" text-anchor="middle" font-weight="bold">Question</text>
+            <text x="105" y="345" fill="#e0e0e0" font-size="9" text-anchor="middle">Utilisateur</text>
+
+            <line x1="170" y1="330" x2="210" y2="330" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr)"/>
+
+            <!-- Embed question -->
+            <rect x="210" y="305" width="110" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="265" y="327" fill="#569cd6" font-size="10" text-anchor="middle" font-weight="bold">Embed</text>
+            <text x="265" y="342" fill="#aaa" font-size="9" text-anchor="middle">Question</text>
+
+            <line x1="320" y1="330" x2="360" y2="330" stroke="#569cd6" stroke-width="2" marker-end="url(#arrB)"/>
+
+            <!-- Similarity Search -->
+            <rect x="360" y="300" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="425" y="325" fill="#00ff88" font-size="10" text-anchor="middle" font-weight="bold">Recherche</text>
+            <text x="425" y="342" fill="#00ff88" font-size="10" text-anchor="middle" font-weight="bold">Similarite</text>
+
+            <!-- Connection to vector store -->
+            <line x1="730" y1="157" x2="730" y2="280" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="730" y1="280" x2="490" y2="310" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+            <line x1="490" y1="330" x2="530" y2="330" stroke="#00ff88" stroke-width="2" marker-end="url(#arrG)"/>
+
+            <!-- Retrieved chunks -->
+            <rect x="530" y="300" width="130" height="60" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="595" y="322" fill="#00ff88" font-size="10" text-anchor="middle" font-weight="bold">Chunks</text>
+            <text x="595" y="339" fill="#00ff88" font-size="10" text-anchor="middle" font-weight="bold">Recuperes</text>
+            <text x="595" y="354" fill="#aaa" font-size="8" text-anchor="middle">(top-k resultats)</text>
+
+            <!-- Prompt construction -->
+            <rect x="210" y="400" width="300" height="70" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="360" y="425" fill="#569cd6" font-size="11" text-anchor="middle" font-weight="bold">Construction du Prompt</text>
+            <text x="360" y="443" fill="#e0e0e0" font-size="9" text-anchor="middle">System prompt + Contexte (chunks) + Question</text>
+            <text x="360" y="458" fill="#aaa" font-size="8" text-anchor="middle">"Reponds en te basant uniquement sur le contexte fourni"</text>
+
+            <line x1="105" y1="360" x2="105" y2="435" stroke="#ff6b35" stroke-width="1.5"/>
+            <line x1="105" y1="435" x2="210" y2="435" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#arr)"/>
+
+            <line x1="595" y1="360" x2="595" y2="435" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="595" y1="435" x2="510" y2="435" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arrG2)"/>
+
+            <line x1="510" y1="435" x2="570" y2="435" stroke="#00ff88" stroke-width="1.5"/>
+
+            <!-- LLM -->
+            <rect x="560" y="400" width="120" height="70" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2.5"/>
+            <text x="620" y="430" fill="#ff6b35" font-size="12" text-anchor="middle" font-weight="bold">LLM</text>
+            <text x="620" y="448" fill="#aaa" font-size="9" text-anchor="middle">GPT-4o / Claude</text>
+            <text x="620" y="460" fill="#aaa" font-size="9" text-anchor="middle">/ Llama / Mistral</text>
+
+            <line x1="680" y1="435" x2="720" y2="435" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr)"/>
+
+            <!-- Answer -->
+            <rect x="720" y="405" width="160" height="60" rx="10" fill="#16213e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="800" y="430" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">Reponse</text>
+            <text x="800" y="448" fill="#e0e0e0" font-size="9" text-anchor="middle">Fondee + Sources citees</text>
+
+            <defs>
+                <marker id="arr" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrB" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arrG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+                <marker id="arrG2" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                    <polygon points="10 0, 0 3.5, 10 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>4. Les 2 Phases du RAG en detail</h2>
+
+    <h3>4.1 Phase 1 : Indexation (Hors-ligne)</h3>
+
+    <p>La phase d'indexation est executee <strong>une seule fois</strong> (ou periodiquement pour mettre a jour la base). Elle prepare les documents pour une recherche rapide et semantique.</p>
+
+    <div class="step-box">
+        <strong>Etape 1 - Chargement des documents (Document Loading)</strong><br>
+        On charge les documents bruts depuis differentes sources : fichiers PDF, pages web, bases de donnees, fichiers CSV, documents Word. Chaque type de source a son propre loader. Les metadonnees sont extraites automatiquement (nom du fichier, chemin, date de modification).
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 2 - Decoupage en chunks (Text Splitting)</strong><br>
+        Les documents sont decoupes en morceaux de taille geree (typiquement 200 a 1000 tokens). Le decoupage est <strong>critique</strong> : trop petit = pas assez de contexte, trop grand = trop de bruit. On utilise generalement le <code>RecursiveCharacterTextSplitter</code> avec un overlap pour eviter de couper au milieu d'une idee. Les strategies avancees incluent le chunking semantique et hierarchique (voir cours 2).
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 3 - Creation des embeddings</strong><br>
+        Chaque chunk de texte est transforme en vecteur numerique (embedding) grace a un modele d'embedding (ex: <code>text-embedding-3-small</code>). Ce vecteur capture le <em>sens semantique</em> du texte. Deux textes ayant un sens similaire auront des vecteurs proches dans l'espace vectoriel, meme si les mots utilises sont differents.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 4 - Stockage dans le Vector Store</strong><br>
+        Les vecteurs sont stockes dans une base de donnees vectorielle (FAISS, Chroma, Pinecone, Qdrant, Weaviate) qui permet des recherches par similarite tres rapides, meme sur des millions de vecteurs. L'index vectoriel est optimise pour les requetes de type "plus proche voisin" (k-NN).
+    </div>
+
+    <h3>4.2 Phase 2 : Requete (En ligne)</h3>
+
+    <p>La phase de requete est executee <strong>a chaque question</strong> de l'utilisateur. Elle est optimisee pour etre rapide (typiquement &lt; 2 secondes).</p>
+
+    <div class="step-box">
+        <strong>Etape 1 - Embedding de la question</strong><br>
+        La question de l'utilisateur est transformee en vecteur avec le <strong>meme modele d'embedding</strong> que celui utilise pour l'indexation. C'est essentiel : le modele d'embedding pour les questions et pour les documents doit etre identique.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 2 - Recherche par similarite</strong><br>
+        Le vecteur de la question est compare aux vecteurs des chunks dans le vector store. Les k chunks les plus similaires (typiquement k=4) sont recuperes. Des strategies avancees (MMR, filtrage par metadonnees, hybrid search) ameliorent cette etape (voir cours 4).
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 3 - Construction du prompt augmente</strong><br>
+        Les chunks recuperes sont injectes dans le prompt du LLM en tant que contexte. Le prompt contient typiquement : (1) des instructions systeme ("Reponds en te basant uniquement sur le contexte"), (2) le contexte (les chunks), (3) la question de l'utilisateur.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 4 - Generation de la reponse</strong><br>
+        Le LLM genere une reponse en se basant sur le contexte fourni. Il peut citer ses sources, admettre qu'il ne sait pas si l'information n'est pas dans le contexte, et fournir une reponse precise et fondee.
+    </div>
+
+    <div class="warning">
+        L'erreur la plus frequente des debutants est d'utiliser un modele d'embedding different entre l'indexation et la requete. Les vecteurs ne seront pas dans le meme espace et la recherche par similarite ne fonctionnera pas du tout.
+    </div>
+
+    <div class="code-block"><span class="comment"># Illustration : le prompt augmente envoye au LLM</span>
+prompt_template = <span class="string">"""Tu es un assistant qui repond aux questions
+en te basant UNIQUEMENT sur le contexte fourni ci-dessous.
+Si l'information n'est pas dans le contexte, dis "Je ne dispose
+pas de cette information dans les documents fournis."
+
+Contexte :
+---
+{context}
+---
+
+Question : {question}
+
+Reponse (avec references aux sources) :"""</span>
+
+<span class="comment"># Exemple de contexte injecte</span>
+context = <span class="string">"""
+[Source: politique_retour.pdf, page 3]
+Les retours sont acceptes dans un delai de 30 jours apres reception.
+Le produit doit etre dans son emballage d'origine, non utilise.
+
+[Source: politique_retour.pdf, page 4]
+Les frais de retour sont a la charge du client, sauf en cas de
+produit defectueux ou d'erreur de livraison.
+"""</span>
+
+question = <span class="string">"Quelle est la politique de retour ?"</span></div>
+
+    <!-- ============================================================ -->
+    <h2>5. RAG vs Fine-tuning : quand utiliser quoi ?</h2>
+
+    <p>Le fine-tuning et le RAG sont deux approches differentes pour adapter un LLM a un domaine specifique. Ils ne sont pas mutuellement exclusifs mais repondent a des besoins differents.</p>
+
+    <div class="concept-box blue">
+        <h3>Fine-tuning</h3>
+        <p>On modifie les poids du modele en l'entrainant sur des donnees specifiques. Le modele "apprend" de nouvelles connaissances et/ou un nouveau style de reponse. Cela necessite des donnees d'entrainement, du calcul GPU, et du temps.</p>
+    </div>
+
+    <div class="concept-box green">
+        <h3>RAG</h3>
+        <p>On ne modifie pas le modele. On lui fournit dynamiquement les informations pertinentes au moment de la requete. Pas d'entrainement necessaire, mise a jour instantanee en modifiant la base documentaire.</p>
+    </div>
+
+    <table>
+        <tr>
+            <th>Critere</th>
+            <th>RAG</th>
+            <th>Fine-tuning</th>
+        </tr>
+        <tr>
+            <td><strong>Cout initial</strong></td>
+            <td>Faible (embeddings + vector store)</td>
+            <td>Eleve (GPU, donnees, expertise)</td>
+        </tr>
+        <tr>
+            <td><strong>Fraicheur des donnees</strong></td>
+            <td>Temps reel (mise a jour du vector store)</td>
+            <td>Statique (necessite re-entrainement)</td>
+        </tr>
+        <tr>
+            <td><strong>Connaissances factuelles</strong></td>
+            <td>Excellent (documents exacts fournis)</td>
+            <td>Moyen (peut "oublier" ou melanger)</td>
+        </tr>
+        <tr>
+            <td><strong>Style / format de reponse</strong></td>
+            <td>Moyen (depend du prompt)</td>
+            <td>Excellent (appris dans les poids)</td>
+        </tr>
+        <tr>
+            <td><strong>Reduction des hallucinations</strong></td>
+            <td>Forte (ancrage factuel)</td>
+            <td>Moyenne (ameliore mais n'elimine pas)</td>
+        </tr>
+        <tr>
+            <td><strong>Tracabilite / Sources</strong></td>
+            <td>Oui (les sources sont connues)</td>
+            <td>Non (melange dans les poids)</td>
+        </tr>
+        <tr>
+            <td><strong>Volume de donnees necessaire</strong></td>
+            <td>N'importe quelle quantite</td>
+            <td>Milliers d'exemples minimum</td>
+        </tr>
+        <tr>
+            <td><strong>Temps de mise en place</strong></td>
+            <td>Heures a jours</td>
+            <td>Jours a semaines</td>
+        </tr>
+        <tr>
+            <td><strong>Latence en inference</strong></td>
+            <td>Legerement plus lente (retrieval + generation)</td>
+            <td>Standard (generation seule)</td>
+        </tr>
+        <tr>
+            <td><strong>Cas d'usage ideal</strong></td>
+            <td>Q&A sur documents, chatbot entreprise, support client</td>
+            <td>Style specifique, taches specialisees, classification</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        En pratique, la combinaison RAG + Fine-tuning est souvent la meilleure approche pour les cas d'usage exigeants. Le fine-tuning donne au modele le bon "style" et le bon format de reponse, tandis que le RAG lui fournit les connaissances factuelles actualisees. Mais commencez TOUJOURS par le RAG seul -- c'est plus rapide, moins cher, et souvent suffisant.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>6. RAG vs Long Context : pourquoi le RAG reste pertinent</h2>
+
+    <p>Avec l'emergence de fenetres de contexte de plus en plus grandes (Claude 200K tokens, Gemini 1M tokens, GPT-4o 128K tokens), une question legitime se pose : pourquoi ne pas simplement injecter tous les documents dans le contexte du LLM sans passer par le retrieval ?</p>
+
+    <table>
+        <tr>
+            <th>Critere</th>
+            <th>RAG (Retrieval)</th>
+            <th>Long Context (Stuffing)</th>
+        </tr>
+        <tr>
+            <td><strong>Cout par requete</strong></td>
+            <td>Faible (seulement k chunks)</td>
+            <td>Tres eleve (tous les tokens factures)</td>
+        </tr>
+        <tr>
+            <td><strong>Latence</strong></td>
+            <td>Rapide (petit prompt)</td>
+            <td>Lente (prompt enorme a traiter)</td>
+        </tr>
+        <tr>
+            <td><strong>Precision</strong></td>
+            <td>Forte (chunks pertinents cibles)</td>
+            <td>Variable (info noyee dans le bruit)</td>
+        </tr>
+        <tr>
+            <td><strong>Scalabilite</strong></td>
+            <td>Millions de documents</td>
+            <td>Limitee par la fenetre de contexte</td>
+        </tr>
+        <tr>
+            <td><strong>Probleme "Lost in the Middle"</strong></td>
+            <td>Evite (peu de contexte, bien cible)</td>
+            <td>Oui (LLMs ignorent le milieu du contexte)</td>
+        </tr>
+        <tr>
+            <td><strong>Mise en place</strong></td>
+            <td>Plus complexe (pipeline a construire)</td>
+            <td>Simple (copier-coller dans le prompt)</td>
+        </tr>
+    </table>
+
+    <div class="concept-box">
+        <h3>Le probleme "Lost in the Middle"</h3>
+        <p>Des recherches (Liu et al., 2023) ont montre que les LLMs ont tendance a mieux traiter les informations au <strong>debut</strong> et a la <strong>fin</strong> du contexte, mais oublient ou ignorent les informations au <strong>milieu</strong>. Avec un contexte de 200K tokens, une information cruciale situee au milieu peut etre ignoree. Le RAG, en ne fournissant que les chunks les plus pertinents (typiquement 4-8), evite ce probleme.</p>
+    </div>
+
+    <div class="prof-note">
+        En 2025-2026, l'approche hybride "RAG + Long Context" est la tendance : on utilise le RAG pour selectionner les chunks pertinents, puis on peut en inclure plus (20-50) grace aux grandes fenetres de contexte. C'est le concept de "Context Engineering" -- l'art d'assembler le contexte optimal pour chaque requete. Cela dit, pour la grande majorite des applications, le RAG classique avec k=4 a 8 chunks reste la meilleure approche en termes de rapport qualite/cout.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>7. Les composants du RAG</h2>
+
+    <p>Un systeme RAG est compose de plusieurs briques technologiques qui s'assemblent en pipeline. Chaque composant a un role precis et peut etre interchangeable.</p>
+
+    <table>
+        <tr>
+            <th>Composant</th>
+            <th>Role</th>
+            <th>Exemples</th>
+            <th>Cours detaille</th>
+        </tr>
+        <tr>
+            <td><strong>Document Loaders</strong></td>
+            <td>Charger les documents bruts depuis differentes sources</td>
+            <td>PyPDFLoader, WebBaseLoader, CSVLoader, UnstructuredLoader</td>
+            <td>Cours 2</td>
+        </tr>
+        <tr>
+            <td><strong>Text Splitters</strong></td>
+            <td>Decouper les documents en chunks de taille geree</td>
+            <td>RecursiveCharacterTextSplitter, SemanticChunker, TokenTextSplitter</td>
+            <td>Cours 2</td>
+        </tr>
+        <tr>
+            <td><strong>Embedding Models</strong></td>
+            <td>Transformer le texte en vecteurs numeriques</td>
+            <td>OpenAI text-embedding-3, Cohere embed-v4, sentence-transformers</td>
+            <td>Cours 3</td>
+        </tr>
+        <tr>
+            <td><strong>Vector Stores</strong></td>
+            <td>Stocker et rechercher les vecteurs efficacement</td>
+            <td>FAISS, Chroma, Pinecone, Qdrant, Weaviate, Milvus</td>
+            <td>Cours 3</td>
+        </tr>
+        <tr>
+            <td><strong>Retrievers</strong></td>
+            <td>Strategies de recherche des documents pertinents</td>
+            <td>Similarity, MMR, Multi-Query, HyDE, Self-Query, Hybrid</td>
+            <td>Cours 4</td>
+        </tr>
+        <tr>
+            <td><strong>LLM (Generateur)</strong></td>
+            <td>Generer la reponse a partir du contexte recupere</td>
+            <td>GPT-4o, Claude 3.5, Llama 3, Mistral, Gemini</td>
+            <td>Tous les cours</td>
+        </tr>
+        <tr>
+            <td><strong>Prompt Templates</strong></td>
+            <td>Structurer le prompt avec contexte et question</td>
+            <td>LangChain PromptTemplate, ChatPromptTemplate</td>
+            <td>Tous les cours</td>
+        </tr>
+    </table>
+
+    <div class="code-block"><span class="comment"># Vue d'ensemble : comment les composants s'assemblent avec LangChain</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings, ChatOpenAI
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain.chains <span class="keyword">import</span> RetrievalQA
+
+<span class="comment"># Composant 1 : Document Loader</span>
+loader = PyPDFLoader(<span class="string">"guide_employe.pdf"</span>)
+
+<span class="comment"># Composant 2 : Text Splitter</span>
+splitter = RecursiveCharacterTextSplitter(chunk_size=<span class="number">500</span>, chunk_overlap=<span class="number">50</span>)
+
+<span class="comment"># Composant 3 : Embedding Model</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Composant 4 : Vector Store</span>
+vectorstore = Chroma.<span class="function">from_documents</span>(
+    documents=splitter.<span class="function">split_documents</span>(loader.<span class="function">load</span>()),
+    embedding=embeddings,
+    persist_directory=<span class="string">"./chroma_db"</span>
+)
+
+<span class="comment"># Composant 5 : Retriever</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>, <span class="string">"fetch_k"</span>: <span class="number">20</span>}
+)
+
+<span class="comment"># Composant 6 : LLM</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Assemblage : la chaine RAG</span>
+qa = RetrievalQA.<span class="function">from_chain_type</span>(llm=llm, retriever=retriever)
+response = qa.<span class="function">invoke</span>({<span class="string">"query"</span>: <span class="string">"Combien de jours de conge ai-je ?"</span>})
+<span class="function">print</span>(response[<span class="string">"result"</span>])</div>
+
+    <!-- ============================================================ -->
+    <h2>8. Types de RAG : du Naive au Modular</h2>
+
+    <p>L'evolution du RAG a donne naissance a trois generations d'architectures, chacune adressant les limitations de la precedente. Comprendre ces differences est essentiel pour choisir la bonne approche selon votre cas d'usage.</p>
+
+    <h3>8.1 Naive RAG (Generation 1)</h3>
+
+    <div class="concept-box">
+        <p>L'architecture originale et la plus simple. Pipeline lineaire : <strong>Indexation -> Retrieval -> Generation</strong>. Pas d'optimisation du retrieval, pas de post-traitement des resultats.</p>
+        <p><strong>Limites :</strong></p>
+        <ul>
+            <li>Chunks non pertinents souvent recuperes (precision faible)</li>
+            <li>Pas de diversite dans les resultats (redundance)</li>
+            <li>La question de l'utilisateur est utilisee telle quelle pour la recherche</li>
+            <li>Pas de reranking ni de filtrage intelligent</li>
+        </ul>
+    </div>
+
+    <h3>8.2 Advanced RAG (Generation 2)</h3>
+
+    <div class="concept-box green">
+        <p>Ajoute des optimisations <strong>avant</strong> et <strong>apres</strong> le retrieval :</p>
+        <ul>
+            <li><strong>Pre-retrieval :</strong> Reformulation de la question (Multi-Query, HyDE), enrichissement de la requete, routing vers le bon index</li>
+            <li><strong>Retrieval :</strong> Hybrid search (BM25 + vecteurs), MMR pour la diversite, filtrage par metadonnees</li>
+            <li><strong>Post-retrieval :</strong> Reranking des resultats, compression contextuelle, filtrage des chunks non pertinents</li>
+        </ul>
+        <p><strong>Gains :</strong> Amelioration de 10 a 40% de la precision par rapport au Naive RAG selon les benchmarks.</p>
+    </div>
+
+    <h3>8.3 Modular RAG (Generation 3)</h3>
+
+    <div class="concept-box blue">
+        <p>Architecture modulaire et flexible ou chaque composant peut etre interchangeable et configurable independamment :</p>
+        <ul>
+            <li><strong>Routing :</strong> Diriger la question vers le bon pipeline selon le type de question</li>
+            <li><strong>Agentic RAG :</strong> Un agent decide quand et comment utiliser le retrieval, peut faire plusieurs iterations, utiliser des outils</li>
+            <li><strong>Self-RAG :</strong> Le modele decide lui-meme s'il a besoin de retrieval et evalue la qualite de ses propres reponses</li>
+            <li><strong>Graph RAG :</strong> Utilise un graphe de connaissances en plus des vecteurs pour capturer les relations entre entites</li>
+            <li><strong>Adaptive RAG :</strong> Ajuste dynamiquement la strategie de retrieval selon la complexite de la question</li>
+        </ul>
+    </div>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg" style="max-width:880px;">
+            <rect width="900" height="400" fill="#0f0f23" rx="12"/>
+            <text x="450" y="30" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">Evolution des architectures RAG</text>
+
+            <!-- Naive RAG -->
+            <rect x="20" y="60" width="260" height="310" rx="10" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="150" y="85" fill="#ff4444" font-size="13" text-anchor="middle" font-weight="bold">Naive RAG</text>
+            <text x="150" y="102" fill="#aaa" font-size="10" text-anchor="middle">Pipeline lineaire simple</text>
+
+            <rect x="55" y="120" width="190" height="35" rx="6" fill="#16213e" stroke="#ff8c42" stroke-width="1"/>
+            <text x="150" y="142" fill="#ff8c42" font-size="10" text-anchor="middle">1. Indexation basique</text>
+
+            <line x1="150" y1="155" x2="150" y2="170" stroke="#aaa" stroke-width="1"/>
+
+            <rect x="55" y="170" width="190" height="35" rx="6" fill="#16213e" stroke="#ff8c42" stroke-width="1"/>
+            <text x="150" y="192" fill="#ff8c42" font-size="10" text-anchor="middle">2. Similarity search (k=4)</text>
+
+            <line x1="150" y1="205" x2="150" y2="220" stroke="#aaa" stroke-width="1"/>
+
+            <rect x="55" y="220" width="190" height="35" rx="6" fill="#16213e" stroke="#ff8c42" stroke-width="1"/>
+            <text x="150" y="242" fill="#ff8c42" font-size="10" text-anchor="middle">3. Generation directe</text>
+
+            <rect x="40" y="280" width="220" height="75" rx="6" fill="rgba(255,68,68,0.1)" stroke="#ff4444" stroke-width="1"/>
+            <text x="150" y="300" fill="#ff4444" font-size="10" text-anchor="middle" font-weight="bold">Limites</text>
+            <text x="150" y="316" fill="#aaa" font-size="9" text-anchor="middle">- Chunks non pertinents</text>
+            <text x="150" y="330" fill="#aaa" font-size="9" text-anchor="middle">- Pas de diversite</text>
+            <text x="150" y="344" fill="#aaa" font-size="9" text-anchor="middle">- Question telle quelle</text>
+
+            <!-- Advanced RAG -->
+            <rect x="310" y="60" width="280" height="310" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="450" y="85" fill="#00ff88" font-size="13" text-anchor="middle" font-weight="bold">Advanced RAG</text>
+            <text x="450" y="102" fill="#aaa" font-size="10" text-anchor="middle">Optimisations pre/post retrieval</text>
+
+            <rect x="325" y="115" width="250" height="30" rx="6" fill="#16213e" stroke="#569cd6" stroke-width="1"/>
+            <text x="450" y="135" fill="#569cd6" font-size="10" text-anchor="middle">Pre-retrieval: Query rewriting, HyDE</text>
+
+            <line x1="450" y1="145" x2="450" y2="155" stroke="#aaa" stroke-width="1"/>
+
+            <rect x="325" y="155" width="250" height="30" rx="6" fill="#16213e" stroke="#00ff88" stroke-width="1"/>
+            <text x="450" y="175" fill="#00ff88" font-size="10" text-anchor="middle">Hybrid Search: BM25 + Vecteurs + MMR</text>
+
+            <line x1="450" y1="185" x2="450" y2="195" stroke="#aaa" stroke-width="1"/>
+
+            <rect x="325" y="195" width="250" height="30" rx="6" fill="#16213e" stroke="#569cd6" stroke-width="1"/>
+            <text x="450" y="215" fill="#569cd6" font-size="10" text-anchor="middle">Post-retrieval: Reranking, Compression</text>
+
+            <line x1="450" y1="225" x2="450" y2="235" stroke="#aaa" stroke-width="1"/>
+
+            <rect x="325" y="235" width="250" height="30" rx="6" fill="#16213e" stroke="#ff8c42" stroke-width="1"/>
+            <text x="450" y="255" fill="#ff8c42" font-size="10" text-anchor="middle">Generation avec meilleur contexte</text>
+
+            <rect x="325" y="280" width="250" height="75" rx="6" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="1"/>
+            <text x="450" y="300" fill="#00ff88" font-size="10" text-anchor="middle" font-weight="bold">Avantages</text>
+            <text x="450" y="316" fill="#aaa" font-size="9" text-anchor="middle">+ 10-40% precision vs Naive</text>
+            <text x="450" y="330" fill="#aaa" font-size="9" text-anchor="middle">+ Resultats diversifies</text>
+            <text x="450" y="344" fill="#aaa" font-size="9" text-anchor="middle">+ Meilleure pertinence</text>
+
+            <!-- Modular RAG -->
+            <rect x="620" y="60" width="260" height="310" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="750" y="85" fill="#569cd6" font-size="13" text-anchor="middle" font-weight="bold">Modular RAG</text>
+            <text x="750" y="102" fill="#aaa" font-size="10" text-anchor="middle">Architecture flexible et adaptive</text>
+
+            <rect x="635" y="115" width="230" height="25" rx="5" fill="#16213e" stroke="#ff6b35" stroke-width="1"/>
+            <text x="750" y="133" fill="#ff6b35" font-size="9" text-anchor="middle">Router (choisit le pipeline)</text>
+
+            <rect x="635" y="148" width="230" height="25" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="1"/>
+            <text x="750" y="166" fill="#00ff88" font-size="9" text-anchor="middle">Agentic RAG (multi-step)</text>
+
+            <rect x="635" y="181" width="230" height="25" rx="5" fill="#16213e" stroke="#569cd6" stroke-width="1"/>
+            <text x="750" y="199" fill="#569cd6" font-size="9" text-anchor="middle">Self-RAG (auto-evaluation)</text>
+
+            <rect x="635" y="214" width="230" height="25" rx="5" fill="#16213e" stroke="#ff8c42" stroke-width="1"/>
+            <text x="750" y="232" fill="#ff8c42" font-size="9" text-anchor="middle">Graph RAG (relations)</text>
+
+            <rect x="635" y="247" width="230" height="25" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="1"/>
+            <text x="750" y="265" fill="#00ff88" font-size="9" text-anchor="middle">Adaptive (ajustement dynamique)</text>
+
+            <rect x="635" y="280" width="230" height="75" rx="6" fill="rgba(86,156,214,0.08)" stroke="#569cd6" stroke-width="1"/>
+            <text x="750" y="300" fill="#569cd6" font-size="10" text-anchor="middle" font-weight="bold">Avantages</text>
+            <text x="750" y="316" fill="#aaa" font-size="9" text-anchor="middle">+ Flexibilite maximale</text>
+            <text x="750" y="330" fill="#aaa" font-size="9" text-anchor="middle">+ S'adapte a la question</text>
+            <text x="750" y="344" fill="#aaa" font-size="9" text-anchor="middle">+ Multi-sources et multi-hop</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        En pratique, commencez TOUJOURS par un Naive RAG pour valider votre cas d'usage, puis evoluez vers un Advanced RAG en ajoutant des optimisations une par une. Le Modular RAG est reserve aux cas complexes (multi-sources, questions complexes, exigences de production elevees). Mesurez l'impact de chaque amelioration avec des metriques (RAGAS : faithfulness, answer relevancy, context precision).
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>9. Metriques d'evaluation du RAG</h2>
+
+    <p>Evaluer un systeme RAG est essentiel pour mesurer sa qualite et guider les ameliorations. Le framework <strong>RAGAS</strong> (Retrieval Augmented Generation Assessment) est la reference pour l'evaluation automatique.</p>
+
+    <h3>9.1 Les metriques cles</h3>
+
+    <table>
+        <tr>
+            <th>Metrique</th>
+            <th>Ce qu'elle mesure</th>
+            <th>Formule simplifiee</th>
+            <th>Score ideal</th>
+        </tr>
+        <tr>
+            <td><strong>Faithfulness</strong></td>
+            <td>La reponse est-elle fidele au contexte recupere ? (pas d'hallucination)</td>
+            <td>Claims supportes par le contexte / Total claims</td>
+            <td>1.0</td>
+        </tr>
+        <tr>
+            <td><strong>Answer Relevancy</strong></td>
+            <td>La reponse est-elle pertinente par rapport a la question ?</td>
+            <td>Similarite semantique entre la reponse et la question</td>
+            <td>1.0</td>
+        </tr>
+        <tr>
+            <td><strong>Context Precision</strong></td>
+            <td>Les chunks recuperes sont-ils pertinents ? (pas de bruit)</td>
+            <td>Chunks pertinents / Total chunks recuperes</td>
+            <td>1.0</td>
+        </tr>
+        <tr>
+            <td><strong>Context Recall</strong></td>
+            <td>Tous les chunks necessaires ont-ils ete recuperes ?</td>
+            <td>Infos necessaires trouvees / Infos necessaires totales</td>
+            <td>1.0</td>
+        </tr>
+    </table>
+
+    <div class="code-block"><span class="comment"># Evaluation avec RAGAS</span>
+<span class="keyword">from</span> ragas <span class="keyword">import</span> evaluate
+<span class="keyword">from</span> ragas.metrics <span class="keyword">import</span> (
+    faithfulness,
+    answer_relevancy,
+    context_precision,
+    context_recall
+)
+<span class="keyword">from</span> datasets <span class="keyword">import</span> Dataset
+
+<span class="comment"># Preparer les donnees d'evaluation</span>
+eval_data = {
+    <span class="string">"question"</span>: [<span class="string">"Quelle est la politique de retour ?"</span>],
+    <span class="string">"answer"</span>: [<span class="string">"Les retours sont possibles sous 30 jours..."</span>],
+    <span class="string">"contexts"</span>: [[<span class="string">"Le delai de retour est de 30 jours..."</span>]],
+    <span class="string">"ground_truth"</span>: [<span class="string">"Retour sous 30 jours, emballage d'origine"</span>]
+}
+
+dataset = Dataset.<span class="function">from_dict</span>(eval_data)
+
+<span class="comment"># Evaluer</span>
+results = <span class="function">evaluate</span>(
+    dataset,
+    metrics=[faithfulness, answer_relevancy, context_precision, context_recall]
+)
+<span class="function">print</span>(results)</div>
+
+    <div class="output-block">{'faithfulness': 0.95, 'answer_relevancy': 0.92, 'context_precision': 0.88, 'context_recall': 0.90}</div>
+
+    <!-- ============================================================ -->
+    <h2>10. Resume et checklist</h2>
+
+    <div class="concept-box green">
+        <h3>Checklist de l'architecture RAG</h3>
+        <ol>
+            <li><strong>Documents source</strong> -- Identifie les documents a indexer (PDF, web, DB, etc.)</li>
+            <li><strong>Strategie de chunking</strong> -- Choisi la taille et le chevauchement des chunks</li>
+            <li><strong>Modele d'embedding</strong> -- Selectionne le bon modele (qualite vs cout vs dimensions)</li>
+            <li><strong>Vector store</strong> -- Choisi la base vectorielle (local vs cloud, prototype vs production)</li>
+            <li><strong>Strategie de retrieval</strong> -- Commence par similarity simple, evolue vers MMR/Hybrid/Reranking</li>
+            <li><strong>Prompt template</strong> -- Concu le prompt avec instructions, contexte et question</li>
+            <li><strong>LLM</strong> -- Choisi le modele generateur (GPT-4o, Claude, Mistral, etc.)</li>
+            <li><strong>Evaluation</strong> -- Mis en place les metriques RAGAS pour mesurer la qualite</li>
+            <li><strong>Iteration</strong> -- Ameliore chaque composant en mesurant l'impact</li>
+        </ol>
+    </div>
+
+    <div class="concept-box blue">
+        <h3>Arbre de decision : quand utiliser le RAG ?</h3>
+        <ul>
+            <li>Besoin d'acceder a des donnees privees/internes ? --> <strong>RAG</strong></li>
+            <li>Besoin de donnees a jour (apres la date de coupure du LLM) ? --> <strong>RAG</strong></li>
+            <li>Besoin de citer les sources des reponses ? --> <strong>RAG</strong></li>
+            <li>Besoin de reduire les hallucinations sur des faits precis ? --> <strong>RAG</strong></li>
+            <li>Besoin d'un style/format de reponse specifique ? --> <strong>Fine-tuning</strong> (ou few-shot prompting)</li>
+            <li>Corpus tres petit (&lt; 50 pages) et questions simples ? --> <strong>Long context stuffing</strong> (peut suffire)</li>
+            <li>Questions complexes sur un large corpus ? --> <strong>RAG avance</strong> (Advanced/Modular)</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Ce premier cours vous donne une vision complete de l'architecture RAG et de ses variantes. Dans les cours suivants, nous plongerons dans chaque composant en detail : l'ingestion des documents (cours 2), les embeddings et vector stores (cours 3), et les strategies de retrieval avancees (cours 4). Chaque cours contient du code executable et des bonnes pratiques issues de l'experience en production.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <span style="color:#555;">(Premier cours RAG)</span>
+        <a href="rag_02_ingestion.html">Cours suivant : Ingestion des Documents &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

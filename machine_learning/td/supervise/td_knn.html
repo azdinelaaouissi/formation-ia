@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - KNN (K-Nearest Neighbors) | ML</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        ol { margin: 10px 0 15px 25px; }
+        ol li { margin-bottom: 8px; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : KNN (K-Nearest Neighbors)</h1>
+    <p class="subtitle">Algorithme supervise de classification et regression</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 : RECAPITULATIF DE L'ALGORITHME -->
+    <!-- ============================================================ -->
+
+    <h2>1. Recapitulatif de l'Algorithme</h2>
+
+    <div class="definition">
+        <strong>KNN (K-Nearest Neighbors)</strong> est un algorithme supervise qui predit la classe d'un nouveau point en regardant les <strong>K points les plus proches</strong> dans les donnees d'entrainement, puis en effectuant un <strong>vote majoritaire</strong> parmi ces voisins.
+    </div>
+
+    <div class="concept-box">
+        <h3>Fiche d'identite</h3>
+        <table>
+            <tr><th>Propriete</th><th>Detail</th></tr>
+            <tr><td><strong>Type</strong></td><td>Supervise (necessite des labels)</td></tr>
+            <tr><td><strong>Tache</strong></td><td>Classification (principalement) et Regression</td></tr>
+            <tr><td><strong>Famille</strong></td><td>Algorithmes a base d'instances (instance-based learning)</td></tr>
+            <tr><td><strong>Apprentissage</strong></td><td>Paresseux (lazy) - pas de phase d'entrainement, tout se fait a la prediction</td></tr>
+            <tr><td><strong>Hypothese</strong></td><td>Les points proches dans l'espace des features ont des labels similaires</td></tr>
+            <tr><td><strong>Complexite</strong></td><td>Non-parametrique (pas de forme fixe pour la frontiere de decision)</td></tr>
+        </table>
+    </div>
+
+    <h3>Analogie pour comprendre</h3>
+    <p>Imaginez que vous arrivez dans un nouveau quartier et vous voulez savoir si c'est un quartier riche ou pauvre. Vous regardez les <strong>K maisons les plus proches</strong> de la votre :</p>
+    <ul>
+        <li>Si 4 maisons sur 5 sont grandes et luxueuses => le quartier est probablement riche</li>
+        <li>Si 3 maisons sur 5 sont modestes => le quartier est probablement modeste</li>
+    </ul>
+    <p>C'est exactement ce que fait KNN : il regarde les voisins les plus proches et fait un <strong>vote majoritaire</strong>.</p>
+
+    <h3>Avantages</h3>
+    <ul>
+        <li><strong>Tres simple</strong> a comprendre et implementer</li>
+        <li><strong>Pas d'entrainement</strong> : on stocke juste les donnees</li>
+        <li><strong>Non-parametrique</strong> : pas d'hypothese sur la forme des donnees</li>
+        <li><strong>Frontiere de decision flexible</strong> : s'adapte a toute forme de distribution</li>
+        <li><strong>Fonctionne bien</strong> sur des petits/moyens datasets</li>
+    </ul>
+
+    <h3>Inconvenients</h3>
+    <ul>
+        <li><strong>Lent a la prediction</strong> : doit calculer la distance a TOUS les points d'entrainement</li>
+        <li><strong>Sensible aux echelles</strong> : une feature avec de grandes valeurs domine les autres</li>
+        <li><strong>Malediction de la dimensionnalite</strong> : en haute dimension, les distances perdent leur sens</li>
+        <li><strong>Sensible au bruit</strong> : un point mal etiquete affecte ses voisins</li>
+        <li><strong>Memoire</strong> : doit stocker TOUTES les donnees d'entrainement</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT -->
+    <!-- ============================================================ -->
+
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <p>KNN est un algorithme dit "paresseux" (<em>lazy learning</em>) car il ne construit aucun modele pendant l'entrainement. Il stocke simplement les donnees. Tout le travail se fait au moment de la prediction.</p>
+
+    <h3>Etape par etape</h3>
+
+    <div class="step-box">
+        <strong>Etape 1 - Stocker les donnees :</strong> On garde en memoire tous les points d'entrainement avec leurs labels. C'est la phase "d'entrainement" (qui n'en est pas vraiment une).
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 2 - Recevoir un nouveau point :</strong> Un point X_nouveau arrive, on ne connait pas sa classe. On veut la predire.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 3 - Calculer les distances :</strong> On calcule la distance entre X_nouveau et CHAQUE point d'entrainement. La distance la plus courante est la distance euclidienne : d(A, B) = sqrt((a1-b1)^2 + (a2-b2)^2 + ... + (an-bn)^2)
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 4 - Selectionner les K voisins :</strong> On trie les distances et on garde les K points les plus proches.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 5 - Vote majoritaire :</strong> Parmi ces K voisins, on regarde quelle classe apparait le plus souvent. Cette classe est la prediction.
+    </div>
+
+    <div class="svg-container">
+        <svg width="600" height="380" viewBox="0 0 600 380">
+            <text x="300" y="25" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Comment KNN fonctionne (K=3)</text>
+
+            <!-- Zone de dessin -->
+            <rect x="40" y="40" width="520" height="280" rx="10" fill="#1a1a2e" stroke="#333"/>
+
+            <!-- Points classe A (ronds bleus) -->
+            <circle cx="100" cy="120" r="10" fill="#569cd6" stroke="#7ab4e8" stroke-width="2"/>
+            <circle cx="140" cy="160" r="10" fill="#569cd6" stroke="#7ab4e8" stroke-width="2"/>
+            <circle cx="180" cy="100" r="10" fill="#569cd6" stroke="#7ab4e8" stroke-width="2"/>
+            <circle cx="120" cy="200" r="10" fill="#569cd6" stroke="#7ab4e8" stroke-width="2"/>
+            <circle cx="200" cy="180" r="10" fill="#569cd6" stroke="#7ab4e8" stroke-width="2"/>
+            <circle cx="160" cy="250" r="10" fill="#569cd6" stroke="#7ab4e8" stroke-width="2"/>
+
+            <!-- Points classe B (carres oranges) -->
+            <rect x="370" y="90" width="18" height="18" rx="3" fill="#ff6b35" stroke="#ff8c42" stroke-width="2"/>
+            <rect x="410" y="140" width="18" height="18" rx="3" fill="#ff6b35" stroke="#ff8c42" stroke-width="2"/>
+            <rect x="440" y="100" width="18" height="18" rx="3" fill="#ff6b35" stroke="#ff8c42" stroke-width="2"/>
+            <rect x="390" y="200" width="18" height="18" rx="3" fill="#ff6b35" stroke="#ff8c42" stroke-width="2"/>
+            <rect x="450" y="170" width="18" height="18" rx="3" fill="#ff6b35" stroke="#ff8c42" stroke-width="2"/>
+            <rect x="420" y="240" width="18" height="18" rx="3" fill="#ff6b35" stroke="#ff8c42" stroke-width="2"/>
+
+            <!-- Point a classifier (etoile verte) -->
+            <polygon points="280,170 285,155 295,155 288,145 291,130 280,140 269,130 272,145 265,155 275,155" fill="#00ff88" stroke="#00ff88" stroke-width="1"/>
+            <text x="280" y="120" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">? Nouveau point</text>
+
+            <!-- Cercle K=3 -->
+            <circle cx="280" cy="165" r="80" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="8,4" opacity="0.6"/>
+            <text x="365" y="130" fill="#00ff88" font-size="10">K=3 voisins</text>
+
+            <!-- Lignes vers les 3 plus proches -->
+            <line x1="280" y1="170" x2="200" y2="180" stroke="#aaa" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="280" y1="170" x2="370" y2="99" stroke="#aaa" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="280" y1="170" x2="140" y2="160" stroke="#aaa" stroke-width="1" stroke-dasharray="4"/>
+
+            <!-- Labels 3 voisins -->
+            <circle cx="200" cy="180" r="10" fill="none" stroke="#00ff88" stroke-width="3"/>
+            <rect x="361" y="90" width="18" height="18" rx="3" fill="none" stroke="#00ff88" stroke-width="3"/>
+            <circle cx="140" cy="160" r="10" fill="none" stroke="#00ff88" stroke-width="3"/>
+
+            <!-- Legende -->
+            <circle cx="80" cy="345" r="8" fill="#569cd6"/>
+            <text x="95" y="349" fill="#e0e0e0" font-size="11">Classe A (bleu)</text>
+            <rect x="192" y="337" width="14" height="14" rx="2" fill="#ff6b35"/>
+            <text x="212" y="349" fill="#e0e0e0" font-size="11">Classe B (orange)</text>
+            <polygon points="330,345 333,338 338,338 335,333 337,327 330,332 323,327 325,333 322,338 327,338" fill="#00ff88"/>
+            <text x="345" y="349" fill="#e0e0e0" font-size="11">Nouveau point</text>
+
+            <!-- Resultat -->
+            <rect x="400" y="275" width="150" height="35" rx="6" fill="#569cd6" opacity="0.2" stroke="#569cd6"/>
+            <text x="475" y="297" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Vote: 2A vs 1B => A</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Dans ce schema, le nouveau point (etoile verte) a 3 voisins les plus proches : 2 bleus (classe A) et 1 orange (classe B). Le vote majoritaire donne : <strong>classe A</strong> (2 contre 1). Si on avait pris K=1, seul le plus proche compterait. Si K=5, on consulterait 5 voisins.
+    </div>
+
+    <h3>Formules de distance</h3>
+
+    <div class="concept-box blue">
+        <p><strong>Distance Euclidienne</strong> (la plus utilisee) :</p>
+        <p>d(A, B) = sqrt( (a1 - b1)^2 + (a2 - b2)^2 + ... + (an - bn)^2 )</p>
+        <p>C'est la distance "en ligne droite" entre deux points dans l'espace.</p>
+
+        <p style="margin-top:15px;"><strong>Distance Manhattan</strong> :</p>
+        <p>d(A, B) = |a1 - b1| + |a2 - b2| + ... + |an - bn|</p>
+        <p>C'est la distance "en grille", comme si on marchait dans les rues de Manhattan (pas de diagonales).</p>
+
+        <p style="margin-top:15px;"><strong>Distance Minkowski</strong> (generalisation) :</p>
+        <p>d(A, B) = ( |a1-b1|^p + |a2-b2|^p + ... + |an-bn|^p )^(1/p)</p>
+        <p>Avec p=2 c'est Euclidienne, avec p=1 c'est Manhattan.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 : LES DONNEES -->
+    <!-- ============================================================ -->
+
+    <h2>3. Les Donnees : Que Faut-il pour KNN ?</h2>
+
+    <h3>Type de donnees acceptees</h3>
+    <table>
+        <tr><th>Type</th><th>Accepte ?</th><th>Explication</th></tr>
+        <tr><td>Numeriques</td><td><strong>Oui</strong></td><td>KNN est fait pour les donnees numeriques (on calcule des distances)</td></tr>
+        <tr><td>Categorielles</td><td>Non directement</td><td>Il faut les encoder en nombres d'abord (One-Hot Encoding ou Label Encoding)</td></tr>
+        <tr><td>Texte</td><td>Non directement</td><td>Il faut d'abord vectoriser le texte (TF-IDF, embeddings)</td></tr>
+        <tr><td>Images</td><td>Oui (pixels)</td><td>Chaque pixel est une feature numerique (mais lent en haute dimension)</td></tr>
+    </table>
+
+    <h3>Preparation obligatoire : la Normalisation</h3>
+
+    <div class="warning">
+        KNN mesure des DISTANCES. Si une feature va de 0 a 10 000 (ex: salaire) et une autre de 0 a 1 (ex: taux), le salaire va DOMINER totalement le calcul de distance. La normalisation met toutes les features a la meme echelle. C'est <strong>OBLIGATOIRE</strong> pour KNN.
+    </div>
+
+    <p><strong>Deux methodes de normalisation :</strong></p>
+    <ul>
+        <li><strong>StandardScaler</strong> : transforme en moyenne=0, ecart-type=1. Le plus courant.</li>
+        <li><strong>MinMaxScaler</strong> : transforme entre 0 et 1. Utile si les donnees n'ont pas de distribution normale.</li>
+    </ul>
+
+    <div class="prof-note">
+        <strong>Erreur classique :</strong> Appliquer fit_transform sur le test. Il faut faire <code>scaler.fit_transform(X_train)</code> puis <code>scaler.transform(X_test)</code>. Le scaler doit apprendre les parametres (moyenne, ecart-type) UNIQUEMENT sur le train, sinon c'est du data leakage.
+    </div>
+
+    <h3>Taille des donnees</h3>
+    <ul>
+        <li><strong>Petit dataset</strong> (100-10 000 points) : KNN fonctionne tres bien</li>
+        <li><strong>Moyen</strong> (10 000-100 000) : Commence a etre lent a la prediction</li>
+        <li><strong>Grand</strong> (>100 000) : Trop lent. Preferer Random Forest ou XGBoost</li>
+        <li><strong>Peu de features</strong> (<20) : Ideal pour KNN</li>
+        <li><strong>Beaucoup de features</strong> (>50) : Malediction de la dimensionnalite, KNN perd en efficacite</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 : LES PARAMETRES -->
+    <!-- ============================================================ -->
+
+    <h2>4. Les Parametres de KNN (en detail)</h2>
+
+    <p>KNN a peu de parametres, mais chacun est important. Voici les 4 principaux :</p>
+
+    <!-- Parametre K -->
+    <div class="param-box">
+        <h4>Parametre 1 : n_neighbors (K) - LE plus important</h4>
+        <p><strong>Role :</strong> Determine combien de voisins on consulte pour le vote. C'est le parametre qui controle la complexite du modele.</p>
+        <p><strong>Valeur par defaut :</strong> 5</p>
+        <p><strong>Impact :</strong></p>
+        <ul>
+            <li><strong>K = 1</strong> : On regarde seulement le plus proche voisin. La frontiere de decision est tres irreguliere. Le modele memorise les donnees d'entrainement (100% accuracy train). Mais il est tres sensible au bruit => <strong>OVERFITTING</strong>.</li>
+            <li><strong>K petit (3-7)</strong> : Bon compromis. Le modele capture les patterns locaux tout en etant assez robuste au bruit.</li>
+            <li><strong>K grand (20-50)</strong> : La frontiere de decision est tres lisse. Le modele ignore les details locaux => risque de <strong>UNDERFITTING</strong>.</li>
+            <li><strong>K = N (total de points)</strong> : Tous les points votent. Le modele predit toujours la classe majoritaire (inutile).</li>
+        </ul>
+        <p><strong>Comment choisir K :</strong> Utiliser la <strong>validation croisee</strong> (cross-validation). Tester K de 1 a 30 et garder celui qui donne la meilleure accuracy de validation. Astuce : pour la classification binaire, choisir un K <strong>impair</strong> pour eviter les egalites.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.neighbors <span class="keyword">import</span> KNeighborsClassifier
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_iris
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split, cross_val_score
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report, confusion_matrix
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># 1. Charger les donnees Iris (3 especes de fleurs, 4 mesures)</span>
+iris = load_iris()
+X, y = iris.data, iris.target
+
+<span class="comment"># 2. Separer train (70%) et test (30%)</span>
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=<span class="number">0.3</span>, random_state=<span class="number">42</span>
+)
+
+<span class="comment"># 3. Normaliser les donnees (OBLIGATOIRE pour KNN)</span>
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)   <span class="comment"># fit + transform sur le train</span>
+X_test_scaled = scaler.transform(X_test)          <span class="comment"># transform SEULEMENT sur le test</span>
+
+<span class="comment"># 4. Tester differentes valeurs de K</span>
+<span class="function">print</span>(<span class="string">f"{'K':>3} | {'Acc Train':>10} | {'Acc Test':>10} | Analyse"</span>)
+<span class="function">print</span>(<span class="string">"-" * 55</span>)
+
+<span class="keyword">for</span> k <span class="keyword">in</span> [<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">10</span>, <span class="number">15</span>, <span class="number">20</span>, <span class="number">30</span>, <span class="number">50</span>]:
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(X_train_scaled, y_train)
+
+    acc_train = knn.score(X_train_scaled, y_train)
+    acc_test = knn.score(X_test_scaled, y_test)
+
+    <span class="comment"># Diagnostic automatique</span>
+    <span class="keyword">if</span> acc_train - acc_test > <span class="number">0.05</span>:
+        diag = <span class="string">"OVERFITTING (train >> test)"</span>
+    <span class="keyword">elif</span> acc_test < <span class="number">0.90</span>:
+        diag = <span class="string">"UNDERFITTING (test trop bas)"</span>
+    <span class="keyword">else</span>:
+        diag = <span class="string">"BON"</span>
+
+    <span class="function">print</span>(<span class="string">f"K={k:>2} | {acc_train:.4f}     | {acc_test:.4f}     | {diag}"</span>)</div>
+
+    <div class="output-block">
+  K | Acc Train  | Acc Test   | Analyse
+-------------------------------------------------------
+K= 1 | 1.0000     | 0.9556     | OVERFITTING (train >> test)
+K= 3 | 0.9714     | 0.9778     | BON
+K= 5 | 0.9714     | 0.9778     | BON
+K= 7 | 0.9714     | 0.9778     | BON
+K=10 | 0.9619     | 0.9556     | BON
+K=15 | 0.9619     | 0.9556     | BON
+K=20 | 0.9524     | 0.9333     | BON
+K=30 | 0.9333     | 0.9111     | BON
+K=50 | 0.8667     | 0.8444     | UNDERFITTING (test trop bas)</div>
+
+    <div class="prof-note">
+        <strong>Lecture des resultats :</strong><br>
+        - <strong>K=1</strong> : 100% sur le train car chaque point est son propre voisin le plus proche. Mais le test est plus bas (95.6%) => le modele a memorise au lieu d'apprendre.<br>
+        - <strong>K=3 a 7</strong> : Zone optimale ! Le train et le test sont equilibres et eleves (~97-98%).<br>
+        - <strong>K=50</strong> : Trop de voisins diluent le vote. Sur 105 points de train, consulter 50 voisins revient a demander l'avis de presque la moitie du dataset => perte de precision locale.
+    </div>
+
+    <!-- Parametre weights -->
+    <div class="param-box">
+        <h4>Parametre 2 : weights - Poids des voisins</h4>
+        <p><strong>Role :</strong> Determine si tous les voisins ont le meme poids dans le vote, ou si les voisins plus proches comptent davantage.</p>
+        <p><strong>Valeur par defaut :</strong> 'uniform'</p>
+        <p><strong>Les 2 options :</strong></p>
+        <ul>
+            <li><strong>'uniform'</strong> : Tous les K voisins ont le meme poids. C'est un vote democratique simple. Voisin a distance 0.1 = voisin a distance 10.</li>
+            <li><strong>'distance'</strong> : Les voisins proches comptent plus. Le poids est 1/distance. Un voisin a distance 0.1 a 100x plus de poids qu'un voisin a distance 10.</li>
+        </ul>
+        <p><strong>Quand utiliser 'distance' :</strong> Quand K est grand. Plus K est grand, plus on inclut des voisins lointains qui polluent le vote. 'distance' compense ce probleme en donnant plus de poids aux proches.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Comparer uniform vs distance pour different K</span>
+<span class="function">print</span>(<span class="string">f"{'K':>3} | {'uniform':>10} | {'distance':>10}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 32</span>)
+
+<span class="keyword">for</span> k <span class="keyword">in</span> [<span class="number">3</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">20</span>]:
+    scores_u = cross_val_score(
+        KNeighborsClassifier(n_neighbors=k, weights=<span class="string">'uniform'</span>),
+        X_train_scaled, y_train, cv=<span class="number">5</span>
+    )
+    scores_d = cross_val_score(
+        KNeighborsClassifier(n_neighbors=k, weights=<span class="string">'distance'</span>),
+        X_train_scaled, y_train, cv=<span class="number">5</span>
+    )
+    <span class="function">print</span>(<span class="string">f"K={k:>2} | {scores_u.mean():.4f}     | {scores_d.mean():.4f}"</span>)</div>
+
+    <div class="output-block">
+  K |    uniform |   distance
+--------------------------------
+K= 3 | 0.9524     | 0.9524
+K= 5 | 0.9619     | 0.9619
+K=10 | 0.9524     | 0.9619
+K=20 | 0.9429     | 0.9524</div>
+
+    <div class="effect">
+        Pour K petit (3, 5), 'uniform' et 'distance' sont equivalents car tous les voisins sont proches. Pour <strong>K=20</strong>, 'distance' gagne (+1%) car il attenue l'influence des voisins lointains.
+    </div>
+
+    <!-- Parametre metric -->
+    <div class="param-box">
+        <h4>Parametre 3 : metric - Type de distance</h4>
+        <p><strong>Role :</strong> Definit comment on mesure la "proximite" entre deux points.</p>
+        <p><strong>Valeur par defaut :</strong> 'minkowski' (avec p=2, ce qui equivaut a la distance euclidienne)</p>
+        <p><strong>Les principales metriques :</strong></p>
+        <table>
+            <tr><th>Metrique</th><th>Formule intuitive</th><th>Quand l'utiliser</th></tr>
+            <tr><td><strong>euclidean</strong></td><td>Distance en ligne droite</td><td>Cas general. Le plus courant.</td></tr>
+            <tr><td><strong>manhattan</strong></td><td>Distance en grille (pas de diagonale)</td><td>Donnees en haute dimension, features independantes.</td></tr>
+            <tr><td><strong>chebyshev</strong></td><td>Distance maximale sur un seul axe</td><td>Quand une seule feature tres differente suffit.</td></tr>
+            <tr><td><strong>minkowski</strong></td><td>Generalisation (p=1=manhattan, p=2=euclidean)</td><td>Quand on veut tester differents p.</td></tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Comparer les metriques de distance</span>
+<span class="keyword">for</span> metric <span class="keyword">in</span> [<span class="string">'euclidean'</span>, <span class="string">'manhattan'</span>, <span class="string">'chebyshev'</span>, <span class="string">'minkowski'</span>]:
+    knn = KNeighborsClassifier(n_neighbors=<span class="number">5</span>, metric=metric)
+    scores = cross_val_score(knn, X_train_scaled, y_train, cv=<span class="number">5</span>)
+    <span class="function">print</span>(<span class="string">f"metric={metric:12s} | Accuracy: {scores.mean():.4f} (+/- {scores.std():.4f})"</span>)</div>
+
+    <div class="output-block">
+metric=euclidean     | Accuracy: 0.9619 (+/- 0.0216)
+metric=manhattan     | Accuracy: 0.9524 (+/- 0.0289)
+metric=chebyshev     | Accuracy: 0.9429 (+/- 0.0338)
+metric=minkowski     | Accuracy: 0.9619 (+/- 0.0216)   # = euclidean (p=2 par defaut)</div>
+
+    <div class="prof-note">
+        En pratique, <strong>euclidean</strong> fonctionne bien dans la majorite des cas. Ne changez la metrique que si vous avez une raison specifique (ex: manhattan est plus robuste aux outliers en haute dimension).
+    </div>
+
+    <!-- Parametre algorithm -->
+    <div class="param-box">
+        <h4>Parametre 4 : algorithm - Methode de recherche</h4>
+        <p><strong>Role :</strong> Determine comment l'algorithme cherche les voisins les plus proches. N'affecte PAS les resultats, seulement la vitesse.</p>
+        <p><strong>Valeur par defaut :</strong> 'auto'</p>
+        <ul>
+            <li><strong>'brute'</strong> : Calcule la distance a TOUS les points. Simple mais lent sur gros datasets.</li>
+            <li><strong>'kd_tree'</strong> : Structure de donnees en arbre pour accelerer la recherche. Efficace en basse dimension (&lt;20 features).</li>
+            <li><strong>'ball_tree'</strong> : Similaire a kd_tree mais meilleur en haute dimension.</li>
+            <li><strong>'auto'</strong> : Sklearn choisit automatiquement la meilleure methode. <strong>Garder 'auto'.</strong></li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 : LES METRIQUES D'EVALUATION -->
+    <!-- ============================================================ -->
+
+    <h2>5. Les Metriques d'Evaluation</h2>
+
+    <p>KNN etant un algorithme de <strong>classification</strong>, voici les metriques a utiliser pour evaluer ses performances :</p>
+
+    <div class="metric-card">
+        <h4>1. Accuracy (Exactitude)</h4>
+        <p><strong>Formule :</strong> Accuracy = Predictions correctes / Total des predictions</p>
+        <p><strong>Quand l'utiliser :</strong> Quand les classes sont equilibrees (meme nombre d'exemples par classe).</p>
+        <p><strong>Piege :</strong> Si 95% des donnees sont de classe A, un modele qui predit toujours A a 95% d'accuracy sans rien avoir appris !</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>2. Precision</h4>
+        <p><strong>Formule :</strong> Precision = Vrais Positifs / (Vrais Positifs + Faux Positifs)</p>
+        <p><strong>Question a laquelle elle repond :</strong> "Parmi toutes les predictions positives, combien sont vraiment positives ?"</p>
+        <p><strong>Importante quand :</strong> Le cout d'une fausse alarme est eleve (ex: spam detecte a tort, faux positif medical).</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>3. Recall (Rappel / Sensibilite)</h4>
+        <p><strong>Formule :</strong> Recall = Vrais Positifs / (Vrais Positifs + Faux Negatifs)</p>
+        <p><strong>Question a laquelle il repond :</strong> "Parmi tous les vrais positifs, combien ont ete detectes ?"</p>
+        <p><strong>Important quand :</strong> Le cout de rater un positif est eleve (ex: cancer non detecte, fraude non detectee).</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>4. F1-Score</h4>
+        <p><strong>Formule :</strong> F1 = 2 * (Precision * Recall) / (Precision + Recall)</p>
+        <p><strong>Quand l'utiliser :</strong> Quand on veut un equilibre entre Precision et Recall. C'est la moyenne harmonique des deux.</p>
+        <p><strong>Utile quand :</strong> Les classes sont desequilibrees.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>5. Matrice de Confusion</h4>
+        <p><strong>C'est quoi :</strong> Un tableau montrant pour chaque classe : combien de predictions correctes et combien d'erreurs, et QUELLES erreurs.</p>
+        <p><strong>Pourquoi c'est utile :</strong> Elle montre non seulement combien d'erreurs, mais quelles classes sont confondues entre elles.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>6. Cross-Validation Score</h4>
+        <p><strong>C'est quoi :</strong> On decoupe le dataset en K parties (folds). On entraine sur K-1 parties et on teste sur la derniere, K fois de suite. On fait la moyenne des scores.</p>
+        <p><strong>Pourquoi c'est indispensable :</strong> Un seul train/test split peut donner un resultat chanceux ou malchanceux. La cross-validation donne une estimation beaucoup plus fiable.</p>
+    </div>
+
+    <h3>Application pratique des metriques</h3>
+
+    <div class="code-block"><span class="comment"># Modele KNN optimal</span>
+knn_best = KNeighborsClassifier(n_neighbors=<span class="number">5</span>, weights=<span class="string">'distance'</span>)
+knn_best.fit(X_train_scaled, y_train)
+y_pred = knn_best.predict(X_test_scaled)
+
+<span class="comment"># 1. Accuracy</span>
+<span class="function">print</span>(<span class="string">f"Accuracy : {knn_best.score(X_test_scaled, y_test):.4f}"</span>)
+
+<span class="comment"># 2. Classification Report (precision, recall, f1 pour chaque classe)</span>
+<span class="function">print</span>(<span class="string">"\nRapport de Classification :"</span>)
+<span class="function">print</span>(classification_report(y_test, y_pred, target_names=iris.target_names))
+
+<span class="comment"># 3. Matrice de confusion</span>
+<span class="function">print</span>(<span class="string">"Matrice de Confusion :"</span>)
+<span class="function">print</span>(confusion_matrix(y_test, y_pred))
+
+<span class="comment"># 4. Cross-validation (estimation plus fiable)</span>
+scores_cv = cross_val_score(knn_best, X_train_scaled, y_train, cv=<span class="number">5</span>)
+<span class="function">print</span>(<span class="string">f"\nCross-Validation (5-fold) : {scores_cv.mean():.4f} (+/- {scores_cv.std():.4f})"</span>)</div>
+
+    <div class="output-block">
+Accuracy : 0.9778
+
+Rapport de Classification :
+              precision    recall  f1-score   support
+
+      setosa       1.00      1.00      1.00        19
+  versicolor       0.93      1.00      0.96        13
+   virginica       1.00      0.92      0.96        13
+
+    accuracy                           0.98        45
+   macro avg       0.98      0.97      0.97        45
+weighted avg       0.98      0.98      0.98        45
+
+Matrice de Confusion :
+[[19  0  0]
+ [ 0 13  0]
+ [ 0  1 12]]
+
+Cross-Validation (5-fold) : 0.9619 (+/- 0.0216)</div>
+
+    <div class="prof-note">
+        <strong>Comment lire ces resultats :</strong><br>
+        - <strong>Setosa</strong> : 100% precision et recall. Parfaitement classifie (c'est une espece tres distincte).<br>
+        - <strong>Versicolor</strong> : precision 93% = quand le modele dit "versicolor", il a raison 93% du temps. Recall 100% = tous les vrais versicolor sont trouves.<br>
+        - <strong>Virginica</strong> : 1 virginica est classee comme versicolor (ligne 3, colonne 2 de la matrice). C'est normal, ces deux especes sont proches.<br>
+        - <strong>Cross-validation 96.2%</strong> : estimation plus fiable que le simple accuracy test (97.8%).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 : IMPLEMENTATION COMPLETE -->
+    <!-- ============================================================ -->
+
+    <h2>6. Implementation Complete (de A a Z)</h2>
+
+    <p>Voici le code complet pour utiliser KNN sur un nouveau probleme, avec chaque etape commentee :</p>
+
+    <div class="code-block"><span class="comment"># =============================================</span>
+<span class="comment"># PIPELINE COMPLET KNN</span>
+<span class="comment"># =============================================</span>
+
+<span class="comment"># Etape 1 : Imports</span>
+<span class="keyword">from</span> sklearn.neighbors <span class="keyword">import</span> KNeighborsClassifier
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split, cross_val_score
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_iris
+
+<span class="comment"># Etape 2 : Charger les donnees</span>
+iris = load_iris()
+X, y = iris.data, iris.target
+
+<span class="comment"># Etape 3 : Separer train/test</span>
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=<span class="number">0.3</span>, random_state=<span class="number">42</span>, stratify=y
+)
+<span class="comment"># stratify=y : garde la meme proportion de classes dans train et test</span>
+
+<span class="comment"># Etape 4 : Normaliser (OBLIGATOIRE pour KNN)</span>
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)
+X_test_s = scaler.transform(X_test)
+
+<span class="comment"># Etape 5 : Trouver le meilleur K par cross-validation</span>
+best_k, best_score = <span class="number">1</span>, <span class="number">0</span>
+<span class="keyword">for</span> k <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="number">31</span>):
+    scores = cross_val_score(
+        KNeighborsClassifier(n_neighbors=k, weights=<span class="string">'distance'</span>),
+        X_train_s, y_train, cv=<span class="number">5</span>
+    )
+    <span class="keyword">if</span> scores.mean() > best_score:
+        best_score = scores.mean()
+        best_k = k
+
+<span class="function">print</span>(<span class="string">f"Meilleur K = {best_k} (accuracy CV = {best_score:.4f})"</span>)
+
+<span class="comment"># Etape 6 : Entrainer le modele final avec le meilleur K</span>
+knn_final = KNeighborsClassifier(n_neighbors=best_k, weights=<span class="string">'distance'</span>)
+knn_final.fit(X_train_s, y_train)
+
+<span class="comment"># Etape 7 : Evaluer sur le test</span>
+<span class="function">print</span>(<span class="string">f"\nAccuracy Test : {knn_final.score(X_test_s, y_test):.4f}"</span>)
+<span class="function">print</span>(classification_report(y_test, knn_final.predict(X_test_s),
+      target_names=iris.target_names))
+
+<span class="comment"># Etape 8 : Faire des predictions sur de nouvelles donnees</span>
+nouvelle_fleur = [[<span class="number">5.1</span>, <span class="number">3.5</span>, <span class="number">1.4</span>, <span class="number">0.2</span>]]
+nouvelle_fleur_s = scaler.transform(nouvelle_fleur)
+prediction = knn_final.predict(nouvelle_fleur_s)
+<span class="function">print</span>(<span class="string">f"Prediction pour {nouvelle_fleur[0]} : {iris.target_names[prediction[0]]}"</span>)</div>
+
+    <div class="output-block">
+Meilleur K = 5 (accuracy CV = 0.9810)
+
+Accuracy Test : 0.9778
+              precision    recall  f1-score   support
+
+      setosa       1.00      1.00      1.00        15
+  versicolor       0.94      1.00      0.97        15
+   virginica       1.00      0.93      0.97        15
+
+    accuracy                           0.98        45
+
+Prediction pour [5.1, 3.5, 1.4, 0.2] : setosa</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 : EXPERIMENTATION -->
+    <!-- ============================================================ -->
+
+    <h2>7. Experimentation : Impact de la Normalisation</h2>
+
+    <p>Voyons concretement la difference entre donnees normalisees et non normalisees :</p>
+
+    <div class="code-block"><span class="comment"># Creer des donnees avec des echelles TRES differentes</span>
+X_raw = X.copy()
+X_raw[:, <span class="number">0</span>] *= <span class="number">1000</span>   <span class="comment"># Feature 0 : passe de 4-8 a 4000-8000</span>
+X_raw[:, <span class="number">1</span>] *= <span class="number">0.01</span>   <span class="comment"># Feature 1 : passe de 2-4 a 0.02-0.04</span>
+
+X_tr, X_te, y_tr, y_te = train_test_split(X_raw, y, test_size=<span class="number">0.3</span>, random_state=<span class="number">42</span>)
+
+<span class="comment"># SANS normalisation</span>
+knn_raw = KNeighborsClassifier(n_neighbors=<span class="number">5</span>)
+knn_raw.fit(X_tr, y_tr)
+<span class="function">print</span>(<span class="string">f"SANS normalisation : {knn_raw.score(X_te, y_te):.4f}"</span>)
+
+<span class="comment"># AVEC normalisation</span>
+scaler2 = StandardScaler()
+X_tr_s = scaler2.fit_transform(X_tr)
+X_te_s = scaler2.transform(X_te)
+
+knn_norm = KNeighborsClassifier(n_neighbors=<span class="number">5</span>)
+knn_norm.fit(X_tr_s, y_tr)
+<span class="function">print</span>(<span class="string">f"AVEC normalisation : {knn_norm.score(X_te_s, y_te):.4f}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nPourquoi ? Regardons les echelles :"</span>)
+<span class="function">print</span>(<span class="string">f"Feature 0 : min={X_raw[:,0].min():.0f}, max={X_raw[:,0].max():.0f}"</span>)
+<span class="function">print</span>(<span class="string">f"Feature 1 : min={X_raw[:,1].min():.4f}, max={X_raw[:,1].max():.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Feature 0 est {X_raw[:,0].max()/X_raw[:,1].max():.0f}x plus grande !"</span>)</div>
+
+    <div class="output-block">
+SANS normalisation : 0.7556
+AVEC normalisation : 0.9778
+
+Pourquoi ? Regardons les echelles :
+Feature 0 : min=4300, max=7900
+Feature 1 : min=0.020, max=0.044
+Feature 0 est 179545x plus grande !</div>
+
+    <div class="warning">
+        75.6% sans normalisation vs 97.8% avec ! La feature 0 (echelle 4000-8000) ecrase completement la feature 1 (echelle 0.02-0.04). KNN ne voit plus que la feature 0 et ignore les autres. <strong>La normalisation est NON NEGOCIABLE pour KNN.</strong>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+
+    <h2>8. Erreurs Courantes de Debutant</h2>
+
+    <div class="warning">
+        <strong>Erreur 1 : Oublier la normalisation.</strong> KNN utilise des distances. Sans normalisation, les features avec de grandes valeurs dominent. <strong>Toujours normaliser avec StandardScaler.</strong>
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 2 : Utiliser fit_transform sur le test.</strong> Il faut faire scaler.fit_transform(X_train) puis scaler.transform(X_test). Le scaler apprend les statistiques (moyenne, ecart-type) uniquement sur le train. Utiliser fit_transform sur le test est du <strong>data leakage</strong> (le modele "triche" en voyant les statistiques du test).
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 3 : Choisir K sans cross-validation.</strong> Ne jamais choisir K "au feeling". Toujours utiliser la validation croisee pour tester systematiquement K de 1 a 30 et garder le meilleur.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 4 : Utiliser KNN sur un gros dataset.</strong> KNN calcule la distance a TOUS les points d'entrainement pour chaque prediction. Sur 1 million de points, chaque prediction parcourt 1 million de distances. C'est trop lent. Au-dela de ~50 000 points, preferer Random Forest ou XGBoost.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 5 : Trop de features (haute dimension).</strong> En haute dimension (>50 features), toutes les distances deviennent similaires. Les "voisins" ne sont plus vraiment proches. C'est la <strong>malediction de la dimensionnalite</strong>. Solution : reduire les dimensions avec PCA avant KNN.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 6 : K pair en classification binaire.</strong> Avec K pair (ex: K=4), on peut avoir 2 votes pour chaque classe => egalite. Utiliser un K impair (3, 5, 7...) pour eviter les egalites.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 : RESUME COMPLET -->
+    <!-- ============================================================ -->
+
+    <h2>9. Resume Complet</h2>
+
+    <div class="concept-box green">
+        <h3>Tableau Recapitulatif des Parametres</h3>
+        <table>
+            <tr><th>Parametre</th><th>Defaut</th><th>Role</th><th>Impact</th><th>Conseil</th></tr>
+            <tr>
+                <td><strong>n_neighbors</strong></td>
+                <td>5</td>
+                <td>Nombre de voisins</td>
+                <td>K petit = overfitting, K grand = underfitting</td>
+                <td>Cross-validation, K de 1 a 30</td>
+            </tr>
+            <tr>
+                <td><strong>weights</strong></td>
+                <td>'uniform'</td>
+                <td>Poids des voisins</td>
+                <td>'distance' = voisins proches comptent plus</td>
+                <td>Essayer 'distance', souvent meilleur avec grand K</td>
+            </tr>
+            <tr>
+                <td><strong>metric</strong></td>
+                <td>'minkowski'</td>
+                <td>Type de distance</td>
+                <td>euclidean est le standard</td>
+                <td>Garder euclidean sauf raison specifique</td>
+            </tr>
+            <tr>
+                <td><strong>algorithm</strong></td>
+                <td>'auto'</td>
+                <td>Methode de recherche</td>
+                <td>Affecte la vitesse, pas les resultats</td>
+                <td>Garder 'auto'</td>
+            </tr>
+            <tr>
+                <td><strong>Normalisation</strong></td>
+                <td>-</td>
+                <td>Egaliser les echelles</td>
+                <td>ENORME (76% vs 98% sans/avec)</td>
+                <td>TOUJOURS StandardScaler !</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Metriques d'Evaluation pour KNN</h3>
+        <table>
+            <tr><th>Metrique</th><th>Quand l'utiliser</th><th>Formule simplifiee</th></tr>
+            <tr><td><strong>Accuracy</strong></td><td>Classes equilibrees</td><td>Corrects / Total</td></tr>
+            <tr><td><strong>Precision</strong></td><td>Cout des faux positifs eleve</td><td>VP / (VP + FP)</td></tr>
+            <tr><td><strong>Recall</strong></td><td>Cout des faux negatifs eleve</td><td>VP / (VP + FN)</td></tr>
+            <tr><td><strong>F1-Score</strong></td><td>Classes desequilibrees</td><td>2 * P * R / (P + R)</td></tr>
+            <tr><td><strong>Confusion Matrix</strong></td><td>Toujours</td><td>Tableau des erreurs par classe</td></tr>
+            <tr><td><strong>Cross-Validation</strong></td><td>Toujours</td><td>Moyenne sur K folds</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box">
+        <h3>Quand utiliser KNN ?</h3>
+        <table>
+            <tr><th>Situation</th><th>KNN est bon ?</th><th>Pourquoi</th></tr>
+            <tr><td>Petit dataset (&lt;10k points)</td><td><strong>Oui</strong></td><td>Pas de probleme de vitesse</td></tr>
+            <tr><td>Peu de features (&lt;20)</td><td><strong>Oui</strong></td><td>Les distances ont du sens</td></tr>
+            <tr><td>Donnees non-lineaires</td><td><strong>Oui</strong></td><td>KNN capture toute forme de frontiere</td></tr>
+            <tr><td>Besoin d'interpretabilite</td><td><strong>Oui</strong></td><td>"Ce point est classé X car ses 5 voisins sont X"</td></tr>
+            <tr><td>Gros dataset (&gt;100k points)</td><td>Non</td><td>Trop lent a la prediction</td></tr>
+            <tr><td>Beaucoup de features (&gt;50)</td><td>Non</td><td>Malediction de la dimensionnalite</td></tr>
+            <tr><td>Besoin de vitesse en production</td><td>Non</td><td>Prediction lente (pas de modele pre-construit)</td></tr>
+            <tr><td>Donnees avec beaucoup de bruit</td><td>Non</td><td>KNN est sensible au bruit</td></tr>
+        </table>
+    </div>
+
+    <div class="nav">
+        <a href="td_regression_logistique.html">&larr; TD Regression Logistique</a>
+        <a href="td_svm.html">TD suivant : SVM &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

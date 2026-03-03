@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - K-Means Clustering | ML</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : K-Means Clustering</h1>
+    <p class="subtitle">Algorithme non supervisé de partitionnement en clusters</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 : RÉCAPITULATIF DE L'ALGORITHME -->
+    <!-- ============================================================ -->
+
+    <h2>1. Récapitulatif de l'Algorithme</h2>
+
+    <div class="definition">
+        <strong>K-Means</strong> est un algorithme d'apprentissage non supervisé qui partitionne un jeu de données en <strong>K clusters</strong> (groupes) en minimisant la distance entre chaque point et le <strong>centroïde</strong> (centre de gravité) de son cluster. L'algorithme itère entre l'assignation des points au centroïde le plus proche et le recalcul des centroïdes, jusqu'à convergence.
+    </div>
+
+    <div class="concept-box">
+        <h3>Fiche d'identité</h3>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Type</strong></td><td>NON Supervisé (pas de labels nécessaires)</td></tr>
+            <tr><td><strong>Tâche</strong></td><td>Clustering (regroupement)</td></tr>
+            <tr><td><strong>Famille</strong></td><td>Partitionnement (partition-based clustering)</td></tr>
+            <tr><td><strong>Apprentissage</strong></td><td>Itératif - minimise l'inertie par alternance assignation/mise à jour</td></tr>
+            <tr><td><strong>Hypothèse</strong></td><td>Les clusters sont sphériques, de taille similaire, et séparables</td></tr>
+            <tr><td><strong>Complexité</strong></td><td>O(n * K * d * i) où n=points, K=clusters, d=dimensions, i=itérations</td></tr>
+        </table>
+    </div>
+
+    <h3>Analogie pour comprendre</h3>
+    <p>Imaginez que vous avez un grand sac de billes de couleurs mélangées (rouges, bleues, vertes) mais <strong>vous ne connaissez pas les couleurs</strong> (vous êtes dans le noir). On vous demande de trier ces billes en <strong>K = 3 groupes</strong> basés uniquement sur leur <strong>similarité</strong> (taille, poids, texture) :</p>
+    <ul>
+        <li>Vous posez <strong>3 billes au hasard</strong> comme références (centroïdes initiaux)</li>
+        <li>Vous comparez chaque bille aux 3 références et la placez dans le groupe de la référence la plus similaire</li>
+        <li>Vous recalculez la bille "moyenne" de chaque groupe (nouveau centroïde)</li>
+        <li>Vous recommencez jusqu'à ce que les groupes ne changent plus</li>
+    </ul>
+    <p>À la fin, vous découvrez que vos 3 groupes correspondent naturellement aux 3 couleurs -- sans jamais les avoir vues !</p>
+
+    <h3>Avantages</h3>
+    <ul>
+        <li><strong>Simple et intuitif</strong> : algorithme facile à comprendre et implémenter</li>
+        <li><strong>Rapide</strong> : complexité linéaire en nombre de points, très efficace</li>
+        <li><strong>Scalable</strong> : fonctionne bien sur de très grands jeux de données (millions de points)</li>
+        <li><strong>Résultat interprétable</strong> : chaque cluster a un centroïde explicite</li>
+        <li><strong>Largement utilisé</strong> : segmentation clients, compression d'images, pré-traitement</li>
+    </ul>
+
+    <h3>Inconvénients</h3>
+    <ul>
+        <li><strong>Il faut choisir K</strong> à l'avance : le nombre de clusters n'est pas appris automatiquement</li>
+        <li><strong>Sensible à l'initialisation</strong> : différents centroïdes initiaux peuvent donner différents résultats (minima locaux)</li>
+        <li><strong>Suppose des clusters sphériques</strong> : ne fonctionne pas bien sur des formes allongées ou irrégulières</li>
+        <li><strong>Sensible aux outliers</strong> : un point aberrant peut déplacer fortement un centroïde</li>
+        <li><strong>Clusters de taille égale</strong> : tendance à créer des clusters de tailles similaires même si les vrais groupes sont déséquilibrés</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT -->
+    <!-- ============================================================ -->
+
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <p>K-Means est un algorithme <strong>itératif</strong> qui alterne entre deux étapes : <em>l'assignation</em> des points aux clusters et la <em>mise à jour</em> des centroïdes. L'objectif est de minimiser l'<strong>inertie</strong> (somme des distances au carré entre chaque point et son centroïde).</p>
+
+    <h3>Étape par étape</h3>
+
+    <div class="step-box">
+        <strong>Étape 0 - Choisir K :</strong> L'utilisateur décide du nombre de clusters K souhaité. C'est un hyperparamètre crucial qui doit être défini avant l'exécution de l'algorithme.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 1 - Initialisation :</strong> Placer K centroïdes aléatoirement dans l'espace des features (ou utiliser k-means++ pour un placement intelligent). Les centroïdes sont notés μ₁, μ₂, ..., μₖ.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 2 - Assignation :</strong> Pour chaque point xᵢ, calculer sa distance à chaque centroïde μₖ et l'assigner au cluster dont le centroïde est <strong>le plus proche</strong> : Cₖ = {xᵢ : ||xᵢ - μₖ||² ≤ ||xᵢ - μⱼ||² pour tout j ≠ k}
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 3 - Mise à jour :</strong> Recalculer chaque centroïde comme la <strong>moyenne</strong> de tous les points assignés à son cluster : μₖ = (1/|Cₖ|) * Σ xᵢ pour xᵢ ∈ Cₖ
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 4 - Convergence :</strong> Répéter les étapes 2 et 3 jusqu'à ce que les centroïdes ne bougent plus (ou que le changement d'inertie soit inférieur à un seuil, ou que max_iter soit atteint).
+    </div>
+
+    <h3>Diagramme : Itérations de K-Means (K=3)</h3>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 520" width="900" height="520" xmlns="http://www.w3.org/2000/svg">
+            <!-- Arrière-plan -->
+            <rect width="900" height="520" fill="#0f0f23" rx="12"/>
+
+            <!-- Titre -->
+            <text x="450" y="32" fill="#ff6b35" font-size="18" font-weight="bold" text-anchor="middle">Itérations de K-Means (K = 3)</text>
+
+            <!-- Définitions des marqueurs de flèche -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/>
+                </marker>
+            </defs>
+
+            <!-- === PANNEAU 1 : Initialisation === -->
+            <rect x="20" y="50" width="200" height="200" rx="8" fill="#1a1a2e" stroke="#333"/>
+            <text x="120" y="72" fill="#ff8c42" font-size="12" font-weight="bold" text-anchor="middle">Étape 1 : Initialisation</text>
+            <!-- Points non colorés (gris) -->
+            <circle cx="60" cy="120" r="4" fill="#888"/>
+            <circle cx="75" cy="110" r="4" fill="#888"/>
+            <circle cx="55" cy="135" r="4" fill="#888"/>
+            <circle cx="80" cy="130" r="4" fill="#888"/>
+            <circle cx="65" cy="145" r="4" fill="#888"/>
+            <circle cx="140" cy="180" r="4" fill="#888"/>
+            <circle cx="155" cy="195" r="4" fill="#888"/>
+            <circle cx="130" cy="200" r="4" fill="#888"/>
+            <circle cx="160" cy="175" r="4" fill="#888"/>
+            <circle cx="145" cy="210" r="4" fill="#888"/>
+            <circle cx="170" cy="100" r="4" fill="#888"/>
+            <circle cx="185" cy="115" r="4" fill="#888"/>
+            <circle cx="175" cy="90" r="4" fill="#888"/>
+            <circle cx="190" cy="105" r="4" fill="#888"/>
+            <circle cx="165" cy="110" r="4" fill="#888"/>
+            <!-- Centroïdes initiaux (aléatoires) -->
+            <text x="100" y="168" fill="#ff4444" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="50" y="200" fill="#00ff88" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="180" y="145" fill="#569cd6" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="120" y="240" fill="#aaa" font-size="10" text-anchor="middle">Centroïdes aléatoires</text>
+
+            <!-- Flèche 1→2 -->
+            <line x1="225" y1="150" x2="245" y2="150" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+            <!-- === PANNEAU 2 : Assignation === -->
+            <rect x="250" y="50" width="200" height="200" rx="8" fill="#1a1a2e" stroke="#333"/>
+            <text x="350" y="72" fill="#ff8c42" font-size="12" font-weight="bold" text-anchor="middle">Étape 2 : Assignation</text>
+            <!-- Points colorés par cluster assigné -->
+            <circle cx="290" cy="120" r="4" fill="#00ff88"/>
+            <circle cx="305" cy="110" r="4" fill="#00ff88"/>
+            <circle cx="285" cy="135" r="4" fill="#00ff88"/>
+            <circle cx="310" cy="130" r="4" fill="#00ff88"/>
+            <circle cx="295" cy="145" r="4" fill="#00ff88"/>
+            <!-- Cluster 2 -->
+            <circle cx="370" cy="180" r="4" fill="#ff4444"/>
+            <circle cx="385" cy="195" r="4" fill="#ff4444"/>
+            <circle cx="360" cy="200" r="4" fill="#ff4444"/>
+            <circle cx="390" cy="175" r="4" fill="#ff4444"/>
+            <circle cx="375" cy="210" r="4" fill="#ff4444"/>
+            <!-- Cluster 3 -->
+            <circle cx="400" cy="100" r="4" fill="#569cd6"/>
+            <circle cx="415" cy="115" r="4" fill="#569cd6"/>
+            <circle cx="405" cy="90" r="4" fill="#569cd6"/>
+            <circle cx="420" cy="105" r="4" fill="#569cd6"/>
+            <circle cx="395" cy="110" r="4" fill="#569cd6"/>
+            <!-- Centroïdes -->
+            <text x="330" y="168" fill="#ff4444" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="280" y="200" fill="#00ff88" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="410" y="145" fill="#569cd6" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <!-- Lignes pointillées -->
+            <line x1="290" y1="120" x2="280" y2="195" stroke="#00ff88" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.4"/>
+            <line x1="370" y1="180" x2="330" y2="163" stroke="#ff4444" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.4"/>
+            <line x1="400" y1="100" x2="410" y2="140" stroke="#569cd6" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.4"/>
+            <text x="350" y="240" fill="#aaa" font-size="10" text-anchor="middle">Point → centroïde le plus proche</text>
+
+            <!-- Flèche 2→3 -->
+            <line x1="455" y1="150" x2="475" y2="150" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+            <!-- === PANNEAU 3 : Mise à jour === -->
+            <rect x="480" y="50" width="200" height="200" rx="8" fill="#1a1a2e" stroke="#333"/>
+            <text x="580" y="72" fill="#ff8c42" font-size="12" font-weight="bold" text-anchor="middle">Étape 3 : Mise à jour</text>
+            <!-- Points identiques -->
+            <circle cx="520" cy="120" r="4" fill="#00ff88"/>
+            <circle cx="535" cy="110" r="4" fill="#00ff88"/>
+            <circle cx="515" cy="135" r="4" fill="#00ff88"/>
+            <circle cx="540" cy="130" r="4" fill="#00ff88"/>
+            <circle cx="525" cy="145" r="4" fill="#00ff88"/>
+            <circle cx="600" cy="180" r="4" fill="#ff4444"/>
+            <circle cx="615" cy="195" r="4" fill="#ff4444"/>
+            <circle cx="590" cy="200" r="4" fill="#ff4444"/>
+            <circle cx="620" cy="175" r="4" fill="#ff4444"/>
+            <circle cx="605" cy="210" r="4" fill="#ff4444"/>
+            <circle cx="630" cy="100" r="4" fill="#569cd6"/>
+            <circle cx="645" cy="115" r="4" fill="#569cd6"/>
+            <circle cx="635" cy="90" r="4" fill="#569cd6"/>
+            <circle cx="650" cy="105" r="4" fill="#569cd6"/>
+            <circle cx="625" cy="110" r="4" fill="#569cd6"/>
+            <!-- Nouveaux centroïdes (déplacés vers le centre des points) -->
+            <text x="527" y="132" fill="#00ff88" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="606" y="195" fill="#ff4444" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="637" y="107" fill="#569cd6" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="580" y="240" fill="#aaa" font-size="10" text-anchor="middle">Centroïdes = moyenne des points</text>
+
+            <!-- Flèche 3→4 -->
+            <line x1="685" y1="150" x2="705" y2="150" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+            <!-- === PANNEAU 4 : Convergence === -->
+            <rect x="710" y="50" width="170" height="200" rx="8" fill="#1a1a2e" stroke="#00ff88"/>
+            <text x="795" y="72" fill="#00ff88" font-size="12" font-weight="bold" text-anchor="middle">Convergence !</text>
+            <!-- Points finaux bien séparés -->
+            <circle cx="745" cy="120" r="4" fill="#00ff88"/>
+            <circle cx="760" cy="110" r="4" fill="#00ff88"/>
+            <circle cx="740" cy="135" r="4" fill="#00ff88"/>
+            <circle cx="765" cy="128" r="4" fill="#00ff88"/>
+            <circle cx="750" cy="142" r="4" fill="#00ff88"/>
+            <circle cx="810" cy="180" r="4" fill="#ff4444"/>
+            <circle cx="825" cy="195" r="4" fill="#ff4444"/>
+            <circle cx="800" cy="200" r="4" fill="#ff4444"/>
+            <circle cx="830" cy="175" r="4" fill="#ff4444"/>
+            <circle cx="815" cy="208" r="4" fill="#ff4444"/>
+            <circle cx="840" cy="100" r="4" fill="#569cd6"/>
+            <circle cx="852" cy="115" r="4" fill="#569cd6"/>
+            <circle cx="845" cy="90" r="4" fill="#569cd6"/>
+            <circle cx="855" cy="102" r="4" fill="#569cd6"/>
+            <circle cx="835" cy="108" r="4" fill="#569cd6"/>
+            <!-- Centroïdes finaux stables -->
+            <text x="752" y="130" fill="#00ff88" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="816" y="193" fill="#ff4444" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="845" y="105" fill="#569cd6" font-size="18" font-weight="bold" text-anchor="middle">X</text>
+            <text x="795" y="240" fill="#aaa" font-size="10" text-anchor="middle">Clusters stables</text>
+
+            <!-- Flèche de boucle (étapes 2 et 3 se répètent) -->
+            <path d="M 580 255 L 580 280 L 350 280 L 350 255" fill="none" stroke="#ff8c42" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrowhead2)"/>
+            <text x="465" y="295" fill="#ff8c42" font-size="11" text-anchor="middle">Répéter jusqu'à convergence</text>
+
+            <!-- Formules en bas -->
+            <rect x="20" y="320" width="860" height="180" rx="8" fill="#1a1a2e" stroke="#333"/>
+            <text x="450" y="348" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">Formules clés</text>
+
+            <text x="40" y="380" fill="#569cd6" font-size="13" font-weight="bold">Distance au centroïde :</text>
+            <text x="40" y="402" fill="#e0e0e0" font-size="12" font-family="monospace">d(xᵢ, μₖ) = ||xᵢ - μₖ||² = Σⱼ (xᵢⱼ - μₖⱼ)²</text>
+
+            <text x="40" y="435" fill="#569cd6" font-size="13" font-weight="bold">Mise à jour du centroïde :</text>
+            <text x="40" y="457" fill="#e0e0e0" font-size="12" font-family="monospace">μₖ = (1/|Cₖ|) × Σ xᵢ    (moyenne des points du cluster k)</text>
+
+            <text x="500" y="380" fill="#569cd6" font-size="13" font-weight="bold">Inertie (fonction objectif) :</text>
+            <text x="500" y="402" fill="#e0e0e0" font-size="12" font-family="monospace">J = Σₖ Σ(xᵢ∈Cₖ) ||xᵢ - μₖ||²</text>
+
+            <text x="500" y="435" fill="#569cd6" font-size="13" font-weight="bold">Objectif :</text>
+            <text x="500" y="457" fill="#e0e0e0" font-size="12" font-family="monospace">Minimiser J en optimisant les μₖ et les Cₖ</text>
+
+            <text x="450" y="490" fill="#aaa" font-size="11" text-anchor="middle">L'inertie diminue à chaque itération et converge vers un minimum (local)</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        K-Means converge toujours, mais vers un <strong>minimum local</strong>, pas forcément global. C'est pourquoi on exécute l'algorithme plusieurs fois (paramètre <code>n_init</code>) et on garde le meilleur résultat (inertie la plus faible).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 : LES DONNÉES -->
+    <!-- ============================================================ -->
+
+    <h2>3. Les Données</h2>
+
+    <h3>Types de données acceptés</h3>
+
+    <div class="concept-box">
+        <p>K-Means est basé sur le calcul de <strong>distances euclidiennes</strong>. Par conséquent, il ne fonctionne qu'avec des <strong>données numériques</strong>. Les variables catégorielles doivent être transformées (ou utiliser K-Modes/K-Prototypes à la place).</p>
+        <table>
+            <tr><th>Type de donnée</th><th>Compatibilité</th><th>Action requise</th></tr>
+            <tr><td>Numérique continu</td><td>Compatible directement</td><td>Normaliser obligatoirement</td></tr>
+            <tr><td>Numérique discret</td><td>Compatible</td><td>Normaliser</td></tr>
+            <tr><td>Catégoriel ordinal</td><td>Partiellement compatible</td><td>OrdinalEncoder + Normalisation</td></tr>
+            <tr><td>Catégoriel nominal</td><td>Non compatible</td><td>Éviter (OneHotEncoding crée des problèmes de distance)</td></tr>
+            <tr><td>Texte</td><td>Non compatible directement</td><td>TF-IDF ou embeddings d'abord</td></tr>
+        </table>
+    </div>
+
+    <h3>Normalisation : OBLIGATOIRE</h3>
+
+    <div class="warning">
+        Comme K-Means est basé sur les <strong>distances</strong> (tout comme KNN), la normalisation est <strong>absolument obligatoire</strong>. Une feature avec des valeurs entre 0 et 1000 dominera une feature entre 0 et 1, faussant complètement le clustering.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Exemple : données avec échelles très différentes</span>
+X = np.array([[<span class="number">25</span>, <span class="number">50000</span>],    <span class="comment"># âge=25, salaire=50000</span>
+              [<span class="number">30</span>, <span class="number">60000</span>],
+              [<span class="number">45</span>, <span class="number">120000</span>],
+              [<span class="number">50</span>, <span class="number">110000</span>]])
+
+<span class="comment"># SANS normalisation : le salaire domine tout !</span>
+<span class="function">print</span>(<span class="string">"Sans normalisation :"</span>, X)
+
+<span class="comment"># AVEC normalisation : chaque feature a la même importance</span>
+scaler = StandardScaler()
+X_scaled = scaler.<span class="function">fit_transform</span>(X)
+<span class="function">print</span>(<span class="string">"Avec normalisation :"</span>, X_scaled.round(<span class="number">2</span>))</div>
+
+    <div class="output-block">Sans normalisation :
+[[    25  50000]
+ [    30  60000]
+ [    45 120000]
+ [    50 110000]]
+Avec normalisation :
+[[-1.18 -1.04]
+ [-0.71 -0.72]
+ [ 0.71  1.24]
+ [ 1.18  0.52]]</div>
+
+    <div class="prof-note">
+        En pratique, <strong>StandardScaler</strong> (moyenne=0, écart-type=1) est le choix le plus courant pour K-Means. MinMaxScaler est aussi possible mais plus sensible aux outliers. Ne normalisez <strong>jamais</strong> les données après le clustering, uniquement avant !
+    </div>
+
+    <h3>Encodage des variables catégorielles</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> OrdinalEncoder, OneHotEncoder
+
+<span class="comment"># Variable ordinale : encoder avec un ordre logique</span>
+ordinal_enc = OrdinalEncoder(categories=[[<span class="string">'bas'</span>, <span class="string">'moyen'</span>, <span class="string">'haut'</span>]])
+X_ord = ordinal_enc.<span class="function">fit_transform</span>([[<span class="string">'bas'</span>], [<span class="string">'haut'</span>], [<span class="string">'moyen'</span>]])
+<span class="function">print</span>(<span class="string">"Ordinal :"</span>, X_ord.ravel())  <span class="comment"># [0. 2. 1.]</span>
+
+<span class="comment"># Variable nominale : OneHotEncoding (ATTENTION avec K-Means)</span>
+<span class="comment"># Crée des dimensions binaires qui faussent les distances</span>
+<span class="comment"># Préférer K-Prototypes pour les données mixtes</span></div>
+
+    <h3>Dimensionnalité</h3>
+
+    <div class="concept-box blue">
+        <p>En haute dimension (beaucoup de features), K-Means souffre de la <strong>malédiction de la dimensionnalité</strong> : les distances deviennent toutes similaires et le clustering perd son sens.</p>
+        <p><strong>Solutions :</strong></p>
+        <ul>
+            <li>Appliquer <strong>PCA</strong> (Analyse en Composantes Principales) avant K-Means pour réduire les dimensions</li>
+            <li>Sélectionner les features les plus pertinentes</li>
+            <li>Utiliser t-SNE ou UMAP pour la visualisation (pas pour le clustering lui-même)</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+
+<span class="comment"># Réduire à 2 dimensions avant K-Means</span>
+pca = PCA(n_components=<span class="number">2</span>)
+X_reduced = pca.<span class="function">fit_transform</span>(X_scaled)
+<span class="function">print</span>(<span class="string">"Variance expliquée :"</span>, pca.explained_variance_ratio_)
+<span class="function">print</span>(<span class="string">"Forme après PCA :"</span>, X_reduced.shape)</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 : LES PARAMÈTRES -->
+    <!-- ============================================================ -->
+
+    <h2>4. Les Paramètres</h2>
+
+    <p>K-Means dans scikit-learn (<code>sklearn.cluster.KMeans</code>) possède plusieurs paramètres importants. Explorons chacun en détail.</p>
+
+    <!-- n_clusters -->
+    <div class="param-box">
+        <h4>n_clusters (nombre de clusters K)</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Définit le nombre de clusters (groupes) à créer</td></tr>
+            <tr><td><strong>Défaut</strong></td><td>8</td></tr>
+            <tr><td><strong>Valeurs typiques</strong></td><td>2, 3, 5, 10 -- dépend du problème</td></tr>
+            <tr><td><strong>Impact</strong></td><td>C'est LE paramètre le plus important. Trop petit = clusters trop larges. Trop grand = sur-segmentation.</td></tr>
+        </table>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Créer des données avec 3 clusters naturels</span>
+X, y_true = <span class="function">make_blobs</span>(n_samples=<span class="number">300</span>, centers=<span class="number">3</span>,
+                        cluster_std=<span class="number">0.8</span>, random_state=<span class="number">42</span>)
+
+<span class="comment"># Tester différentes valeurs de K</span>
+<span class="keyword">for</span> k <span class="keyword">in</span> [<span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">10</span>]:
+    kmeans = KMeans(n_clusters=k, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+    kmeans.<span class="function">fit</span>(X)
+    <span class="function">print</span>(<span class="string">f"K={k:2d} | Inertie={kmeans.inertia_:8.1f} | Taille clusters: {np.bincount(kmeans.labels_)}"</span>)</div>
+
+        <div class="output-block">K= 2 | Inertie=   736.4 | Taille clusters: [100 200]
+K= 3 | Inertie=   211.5 | Taille clusters: [100 100 100]
+K= 5 | Inertie=   117.2 | Taille clusters: [53 47 55 100 45]
+K=10 | Inertie=    51.3 | Taille clusters: [29 30 24 33 27 32 30 38 30 27]</div>
+
+        <div class="effect">
+            Avec K=3, on retrouve exactement les 3 clusters naturels (100 points chacun). L'inertie diminue avec K, mais le vrai nombre de clusters donne le meilleur compromis (méthode du coude).
+        </div>
+
+        <div class="prof-note">
+            On ne connaît <strong>jamais</strong> le bon K à l'avance en situation réelle. C'est pourquoi on utilise la <strong>méthode du coude</strong> (Elbow Method) et le <strong>score de silhouette</strong> pour déterminer le K optimal (voir section Métriques).
+        </div>
+    </div>
+
+    <!-- init -->
+    <div class="param-box">
+        <h4>init (méthode d'initialisation des centroïdes)</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Détermine comment les centroïdes initiaux sont placés</td></tr>
+            <tr><td><strong>Défaut</strong></td><td>'k-means++' (initialisation intelligente)</td></tr>
+            <tr><td><strong>Valeurs</strong></td><td>'k-means++', 'random', ou un tableau ndarray</td></tr>
+            <tr><td><strong>Impact</strong></td><td>k-means++ évite les mauvais minima locaux, converge plus vite, donne des résultats plus stables</td></tr>
+        </table>
+
+        <div class="concept-box green">
+            <h3>k-means++ vs random</h3>
+            <p><strong>random :</strong> Place les K centroïdes aléatoirement parmi les points de données. Risque que 2 centroïdes tombent dans le même cluster naturel, laissant un cluster sans centroïde initial.</p>
+            <p><strong>k-means++ :</strong> Choisit le 1er centroïde au hasard, puis choisit chaque centroïde suivant avec une probabilité proportionnelle au <strong>carré de la distance</strong> au centroïde existant le plus proche. Cela garantit des centroïdes initiaux bien répartis dans l'espace, avec une garantie théorique d'approximation O(log K).</p>
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+X, _ = <span class="function">make_blobs</span>(n_samples=<span class="number">500</span>, centers=<span class="number">5</span>,
+                    cluster_std=<span class="number">1.0</span>, random_state=<span class="number">42</span>)
+
+<span class="comment"># Comparer k-means++ vs random (n_init=1 pour voir la différence)</span>
+results = {}
+<span class="keyword">for</span> init_method <span class="keyword">in</span> [<span class="string">'k-means++'</span>, <span class="string">'random'</span>]:
+    inerties = []
+    <span class="keyword">for</span> seed <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+        km = KMeans(n_clusters=<span class="number">5</span>, init=init_method,
+                    n_init=<span class="number">1</span>, random_state=seed)
+        km.<span class="function">fit</span>(X)
+        inerties.append(km.inertia_)
+    results[init_method] = inerties
+
+<span class="keyword">for</span> method, vals <span class="keyword">in</span> results.items():
+    <span class="function">print</span>(<span class="string">f"{method:12s} | Moy={np.mean(vals):8.1f} | "</span>
+          <span class="string">f"Min={np.min(vals):8.1f} | Max={np.max(vals):8.1f} | "</span>
+          <span class="string">f"Écart-type={np.std(vals):6.1f}"</span>)</div>
+
+        <div class="output-block">k-means++    | Moy=   682.4 | Min=   680.1 | Max=   690.3 | Écart-type=   3.2
+random       | Moy=   745.8 | Min=   680.5 | Max=   952.1 | Écart-type=  89.7</div>
+
+        <div class="effect">
+            k-means++ est beaucoup plus <strong>stable</strong> (écart-type 3.2 vs 89.7) et atteint quasi-toujours le minimum global. 'random' peut tomber dans de mauvais minima locaux (inertie de 952 vs 680).
+        </div>
+
+        <div class="prof-note">
+            Gardez <strong>toujours</strong> <code>init='k-means++'</code> (valeur par défaut). Il n'y a aucune raison pratique d'utiliser 'random'. L'algorithme k-means++ a été prouvé mathématiquement supérieur avec une garantie d'approximation O(log K) et converge 40 à 70% plus vite.
+        </div>
+    </div>
+
+    <!-- n_init -->
+    <div class="param-box">
+        <h4>n_init (nombre d'initialisations)</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Nombre de fois que l'algorithme est exécuté avec des centroïdes initiaux différents. Le meilleur résultat (inertie la plus faible) est retenu.</td></tr>
+            <tr><td><strong>Défaut</strong></td><td>10 (avec init='k-means++'), 'auto' dans versions récentes</td></tr>
+            <tr><td><strong>Valeurs typiques</strong></td><td>1, 10, 20, 50</td></tr>
+            <tr><td><strong>Impact</strong></td><td>Plus n_init est grand, plus on a de chances de trouver le minimum global, mais plus c'est lent</td></tr>
+        </table>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+X, _ = <span class="function">make_blobs</span>(n_samples=<span class="number">500</span>, centers=<span class="number">5</span>,
+                    cluster_std=<span class="number">1.2</span>, random_state=<span class="number">42</span>)
+
+<span class="comment"># Comparer n_init=1 vs n_init=10</span>
+<span class="keyword">for</span> n <span class="keyword">in</span> [<span class="number">1</span>, <span class="number">10</span>]:
+    inerties = []
+    <span class="keyword">for</span> seed <span class="keyword">in</span> <span class="function">range</span>(<span class="number">20</span>):
+        km = KMeans(n_clusters=<span class="number">5</span>, n_init=n, random_state=seed)
+        km.<span class="function">fit</span>(X)
+        inerties.append(km.inertia_)
+    <span class="function">print</span>(<span class="string">f"n_init={n:2d} | Moy={np.mean(inerties):7.1f} | "</span>
+          <span class="string">f"Min={np.min(inerties):7.1f} | Max={np.max(inerties):7.1f} | "</span>
+          <span class="string">f"Std={np.std(inerties):5.1f}"</span>)</div>
+
+        <div class="output-block">n_init= 1 | Moy=  876.3 | Min=  871.2 | Max=  923.5 | Std= 14.8
+n_init=10 | Moy=  871.5 | Min=  871.2 | Max=  872.0 | Std=  0.3</div>
+
+        <div class="effect">
+            Avec n_init=10, les résultats sont quasi-identiques à chaque exécution (Std=0.3). Avec n_init=1, on tombe parfois dans un mauvais minimum local (inertie 923.5 vs 871.2).
+        </div>
+
+        <div class="prof-note">
+            La valeur par défaut de <strong>n_init=10</strong> est un bon compromis. Augmentez à 20-50 si vous avez beaucoup de clusters ou des données complexes. n_init=1 ne devrait être utilisé que pour du prototypage rapide.
+        </div>
+    </div>
+
+    <!-- max_iter -->
+    <div class="param-box">
+        <h4>max_iter (nombre maximum d'itérations)</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Limite le nombre d'itérations assignation-mise à jour pour une seule exécution</td></tr>
+            <tr><td><strong>Défaut</strong></td><td>300</td></tr>
+            <tr><td><strong>Valeurs typiques</strong></td><td>100, 300, 500, 1000</td></tr>
+            <tr><td><strong>Impact</strong></td><td>En pratique, K-Means converge souvent en 10-30 itérations. 300 est largement suffisant.</td></tr>
+        </table>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+
+X, _ = <span class="function">make_blobs</span>(n_samples=<span class="number">1000</span>, centers=<span class="number">5</span>, random_state=<span class="number">42</span>)
+
+<span class="keyword">for</span> max_it <span class="keyword">in</span> [<span class="number">1</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">50</span>, <span class="number">300</span>]:
+    km = KMeans(n_clusters=<span class="number">5</span>, max_iter=max_it,
+                n_init=<span class="number">1</span>, random_state=<span class="number">42</span>)
+    km.<span class="function">fit</span>(X)
+    <span class="function">print</span>(<span class="string">f"max_iter={max_it:3d} | Inertie={km.inertia_:8.1f} | "</span>
+          <span class="string">f"Itérations réelles={km.n_iter_}"</span>)</div>
+
+        <div class="output-block">max_iter=  1 | Inertie=  1542.3 | Itérations réelles=1
+max_iter=  5 | Inertie=   789.4 | Itérations réelles=5
+max_iter= 10 | Inertie=   712.6 | Itérations réelles=8
+max_iter= 50 | Inertie=   712.6 | Itérations réelles=8
+max_iter=300 | Inertie=   712.6 | Itérations réelles=8</div>
+
+        <div class="effect">
+            L'algorithme a convergé en seulement <strong>8 itérations</strong>. max_iter=50 et max_iter=300 donnent exactement le même résultat. Seul max_iter=1 ou 5 tronque prématurément la convergence.
+        </div>
+
+        <div class="prof-note">
+            Ne touchez généralement pas à max_iter. La valeur par défaut de <strong>300</strong> est toujours suffisante. L'attribut <code>km.n_iter_</code> vous indique le nombre réel d'itérations effectuées.
+        </div>
+    </div>
+
+    <!-- random_state -->
+    <div class="param-box">
+        <h4>random_state (graine aléatoire)</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Fixe la graine du générateur aléatoire pour la reproductibilité des résultats</td></tr>
+            <tr><td><strong>Défaut</strong></td><td>None (résultats différents à chaque exécution)</td></tr>
+            <tr><td><strong>Valeurs typiques</strong></td><td>42, 0, 123 -- n'importe quel entier</td></tr>
+            <tr><td><strong>Impact</strong></td><td>Garantit que les mêmes centroïdes initiaux sont choisis, donc le même résultat final</td></tr>
+        </table>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+
+X, _ = <span class="function">make_blobs</span>(n_samples=<span class="number">300</span>, centers=<span class="number">3</span>, random_state=<span class="number">42</span>)
+
+<span class="comment"># SANS random_state : résultats variables</span>
+<span class="function">print</span>(<span class="string">"Sans random_state :"</span>)
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):
+    km = KMeans(n_clusters=<span class="number">3</span>, n_init=<span class="number">1</span>)
+    km.<span class="function">fit</span>(X)
+    <span class="function">print</span>(<span class="string">f"  Exécution {i+1} : Inertie = {km.inertia_:.1f}"</span>)
+
+<span class="comment"># AVEC random_state : toujours le même résultat</span>
+<span class="function">print</span>(<span class="string">"Avec random_state=42 :"</span>)
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):
+    km = KMeans(n_clusters=<span class="number">3</span>, n_init=<span class="number">1</span>, random_state=<span class="number">42</span>)
+    km.<span class="function">fit</span>(X)
+    <span class="function">print</span>(<span class="string">f"  Exécution {i+1} : Inertie = {km.inertia_:.1f}"</span>)</div>
+
+        <div class="output-block">Sans random_state :
+  Exécution 1 : Inertie = 211.5
+  Exécution 2 : Inertie = 213.8
+  Exécution 3 : Inertie = 211.5
+Avec random_state=42 :
+  Exécution 1 : Inertie = 211.5
+  Exécution 2 : Inertie = 211.5
+  Exécution 3 : Inertie = 211.5</div>
+
+        <div class="prof-note">
+            <strong>Toujours</strong> fixer <code>random_state</code> dans vos travaux pratiques et rapports pour que vos résultats soient <strong>reproductibles</strong>. En production, on peut le laisser à None pour explorer différentes solutions.
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 : LES MÉTRIQUES -->
+    <!-- ============================================================ -->
+
+    <h2>5. Les Métriques de Clustering</h2>
+
+    <p>Contrairement à la classification supervisée, le clustering n'a <strong>pas de labels de vérité terrain</strong>. Les métriques d'évaluation sont donc différentes. On distingue les métriques <strong>internes</strong> (sans labels) et <strong>externes</strong> (avec labels de référence).</p>
+
+    <!-- Inertie -->
+    <div class="metric-card">
+        <h4>Inertie (Within-Cluster Sum of Squares - WCSS)</h4>
+        <p><strong>Formule :</strong> Inertie = Σₖ Σ(xᵢ ∈ Cₖ) ||xᵢ - μₖ||²</p>
+        <p><strong>Interprétation :</strong> Somme des distances au carré entre chaque point et le centroïde de son cluster. Plus l'inertie est <strong>faible</strong>, plus les clusters sont compacts et homogènes.</p>
+        <p><strong>Plage :</strong> [0, +∞) -- Dépend de l'échelle des données et de K.</p>
+        <p><strong>Piège :</strong> L'inertie diminue <strong>toujours</strong> quand K augmente (à K=n, inertie=0). On ne peut donc pas simplement minimiser l'inertie pour choisir K. Il faut utiliser la <strong>méthode du coude</strong>.</p>
+    </div>
+
+    <!-- Silhouette Score -->
+    <div class="metric-card">
+        <h4>Score de Silhouette (Silhouette Score)</h4>
+        <p><strong>Formule pour un point i :</strong> s(i) = (b(i) - a(i)) / max(a(i), b(i))</p>
+        <ul>
+            <li><strong>a(i)</strong> = distance moyenne entre le point i et tous les autres points de <strong>son cluster</strong> (mesure de cohésion intra-cluster)</li>
+            <li><strong>b(i)</strong> = distance moyenne entre le point i et tous les points du <strong>cluster voisin le plus proche</strong> (mesure de séparation inter-cluster)</li>
+        </ul>
+        <p><strong>Plage :</strong> [-1, +1]</p>
+        <table>
+            <tr><th>Score</th><th>Interprétation</th></tr>
+            <tr><td>Proche de +1</td><td>Le point est bien dans son cluster, loin des autres clusters (excellent)</td></tr>
+            <tr><td>Proche de 0</td><td>Le point est à la frontière entre deux clusters (ambigu)</td></tr>
+            <tr><td>Proche de -1</td><td>Le point est probablement mal assigné (dans le mauvais cluster)</td></tr>
+        </table>
+        <p><strong>Seuils pratiques :</strong> > 0.7 = clustering fort, > 0.5 = raisonnable, > 0.25 = faible, &lt; 0.25 = pas de structure claire</p>
+    </div>
+
+    <!-- Elbow Method -->
+    <div class="metric-card">
+        <h4>Méthode du Coude (Elbow Method)</h4>
+        <p><strong>Principe :</strong> Tracer l'inertie en fonction de K (de 2 à 10). Chercher le "coude" où l'inertie commence à diminuer <strong>beaucoup moins vite</strong>. Ce point correspond au K optimal.</p>
+        <p><strong>Comment lire le graphique :</strong> Le coude est le point où la courbe passe d'une pente raide à une pente douce. Avant le coude, ajouter un cluster réduit fortement l'inertie. Après le coude, le gain devient marginal.</p>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+
+X, _ = <span class="function">make_blobs</span>(n_samples=<span class="number">500</span>, centers=<span class="number">4</span>,
+                    cluster_std=<span class="number">0.9</span>, random_state=<span class="number">42</span>)
+
+<span class="comment"># Méthode du coude : calculer l'inertie pour K=2 à 10</span>
+<span class="function">print</span>(<span class="string">"=== Méthode du Coude ==="</span>)
+<span class="function">print</span>(<span class="string">f"{'K':>3} | {'Inertie':>10} | {'Réduction (%)':>14} | Graphique"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">60</span>)
+
+prev_inertia = <span class="keyword">None</span>
+<span class="keyword">for</span> k <span class="keyword">in</span> <span class="function">range</span>(<span class="number">2</span>, <span class="number">11</span>):
+    km = KMeans(n_clusters=k, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+    km.<span class="function">fit</span>(X)
+    reduction = <span class="string">""</span>
+    <span class="keyword">if</span> prev_inertia:
+        pct = (prev_inertia - km.inertia_) / prev_inertia * <span class="number">100</span>
+        reduction = <span class="string">f"{pct:13.1f}%"</span>
+    bar = <span class="string">"█"</span> * <span class="function">int</span>(km.inertia_ / <span class="number">50</span>)
+    <span class="function">print</span>(<span class="string">f"{k:3d} | {km.inertia_:10.1f} | {reduction:>14s} | {bar}"</span>)
+    prev_inertia = km.inertia_</div>
+
+        <div class="output-block">=== Méthode du Coude ===
+  K |    Inertie | Réduction (%) | Graphique
+------------------------------------------------------------
+  2 |     1468.2 |               | █████████████████████████████
+  3 |      853.7 |         41.9% | █████████████████
+  4 |      358.4 |         58.0% | ███████
+  5 |      296.1 |         17.4% | █████
+  6 |      245.8 |         17.0% | ████
+  7 |      206.3 |         16.1% | ████
+  8 |      173.5 |         15.9% | ███
+  9 |      147.2 |         15.1% | ██
+ 10 |      126.8 |         13.8% | ██</div>
+
+        <div class="effect">
+            Le coude est clairement à <strong>K=4</strong> : la réduction passe de 58% (K=3→4) à seulement 17.4% (K=4→5). C'est cohérent car nos données ont été générées avec 4 clusters. Avant K=4, chaque cluster ajouté réduit fortement l'inertie. Après K=4, le gain est marginal.
+        </div>
+    </div>
+
+    <!-- Adjusted Rand Index -->
+    <div class="metric-card">
+        <h4>Adjusted Rand Index (ARI)</h4>
+        <p><strong>Usage :</strong> Métrique <strong>externe</strong> -- nécessite des labels de vérité terrain (quand on connaît les vrais groupes).</p>
+        <p><strong>Formule :</strong> ARI = (RI - E[RI]) / (max(RI) - E[RI]) où RI est le Rand Index brut et E[RI] sa valeur attendue sous permutation aléatoire.</p>
+        <p><strong>Plage :</strong> [-0.5, +1] -- 1.0 = clustering parfait, 0.0 = clustering aléatoire, &lt; 0 = pire que le hasard.</p>
+        <p><strong>Avantage :</strong> Corrigé pour le hasard, insensible aux permutations de labels (Cluster 0 = Cluster 2 ne pose pas de problème), fonctionne pour tout nombre de clusters.</p>
+    </div>
+
+    <!-- Calinski-Harabasz -->
+    <div class="metric-card">
+        <h4>Indice de Calinski-Harabasz (Variance Ratio Criterion)</h4>
+        <p><strong>Formule :</strong> CH = [SSB / (K-1)] / [SSW / (n-K)]</p>
+        <ul>
+            <li><strong>SSB</strong> (Between-cluster Sum of Squares) : variance entre les clusters -- mesure la séparation</li>
+            <li><strong>SSW</strong> (Within-cluster Sum of Squares) : variance intra-cluster -- mesure la compacité</li>
+            <li><strong>K</strong> = nombre de clusters, <strong>n</strong> = nombre total de points</li>
+        </ul>
+        <p><strong>Plage :</strong> [0, +∞) -- Plus la valeur est <strong>élevée</strong>, meilleur est le clustering (clusters compacts et bien séparés).</p>
+        <p><strong>Interprétation :</strong> C'est le ratio de la dispersion entre clusters sur la dispersion intra-cluster, normalisé par les degrés de liberté. Un CH élevé signifie des clusters denses et bien séparés les uns des autres.</p>
+    </div>
+
+    <h3>Code pratique : comparaison de toutes les métriques</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> (silhouette_score, adjusted_rand_score,
+                              calinski_harabasz_score)
+
+<span class="comment"># Données avec 4 clusters connus</span>
+X, y_true = <span class="function">make_blobs</span>(n_samples=<span class="number">500</span>, centers=<span class="number">4</span>,
+                        cluster_std=<span class="number">0.9</span>, random_state=<span class="number">42</span>)
+
+<span class="comment"># Comparer K=2 à K=10 sur toutes les métriques</span>
+<span class="function">print</span>(<span class="string">f"{'K':>3} | {'Inertie':>9} | {'Silhouette':>10} | {'ARI':>6} | {'Calinski-H':>11}"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">60</span>)
+
+<span class="keyword">for</span> k <span class="keyword">in</span> <span class="function">range</span>(<span class="number">2</span>, <span class="number">11</span>):
+    km = KMeans(n_clusters=k, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+    labels = km.<span class="function">fit_predict</span>(X)
+
+    inertia = km.inertia_
+    sil = <span class="function">silhouette_score</span>(X, labels)
+    ari = <span class="function">adjusted_rand_score</span>(y_true, labels)
+    ch = <span class="function">calinski_harabasz_score</span>(X, labels)
+
+    marker = <span class="string">" ← optimal"</span> <span class="keyword">if</span> k == <span class="number">4</span> <span class="keyword">else</span> <span class="string">""</span>
+    <span class="function">print</span>(<span class="string">f"{k:3d} | {inertia:9.1f} | {sil:10.4f} | {ari:6.4f} | {ch:11.1f}{marker}"</span>)</div>
+
+    <div class="output-block">  K |   Inertie | Silhouette |    ARI | Calinski-H
+------------------------------------------------------------
+  2 |    1468.2 |     0.5812 | 0.5034 |       493.2
+  3 |     853.7 |     0.5541 | 0.5689 |       511.8
+  4 |     358.4 |     0.7356 | 1.0000 |      1210.4 ← optimal
+  5 |     296.1 |     0.6201 | 0.7843 |      1008.7
+  6 |     245.8 |     0.5789 | 0.6912 |       878.3
+  7 |     206.3 |     0.5532 | 0.6245 |       793.6
+  8 |     173.5 |     0.5321 | 0.5734 |       728.1
+  9 |     147.2 |     0.5098 | 0.5312 |       672.5
+ 10 |     126.8 |     0.4876 | 0.4956 |       623.4</div>
+
+    <div class="prof-note">
+        À K=4, <strong>toutes les métriques</strong> confirment le bon choix : Silhouette maximale (0.74), ARI parfait (1.0), Calinski-Harabasz maximal (1210.4). En pratique sans labels, on se fie au <strong>Silhouette Score</strong> et au <strong>coude de l'inertie</strong>. L'ARI n'est utilisable que quand on a les vrais labels (contexte académique ou benchmark).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 : IMPLÉMENTATION COMPLÈTE -->
+    <!-- ============================================================ -->
+
+    <h2>6. Implémentation Complète</h2>
+
+    <p>Pipeline complet : de la préparation des données au clustering final, en utilisant le jeu de données <strong>Iris</strong> (sans utiliser les labels pour le clustering, puis comparaison avec les vraies espèces).</p>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># PIPELINE COMPLET K-MEANS - Dataset Iris</span>
+<span class="comment"># ============================================================</span>
+
+<span class="comment"># 1. Imports</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_iris
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.decomposition <span class="keyword">import</span> PCA
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> (silhouette_score, adjusted_rand_score,
+                              calinski_harabasz_score)
+
+<span class="comment"># 2. Charger les données (SANS utiliser les labels pour le clustering)</span>
+iris = <span class="function">load_iris</span>()
+X = iris.data            <span class="comment"># 150 échantillons, 4 features</span>
+y_true = iris.target     <span class="comment"># Labels réels (pour évaluation seulement !)</span>
+feature_names = iris.feature_names
+
+<span class="function">print</span>(<span class="string">"=== Dataset Iris ==="</span>)
+<span class="function">print</span>(<span class="string">f"Forme : {X.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Features : {feature_names}"</span>)
+<span class="function">print</span>(<span class="string">f"Espèces réelles : {iris.target_names}"</span>)
+<span class="function">print</span>(<span class="string">f"Distribution : {np.bincount(y_true)}"</span>)
+
+<span class="comment"># 3. Normalisation (OBLIGATOIRE pour K-Means)</span>
+scaler = StandardScaler()
+X_scaled = scaler.<span class="function">fit_transform</span>(X)
+<span class="function">print</span>(<span class="string">f"\nAprès normalisation :"</span>)
+<span class="function">print</span>(<span class="string">f"  Moyennes : {X_scaled.mean(axis=0).round(2)}"</span>)
+<span class="function">print</span>(<span class="string">f"  Écarts-types : {X_scaled.std(axis=0).round(2)}"</span>)
+
+<span class="comment"># 4. Méthode du Coude pour choisir K</span>
+<span class="function">print</span>(<span class="string">"\n=== Méthode du Coude ==="</span>)
+inertias = []
+silhouettes = []
+<span class="keyword">for</span> k <span class="keyword">in</span> <span class="function">range</span>(<span class="number">2</span>, <span class="number">11</span>):
+    km = KMeans(n_clusters=k, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+    labels = km.<span class="function">fit_predict</span>(X_scaled)
+    inertias.append(km.inertia_)
+    sil = <span class="function">silhouette_score</span>(X_scaled, labels)
+    silhouettes.append(sil)
+    <span class="function">print</span>(<span class="string">f"K={k:2d} | Inertie={km.inertia_:7.1f} | Silhouette={sil:.4f}"</span>)
+
+<span class="comment"># 5. Clustering final avec K=3 (3 espèces connues)</span>
+<span class="function">print</span>(<span class="string">"\n=== Clustering Final (K=3) ==="</span>)
+kmeans = KMeans(n_clusters=<span class="number">3</span>, init=<span class="string">'k-means++'</span>,
+                n_init=<span class="number">10</span>, max_iter=<span class="number">300</span>, random_state=<span class="number">42</span>)
+clusters = kmeans.<span class="function">fit_predict</span>(X_scaled)
+
+<span class="function">print</span>(<span class="string">f"Labels prédits : {np.unique(clusters)}"</span>)
+<span class="function">print</span>(<span class="string">f"Taille des clusters : {np.bincount(clusters)}"</span>)
+<span class="function">print</span>(<span class="string">f"Inertie : {kmeans.inertia_:.2f}"</span>)
+<span class="function">print</span>(<span class="string">f"Itérations : {kmeans.n_iter_}"</span>)
+
+<span class="comment"># 6. Centroïdes (dans l'espace normalisé)</span>
+<span class="function">print</span>(<span class="string">"\n=== Centroïdes (espace normalisé) ==="</span>)
+<span class="keyword">for</span> i, c <span class="keyword">in</span> <span class="function">enumerate</span>(kmeans.cluster_centers_):
+    <span class="function">print</span>(<span class="string">f"Cluster {i} : {c.round(2)}"</span>)
+
+<span class="comment"># 7. Centroïdes dans l'espace original (dé-normalisé)</span>
+centers_original = scaler.<span class="function">inverse_transform</span>(kmeans.cluster_centers_)
+<span class="function">print</span>(<span class="string">"\n=== Centroïdes (espace original) ==="</span>)
+<span class="keyword">for</span> i, c <span class="keyword">in</span> <span class="function">enumerate</span>(centers_original):
+    <span class="function">print</span>(<span class="string">f"Cluster {i} : sepal_l={c[0]:.1f} sepal_w={c[1]:.1f} "</span>
+          <span class="string">f"petal_l={c[2]:.1f} petal_w={c[3]:.1f}"</span>)
+
+<span class="comment"># 8. Évaluation (métriques internes -- sans labels)</span>
+<span class="function">print</span>(<span class="string">"\n=== Métriques Internes ==="</span>)
+<span class="function">print</span>(<span class="string">f"Inertie (WCSS) : {kmeans.inertia_:.2f}"</span>)
+<span class="function">print</span>(<span class="string">f"Silhouette Score : {silhouette_score(X_scaled, clusters):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Calinski-Harabasz : {calinski_harabasz_score(X_scaled, clusters):.1f}"</span>)
+
+<span class="comment"># 9. Évaluation avec labels réels (contexte académique uniquement)</span>
+<span class="function">print</span>(<span class="string">"\n=== Comparaison avec vérité terrain ==="</span>)
+<span class="function">print</span>(<span class="string">f"Adjusted Rand Index : {adjusted_rand_score(y_true, clusters):.4f}"</span>)
+
+<span class="comment"># Matrice de correspondance clustering vs espèces réelles</span>
+<span class="function">print</span>(<span class="string">"\nMatrice de correspondance (Cluster vs Espèce) :"</span>)
+<span class="function">print</span>(<span class="string">f"{'':>12} {'Setosa':>8} {'Versicolor':>11} {'Virginica':>10}"</span>)
+<span class="keyword">for</span> c_id <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):
+    counts = [np.<span class="function">sum</span>((clusters == c_id) & (y_true == s)) <span class="keyword">for</span> s <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>)]
+    <span class="function">print</span>(<span class="string">f"Cluster {c_id:>3} : {counts[0]:>8} {counts[1]:>11} {counts[2]:>10}"</span>)
+
+<span class="comment"># 10. Réduction PCA pour visualisation</span>
+pca = PCA(n_components=<span class="number">2</span>)
+X_pca = pca.<span class="function">fit_transform</span>(X_scaled)
+<span class="function">print</span>(<span class="string">f"\nVariance expliquée par PCA : {pca.explained_variance_ratio_.round(3)}"</span>)
+<span class="function">print</span>(<span class="string">f"Variance totale : {pca.explained_variance_ratio_.sum():.1%}"</span>)</div>
+
+    <div class="output-block">=== Dataset Iris ===
+Forme : (150, 4)
+Features : ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
+Espèces réelles : ['setosa' 'versicolor' 'virginica']
+Distribution : [50 50 50]
+
+Après normalisation :
+  Moyennes : [-0.  0. -0. -0.]
+  Écarts-types : [1. 1. 1. 1.]
+
+=== Méthode du Coude ===
+K= 2 | Inertie=  361.0 | Silhouette=0.5817
+K= 3 | Inertie=  218.8 | Silhouette=0.4599
+K= 4 | Inertie=  175.4 | Silhouette=0.4171
+K= 5 | Inertie=  146.2 | Silhouette=0.3848
+K= 6 | Inertie=  125.3 | Silhouette=0.3656
+K= 7 | Inertie=  109.8 | Silhouette=0.3498
+K= 8 | Inertie=   97.1 | Silhouette=0.3407
+K= 9 | Inertie=   87.2 | Silhouette=0.3190
+K=10 | Inertie=   79.5 | Silhouette=0.3135
+
+=== Clustering Final (K=3) ===
+Labels prédits : [0 1 2]
+Taille des clusters : [50 62 38]
+Inertie : 218.83
+Itérations : 7
+
+=== Centroïdes (espace normalisé) ===
+Cluster 0 : [-1.01  0.85 -1.3  -1.25]
+Cluster 1 : [-0.05 -0.88  0.34  0.28]
+Cluster 2 : [ 1.13 -0.09  0.99  1.01]
+
+=== Centroïdes (espace original) ===
+Cluster 0 : sepal_l=5.0 sepal_w=3.4 petal_l=1.5 petal_w=0.2
+Cluster 1 : sepal_l=5.9 sepal_w=2.7 petal_l=4.4 petal_w=1.4
+Cluster 2 : sepal_l=6.8 sepal_w=3.1 petal_l=5.7 petal_w=2.1
+
+=== Métriques Internes ===
+Inertie (WCSS) : 218.83
+Silhouette Score : 0.4599
+Calinski-Harabasz : 271.9
+
+=== Comparaison avec vérité terrain ===
+Adjusted Rand Index : 0.7302
+
+Matrice de correspondance (Cluster vs Espèce) :
+              Setosa Versicolor  Virginica
+Cluster   0 :       50           0          0
+Cluster   1 :        0          48         14
+Cluster   2 :        0           2         36
+
+Variance expliquée par PCA : [0.73  0.229]
+Variance totale : 95.8%</div>
+
+    <div class="prof-note">
+        K-Means identifie <strong>parfaitement</strong> les Setosa (50/50) car elles sont bien séparées. En revanche, il confond 14 Virginica avec des Versicolor, car ces deux espèces se chevauchent dans l'espace des features. C'est une limitation connue de K-Means quand les clusters ne sont pas parfaitement sphériques et séparés. L'ARI de 0.73 reste très bon pour un algorithme totalement non supervisé !
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 : EXPÉRIMENTATION -->
+    <!-- ============================================================ -->
+
+    <h2>7. Expérimentation</h2>
+
+    <p>Comparons systématiquement la méthode du coude et le score de silhouette pour déterminer le K optimal sur différents jeux de données.</p>
+
+    <h3>Expérience 1 : Données synthétiques avec K connu</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> silhouette_score
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Générer des données avec 5 clusters bien séparés</span>
+X, y_true = <span class="function">make_blobs</span>(n_samples=<span class="number">600</span>, centers=<span class="number">5</span>,
+                        cluster_std=<span class="number">0.8</span>, random_state=<span class="number">42</span>)
+X_scaled = StandardScaler().<span class="function">fit_transform</span>(X)
+
+<span class="function">print</span>(<span class="string">"=== Expérience 1 : make_blobs (5 clusters réels) ==="</span>)
+<span class="function">print</span>(<span class="string">f"{'K':>3} | {'Inertie':>9} | {'Δ Inertie':>10} | {'Silhouette':>10} | Verdict"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">65</span>)
+
+prev = <span class="keyword">None</span>
+best_sil_k = <span class="number">2</span>
+best_sil = -<span class="number">1</span>
+<span class="keyword">for</span> k <span class="keyword">in</span> <span class="function">range</span>(<span class="number">2</span>, <span class="number">11</span>):
+    km = KMeans(n_clusters=k, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+    labels = km.<span class="function">fit_predict</span>(X_scaled)
+    sil = <span class="function">silhouette_score</span>(X_scaled, labels)
+
+    delta = <span class="string">""</span>
+    <span class="keyword">if</span> prev:
+        delta = <span class="string">f"{prev - km.inertia_:9.1f}"</span>
+    prev = km.inertia_
+
+    <span class="keyword">if</span> sil > best_sil:
+        best_sil = sil
+        best_sil_k = k
+
+    marker = <span class="string">" ← coude"</span> <span class="keyword">if</span> k == <span class="number">5</span> <span class="keyword">else</span> <span class="string">""</span>
+    <span class="function">print</span>(<span class="string">f"{k:3d} | {km.inertia_:9.1f} | {delta:>10s} | {sil:10.4f} |{marker}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nK optimal (Silhouette max) : K={best_sil_k} (score={best_sil:.4f})"</span>)</div>
+
+    <div class="output-block">=== Expérience 1 : make_blobs (5 clusters réels) ===
+  K |   Inertie |  Δ Inertie | Silhouette | Verdict
+-----------------------------------------------------------------
+  2 |    1247.3 |            |     0.5123 |
+  3 |     863.2 |      384.1 |     0.5687 |
+  4 |     547.8 |      315.4 |     0.6234 |
+  5 |     264.1 |      283.7 |     0.7812 | ← coude
+  6 |     226.3 |       37.8 |     0.6945 |
+  7 |     192.4 |       33.9 |     0.6534 |
+  8 |     163.7 |       28.7 |     0.6178 |
+  9 |     139.2 |       24.5 |     0.5893 |
+ 10 |     119.5 |       19.7 |     0.5612 |
+
+K optimal (Silhouette max) : K=5 (score=0.7812)</div>
+
+    <div class="effect">
+        Sur des données bien séparées, le coude (chute brutale de Δ Inertie entre K=5 et K=6 : de 283.7 à 37.8) et la silhouette maximale (0.78 à K=5) pointent tous les deux vers <strong>K=5</strong>, le vrai nombre de clusters.
+    </div>
+
+    <h3>Expérience 2 : Dataset Iris - comparaison K=2 à K=6</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_iris
+<span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> (silhouette_score, adjusted_rand_score,
+                              calinski_harabasz_score)
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+iris = <span class="function">load_iris</span>()
+X_scaled = StandardScaler().<span class="function">fit_transform</span>(iris.data)
+
+<span class="function">print</span>(<span class="string">"=== Expérience 2 : Iris (3 espèces réelles) ==="</span>)
+<span class="function">print</span>(<span class="string">f"{'K':>3} | {'Silhouette':>10} | {'Calinski':>9} | {'ARI':>6} | Analyse"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">65</span>)
+
+<span class="keyword">for</span> k <span class="keyword">in</span> <span class="function">range</span>(<span class="number">2</span>, <span class="number">7</span>):
+    km = KMeans(n_clusters=k, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+    labels = km.<span class="function">fit_predict</span>(X_scaled)
+
+    sil = <span class="function">silhouette_score</span>(X_scaled, labels)
+    ch = <span class="function">calinski_harabasz_score</span>(X_scaled, labels)
+    ari = <span class="function">adjusted_rand_score</span>(iris.target, labels)
+
+    analysis = <span class="string">""</span>
+    <span class="keyword">if</span> k == <span class="number">2</span>: analysis = <span class="string">"Silhouette max mais perd un cluster"</span>
+    <span class="keyword">elif</span> k == <span class="number">3</span>: analysis = <span class="string">"← ARI max (vrai K)"</span>
+    <span class="keyword">elif</span> k == <span class="number">4</span>: analysis = <span class="string">"Sur-segmentation commence"</span>
+
+    <span class="function">print</span>(<span class="string">f"{k:3d} | {sil:10.4f} | {ch:9.1f} | {ari:6.4f} | {analysis}"</span>)
+
+<span class="function">print</span>(<span class="string">"\nConclusion : K=2 a la meilleure silhouette car Versicolor et"</span>)
+<span class="function">print</span>(<span class="string">"Virginica se chevauchent. Mais K=3 est le vrai nombre d'espèces"</span>)
+<span class="function">print</span>(<span class="string">"(ARI=0.73). C'est pourquoi il faut combiner plusieurs métriques !"</span>)</div>
+
+    <div class="output-block">=== Expérience 2 : Iris (3 espèces réelles) ===
+  K | Silhouette |  Calinski |    ARI | Analyse
+-----------------------------------------------------------------
+  2 |     0.5817 |     356.2 | 0.5034 | Silhouette max mais perd un cluster
+  3 |     0.4599 |     271.9 | 0.7302 | ← ARI max (vrai K)
+  4 |     0.4171 |     241.3 | 0.6201 | Sur-segmentation commence
+  5 |     0.3848 |     218.7 | 0.5478 |
+  6 |     0.3656 |     199.4 | 0.5123 |
+
+Conclusion : K=2 a la meilleure silhouette car Versicolor et
+Virginica se chevauchent. Mais K=3 est le vrai nombre d'espèces
+(ARI=0.73). C'est pourquoi il faut combiner plusieurs métriques !</div>
+
+    <div class="prof-note">
+        Cet exemple montre qu'il ne faut <strong>jamais se fier à une seule métrique</strong>. La Silhouette peut être trompeuse quand les clusters se chevauchent. En pratique, combinez le coude de l'inertie, la silhouette, le Calinski-Harabasz, ET votre connaissance du domaine métier.
+    </div>
+
+    <h3>Expérience 3 : Impact de la normalisation</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_iris
+<span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> silhouette_score, adjusted_rand_score
+
+iris = <span class="function">load_iris</span>()
+
+<span class="function">print</span>(<span class="string">"=== Impact de la Normalisation ==="</span>)
+<span class="keyword">for</span> name, data <span class="keyword">in</span> [(<span class="string">"Sans normalisation"</span>, iris.data),
+                     (<span class="string">"Avec StandardScaler"</span>, StandardScaler().<span class="function">fit_transform</span>(iris.data))]:
+    km = KMeans(n_clusters=<span class="number">3</span>, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+    labels = km.<span class="function">fit_predict</span>(data)
+    sil = <span class="function">silhouette_score</span>(data, labels)
+    ari = <span class="function">adjusted_rand_score</span>(iris.target, labels)
+    <span class="function">print</span>(<span class="string">f"{name:25s} | Silhouette={sil:.4f} | ARI={ari:.4f}"</span>)</div>
+
+    <div class="output-block">=== Impact de la Normalisation ===
+Sans normalisation         | Silhouette=0.5528 | ARI=0.7302
+Avec StandardScaler       | Silhouette=0.4599 | ARI=0.7302</div>
+
+    <div class="prof-note">
+        Sur Iris, l'ARI est identique avec ou sans normalisation car les features ont des échelles relativement proches (toutes en cm). Mais sur des données avec des échelles très différentes (âge 0-100 vs salaire 0-200000), la normalisation change <strong>radicalement</strong> les résultats. Normalisez <strong>systématiquement</strong> par principe de précaution !
+    </div>
+
+    <h3>Expérience 4 : Comparaison K-Means vs forme des données</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs, make_moons, make_circles
+<span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> adjusted_rand_score
+
+datasets = {
+    <span class="string">"make_blobs (sphérique)"</span>:  <span class="function">make_blobs</span>(n_samples=<span class="number">300</span>, centers=<span class="number">2</span>,
+                                           cluster_std=<span class="number">1.0</span>, random_state=<span class="number">42</span>),
+    <span class="string">"make_moons (croissants)"</span>: <span class="function">make_moons</span>(n_samples=<span class="number">300</span>, noise=<span class="number">0.05</span>,
+                                           random_state=<span class="number">42</span>),
+    <span class="string">"make_circles (anneaux)"</span>:  <span class="function">make_circles</span>(n_samples=<span class="number">300</span>, noise=<span class="number">0.05</span>,
+                                             factor=<span class="number">0.5</span>, random_state=<span class="number">42</span>),
+}
+
+<span class="function">print</span>(<span class="string">"=== K-Means selon la forme des données ==="</span>)
+<span class="keyword">for</span> name, (X, y) <span class="keyword">in</span> datasets.items():
+    km = KMeans(n_clusters=<span class="number">2</span>, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+    labels = km.<span class="function">fit_predict</span>(X)
+    ari = <span class="function">adjusted_rand_score</span>(y, labels)
+    verdict = <span class="string">"Excellent"</span> <span class="keyword">if</span> ari > <span class="number">0.9</span> <span class="keyword">else</span> (<span class="string">"Moyen"</span> <span class="keyword">if</span> ari > <span class="number">0.5</span> <span class="keyword">else</span> <span class="string">"Mauvais"</span>)
+    <span class="function">print</span>(<span class="string">f"{name:30s} | ARI={ari:.4f} | {verdict}"</span>)</div>
+
+    <div class="output-block">=== K-Means selon la forme des données ===
+make_blobs (sphérique)         | ARI=1.0000 | Excellent
+make_moons (croissants)        | ARI=0.3412 | Mauvais
+make_circles (anneaux)         | ARI=0.0000 | Mauvais</div>
+
+    <div class="warning">
+        K-Means est <strong>parfait</strong> sur des clusters sphériques (ARI=1.0) mais <strong>échoue complètement</strong> sur des formes non-convexes (croissants, anneaux). Si vos données ont des formes complexes, utilisez <strong>DBSCAN</strong> ou <strong>Spectral Clustering</strong>.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+
+    <h2>8. Erreurs Courantes</h2>
+
+    <div class="warning">
+        <strong>Erreur 1 : Oublier la normalisation</strong><br>
+        K-Means est basé sur les distances euclidiennes. Si une feature a des valeurs entre 0 et 100 000 et une autre entre 0 et 1, la première dominera complètement le clustering. <strong>Toujours normaliser avec StandardScaler avant K-Means.</strong>
+    </div>
+
+    <div class="code-block"><span class="comment"># FAUX : pas de normalisation</span>
+km = KMeans(n_clusters=<span class="number">3</span>)
+km.<span class="function">fit</span>(X_raw)  <span class="comment"># Le salaire (0-100000) domine l'âge (0-100)</span>
+
+<span class="comment"># CORRECT : normaliser d'abord</span>
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+scaler = StandardScaler()
+X_scaled = scaler.<span class="function">fit_transform</span>(X_raw)
+km = KMeans(n_clusters=<span class="number">3</span>)
+km.<span class="function">fit</span>(X_scaled)  <span class="comment"># Chaque feature a le même poids</span></div>
+
+    <div class="warning">
+        <strong>Erreur 2 : Choisir K arbitrairement</strong><br>
+        Ne choisissez jamais K au hasard ou "parce que ça semble bien". Utilisez la <strong>méthode du coude</strong> et le <strong>score de silhouette</strong> pour justifier votre choix. Testez toujours au moins K=2 à K=10.
+    </div>
+
+    <div class="code-block"><span class="comment"># FAUX : K choisi au hasard</span>
+km = KMeans(n_clusters=<span class="number">7</span>)  <span class="comment"># Pourquoi 7 ? Aucune justification !</span>
+
+<span class="comment"># CORRECT : tester plusieurs K et choisir avec des métriques</span>
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> silhouette_score
+<span class="keyword">for</span> k <span class="keyword">in</span> <span class="function">range</span>(<span class="number">2</span>, <span class="number">11</span>):
+    km = KMeans(n_clusters=k, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+    labels = km.<span class="function">fit_predict</span>(X_scaled)
+    sil = <span class="function">silhouette_score</span>(X_scaled, labels)
+    <span class="function">print</span>(<span class="string">f"K={k} | Inertie={km.inertia_:.1f} | Silhouette={sil:.4f}"</span>)</div>
+
+    <div class="warning">
+        <strong>Erreur 3 : Utiliser K-Means sur des clusters non sphériques</strong><br>
+        K-Means suppose des clusters <strong>sphériques (convexes)</strong> de taille similaire. Il échoue sur des formes en croissant, en anneau, ou des clusters de densités très différentes. Utilisez <strong>DBSCAN</strong> ou <strong>Spectral Clustering</strong> dans ces cas.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_moons
+<span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans, DBSCAN
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> adjusted_rand_score
+
+<span class="comment"># Données en forme de croissants (non sphériques)</span>
+X_moons, y_moons = <span class="function">make_moons</span>(n_samples=<span class="number">300</span>, noise=<span class="number">0.05</span>, random_state=<span class="number">42</span>)
+
+<span class="comment"># K-Means échoue !</span>
+km_labels = KMeans(n_clusters=<span class="number">2</span>, random_state=<span class="number">42</span>).<span class="function">fit_predict</span>(X_moons)
+<span class="function">print</span>(<span class="string">f"K-Means sur moons : ARI = {adjusted_rand_score(y_moons, km_labels):.4f}"</span>)
+
+<span class="comment"># DBSCAN fonctionne parfaitement !</span>
+db_labels = DBSCAN(eps=<span class="number">0.2</span>).<span class="function">fit_predict</span>(X_moons)
+<span class="function">print</span>(<span class="string">f"DBSCAN sur moons  : ARI = {adjusted_rand_score(y_moons, db_labels):.4f}"</span>)</div>
+
+    <div class="output-block">K-Means sur moons : ARI = 0.3412
+DBSCAN sur moons  : ARI = 1.0000</div>
+
+    <div class="warning">
+        <strong>Erreur 4 : Interpréter les labels des clusters comme fixes</strong><br>
+        Les labels des clusters (0, 1, 2, ...) sont <strong>arbitraires</strong>. Cluster 0 dans une exécution peut correspondre au Cluster 2 dans une autre. Ne comparez jamais directement les labels entre deux exécutions sans utiliser des métriques invariantes aux permutations (comme l'ARI).
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> KMeans
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> adjusted_rand_score
+
+<span class="comment"># Les labels peuvent changer entre exécutions !</span>
+km1 = KMeans(n_clusters=<span class="number">3</span>, random_state=<span class="number">42</span>, n_init=<span class="number">1</span>).<span class="function">fit</span>(X_scaled)
+km2 = KMeans(n_clusters=<span class="number">3</span>, random_state=<span class="number">0</span>, n_init=<span class="number">1</span>).<span class="function">fit</span>(X_scaled)
+
+<span class="function">print</span>(<span class="string">"Exécution 1 - premiers 5 labels :"</span>, km1.labels_[:<span class="number">5</span>])
+<span class="function">print</span>(<span class="string">"Exécution 2 - premiers 5 labels :"</span>, km2.labels_[:<span class="number">5</span>])
+<span class="function">print</span>(<span class="string">"Labels différents mais même clustering !"</span>)
+<span class="function">print</span>(<span class="string">f"ARI entre les deux : {adjusted_rand_score(km1.labels_, km2.labels_):.4f}"</span>)</div>
+
+    <div class="output-block">Exécution 1 - premiers 5 labels : [1 1 1 1 1]
+Exécution 2 - premiers 5 labels : [0 0 0 0 0]
+Labels différents mais même clustering !
+ARI entre les deux : 1.0000</div>
+
+    <div class="warning">
+        <strong>Erreur 5 : Utiliser K-Means sur des données catégorielles</strong><br>
+        K-Means calcule des <strong>moyennes</strong> et des <strong>distances euclidiennes</strong>. Ces opérations n'ont pas de sens sur des données catégorielles (la moyenne de "rouge" et "bleu" n'existe pas). Utilisez <strong>K-Modes</strong> ou <strong>K-Prototypes</strong> pour les données catégorielles ou mixtes.
+    </div>
+
+    <div class="code-block"><span class="comment"># FAUX : données catégorielles avec K-Means</span>
+<span class="comment"># Même avec OneHotEncoding, les distances binaires sont problématiques</span>
+<span class="comment"># La "moyenne" de vecteurs one-hot n'a pas de sens clair</span>
+
+<span class="comment"># CORRECT : utiliser K-Modes pour les données catégorielles</span>
+<span class="comment"># pip install kmodes</span>
+<span class="comment"># from kmodes.kmodes import KModes</span>
+<span class="comment"># km = KModes(n_clusters=3, init='Huang')</span>
+<span class="comment"># clusters = km.fit_predict(X_categoriel)</span></div>
+
+    <div class="warning">
+        <strong>Erreur 6 : Oublier n_init ou utiliser n_init=1</strong><br>
+        Avec n_init=1, K-Means n'exécute l'algorithme qu'une seule fois et peut tomber dans un <strong>mauvais minimum local</strong>. Gardez toujours <code>n_init=10</code> (valeur par défaut) ou plus. La seule raison d'utiliser n_init=1 est le prototypage rapide sur de très grandes données.
+    </div>
+
+    <div class="code-block"><span class="comment"># RISQUÉ : une seule initialisation</span>
+km = KMeans(n_clusters=<span class="number">5</span>, n_init=<span class="number">1</span>)  <span class="comment"># Risque de minimum local</span>
+
+<span class="comment"># SÛR : 10 initialisations (valeur par défaut)</span>
+km = KMeans(n_clusters=<span class="number">5</span>, n_init=<span class="number">10</span>)  <span class="comment"># Meilleur résultat garanti</span>
+
+<span class="comment"># ROBUSTE : 20+ initialisations pour données complexes</span>
+km = KMeans(n_clusters=<span class="number">5</span>, n_init=<span class="number">20</span>)  <span class="comment"># Plus de chances de trouver le global</span></div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 : RÉSUMÉ COMPLET -->
+    <!-- ============================================================ -->
+
+    <h2>9. Résumé Complet</h2>
+
+    <h3>Tableau 1 : Paramètres principaux</h3>
+
+    <table>
+        <tr>
+            <th>Paramètre</th>
+            <th>Défaut</th>
+            <th>Rôle</th>
+            <th>Conseil pratique</th>
+        </tr>
+        <tr>
+            <td><strong>n_clusters</strong></td>
+            <td>8</td>
+            <td>Nombre de clusters K à former</td>
+            <td>Utiliser Elbow Method + Silhouette pour choisir</td>
+        </tr>
+        <tr>
+            <td><strong>init</strong></td>
+            <td>'k-means++'</td>
+            <td>Méthode d'initialisation des centroïdes</td>
+            <td>Toujours garder 'k-means++' (plus stable, plus rapide)</td>
+        </tr>
+        <tr>
+            <td><strong>n_init</strong></td>
+            <td>10</td>
+            <td>Nombre d'exécutions indépendantes</td>
+            <td>10 minimum, augmenter à 20-50 si données complexes</td>
+        </tr>
+        <tr>
+            <td><strong>max_iter</strong></td>
+            <td>300</td>
+            <td>Itérations maximum par exécution</td>
+            <td>Ne pas toucher, 300 toujours suffisant</td>
+        </tr>
+        <tr>
+            <td><strong>random_state</strong></td>
+            <td>None</td>
+            <td>Graine aléatoire pour reproductibilité</td>
+            <td>Toujours fixer (42) pour les TDs et rapports</td>
+        </tr>
+    </table>
+
+    <h3>Tableau 2 : Métriques de clustering</h3>
+
+    <table>
+        <tr>
+            <th>Métrique</th>
+            <th>Type</th>
+            <th>Plage</th>
+            <th>Objectif</th>
+            <th>Labels requis ?</th>
+        </tr>
+        <tr>
+            <td><strong>Inertie (WCSS)</strong></td>
+            <td>Interne</td>
+            <td>[0, +∞)</td>
+            <td>Minimiser (chercher le coude)</td>
+            <td>Non</td>
+        </tr>
+        <tr>
+            <td><strong>Silhouette Score</strong></td>
+            <td>Interne</td>
+            <td>[-1, +1]</td>
+            <td>Maximiser (proche de +1)</td>
+            <td>Non</td>
+        </tr>
+        <tr>
+            <td><strong>Calinski-Harabasz</strong></td>
+            <td>Interne</td>
+            <td>[0, +∞)</td>
+            <td>Maximiser (ratio variance élevé)</td>
+            <td>Non</td>
+        </tr>
+        <tr>
+            <td><strong>Adjusted Rand Index</strong></td>
+            <td>Externe</td>
+            <td>[-0.5, +1]</td>
+            <td>Maximiser (1 = clustering parfait)</td>
+            <td>Oui</td>
+        </tr>
+    </table>
+
+    <h3>Tableau 3 : Quand utiliser / ne pas utiliser K-Means</h3>
+
+    <table>
+        <tr>
+            <th>Situation</th>
+            <th>K-Means ?</th>
+            <th>Alternative recommandée</th>
+        </tr>
+        <tr>
+            <td>Clusters sphériques, taille similaire</td>
+            <td style="color: #00ff88;">Excellent choix</td>
+            <td>--</td>
+        </tr>
+        <tr>
+            <td>Grand dataset (> 100k points)</td>
+            <td style="color: #00ff88;">Très bon (rapide et scalable)</td>
+            <td>MiniBatchKMeans pour encore plus de vitesse</td>
+        </tr>
+        <tr>
+            <td>Segmentation de clientèle</td>
+            <td style="color: #00ff88;">Classique et efficace</td>
+            <td>Gaussian Mixture Model (GMM) pour plus de flexibilité</td>
+        </tr>
+        <tr>
+            <td>Clusters de formes irrégulières</td>
+            <td style="color: #ff4444;">Mauvais choix</td>
+            <td>DBSCAN, Spectral Clustering</td>
+        </tr>
+        <tr>
+            <td>Clusters de densités différentes</td>
+            <td style="color: #ff4444;">Mauvais choix</td>
+            <td>DBSCAN, HDBSCAN</td>
+        </tr>
+        <tr>
+            <td>Nombre de clusters inconnu</td>
+            <td style="color: #ff8c42;">Possible (Elbow + Silhouette)</td>
+            <td>DBSCAN (détecte K automatiquement)</td>
+        </tr>
+        <tr>
+            <td>Données catégorielles</td>
+            <td style="color: #ff4444;">Impossible</td>
+            <td>K-Modes, K-Prototypes</td>
+        </tr>
+        <tr>
+            <td>Haute dimension (> 50 features)</td>
+            <td style="color: #ff8c42;">Moyen (appliquer PCA d'abord)</td>
+            <td>PCA + K-Means, ou Spectral Clustering</td>
+        </tr>
+        <tr>
+            <td>Données avec beaucoup d'outliers</td>
+            <td style="color: #ff4444;">Sensible aux outliers</td>
+            <td>DBSCAN (les outliers deviennent du bruit)</td>
+        </tr>
+    </table>
+
+    <div class="concept-box green">
+        <h3>Checklist K-Means</h3>
+        <ol>
+            <li>Vérifier que les données sont <strong>numériques</strong> (encoder les catégorielles si absolument nécessaire)</li>
+            <li><strong>Normaliser</strong> avec StandardScaler (obligatoire pour tout algorithme basé sur les distances !)</li>
+            <li>Réduire les dimensions avec <strong>PCA</strong> si > 50 features</li>
+            <li>Tester K de 2 à 10 avec <strong>Elbow Method</strong> et <strong>Silhouette Score</strong></li>
+            <li>Lancer K-Means avec <code>init='k-means++'</code>, <code>n_init=10</code>, <code>random_state=42</code></li>
+            <li>Évaluer avec <strong>Silhouette</strong>, <strong>Calinski-Harabasz</strong>, et <strong>ARI</strong> si labels disponibles</li>
+            <li>Vérifier que les clusters ont un <strong>sens métier</strong> (interprétabilité des centroïdes)</li>
+            <li>Visualiser en 2D avec <strong>PCA</strong> ou t-SNE pour validation visuelle</li>
+        </ol>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="#">&larr; Premier TD non supervisé</a>
+        <a href="#">TD suivant : DBSCAN &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

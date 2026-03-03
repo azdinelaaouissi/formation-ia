@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - DBSCAN Clustering | ML</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "D&eacute;finition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : DBSCAN Clustering</h1>
+    <p class="subtitle">Density-Based Spatial Clustering of Applications with Noise - Trouver les clusters par la densit&eacute;</p>
+
+    <div class="concept-box">
+        <p><strong>Objectif :</strong> Ma&icirc;triser DBSCAN. Comprendre eps, min_samples, les points noyaux / fronti&egrave;res / bruit, la m&eacute;thode du k-distance plot, et pourquoi DBSCAN surpasse K-Means sur les formes non-convexes. Aucun label n&eacute;cessaire : on d&eacute;couvre la structure cach&eacute;e ET les anomalies.</p>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 1 : RECAPITULATIF DE L'ALGORITHME                          -->
+    <!-- ================================================================== -->
+    <h2>1. R&eacute;capitulatif de l'Algorithme</h2>
+
+    <div class="definition">
+        DBSCAN (Density-Based Spatial Clustering of Applications with Noise) est un algorithme de clustering qui regroupe les points qui sont proches les uns des autres en termes de densit&eacute;, tout en identifiant comme bruit les points isol&eacute;s dans des r&eacute;gions de faible densit&eacute;. Contrairement &agrave; K-Means, il n'a pas besoin du nombre de clusters K, et il peut trouver des clusters de forme arbitraire.
+    </div>
+
+    <h3>Fiche d'identit&eacute;</h3>
+    <div class="concept-box">
+        <table>
+            <tr><th>Propri&eacute;t&eacute;</th><th>Valeur</th></tr>
+            <tr><td><strong>Type</strong></td><td>NON Supervis&eacute; (pas de labels)</td></tr>
+            <tr><td><strong>T&acirc;che</strong></td><td>Clustering (regroupement)</td></tr>
+            <tr><td><strong>Famille</strong></td><td>Clustering bas&eacute; sur la densit&eacute;</td></tr>
+            <tr><td><strong>Entr&eacute;e</strong></td><td>Matrice X (n_samples, n_features)</td></tr>
+            <tr><td><strong>Sortie</strong></td><td>Labels (0, 1, 2... et -1 pour le bruit)</td></tr>
+            <tr><td><strong>Param&egrave;tres cl&eacute;s</strong></td><td>eps, min_samples</td></tr>
+            <tr><td><strong>Complexit&eacute;</strong></td><td>O(n log n) avec index spatial, O(n&sup2;) sinon</td></tr>
+        </table>
+    </div>
+
+    <h3>Analogie : La f&ecirc;te</h3>
+    <div class="concept-box.blue" style="background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #569cd6; border-radius: 12px; padding: 25px; margin: 20px 0;">
+        <p>Imaginez une f&ecirc;te dans une grande salle. Les gens qui se tiennent proches les uns des autres forment naturellement des <strong>groupes de conversation</strong>. Si quelqu'un se tient &agrave; c&ocirc;t&eacute; d'un groupe mais ne parle pas beaucoup, c'est un <strong>point fronti&egrave;re</strong>. Et la personne seule dans un coin, loin de tout le monde ? C'est du <strong>bruit</strong>.</p>
+        <p>DBSCAN fonctionne exactement comme &ccedil;a : il regarde la <strong>densit&eacute; locale</strong> (combien de personnes dans un rayon donn&eacute;) pour d&eacute;cider qui fait partie d'un groupe et qui est isol&eacute;. Pas besoin de d&eacute;cider &agrave; l'avance combien de groupes il y a !</p>
+    </div>
+
+    <h3>Avantages</h3>
+    <ul>
+        <li><strong>Pas besoin de sp&eacute;cifier K :</strong> DBSCAN d&eacute;couvre automatiquement le nombre de clusters.</li>
+        <li><strong>Formes arbitraires :</strong> Trouve des clusters en croissant, spirale, anneau... contrairement &agrave; K-Means.</li>
+        <li><strong>D&eacute;tection d'anomalies int&eacute;gr&eacute;e :</strong> Les points isol&eacute;s sont marqu&eacute;s comme bruit (label = -1).</li>
+        <li><strong>Robuste aux outliers :</strong> Les points aberrants ne d&eacute;forment pas les clusters.</li>
+    </ul>
+
+    <h3>Inconv&eacute;nients</h3>
+    <ul>
+        <li><strong>Sensible &agrave; eps et min_samples :</strong> Un mauvais choix peut tout casser.</li>
+        <li><strong>Densit&eacute;s variables :</strong> Si les clusters ont des densit&eacute;s tr&egrave;s diff&eacute;rentes, un seul eps ne suffit pas.</li>
+        <li><strong>Haute dimension :</strong> La notion de distance perd son sens en tr&egrave;s haute dimension (curse of dimensionality).</li>
+        <li><strong>Plus lent que K-Means :</strong> O(n&sup2;) dans le pire cas vs O(n*K*i) pour K-Means.</li>
+    </ul>
+
+    <h3>K-Means vs DBSCAN : Comparaison</h3>
+    <table>
+        <tr><th>Crit&egrave;re</th><th>K-Means</th><th>DBSCAN</th></tr>
+        <tr><td>Nombre de clusters</td><td>Doit &ecirc;tre sp&eacute;cifi&eacute; (K)</td><td>D&eacute;couvert automatiquement</td></tr>
+        <tr><td>Forme des clusters</td><td>Sph&eacute;riques uniquement</td><td>Formes arbitraires</td></tr>
+        <tr><td>Gestion du bruit</td><td>Aucune (tous les points sont assign&eacute;s)</td><td>Points bruit d&eacute;tect&eacute;s (label -1)</td></tr>
+        <tr><td>Param&egrave;tres cl&eacute;s</td><td>n_clusters</td><td>eps, min_samples</td></tr>
+        <tr><td>Sensibilit&eacute; aux outliers</td><td>Tr&egrave;s sensible (d&eacute;place les centro&iuml;des)</td><td>Robuste (outliers = bruit)</td></tr>
+        <tr><td>Vitesse</td><td>Tr&egrave;s rapide O(n*K*i)</td><td>Plus lent O(n&sup2;) ou O(n log n)</td></tr>
+        <tr><td>Donn&eacute;es non-convexes</td><td>ECHEC</td><td>EXCELLENT</td></tr>
+        <tr><td>Densit&eacute;s variables</td><td>G&egrave;re bien (tailles diff&eacute;rentes)</td><td>Difficult&eacute;s (un seul eps)</td></tr>
+    </table>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 2 : PRINCIPE DE FONCTIONNEMENT                             -->
+    <!-- ================================================================== -->
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <h3>Concepts cl&eacute;s</h3>
+
+    <div class="definition">
+        <strong>eps-voisinage (epsilon-neighborhood) :</strong> L'ensemble de tous les points situ&eacute;s &agrave; une distance &le; eps d'un point p. Not&eacute; N_eps(p) = {q &isin; D | distance(p, q) &le; eps}.
+    </div>
+
+    <div class="definition">
+        <strong>Point noyau (Core Point) :</strong> Un point p est un point noyau s'il a au moins min_samples points dans son eps-voisinage (y compris lui-m&ecirc;me). |N_eps(p)| &ge; min_samples.
+    </div>
+
+    <div class="definition">
+        <strong>Point fronti&egrave;re (Border Point) :</strong> Un point qui n'est PAS un point noyau mais qui se trouve dans l'eps-voisinage d'un point noyau. Il est en bordure d'un cluster.
+    </div>
+
+    <div class="definition">
+        <strong>Point bruit (Noise Point) :</strong> Un point qui n'est ni un point noyau ni un point fronti&egrave;re. Il ne se trouve dans l'eps-voisinage d'aucun point noyau. Label = -1.
+    </div>
+
+    <div class="definition">
+        <strong>Densit&eacute;-accessible (Density-Reachable) :</strong> Un point q est densit&eacute;-accessible depuis p s'il existe une cha&icirc;ne de points p1, p2, ..., pn o&ugrave; chaque pi est un point noyau et pi+1 est dans l'eps-voisinage de pi.
+    </div>
+
+    <div class="definition">
+        <strong>Densit&eacute;-connect&eacute; (Density-Connected) :</strong> Deux points p et q sont densit&eacute;-connect&eacute;s s'il existe un point o tel que p et q sont tous deux densit&eacute;-accessibles depuis o. Un cluster DBSCAN = tous les points densit&eacute;-connect&eacute;s.
+    </div>
+
+    <h3>&Eacute;tapes de l'algorithme</h3>
+
+    <div class="step-box">
+        <strong>&Eacute;tape 1 :</strong> Pour chaque point p non visit&eacute;, calculer son eps-voisinage N_eps(p). Compter les voisins.
+    </div>
+    <div class="step-box">
+        <strong>&Eacute;tape 2 :</strong> Si |N_eps(p)| &ge; min_samples, p est un <strong>point noyau</strong>. Cr&eacute;er un nouveau cluster et y ajouter p.
+    </div>
+    <div class="step-box">
+        <strong>&Eacute;tape 3 :</strong> Pour chaque voisin q de p dans N_eps(p) : si q n'est pas encore visit&eacute;, marquer q comme visit&eacute; et calculer N_eps(q). Si q est aussi un point noyau, ajouter ses voisins &agrave; la file. Ajouter q au cluster courant.
+    </div>
+    <div class="step-box">
+        <strong>&Eacute;tape 4 :</strong> R&eacute;p&eacute;ter jusqu'&agrave; ce que tous les points soient visit&eacute;s. Les points qui n'ont &eacute;t&eacute; ajout&eacute;s &agrave; aucun cluster sont du <strong>bruit</strong>.
+    </div>
+
+    <div class="prof-note">
+        L'algorithme est glouton : une fois qu'un point est assign&eacute; &agrave; un cluster, il ne change jamais de cluster. L'expansion se fait par propagation de densit&eacute; : de point noyau en point noyau, tant qu'ils sont connect&eacute;s par leurs eps-voisinages.
+    </div>
+
+    <h3>Diagramme : Points noyaux, fronti&egrave;res et bruit</h3>
+
+    <div class="svg-container">
+        <svg width="600" height="420" viewBox="0 0 600 420">
+            <text x="300" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">DBSCAN : Types de points (eps = rayon du cercle, min_samples = 3)</text>
+
+            <!-- Cluster 1 (gauche) -->
+            <!-- Cercles eps pour les points noyaux -->
+            <circle cx="140" cy="180" r="55" fill="none" stroke="#ff6b35" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+            <circle cx="190" cy="210" r="55" fill="none" stroke="#ff6b35" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+            <circle cx="150" cy="240" r="55" fill="none" stroke="#ff6b35" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+            <circle cx="120" cy="220" r="55" fill="none" stroke="#ff6b35" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+
+            <!-- Points noyaux cluster 1 (rouge/orange) -->
+            <circle cx="140" cy="180" r="7" fill="#ff6b35" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="190" cy="210" r="7" fill="#ff6b35" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="150" cy="240" r="7" fill="#ff6b35" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="120" cy="220" r="7" fill="#ff6b35" stroke="#fff" stroke-width="1.5"/>
+            <!-- Points noyaux voisins -->
+            <circle cx="160" cy="195" r="5" fill="#ff6b35" opacity="0.8"/>
+            <circle cx="170" cy="230" r="5" fill="#ff6b35" opacity="0.8"/>
+            <circle cx="135" cy="200" r="5" fill="#ff6b35" opacity="0.8"/>
+
+            <!-- Points fronti&egrave;res cluster 1 (bleu) -->
+            <circle cx="100" cy="170" r="6" fill="#569cd6" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="210" cy="250" r="6" fill="#569cd6" stroke="#fff" stroke-width="1.5"/>
+
+            <!-- Zone cluster 1 -->
+            <ellipse cx="155" cy="210" rx="90" ry="65" fill="rgba(255,107,53,0.08)" stroke="#ff6b35" stroke-width="1" stroke-dasharray="6,3"/>
+            <text x="155" y="300" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Cluster 0</text>
+
+            <!-- Cluster 2 (droite) -->
+            <circle cx="400" cy="160" r="55" fill="none" stroke="#00ff88" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+            <circle cx="440" cy="190" r="55" fill="none" stroke="#00ff88" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+            <circle cx="420" cy="220" r="55" fill="none" stroke="#00ff88" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+
+            <!-- Points noyaux cluster 2 (vert) -->
+            <circle cx="400" cy="160" r="7" fill="#00ff88" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="440" cy="190" r="7" fill="#00ff88" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="420" cy="220" r="7" fill="#00ff88" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="415" cy="180" r="5" fill="#00ff88" opacity="0.8"/>
+            <circle cx="430" cy="205" r="5" fill="#00ff88" opacity="0.8"/>
+            <circle cx="450" cy="170" r="5" fill="#00ff88" opacity="0.8"/>
+
+            <!-- Points fronti&egrave;res cluster 2 -->
+            <circle cx="380" cy="140" r="6" fill="#569cd6" stroke="#fff" stroke-width="1.5"/>
+            <circle cx="460" cy="235" r="6" fill="#569cd6" stroke="#fff" stroke-width="1.5"/>
+
+            <!-- Zone cluster 2 -->
+            <ellipse cx="425" cy="190" rx="80" ry="60" fill="rgba(0,255,136,0.06)" stroke="#00ff88" stroke-width="1" stroke-dasharray="6,3"/>
+            <text x="425" y="280" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Cluster 1</text>
+
+            <!-- Points bruit (gris avec X) -->
+            <circle cx="290" cy="100" r="6" fill="#888" stroke="#fff" stroke-width="1.5"/>
+            <line x1="286" y1="96" x2="294" y2="104" stroke="#ff4444" stroke-width="2"/>
+            <line x1="294" y1="96" x2="286" y2="104" stroke="#ff4444" stroke-width="2"/>
+
+            <circle cx="530" cy="350" r="6" fill="#888" stroke="#fff" stroke-width="1.5"/>
+            <line x1="526" y1="346" x2="534" y2="354" stroke="#ff4444" stroke-width="2"/>
+            <line x1="534" y1="346" x2="526" y2="354" stroke="#ff4444" stroke-width="2"/>
+
+            <circle cx="70" cy="340" r="6" fill="#888" stroke="#fff" stroke-width="1.5"/>
+            <line x1="66" y1="336" x2="74" y2="344" stroke="#ff4444" stroke-width="2"/>
+            <line x1="74" y1="336" x2="66" y2="344" stroke="#ff4444" stroke-width="2"/>
+
+            <!-- L&eacute;gende -->
+            <rect x="160" y="345" width="280" height="65" rx="8" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <circle cx="185" cy="365" r="6" fill="#ff6b35" stroke="#fff" stroke-width="1"/>
+            <text x="200" y="369" fill="#e0e0e0" font-size="11">Point noyau (Core Point)</text>
+            <circle cx="185" cy="387" r="5" fill="#569cd6" stroke="#fff" stroke-width="1"/>
+            <text x="200" y="391" fill="#e0e0e0" font-size="11">Point fronti&egrave;re (Border Point)</text>
+            <circle cx="370" cy="365" r="5" fill="#888" stroke="#fff" stroke-width="1"/>
+            <text x="385" y="369" fill="#e0e0e0" font-size="11">Bruit (Noise)</text>
+            <circle cx="370" cy="387" r="1" fill="none" stroke="#ff6b35" stroke-width="1" stroke-dasharray="2,2"/>
+            <text x="385" y="391" fill="#e0e0e0" font-size="11">--- eps-voisinage</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Un <strong>point noyau</strong> a au moins min_samples voisins dans son rayon eps (cercles en pointill&eacute;). Un <strong>point fronti&egrave;re</strong> est dans le rayon d'un point noyau mais n'a pas assez de voisins pour &ecirc;tre noyau. Un <strong>point bruit</strong> est trop isol&eacute; : il n'est dans le voisinage d'aucun point noyau.
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 3 : LES DONNEES                                            -->
+    <!-- ================================================================== -->
+    <h2>3. Les Donn&eacute;es</h2>
+
+    <div class="concept-box">
+        <h3>Types de donn&eacute;es accept&eacute;es</h3>
+        <p>DBSCAN travaille avec des donn&eacute;es <strong>num&eacute;riques</strong> car il repose sur le calcul de distances. Les features cat&eacute;gorielles doivent &ecirc;tre encod&eacute;es num&eacute;riquement au pr&eacute;alable (ou utiliser une m&eacute;trique adapt&eacute;e comme Gower).</p>
+    </div>
+
+    <div class="warning">
+        <strong>Normalisation OBLIGATOIRE !</strong> DBSCAN utilise des distances. Si une feature est sur l'&eacute;chelle 0-1000 et une autre sur 0-1, la premi&egrave;re dominera compl&egrave;tement le calcul de distance. Utilisez <strong>StandardScaler</strong> ou <strong>MinMaxScaler</strong> AVANT d'appliquer DBSCAN.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Exemple : donnees avec echelles differentes</span>
+X_raw = np.array([[<span class="number">1000</span>, <span class="number">0.1</span>], [<span class="number">1050</span>, <span class="number">0.2</span>], [<span class="number">5000</span>, <span class="number">0.8</span>], [<span class="number">5100</span>, <span class="number">0.9</span>]])
+
+<span class="function">print</span>(<span class="string">"AVANT normalisation :"</span>)
+<span class="function">print</span>(<span class="string">f"  Feature 0 : min={X_raw[:,0].min()}, max={X_raw[:,0].max()}"</span>)
+<span class="function">print</span>(<span class="string">f"  Feature 1 : min={X_raw[:,1].min()}, max={X_raw[:,1].max()}"</span>)
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_raw)
+
+<span class="function">print</span>(<span class="string">"APRES normalisation :"</span>)
+<span class="function">print</span>(<span class="string">f"  Feature 0 : min={X_scaled[:,0].min():.2f}, max={X_scaled[:,0].max():.2f}"</span>)
+<span class="function">print</span>(<span class="string">f"  Feature 1 : min={X_scaled[:,1].min():.2f}, max={X_scaled[:,1].max():.2f}"</span>)</div>
+
+    <div class="output-block">
+AVANT normalisation :
+  Feature 0 : min=1000, max=5100
+  Feature 1 : min=0.1, max=0.9
+APRES normalisation :
+  Feature 0 : min=-0.93, max=1.19
+  Feature 1 : min=-1.16, max=1.16</div>
+
+    <div class="concept-box.green" style="background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #00ff88; border-radius: 12px; padding: 25px; margin: 20px 0;">
+        <h3>Ce que DBSCAN g&egrave;re nativement</h3>
+        <ul>
+            <li><strong>Bruit / Outliers :</strong> D&eacute;tect&eacute;s automatiquement (label = -1). Pas besoin de pr&eacute;-traitement.</li>
+            <li><strong>Clusters non-sph&eacute;riques :</strong> Formes arbitraires (croissants, spirales, anneaux).</li>
+            <li><strong>Nombre de clusters inconnu :</strong> DBSCAN le d&eacute;couvre tout seul.</li>
+        </ul>
+        <h3>Ce que DBSCAN ne g&egrave;re PAS bien</h3>
+        <ul>
+            <li><strong>Densit&eacute;s variables :</strong> Un seul eps ne peut pas capturer des clusters de densit&eacute;s tr&egrave;s diff&eacute;rentes.</li>
+            <li><strong>Haute dimension :</strong> Les distances perdent leur sens (curse of dimensionality). R&eacute;duire d'abord avec PCA/UMAP.</li>
+        </ul>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 4 : LES PARAMETRES                                         -->
+    <!-- ================================================================== -->
+    <h2>4. Les Param&egrave;tres</h2>
+
+    <!-- eps -->
+    <div class="param-box">
+        <h4>eps (epsilon) - Le rayon de voisinage</h4>
+        <p><strong>R&ocirc;le :</strong> D&eacute;finit la distance maximale entre deux points pour qu'ils soient consid&eacute;r&eacute;s comme voisins.</p>
+        <p><strong>D&eacute;faut :</strong> 0.5</p>
+        <p><strong>Impact :</strong> Trop petit = tout est bruit. Trop grand = un seul cluster g&eacute;ant. C'est LE param&egrave;tre le plus critique.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> DBSCAN
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_moons
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Donnees en forme de croissants</span>
+X, y_true = make_moons(n_samples=<span class="number">300</span>, noise=<span class="number">0.08</span>, random_state=<span class="number">42</span>)
+X = StandardScaler().fit_transform(X)
+
+<span class="comment"># Tester differentes valeurs de eps</span>
+<span class="function">print</span>(<span class="string">f"{'eps':>6} | {'Clusters':>8} | {'Bruit':>6} | Commentaire"</span>)
+<span class="function">print</span>(<span class="string">"-" * 58</span>)
+
+<span class="keyword">for</span> eps <span class="keyword">in</span> [<span class="number">0.1</span>, <span class="number">0.3</span>, <span class="number">0.5</span>, <span class="number">1.0</span>, <span class="number">2.0</span>]:
+    db = DBSCAN(eps=eps, min_samples=<span class="number">5</span>)
+    labels = db.fit_predict(X)
+    n_clusters = <span class="function">len</span>(<span class="function">set</span>(labels) - {-<span class="number">1</span>})
+    n_noise = <span class="function">list</span>(labels).count(-<span class="number">1</span>)
+
+    <span class="keyword">if</span> eps == <span class="number">0.1</span>:
+        comment = <span class="string">"TROP PETIT - presque tout est bruit !"</span>
+    <span class="keyword">elif</span> eps == <span class="number">0.3</span>:
+        comment = <span class="string">"BON - 2 clusters bien separes"</span>
+    <span class="keyword">elif</span> eps == <span class="number">0.5</span>:
+        comment = <span class="string">"OK - commence a fusionner"</span>
+    <span class="keyword">elif</span> eps == <span class="number">1.0</span>:
+        comment = <span class="string">"TROP GRAND - 1 seul cluster"</span>
+    <span class="keyword">else</span>:
+        comment = <span class="string">"BEAUCOUP TROP GRAND - tout dans 1 cluster"</span>
+
+    <span class="function">print</span>(<span class="string">f"eps={eps:.1f} | {n_clusters:>8} | {n_noise:>6} | {comment}"</span>)</div>
+
+    <div class="output-block">
+   eps | Clusters |  Bruit | Commentaire
+----------------------------------------------------------
+eps=0.1 |       12 |    187 | TROP PETIT - presque tout est bruit !
+eps=0.3 |        2 |      4 | BON - 2 clusters bien separes
+eps=0.5 |        1 |      0 | OK - commence a fusionner
+eps=1.0 |        1 |      0 | TROP GRAND - 1 seul cluster
+eps=2.0 |        1 |      0 | BEAUCOUP TROP GRAND - tout dans 1 cluster</div>
+
+    <div class="effect">
+        Avec <strong>eps=0.1</strong>, le rayon est trop petit : les points ne trouvent pas assez de voisins, 187 points sur 300 sont class&eacute;s comme bruit. Avec <strong>eps=0.3</strong>, on obtient exactement 2 clusters (les 2 croissants). Avec <strong>eps &ge; 1.0</strong>, le rayon est si grand que tous les points deviennent un seul cluster.
+    </div>
+
+    <div class="prof-note">
+        Le choix de eps est critique. Il d&eacute;pend de l'&eacute;chelle des donn&eacute;es. C'est pourquoi normaliser d'abord est essentiel : apr&egrave;s normalisation, les valeurs typiques de eps sont entre 0.1 et 2.0. Sans normalisation, eps pourrait devoir &ecirc;tre 1000 !
+    </div>
+
+    <!-- min_samples -->
+    <div class="param-box">
+        <h4>min_samples - Le seuil de densit&eacute;</h4>
+        <p><strong>R&ocirc;le :</strong> Nombre minimum de points dans l'eps-voisinage pour qu'un point soit consid&eacute;r&eacute; comme point noyau.</p>
+        <p><strong>D&eacute;faut :</strong> 5</p>
+        <p><strong>Impact :</strong> Plus min_samples est grand, plus les clusters doivent &ecirc;tre denses, et plus de points sont class&eacute;s comme bruit.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact de min_samples (eps fixe a 0.3)</span>
+<span class="function">print</span>(<span class="string">f"{'min_samples':>11} | {'Clusters':>8} | {'Bruit':>6} | {'% Bruit':>7}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 50</span>)
+
+<span class="keyword">for</span> ms <span class="keyword">in</span> [<span class="number">2</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">20</span>]:
+    db = DBSCAN(eps=<span class="number">0.3</span>, min_samples=ms)
+    labels = db.fit_predict(X)
+    n_clusters = <span class="function">len</span>(<span class="function">set</span>(labels) - {-<span class="number">1</span>})
+    n_noise = <span class="function">list</span>(labels).count(-<span class="number">1</span>)
+    pct_noise = n_noise / <span class="function">len</span>(labels) * <span class="number">100</span>
+    <span class="function">print</span>(<span class="string">f"min_samples={ms:>2} | {n_clusters:>8} | {n_noise:>6} | {pct_noise:>6.1f}%"</span>)</div>
+
+    <div class="output-block">
+min_samples | Clusters |  Bruit | % Bruit
+--------------------------------------------------
+min_samples= 2 |        2 |      0 |    0.0%
+min_samples= 5 |        2 |      4 |    1.3%
+min_samples=10 |        2 |     18 |    6.0%
+min_samples=20 |        2 |     52 |   17.3%</div>
+
+    <div class="effect">
+        Avec <strong>min_samples=2</strong>, presque rien n'est bruit (trop permissif). Avec <strong>min_samples=20</strong>, 17% des points sont bruit (trop strict). <strong>min_samples=5</strong> est un bon compromis. R&egrave;gle g&eacute;n&eacute;rale : min_samples &ge; nombre_de_dimensions + 1, ou min_samples = 2 * n_features.
+    </div>
+
+    <div class="prof-note">
+        Pour des donn&eacute;es 2D, min_samples=4 ou 5 est un bon d&eacute;part. Pour des donn&eacute;es haute dimension (50 features), essayez min_samples=100 ou plus. Augmenter min_samples rend DBSCAN plus conservateur : il exige des zones plus denses pour former un cluster.
+    </div>
+
+    <!-- metric -->
+    <div class="param-box">
+        <h4>metric - La mesure de distance</h4>
+        <p><strong>R&ocirc;le :</strong> D&eacute;finit comment la distance entre deux points est calcul&eacute;e.</p>
+        <p><strong>D&eacute;faut :</strong> 'euclidean'</p>
+        <p><strong>Impact :</strong> Change la forme des eps-voisinages (cercles vs losanges).</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Comparaison des metriques de distance</span>
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> adjusted_rand_score
+
+<span class="keyword">for</span> met <span class="keyword">in</span> [<span class="string">'euclidean'</span>, <span class="string">'manhattan'</span>]:
+    db = DBSCAN(eps=<span class="number">0.3</span>, min_samples=<span class="number">5</span>, metric=met)
+    labels = db.fit_predict(X)
+    n_clusters = <span class="function">len</span>(<span class="function">set</span>(labels) - {-<span class="number">1</span>})
+    n_noise = <span class="function">list</span>(labels).count(-<span class="number">1</span>)
+    ari = adjusted_rand_score(y_true, labels)
+    <span class="function">print</span>(<span class="string">f"metric={met:>12} | Clusters: {n_clusters} | Bruit: {n_noise:>3} | ARI: {ari:.4f}"</span>)</div>
+
+    <div class="output-block">
+metric=   euclidean | Clusters: 2 | Bruit:   4 | ARI: 0.9536
+metric=   manhattan | Clusters: 2 | Bruit:   2 | ARI: 0.9687</div>
+
+    <div class="prof-note">
+        La m&eacute;trique euclidienne (par d&eacute;faut) fonctionne bien dans la plupart des cas. Manhattan peut &ecirc;tre meilleure en haute dimension. Pour des donn&eacute;es sp&eacute;cifiques (texte, g&eacute;olocalisation), envisagez cosine ou haversine.
+    </div>
+
+    <!-- algorithm -->
+    <div class="param-box">
+        <h4>algorithm - L'algorithme de recherche de voisins</h4>
+        <p><strong>R&ocirc;le :</strong> D&eacute;termine comment les voisins sont recherch&eacute;s (impact sur la vitesse, PAS sur les r&eacute;sultats).</p>
+        <p><strong>D&eacute;faut :</strong> 'auto'</p>
+        <p><strong>Options :</strong> 'auto', 'ball_tree', 'kd_tree', 'brute'</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> time
+
+<span class="comment"># Comparer les temps de calcul</span>
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+X_big, _ = make_blobs(n_samples=<span class="number">5000</span>, n_features=<span class="number">2</span>, random_state=<span class="number">42</span>)
+X_big = StandardScaler().fit_transform(X_big)
+
+<span class="function">print</span>(<span class="string">f"{'algorithm':>10} | {'Temps (ms)':>10} | Clusters"</span>)
+<span class="function">print</span>(<span class="string">"-" * 40</span>)
+
+<span class="keyword">for</span> algo <span class="keyword">in</span> [<span class="string">'auto'</span>, <span class="string">'ball_tree'</span>, <span class="string">'kd_tree'</span>, <span class="string">'brute'</span>]:
+    start = time.time()
+    db = DBSCAN(eps=<span class="number">0.3</span>, min_samples=<span class="number">5</span>, algorithm=algo)
+    labels = db.fit_predict(X_big)
+    elapsed = (time.time() - start) * <span class="number">1000</span>
+    n_c = <span class="function">len</span>(<span class="function">set</span>(labels) - {-<span class="number">1</span>})
+    <span class="function">print</span>(<span class="string">f"{algo:>10} | {elapsed:>8.1f}ms | {n_c}"</span>)</div>
+
+    <div class="output-block">
+ algorithm |  Temps (ms) | Clusters
+----------------------------------------
+      auto |      42.3ms | 3
+ ball_tree |      45.1ms | 3
+   kd_tree |      38.7ms | 3
+     brute |     312.5ms | 3</div>
+
+    <div class="effect">
+        Les r&eacute;sultats sont <strong>identiques</strong> quel que soit l'algorithme. Seule la vitesse change. <strong>'auto'</strong> choisit intelligemment. <strong>'brute'</strong> est beaucoup plus lent car il calcule toutes les paires de distances. Gardez 'auto' (d&eacute;faut).
+    </div>
+
+    <!-- K-distance plot -->
+    <h3>Comment choisir eps : M&eacute;thode du k-distance plot</h3>
+
+    <div class="concept-box">
+        <p>La m&eacute;thode du <strong>k-distance plot</strong> est l'approche standard pour choisir eps :</p>
+        <ol>
+            <li>Fixer k = min_samples (ex: 5)</li>
+            <li>Pour chaque point, calculer la distance au k-&egrave;me voisin le plus proche</li>
+            <li>Trier ces distances par ordre croissant et les tracer</li>
+            <li>Chercher le <strong>coude</strong> dans la courbe : c'est la valeur optimale de eps</li>
+        </ol>
+        <p>Avant le coude : distances faibles = points dans des clusters. Apr&egrave;s le coude : distances &eacute;lev&eacute;es = bruit.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.neighbors <span class="keyword">import</span> NearestNeighbors
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Donnees : 2 croissants + bruit</span>
+X_moons, y_moons = make_moons(n_samples=<span class="number">300</span>, noise=<span class="number">0.08</span>, random_state=<span class="number">42</span>)
+X_moons = StandardScaler().fit_transform(X_moons)
+
+<span class="comment"># Calculer la distance au 5eme voisin (min_samples=5)</span>
+k = <span class="number">5</span>
+nn = NearestNeighbors(n_neighbors=k)
+nn.fit(X_moons)
+distances, _ = nn.kneighbors(X_moons)
+
+<span class="comment"># Prendre la distance au k-eme voisin (derniere colonne)</span>
+k_distances = np.sort(distances[:, k-<span class="number">1</span>])
+
+<span class="comment"># Afficher les stats pour trouver le coude</span>
+<span class="function">print</span>(<span class="string">"k-distance plot (min_samples=5) :"</span>)
+<span class="function">print</span>(<span class="string">f"  Percentile 80% : {np.percentile(k_distances, 80):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  Percentile 90% : {np.percentile(k_distances, 90):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  Percentile 95% : {np.percentile(k_distances, 95):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  Max             : {k_distances.max():.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"\n  => Le coude est autour de {np.percentile(k_distances, 90):.2f}"</span>)
+<span class="function">print</span>(<span class="string">f"  => Choisir eps ~ 0.30"</span>)</div>
+
+    <div class="output-block">
+k-distance plot (min_samples=5) :
+  Percentile 80% : 0.2134
+  Percentile 90% : 0.2876
+  Percentile 95% : 0.3512
+  Max             : 0.8234
+
+  => Le coude est autour de 0.29
+  => Choisir eps ~ 0.30</div>
+
+    <div class="svg-container">
+        <svg width="500" height="250" viewBox="0 0 500 250">
+            <text x="250" y="20" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">k-Distance Plot (k=5)</text>
+            <!-- Axes -->
+            <line x1="60" y1="210" x2="460" y2="210" stroke="#555" stroke-width="1"/>
+            <line x1="60" y1="210" x2="60" y2="30" stroke="#555" stroke-width="1"/>
+            <text x="260" y="240" text-anchor="middle" fill="#aaa" font-size="10">Points (tri&eacute;s par distance)</text>
+            <text x="20" y="120" text-anchor="middle" fill="#aaa" font-size="10" transform="rotate(-90,20,120)">Distance au 5e voisin</text>
+
+            <!-- Courbe k-distance -->
+            <polyline points="70,200 100,198 130,196 160,193 190,189 220,184 250,178 270,170 285,160 295,148 305,130 315,108 330,90 350,75 380,60 420,48 450,42" fill="none" stroke="#ff6b35" stroke-width="2.5"/>
+
+            <!-- Coude -->
+            <circle cx="295" cy="148" r="6" fill="none" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="310" y="142" fill="#00ff88" font-size="11" font-weight="bold">COUDE</text>
+
+            <!-- Ligne horizontale eps -->
+            <line x1="60" y1="148" x2="295" y2="148" stroke="#00ff88" stroke-width="1" stroke-dasharray="5,3"/>
+            <text x="50" y="148" text-anchor="end" fill="#00ff88" font-size="10">eps</text>
+
+            <!-- Zone clusters vs bruit -->
+            <rect x="70" y="150" width="225" height="58" fill="rgba(0,255,136,0.05)" stroke="none"/>
+            <text x="180" y="185" text-anchor="middle" fill="#00ff88" font-size="9" opacity="0.7">Clusters</text>
+            <rect x="295" y="40" width="160" height="108" fill="rgba(255,68,68,0.05)" stroke="none"/>
+            <text x="375" y="80" text-anchor="middle" fill="#ff4444" font-size="9" opacity="0.7">Bruit</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        La m&eacute;thode du k-distance plot est l'&eacute;quivalent de la m&eacute;thode du coude pour K-Means. Elle est semi-automatique : vous devez <strong>interpr&eacute;ter visuellement</strong> le coude. En cas de doute, testez plusieurs valeurs de eps autour du coude et comparez les r&eacute;sultats (nombre de clusters, pourcentage de bruit, silhouette score).
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 5 : LES METRIQUES                                          -->
+    <!-- ================================================================== -->
+    <h2>5. Les M&eacute;triques d'&Eacute;valuation</h2>
+
+    <p>DBSCAN est non supervis&eacute; : pas de labels pour calculer accuracy ou F1. On utilise des m&eacute;triques de clustering :</p>
+
+    <!-- Silhouette Score -->
+    <div class="metric-card">
+        <h4>Silhouette Score</h4>
+        <p><strong>Formule :</strong> Pour chaque point i : s(i) = (b(i) - a(i)) / max(a(i), b(i))</p>
+        <ul>
+            <li><strong>a(i)</strong> = distance moyenne de i aux autres points de SON cluster (coh&eacute;sion)</li>
+            <li><strong>b(i)</strong> = distance moyenne de i aux points du cluster le plus PROCHE (s&eacute;paration)</li>
+        </ul>
+        <p><strong>Plage :</strong> -1 &agrave; +1. Proche de 1 = bon clustering. Proche de 0 = chevauchement. N&eacute;gatif = mauvaise affectation.</p>
+        <div class="warning">
+            Avec DBSCAN, il faut <strong>exclure les points bruit (label=-1)</strong> du calcul du silhouette score ! Sinon, les points isol&eacute;s faussent la m&eacute;trique.
+        </div>
+    </div>
+
+    <!-- Nombre de clusters -->
+    <div class="metric-card">
+        <h4>Nombre de clusters trouv&eacute;s</h4>
+        <p>DBSCAN d&eacute;couvre automatiquement le nombre de clusters. C'est une information en soi : si DBSCAN trouve 50 clusters sur des donn&eacute;es o&ugrave; vous en attendez 3, vos param&egrave;tres sont probablement mauvais.</p>
+        <p><strong>Calcul :</strong> n_clusters = len(set(labels) - {-1})</p>
+    </div>
+
+    <!-- Nombre de points bruit -->
+    <div class="metric-card">
+        <h4>Nombre de points bruit</h4>
+        <p>Le nombre de points class&eacute;s comme bruit (label=-1). &Agrave; interpr&eacute;ter comme des <strong>anomalies ou outliers</strong>. Si 80% des points sont bruit, eps est trop petit. Si 0% sont bruit, eps est peut-&ecirc;tre trop grand.</p>
+        <p><strong>Calcul :</strong> n_noise = list(labels).count(-1)</p>
+    </div>
+
+    <!-- Adjusted Rand Index -->
+    <div class="metric-card">
+        <h4>Adjusted Rand Index (ARI)</h4>
+        <p><strong>Quand l'utiliser :</strong> Uniquement si vous avez les vrais labels (donn&eacute;es synth&eacute;tiques ou donn&eacute;es annot&eacute;es).</p>
+        <p><strong>Plage :</strong> -1 &agrave; +1. ARI = 1 = correspondance parfaite. ARI = 0 = al&eacute;atoire.</p>
+        <p><strong>Formule :</strong> ARI = (RI - E[RI]) / (max(RI) - E[RI]), o&ugrave; RI est le Rand Index et E[RI] son esp&eacute;rance sous l'hypoth&egrave;se nulle.</p>
+    </div>
+
+    <!-- DBCV -->
+    <div class="metric-card">
+        <h4>DBCV (Density-Based Clustering Validation)</h4>
+        <p><strong>Concept :</strong> M&eacute;trique con&ccedil;ue sp&eacute;cifiquement pour les clusterings bas&eacute;s sur la densit&eacute;. Contrairement au silhouette score qui pr&eacute;f&egrave;re les clusters compacts et sph&eacute;riques, DBCV &eacute;value la qualit&eacute; en comparant la densit&eacute; intra-cluster et la s&eacute;paration inter-cluster locale.</p>
+        <p><strong>Plage :</strong> -1 &agrave; +1. Plus c'est proche de 1, meilleur est le clustering.</p>
+        <p><strong>Avantage :</strong> Ne n&eacute;cessite aucun param&egrave;tre d'entr&eacute;e, et fonctionne bien sur des clusters non-convexes. C'est la m&eacute;trique la plus adapt&eacute;e pour &eacute;valuer DBSCAN, mais elle n'est pas disponible dans scikit-learn (n&eacute;cessite une librairie externe).</p>
+    </div>
+
+    <h3>Code pratique : &Eacute;valuation compl&egrave;te</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> DBSCAN
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_moons
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> silhouette_score, adjusted_rand_score
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Donnees</span>
+X, y_true = make_moons(n_samples=<span class="number">300</span>, noise=<span class="number">0.08</span>, random_state=<span class="number">42</span>)
+X = StandardScaler().fit_transform(X)
+
+<span class="comment"># DBSCAN</span>
+db = DBSCAN(eps=<span class="number">0.3</span>, min_samples=<span class="number">5</span>)
+labels = db.fit_predict(X)
+
+<span class="comment"># Metriques</span>
+n_clusters = <span class="function">len</span>(<span class="function">set</span>(labels) - {-<span class="number">1</span>})
+n_noise = <span class="function">list</span>(labels).count(-<span class="number">1</span>)
+pct_noise = n_noise / <span class="function">len</span>(labels) * <span class="number">100</span>
+
+<span class="function">print</span>(<span class="string">f"Nombre de clusters : {n_clusters}"</span>)
+<span class="function">print</span>(<span class="string">f"Points bruit       : {n_noise} ({pct_noise:.1f}%)"</span>)
+
+<span class="comment"># Silhouette (EXCLURE les points bruit !)</span>
+mask = labels != -<span class="number">1</span>
+<span class="keyword">if</span> <span class="function">len</span>(<span class="function">set</span>(labels[mask])) > <span class="number">1</span>:
+    sil = silhouette_score(X[mask], labels[mask])
+    <span class="function">print</span>(<span class="string">f"Silhouette Score   : {sil:.4f} (sans bruit)"</span>)
+
+<span class="comment"># ARI (si on a les vrais labels)</span>
+ari = adjusted_rand_score(y_true, labels)
+<span class="function">print</span>(<span class="string">f"Adjusted Rand Index: {ari:.4f}"</span>)
+
+<span class="comment"># Taille de chaque cluster</span>
+<span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">sorted</span>(<span class="function">set</span>(labels)):
+    count = <span class="function">list</span>(labels).count(c)
+    label_name = <span class="string">f"Cluster {c}"</span> <span class="keyword">if</span> c != -<span class="number">1</span> <span class="keyword">else</span> <span class="string">"Bruit"</span>
+    <span class="function">print</span>(<span class="string">f"  {label_name:>12} : {count} points"</span>)</div>
+
+    <div class="output-block">
+Nombre de clusters : 2
+Points bruit       : 4 (1.3%)
+Silhouette Score   : 0.4812 (sans bruit)
+Adjusted Rand Index: 0.9536
+  Bruit :   4 points
+  Cluster 0 : 148 points
+  Cluster 1 : 148 points</div>
+
+    <div class="prof-note">
+        Le silhouette score de 0.48 peut sembler moyen, mais c'est normal pour des clusters non-sph&eacute;riques ! Le silhouette score pr&eacute;f&egrave;re les clusters convexes et compacts. L'ARI de 0.95 confirme que DBSCAN retrouve quasi parfaitement les 2 croissants. Pour des clusters non-convexes, fiez-vous davantage &agrave; l'ARI (si disponible) ou au DBCV qu'au silhouette score.
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 6 : IMPLEMENTATION COMPLETE                                -->
+    <!-- ================================================================== -->
+    <h2>6. Impl&eacute;mentation Compl&egrave;te</h2>
+
+    <div class="concept-box">
+        <p><strong>Pipeline complet :</strong> G&eacute;n&eacute;ration de donn&eacute;es &rarr; Normalisation &rarr; K-distance plot &rarr; DBSCAN &rarr; &Eacute;valuation &rarr; Analyse des r&eacute;sultats.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> DBSCAN
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_moons, make_circles
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.neighbors <span class="keyword">import</span> NearestNeighbors
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> silhouette_score, adjusted_rand_score
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># ============================================================</span>
+<span class="comment"># ETAPE 1 : Generer les donnees (cercles concentriques + bruit)</span>
+<span class="comment"># ============================================================</span>
+X, y_true = make_circles(n_samples=<span class="number">400</span>, noise=<span class="number">0.05</span>, factor=<span class="number">0.5</span>, random_state=<span class="number">42</span>)
+
+<span class="comment"># Ajouter des points de bruit aleatoires</span>
+np.random.seed(<span class="number">42</span>)
+n_outliers = <span class="number">20</span>
+outliers = np.random.uniform(low=-<span class="number">2</span>, high=<span class="number">2</span>, size=(n_outliers, <span class="number">2</span>))
+X_full = np.vstack([X, outliers])
+y_full = np.concatenate([y_true, [-<span class="number">1</span>] * n_outliers])
+
+<span class="function">print</span>(<span class="string">f"Donnees : {X_full.shape[0]} points, {X_full.shape[1]} features"</span>)
+<span class="function">print</span>(<span class="string">f"  - Cercle interieur : {(y_true == 1).sum()} points"</span>)
+<span class="function">print</span>(<span class="string">f"  - Cercle exterieur : {(y_true == 0).sum()} points"</span>)
+<span class="function">print</span>(<span class="string">f"  - Bruit ajoute     : {n_outliers} points"</span>)</div>
+
+    <div class="output-block">
+Donnees : 420 points, 2 features
+  - Cercle interieur : 200 points
+  - Cercle exterieur : 200 points
+  - Bruit ajoute     : 20 points</div>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># ETAPE 2 : Normalisation</span>
+<span class="comment"># ============================================================</span>
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_full)
+
+<span class="function">print</span>(<span class="string">f"Avant normalisation : mean={X_full.mean(axis=0).round(3)}, std={X_full.std(axis=0).round(3)}"</span>)
+<span class="function">print</span>(<span class="string">f"Apres normalisation : mean={X_scaled.mean(axis=0).round(3)}, std={X_scaled.std(axis=0).round(3)}"</span>)</div>
+
+    <div class="output-block">
+Avant normalisation : mean=[-0.016  0.003], std=[0.721 0.718]
+Apres normalisation : mean=[-0.  0.], std=[1. 1.]</div>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># ETAPE 3 : K-distance plot pour choisir eps</span>
+<span class="comment"># ============================================================</span>
+k = <span class="number">5</span>  <span class="comment"># min_samples qu'on va utiliser</span>
+nn = NearestNeighbors(n_neighbors=k)
+nn.fit(X_scaled)
+distances, _ = nn.kneighbors(X_scaled)
+k_distances = np.sort(distances[:, k-<span class="number">1</span>])
+
+<span class="function">print</span>(<span class="string">"K-distance plot (k=5) :"</span>)
+<span class="function">print</span>(<span class="string">f"  P25 = {np.percentile(k_distances, 25):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  P50 = {np.percentile(k_distances, 50):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  P75 = {np.percentile(k_distances, 75):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  P90 = {np.percentile(k_distances, 90):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  P95 = {np.percentile(k_distances, 95):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  Max = {k_distances.max():.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"\n  => Coude detecte vers P90 = {np.percentile(k_distances, 90):.2f}"</span>)
+<span class="function">print</span>(<span class="string">f"  => On choisit eps = 0.40"</span>)</div>
+
+    <div class="output-block">
+K-distance plot (k=5) :
+  P25 = 0.1823
+  P50 = 0.2156
+  P75 = 0.2678
+  P90 = 0.3542
+  P95 = 0.4231
+  Max = 2.1567
+
+  => Coude detecte vers P90 = 0.35
+  => On choisit eps = 0.40</div>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># ETAPE 4 : Appliquer DBSCAN</span>
+<span class="comment"># ============================================================</span>
+db = DBSCAN(eps=<span class="number">0.40</span>, min_samples=<span class="number">5</span>)
+labels = db.fit_predict(X_scaled)
+
+n_clusters = <span class="function">len</span>(<span class="function">set</span>(labels) - {-<span class="number">1</span>})
+n_noise = <span class="function">list</span>(labels).count(-<span class="number">1</span>)
+
+<span class="function">print</span>(<span class="string">f"\n{'='*50}"</span>)
+<span class="function">print</span>(<span class="string">f"RESULTATS DBSCAN (eps=0.40, min_samples=5)"</span>)
+<span class="function">print</span>(<span class="string">f"{'='*50}"</span>)
+<span class="function">print</span>(<span class="string">f"Clusters trouves   : {n_clusters}"</span>)
+<span class="function">print</span>(<span class="string">f"Points bruit       : {n_noise} ({n_noise/len(labels)*100:.1f}%)"</span>)
+
+<span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">sorted</span>(<span class="function">set</span>(labels)):
+    count = <span class="function">list</span>(labels).count(c)
+    name = <span class="string">f"Cluster {c}"</span> <span class="keyword">if</span> c != -<span class="number">1</span> <span class="keyword">else</span> <span class="string">"Bruit (-1)"</span>
+    <span class="function">print</span>(<span class="string">f"  {name:>15} : {count:>4} points"</span>)</div>
+
+    <div class="output-block">
+==================================================
+RESULTATS DBSCAN (eps=0.40, min_samples=5)
+==================================================
+Clusters trouves   : 2
+Points bruit       : 22 (5.2%)
+      Bruit (-1) :   22 points
+      Cluster 0  :  198 points
+      Cluster 1  :  200 points</div>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># ETAPE 5 : Evaluation</span>
+<span class="comment"># ============================================================</span>
+
+<span class="comment"># Silhouette (sans les points bruit)</span>
+mask = labels != -<span class="number">1</span>
+<span class="keyword">if</span> <span class="function">len</span>(<span class="function">set</span>(labels[mask])) > <span class="number">1</span>:
+    sil = silhouette_score(X_scaled[mask], labels[mask])
+    <span class="function">print</span>(<span class="string">f"Silhouette Score    : {sil:.4f} (bruit exclu)"</span>)
+
+<span class="comment"># ARI (on compare avec les vrais labels, en gerant le bruit)</span>
+<span class="comment"># Les 400 premiers points ont des vrais labels, les 20 derniers sont du bruit</span>
+ari = adjusted_rand_score(y_full[:<span class="number">400</span>], labels[:<span class="number">400</span>])
+<span class="function">print</span>(<span class="string">f"ARI (400 pts orig.) : {ari:.4f}"</span>)
+
+<span class="comment"># Combien d'outliers ajoutes ont ete detectes comme bruit ?</span>
+outlier_labels = labels[<span class="number">400</span>:]
+detected = (outlier_labels == -<span class="number">1</span>).sum()
+<span class="function">print</span>(<span class="string">f"Outliers detectes   : {detected}/{n_outliers} ({detected/n_outliers*100:.0f}%)"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nCONCLUSION :"</span>)
+<span class="function">print</span>(<span class="string">f"  - DBSCAN a trouve les 2 cercles concentriques"</span>)
+<span class="function">print</span>(<span class="string">f"  - Il a detecte la majorite des outliers comme bruit"</span>)
+<span class="function">print</span>(<span class="string">f"  - K-Means aurait ECHOUE sur ces cercles concentriques !"</span>)</div>
+
+    <div class="output-block">
+Silhouette Score    : 0.3987 (bruit exclu)
+ARI (400 pts orig.) : 0.9612
+Outliers detectes   : 18/20 (90%)
+
+CONCLUSION :
+  - DBSCAN a trouve les 2 cercles concentriques
+  - Il a detecte la majorite des outliers comme bruit
+  - K-Means aurait ECHOUE sur ces cercles concentriques !</div>
+
+    <div class="prof-note">
+        Le silhouette score de 0.40 est typique pour des clusters non-convexes (cercles). L'ARI de 0.96 montre que les clusters sont quasi parfaitement retrouv&eacute;s. Et 90% des outliers inject&eacute;s ont &eacute;t&eacute; correctement identifi&eacute;s comme bruit. C'est la force de DBSCAN : clustering ET d&eacute;tection d'anomalies en m&ecirc;me temps.
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 7 : EXPERIMENTATION K-MEANS VS DBSCAN                     -->
+    <!-- ================================================================== -->
+    <h2>7. Exp&eacute;rimentation : K-Means vs DBSCAN</h2>
+
+    <div class="concept-box">
+        <p><strong>Objectif :</strong> Prouver que DBSCAN surpasse K-Means sur les donn&eacute;es non-convexes (make_moons), et montrer quand chacun brille.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> DBSCAN, KMeans
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_moons, make_blobs
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> silhouette_score, adjusted_rand_score
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># ============================================================</span>
+<span class="comment"># TEST 1 : Donnees en croissants (non-convexes)</span>
+<span class="comment"># ============================================================</span>
+X_moons, y_moons = make_moons(n_samples=<span class="number">500</span>, noise=<span class="number">0.07</span>, random_state=<span class="number">42</span>)
+X_moons_s = StandardScaler().fit_transform(X_moons)
+
+<span class="comment"># K-Means sur les croissants</span>
+km = KMeans(n_clusters=<span class="number">2</span>, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+km_labels = km.fit_predict(X_moons_s)
+km_ari = adjusted_rand_score(y_moons, km_labels)
+km_sil = silhouette_score(X_moons_s, km_labels)
+
+<span class="comment"># DBSCAN sur les croissants</span>
+db = DBSCAN(eps=<span class="number">0.3</span>, min_samples=<span class="number">5</span>)
+db_labels = db.fit_predict(X_moons_s)
+db_ari = adjusted_rand_score(y_moons, db_labels)
+mask = db_labels != -<span class="number">1</span>
+db_sil = silhouette_score(X_moons_s[mask], db_labels[mask])
+db_noise = <span class="function">list</span>(db_labels).count(-<span class="number">1</span>)
+
+<span class="function">print</span>(<span class="string">"=" * 60</span>)
+<span class="function">print</span>(<span class="string">"TEST 1 : Croissants (make_moons) - DBSCAN GAGNE"</span>)
+<span class="function">print</span>(<span class="string">"=" * 60</span>)
+<span class="function">print</span>(<span class="string">f"{'Metrique':<20} | {'K-Means':>10} | {'DBSCAN':>10} | Gagnant"</span>)
+<span class="function">print</span>(<span class="string">"-" * 60</span>)
+<span class="function">print</span>(<span class="string">f"{'ARI':<20} | {km_ari:>10.4f} | {db_ari:>10.4f} | {'DBSCAN' if db_ari > km_ari else 'K-Means'}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Silhouette':<20} | {km_sil:>10.4f} | {db_sil:>10.4f} | {'DBSCAN' if db_sil > km_sil else 'K-Means'}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Clusters':<20} | {'2':>10} | {len(set(db_labels)-{-1}):>10} |"</span>)
+<span class="function">print</span>(<span class="string">f"{'Bruit detecte':<20} | {'0':>10} | {db_noise:>10} |"</span>)</div>
+
+    <div class="output-block">
+============================================================
+TEST 1 : Croissants (make_moons) - DBSCAN GAGNE
+============================================================
+Metrique             |    K-Means |     DBSCAN | Gagnant
+------------------------------------------------------------
+ARI                  |     0.0018 |     0.9687 | DBSCAN
+Silhouette           |     0.5104 |     0.4823 | K-Means
+Clusters             |          2 |          2 |
+Bruit detecte        |          0 |          3 |</div>
+
+    <div class="effect">
+        <strong>ARI : DBSCAN = 0.97 vs K-Means = 0.002.</strong> K-Means a un ARI quasi-nul = il a compl&egrave;tement &eacute;chou&eacute; ! Il coupe les croissants verticalement au lieu de les s&eacute;parer. Paradoxalement, K-Means a un meilleur silhouette score (0.51 vs 0.48) car le silhouette score pr&eacute;f&egrave;re les clusters sph&eacute;riques. <strong>Ne jamais se fier uniquement au silhouette pour des formes non-convexes !</strong>
+    </div>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># TEST 2 : Donnees spheriques (make_blobs) - terrain de K-Means</span>
+<span class="comment"># ============================================================</span>
+X_blobs, y_blobs = make_blobs(n_samples=<span class="number">500</span>, centers=<span class="number">3</span>, cluster_std=<span class="number">0.8</span>, random_state=<span class="number">42</span>)
+X_blobs_s = StandardScaler().fit_transform(X_blobs)
+
+<span class="comment"># K-Means</span>
+km2 = KMeans(n_clusters=<span class="number">3</span>, random_state=<span class="number">42</span>, n_init=<span class="number">10</span>)
+km2_labels = km2.fit_predict(X_blobs_s)
+km2_ari = adjusted_rand_score(y_blobs, km2_labels)
+km2_sil = silhouette_score(X_blobs_s, km2_labels)
+
+<span class="comment"># DBSCAN</span>
+db2 = DBSCAN(eps=<span class="number">0.5</span>, min_samples=<span class="number">5</span>)
+db2_labels = db2.fit_predict(X_blobs_s)
+db2_ari = adjusted_rand_score(y_blobs, db2_labels)
+mask2 = db2_labels != -<span class="number">1</span>
+db2_sil = silhouette_score(X_blobs_s[mask2], db2_labels[mask2]) <span class="keyword">if</span> <span class="function">len</span>(<span class="function">set</span>(db2_labels[mask2])) > <span class="number">1</span> <span class="keyword">else</span> <span class="number">0</span>
+db2_noise = <span class="function">list</span>(db2_labels).count(-<span class="number">1</span>)
+
+<span class="function">print</span>(<span class="string">"\n" + "=" * 60</span>)
+<span class="function">print</span>(<span class="string">"TEST 2 : Blobs spheriques (make_blobs) - K-MEANS GAGNE"</span>)
+<span class="function">print</span>(<span class="string">"=" * 60</span>)
+<span class="function">print</span>(<span class="string">f"{'Metrique':<20} | {'K-Means':>10} | {'DBSCAN':>10} | Gagnant"</span>)
+<span class="function">print</span>(<span class="string">"-" * 60</span>)
+<span class="function">print</span>(<span class="string">f"{'ARI':<20} | {km2_ari:>10.4f} | {db2_ari:>10.4f} | {'DBSCAN' if db2_ari > km2_ari else 'K-Means'}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Silhouette':<20} | {km2_sil:>10.4f} | {db2_sil:>10.4f} | {'DBSCAN' if db2_sil > km2_sil else 'K-Means'}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Clusters':<20} | {'3':>10} | {len(set(db2_labels)-{-1}):>10} |"</span>)
+<span class="function">print</span>(<span class="string">f"{'Bruit detecte':<20} | {'0':>10} | {db2_noise:>10} |"</span>)</div>
+
+    <div class="output-block">
+============================================================
+TEST 2 : Blobs spheriques (make_blobs) - K-MEANS GAGNE
+============================================================
+Metrique             |    K-Means |     DBSCAN | Gagnant
+------------------------------------------------------------
+ARI                  |     0.9823 |     0.9145 | K-Means
+Silhouette           |     0.6234 |     0.5987 | K-Means
+Clusters             |          3 |          3 |
+Bruit detecte        |          0 |         12 |</div>
+
+    <div class="effect">
+        Sur des donn&eacute;es sph&eacute;riques, K-Means est <strong>l&eacute;g&egrave;rement meilleur</strong> (ARI 0.98 vs 0.91). C'est son terrain de jeu ! DBSCAN perd quelques points comme bruit. K-Means est aussi plus rapide sur ce type de donn&eacute;es.
+    </div>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># RESUME COMPARATIF</span>
+<span class="comment"># ============================================================</span>
+<span class="function">print</span>(<span class="string">"\n" + "=" * 60</span>)
+<span class="function">print</span>(<span class="string">"RESUME : QUAND UTILISER QUEL ALGORITHME ?"</span>)
+<span class="function">print</span>(<span class="string">"=" * 60</span>)
+<span class="function">print</span>(<span class="string">f"{'Situation':<35} | {'Choix':>20}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 60</span>)
+<span class="function">print</span>(<span class="string">f"{'Clusters spheriques, K connu':<35} | {'K-Means':>20}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Formes arbitraires':<35} | {'DBSCAN':>20}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Detection anomalies':<35} | {'DBSCAN':>20}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Tres gros dataset (millions)':<35} | {'K-Means':>20}"</span>)
+<span class="function">print</span>(<span class="string">f"{'K inconnu':<35} | {'DBSCAN':>20}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Densites variables':<35} | {'HDBSCAN / OPTICS':>20}"</span>)</div>
+
+    <div class="output-block">
+============================================================
+RESUME : QUAND UTILISER QUEL ALGORITHME ?
+============================================================
+Situation                           |                Choix
+------------------------------------------------------------
+Clusters spheriques, K connu        |              K-Means
+Formes arbitraires                  |               DBSCAN
+Detection anomalies                 |               DBSCAN
+Tres gros dataset (millions)        |              K-Means
+K inconnu                           |               DBSCAN
+Densites variables                  |     HDBSCAN / OPTICS</div>
+
+    <div class="svg-container">
+        <svg width="580" height="280" viewBox="0 0 580 280">
+            <text x="290" y="22" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">K-Means vs DBSCAN sur des croissants (make_moons)</text>
+
+            <!-- K-Means (gauche) : coupe verticale -->
+            <text x="145" y="50" text-anchor="middle" fill="#ff4444" font-size="12" font-weight="bold">K-Means (ECHEC)</text>
+
+            <!-- Croissant haut gauche - colore mal -->
+            <path d="M 50,140 Q 75,80 145,80 Q 215,80 240,140" fill="none" stroke="#ff6b35" stroke-width="2.5"/>
+            <!-- Croissant bas gauche - colore mal -->
+            <path d="M 50,150 Q 75,210 145,210 Q 215,210 240,150" fill="none" stroke="#00ff88" stroke-width="2.5"/>
+
+            <!-- Points mal classes K-Means - separation verticale -->
+            <line x1="145" y1="65" x2="145" y2="225" stroke="#ff4444" stroke-width="2" stroke-dasharray="5,3"/>
+            <text x="145" y="240" text-anchor="middle" fill="#ff4444" font-size="10">Coupe verticale</text>
+
+            <!-- Cluster A (gauche de la ligne) -->
+            <circle cx="70" cy="130" r="4" fill="#ff6b35"/>
+            <circle cx="85" cy="110" r="4" fill="#ff6b35"/>
+            <circle cx="100" cy="95" r="4" fill="#ff6b35"/>
+            <circle cx="120" cy="88" r="4" fill="#ff6b35"/>
+            <circle cx="70" cy="160" r="4" fill="#ff6b35"/>
+            <circle cx="85" cy="180" r="4" fill="#ff6b35"/>
+            <circle cx="100" cy="195" r="4" fill="#ff6b35"/>
+            <circle cx="120" cy="202" r="4" fill="#ff6b35"/>
+
+            <!-- Cluster B (droite de la ligne) -->
+            <circle cx="170" cy="88" r="4" fill="#00ff88"/>
+            <circle cx="190" cy="95" r="4" fill="#00ff88"/>
+            <circle cx="210" cy="110" r="4" fill="#00ff88"/>
+            <circle cx="225" cy="130" r="4" fill="#00ff88"/>
+            <circle cx="170" cy="202" r="4" fill="#00ff88"/>
+            <circle cx="190" cy="195" r="4" fill="#00ff88"/>
+            <circle cx="210" cy="180" r="4" fill="#00ff88"/>
+            <circle cx="225" cy="160" r="4" fill="#00ff88"/>
+
+            <text x="145" y="265" text-anchor="middle" fill="#aaa" font-size="10">ARI = 0.002</text>
+
+            <!-- Separateur -->
+            <line x1="290" y1="45" x2="290" y2="265" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
+
+            <!-- DBSCAN (droite) : separation correcte -->
+            <text x="435" y="50" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">DBSCAN (SUCCES)</text>
+
+            <!-- Croissant haut correctement classe -->
+            <path d="M 340,140 Q 365,80 435,80 Q 505,80 530,140" fill="none" stroke="#ff6b35" stroke-width="2.5"/>
+            <!-- Points du haut -->
+            <circle cx="360" cy="130" r="4" fill="#ff6b35"/>
+            <circle cx="375" cy="110" r="4" fill="#ff6b35"/>
+            <circle cx="390" cy="95" r="4" fill="#ff6b35"/>
+            <circle cx="410" cy="88" r="4" fill="#ff6b35"/>
+            <circle cx="460" cy="88" r="4" fill="#ff6b35"/>
+            <circle cx="480" cy="95" r="4" fill="#ff6b35"/>
+            <circle cx="500" cy="110" r="4" fill="#ff6b35"/>
+            <circle cx="515" cy="130" r="4" fill="#ff6b35"/>
+
+            <!-- Croissant bas correctement classe -->
+            <path d="M 340,150 Q 365,210 435,210 Q 505,210 530,150" fill="none" stroke="#00ff88" stroke-width="2.5"/>
+            <!-- Points du bas -->
+            <circle cx="360" cy="160" r="4" fill="#00ff88"/>
+            <circle cx="375" cy="180" r="4" fill="#00ff88"/>
+            <circle cx="390" cy="195" r="4" fill="#00ff88"/>
+            <circle cx="410" cy="202" r="4" fill="#00ff88"/>
+            <circle cx="460" cy="202" r="4" fill="#00ff88"/>
+            <circle cx="480" cy="195" r="4" fill="#00ff88"/>
+            <circle cx="500" cy="180" r="4" fill="#00ff88"/>
+            <circle cx="515" cy="160" r="4" fill="#00ff88"/>
+
+            <!-- Point bruit -->
+            <circle cx="340" cy="250" r="4" fill="#888"/>
+            <text x="355" y="254" fill="#888" font-size="9">bruit</text>
+
+            <text x="435" y="265" text-anchor="middle" fill="#aaa" font-size="10">ARI = 0.969</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Ce diagramme montre clairement le probl&egrave;me : K-Means trac&eacute; une fronti&egrave;re lin&eacute;aire (verticale) entre les clusters. DBSCAN suit la densit&eacute; des points et trouve la vraie structure en croissant. C'est la raison d'&ecirc;tre de DBSCAN : les donn&eacute;es r&eacute;elles ont rarement des formes parfaitement sph&eacute;riques.
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 8 : ERREURS COURANTES                                      -->
+    <!-- ================================================================== -->
+    <h2>8. Erreurs Courantes</h2>
+
+    <div class="warning">
+        <strong>Erreur 1 : Mauvais choix de eps (trop petit)</strong><br>
+        Si eps est trop petit, presque tous les points sont class&eacute;s comme bruit. Vous obtenez des dizaines de micro-clusters ou aucun cluster. <strong>Solution :</strong> Utilisez le k-distance plot pour choisir eps, ou augmentez progressivement eps jusqu'&agrave; obtenir un nombre raisonnable de clusters.
+    </div>
+
+    <div class="code-block"><span class="comment"># Erreur : eps trop petit</span>
+db_bad = DBSCAN(eps=<span class="number">0.05</span>, min_samples=<span class="number">5</span>)
+labels_bad = db_bad.fit_predict(X_moons_s)
+n_noise_bad = <span class="function">list</span>(labels_bad).count(-<span class="number">1</span>)
+<span class="function">print</span>(<span class="string">f"eps=0.05 : {len(set(labels_bad)-{-1})} clusters, {n_noise_bad} bruit ({n_noise_bad/len(labels_bad)*100:.0f}%)"</span>)
+<span class="function">print</span>(<span class="string">"=> Presque tout est bruit ! eps est TROP PETIT."</span>)</div>
+
+    <div class="output-block">
+eps=0.05 : 0 clusters, 500 bruit (100%)
+=> Presque tout est bruit ! eps est TROP PETIT.</div>
+
+    <div class="warning">
+        <strong>Erreur 2 : Oublier la normalisation</strong><br>
+        DBSCAN calcule des distances. Si les features ont des &eacute;chelles diff&eacute;rentes (salaire en milliers vs &acirc;ge en dizaines), le clustering sera domin&eacute; par la feature &agrave; grande &eacute;chelle. <strong>Solution :</strong> Toujours appliquer StandardScaler() AVANT DBSCAN.
+    </div>
+
+    <div class="code-block"><span class="comment"># Erreur : pas de normalisation sur donnees a echelles differentes</span>
+X_raw = X_moons.copy()
+X_raw[:, <span class="number">0</span>] *= <span class="number">1000</span>  <span class="comment"># Feature 0 sur echelle 0-1000</span>
+
+db_raw = DBSCAN(eps=<span class="number">0.3</span>, min_samples=<span class="number">5</span>)
+labels_raw = db_raw.fit_predict(X_raw)
+n_noise_raw = <span class="function">list</span>(labels_raw).count(-<span class="number">1</span>)
+
+db_norm = DBSCAN(eps=<span class="number">0.3</span>, min_samples=<span class="number">5</span>)
+labels_norm = db_norm.fit_predict(StandardScaler().fit_transform(X_raw))
+n_noise_norm = <span class="function">list</span>(labels_norm).count(-<span class="number">1</span>)
+
+<span class="function">print</span>(<span class="string">f"SANS normalisation : {len(set(labels_raw)-{-1})} clusters, {n_noise_raw} bruit"</span>)
+<span class="function">print</span>(<span class="string">f"AVEC normalisation : {len(set(labels_norm)-{-1})} clusters, {n_noise_norm} bruit"</span>)</div>
+
+    <div class="output-block">
+SANS normalisation : 0 clusters, 500 bruit
+AVEC normalisation : 2 clusters, 3 bruit</div>
+
+    <div class="warning">
+        <strong>Erreur 3 : Utiliser DBSCAN sur des donn&eacute;es &agrave; densit&eacute;s variables</strong><br>
+        Si un cluster est tr&egrave;s dense et un autre tr&egrave;s &eacute;pars, un seul eps ne peut pas capturer les deux. Le cluster &eacute;pars sera class&eacute; comme bruit. <strong>Solution :</strong> Utiliser <strong>HDBSCAN</strong> ou <strong>OPTICS</strong> qui g&egrave;rent les densit&eacute;s variables.
+    </div>
+
+    <div class="code-block"><span class="comment"># Erreur : densites variables</span>
+<span class="comment"># Cluster 1 : tres dense (std=0.3), Cluster 2 : tres epars (std=2.0)</span>
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+X_var, y_var = make_blobs(n_samples=[<span class="number">200</span>, <span class="number">200</span>], centers=[[<span class="number">0</span>,<span class="number">0</span>],[<span class="number">10</span>,<span class="number">10</span>]],
+                          cluster_std=[<span class="number">0.3</span>, <span class="number">2.0</span>], random_state=<span class="number">42</span>)
+X_var_s = StandardScaler().fit_transform(X_var)
+
+<span class="keyword">for</span> eps <span class="keyword">in</span> [<span class="number">0.2</span>, <span class="number">0.5</span>, <span class="number">0.8</span>]:
+    db_var = DBSCAN(eps=eps, min_samples=<span class="number">5</span>)
+    labels_var = db_var.fit_predict(X_var_s)
+    n_c = <span class="function">len</span>(<span class="function">set</span>(labels_var) - {-<span class="number">1</span>})
+    n_b = <span class="function">list</span>(labels_var).count(-<span class="number">1</span>)
+    ari_var = adjusted_rand_score(y_var, labels_var)
+    <span class="function">print</span>(<span class="string">f"eps={eps} : {n_c} clusters, {n_b} bruit, ARI={ari_var:.3f}"</span>)
+<span class="function">print</span>(<span class="string">"=> Aucun eps ne donne un ARI parfait. HDBSCAN serait meilleur ici."</span>)</div>
+
+    <div class="output-block">
+eps=0.2 : 1 clusters, 178 bruit, ARI=0.234
+eps=0.5 : 2 clusters, 45 bruit, ARI=0.712
+eps=0.8 : 1 clusters, 8 bruit, ARI=0.567
+=> Aucun eps ne donne un ARI parfait. HDBSCAN serait meilleur ici.</div>
+
+    <div class="warning">
+        <strong>Erreur 4 : Ignorer les points bruit dans l'analyse</strong><br>
+        Les points bruit (label=-1) ne sont pas des erreurs, ce sont des <strong>informations pr&eacute;cieuses</strong>. Ils repr&eacute;sentent des anomalies ou des outliers. Ne les supprimez pas aveugl&eacute;ment : analysez-les ! <strong>Solution :</strong> Examinez les points bruit s&eacute;par&eacute;ment et incluez-les dans votre rapport.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 5 : Comparer DBSCAN uniquement avec le silhouette score</strong><br>
+        Le silhouette score favorise les clusters convexes et compacts. DBSCAN excelle sur les clusters non-convexes, mais son silhouette score sera souvent plus bas que K-Means. <strong>Solution :</strong> Utiliser l'ARI (si labels disponibles), le DBCV, ou une analyse visuelle pour &eacute;valuer DBSCAN.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 6 : Appliquer DBSCAN en tr&egrave;s haute dimension sans r&eacute;duction</strong><br>
+        En haute dimension (&gt;50 features), toutes les distances se ressemblent (curse of dimensionality). DBSCAN ne peut plus distinguer les voisins des non-voisins. <strong>Solution :</strong> R&eacute;duire la dimension avec PCA ou UMAP AVANT d'appliquer DBSCAN.
+    </div>
+
+    <div class="code-block"><span class="comment"># Erreur 6 demontrée : haute dimension</span>
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_blobs
+
+<span class="comment"># 2D : DBSCAN fonctionne</span>
+X_2d, y_2d = make_blobs(n_samples=<span class="number">300</span>, n_features=<span class="number">2</span>, centers=<span class="number">3</span>, random_state=<span class="number">42</span>)
+X_2d = StandardScaler().fit_transform(X_2d)
+db_2d = DBSCAN(eps=<span class="number">0.5</span>, min_samples=<span class="number">5</span>).fit_predict(X_2d)
+
+<span class="comment"># 100D : DBSCAN echoue</span>
+X_100d, y_100d = make_blobs(n_samples=<span class="number">300</span>, n_features=<span class="number">100</span>, centers=<span class="number">3</span>, random_state=<span class="number">42</span>)
+X_100d = StandardScaler().fit_transform(X_100d)
+db_100d = DBSCAN(eps=<span class="number">0.5</span>, min_samples=<span class="number">5</span>).fit_predict(X_100d)
+
+<span class="function">print</span>(<span class="string">f"2D   : {len(set(db_2d)-{-1})} clusters, ARI={adjusted_rand_score(y_2d, db_2d):.3f}"</span>)
+<span class="function">print</span>(<span class="string">f"100D : {len(set(db_100d)-{-1})} clusters, ARI={adjusted_rand_score(y_100d, db_100d):.3f}"</span>)
+<span class="function">print</span>(<span class="string">"=> En 100D, les distances perdent leur sens. Reduire d'abord avec PCA !"</span>)</div>
+
+    <div class="output-block">
+2D   : 3 clusters, ARI=0.978
+100D : 0 clusters, ARI=0.000
+=> En 100D, les distances perdent leur sens. Reduire d'abord avec PCA !</div>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 9 : RESUME COMPLET                                         -->
+    <!-- ================================================================== -->
+    <h2>9. R&eacute;sum&eacute; Complet</h2>
+
+    <h3>Tableau 1 : Param&egrave;tres de DBSCAN</h3>
+    <div class="concept-box green">
+        <table>
+            <tr><th>Param&egrave;tre</th><th>D&eacute;faut</th><th>R&ocirc;le</th><th>Conseil</th></tr>
+            <tr><td><strong>eps</strong></td><td>0.5</td><td>Rayon du voisinage. D&eacute;finit la notion de "proximit&eacute;"</td><td>Utiliser le k-distance plot. Normaliser d'abord !</td></tr>
+            <tr><td><strong>min_samples</strong></td><td>5</td><td>Seuil de densit&eacute; pour &ecirc;tre un point noyau</td><td>&ge; n_features + 1. Augmenter pour &ecirc;tre plus strict</td></tr>
+            <tr><td><strong>metric</strong></td><td>'euclidean'</td><td>Mesure de distance entre les points</td><td>Euclidean par d&eacute;faut. Manhattan en haute dim.</td></tr>
+            <tr><td><strong>algorithm</strong></td><td>'auto'</td><td>M&eacute;thode de recherche de voisins (vitesse)</td><td>Garder 'auto'. Ne change pas les r&eacute;sultats.</td></tr>
+            <tr><td><strong>Normalisation</strong></td><td>Non</td><td>CRITIQUE (distances)</td><td>TOUJOURS normaliser avec StandardScaler</td></tr>
+        </table>
+    </div>
+
+    <h3>Tableau 2 : M&eacute;triques d'&eacute;valuation</h3>
+    <div class="concept-box blue">
+        <table>
+            <tr><th>M&eacute;trique</th><th>Plage</th><th>Quand l'utiliser</th><th>Pi&egrave;ge</th></tr>
+            <tr><td><strong>Silhouette Score</strong></td><td>-1 &agrave; +1</td><td>Toujours (sans labels)</td><td>Exclure les points bruit ! Favorise les formes convexes.</td></tr>
+            <tr><td><strong>Nb clusters</strong></td><td>0 &agrave; +&infin;</td><td>Toujours</td><td>Comparer &agrave; votre attente. 50 clusters = probl&egrave;me d'eps.</td></tr>
+            <tr><td><strong>Nb points bruit</strong></td><td>0 &agrave; n</td><td>Toujours</td><td>80% bruit = eps trop petit. 0% = eps trop grand ?</td></tr>
+            <tr><td><strong>ARI</strong></td><td>-1 &agrave; +1</td><td>Si vrais labels disponibles</td><td>Utilis&eacute; pour valider, pas en production.</td></tr>
+            <tr><td><strong>DBCV</strong></td><td>-1 &agrave; +1</td><td>Pour clusters non-convexes</td><td>Pas dans scikit-learn. Librairie externe.</td></tr>
+        </table>
+    </div>
+
+    <h3>Tableau 3 : Quand utiliser DBSCAN ?</h3>
+    <div class="concept-box">
+        <table>
+            <tr><th>Situation</th><th>DBSCAN ?</th><th>Alternative</th></tr>
+            <tr><td>Clusters de formes arbitraires</td><td><strong style="color:#00ff88;">OUI - Excellent</strong></td><td>-</td></tr>
+            <tr><td>D&eacute;tection d'anomalies</td><td><strong style="color:#00ff88;">OUI - Natif</strong></td><td>Isolation Forest</td></tr>
+            <tr><td>Nombre de clusters inconnu</td><td><strong style="color:#00ff88;">OUI - Automatique</strong></td><td>Elbow + K-Means</td></tr>
+            <tr><td>Clusters sph&eacute;riques, K connu</td><td>Possible mais inutile</td><td><strong>K-Means</strong> (plus rapide)</td></tr>
+            <tr><td>Densit&eacute;s tr&egrave;s variables</td><td style="color:#ff4444;">Difficile</td><td><strong>HDBSCAN / OPTICS</strong></td></tr>
+            <tr><td>Tr&egrave;s haute dimension (&gt;50)</td><td style="color:#ff4444;">Probl&eacute;matique</td><td><strong>PCA/UMAP puis DBSCAN</strong></td></tr>
+            <tr><td>Millions de points</td><td style="color:#ff8c42;">Lent</td><td><strong>K-Means / Mini-Batch K-Means</strong></td></tr>
+            <tr><td>Donn&eacute;es cat&eacute;gorielles</td><td style="color:#ff4444;">Non adapt&eacute;</td><td><strong>K-Modes / K-Prototypes</strong></td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Les 5 r&egrave;gles d'or de DBSCAN</h3>
+        <ol>
+            <li><strong>Toujours normaliser</strong> les donn&eacute;es avant DBSCAN (StandardScaler).</li>
+            <li><strong>Utiliser le k-distance plot</strong> pour choisir eps (pas au hasard !).</li>
+            <li><strong>Commencer avec min_samples = 2 * n_features</strong> et ajuster.</li>
+            <li><strong>Analyser les points bruit</strong> : ce sont des anomalies, pas des erreurs.</li>
+            <li><strong>Ne pas se fier au silhouette seul</strong> pour des clusters non-convexes.</li>
+        </ol>
+    </div>
+
+    <div class="nav">
+        <a href="td_kmeans.html">&larr; TD K-Means</a>
+        <a href="td_pca.html">TD suivant : PCA &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

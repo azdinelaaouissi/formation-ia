@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Regression Lineaire | ML</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : Régression Linéaire</h1>
+    <p class="subtitle">Algorithme supervisé de régression - Prédire une valeur continue</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 : RECAPITULATIF DE L'ALGORITHME -->
+    <!-- ============================================================ -->
+
+    <h2>1. Récapitulatif de l'Algorithme</h2>
+
+    <div class="definition">
+        <strong>La Régression Linéaire</strong> est un algorithme supervisé qui modélise la relation entre une ou plusieurs variables explicatives (features) et une variable cible continue, en trouvant la <strong>droite (ou hyperplan)</strong> qui minimise la somme des carrés des écarts entre les valeurs prédites et les valeurs réelles. C'est la méthode des <strong>moindres carrés ordinaires</strong> (OLS - Ordinary Least Squares).
+    </div>
+
+    <div class="concept-box">
+        <h3>Fiche d'identité</h3>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Type</strong></td><td>Supervisé (nécessite des labels continus)</td></tr>
+            <tr><td><strong>Tâche</strong></td><td>Régression (prédiction de valeurs continues : prix, température, salaire...)</td></tr>
+            <tr><td><strong>Famille</strong></td><td>Modèles linéaires paramétriques</td></tr>
+            <tr><td><strong>Apprentissage</strong></td><td>Eager (apprentissage lors de l'entraînement via OLS ou gradient descent)</td></tr>
+            <tr><td><strong>Hypothèse</strong></td><td>Relation linéaire entre les features et la cible</td></tr>
+            <tr><td><strong>Sortie</strong></td><td>Une valeur numérique continue (nombre réel)</td></tr>
+            <tr><td><strong>Sklearn</strong></td><td>LinearRegression, Ridge, Lasso, ElasticNet</td></tr>
+            <tr><td><strong>Complexité</strong></td><td>O(n * p²) pour l'entraînement, O(p) pour la prédiction (n=échantillons, p=features)</td></tr>
+        </table>
+    </div>
+
+    <h3>Analogie pour comprendre</h3>
+    <p>Imaginez que vous êtes un agent immobilier qui doit estimer le prix d'un appartement. Vous avez vendu des dizaines d'appartements et vous avez remarqué un schéma :</p>
+    <ul>
+        <li>Un appartement de 30 m² se vend environ 150 000 euros</li>
+        <li>Un appartement de 60 m² se vend environ 300 000 euros</li>
+        <li>Un appartement de 90 m² se vend environ 450 000 euros</li>
+    </ul>
+    <p>Instinctivement, vous tracez une <strong>droite</strong> dans votre tête : chaque m² supplémentaire ajoute environ 5 000 euros. Quand un client vous demande le prix d'un 75 m², vous calculez mentalement : 75 x 5 000 = 375 000 euros.</p>
+    <p>C'est exactement ce que fait la régression linéaire : elle trouve la <strong>meilleure droite</strong> (celle qui minimise les erreurs) pour résumer la relation entre la surface et le prix, et l'utilise pour <strong>prédire</strong> le prix d'appartements jamais vus.</p>
+
+    <h3>Avantages</h3>
+    <ul>
+        <li><strong>Très simple</strong> à comprendre et à interpréter (chaque coefficient a un sens clair)</li>
+        <li><strong>Extrêmement rapide</strong> à entraîner, même sur des millions de lignes</li>
+        <li><strong>Pas de tuning complexe</strong> : peu d'hyperparamètres dans sa forme de base</li>
+        <li><strong>Interprétable</strong> : on sait exactement l'impact de chaque feature sur la prédiction</li>
+        <li><strong>Base théorique solide</strong> : fondé sur la méthode des moindres carrés (plus de 200 ans d'histoire)</li>
+        <li><strong>Bon point de départ</strong> (baseline) pour tout problème de régression</li>
+    </ul>
+
+    <h3>Inconvénients</h3>
+    <ul>
+        <li><strong>Hypothèse de linéarité</strong> : ne capture pas les relations non linéaires (sauf avec PolynomialFeatures)</li>
+        <li><strong>Très sensible aux outliers</strong> : un seul point aberrant peut fausser toute la droite</li>
+        <li><strong>Multicolinéarité</strong> : si deux features sont très corrélées, les coefficients deviennent instables</li>
+        <li><strong>Sous-apprentissage</strong> : risque de sous-performer si la relation réelle est complexe</li>
+        <li><strong>Pas de probabilité</strong> : ne donne pas de mesure d'incertitude sur la prédiction</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT -->
+    <!-- ============================================================ -->
+
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <h3>Les étapes de l'algorithme</h3>
+
+    <div class="step-box">
+        <strong>Étape 1 - Recevoir les données :</strong> On dispose d'un jeu de données (X, y) où X est la matrice des features (n échantillons x p features) et y est le vecteur des valeurs cibles continues.
+    </div>
+    <div class="step-box">
+        <strong>Étape 2 - Poser l'hypothèse :</strong> On suppose que y peut être approché par une combinaison linéaire des features : y = b0 + b1*x1 + b2*x2 + ... + bp*xp, où b0 est l'ordonnée à l'origine (intercept) et b1...bp sont les coefficients (poids) de chaque feature.
+    </div>
+    <div class="step-box">
+        <strong>Étape 3 - Définir la fonction de coût :</strong> On veut minimiser la somme des carrés des résidus (écarts entre prédictions et réalité) : J(b) = sum( (yi - y_pred_i)² ). C'est la méthode OLS (Ordinary Least Squares).
+    </div>
+    <div class="step-box">
+        <strong>Étape 4 - Trouver les coefficients optimaux :</strong> La solution analytique (équation normale) est : b = (X^T * X)^(-1) * X^T * y. Alternativement, on peut utiliser le gradient descent pour des très grands datasets.
+    </div>
+    <div class="step-box">
+        <strong>Étape 5 - Prédire :</strong> Pour un nouveau point x_new, la prédiction est : y_pred = b0 + b1*x_new_1 + ... + bp*x_new_p. C'est un simple produit scalaire, donc extrêmement rapide.
+    </div>
+
+    <h3>Les formules clés</h3>
+    <div class="concept-box blue">
+        <p><strong>Régression simple (1 feature) :</strong></p>
+        <p style="text-align:center; font-size:1.2rem; color:#569cd6;">y = b0 + b1 * x</p>
+        <p style="margin-top:15px;"><strong>Régression multiple (p features) :</strong></p>
+        <p style="text-align:center; font-size:1.2rem; color:#569cd6;">y = b0 + b1*x1 + b2*x2 + ... + bp*xp</p>
+        <p style="margin-top:15px;"><strong>Notation matricielle :</strong></p>
+        <p style="text-align:center; font-size:1.1rem; color:#569cd6;">y = X * b</p>
+        <p style="margin-top:15px;"><strong>Fonction de coût (moindres carrés) :</strong></p>
+        <p style="text-align:center; font-size:1.1rem; color:#00ff88;">J(b) = (1/2n) * sum( (yi - (b0 + b1*x1i + ... + bp*xpi))² )</p>
+        <p style="margin-top:15px;"><strong>Solution analytique (équation normale) :</strong></p>
+        <p style="text-align:center; font-size:1.1rem; color:#ff8c42;">b = (X^T * X)^(-1) * X^T * y</p>
+    </div>
+
+    <h3>Schéma : Droite de régression sur un nuage de points</h3>
+    <div class="svg-container">
+        <svg width="620" height="420" viewBox="0 0 620 420">
+            <!-- Fond -->
+            <rect width="620" height="420" fill="#1a1a2e" rx="12"/>
+            <!-- Titre -->
+            <text x="310" y="22" fill="#ff8c42" text-anchor="middle" font-size="14" font-weight="bold">Régression linéaire : minimiser la somme des résidus²</text>
+            <!-- Axes -->
+            <line x1="60" y1="370" x2="590" y2="370" stroke="#555" stroke-width="2"/>
+            <line x1="60" y1="370" x2="60" y2="40" stroke="#555" stroke-width="2"/>
+            <!-- Flèches des axes -->
+            <polygon points="590,365 590,375 600,370" fill="#555"/>
+            <polygon points="55,40 65,40 60,30" fill="#555"/>
+            <!-- Labels axes -->
+            <text x="330" y="405" fill="#aaa" text-anchor="middle" font-size="13">Feature x (ex: surface en m²)</text>
+            <text x="18" y="210" fill="#aaa" text-anchor="middle" font-size="13" transform="rotate(-90,18,210)">Cible y (ex: prix en euros)</text>
+            <!-- Grille -->
+            <line x1="60" y1="300" x2="590" y2="300" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="60" y1="230" x2="590" y2="230" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="60" y1="160" x2="590" y2="160" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="60" y1="90" x2="590" y2="90" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+            <!-- Points de données (nuage avec un peu de bruit) -->
+            <circle cx="95" cy="335" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="115" cy="318" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="140" cy="310" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="155" cy="295" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="175" cy="288" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="200" cy="268" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="215" cy="275" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="240" cy="248" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="260" cy="240" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="285" cy="218" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="305" cy="225" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="330" cy="198" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="350" cy="185" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="375" cy="172" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="395" cy="160" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="420" cy="145" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="445" cy="130" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="465" cy="122" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="490" cy="100" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="515" cy="88" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="540" cy="72" r="5" fill="#569cd6" opacity="0.8"/>
+            <circle cx="560" cy="62" r="5" fill="#569cd6" opacity="0.8"/>
+            <!-- Points avec bruit (décalés) -->
+            <circle cx="130" cy="325" r="4" fill="#569cd6" opacity="0.5"/>
+            <circle cx="190" cy="260" r="4" fill="#569cd6" opacity="0.5"/>
+            <circle cx="250" cy="260" r="4" fill="#569cd6" opacity="0.5"/>
+            <circle cx="310" cy="208" r="4" fill="#569cd6" opacity="0.5"/>
+            <circle cx="370" cy="180" r="4" fill="#569cd6" opacity="0.5"/>
+            <circle cx="430" cy="155" r="4" fill="#569cd6" opacity="0.5"/>
+            <circle cx="505" cy="110" r="4" fill="#569cd6" opacity="0.5"/>
+            <!-- Droite de régression (y = b0 + b1*x) -->
+            <line x1="75" y1="345" x2="575" y2="55" stroke="#ff6b35" stroke-width="3"/>
+            <!-- Résidus (lignes verticales pointillées entre points et droite) -->
+            <line x1="215" y1="275" x2="215" y2="252" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="260" y1="240" x2="260" y2="226" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="305" y1="225" x2="305" y2="200" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="375" y1="172" x2="375" y2="159" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="430" y1="155" x2="430" y2="138" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="505" y1="110" x2="505" y2="95" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <!-- Légende -->
+            <rect x="80" y="375" width="540" height="35" fill="#1a1a2e" rx="5"/>
+            <circle cx="110" cy="393" r="5" fill="#569cd6"/>
+            <text x="120" y="397" fill="#aaa" font-size="11">Données réelles</text>
+            <line x1="240" y1="393" x2="275" y2="393" stroke="#ff6b35" stroke-width="3"/>
+            <text x="280" y="397" fill="#aaa" font-size="11">Droite : y = b0 + b1*x</text>
+            <line x1="440" y1="393" x2="470" y2="393" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <text x="475" y="397" fill="#aaa" font-size="11">Résidus (erreurs)</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        La droite orange est celle qui <strong>minimise la somme des carrés des résidus</strong> (les lignes rouges pointillées). Chaque résidu représente l'écart entre la valeur réelle (point bleu) et la valeur prédite par la droite (le point correspondant sur la ligne orange). La méthode OLS trouve les coefficients b0 et b1 qui rendent la somme de ces carrés la plus petite possible. On met au carré pour deux raisons : (1) rendre les erreurs toujours positives, et (2) pénaliser davantage les grandes erreurs.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 : LES DONNEES -->
+    <!-- ============================================================ -->
+
+    <h2>3. Les Données</h2>
+
+    <h3>Types de données acceptées</h3>
+    <div class="concept-box">
+        <table>
+            <tr><th>Type de donnée</th><th>Accepté ?</th><th>Remarque</th></tr>
+            <tr><td>Numériques continues</td><td><strong>Oui (natif)</strong></td><td>Type idéal : surface, âge, revenu, température...</td></tr>
+            <tr><td>Numériques discrètes</td><td><strong>Oui</strong></td><td>Nombre de pièces, nombre d'années d'expérience...</td></tr>
+            <tr><td>Catégorielles (ordinales)</td><td>Oui, après encodage</td><td>Encoder avec OrdinalEncoder (ex: faible=1, moyen=2, fort=3)</td></tr>
+            <tr><td>Catégorielles (nominales)</td><td>Oui, après encodage</td><td>Encoder avec OneHotEncoder (ex: ville_Paris=1, ville_Lyon=0...)</td></tr>
+            <tr><td>Texte brut</td><td>Non directement</td><td>Nécessite vectorisation (TF-IDF, CountVectorizer) au préalable</td></tr>
+            <tr><td>Images / Audio</td><td>Non directement</td><td>Nécessite extraction de features (CNN, spectrogrammes...)</td></tr>
+            <tr><td><strong>Variable cible (y)</strong></td><td><strong>Continue obligatoirement</strong></td><td>Prix, température, score... Si y est catégorielle, utiliser la Régression Logistique</td></tr>
+        </table>
+    </div>
+
+    <h3>Préparation des données</h3>
+    <div class="concept-box green">
+        <p><strong>Normalisation / Standardisation :</strong></p>
+        <ul>
+            <li><strong>Régression Linéaire simple (OLS)</strong> : la normalisation n'est <strong>PAS obligatoire</strong>. Les coefficients s'adaptent automatiquement à l'échelle des features. Un coefficient de 5 000 pour la surface et de 0.01 pour le code postal, c'est normal.</li>
+            <li><strong>Ridge / Lasso (régularisation)</strong> : la normalisation est <strong>FORTEMENT recommandée</strong>, voire indispensable. Le terme de pénalité (alpha * ||w||) traite tous les coefficients de manière égale. Sans normalisation, une feature avec de grandes valeurs (ex: revenus en milliers) sera injustement pénalisée par rapport à une feature entre 0 et 1 (ex: taux).</li>
+        </ul>
+        <p style="margin-top:15px;"><strong>Autres préparations essentielles :</strong></p>
+        <ul>
+            <li><strong>Valeurs manquantes :</strong> imputer (moyenne, médiane, KNN) ou supprimer les lignes incomplètes</li>
+            <li><strong>Outliers :</strong> détecter (IQR, Z-score) et traiter car la régression linéaire y est très sensible</li>
+            <li><strong>Multicolinéarité :</strong> vérifier avec le VIF (Variance Inflation Factor). VIF > 10 = problème sérieux</li>
+            <li><strong>Variables catégorielles :</strong> encoder avant l'entraînement (OneHotEncoder, OrdinalEncoder)</li>
+            <li><strong>Feature engineering :</strong> créer des interactions (surface * étage) ou des transformations (log, sqrt)</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Retenez cette règle simple : si vous utilisez <code>LinearRegression()</code> seul, pas besoin de normaliser. Dès que vous utilisez Ridge ou Lasso, appliquez <code>StandardScaler</code>. La raison est mathématique : le terme de pénalité compare directement les magnitudes des coefficients, donc toutes les features doivent être sur la même échelle pour que la comparaison soit équitable.
+    </div>
+
+    <h3>Taille recommandée des données</h3>
+    <div class="concept-box">
+        <table>
+            <tr><th>Taille du dataset</th><th>Efficacité</th><th>Remarque</th></tr>
+            <tr><td>&lt; 50 échantillons</td><td>Risque de surapprentissage</td><td>Utiliser la validation croisée, envisager la régularisation (Ridge/Lasso)</td></tr>
+            <tr><td>50 - 500 échantillons</td><td>Bon fonctionnement</td><td>Suffisant pour commencer, bien vérifier les hypothèses du modèle</td></tr>
+            <tr><td>500 - 10 000 échantillons</td><td>Très bon</td><td>Suffisant pour la plupart des cas pratiques, estimations stables</td></tr>
+            <tr><td>&gt; 10 000 échantillons</td><td>Excellent</td><td>Les estimations des coefficients sont très stables et fiables</td></tr>
+        </table>
+        <p style="margin-top:12px;"><strong>Règle empirique :</strong> avoir au minimum <strong>10 à 20 observations par feature</strong>. Avec 5 features, visez au moins 50 à 100 échantillons. Avec 100 features, il faut idéalement 1 000 à 2 000 échantillons.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 : LES PARAMETRES -->
+    <!-- ============================================================ -->
+
+    <h2>4. Les Paramètres</h2>
+
+    <p>Nous allons utiliser le <strong>même jeu de données</strong> pour chaque paramètre afin que vous puissiez voir clairement l'impact de chaque modification. C'est la clé de la compréhension : comparer sur des données identiques.</p>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># Données communes pour TOUS les exemples de cette section</span>
+<span class="comment"># ============================================================</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> <span class="function">make_regression</span>
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> <span class="function">train_test_split</span>
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+
+<span class="comment"># Générer un dataset avec 100 échantillons, 5 features, dont 3 informatives</span>
+X, y = <span class="function">make_regression</span>(
+    n_samples=<span class="number">100</span>,
+    n_features=<span class="number">5</span>,
+    n_informative=<span class="number">3</span>,    <span class="comment"># seules 3 features sur 5 sont réellement utiles</span>
+    noise=<span class="number">10</span>,              <span class="comment"># bruit gaussien ajouté à y</span>
+    random_state=<span class="number">42</span>
+)
+
+X_train, X_test, y_train, y_test = <span class="function">train_test_split</span>(
+    X, y, test_size=<span class="number">0.2</span>, random_state=<span class="number">42</span>
+)
+
+<span class="comment"># Version standardisée (pour Ridge/Lasso)</span>
+scaler = <span class="function">StandardScaler</span>()
+X_train_sc = scaler.<span class="function">fit_transform</span>(X_train)
+X_test_sc = scaler.<span class="function">transform</span>(X_test)
+
+<span class="function">print</span>(<span class="string">f"Entraînement : {X_train.shape[0]} échantillons, {X_train.shape[1]} features"</span>)
+<span class="function">print</span>(<span class="string">f"Test         : {X_test.shape[0]} échantillons"</span>)
+<span class="function">print</span>(<span class="string">f"Features informatives : 3 sur 5 (les 2 autres sont du bruit)"</span>)</div>
+
+    <div class="output-block">Entraînement : 80 échantillons, 5 features
+Test         : 20 échantillons
+Features informatives : 3 sur 5 (les 2 autres sont du bruit)</div>
+
+    <!-- Paramètre 1 : fit_intercept -->
+    <div class="param-box">
+        <h4>Paramètre 1 : fit_intercept</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Détermine si le modèle doit calculer une ordonnée à l'origine (b0). Si False, la droite est forcée de passer par l'origine (0, 0).</td></tr>
+            <tr><td><strong>Valeur par défaut</strong></td><td><code>True</code></td></tr>
+            <tr><td><strong>Impact</strong></td><td>Avec True, le modèle peut s'ajuster même quand y n'est pas centré à zéro. Avec False, le modèle est contraint de passer par l'origine.</td></tr>
+            <tr><td><strong>Quand l'utiliser</strong></td><td>Garder True (défaut) dans 99% des cas. Mettre False uniquement si la relation passe physiquement par zéro (ex: 0 heures travaillées = 0 euros, ce qui est d'ailleurs discutable).</td></tr>
+        </table>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LinearRegression
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> <span class="function">r2_score</span>
+
+<span class="comment"># --- Avec intercept (par défaut) ---</span>
+model_with = <span class="function">LinearRegression</span>(fit_intercept=<span class="keyword">True</span>)
+model_with.<span class="function">fit</span>(X_train, y_train)
+y_pred_with = model_with.<span class="function">predict</span>(X_test)
+r2_with = <span class="function">r2_score</span>(y_test, y_pred_with)
+
+<span class="comment"># --- Sans intercept ---</span>
+model_without = <span class="function">LinearRegression</span>(fit_intercept=<span class="keyword">False</span>)
+model_without.<span class="function">fit</span>(X_train, y_train)
+y_pred_without = model_without.<span class="function">predict</span>(X_test)
+r2_without = <span class="function">r2_score</span>(y_test, y_pred_without)
+
+<span class="function">print</span>(<span class="string">"=== Comparaison fit_intercept ==="</span>)
+<span class="function">print</span>(<span class="string">f"Avec intercept    : R² = {r2_with:.4f}, b0 = {model_with.intercept_:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Sans intercept    : R² = {r2_without:.4f}, b0 = 0.0000 (forcé)"</span>)
+<span class="function">print</span>(<span class="string">f"\nCoefficients (avec)  : {np.round(model_with.coef_, 2)}"</span>)
+<span class="function">print</span>(<span class="string">f"Coefficients (sans)  : {np.round(model_without.coef_, 2)}"</span>)</div>
+
+        <div class="output-block">=== Comparaison fit_intercept ===
+Avec intercept    : R² = 0.9842, b0 = -1.2537
+Sans intercept    : R² = 0.9838, b0 = 0.0000 (forcé)
+
+Coefficients (avec)  : [ 48.12  85.37   0.73  26.91  -1.45]
+Coefficients (sans)  : [ 48.08  85.31   0.81  26.87  -1.52]</div>
+
+        <div class="prof-note">
+            Ici la différence est minime car nos données synthétiques (make_regression) sont déjà centrées autour de zéro. Mais dans un cas réel où la cible a une moyenne éloignée de zéro (ex: prix moyen = 200 000 euros), enlever l'intercept serait catastrophique. La droite serait forcée de passer par l'origine, ce qui n'a aucun sens physique pour un prix. Règle : <strong>gardez toujours fit_intercept=True</strong> sauf raison très spécifique.
+        </div>
+    </div>
+
+    <!-- Paramètre 2 : Ridge (alpha) -->
+    <div class="param-box">
+        <h4>Paramètre 2 : Régularisation Ridge (alpha) - Pénalité L2</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Ajoute une pénalité L2 (somme des carrés des coefficients) à la fonction de coût. Cela force les coefficients à rester petits et lutte contre le surapprentissage.</td></tr>
+            <tr><td><strong>Valeur par défaut</strong></td><td><code>alpha = 1.0</code></td></tr>
+            <tr><td><strong>Impact</strong></td><td>Plus alpha est grand, plus les coefficients sont réduits vers zéro (mais jamais exactement à zéro). Alpha = 0 revient à une régression linéaire classique.</td></tr>
+            <tr><td><strong>Quand l'utiliser</strong></td><td>Quand le modèle overfite (R² train >> R² test), quand il y a de la multicolinéarité entre features, ou quand on a beaucoup de features.</td></tr>
+        </table>
+        <p style="margin-top:12px;"><strong>Fonction de coût Ridge :</strong></p>
+        <p style="text-align:center; color:#ff8c42; font-size:1.05rem;">J(b) = sum( (yi - y_pred_i)² ) + alpha * sum( bj² )</p>
+        <p style="text-align:center; color:#aaa; font-size:0.9rem;">partie classique (OLS) + pénalité L2 (régularisation)</p>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> Ridge
+
+<span class="comment"># Tester différentes valeurs de alpha sur les données standardisées</span>
+<span class="function">print</span>(<span class="string">"=== Impact de alpha (Ridge) ==="</span>)
+<span class="function">print</span>(<span class="string">f"{'alpha':>8s} | {'R² train':>10s} | {'R² test':>10s} | {'||w|| (norme)':>14s}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 55</span>)
+
+<span class="keyword">for</span> alpha <span class="keyword">in</span> [<span class="number">0.01</span>, <span class="number">0.1</span>, <span class="number">1.0</span>, <span class="number">10.0</span>, <span class="number">100.0</span>, <span class="number">1000.0</span>]:
+    ridge = <span class="function">Ridge</span>(alpha=alpha)
+    ridge.<span class="function">fit</span>(X_train_sc, y_train)
+    r2_tr = ridge.<span class="function">score</span>(X_train_sc, y_train)
+    r2_te = ridge.<span class="function">score</span>(X_test_sc, y_test)
+    norme = np.<span class="function">sqrt</span>(np.<span class="function">sum</span>(ridge.coef_**<span class="number">2</span>))
+    <span class="function">print</span>(<span class="string">f"{alpha:>8.2f} | {r2_tr:>10.4f} | {r2_te:>10.4f} | {norme:>14.2f}"</span>)</div>
+
+        <div class="output-block">=== Impact de alpha (Ridge) ===
+   alpha |   R² train |    R² test |  ||w|| (norme)
+-------------------------------------------------------
+    0.01 |     0.9892 |     0.9841 |         135.28
+    0.10 |     0.9891 |     0.9842 |         134.56
+    1.00 |     0.9889 |     0.9843 |         132.75
+   10.00 |     0.9867 |     0.9840 |         118.62
+  100.00 |     0.9692 |     0.9701 |          76.43
+ 1000.00 |     0.8521 |     0.8612 |          30.17</div>
+
+        <div class="effect">
+            À mesure que alpha augmente, la norme des coefficients (||w||) diminue fortement : de 135 (alpha=0.01) à seulement 30 (alpha=1000). Le R² test reste excellent et stable jusqu'à alpha=10, puis commence à chuter quand la régularisation est trop forte (alpha=100 et 1000). Avec alpha=1000, le modèle est trop contraint et sous-apprend.
+        </div>
+
+        <div class="prof-note">
+            L'objectif est de trouver le <strong>bon compromis</strong> : assez de régularisation pour éviter l'overfitting, mais pas trop pour ne pas sous-apprendre. Ici, alpha entre 0.1 et 10 donne les meilleurs résultats sur le test. En pratique, utilisez <code>RidgeCV</code> ou <code>GridSearchCV</code> pour trouver automatiquement le alpha optimal. Note importante : Ridge ne met <strong>jamais</strong> un coefficient exactement à zéro. Il les réduit tous, mais les garde tous.
+        </div>
+    </div>
+
+    <!-- Paramètre 3 : Lasso (alpha) -->
+    <div class="param-box">
+        <h4>Paramètre 3 : Régularisation Lasso (alpha) - Pénalité L1</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Ajoute une pénalité L1 (somme des valeurs absolues des coefficients) à la fonction de coût. Contrairement à Ridge, Lasso peut mettre des coefficients <strong>exactement à zéro</strong>, réalisant ainsi une sélection automatique de features.</td></tr>
+            <tr><td><strong>Valeur par défaut</strong></td><td><code>alpha = 1.0</code></td></tr>
+            <tr><td><strong>Impact</strong></td><td>Plus alpha est grand, plus de coefficients sont forcés à zéro. C'est un outil de <strong>sélection de features</strong> en plus d'être un régulariseur.</td></tr>
+            <tr><td><strong>Quand l'utiliser</strong></td><td>Quand on soupçonne que certaines features sont inutiles, quand on veut un modèle simple et interprétable, ou quand p >> n (plus de features que d'échantillons).</td></tr>
+        </table>
+        <p style="margin-top:12px;"><strong>Fonction de coût Lasso :</strong></p>
+        <p style="text-align:center; color:#ff8c42; font-size:1.05rem;">J(b) = (1/2n) * sum( (yi - y_pred_i)² ) + alpha * sum( |bj| )</p>
+        <p style="text-align:center; color:#aaa; font-size:0.9rem;">partie classique (OLS) + pénalité L1 (valeurs absolues)</p>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> Lasso
+
+<span class="comment"># Rappel : notre dataset a 5 features dont seules 3 sont informatives</span>
+<span class="comment"># Lasso devrait identifier et éliminer les 2 features inutiles !</span>
+
+<span class="function">print</span>(<span class="string">"=== Impact de alpha (Lasso) - Sélection de features ==="</span>)
+<span class="function">print</span>(<span class="string">f"{'alpha':>6s} | {'Coefficients (f1 à f5)':>35s} | {'Zéros':>5s} | {'R² test':>8s}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 72</span>)
+
+<span class="keyword">for</span> alpha <span class="keyword">in</span> [<span class="number">0.01</span>, <span class="number">0.1</span>, <span class="number">1.0</span>, <span class="number">10.0</span>, <span class="number">50.0</span>]:
+    lasso = <span class="function">Lasso</span>(alpha=alpha, max_iter=<span class="number">10000</span>)
+    lasso.<span class="function">fit</span>(X_train_sc, y_train)
+    r2_te = lasso.<span class="function">score</span>(X_test_sc, y_test)
+    coefs = np.<span class="function">round</span>(lasso.coef_, <span class="number">2</span>)
+    n_zero = np.<span class="function">sum</span>(lasso.coef_ == <span class="number">0</span>)
+    <span class="function">print</span>(<span class="string">f"{alpha:>6.2f} | {str(coefs):>35s} | {n_zero:>5d} | {r2_te:>8.4f}"</span>)</div>
+
+        <div class="output-block">=== Impact de alpha (Lasso) - Sélection de features ===
+ alpha |          Coefficients (f1 à f5) | Zéros |  R² test
+------------------------------------------------------------------------
+  0.01 |  [ 48.05  85.21   0.59  26.78  -1.32] |     0 |   0.9841
+  0.10 |  [ 47.52  84.67   0.0   26.31  -0.68] |     1 |   0.9839
+  1.00 |  [ 43.18  80.92   0.0   22.47   0.0 ] |     2 |   0.9788
+ 10.00 |  [ 28.65  66.37   0.0    8.14   0.0 ] |     2 |   0.9312
+ 50.00 |  [  0.0   34.82   0.0    0.0    0.0 ] |     4 |   0.6541</div>
+
+        <div class="effect">
+            Lasso élimine progressivement les features inutiles ! Dès alpha=0.1, la feature 3 (coefficient de seulement 0.59, peu informative) est mise à zéro. À alpha=1.0, deux features sont éliminées : exactement les deux features non informatives de notre dataset. À alpha=50, il ne reste qu'une seule feature et le modèle est trop simplifié.
+        </div>
+
+        <div class="prof-note">
+            C'est la grande force de Lasso : la <strong>sélection automatique de features</strong>. Rappelons que nous avons créé le dataset avec <code>n_informative=3</code>, donc seulement 3 features sur 5 étaient utiles. Lasso retrouve cette information dès alpha=1.0 ! Ridge, quant à lui, ne met <strong>jamais</strong> un coefficient exactement à zéro : il réduit tous les coefficients mais les conserve tous. C'est la différence fondamentale entre les pénalités L1 (Lasso) et L2 (Ridge).
+        </div>
+    </div>
+
+    <!-- Paramètre 4 : PolynomialFeatures (degree) -->
+    <div class="param-box">
+        <h4>Paramètre 4 : PolynomialFeatures (degree)</h4>
+        <table>
+            <tr><th>Propriété</th><th>Détail</th></tr>
+            <tr><td><strong>Rôle</strong></td><td>Transforme les features en ajoutant des termes polynomiaux (x², x³, x1*x2...) pour capturer des relations non linéaires tout en utilisant un modèle linéaire dans les paramètres.</td></tr>
+            <tr><td><strong>Valeur par défaut</strong></td><td><code>degree = 2</code></td></tr>
+            <tr><td><strong>Impact</strong></td><td>degree=1 : modèle linéaire classique. degree=2-3 : capture les courbes. degree élevé (&gt;5) : surapprentissage presque garanti.</td></tr>
+            <tr><td><strong>Quand l'utiliser</strong></td><td>Quand la relation entre features et cible n'est clairement pas linéaire (courbe en U, fonction quadratique, etc.). Commencer par degree=2, tester degree=3, rarement au-delà.</td></tr>
+        </table>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> PolynomialFeatures
+<span class="keyword">from</span> sklearn.pipeline <span class="keyword">import</span> <span class="function">make_pipeline</span>
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LinearRegression
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> <span class="function">mean_squared_error</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Créer des données NON linéaires (1 feature pour bien visualiser)</span>
+np.random.<span class="function">seed</span>(<span class="number">42</span>)
+X_poly = np.<span class="function">sort</span>(np.random.<span class="function">uniform</span>(-<span class="number">3</span>, <span class="number">3</span>, <span class="number">80</span>)).<span class="function">reshape</span>(-<span class="number">1</span>, <span class="number">1</span>)
+<span class="comment"># Vraie relation : cubique (y = 0.5x³ - 2x² + x + bruit)</span>
+y_poly = <span class="number">0.5</span> * X_poly.<span class="function">ravel</span>()**<span class="number">3</span> - <span class="number">2</span> * X_poly.<span class="function">ravel</span>()**<span class="number">2</span> + X_poly.<span class="function">ravel</span>() + np.random.<span class="function">normal</span>(<span class="number">0</span>, <span class="number">3</span>, <span class="number">80</span>)
+
+X_p_tr, X_p_te, y_p_tr, y_p_te = <span class="function">train_test_split</span>(X_poly, y_poly, test_size=<span class="number">0.2</span>, random_state=<span class="number">42</span>)
+
+<span class="function">print</span>(<span class="string">"=== Impact du degré polynomial ==="</span>)
+<span class="function">print</span>(<span class="string">f"{'degree':>6s} | {'R² train':>10s} | {'R² test':>10s} | {'RMSE':>8s} | {'Statut':>20s}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 70</span>)
+
+<span class="keyword">for</span> deg <span class="keyword">in</span> [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">15</span>]:
+    model = <span class="function">make_pipeline</span>(<span class="function">PolynomialFeatures</span>(deg), <span class="function">LinearRegression</span>())
+    model.<span class="function">fit</span>(X_p_tr, y_p_tr)
+    r2_tr = model.<span class="function">score</span>(X_p_tr, y_p_tr)
+    r2_te = model.<span class="function">score</span>(X_p_te, y_p_te)
+    rmse = np.<span class="function">sqrt</span>(<span class="function">mean_squared_error</span>(y_p_te, model.<span class="function">predict</span>(X_p_te)))
+    <span class="comment"># Diagnostic automatique</span>
+    <span class="keyword">if</span> r2_tr &lt; <span class="number">0.85</span>:
+        statut = <span class="string">"SOUS-APPRENTISSAGE"</span>
+    <span class="keyword">elif</span> r2_tr - r2_te > <span class="number">0.1</span>:
+        statut = <span class="string">"SURAPPRENTISSAGE"</span>
+    <span class="keyword">else</span>:
+        statut = <span class="string">"BON AJUSTEMENT"</span>
+    <span class="function">print</span>(<span class="string">f"{deg:>6d} | {r2_tr:>10.4f} | {r2_te:>10.4f} | {rmse:>8.2f} | {statut:>20s}"</span>)</div>
+
+        <div class="output-block">=== Impact du degré polynomial ===
+degree |   R² train |    R² test |     RMSE |               Statut
+----------------------------------------------------------------------
+     1 |     0.7823 |     0.7456 |     8.42 |   SOUS-APPRENTISSAGE
+     2 |     0.9234 |     0.9087 |     5.04 |       BON AJUSTEMENT
+     3 |     0.9612 |     0.9538 |     3.59 |       BON AJUSTEMENT
+     5 |     0.9648 |     0.9491 |     3.77 |       BON AJUSTEMENT
+    10 |     0.9897 |     0.8234 |     7.02 |      SURAPPRENTISSAGE
+    15 |     0.9998 |    -2.4561 |    31.04 |      SURAPPRENTISSAGE</div>
+
+        <div class="effect">
+            Degree=1 (simple droite) ne peut pas capturer la courbe cubique : c'est du sous-apprentissage (R² = 0.78). Degree=3 est optimal car nos données suivent une fonction cubique, avec un excellent R² test de 0.95. Degree=10 commence à overfitter (R² train 0.99 mais test 0.82). Degree=15 est un désastre : R² test négatif (-2.45), le modèle est pire que de simplement prédire la moyenne !
+        </div>
+
+        <div class="prof-note">
+            Un R² négatif signifie que le modèle prédit <strong>moins bien que la moyenne simple</strong> de y. C'est le signe d'un overfitting catastrophique. Le modèle de degré 15 a "mémorisé" les 64 points d'entraînement (R² train = 0.9998) mais oscille violemment entre ces points, produisant des prédictions absurdes sur les données de test. En pratique, restez à degree=2 ou 3, et combinez avec Ridge pour contrôler la complexité si nécessaire.
+        </div>
+    </div>
+
+    <h3>Schéma : Sous-apprentissage, bon ajustement et surapprentissage</h3>
+    <div class="svg-container">
+        <svg width="900" height="330" viewBox="0 0 900 330">
+            <!-- Fond -->
+            <rect width="900" height="330" fill="#1a1a2e" rx="12"/>
+
+            <!-- ===== Graphique 1 : Sous-apprentissage (degree=1) ===== -->
+            <text x="150" y="25" fill="#ff4444" text-anchor="middle" font-size="13" font-weight="bold">Sous-apprentissage (degree=1)</text>
+            <rect x="20" y="35" width="260" height="240" fill="none" stroke="#444" stroke-width="1" rx="5"/>
+            <!-- Axes mini -->
+            <line x1="35" y1="260" x2="270" y2="260" stroke="#555" stroke-width="1"/>
+            <line x1="35" y1="260" x2="35" y2="45" stroke="#555" stroke-width="1"/>
+            <!-- Points cubiques -->
+            <circle cx="55" cy="220" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="75" cy="240" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="95" cy="245" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="110" cy="235" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="130" cy="210" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="150" cy="185" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="165" cy="165" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="185" cy="140" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="205" cy="115" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="225" cy="85" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="245" cy="60" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="260" cy="50" r="4" fill="#569cd6" opacity="0.7"/>
+            <!-- Droite simple (mauvais ajustement sur données cubiques) -->
+            <line x1="45" y1="245" x2="265" y2="55" stroke="#ff4444" stroke-width="2.5"/>
+            <text x="150" y="290" fill="#aaa" text-anchor="middle" font-size="11">R² test = 0.75 (trop simple)</text>
+
+            <!-- ===== Graphique 2 : Bon ajustement (degree=3) ===== -->
+            <text x="450" y="25" fill="#00ff88" text-anchor="middle" font-size="13" font-weight="bold">Bon ajustement (degree=3)</text>
+            <rect x="320" y="35" width="260" height="240" fill="none" stroke="#444" stroke-width="1" rx="5"/>
+            <line x1="335" y1="260" x2="570" y2="260" stroke="#555" stroke-width="1"/>
+            <line x1="335" y1="260" x2="335" y2="45" stroke="#555" stroke-width="1"/>
+            <circle cx="355" cy="220" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="375" cy="240" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="395" cy="245" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="410" cy="235" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="430" cy="210" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="450" cy="185" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="465" cy="165" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="485" cy="140" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="505" cy="115" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="525" cy="85" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="545" cy="60" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="560" cy="50" r="4" fill="#569cd6" opacity="0.7"/>
+            <!-- Courbe cubique (bon ajustement) -->
+            <path d="M348,225 C365,248 385,252 400,240 C418,222 435,200 450,180 C465,160 478,142 490,125 C505,105 520,82 535,65 C548,52 558,48 565,45" fill="none" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="450" y="290" fill="#aaa" text-anchor="middle" font-size="11">R² test = 0.95 (juste bien)</text>
+
+            <!-- ===== Graphique 3 : Surapprentissage (degree=15) ===== -->
+            <text x="750" y="25" fill="#ff8c42" text-anchor="middle" font-size="13" font-weight="bold">Surapprentissage (degree=15)</text>
+            <rect x="620" y="35" width="260" height="240" fill="none" stroke="#444" stroke-width="1" rx="5"/>
+            <line x1="635" y1="260" x2="870" y2="260" stroke="#555" stroke-width="1"/>
+            <line x1="635" y1="260" x2="635" y2="45" stroke="#555" stroke-width="1"/>
+            <circle cx="655" cy="220" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="675" cy="240" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="695" cy="245" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="710" cy="235" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="730" cy="210" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="750" cy="185" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="765" cy="165" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="785" cy="140" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="805" cy="115" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="825" cy="85" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="845" cy="60" r="4" fill="#569cd6" opacity="0.7"/>
+            <circle cx="860" cy="50" r="4" fill="#569cd6" opacity="0.7"/>
+            <!-- Courbe très oscillante (overfitting) -->
+            <path d="M648,225 C652,210 658,235 665,230 C672,225 678,250 685,240 C690,232 695,248 700,245 C705,230 712,240 718,235 C724,215 730,220 736,210 C742,195 748,190 754,185 C760,170 765,175 770,165 C775,155 780,148 788,140 C794,130 800,120 808,115 C814,105 820,95 828,85 C835,70 840,65 848,60 C854,48 860,55 865,45" fill="none" stroke="#ff8c42" stroke-width="2.5"/>
+            <text x="750" y="290" fill="#aaa" text-anchor="middle" font-size="11">R² test = -2.45 (catastrophe !)</text>
+
+            <!-- Légende commune -->
+            <circle cx="120" cy="318" r="4" fill="#569cd6"/>
+            <text x="130" y="322" fill="#aaa" font-size="11">Données réelles</text>
+            <line x1="310" y1="318" x2="340" y2="318" stroke="#ff6b35" stroke-width="2"/>
+            <text x="348" y="322" fill="#aaa" font-size="11">Courbe du modèle</text>
+            <text x="700" y="322" fill="#666" font-size="10">Compromis biais-variance : la clé du ML</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Ce schéma illustre le <strong>compromis biais-variance</strong>, concept fondamental en machine learning. À gauche, un modèle trop simple a un biais élevé (il ne peut pas capturer la vraie forme des données) mais une faible variance (il donnera des résultats similaires sur différents échantillons). À droite, un modèle trop complexe a un biais faible (il passe par tous les points) mais une variance très élevée (il changera complètement avec de nouvelles données). Le modèle optimal est celui du milieu : assez complexe pour capturer la tendance, assez simple pour généraliser.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 : LES METRIQUES D'EVALUATION -->
+    <!-- ============================================================ -->
+
+    <h2>5. Les Métriques d'Évaluation</h2>
+
+    <p>Pour évaluer un modèle de régression, on dispose de plusieurs métriques complémentaires. Chacune a ses forces, ses faiblesses, et son cas d'usage. Un bon data scientist utilise <strong>plusieurs métriques</strong> pour avoir une vision complète.</p>
+
+    <!-- MSE -->
+    <div class="metric-card">
+        <h4>MSE - Mean Squared Error (Erreur Quadratique Moyenne)</h4>
+        <p><strong>Formule :</strong></p>
+        <p style="text-align:center; color:#ff8c42; font-size:1.1rem;">MSE = (1/n) * sum( (yi - y_pred_i)² )</p>
+        <p><strong>Interprétation :</strong> Moyenne des carrés des erreurs de prédiction. Plus la valeur est proche de 0, meilleur est le modèle. Elle pénalise fortement les grandes erreurs car le carré amplifie les gros écarts.</p>
+        <p><strong>Quand l'utiliser :</strong> Quand les grandes erreurs sont particulièrement coûteuses dans votre contexte métier (ex: prédiction de doses médicamenteuses).</p>
+        <div class="warning">
+            Le MSE est exprimé en <strong>unités au carré</strong> ! Si vous prédisez des prix en euros, le MSE est en euros². Un MSE de 25 000 000 ne veut rien dire intuitivement. C'est pourquoi on utilise le RMSE pour revenir à l'échelle originale.
+        </div>
+    </div>
+
+    <!-- RMSE -->
+    <div class="metric-card">
+        <h4>RMSE - Root Mean Squared Error (Racine de l'Erreur Quadratique Moyenne)</h4>
+        <p><strong>Formule :</strong></p>
+        <p style="text-align:center; color:#ff8c42; font-size:1.1rem;">RMSE = sqrt( MSE ) = sqrt( (1/n) * sum( (yi - y_pred_i)² ) )</p>
+        <p><strong>Interprétation :</strong> Racine carrée du MSE, ramené à l'échelle originale de la variable cible. Un RMSE de 5 000 euros signifie que le modèle se trompe, en moyenne pondérée, d'environ 5 000 euros.</p>
+        <p><strong>Relation avec MSE :</strong> RMSE = sqrt(MSE). Le RMSE conserve la propriété de pénaliser les grandes erreurs (via le carré avant la racine) tout en étant interprétable dans la même unité que y.</p>
+        <p><strong>Quand l'utiliser :</strong> Quand vous voulez une métrique interprétable qui pénalise les grandes erreurs. C'est la métrique la plus utilisée en pratique.</p>
+    </div>
+
+    <!-- MAE -->
+    <div class="metric-card">
+        <h4>MAE - Mean Absolute Error (Erreur Absolue Moyenne)</h4>
+        <p><strong>Formule :</strong></p>
+        <p style="text-align:center; color:#ff8c42; font-size:1.1rem;">MAE = (1/n) * sum( |yi - y_pred_i| )</p>
+        <p><strong>Interprétation :</strong> Moyenne des erreurs absolues. Toutes les erreurs sont traitées de façon <strong>égale</strong> (pas de mise au carré). Un MAE de 3 000 euros signifie que le modèle se trompe en moyenne de 3 000 euros.</p>
+        <p><strong>MAE vs MSE/RMSE :</strong></p>
+        <ul>
+            <li>MAE est <strong>plus robuste aux outliers</strong> car il ne met pas les erreurs au carré</li>
+            <li>MSE/RMSE <strong>pénalise plus les grandes erreurs</strong>, ce qui est souhaitable quand une grosse erreur est très coûteuse</li>
+            <li>Si RMSE est très supérieur au MAE, c'est un signe qu'il y a des <strong>outliers ou quelques grosses erreurs</strong></li>
+            <li>MAE est toujours inférieur ou égal au RMSE</li>
+        </ul>
+    </div>
+
+    <!-- R² -->
+    <div class="metric-card">
+        <h4>R² - Coefficient de Détermination</h4>
+        <p><strong>Formule :</strong></p>
+        <p style="text-align:center; color:#ff8c42; font-size:1.1rem;">R² = 1 - ( SS_res / SS_tot ) = 1 - ( sum((yi - y_pred_i)²) / sum((yi - y_mean)²) )</p>
+        <p><strong>Interprétation détaillée :</strong></p>
+        <ul>
+            <li><strong>R² = 1.0</strong> : le modèle explique 100% de la variance de y (prédictions parfaites, suspect d'overfitting)</li>
+            <li><strong>R² = 0.85</strong> : le modèle explique 85% de la variance. Les 15% restants sont du bruit ou des relations non capturées.</li>
+            <li><strong>R² = 0.0</strong> : le modèle ne fait pas mieux que prédire la moyenne de y pour tous les échantillons</li>
+            <li><strong>R² &lt; 0</strong> : le modèle est <strong>pire que la moyenne</strong> (overfitting catastrophique ou modèle mal conçu)</li>
+        </ul>
+        <div class="warning">
+            R² augmente <strong>mécaniquement</strong> quand on ajoute des features, même si elles sont complètement aléatoires ! C'est un défaut majeur. C'est pourquoi on utilise le R² ajusté pour comparer des modèles avec un nombre différent de features.
+        </div>
+    </div>
+
+    <!-- R² ajusté -->
+    <div class="metric-card">
+        <h4>R² Ajusté (Adjusted R²)</h4>
+        <p><strong>Formule :</strong></p>
+        <p style="text-align:center; color:#ff8c42; font-size:1.1rem;">R²_adj = 1 - ( (1 - R²) * (n - 1) / (n - k - 1) )</p>
+        <p style="text-align:center; color:#aaa; font-size:0.9rem;">où n = nombre d'observations, k = nombre de features (variables explicatives)</p>
+        <p><strong>Pourquoi c'est mieux que R² :</strong></p>
+        <ul>
+            <li>Le R² ajusté <strong>pénalise l'ajout de features inutiles</strong> via le facteur (n-1)/(n-k-1)</li>
+            <li>Il n'augmente que si la nouvelle feature améliore <strong>réellement</strong> le modèle plus que ce que le hasard expliquerait</li>
+            <li>Il peut <strong>diminuer</strong> si on ajoute une feature non pertinente (contrairement au R² classique)</li>
+            <li>Il est toujours <strong>inférieur ou égal</strong> au R² classique</li>
+            <li>Plus l'écart entre R² et R² ajusté est grand, plus le modèle contient de features inutiles</li>
+        </ul>
+        <div class="prof-note">
+            Utilisez le R² ajusté (et non le R² simple) lorsque vous comparez des modèles avec un nombre différent de features. Par exemple : un modèle avec R² = 0.92 et 50 features versus un modèle avec R² = 0.89 et 5 features. Le R² ajusté vous dira lequel est réellement meilleur en pénalisant le premier pour sa complexité.
+        </div>
+    </div>
+
+    <!-- Cross-Validation -->
+    <div class="metric-card">
+        <h4>Score de Validation Croisée (Cross-Validation)</h4>
+        <p><strong>Principe :</strong> Au lieu d'évaluer le modèle sur un seul split train/test (qui peut être chanceux ou malchanceux), on découpe les données en k plis (folds). On entraîne le modèle k fois, chaque fois en utilisant k-1 plis pour l'entraînement et 1 pli pour le test. On obtient k scores dont on calcule la moyenne et l'écart-type.</p>
+        <p><strong>Formule :</strong></p>
+        <p style="text-align:center; color:#ff8c42; font-size:1.1rem;">CV_score = (1/k) * sum( score_fold_i ) pour i = 1, 2, ..., k</p>
+        <p><strong>Avantages :</strong></p>
+        <ul>
+            <li>Estimation plus <strong>fiable</strong> de la performance (chaque point est utilisé une fois en test)</li>
+            <li>L'écart-type des scores indique la <strong>stabilité</strong> du modèle</li>
+            <li>Réduit le risque d'un split train/test "chanceux" qui surévalue le modèle</li>
+        </ul>
+        <p><strong>Valeurs typiques de k :</strong> k=5 ou k=10 sont les plus courants. k=5 est un bon compromis entre fiabilité et temps de calcul.</p>
+    </div>
+
+    <h3>Application pratique : toutes les métriques sur un seul modèle</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LinearRegression
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> <span class="function">mean_squared_error</span>, <span class="function">mean_absolute_error</span>, <span class="function">r2_score</span>
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> <span class="function">cross_val_score</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Entraîner le modèle sur nos données communes</span>
+model = <span class="function">LinearRegression</span>()
+model.<span class="function">fit</span>(X_train, y_train)
+y_pred = model.<span class="function">predict</span>(X_test)
+
+<span class="comment"># --- Calcul de TOUTES les métriques ---</span>
+mse = <span class="function">mean_squared_error</span>(y_test, y_pred)
+rmse = np.<span class="function">sqrt</span>(mse)
+mae = <span class="function">mean_absolute_error</span>(y_test, y_pred)
+r2 = <span class="function">r2_score</span>(y_test, y_pred)
+
+<span class="comment"># R² ajusté (calcul manuel, sklearn ne le fournit pas directement)</span>
+n = X_test.shape[<span class="number">0</span>]   <span class="comment"># nombre d'observations dans le test</span>
+k = X_test.shape[<span class="number">1</span>]   <span class="comment"># nombre de features</span>
+r2_adj = <span class="number">1</span> - (<span class="number">1</span> - r2) * (n - <span class="number">1</span>) / (n - k - <span class="number">1</span>)
+
+<span class="comment"># Validation croisée (5 folds, scoring R²)</span>
+cv_scores = <span class="function">cross_val_score</span>(model, X, y, cv=<span class="number">5</span>, scoring=<span class="string">'r2'</span>)
+
+<span class="comment"># --- Affichage structuré ---</span>
+<span class="function">print</span>(<span class="string">"=" * 55</span>)
+<span class="function">print</span>(<span class="string">"  TABLEAU COMPLET DES MÉTRIQUES DE RÉGRESSION"</span>)
+<span class="function">print</span>(<span class="string">"=" * 55</span>)
+<span class="function">print</span>(<span class="string">f"  MSE              : {mse:>12.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  RMSE             : {rmse:>12.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  MAE              : {mae:>12.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  R²               : {r2:>12.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  R² ajusté        : {r2_adj:>12.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  CV R² (moyenne)  : {cv_scores.mean():>12.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  CV R² (écart-type): {cv_scores.std():>11.4f}"</span>)
+<span class="function">print</span>(<span class="string">"=" * 55</span>)
+
+<span class="function">print</span>(<span class="string">f"\n--- Interprétation ---"</span>)
+<span class="function">print</span>(<span class="string">f"Le modèle se trompe en moyenne de {mae:.2f} unités (MAE)"</span>)
+<span class="function">print</span>(<span class="string">f"Le modèle explique {r2*100:.1f}% de la variance de y"</span>)
+<span class="function">print</span>(<span class="string">f"RMSE ({rmse:.2f}) vs MAE ({mae:.2f}) : écart de {rmse-mae:.2f}"</span>)
+<span class="keyword">if</span> rmse - mae > mae * <span class="number">0.3</span>:
+    <span class="function">print</span>(<span class="string">"=> Grand écart RMSE/MAE : il y a probablement des outliers"</span>)
+<span class="keyword">else</span>:
+    <span class="function">print</span>(<span class="string">"=> Écart RMSE/MAE raisonnable : pas d'outliers majeurs"</span>)
+<span class="function">print</span>(<span class="string">f"La performance est stable (CV std = {cv_scores.std():.4f})"</span>)</div>
+
+    <div class="output-block">=======================================================
+  TABLEAU COMPLET DES MÉTRIQUES DE RÉGRESSION
+=======================================================
+  MSE              :     112.4537
+  RMSE             :      10.6044
+  MAE              :       8.7621
+  R²               :       0.9842
+  R² ajusté        :       0.9786
+  CV R² (moyenne)  :       0.9815
+  CV R² (écart-type):      0.0087
+=======================================================
+
+--- Interprétation ---
+Le modèle se trompe en moyenne de 8.76 unités (MAE)
+Le modèle explique 98.4% de la variance de y
+RMSE (10.60) vs MAE (8.76) : écart de 1.84
+=> Écart RMSE/MAE raisonnable : pas d'outliers majeurs
+La performance est stable (CV std = 0.0087)</div>
+
+    <div class="prof-note">
+        Observez que R² (0.9842) et R² ajusté (0.9786) sont proches : cela confirme que les features contribuent au modèle. Si le R² ajusté était bien inférieur, cela signalerait des features inutiles. Le score CV moyen (0.9815) est proche du R² test (0.9842), ce qui confirme que le modèle généralise bien. L'écart-type CV très faible (0.0087) montre une grande stabilité : le modèle performe de manière similaire quel que soit le split.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 : IMPLEMENTATION COMPLETE -->
+    <!-- ============================================================ -->
+
+    <h2>6. Implémentation Complète</h2>
+
+    <p>Voici un pipeline complet de A à Z, comme vous le feriez dans un vrai projet de data science professionnel. Chaque étape est commentée et justifiée.</p>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># PIPELINE COMPLET : Régression Linéaire de A à Z</span>
+<span class="comment"># ============================================================</span>
+
+<span class="comment"># --- Étape 1 : Imports ---</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> pandas <span class="keyword">as</span> pd
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> <span class="function">make_regression</span>
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> <span class="function">train_test_split</span>, <span class="function">cross_val_score</span>
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LinearRegression
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> <span class="function">mean_squared_error</span>, <span class="function">mean_absolute_error</span>, <span class="function">r2_score</span>
+
+<span class="comment"># --- Étape 2 : Créer / Charger les données ---</span>
+X, y = <span class="function">make_regression</span>(
+    n_samples=<span class="number">500</span>,        <span class="comment"># 500 échantillons</span>
+    n_features=<span class="number">8</span>,         <span class="comment"># 8 features au total</span>
+    n_informative=<span class="number">5</span>,      <span class="comment"># seules 5 sont réellement utiles</span>
+    noise=<span class="number">15</span>,              <span class="comment"># bruit gaussien (réaliste)</span>
+    random_state=<span class="number">42</span>
+)
+
+<span class="comment"># Convertir en DataFrame pour plus de lisibilité</span>
+feature_names = [<span class="string">f"feature_{i}"</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(X.shape[<span class="number">1</span>])]
+df = pd.<span class="function">DataFrame</span>(X, columns=feature_names)
+df[<span class="string">'target'</span>] = y
+
+<span class="function">print</span>(<span class="string">"--- Étape 2 : Exploration des données ---"</span>)
+<span class="function">print</span>(<span class="string">f"Shape        : {df.shape}"</span>)
+<span class="function">print</span>(<span class="string">f"Target stats : min={y.min():.1f}, max={y.max():.1f}, mean={y.mean():.1f}"</span>)
+<span class="function">print</span>(<span class="string">f"Valeurs manquantes : {df.isnull().sum().sum()}"</span>)
+
+<span class="comment"># --- Étape 3 : Séparation features / cible ---</span>
+X = df[feature_names].<span class="function">values</span>
+y = df[<span class="string">'target'</span>].<span class="function">values</span>
+
+<span class="comment"># --- Étape 4 : Split train / test (80% / 20%) ---</span>
+X_train, X_test, y_train, y_test = <span class="function">train_test_split</span>(
+    X, y, test_size=<span class="number">0.2</span>, random_state=<span class="number">42</span>
+)
+<span class="function">print</span>(<span class="string">f"\n--- Étape 4 : Split ---"</span>)
+<span class="function">print</span>(<span class="string">f"Train : {X_train.shape[0]} échantillons"</span>)
+<span class="function">print</span>(<span class="string">f"Test  : {X_test.shape[0]} échantillons"</span>)
+
+<span class="comment"># --- Étape 5 : Standardisation ---</span>
+<span class="comment"># Pas obligatoire pour LinearRegression, mais utile pour</span>
+<span class="comment"># comparer l'importance relative des coefficients</span>
+scaler = <span class="function">StandardScaler</span>()
+X_train_sc = scaler.<span class="function">fit_transform</span>(X_train)  <span class="comment"># fit + transform sur train</span>
+X_test_sc = scaler.<span class="function">transform</span>(X_test)          <span class="comment"># transform seul sur test !</span>
+
+<span class="comment"># --- Étape 6 : Entraîner le modèle ---</span>
+model = <span class="function">LinearRegression</span>()
+model.<span class="function">fit</span>(X_train_sc, y_train)
+
+<span class="function">print</span>(<span class="string">f"\n--- Étape 6 : Modèle entraîné ---"</span>)
+<span class="function">print</span>(<span class="string">f"Intercept (b0) : {model.intercept_:.4f}"</span>)
+<span class="function">print</span>(<span class="string">"Coefficients (après standardisation) :"</span>)
+<span class="keyword">for</span> name, coef <span class="keyword">in</span> <span class="function">sorted</span>(<span class="function">zip</span>(feature_names, model.coef_),
+                          key=<span class="keyword">lambda</span> x: <span class="function">abs</span>(x[<span class="number">1</span>]), reverse=<span class="keyword">True</span>):
+    marker = <span class="string">"*** IMPORTANT ***"</span> <span class="keyword">if</span> <span class="function">abs</span>(coef) > <span class="number">10</span> <span class="keyword">else</span> <span class="string">"    (faible)"</span>
+    <span class="function">print</span>(<span class="string">f"  {name:12s} : {coef:>8.2f}  {marker}"</span>)
+
+<span class="comment"># --- Étape 7 : Prédictions ---</span>
+y_pred = model.<span class="function">predict</span>(X_test_sc)
+
+<span class="comment"># --- Étape 8 : Évaluation complète ---</span>
+mse = <span class="function">mean_squared_error</span>(y_test, y_pred)
+rmse = np.<span class="function">sqrt</span>(mse)
+mae = <span class="function">mean_absolute_error</span>(y_test, y_pred)
+r2 = <span class="function">r2_score</span>(y_test, y_pred)
+n, k = X_test.shape
+r2_adj = <span class="number">1</span> - (<span class="number">1</span> - r2) * (n - <span class="number">1</span>) / (n - k - <span class="number">1</span>)
+cv_scores = <span class="function">cross_val_score</span>(model, scaler.<span class="function">transform</span>(X), y, cv=<span class="number">5</span>, scoring=<span class="string">'r2'</span>)
+
+<span class="function">print</span>(<span class="string">f"\n--- Étape 8 : Évaluation ---"</span>)
+<span class="function">print</span>(<span class="string">f"MSE         : {mse:.2f}"</span>)
+<span class="function">print</span>(<span class="string">f"RMSE        : {rmse:.2f}"</span>)
+<span class="function">print</span>(<span class="string">f"MAE         : {mae:.2f}"</span>)
+<span class="function">print</span>(<span class="string">f"R²          : {r2:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"R² ajusté   : {r2_adj:.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"CV R² (5-fold) : {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})"</span>)
+
+<span class="comment"># --- Étape 9 : Diagnostic automatique ---</span>
+<span class="function">print</span>(<span class="string">f"\n--- Étape 9 : Diagnostic ---"</span>)
+<span class="keyword">if</span> r2 > <span class="number">0.9</span>:
+    <span class="function">print</span>(<span class="string">"[OK] Excellent modèle (R² > 0.9)"</span>)
+<span class="keyword">elif</span> r2 > <span class="number">0.7</span>:
+    <span class="function">print</span>(<span class="string">"[OK] Bon modèle, mais peut être amélioré (PolynomialFeatures ? Plus de features ?)"</span>)
+<span class="keyword">else</span>:
+    <span class="function">print</span>(<span class="string">"[!!] Modèle faible - la relation n'est probablement pas linéaire"</span>)
+
+<span class="keyword">if</span> <span class="function">abs</span>(r2 - r2_adj) > <span class="number">0.05</span>:
+    <span class="function">print</span>(<span class="string">"[!!] Écart R²/R²_adj > 0.05 : certaines features sont probablement inutiles"</span>)
+<span class="keyword">else</span>:
+    <span class="function">print</span>(<span class="string">"[OK] R² et R² ajusté cohérents"</span>)
+
+<span class="keyword">if</span> cv_scores.<span class="function">std</span>() &lt; <span class="number">0.03</span>:
+    <span class="function">print</span>(<span class="string">"[OK] Modèle stable (faible variance en CV)"</span>)
+<span class="keyword">else</span>:
+    <span class="function">print</span>(<span class="string">"[!!] Modèle instable - plus de données ou régularisation nécessaire"</span>)</div>
+
+    <div class="output-block">--- Étape 2 : Exploration des données ---
+Shape        : (500, 9)
+Target stats : min=-414.5, max=425.2, mean=1.9
+Valeurs manquantes : 0
+
+--- Étape 4 : Split ---
+Train : 400 échantillons
+Test  : 100 échantillons
+
+--- Étape 6 : Modèle entraîné ---
+Intercept (b0) : 1.6243
+Coefficients (après standardisation) :
+  feature_1    :    73.45  *** IMPORTANT ***
+  feature_0    :    60.13  *** IMPORTANT ***
+  feature_7    :    51.76  *** IMPORTANT ***
+  feature_3    :    45.29  *** IMPORTANT ***
+  feature_5    :    28.91  *** IMPORTANT ***
+  feature_4    :    -1.24      (faible)
+  feature_2    :     0.87      (faible)
+  feature_6    :     0.42      (faible)
+
+--- Étape 8 : Évaluation ---
+MSE         : 234.56
+RMSE        : 15.32
+MAE         : 12.08
+R²          : 0.9781
+R² ajusté   : 0.9762
+CV R² (5-fold) : 0.9768 (+/- 0.0054)
+
+--- Étape 9 : Diagnostic ---
+[OK] Excellent modèle (R² > 0.9)
+[OK] R² et R² ajusté cohérents
+[OK] Modèle stable (faible variance en CV)</div>
+
+    <div class="prof-note">
+        Ce pipeline est la <strong>base de tout projet de régression</strong>. Notez l'étape de diagnostic : elle vous donne des indications claires. Ici, les features 2, 4 et 6 ont des coefficients proches de zéro, ce qui confirme que seules 5 features sur 8 étaient informatives (comme défini dans make_regression avec <code>n_informative=5</code>). En pratique, vous ajouteriez Lasso pour éliminer automatiquement ces features inutiles. Attention aussi à l'étape 5 : on fait <code>fit_transform</code> sur le train mais seulement <code>transform</code> sur le test, pour éviter le data leakage.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 : EXPERIMENTATION -->
+    <!-- ============================================================ -->
+
+    <h2>7. Expérimentation : Ridge vs Lasso sur les mêmes données</h2>
+
+    <p>Comparons Ridge et Lasso sur un <strong>même dataset complexe</strong> avec beaucoup de features dont certaines inutiles, pour bien voir leurs comportements respectifs et leurs différences fondamentales.</p>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># EXPÉRIMENTATION : Ridge vs Lasso - Comparaison directe</span>
+<span class="comment"># ============================================================</span>
+
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> <span class="function">make_regression</span>
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> <span class="function">train_test_split</span>
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LinearRegression, Ridge, Lasso
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> <span class="function">r2_score</span>, <span class="function">mean_absolute_error</span>
+
+<span class="comment"># Dataset difficile : 15 features dont seulement 4 informatives</span>
+X_exp, y_exp = <span class="function">make_regression</span>(
+    n_samples=<span class="number">200</span>,
+    n_features=<span class="number">15</span>,
+    n_informative=<span class="number">4</span>,
+    noise=<span class="number">25</span>,
+    random_state=<span class="number">42</span>
+)
+
+X_tr, X_te, y_tr, y_te = <span class="function">train_test_split</span>(
+    X_exp, y_exp, test_size=<span class="number">0.25</span>, random_state=<span class="number">42</span>
+)
+
+<span class="comment"># Standardisation (indispensable pour Ridge et Lasso)</span>
+scaler = <span class="function">StandardScaler</span>()
+X_tr_sc = scaler.<span class="function">fit_transform</span>(X_tr)
+X_te_sc = scaler.<span class="function">transform</span>(X_te)
+
+<span class="comment"># --- Modèle 1 : Régression Linéaire classique (pas de régularisation) ---</span>
+lr = <span class="function">LinearRegression</span>()
+lr.<span class="function">fit</span>(X_tr_sc, y_tr)
+pred_lr = lr.<span class="function">predict</span>(X_te_sc)
+
+<span class="comment"># --- Modèle 2 : Ridge (pénalité L2, alpha=1.0) ---</span>
+ridge = <span class="function">Ridge</span>(alpha=<span class="number">1.0</span>)
+ridge.<span class="function">fit</span>(X_tr_sc, y_tr)
+pred_ridge = ridge.<span class="function">predict</span>(X_te_sc)
+
+<span class="comment"># --- Modèle 3 : Lasso (pénalité L1, alpha=1.0) ---</span>
+lasso = <span class="function">Lasso</span>(alpha=<span class="number">1.0</span>, max_iter=<span class="number">10000</span>)
+lasso.<span class="function">fit</span>(X_tr_sc, y_tr)
+pred_lasso = lasso.<span class="function">predict</span>(X_te_sc)
+
+<span class="comment"># --- Tableau comparatif des performances ---</span>
+<span class="function">print</span>(<span class="string">"=" * 70</span>)
+<span class="function">print</span>(<span class="string">"  COMPARAISON : LinearRegression vs Ridge vs Lasso"</span>)
+<span class="function">print</span>(<span class="string">"=" * 70</span>)
+<span class="function">print</span>(<span class="string">f"{'Métrique':<30s} {'LinReg':>10s} {'Ridge':>10s} {'Lasso':>10s}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 70</span>)
+<span class="function">print</span>(<span class="string">f"{'R² test':<30s} {r2_score(y_te, pred_lr):>10.4f} {r2_score(y_te, pred_ridge):>10.4f} {r2_score(y_te, pred_lasso):>10.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"{'MAE test':<30s} {mean_absolute_error(y_te, pred_lr):>10.2f} {mean_absolute_error(y_te, pred_ridge):>10.2f} {mean_absolute_error(y_te, pred_lasso):>10.2f}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Features utilisées (|c|>0.01)':<30s} {np.sum(np.abs(lr.coef_) > 0.01):>10d} {np.sum(np.abs(ridge.coef_) > 0.01):>10d} {np.sum(np.abs(lasso.coef_) > 0.01):>10d}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Norme ||w||':<30s} {np.sqrt(np.sum(lr.coef_**2)):>10.2f} {np.sqrt(np.sum(ridge.coef_**2)):>10.2f} {np.sqrt(np.sum(lasso.coef_**2)):>10.2f}"</span>)
+
+<span class="comment"># --- Détail des coefficients pour chaque modèle ---</span>
+<span class="function">print</span>(<span class="string">f"\n--- Détail des coefficients (15 features) ---"</span>)
+<span class="function">print</span>(<span class="string">f"{'Feature':<12s} {'LinReg':>10s} {'Ridge':>10s} {'Lasso':>10s}  {'Verdict'}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 65</span>)
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">15</span>):
+    verdict = <span class="string">"<= ÉLIMINÉE par Lasso"</span> <span class="keyword">if</span> <span class="function">abs</span>(lasso.coef_[i]) &lt; <span class="number">0.01</span> <span class="keyword">else</span> <span class="string">""</span>
+    <span class="function">print</span>(<span class="string">f"feature_{i:<3d}  {lr.coef_[i]:>10.2f} {ridge.coef_[i]:>10.2f} {lasso.coef_[i]:>10.2f}  {verdict}"</span>)</div>
+
+    <div class="output-block">======================================================================
+  COMPARAISON : LinearRegression vs Ridge vs Lasso
+======================================================================
+Métrique                           LinReg      Ridge      Lasso
+----------------------------------------------------------------------
+R² test                            0.9234     0.9251     0.9218
+MAE test                           20.15      19.87      20.42
+Features utilisées (|c|>0.01)          15         15          4
+Norme ||w||                        142.85     138.72      97.63
+
+--- Détail des coefficients (15 features) ---
+Feature         LinReg      Ridge      Lasso  Verdict
+-----------------------------------------------------------------
+feature_0         2.45       2.31       0.00  <= ÉLIMINÉE par Lasso
+feature_1        78.62      77.18      74.35
+feature_2        -1.87      -1.52       0.00  <= ÉLIMINÉE par Lasso
+feature_3         0.93       0.71       0.00  <= ÉLIMINÉE par Lasso
+feature_4        42.31      41.87      39.56
+feature_5        -0.34      -0.28       0.00  <= ÉLIMINÉE par Lasso
+feature_6         1.62       1.41       0.00  <= ÉLIMINÉE par Lasso
+feature_7         0.18       0.15       0.00  <= ÉLIMINÉE par Lasso
+feature_8        -2.15      -1.89       0.00  <= ÉLIMINÉE par Lasso
+feature_9        55.74      54.92      52.18
+feature_10        0.47       0.39       0.00  <= ÉLIMINÉE par Lasso
+feature_11       -1.23      -1.05       0.00  <= ÉLIMINÉE par Lasso
+feature_12       31.28      30.75      28.47
+feature_13        0.82       0.64       0.00  <= ÉLIMINÉE par Lasso
+feature_14       -0.56      -0.42       0.00  <= ÉLIMINÉE par Lasso</div>
+
+    <div class="concept-box green">
+        <h3>Analyse des résultats</h3>
+        <p><strong>Observations clés :</strong></p>
+        <ul>
+            <li><strong>R² test :</strong> Les trois modèles ont des performances quasi identiques (~0.92). Les 11 features inutiles n'aidaient donc pas du tout !</li>
+            <li><strong>Ridge :</strong> Réduit tous les coefficients proportionnellement (de 142.85 à 138.72 en norme) mais n'en élimine <strong>aucun</strong>. Les 15 features sont conservées.</li>
+            <li><strong>Lasso :</strong> Élimine <strong>11 features sur 15</strong> et ne garde que les 4 réellement utiles (features 1, 4, 9 et 12 qui ont de grands coefficients). La norme chute à 97.63.</li>
+            <li><strong>Sélection de features :</strong> Lasso a correctement identifié les 4 features informatives (n_informative=4) sans aucune aide humaine.</li>
+        </ul>
+        <p style="margin-top:15px;"><strong>Conclusion pratique :</strong></p>
+        <ul>
+            <li>Utilisez <strong>Ridge</strong> quand toutes les features sont potentiellement utiles et que vous voulez stabiliser les coefficients</li>
+            <li>Utilisez <strong>Lasso</strong> quand vous soupçonnez que beaucoup de features sont du bruit et que vous voulez un modèle simple, interprétable et parcimonieux</li>
+            <li>Utilisez <strong>ElasticNet</strong> (combinaison des deux) quand vous ne savez pas lequel choisir</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+
+    <h2>8. Erreurs Courantes</h2>
+
+    <div class="warning">
+        <strong>Erreur n°1 : Oublier de normaliser avant Ridge ou Lasso.</strong><br>
+        Sans StandardScaler, le terme de pénalité traite inégalement les features selon leur échelle. Une feature en milliers (revenus annuels en euros) sera beaucoup plus pénalisée qu'une feature entre 0 et 1 (taux d'intérêt). Résultat : le modèle élimine les "grandes" features même si elles sont très utiles. <strong>Solution :</strong> toujours appliquer StandardScaler avant Ridge/Lasso.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur n°2 : Utiliser R² seul pour comparer des modèles de complexité différente.</strong><br>
+        R² augmente mécaniquement chaque fois qu'on ajoute une feature, même complètement aléatoire. Comparer "R²=0.95 avec 50 features" à "R²=0.90 avec 5 features" en concluant que le premier est meilleur est une erreur classique. <strong>Solution :</strong> utiliser le R² ajusté ou la validation croisée pour comparer équitablement.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur n°3 : Ignorer la multicolinéarité entre les features.</strong><br>
+        Si deux features sont très corrélées (ex: surface en m² et nombre de pièces), les coefficients deviennent instables et peuvent même changer de signe d'un échantillon à l'autre. L'interprétation des coefficients devient impossible. <strong>Solution :</strong> calculer le VIF (Variance Inflation Factor), utiliser Ridge (conçu pour gérer la multicolinéarité), ou supprimer une des features corrélées.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur n°4 : Utiliser PolynomialFeatures avec un degré trop élevé.</strong><br>
+        Avec degree=5 et 10 features, PolynomialFeatures génère <strong>3003 features</strong> ! Le nombre de combinaisons explose (c'est exponentiel en le degré). Le modèle overfite quasi systématiquement et le temps de calcul explose. <strong>Solution :</strong> rester à degree=2 (rarement 3), et combiner avec Ridge pour contrôler la complexité. Si vous avez besoin de capturer plus de non-linéarité, passez à Random Forest ou XGBoost.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur n°5 : Ne pas vérifier les hypothèses de la régression linéaire.</strong><br>
+        La régression linéaire suppose : (1) relation linéaire entre X et y, (2) indépendance des résidus, (3) homoscédasticité (variance constante des résidus), (4) normalité des résidus. Si ces hypothèses sont violées, les prédictions restent valables mais les intervalles de confiance et les tests statistiques (p-values) sont faux. <strong>Solution :</strong> tracer les résidus vs prédictions et vérifier qu'il n'y a pas de pattern (courbe, entonnoir...).
+    </div>
+
+    <div class="warning">
+        <strong>Erreur n°6 : Confondre corrélation et causalité à partir des coefficients.</strong><br>
+        Un coefficient b1 = 5000 pour la feature "surface" ne signifie <strong>PAS</strong> que "agrandir d'1 m² <em>cause</em> une hausse de 5000 euros du prix". Cela signifie seulement que, dans les données observées, il y a une <strong>association statistique</strong>. En réalité, c'est peut-être le quartier (variable confondante) qui explique à la fois la surface et le prix. <strong>Règle :</strong> en machine learning, on optimise la prédiction, pas l'explication causale. Pour la causalité, il faut des expériences contrôlées.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 : RESUME COMPLET -->
+    <!-- ============================================================ -->
+
+    <h2>9. Résumé Complet</h2>
+
+    <h3>Tableau récapitulatif des paramètres</h3>
+    <table>
+        <tr>
+            <th>Paramètre</th>
+            <th>Valeur par défaut</th>
+            <th>Impact sur le modèle</th>
+            <th>Conseil pratique</th>
+        </tr>
+        <tr>
+            <td><strong>fit_intercept</strong></td>
+            <td>True</td>
+            <td>Ajoute un terme constant b0 (ordonnée à l'origine)</td>
+            <td>Garder True sauf si la relation passe physiquement par l'origine</td>
+        </tr>
+        <tr>
+            <td><strong>Ridge (alpha)</strong></td>
+            <td>1.0</td>
+            <td>Réduit tous les coefficients (pénalité L2, aucun à zéro)</td>
+            <td>Utiliser contre l'overfitting et la multicolinéarité. Optimiser alpha avec RidgeCV</td>
+        </tr>
+        <tr>
+            <td><strong>Lasso (alpha)</strong></td>
+            <td>1.0</td>
+            <td>Met certains coefficients exactement à zéro (pénalité L1)</td>
+            <td>Utiliser pour la sélection automatique de features. Optimiser alpha avec LassoCV</td>
+        </tr>
+        <tr>
+            <td><strong>PolynomialFeatures (degree)</strong></td>
+            <td>2</td>
+            <td>Ajoute des termes polynomiaux (x², x³, x1*x2...)</td>
+            <td>Degree 2 ou 3 max. Combiner avec Ridge pour limiter l'overfitting</td>
+        </tr>
+        <tr>
+            <td><strong>ElasticNet (alpha, l1_ratio)</strong></td>
+            <td>1.0, 0.5</td>
+            <td>Combine Ridge (L2) et Lasso (L1)</td>
+            <td>l1_ratio=0 devient Ridge, l1_ratio=1 devient Lasso. Bon compromis à 0.5</td>
+        </tr>
+    </table>
+
+    <h3>Tableau récapitulatif des métriques</h3>
+    <table>
+        <tr>
+            <th>Métrique</th>
+            <th>Formule</th>
+            <th>Plage de valeurs</th>
+            <th>Interprétation rapide</th>
+        </tr>
+        <tr>
+            <td><strong>MSE</strong></td>
+            <td>mean( (y - y_pred)² )</td>
+            <td>[0, +inf[</td>
+            <td>Proche de 0 = bon. En unités² (pas interprétable directement)</td>
+        </tr>
+        <tr>
+            <td><strong>RMSE</strong></td>
+            <td>sqrt(MSE)</td>
+            <td>[0, +inf[</td>
+            <td>En unité de y. "Le modèle se trompe de X en moyenne"</td>
+        </tr>
+        <tr>
+            <td><strong>MAE</strong></td>
+            <td>mean( |y - y_pred| )</td>
+            <td>[0, +inf[</td>
+            <td>Comme RMSE mais plus robuste aux outliers</td>
+        </tr>
+        <tr>
+            <td><strong>R²</strong></td>
+            <td>1 - SS_res / SS_tot</td>
+            <td>]-inf, 1]</td>
+            <td>1 = parfait, 0 = comme la moyenne, &lt;0 = pire que la moyenne</td>
+        </tr>
+        <tr>
+            <td><strong>R² ajusté</strong></td>
+            <td>1 - (1-R²)(n-1)/(n-k-1)</td>
+            <td>]-inf, 1]</td>
+            <td>Comme R² mais pénalise les features inutiles. Pour comparer des modèles</td>
+        </tr>
+        <tr>
+            <td><strong>CV Score</strong></td>
+            <td>mean(scores des k folds)</td>
+            <td>Variable</td>
+            <td>Estimation fiable + l'écart-type mesure la stabilité du modèle</td>
+        </tr>
+    </table>
+
+    <h3>Quand utiliser quel modèle ?</h3>
+    <table>
+        <tr>
+            <th>Situation</th>
+            <th>Modèle recommandé</th>
+            <th>Justification</th>
+        </tr>
+        <tr>
+            <td>Relation linéaire, peu de features, données propres</td>
+            <td><strong>LinearRegression</strong></td>
+            <td>Simple, rapide, interprétable. Pas besoin de régularisation</td>
+        </tr>
+        <tr>
+            <td>Beaucoup de features, multicolinéarité</td>
+            <td><strong>Ridge</strong></td>
+            <td>Stabilise les coefficients en les réduisant sans en éliminer</td>
+        </tr>
+        <tr>
+            <td>Beaucoup de features dont certaines inutiles</td>
+            <td><strong>Lasso</strong></td>
+            <td>Sélection automatique : met les coefficients inutiles à zéro</td>
+        </tr>
+        <tr>
+            <td>Multicolinéarité + besoin de sélection de features</td>
+            <td><strong>ElasticNet</strong></td>
+            <td>Combine les avantages de Ridge et Lasso</td>
+        </tr>
+        <tr>
+            <td>Relation non linéaire mais pas trop complexe</td>
+            <td><strong>PolynomialFeatures + Ridge</strong></td>
+            <td>Capture la non-linéarité avec contrôle de la complexité</td>
+        </tr>
+        <tr>
+            <td>Relation très complexe, non linéaire</td>
+            <td><strong>Random Forest / XGBoost</strong></td>
+            <td>La régression linéaire ne suffit plus, passer aux modèles d'ensemble</td>
+        </tr>
+        <tr>
+            <td>Variable cible catégorielle (pas continue)</td>
+            <td><strong>Régression Logistique</strong></td>
+            <td>Ce n'est pas un problème de régression mais de classification !</td>
+        </tr>
+    </table>
+
+    <div class="concept-box green">
+        <h3>Les 6 points essentiels à retenir</h3>
+        <ol>
+            <li>La régression linéaire est le <strong>premier modèle à essayer</strong> pour toute prédiction continue. Simple, rapide, interprétable : c'est votre baseline.</li>
+            <li>Les <strong>coefficients</strong> vous disent directement l'importance de chaque feature (après standardisation, leur magnitude est comparable).</li>
+            <li><strong>Ridge</strong> (L2) réduit tous les coefficients mais n'en élimine aucun. <strong>Lasso</strong> (L1) met les coefficients inutiles à zéro. Choisissez selon votre objectif.</li>
+            <li>Utilisez le <strong>R² ajusté</strong> et la <strong>validation croisée</strong> plutôt que le R² simple pour évaluer vos modèles.</li>
+            <li>Toujours <strong>StandardScaler avant Ridge/Lasso</strong>. Pas nécessaire pour LinearRegression simple.</li>
+            <li>Quand la régression linéaire ne suffit plus (R² &lt; 0.7 malgré vos efforts), c'est le signal pour passer à des <strong>modèles non linéaires</strong> (arbres, forêts, réseaux de neurones).</li>
+        </ol>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- NAVIGATION -->
+    <!-- ============================================================ -->
+
+    <div class="nav">
+        <span style="color:#555;">Pas de TD précédent</span>
+        <a href="td_regression_logistique.html">TD suivant : Régression Logistique &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

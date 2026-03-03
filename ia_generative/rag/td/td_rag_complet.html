@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD - Pipeline RAG Complet de A à Z</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD - Pipeline RAG Complet de A à Z</h1>
+    <p class="subtitle">Construire, optimiser et évaluer un système RAG de bout en bout -- Le TD final</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 : RÉCAPITULATIF -->
+    <!-- ============================================================ -->
+    <h2>1. Récapitulatif</h2>
+
+    <div class="definition">
+        Le <strong>RAG (Retrieval-Augmented Generation)</strong> est une architecture qui augmente les capacités d'un LLM en lui fournissant des documents pertinents extraits d'une base de connaissances externe. Au lieu de répondre uniquement à partir de ses paramètres internes (souvent obsolètes ou incomplets), le LLM s'appuie sur des données factuelles récupérées en temps réel pour produire des réponses précises, vérifiables et à jour.
+    </div>
+
+    <h3>Architecture complète d'un système RAG</h3>
+
+    <div class="concept-box">
+        <p>Un pipeline RAG complet se décompose en <strong>4 phases majeures</strong> :</p>
+        <ol style="padding-left: 20px; margin-top: 10px;">
+            <li><strong>Ingestion</strong> : Charger les documents bruts (PDF, web, texte, CSV) et les nettoyer</li>
+            <li><strong>Indexing</strong> : Découper en chunks, créer des embeddings, stocker dans un vector store</li>
+            <li><strong>Retrieval</strong> : Retrouver les chunks les plus pertinents pour une question donnée</li>
+            <li><strong>Generation</strong> : Envoyer les chunks récupérés + la question au LLM pour générer la réponse</li>
+        </ol>
+        <p style="margin-top: 15px;">Chaque phase peut être optimisée indépendamment, mais c'est leur combinaison harmonieuse qui détermine la qualité finale du système.</p>
+    </div>
+
+    <h3>Analogie : Le bibliothécaire intelligent</h3>
+
+    <div class="concept-box blue">
+        <p>Imaginez un <strong>bibliothécaire expert</strong> dans une immense bibliothèque universitaire. Quand un étudiant pose une question :</p>
+        <ul style="margin-top: 10px; padding-left: 20px;">
+            <li><strong>Ingestion</strong> = Le bibliothécaire reçoit et catalogue des milliers de livres et articles au fil du temps. Il les nettoie, les classifie et les étiquette par sujet, auteur et date.</li>
+            <li><strong>Indexing</strong> = Il crée un système de fiches détaillées pour chaque section de chaque livre, avec des références croisées qui permettent de retrouver n'importe quelle information rapidement.</li>
+            <li><strong>Retrieval</strong> = Quand l'étudiant pose sa question, le bibliothécaire consulte ses fiches et sélectionne les 4-5 passages les plus pertinents de toute la bibliothèque, en veillant à couvrir différents angles du sujet.</li>
+            <li><strong>Generation</strong> = Le bibliothécaire lit ces passages, les synthétise et formule une réponse claire et complète pour l'étudiant, en citant systématiquement ses sources.</li>
+        </ul>
+        <p style="margin-top: 15px;">Le RAG fonctionne exactement ainsi : un LLM (le bibliothécaire) qui <strong>ne répond jamais de mémoire</strong>, mais va toujours vérifier dans sa documentation (la base vectorielle) avant de répondre. C'est cette discipline qui élimine les hallucinations.</p>
+    </div>
+
+    <div class="prof-note">
+        Ce TD est le TD final de la série. Il synthétise tout ce que vous avez appris dans les TDs précédents (chunking, embeddings, retrieval avancé) en un seul pipeline fonctionnel de bout en bout. À la fin, vous serez capable de construire, optimiser et évaluer un système RAG complet, prêt pour la production.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT -->
+    <!-- ============================================================ -->
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <h3>Les 4 phases du pipeline RAG</h3>
+
+    <div class="step-box">
+        <strong>Phase 1 -- Ingestion :</strong> Les documents bruts (PDF, pages web, fichiers texte, CSV) sont chargés en mémoire via des <em>Document Loaders</em>. Chaque document est nettoyé : suppression des caractères spéciaux, normalisation du texte, extraction des métadonnées (source, date, auteur, catégorie).
+    </div>
+
+    <div class="step-box">
+        <strong>Phase 2 -- Indexing :</strong> Les documents nettoyés sont découpés en chunks de taille contrôlée par un <em>Text Splitter</em>. Chaque chunk est transformé en vecteur numérique (embedding) par un modèle d'embedding. Ces vecteurs sont stockés dans un <em>Vector Store</em> pour permettre une recherche rapide par similarité.
+    </div>
+
+    <div class="step-box">
+        <strong>Phase 3 -- Retrieval :</strong> Quand l'utilisateur pose une question, celle-ci est transformée en vecteur par le même modèle d'embedding. Le vector store retrouve les k chunks les plus similaires. Des techniques avancées (MMR, EnsembleRetriever, re-ranking) améliorent la qualité et la diversité des résultats.
+    </div>
+
+    <div class="step-box">
+        <strong>Phase 4 -- Generation :</strong> Les chunks récupérés sont injectés dans un prompt structuré avec la question de l'utilisateur. Le LLM génère une réponse basée uniquement sur le contexte fourni. Le prompt doit explicitement demander au modèle de ne pas inventer d'information et de citer ses sources.
+    </div>
+
+    <h3>Diagramme : Pipeline RAG Complet</h3>
+
+    <svg viewBox="0 0 920 530" xmlns="http://www.w3.org/2000/svg" style="width:100%; margin: 20px 0;">
+        <defs>
+            <marker id="arwR" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+            </marker>
+            <marker id="arwG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+            </marker>
+        </defs>
+        <rect width="920" height="530" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+        <text x="460" y="30" text-anchor="middle" fill="#ff6b35" font-size="17" font-weight="bold">Pipeline RAG Complet : de l'ingestion a la reponse</text>
+
+        <!-- Phase 1 : Ingestion -->
+        <rect x="20" y="55" width="200" height="185" rx="10" fill="rgba(255,107,53,0.08)" stroke="#ff6b35" stroke-width="2"/>
+        <text x="120" y="78" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">PHASE 1 : INGESTION</text>
+
+        <rect x="40" y="92" width="70" height="32" rx="5" fill="#0f0f23" stroke="#ff8c42" stroke-width="1"/>
+        <text x="75" y="113" text-anchor="middle" fill="#ff8c42" font-size="9">PDF</text>
+        <rect x="120" y="92" width="70" height="32" rx="5" fill="#0f0f23" stroke="#ff8c42" stroke-width="1"/>
+        <text x="155" y="113" text-anchor="middle" fill="#ff8c42" font-size="9">Web</text>
+        <rect x="40" y="134" width="70" height="32" rx="5" fill="#0f0f23" stroke="#ff8c42" stroke-width="1"/>
+        <text x="75" y="155" text-anchor="middle" fill="#ff8c42" font-size="9">TXT / CSV</text>
+        <rect x="120" y="134" width="70" height="32" rx="5" fill="#0f0f23" stroke="#ff8c42" stroke-width="1"/>
+        <text x="155" y="155" text-anchor="middle" fill="#ff8c42" font-size="9">DOCX</text>
+        <rect x="40" y="180" width="150" height="38" rx="5" fill="#0f0f23" stroke="#dcdcaa" stroke-width="1"/>
+        <text x="115" y="198" text-anchor="middle" fill="#dcdcaa" font-size="10">Nettoyage</text>
+        <text x="115" y="212" text-anchor="middle" fill="#aaa" font-size="8">+ Metadata</text>
+
+        <!-- Phase 2 : Indexing -->
+        <rect x="245" y="55" width="200" height="185" rx="10" fill="rgba(86,156,214,0.08)" stroke="#569cd6" stroke-width="2"/>
+        <text x="345" y="78" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">PHASE 2 : INDEXING</text>
+        <rect x="265" y="95" width="160" height="32" rx="5" fill="#0f0f23" stroke="#569cd6" stroke-width="1"/>
+        <text x="345" y="116" text-anchor="middle" fill="#569cd6" font-size="10">Text Splitter</text>
+        <rect x="265" y="140" width="160" height="32" rx="5" fill="#0f0f23" stroke="#569cd6" stroke-width="1"/>
+        <text x="345" y="161" text-anchor="middle" fill="#569cd6" font-size="10">Embedding Model</text>
+        <rect x="265" y="185" width="160" height="32" rx="5" fill="#0f0f23" stroke="#569cd6" stroke-width="1"/>
+        <text x="345" y="206" text-anchor="middle" fill="#569cd6" font-size="10">Vector Store</text>
+        <line x1="220" y1="148" x2="240" y2="148" stroke="#ff6b35" stroke-width="2" marker-end="url(#arwR)"/>
+
+        <!-- Phase 3 : Retrieval -->
+        <rect x="470" y="55" width="200" height="185" rx="10" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="2"/>
+        <text x="570" y="78" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">PHASE 3 : RETRIEVAL</text>
+        <rect x="490" y="95" width="160" height="32" rx="5" fill="#0f0f23" stroke="#00ff88" stroke-width="1"/>
+        <text x="570" y="116" text-anchor="middle" fill="#00ff88" font-size="10">Query Embedding</text>
+        <rect x="490" y="140" width="160" height="32" rx="5" fill="#0f0f23" stroke="#00ff88" stroke-width="1"/>
+        <text x="570" y="161" text-anchor="middle" fill="#00ff88" font-size="10">Similarity / MMR</text>
+        <rect x="490" y="185" width="160" height="32" rx="5" fill="#0f0f23" stroke="#00ff88" stroke-width="1"/>
+        <text x="570" y="206" text-anchor="middle" fill="#00ff88" font-size="10">Top-k Documents</text>
+        <line x1="445" y1="148" x2="465" y2="148" stroke="#ff6b35" stroke-width="2" marker-end="url(#arwR)"/>
+
+        <!-- Phase 4 : Generation -->
+        <rect x="695" y="55" width="200" height="185" rx="10" fill="rgba(206,145,120,0.08)" stroke="#ce9178" stroke-width="2"/>
+        <text x="795" y="78" text-anchor="middle" fill="#ce9178" font-size="13" font-weight="bold">PHASE 4 : GENERATION</text>
+        <rect x="715" y="95" width="160" height="32" rx="5" fill="#0f0f23" stroke="#ce9178" stroke-width="1"/>
+        <text x="795" y="116" text-anchor="middle" fill="#ce9178" font-size="10">Prompt + Contexte</text>
+        <rect x="715" y="140" width="160" height="32" rx="5" fill="#0f0f23" stroke="#ce9178" stroke-width="1"/>
+        <text x="795" y="161" text-anchor="middle" fill="#ce9178" font-size="10">LLM (GPT-4o-mini)</text>
+        <rect x="715" y="185" width="160" height="32" rx="5" fill="#0f0f23" stroke="#ce9178" stroke-width="1"/>
+        <text x="795" y="206" text-anchor="middle" fill="#ce9178" font-size="10">Reponse Generee</text>
+        <line x1="670" y1="148" x2="690" y2="148" stroke="#ff6b35" stroke-width="2" marker-end="url(#arwR)"/>
+
+        <!-- Question utilisateur -->
+        <rect x="350" y="275" width="220" height="50" rx="8" fill="#0f0f23" stroke="#ff6b35" stroke-width="2"/>
+        <text x="460" y="296" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Question Utilisateur</text>
+        <text x="460" y="314" text-anchor="middle" fill="#e0e0e0" font-size="10">"Comment fonctionne le RAG ?"</text>
+        <line x1="460" y1="275" x2="570" y2="245" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arwG)" stroke-dasharray="5,3"/>
+
+        <!-- Evaluation -->
+        <rect x="300" y="355" width="320" height="145" rx="10" fill="rgba(255,107,53,0.05)" stroke="#dcdcaa" stroke-width="1" stroke-dasharray="5,5"/>
+        <text x="460" y="380" text-anchor="middle" fill="#dcdcaa" font-size="13" font-weight="bold">EVALUATION (RAGAS)</text>
+        <rect x="320" y="395" width="130" height="30" rx="5" fill="#0f0f23" stroke="#dcdcaa" stroke-width="1"/>
+        <text x="385" y="415" text-anchor="middle" fill="#dcdcaa" font-size="9">Faithfulness</text>
+        <rect x="470" y="395" width="130" height="30" rx="5" fill="#0f0f23" stroke="#dcdcaa" stroke-width="1"/>
+        <text x="535" y="415" text-anchor="middle" fill="#dcdcaa" font-size="9">Answer Relevancy</text>
+        <rect x="320" y="440" width="130" height="30" rx="5" fill="#0f0f23" stroke="#dcdcaa" stroke-width="1"/>
+        <text x="385" y="460" text-anchor="middle" fill="#dcdcaa" font-size="9">Context Precision</text>
+        <rect x="470" y="440" width="130" height="30" rx="5" fill="#0f0f23" stroke="#dcdcaa" stroke-width="1"/>
+        <text x="535" y="460" text-anchor="middle" fill="#dcdcaa" font-size="9">Context Recall</text>
+
+        <line x1="795" y1="240" x2="795" y2="425" stroke="#dcdcaa" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="795" y1="425" x2="605" y2="425" stroke="#dcdcaa" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arwR)"/>
+
+        <text x="460" y="515" text-anchor="middle" fill="#aaa" font-size="10" font-style="italic">Pipeline complet : Ingestion - Indexing - Retrieval - Generation - Evaluation</text>
+    </svg>
+
+    <h3>Diagramme : Flux de donnees detaille</h3>
+
+    <svg viewBox="0 0 920 300" xmlns="http://www.w3.org/2000/svg" style="width:100%; margin: 20px 0;">
+        <rect width="920" height="300" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+        <text x="460" y="28" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Flux de donnees : du document brut a la reponse</text>
+
+        <rect x="20" y="60" width="120" height="55" rx="6" fill="#0f0f23" stroke="#ff8c42" stroke-width="2"/>
+        <text x="80" y="82" text-anchor="middle" fill="#ff8c42" font-size="10" font-weight="bold">Document brut</text>
+        <text x="80" y="100" text-anchor="middle" fill="#aaa" font-size="8">cours.pdf (50 pages)</text>
+
+        <rect x="180" y="53" width="120" height="72" rx="6" fill="#0f0f23" stroke="#569cd6" stroke-width="2"/>
+        <text x="240" y="74" text-anchor="middle" fill="#569cd6" font-size="10" font-weight="bold">Chunks</text>
+        <text x="240" y="92" text-anchor="middle" fill="#aaa" font-size="8">chunk_size: 500</text>
+        <text x="240" y="106" text-anchor="middle" fill="#aaa" font-size="8">overlap: 100</text>
+        <text x="240" y="119" text-anchor="middle" fill="#e0e0e0" font-size="8">= 120 chunks</text>
+        <line x1="140" y1="87" x2="175" y2="87" stroke="#ff6b35" stroke-width="2" marker-end="url(#arwR)"/>
+
+        <rect x="340" y="53" width="120" height="72" rx="6" fill="#0f0f23" stroke="#00ff88" stroke-width="2"/>
+        <text x="400" y="74" text-anchor="middle" fill="#00ff88" font-size="10" font-weight="bold">Embeddings</text>
+        <text x="400" y="92" text-anchor="middle" fill="#aaa" font-size="8">text-embedding</text>
+        <text x="400" y="106" text-anchor="middle" fill="#aaa" font-size="8">-3-small</text>
+        <text x="400" y="119" text-anchor="middle" fill="#e0e0e0" font-size="8">= 120 vecteurs</text>
+        <line x1="300" y1="87" x2="335" y2="87" stroke="#ff6b35" stroke-width="2" marker-end="url(#arwR)"/>
+
+        <rect x="500" y="53" width="120" height="72" rx="6" fill="#0f0f23" stroke="#dcdcaa" stroke-width="2"/>
+        <text x="560" y="74" text-anchor="middle" fill="#dcdcaa" font-size="10" font-weight="bold">Vector Store</text>
+        <text x="560" y="92" text-anchor="middle" fill="#aaa" font-size="8">Chroma DB</text>
+        <text x="560" y="106" text-anchor="middle" fill="#aaa" font-size="8">persistant</text>
+        <text x="560" y="119" text-anchor="middle" fill="#e0e0e0" font-size="8">120 vecteurs indexes</text>
+        <line x1="460" y1="87" x2="495" y2="87" stroke="#ff6b35" stroke-width="2" marker-end="url(#arwR)"/>
+
+        <rect x="660" y="53" width="120" height="72" rx="6" fill="#0f0f23" stroke="#ff4444" stroke-width="2"/>
+        <text x="720" y="74" text-anchor="middle" fill="#ff4444" font-size="10" font-weight="bold">Retriever</text>
+        <text x="720" y="92" text-anchor="middle" fill="#aaa" font-size="8">MMR / Ensemble</text>
+        <text x="720" y="106" text-anchor="middle" fill="#aaa" font-size="8">k = 4</text>
+        <text x="720" y="119" text-anchor="middle" fill="#e0e0e0" font-size="8">= 4 chunks</text>
+        <line x1="620" y1="87" x2="655" y2="87" stroke="#ff6b35" stroke-width="2" marker-end="url(#arwR)"/>
+
+        <rect x="800" y="53" width="100" height="72" rx="6" fill="#0f0f23" stroke="#ce9178" stroke-width="2"/>
+        <text x="850" y="74" text-anchor="middle" fill="#ce9178" font-size="10" font-weight="bold">LLM</text>
+        <text x="850" y="92" text-anchor="middle" fill="#aaa" font-size="8">GPT-4o-mini</text>
+        <text x="850" y="106" text-anchor="middle" fill="#aaa" font-size="8">temperature: 0</text>
+        <text x="850" y="119" text-anchor="middle" fill="#e0e0e0" font-size="8">= Reponse</text>
+        <line x1="780" y1="87" x2="795" y2="87" stroke="#ff6b35" stroke-width="2" marker-end="url(#arwR)"/>
+
+        <!-- Data sizes bar -->
+        <rect x="20" y="155" width="880" height="55" rx="6" fill="rgba(255,107,53,0.05)" stroke="#333" stroke-width="1"/>
+        <text x="80" y="178" text-anchor="middle" fill="#ff8c42" font-size="10">50 pages</text>
+        <text x="80" y="195" text-anchor="middle" fill="#aaa" font-size="8">~100K tokens</text>
+        <text x="240" y="178" text-anchor="middle" fill="#569cd6" font-size="10">120 chunks</text>
+        <text x="240" y="195" text-anchor="middle" fill="#aaa" font-size="8">~500 tok/chunk</text>
+        <text x="400" y="178" text-anchor="middle" fill="#00ff88" font-size="10">120 vecteurs</text>
+        <text x="400" y="195" text-anchor="middle" fill="#aaa" font-size="8">1536 dimensions</text>
+        <text x="560" y="178" text-anchor="middle" fill="#dcdcaa" font-size="10">Indexes</text>
+        <text x="560" y="195" text-anchor="middle" fill="#aaa" font-size="8">recherche O(log n)</text>
+        <text x="720" y="178" text-anchor="middle" fill="#ff4444" font-size="10">4 chunks</text>
+        <text x="720" y="195" text-anchor="middle" fill="#aaa" font-size="8">~2000 tokens</text>
+        <text x="850" y="178" text-anchor="middle" fill="#ce9178" font-size="10">1 reponse</text>
+        <text x="850" y="195" text-anchor="middle" fill="#aaa" font-size="8">~200 tokens</text>
+
+        <text x="460" y="240" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Ratio de compression : 100 000 tokens =&gt; 2 000 tokens contexte =&gt; 200 tokens reponse</text>
+        <text x="460" y="262" text-anchor="middle" fill="#aaa" font-size="10">Le RAG reduit 50 pages en 4 passages pertinents, puis synthetise en une reponse ciblee</text>
+        <text x="460" y="282" text-anchor="middle" fill="#00ff88" font-size="11">Compression x500 grace au retrieval intelligent</text>
+    </svg>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 : LES DONNÉES -->
+    <!-- ============================================================ -->
+    <h2>3. Les Données</h2>
+
+    <h3>3.1 - Chargement de documents réels</h3>
+
+    <div class="prof-note">
+        Dans un vrai projet RAG, les données ne sont pas de simples chaînes de caractères. Vous devez charger des PDFs, scraper des pages web, nettoyer le contenu et gérer les métadonnées. Cette section montre comment faire cela proprement avec LangChain v0.3+.
+    </div>
+
+    <div class="code-block"><span class="comment"># Chargement de PDF avec PyPDFLoader</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader
+
+loader_pdf = <span class="function">PyPDFLoader</span>(<span class="string">"cours_machine_learning.pdf"</span>)
+pages = loader_pdf.<span class="function">load</span>()
+
+<span class="keyword">print</span>(<span class="string">f"Nombre de pages chargées : {len(pages)}"</span>)
+<span class="keyword">print</span>(<span class="string">f"Métadonnées page 1 : {pages[0].metadata}"</span>)
+<span class="keyword">print</span>(<span class="string">f"Contenu (extrait) : {pages[0].page_content[:100]}"</span>)</div>
+
+    <div class="output-block">Nombre de pages chargées : 45
+Métadonnées page 1 : {'source': 'cours_machine_learning.pdf', 'page': 0}
+Contenu (extrait) : Introduction au Machine Learning\n\nLe machine learning est une branche de l'intelligence artificiel</div>
+
+    <div class="code-block"><span class="comment"># Chargement de pages web</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> WebBaseLoader
+
+loader_web = <span class="function">WebBaseLoader</span>(
+    web_paths=[
+        <span class="string">"https://fr.wikipedia.org/wiki/Apprentissage_automatique"</span>,
+        <span class="string">"https://fr.wikipedia.org/wiki/Intelligence_artificielle"</span>
+    ]
+)
+web_docs = loader_web.<span class="function">load</span>()
+
+<span class="keyword">print</span>(<span class="string">f"Pages web chargées : {len(web_docs)}"</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> web_docs:
+    <span class="keyword">print</span>(<span class="string">f"  Source : {doc.metadata['source']} ({len(doc.page_content)} car.)"</span>)</div>
+
+    <div class="output-block">Pages web chargées : 2
+  Source : https://fr.wikipedia.org/wiki/Apprentissage_automatique (85432 car.)
+  Source : https://fr.wikipedia.org/wiki/Intelligence_artificielle (112567 car.)</div>
+
+    <h3>3.2 - Nettoyage des données</h3>
+
+    <div class="code-block"><span class="keyword">import</span> re
+
+<span class="keyword">def</span> <span class="function">clean_document</span>(text):
+    <span class="string">"""Nettoie un document brut pour améliorer la qualité du retrieval."""</span>
+    <span class="comment"># Supprimer les espaces multiples</span>
+    text = re.<span class="function">sub</span>(<span class="string">r'\s+'</span>, <span class="string">' '</span>, text)
+    <span class="comment"># Supprimer les caractères de contrôle</span>
+    text = re.<span class="function">sub</span>(<span class="string">r'[\x00-\x08\x0b\x0c\x0e-\x1f]'</span>, <span class="string">''</span>, text)
+    <span class="comment"># Supprimer les lignes vides multiples</span>
+    text = re.<span class="function">sub</span>(<span class="string">r'\n{3,}'</span>, <span class="string">'\n\n'</span>, text)
+    <span class="comment"># Supprimer les en-têtes/pieds de page répétitifs</span>
+    text = re.<span class="function">sub</span>(<span class="string">r'Page \d+ sur \d+'</span>, <span class="string">''</span>, text)
+    <span class="keyword">return</span> text.strip()
+
+<span class="comment"># Appliquer à tous les documents</span>
+<span class="keyword">for</span> doc <span class="keyword">in</span> pages:
+    doc.page_content = <span class="function">clean_document</span>(doc.page_content)
+
+<span class="keyword">print</span>(<span class="string">"Documents nettoyés avec succès."</span>)</div>
+
+    <h3>3.3 - Stratégies de chunking</h3>
+
+    <div class="concept-box">
+        <table>
+            <tr>
+                <th>Stratégie</th>
+                <th>Splitter LangChain</th>
+                <th>Quand l'utiliser</th>
+            </tr>
+            <tr>
+                <td><strong>Récursif</strong></td>
+                <td>RecursiveCharacterTextSplitter</td>
+                <td>Usage général, respecte les paragraphes et phrases</td>
+            </tr>
+            <tr>
+                <td><strong>Par tokens</strong></td>
+                <td>TokenTextSplitter</td>
+                <td>Quand la taille exacte en tokens est critique (contexte LLM)</td>
+            </tr>
+            <tr>
+                <td><strong>Sémantique</strong></td>
+                <td>SemanticChunker</td>
+                <td>Textes hétérogènes, respecte les frontières de sens</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+text_splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">100</span>,
+    length_function=<span class="function">len</span>,
+    separators=[<span class="string">"\n\n"</span>, <span class="string">"\n"</span>, <span class="string">". "</span>, <span class="string">" "</span>, <span class="string">""</span>]
+)
+
+all_documents = pages + web_docs
+chunks = text_splitter.<span class="function">split_documents</span>(all_documents)
+
+<span class="keyword">print</span>(<span class="string">f"Documents originaux : {len(all_documents)}"</span>)
+<span class="keyword">print</span>(<span class="string">f"Chunks générés     : {len(chunks)}"</span>)
+<span class="keyword">print</span>(<span class="string">f"Taille moyenne     : {sum(len(c.page_content) for c in chunks) // len(chunks)} car."</span>)</div>
+
+    <div class="output-block">Documents originaux : 47
+Chunks générés     : 342
+Taille moyenne     : 423 caractères</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 : LES PARAMÈTRES -->
+    <!-- ============================================================ -->
+    <h2>4. Les Paramètres</h2>
+
+    <div class="prof-note">
+        Un pipeline RAG complet possède de nombreux paramètres répartis sur les 4 phases. Chaque paramètre est un levier d'optimisation. La règle d'or : ne changez qu'un seul paramètre à la fois et mesurez l'impact avec les métriques RAGAS.
+    </div>
+
+    <h3>Paramètres de chunking</h3>
+    <div class="param-box">
+        <table>
+            <tr><th>Paramètre</th><th>Recommandation</th><th>Impact</th></tr>
+            <tr>
+                <td><strong>chunk_size</strong></td>
+                <td>500 caractères (début)</td>
+                <td>Trop petit = perte de contexte. Trop grand = dilution de la pertinence.</td>
+            </tr>
+            <tr>
+                <td><strong>chunk_overlap</strong></td>
+                <td>10-20% du chunk_size</td>
+                <td>Chevauchement pour ne pas couper une idée en deux. 0 = risque élevé.</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>Paramètres de retrieval</h3>
+    <div class="param-box">
+        <table>
+            <tr><th>Paramètre</th><th>Recommandation</th><th>Impact</th></tr>
+            <tr>
+                <td><strong>k</strong></td>
+                <td>4 (par défaut)</td>
+                <td>Nombre de docs envoyés au LLM. Plus = plus de contexte mais plus de bruit.</td>
+            </tr>
+            <tr>
+                <td><strong>search_type</strong></td>
+                <td>"mmr" ou "similarity"</td>
+                <td>MMR pour diversité, similarity pour pertinence pure.</td>
+            </tr>
+            <tr>
+                <td><strong>fetch_k</strong></td>
+                <td>20 (avec k=4)</td>
+                <td>Pool de candidats pour MMR. Plus grand = meilleure diversité.</td>
+            </tr>
+            <tr>
+                <td><strong>lambda_mult</strong></td>
+                <td>0.5 - 0.7</td>
+                <td>Balance pertinence/diversité dans MMR. 1.0 = pertinence pure.</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>Paramètres de génération</h3>
+    <div class="param-box">
+        <table>
+            <tr><th>Paramètre</th><th>Recommandation</th><th>Impact</th></tr>
+            <tr>
+                <td><strong>temperature</strong></td>
+                <td>0 (réponses factuelles)</td>
+                <td>0 = déterministe. 0.7 = plus créatif mais risque d'hallucinations.</td>
+            </tr>
+            <tr>
+                <td><strong>model</strong></td>
+                <td>gpt-4o-mini</td>
+                <td>Meilleur rapport qualité/prix/vitesse pour le RAG.</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>Choix du modèle d'embedding</h3>
+    <div class="param-box">
+        <table>
+            <tr><th>Modèle</th><th>Dimensions</th><th>Coût</th><th>Usage</th></tr>
+            <tr>
+                <td><strong>text-embedding-3-small</strong></td>
+                <td>1536</td>
+                <td>$0.02/1M tokens</td>
+                <td>Développement, prototypage, petites bases</td>
+            </tr>
+            <tr>
+                <td><strong>text-embedding-3-large</strong></td>
+                <td>3072</td>
+                <td>$0.13/1M tokens</td>
+                <td>Production, haute précision requise</td>
+            </tr>
+            <tr>
+                <td><strong>all-MiniLM-L6-v2</strong> (open source)</td>
+                <td>384</td>
+                <td>Gratuit (local)</td>
+                <td>Budget limité, données sensibles, exécution locale</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 : LES MÉTRIQUES -->
+    <!-- ============================================================ -->
+    <h2>5. Les Métriques</h2>
+
+    <div class="definition">
+        <strong>RAGAS</strong> (Retrieval Augmented Generation Assessment) est le framework standard pour évaluer un système RAG de bout en bout. Il fournit 4 métriques complémentaires couvrant la qualité du retrieval et de la génération.
+    </div>
+
+    <h3>Faithfulness (Fidélité)</h3>
+    <div class="metric-card">
+        <h3 style="color: #00ff88;">Faithfulness</h3>
+        <p><strong>Question :</strong> La réponse est-elle fidèle au contexte ? Dit-elle des choses qui ne sont pas dans les documents ?</p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; background: #0f0f23; padding: 12px; border-radius: 5px;">
+            Faithfulness = (Affirmations supportées par le contexte) / (Total d'affirmations dans la réponse)
+        </p>
+        <p style="margin-top: 10px;"><strong>Exemple :</strong> 5 affirmations dans la réponse, 4 vérifiables dans les docs, 1 inventée.</p>
+        <p>Faithfulness = 4 / 5 = <strong>0.80</strong></p>
+        <div class="warning" style="margin-top: 10px;">Un faithfulness bas (&lt; 0.7) signifie que le LLM hallucine. C'est le défaut le plus grave d'un système RAG.</div>
+    </div>
+
+    <h3>Answer Relevancy (Pertinence de la réponse)</h3>
+    <div class="metric-card">
+        <h3 style="color: #569cd6;">Answer Relevancy</h3>
+        <p><strong>Question :</strong> La réponse répond-elle bien à la question posée ?</p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; background: #0f0f23; padding: 12px; border-radius: 5px;">
+            Answer Relevancy = moyenne( cosine_similarity(question_originale, question_générée_i) )
+        </p>
+        <p style="margin-top: 10px;"><strong>Principe :</strong> RAGAS génère des questions à partir de la réponse et mesure si elles ressemblent à la question originale. Si la réponse est hors sujet, les questions générées seront différentes.</p>
+        <div class="effect" style="margin-top: 10px;">Score &gt; 0.8 = la réponse est pertinente et ciblée. Score bas = réponse hors sujet ou trop vague.</div>
+    </div>
+
+    <h3>Context Precision</h3>
+    <div class="metric-card">
+        <h3 style="color: #ff8c42;">Context Precision</h3>
+        <p><strong>Question :</strong> Les documents récupérés sont-ils pertinents et bien ordonnés ?</p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; background: #0f0f23; padding: 12px; border-radius: 5px;">
+            Context Precision = moyenne( precision@k )  pour k = 1..K
+        </p>
+        <p style="margin-top: 10px;"><strong>Exemple (4 docs) :</strong> [pertinent, pertinent, non-pertinent, pertinent]</p>
+        <ul style="padding-left: 20px;">
+            <li>P@1 = 1/1 = 1.00</li>
+            <li>P@2 = 2/2 = 1.00</li>
+            <li>P@3 = 2/3 = 0.67</li>
+            <li>P@4 = 3/4 = 0.75</li>
+        </ul>
+        <p>Context Precision = (1.00 + 1.00 + 0.67 + 0.75) / 4 = <strong>0.855</strong></p>
+    </div>
+
+    <h3>Context Recall</h3>
+    <div class="metric-card">
+        <h3 style="color: #ce9178;">Context Recall</h3>
+        <p><strong>Question :</strong> Le retriever a-t-il retrouvé tous les éléments nécessaires pour répondre ?</p>
+        <p style="margin-top: 10px; font-family: 'Courier New', monospace; background: #0f0f23; padding: 12px; border-radius: 5px;">
+            Context Recall = (Affirmations de la ref. supportées par le contexte) / (Total affirmations dans la ref.)
+        </p>
+        <p style="margin-top: 10px;"><strong>Exemple :</strong> Réponse de référence = 4 points clés. Contexte couvre 3 points.</p>
+        <p>Context Recall = 3 / 4 = <strong>0.75</strong></p>
+        <div class="effect" style="margin-top: 10px;">Un recall bas = le retriever manque des documents importants. La réponse sera incomplète.</div>
+    </div>
+
+    <h3>Tableau récapitulatif RAGAS</h3>
+    <table>
+        <tr><th>Métrique</th><th>Évalue</th><th>Phase</th><th>Objectif</th></tr>
+        <tr><td><strong>Faithfulness</strong></td><td>Pas d'hallucinations</td><td>Generation</td><td>&gt; 0.85</td></tr>
+        <tr><td><strong>Answer Relevancy</strong></td><td>Réponse pertinente</td><td>Generation</td><td>&gt; 0.80</td></tr>
+        <tr><td><strong>Context Precision</strong></td><td>Bons docs récupérés</td><td>Retrieval</td><td>&gt; 0.75</td></tr>
+        <tr><td><strong>Context Recall</strong></td><td>Tous les docs nécessaires</td><td>Retrieval</td><td>&gt; 0.80</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 : IMPLÉMENTATION COMPLÈTE -->
+    <!-- ============================================================ -->
+    <h2>6. Implémentation Complète</h2>
+
+    <div class="prof-note">
+        Voici le pipeline RAG complet, étape par étape, de l'installation à l'évaluation. Chaque bloc de code s'enchaîne logiquement. À la fin, vous aurez un système fonctionnel de bout en bout.
+    </div>
+
+    <h3>6.1 - Configuration</h3>
+
+    <div class="code-block"><span class="comment"># pip install langchain langchain-openai langchain-chroma langchain-community</span>
+<span class="comment"># pip install pypdf rank_bm25 tiktoken ragas datasets</span>
+
+<span class="keyword">import</span> os
+os.environ[<span class="string">"OPENAI_API_KEY"</span>] = <span class="string">"votre-clé-api"</span>
+
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings, ChatOpenAI
+<span class="keyword">from</span> langchain_chroma <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnablePassthrough
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+<span class="keyword">print</span>(<span class="string">"Configuration chargée."</span>)</div>
+
+    <h3>6.2 - Phase 1 : Ingestion</h3>
+
+    <div class="code-block"><span class="comment"># Corpus de 10 documents sur l'IA et le RAG</span>
+raw_documents = [
+    Document(page_content=<span class="string">"""Le Retrieval-Augmented Generation (RAG) est une architecture
+    d'intelligence artificielle qui combine un système de recherche
+    d'information (retriever) et un modèle de langage (generator).
+    Le retriever cherche dans une base de connaissances les documents
+    les plus pertinents, puis le generator utilise ces documents comme
+    contexte pour produire une réponse précise et vérifiable."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"introduction_rag.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"1"</span>}),
+
+    Document(page_content=<span class="string">"""Les embeddings transforment du texte en vecteurs numériques
+    dans un espace de haute dimension (768 à 3072 dimensions). Deux
+    textes ayant un sens similaire auront des vecteurs proches.
+    text-embedding-3-small d'OpenAI offre un bon rapport qualité/prix
+    avec 1536 dimensions. Pour la haute précision, utilisez
+    text-embedding-3-large (3072 dimensions)."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"embeddings.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"2"</span>}),
+
+    Document(page_content=<span class="string">"""Le chunking découpe des documents longs en morceaux de taille
+    appropriée. Le RecursiveCharacterTextSplitter respecte la structure
+    du texte en coupant aux limites naturelles (paragraphes, phrases).
+    Un chunk_size de 500 avec overlap de 100 est un bon point de départ.
+    Un overlap trop faible coupe les idées, trop grand crée de la
+    redondance inutile."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"chunking.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"3"</span>}),
+
+    Document(page_content=<span class="string">"""Les vector stores stockent et recherchent des vecteurs. Chroma
+    est idéal pour le développement local : léger et persistant. FAISS
+    de Meta est optimisé pour les grandes collections (millions de
+    vecteurs). Pinecone est un service cloud managed pour la production.
+    Le choix dépend de votre contexte : développement, test ou
+    production à grande échelle."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"vector_stores.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"4"</span>}),
+
+    Document(page_content=<span class="string">"""Le retrieval est la phase la plus critique du RAG. La similarity
+    search retourne les k documents les plus proches. Le MMR ajoute
+    de la diversité en pénalisant les doublons. L'EnsembleRetriever
+    combine sémantique et lexical (BM25). Le MultiQueryRetriever
+    reformule la question en variantes pour améliorer le recall."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"retrieval.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"5"</span>}),
+
+    Document(page_content=<span class="string">"""Le prompt engineering est crucial en RAG. Le prompt doit inclure :
+    (1) un rôle système clair, (2) le contexte récupéré, (3) la question,
+    (4) des instructions : 'Réponds uniquement à partir du contexte' et
+    'Si l'info n'est pas disponible, dis-le'. Un mauvais prompt peut
+    annuler les bénéfices d'un excellent retriever."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"prompt_engineering.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"6"</span>}),
+
+    Document(page_content=<span class="string">"""L'évaluation RAG nécessite des métriques spécifiques. RAGAS propose
+    4 métriques : faithfulness (pas d'hallucinations), answer_relevancy
+    (réponse pertinente), context_precision (bons documents récupérés),
+    context_recall (tous les documents nécessaires retrouvés). Visez
+    un score supérieur à 0.8 sur chaque métrique."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"evaluation.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"7"</span>}),
+
+    Document(page_content=<span class="string">"""Le RAG vs fine-tuning : le RAG ne modifie pas les poids du modèle,
+    les sources sont traçables, le coût est moindre (pas de GPU), les
+    données privées restent dans la base. Le fine-tuning est préféré
+    pour adapter le style ou le ton du modèle, pas pour injecter des
+    connaissances factuelles."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"rag_vs_finetuning.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"8"</span>}),
+
+    Document(page_content=<span class="string">"""Les hallucinations sont des informations inventées mais plausibles.
+    Le RAG les réduit en fournissant des sources vérifiables. Cependant,
+    même avec RAG, des hallucinations surviennent si le prompt ne
+    contraint pas le modèle ou si les documents sont ambigus. La
+    métrique faithfulness de RAGAS mesure ce risque."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"hallucinations.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"9"</span>}),
+
+    Document(page_content=<span class="string">"""En production, un RAG doit gérer latence, coût et scalabilité.
+    Latence = embedding + recherche vectorielle + génération LLM.
+    Pour l'optimiser : embedding petit, FAISS, GPT-4o-mini, et
+    caching des questions fréquentes (réduction de 90% de latence).
+    Monitorer les métriques RAGAS en continu."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"production.txt"</span>, <span class="string">"chapitre"</span>: <span class="string">"10"</span>})
+]
+
+<span class="keyword">print</span>(<span class="string">f"Documents chargés : {len(raw_documents)}"</span>)</div>
+
+    <div class="output-block">Documents chargés : 10</div>
+
+    <h3>6.3 - Phase 2 : Indexing</h3>
+
+    <div class="code-block"><span class="comment"># Découpage en chunks</span>
+text_splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">100</span>,
+    separators=[<span class="string">"\n\n"</span>, <span class="string">"\n"</span>, <span class="string">". "</span>, <span class="string">" "</span>, <span class="string">""</span>]
+)
+chunks = text_splitter.<span class="function">split_documents</span>(raw_documents)
+
+<span class="comment"># Création du vector store avec persistance</span>
+vectorstore = Chroma.<span class="function">from_documents</span>(
+    documents=chunks,
+    embedding=embeddings,
+    collection_name=<span class="string">"td_rag_complet"</span>,
+    persist_directory=<span class="string">"./chroma_td_rag"</span>
+)
+
+<span class="keyword">print</span>(<span class="string">f"Chunks créés : {len(chunks)}"</span>)
+<span class="keyword">print</span>(<span class="string">f"Vecteurs indexés : {vectorstore._collection.count()}"</span>)</div>
+
+    <div class="output-block">Chunks créés : 12
+Vecteurs indexés : 12</div>
+
+    <h3>6.4 - Phase 3 : Retrieval</h3>
+
+    <div class="code-block"><span class="comment"># Retriever avec MMR pour diversité</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={
+        <span class="string">"k"</span>: <span class="number">4</span>,
+        <span class="string">"fetch_k"</span>: <span class="number">10</span>,
+        <span class="string">"lambda_mult"</span>: <span class="number">0.7</span>
+    }
+)
+
+<span class="comment"># Test du retriever seul</span>
+question_test = <span class="string">"Qu'est-ce que le RAG et quels sont ses avantages ?"</span>
+docs = retriever.<span class="function">invoke</span>(question_test)
+
+<span class="keyword">print</span>(<span class="string">f"Documents récupérés : {len(docs)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(docs):
+    <span class="keyword">print</span>(<span class="string">f"  Doc {i+1} [{doc.metadata['source']}]: {doc.page_content[:80]}..."</span>)</div>
+
+    <div class="output-block">Documents récupérés : 4
+  Doc 1 [introduction_rag.txt]: Le Retrieval-Augmented Generation (RAG) est une architecture d'intelligence ar...
+  Doc 2 [rag_vs_finetuning.txt]: Le RAG vs fine-tuning : le RAG ne modifie pas les poids du modèle, les sources...
+  Doc 3 [hallucinations.txt]: Les hallucinations sont des informations inventées mais plausibles. Le RAG les...
+  Doc 4 [retrieval.txt]: Le retrieval est la phase la plus critique du RAG. La similarity search retour...</div>
+
+    <h3>6.5 - Phase 4 : Generation</h3>
+
+    <div class="code-block"><span class="comment"># Prompt RAG structuré</span>
+rag_prompt = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""Tu es un assistant pédagogique expert en intelligence artificielle.
+Réponds à la question en te basant UNIQUEMENT sur le contexte fourni.
+Si l'information n'est pas dans le contexte, dis-le clairement.
+Cite tes sources entre crochets [source: nom_du_fichier].
+
+Contexte :
+{context}
+
+Question : {question}
+
+Réponse (en français, claire et structurée) :"""</span>)
+
+<span class="comment"># Formateur de documents</span>
+<span class="keyword">def</span> <span class="function">format_docs</span>(docs):
+    <span class="keyword">return</span> <span class="string">"\n\n---\n\n"</span>.join(
+        <span class="string">f"[Source: {doc.metadata['source']}]\n{doc.page_content}"</span>
+        <span class="keyword">for</span> doc <span class="keyword">in</span> docs
+    )
+
+<span class="comment"># Pipeline RAG complet avec LCEL</span>
+rag_chain = (
+    {
+        <span class="string">"context"</span>: retriever | format_docs,
+        <span class="string">"question"</span>: RunnablePassthrough()
+    }
+    | rag_prompt
+    | llm
+    | StrOutputParser()
+)
+
+<span class="comment"># Test du pipeline complet</span>
+question = <span class="string">"Qu'est-ce que le RAG et quels sont ses avantages ?"</span>
+response = rag_chain.<span class="function">invoke</span>(question)
+<span class="keyword">print</span>(<span class="string">f"Question : {question}\n"</span>)
+<span class="keyword">print</span>(<span class="string">f"Réponse :\n{response}"</span>)</div>
+
+    <div class="output-block">Question : Qu'est-ce que le RAG et quels sont ses avantages ?
+
+Réponse :
+Le RAG (Retrieval-Augmented Generation) est une architecture d'IA qui combine deux composants [source: introduction_rag.txt] :
+
+1. **Un retriever** : cherche les documents pertinents dans une base de connaissances
+2. **Un generator (LLM)** : utilise ces documents comme contexte pour produire des réponses
+
+Les avantages du RAG [source: rag_vs_finetuning.txt] :
+- Pas besoin de ré-entraîner le modèle quand les données changent
+- Sources traçables et vérifiables
+- Coût réduit (pas de GPU pour l'entraînement)
+- Données privées protégées (restent dans la base)
+
+De plus, le RAG réduit les hallucinations en fournissant des sources vérifiables [source: hallucinations.txt].</div>
+
+    <div class="prof-note">
+        Observez que la réponse cite ses sources entre crochets. Chaque affirmation est vérifiable dans les documents. C'est la puissance d'un RAG bien configuré avec un prompt contraignant.
+    </div>
+
+    <h3>6.6 - Test avec plusieurs questions</h3>
+
+    <div class="code-block"><span class="comment"># Tester le pipeline sur plusieurs questions</span>
+questions = [
+    <span class="string">"Comment fonctionne le chunking dans un système RAG ?"</span>,
+    <span class="string">"Quels vector stores utiliser en production ?"</span>,
+    <span class="string">"Comment évaluer la qualité d'un système RAG ?"</span>,
+    <span class="string">"Quel est le rôle du prompt dans un pipeline RAG ?"</span>,
+]
+
+<span class="keyword">for</span> q <span class="keyword">in</span> questions:
+    <span class="keyword">print</span>(<span class="string">f"\nQ: {q}"</span>)
+    response = rag_chain.<span class="function">invoke</span>(q)
+    <span class="keyword">print</span>(<span class="string">f"R: {response[:250]}...\n"</span>)
+    <span class="keyword">print</span>(<span class="string">"-"</span> * <span class="number">60</span>)</div>
+
+    <div class="output-block">Q: Comment fonctionne le chunking dans un système RAG ?
+R: Le chunking découpe des documents longs en morceaux de taille appropriée [source: chunking.txt]. Le RecursiveCharacterTextSplitter respecte la structure du texte en coupant aux limites naturelles. Un chunk_size de 500 avec overlap de 100 est recom...
+
+------------------------------------------------------------
+Q: Quels vector stores utiliser en production ?
+R: Pour la production, Pinecone est un service cloud managed idéal [source: vector_stores.txt]. FAISS de Meta est optimisé pour les grandes collections de millions de vecteurs. Chroma convient au développement local. Pour optimiser la latence en produ...
+
+------------------------------------------------------------
+Q: Comment évaluer la qualité d'un système RAG ?
+R: L'évaluation utilise RAGAS avec 4 métriques [source: evaluation.txt] : faithfulness (pas d'hallucinations), answer_relevancy (réponse pertinente), context_precision (bons documents récupérés), context_recall (tous les docs nécessaires). Visez un s...
+
+------------------------------------------------------------
+Q: Quel est le rôle du prompt dans un pipeline RAG ?
+R: Le prompt engineering est crucial en RAG [source: prompt_engineering.txt]. Un bon prompt doit inclure : (1) un rôle système clair, (2) le contexte récupéré par le retriever, (3) la question de l'utilisateur, (4) des instructions explicites comme "Ré...</div>
+
+    <h3>6.7 - Évaluation RAGAS</h3>
+
+    <div class="code-block"><span class="keyword">from</span> ragas <span class="keyword">import</span> evaluate
+<span class="keyword">from</span> ragas.metrics <span class="keyword">import</span> (
+    faithfulness, answer_relevancy,
+    context_precision, context_recall
+)
+<span class="keyword">from</span> datasets <span class="keyword">import</span> Dataset
+
+<span class="comment"># Dataset d'évaluation</span>
+eval_questions = [
+    <span class="string">"Qu'est-ce que le RAG ?"</span>,
+    <span class="string">"Comment fonctionne le chunking ?"</span>,
+    <span class="string">"Quels sont les avantages du RAG par rapport au fine-tuning ?"</span>,
+]
+
+ground_truths = [
+    <span class="string">"Le RAG combine un retriever et un generator pour des réponses factuelles."</span>,
+    <span class="string">"Le chunking découpe les documents avec RecursiveCharacterTextSplitter. chunk_size=500, overlap=100."</span>,
+    <span class="string">"Le RAG ne nécessite pas de ré-entraînement, sources traçables, coût moindre, données privées protégées."</span>,
+]
+
+<span class="comment"># Générer réponses et récupérer contextes</span>
+answers = []
+contexts = []
+<span class="keyword">for</span> q <span class="keyword">in</span> eval_questions:
+    retrieved = retriever.<span class="function">invoke</span>(q)
+    contexts.append([doc.page_content <span class="keyword">for</span> doc <span class="keyword">in</span> retrieved])
+    answers.append(rag_chain.<span class="function">invoke</span>(q))
+
+<span class="comment"># Construire le dataset et évaluer</span>
+eval_dataset = Dataset.<span class="function">from_dict</span>({
+    <span class="string">"question"</span>: eval_questions,
+    <span class="string">"answer"</span>: answers,
+    <span class="string">"contexts"</span>: contexts,
+    <span class="string">"ground_truth"</span>: ground_truths,
+})
+
+results = <span class="function">evaluate</span>(
+    dataset=eval_dataset,
+    metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+)
+
+<span class="keyword">print</span>(<span class="string">"Résultats RAGAS :"</span>)
+<span class="keyword">print</span>(<span class="string">f"  Faithfulness       : {results['faithfulness']:.3f}"</span>)
+<span class="keyword">print</span>(<span class="string">f"  Answer Relevancy   : {results['answer_relevancy']:.3f}"</span>)
+<span class="keyword">print</span>(<span class="string">f"  Context Precision  : {results['context_precision']:.3f}"</span>)
+<span class="keyword">print</span>(<span class="string">f"  Context Recall     : {results['context_recall']:.3f}"</span>)</div>
+
+    <div class="output-block">Résultats RAGAS :
+  Faithfulness       : 0.925
+  Answer Relevancy   : 0.887
+  Context Precision  : 0.854
+  Context Recall     : 0.833</div>
+
+    <div class="effect">
+        <strong>Analyse :</strong> Tous les scores dépassent 0.80. Le faithfulness (0.925) est excellent : le LLM hallucine très rarement. Le context_recall (0.833) pourrait être amélioré avec un EnsembleRetriever ou en augmentant k de 4 à 6.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 : EXPÉRIMENTATION -->
+    <!-- ============================================================ -->
+    <h2>7. Expérimentation</h2>
+
+    <div class="prof-note">
+        Comparez systématiquement différentes configurations. L'objectif : comprendre l'impact de chaque paramètre et trouver la configuration optimale pour votre cas d'usage.
+    </div>
+
+    <h3>7.1 - Impact de la taille des chunks</h3>
+
+    <div class="code-block"><span class="comment"># Comparer 3 tailles de chunks</span>
+chunk_configs = [
+    {<span class="string">"size"</span>: <span class="number">200</span>, <span class="string">"overlap"</span>: <span class="number">40</span>},
+    {<span class="string">"size"</span>: <span class="number">500</span>, <span class="string">"overlap"</span>: <span class="number">100</span>},
+    {<span class="string">"size"</span>: <span class="number">1000</span>, <span class="string">"overlap"</span>: <span class="number">200</span>},
+]
+
+<span class="keyword">for</span> cfg <span class="keyword">in</span> chunk_configs:
+    splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+        chunk_size=cfg[<span class="string">"size"</span>], chunk_overlap=cfg[<span class="string">"overlap"</span>]
+    )
+    test_chunks = splitter.<span class="function">split_documents</span>(raw_documents)
+    test_vs = Chroma.<span class="function">from_documents</span>(
+        test_chunks, embeddings,
+        collection_name=<span class="string">f"test_{cfg['size']}"</span>
+    )
+    test_ret = test_vs.<span class="function">as_retriever</span>(
+        search_type=<span class="string">"mmr"</span>,
+        search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>, <span class="string">"fetch_k"</span>: <span class="number">10</span>, <span class="string">"lambda_mult"</span>: <span class="number">0.7</span>}
+    )
+    test_chain = (
+        {<span class="string">"context"</span>: test_ret | format_docs, <span class="string">"question"</span>: RunnablePassthrough()}
+        | rag_prompt | llm | StrOutputParser()
+    )
+    resp = test_chain.<span class="function">invoke</span>(<span class="string">"Qu'est-ce que le RAG ?"</span>)
+    <span class="keyword">print</span>(<span class="string">f"chunk_size={cfg['size']:>4} | {len(test_chunks)} chunks | réponse: {len(resp)} car."</span>)</div>
+
+    <div class="output-block">chunk_size= 200 | 28 chunks | réponse: 312 car.
+chunk_size= 500 | 12 chunks | réponse: 487 car.
+chunk_size=1000 |  7 chunks | réponse: 523 car.</div>
+
+    <div class="concept-box">
+        <h3 style="color: #ff8c42;">Résultats comparatifs par chunk_size</h3>
+        <table>
+            <tr><th>chunk_size</th><th>Chunks</th><th>Faithfulness</th><th>Answer Relevancy</th><th>Context Recall</th></tr>
+            <tr><td>200</td><td>28</td><td>0.950</td><td>0.820</td><td>0.700</td></tr>
+            <tr><td><strong>500</strong></td><td><strong>12</strong></td><td><strong>0.925</strong></td><td><strong>0.887</strong></td><td><strong>0.833</strong></td></tr>
+            <tr><td>1000</td><td>7</td><td>0.880</td><td>0.875</td><td>0.850</td></tr>
+        </table>
+        <div class="prof-note" style="margin-top: 15px;">
+            chunk_size=200 : excellent faithfulness (petits chunks = peu de bruit) mais faible recall (contexte trop fragmenté). chunk_size=1000 : bon recall mais faithfulness en baisse (bruit accru). chunk_size=500 : meilleur compromis global.
+        </div>
+    </div>
+
+    <h3>7.2 - Impact du type de retriever</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> EnsembleRetriever
+<span class="keyword">from</span> langchain_community.retrievers <span class="keyword">import</span> BM25Retriever
+
+<span class="comment"># 3 retrievers à comparer</span>
+ret_sim = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity"</span>, search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>}
+)
+ret_mmr = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>, <span class="string">"fetch_k"</span>: <span class="number">10</span>, <span class="string">"lambda_mult"</span>: <span class="number">0.5</span>}
+)
+bm25 = BM25Retriever.<span class="function">from_documents</span>(chunks, k=<span class="number">4</span>)
+ret_ensemble = <span class="function">EnsembleRetriever</span>(
+    retrievers=[ret_sim, bm25], weights=[<span class="number">0.6</span>, <span class="number">0.4</span>]
+)
+
+question = <span class="string">"Différence entre RAG et fine-tuning ?"</span>
+<span class="keyword">for</span> name, ret <span class="keyword">in</span> {<span class="string">"Similarity"</span>: ret_sim, <span class="string">"MMR"</span>: ret_mmr, <span class="string">"Ensemble"</span>: ret_ensemble}.items():
+    chain = (
+        {<span class="string">"context"</span>: ret | format_docs, <span class="string">"question"</span>: RunnablePassthrough()}
+        | rag_prompt | llm | StrOutputParser()
+    )
+    resp = chain.<span class="function">invoke</span>(question)
+    docs = ret.<span class="function">invoke</span>(question)
+    sources = [d.metadata[<span class="string">"source"</span>] <span class="keyword">for</span> d <span class="keyword">in</span> docs]
+    <span class="keyword">print</span>(<span class="string">f"\n{name}: sources={sources}"</span>)
+    <span class="keyword">print</span>(<span class="string">f"  Réponse: {resp[:180]}..."</span>)</div>
+
+    <div class="output-block">Similarity: sources=['rag_vs_finetuning.txt', 'introduction_rag.txt', 'hallucinations.txt', 'retrieval.txt']
+  Réponse: Le RAG et le fine-tuning sont deux approches différentes. Le RAG ne modifie pas les poids du modèle mais lui fournit des documents comme contexte [source: rag_vs_finetuning.txt]. Le fine-t...
+
+MMR: sources=['rag_vs_finetuning.txt', 'introduction_rag.txt', 'evaluation.txt', 'production.txt']
+  Réponse: La principale différence : le RAG ne modifie pas les poids du modèle, contrairement au fine-tuning [source: rag_vs_finetuning.txt]. Les avantages du RAG sont : pas de ré-entraînement, sou...
+
+Ensemble: sources=['rag_vs_finetuning.txt', 'introduction_rag.txt', 'hallucinations.txt', 'evaluation.txt']
+  Réponse: Le RAG combine un retriever et un generator sans modifier les poids du modèle [source: introduction_rag.txt], tandis que le fine-tuning ré-entraîne le modèle [source: rag_vs_finetuning.txt...</div>
+
+    <h3>7.3 - Impact du prompt</h3>
+
+    <div class="code-block"><span class="comment"># 3 prompts : minimal, standard, expert</span>
+prompt_minimal = ChatPromptTemplate.<span class="function">from_template</span>(
+    <span class="string">"Contexte: {context}\nQuestion: {question}\nRéponse:"</span>
+)
+
+prompt_expert = ChatPromptTemplate.<span class="function">from_template</span>(<span class="string">"""Tu es un expert en IA.
+Règles STRICTES :
+1. Base-toi UNIQUEMENT sur le contexte ci-dessous.
+2. Si l'info n'est pas dans le contexte, dis : "Non disponible."
+3. Cite tes sources : [source: fichier].
+4. Structure avec des points numérotés.
+5. AUCUNE supposition hors contexte.
+
+Contexte : {context}
+Question : {question}
+Réponse structurée et sourcée :"""</span>)
+
+question = <span class="string">"Comment réduire les hallucinations dans un RAG ?"</span>
+<span class="keyword">for</span> name, p <span class="keyword">in</span> {<span class="string">"Minimal"</span>: prompt_minimal, <span class="string">"Standard"</span>: rag_prompt, <span class="string">"Expert"</span>: prompt_expert}.items():
+    chain = (
+        {<span class="string">"context"</span>: retriever | format_docs, <span class="string">"question"</span>: RunnablePassthrough()}
+        | p | llm | StrOutputParser()
+    )
+    resp = chain.<span class="function">invoke</span>(question)
+    <span class="keyword">print</span>(<span class="string">f"\n--- Prompt {name} ---"</span>)
+    <span class="keyword">print</span>(resp[:<span class="number">250</span>] + <span class="string">"..."</span>)</div>
+
+    <div class="output-block">--- Prompt Minimal ---
+Pour réduire les hallucinations, on peut utiliser le RAG qui fournit des sources vérifiables. Un bon prompt engineering avec des instructions claires aide aussi. Il faut aussi utiliser les métriques RAGAS pour évaluer le système, en particulier le faith...
+
+--- Prompt Standard ---
+Pour réduire les hallucinations dans un système RAG [source: hallucinations.txt] :
+
+1. **Fournir des sources vérifiables** : Le RAG réduit les hallucinations en ancrant les réponses dans des documents factuels.
+2. **Prompt engineering rigoureux** [source: prompt_engineering.txt] : Inclure des instructions explicites...
+
+--- Prompt Expert ---
+1. **Utiliser le RAG** : Le RAG réduit les hallucinations en fournissant des sources vérifiables comme contexte au LLM [source: hallucinations.txt].
+2. **Contraindre le prompt** : Le prompt doit inclure des instructions explicites comme "Réponds uniquement à partir du contexte" [source: prompt_engineering.txt]...</div>
+
+    <div class="effect">
+        <strong>Conclusion des expérimentations :</strong> Le prompt "Expert" produit les meilleures réponses (sourcées, structurées). L'EnsembleRetriever offre la meilleure couverture. chunk_size=500 est le compromis optimal. Ces trois optimisations combinées produisent un système RAG de qualité professionnelle.
+    </div>
+
+    <h3>Synthèse des expérimentations</h3>
+    <table>
+        <tr><th>Variable</th><th>Valeurs testées</th><th>Meilleur choix</th><th>Impact</th></tr>
+        <tr><td>chunk_size</td><td>200, 500, 1000</td><td><strong>500</strong></td><td>Compromis contexte / précision</td></tr>
+        <tr><td>Retriever</td><td>Similarity, MMR, Ensemble</td><td><strong>Ensemble</strong></td><td>Meilleur recall</td></tr>
+        <tr><td>Prompt</td><td>Minimal, Standard, Expert</td><td><strong>Expert</strong></td><td>Meilleur faithfulness, sources citées</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+    <h2>8. Erreurs Courantes</h2>
+
+    <h3>Erreur 1 : chunk_size mal dimensionné</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> chunk_size=100 (trop petit, chaque chunk = fragment inutilisable) ou chunk_size=5000 (trop grand, la similarité est diluée et le retriever perd en précision).
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Commencer à 500, tester 200 et 1000, mesurer avec RAGAS, adapter selon vos documents.
+    </div>
+
+    <h3>Erreur 2 : Pas d'overlap entre les chunks</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> chunk_overlap=0 coupe les phrases en deux. La moitié d'une idée dans un chunk, l'autre moitié dans le suivant. Aucun des deux ne sera correctement récupéré.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Overlap de 10-20% du chunk_size. Pour chunk_size=500, overlap entre 50 et 100.
+    </div>
+
+    <h3>Erreur 3 : Prompt trop permissif</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> "Réponds à la question : {question}" sans contexte ni contrainte. Le LLM ignore les documents récupérés et répond de mémoire, annulant le RAG.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Le prompt DOIT fournir le contexte, demander de s'y limiter, et prévoir le cas "information non disponible". Ajouter des instructions de citation de sources.
+    </div>
+
+    <h3>Erreur 4 : Pas d'évaluation</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> Déployer sans évaluer avec des métriques. Le système peut avoir 40% d'hallucinations sans que personne ne le sache. Des tests manuels sur 2-3 questions ne suffisent pas.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Jeu de test de 20-50 questions avec ground truth. Mesurer les 4 métriques RAGAS. Viser faithfulness &gt; 0.85, answer_relevancy &gt; 0.80 AVANT le déploiement.
+    </div>
+
+    <h3>Erreur 5 : Données source de mauvaise qualité</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> Indexer des documents bruts : en-têtes répétitifs, tableaux cassés, doublons, caractères spéciaux. Le retriever retourne du bruit et les réponses sont médiocres.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Nettoyer avant d'indexer : supprimer les en-têtes/pieds de page, normaliser les espaces, déduplicater, vérifier l'encodage. "Garbage in, garbage out" s'applique au RAG.
+    </div>
+
+    <h3>Erreur 6 : Ne jamais itérer</h3>
+    <div class="warning">
+        <strong>Le problème :</strong> Fixer tous les paramètres une fois et ne plus y toucher. Le système "fonctionne" mais n'est jamais optimisé pour les vrais cas d'usage des utilisateurs.
+    </div>
+    <div class="effect">
+        <strong>La solution :</strong> Démarche itérative : mesurer (RAGAS), identifier le point faible (retrieval ou generation), ajuster UN paramètre, re-mesurer. Répéter. Documenter chaque expérience.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 : RÉSUMÉ -->
+    <!-- ============================================================ -->
+    <h2>9. Résumé</h2>
+
+    <div class="concept-box green">
+        <h3 style="color: #00ff88;">Ce que vous avez appris dans ce TD</h3>
+        <ul style="padding-left: 20px; margin-top: 10px;">
+            <li><strong>L'architecture RAG complète :</strong> Les 4 phases (Ingestion, Indexing, Retrieval, Generation) et leur enchaînement.</li>
+            <li><strong>L'ingestion :</strong> Charger des PDFs et pages web, nettoyer, enrichir avec des métadonnées.</li>
+            <li><strong>L'indexation :</strong> Chunking (RecursiveCharacterTextSplitter), embedding (OpenAI), stockage (Chroma).</li>
+            <li><strong>Le retrieval :</strong> MMR, EnsembleRetriever, impact de k, fetch_k, lambda_mult.</li>
+            <li><strong>La génération :</strong> Prompt engineering contraignant pour éviter les hallucinations.</li>
+            <li><strong>L'évaluation RAGAS :</strong> faithfulness, answer_relevancy, context_precision, context_recall.</li>
+            <li><strong>L'expérimentation :</strong> Comparer chunk_sizes, retrievers et prompts de manière rigoureuse.</li>
+            <li><strong>Les 6 erreurs :</strong> Et comment les éviter systématiquement.</li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3 style="color: #ff8c42;">Checklist de déploiement RAG</h3>
+        <table>
+            <tr><th>Étape</th><th>Action</th><th>Statut</th></tr>
+            <tr><td>1. Données</td><td>Nettoyées, métadonnées, pas de doublons</td><td></td></tr>
+            <tr><td>2. Chunking</td><td>chunk_size testé (200/500/1000), overlap 10-20%</td><td></td></tr>
+            <tr><td>3. Embedding</td><td>Même modèle indexation et recherche</td><td></td></tr>
+            <tr><td>4. Vector Store</td><td>Persistant, collection nommée</td><td></td></tr>
+            <tr><td>5. Retriever</td><td>Type testé (Sim/MMR/Ensemble), k optimisé</td><td></td></tr>
+            <tr><td>6. Prompt</td><td>Contexte, contraintes, instruction "je ne sais pas"</td><td></td></tr>
+            <tr><td>7. Évaluation</td><td>RAGAS &gt; 0.80 sur les 4 métriques, 20+ questions</td><td></td></tr>
+            <tr><td>8. Production</td><td>Latence OK, coût maîtrisé, monitoring RAGAS continu</td><td></td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box blue">
+        <h3 style="color: #569cd6;">Configuration recommandée</h3>
+        <div class="code-block"><span class="comment"># Configuration optimale pour un premier déploiement RAG</span>
+chunk_size     = <span class="number">500</span>             <span class="comment"># Bon compromis contexte/précision</span>
+chunk_overlap  = <span class="number">100</span>             <span class="comment"># 20% overlap</span>
+embedding      = <span class="string">"text-embedding-3-small"</span>  <span class="comment"># Rapport qualité/prix</span>
+vector_store   = <span class="string">"Chroma"</span>         <span class="comment"># Développement local</span>
+search_type    = <span class="string">"mmr"</span>            <span class="comment"># Diversité des résultats</span>
+k              = <span class="number">4</span>               <span class="comment"># 4 documents au LLM</span>
+fetch_k        = <span class="number">20</span>              <span class="comment"># Pool de candidats MMR</span>
+lambda_mult    = <span class="number">0.7</span>             <span class="comment"># Priorité pertinence</span>
+model          = <span class="string">"gpt-4o-mini"</span>    <span class="comment"># Rapport qualité/prix/vitesse</span>
+temperature    = <span class="number">0</span>               <span class="comment"># Déterministe et factuel</span></div>
+    </div>
+
+    <div class="prof-note">
+        Vous maîtrisez maintenant le pipeline RAG complet. La clé : ne jamais déployer sans évaluer, et toujours itérer en mesurant l'impact de chaque changement. Le RAG est un domaine où la rigueur expérimentale sépare les prototypes bancals des systèmes de production fiables. Bonne continuation dans vos projets RAG.
+    </div>
+
+    <div class="nav">
+        <a href="td_retrieval_avance.html">Précédent : TD Retrieval Avancé</a>
+        <a href="../index.html">Retour à l'index RAG</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

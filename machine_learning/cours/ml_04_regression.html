@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML 04 - La Régression</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0f0f23;color:#e0e0e0;line-height:1.8}
+nav{position:fixed;top:0;left:0;width:260px;height:100vh;background:#1a1a2e;padding:20px 15px;overflow-y:auto;border-right:2px solid #ff6b35;z-index:10}
+nav h2{color:#ff6b35;font-size:15px;margin-bottom:15px;text-align:center}
+nav a{display:block;color:#aaa;text-decoration:none;padding:5px 10px;font-size:12.5px;border-radius:5px;margin-bottom:2px}
+nav a:hover{background:#16213e;color:#ff6b35}
+main{margin-left:270px;padding:30px 40px;max-width:950px}
+h1{color:#ff6b35;font-size:32px;margin-bottom:10px;border-bottom:3px solid #ff6b35;padding-bottom:10px}
+h2{color:#ff6b35;font-size:24px;margin:45px 0 15px;border-left:4px solid #ff6b35;padding-left:15px}
+h3{color:#ff8c5a;font-size:18px;margin:25px 0 10px}
+p{margin-bottom:12px}
+ul,ol{margin:10px 0 15px 25px}
+li{margin-bottom:6px}
+.box{background:#16213e;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0}
+.box-green{border-left:4px solid #4caf50}
+.box-orange{border-left:4px solid #ff9800}
+.box-red{border-left:4px solid #f44336}
+.box-blue{border-left:4px solid #2196f3}
+.box-gold{border-left:4px solid #ffd700}
+table{width:100%;border-collapse:collapse;margin:15px 0}
+th{background:#1a1a2e;color:#ff6b35;padding:12px;text-align:left;border:1px solid #333}
+td{padding:10px;border:1px solid #333;background:#16213e}
+svg{display:block;margin:20px auto}
+svg text{font-family:'Segoe UI',sans-serif}
+.analogy{background:#1a2e1a;border:2px solid #4caf50;border-radius:12px;padding:20px;margin:15px 0}
+.analogy h4{color:#4caf50;margin-top:0}
+</style>
+</head>
+<body>
+
+<nav>
+<h2>📈 ML 04 - Régression</h2>
+<a href="#ch1">1. C'est quoi la régression ?</a>
+<a href="#ch2">2. Régression linéaire simple</a>
+<a href="#ch3">3. Comment la droite est trouvée</a>
+<a href="#ch4">4. Régression multiple</a>
+<a href="#ch5">5. Régression polynomiale</a>
+<a href="#ch6">6. Overfitting vs Underfitting</a>
+<a href="#ch7">7. Régularisation</a>
+<a href="#ch8">8. Les métriques</a>
+<a href="#ch9">9. Quand utiliser quoi</a>
+<a href="#ch10">10. Exemples concrets</a>
+<a href="#ch11">11. Les erreurs courantes</a>
+<a href="#ch12">12. Résumé</a>
+</nav>
+
+<main>
+
+<h1>📈 La Régression</h1>
+<p>Cours 4/12 - Prédire un nombre (prix, température, ventes...)</p>
+
+<!-- CH1 -->
+<h2 id="ch1">1. C'est quoi la régression ?</h2>
+
+<div class="box box-gold">
+<p><strong>La régression</strong> = prédire un <strong>nombre continu</strong>. Contrairement à la classification (chat ou chien ?), ici on prédit une VALEUR (combien ?).</p>
+</div>
+
+<table>
+<tr><th>Question</th><th>Réponse</th><th>C'est de la...</th></tr>
+<tr><td>Ce mail est-il un spam ?</td><td>Oui / Non</td><td style="color:#2196f3">Classification</td></tr>
+<tr><td>Quel sera le prix de cette maison ?</td><td>247 500 €</td><td style="color:#ff6b35"><strong>Régression</strong></td></tr>
+<tr><td>Ce patient a-t-il le diabète ?</td><td>Oui / Non</td><td style="color:#2196f3">Classification</td></tr>
+<tr><td>Quelle température fera-t-il demain ?</td><td>23.5°C</td><td style="color:#ff6b35"><strong>Régression</strong></td></tr>
+<tr><td>Quel âge a cette personne sur la photo ?</td><td>34 ans</td><td style="color:#ff6b35"><strong>Régression</strong></td></tr>
+</table>
+
+<!-- CH2 -->
+<h2 id="ch2">2. Régression linéaire simple</h2>
+
+<div class="box box-blue">
+<p><strong>Idée :</strong> Tracer la meilleure droite qui passe au milieu des points de données. Cette droite permet ensuite de prédire de nouvelles valeurs.</p>
+</div>
+
+<svg width="650" height="350" viewBox="0 0 650 350">
+<rect x="0" y="0" width="650" height="350" rx="15" fill="#16213e" stroke="#333"/>
+<text x="325" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Régression linéaire : trouver la meilleure droite</text>
+
+<!-- Axes -->
+<line x1="60" y1="290" x2="600" y2="290" stroke="#555" stroke-width="2"/>
+<line x1="60" y1="290" x2="60" y2="40" stroke="#555" stroke-width="2"/>
+<text x="330" y="320" fill="#aaa" text-anchor="middle" font-size="11">Surface (m²) →</text>
+<text x="25" y="165" fill="#aaa" text-anchor="middle" font-size="11" transform="rotate(-90,25,165)">Prix (€) →</text>
+
+<!-- Points de données -->
+<circle cx="120" cy="250" r="6" fill="#4caf50"/>
+<circle cx="170" cy="230" r="6" fill="#4caf50"/>
+<circle cx="200" cy="210" r="6" fill="#4caf50"/>
+<circle cx="250" cy="190" r="6" fill="#4caf50"/>
+<circle cx="280" cy="170" r="6" fill="#4caf50"/>
+<circle cx="320" cy="155" r="6" fill="#4caf50"/>
+<circle cx="350" cy="140" r="6" fill="#4caf50"/>
+<circle cx="400" cy="110" r="6" fill="#4caf50"/>
+<circle cx="430" cy="105" r="6" fill="#4caf50"/>
+<circle cx="480" cy="80" r="6" fill="#4caf50"/>
+<circle cx="530" cy="60" r="6" fill="#4caf50"/>
+
+<!-- Droite de régression -->
+<line x1="90" y1="265" x2="560" y2="50" stroke="#f44336" stroke-width="3"/>
+<text x="570" y="55" fill="#f44336" font-size="11">droite</text>
+
+<!-- Prédiction -->
+<circle cx="370" cy="133" r="8" fill="none" stroke="#ffd700" stroke-width="3"/>
+<line x1="370" y1="290" x2="370" y2="141" stroke="#ffd700" stroke-width="1" stroke-dasharray="5,5"/>
+<line x1="60" y1="133" x2="362" y2="133" stroke="#ffd700" stroke-width="1" stroke-dasharray="5,5"/>
+<text x="370" y="310" fill="#ffd700" text-anchor="middle" font-size="10">90 m²</text>
+<text x="45" y="130" fill="#ffd700" font-size="10">280k€</text>
+<text x="420" y="145" fill="#ffd700" font-size="10">Prédiction !</text>
+
+<!-- Légende -->
+<circle cx="80" y="340" r="5" fill="#4caf50"/>
+<text x="95" y="345" fill="#aaa" font-size="10">= données réelles</text>
+<line x1="180" y1="340" x2="210" y2="340" stroke="#f44336" stroke-width="2"/>
+<text x="220" y="345" fill="#aaa" font-size="10">= droite du modèle</text>
+</svg>
+
+<div class="analogy">
+<h4>📏 Analogie : La règle sur le nuage de points</h4>
+<p>Imagine que tu as plein de points sur une feuille (les données). Tu prends une règle et tu essaies de la poser de façon à ce qu'elle passe <strong>le plus près possible de tous les points</strong>.</p>
+<p>La position de la règle = le modèle. Tu peux maintenant prolonger la règle pour <strong>prédire</strong> des valeurs que tu n'as pas encore.</p>
+</div>
+
+<!-- CH3 -->
+<h2 id="ch3">3. Comment la droite est trouvée</h2>
+
+<svg width="700" height="300" viewBox="0 0 700 300">
+<rect x="0" y="0" width="700" height="300" rx="15" fill="#16213e" stroke="#333"/>
+<text x="350" y="25" fill="#ff6b35" text-anchor="middle" font-size="14" font-weight="bold">Le modèle minimise la somme des erreurs²</text>
+
+<!-- Axes -->
+<line x1="60" y1="230" x2="350" y2="230" stroke="#555" stroke-width="1"/>
+<line x1="60" y1="230" x2="60" y2="50" stroke="#555" stroke-width="1"/>
+
+<!-- Points -->
+<circle cx="100" cy="190" r="5" fill="#4caf50"/>
+<circle cx="150" cy="150" r="5" fill="#4caf50"/>
+<circle cx="200" cy="170" r="5" fill="#4caf50"/>
+<circle cx="250" cy="100" r="5" fill="#4caf50"/>
+<circle cx="300" cy="80" r="5" fill="#4caf50"/>
+
+<!-- Droite -->
+<line x1="80" y1="200" x2="320" y2="70" stroke="#f44336" stroke-width="2"/>
+
+<!-- Erreurs (carrés jaunes) -->
+<rect x="96" y="183" width="8" height="8" fill="rgba(255,215,0,0.5)" stroke="#ffd700"/>
+<line x1="100" y1="190" x2="100" y2="183" stroke="#ffd700" stroke-width="2"/>
+<rect x="146" y="150" width="12" height="12" fill="rgba(255,215,0,0.5)" stroke="#ffd700"/>
+<line x1="150" y1="162" x2="150" y2="150" stroke="#ffd700" stroke-width="2"/>
+<rect x="196" y="148" width="22" height="22" fill="rgba(255,215,0,0.5)" stroke="#ffd700"/>
+<line x1="200" y1="148" x2="200" y2="170" stroke="#ffd700" stroke-width="2"/>
+<rect x="246" y="100" width="12" height="12" fill="rgba(255,215,0,0.5)" stroke="#ffd700"/>
+<line x1="250" y1="100" x2="250" y2="112" stroke="#ffd700" stroke-width="2"/>
+
+<!-- Explication -->
+<rect x="390" y="40" width="280" height="240" rx="10" fill="#1a1a2e" stroke="#333"/>
+<text x="530" y="70" fill="#ffd700" text-anchor="middle" font-size="13" font-weight="bold">Comment ça marche :</text>
+<text x="410" y="100" fill="#ddd" font-size="11">1. Le modèle pose une droite au hasard</text>
+<text x="410" y="125" fill="#ddd" font-size="11">2. Il mesure l'ERREUR de chaque point</text>
+<text x="430" y="145" fill="#aaa" font-size="10">(distance entre le point et la droite)</text>
+<text x="410" y="170" fill="#ddd" font-size="11">3. Il met chaque erreur au CARRÉ</text>
+<text x="430" y="190" fill="#aaa" font-size="10">(pour éliminer les négatifs)</text>
+<text x="410" y="215" fill="#ddd" font-size="11">4. Il SOMME tous les carrés</text>
+<text x="410" y="240" fill="#4caf50" font-size="11">5. Il ajuste la droite pour MINIMISER</text>
+<text x="430" y="260" fill="#4caf50" font-size="10">cette somme (gradient descent !)</text>
+</svg>
+
+<div class="box box-green">
+<p><strong>Résumé :</strong> La droite "optimale" est celle qui minimise la somme des carrés des erreurs. C'est pour ça qu'on appelle cette méthode les "<strong>Moindres Carrés</strong>" (Least Squares).</p>
+</div>
+
+<!-- CH4 -->
+<h2 id="ch4">4. Régression linéaire multiple</h2>
+
+<div class="box box-blue">
+<p><strong>Simple :</strong> 1 feature → 1 prédiction (surface → prix). C'est une droite.</p>
+<p><strong>Multiple :</strong> Plusieurs features → 1 prédiction (surface + chambres + âge → prix). C'est un plan (ou un hyperplan en dimension supérieure).</p>
+</div>
+
+<svg width="600" height="180" viewBox="0 0 600 180">
+<rect x="0" y="0" width="600" height="180" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Simple -->
+<rect x="20" y="20" width="250" height="140" rx="10" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="145" y="45" fill="#4caf50" text-anchor="middle" font-size="13" font-weight="bold">Simple</text>
+<text x="145" y="70" fill="#ddd" text-anchor="middle" font-size="11">1 feature → prix</text>
+<text x="145" y="95" fill="#aaa" text-anchor="middle" font-size="11">Surface → 250 000€</text>
+<text x="145" y="120" fill="#aaa" text-anchor="middle" font-size="10">Visualisation = droite (2D)</text>
+<text x="145" y="145" fill="#4caf50" text-anchor="middle" font-size="10">Facile à comprendre</text>
+
+<!-- Multiple -->
+<rect x="330" y="20" width="250" height="140" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+<text x="455" y="45" fill="#ff6b35" text-anchor="middle" font-size="13" font-weight="bold">Multiple</text>
+<text x="455" y="70" fill="#ddd" text-anchor="middle" font-size="11">N features → prix</text>
+<text x="455" y="95" fill="#aaa" text-anchor="middle" font-size="11">Surface + chambres + âge</text>
+<text x="455" y="120" fill="#aaa" text-anchor="middle" font-size="10">Visualisation = impossible (nD)</text>
+<text x="455" y="145" fill="#ff6b35" text-anchor="middle" font-size="10">Plus précis en pratique</text>
+</svg>
+
+<!-- CH5 -->
+<h2 id="ch5">5. Régression polynomiale</h2>
+
+<div class="box box-blue">
+<p><strong>Problème :</strong> Parfois les données ne suivent pas une droite. Elles suivent une courbe. La régression polynomiale utilise une <strong>courbe</strong> au lieu d'une droite.</p>
+</div>
+
+<svg width="700" height="280" viewBox="0 0 700 280">
+<rect x="0" y="0" width="700" height="280" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Linéaire (mauvais) -->
+<text x="175" y="25" fill="#f44336" text-anchor="middle" font-size="12" font-weight="bold">Linéaire (droite) - Mauvais fit</text>
+<line x1="40" y1="230" x2="330" y2="230" stroke="#555" stroke-width="1"/>
+<line x1="40" y1="230" x2="40" y2="40" stroke="#555" stroke-width="1"/>
+<!-- Points en courbe -->
+<circle cx="70" cy="200" r="4" fill="#4caf50"/>
+<circle cx="100" cy="150" r="4" fill="#4caf50"/>
+<circle cx="140" cy="100" r="4" fill="#4caf50"/>
+<circle cx="180" cy="80" r="4" fill="#4caf50"/>
+<circle cx="220" cy="90" r="4" fill="#4caf50"/>
+<circle cx="260" cy="130" r="4" fill="#4caf50"/>
+<circle cx="300" cy="190" r="4" fill="#4caf50"/>
+<!-- Droite (mauvais) -->
+<line x1="60" y1="180" x2="310" y2="110" stroke="#f44336" stroke-width="2"/>
+<text x="175" y="250" fill="#f44336" text-anchor="middle" font-size="10">La droite rate complètement la courbe</text>
+
+<!-- Polynomiale (bon) -->
+<text x="525" y="25" fill="#4caf50" text-anchor="middle" font-size="12" font-weight="bold">Polynomiale (courbe) - Bon fit</text>
+<line x1="380" y1="230" x2="670" y2="230" stroke="#555" stroke-width="1"/>
+<line x1="380" y1="230" x2="380" y2="40" stroke="#555" stroke-width="1"/>
+<!-- Mêmes points -->
+<circle cx="410" cy="200" r="4" fill="#4caf50"/>
+<circle cx="440" cy="150" r="4" fill="#4caf50"/>
+<circle cx="480" cy="100" r="4" fill="#4caf50"/>
+<circle cx="520" cy="80" r="4" fill="#4caf50"/>
+<circle cx="560" cy="90" r="4" fill="#4caf50"/>
+<circle cx="600" cy="130" r="4" fill="#4caf50"/>
+<circle cx="640" cy="190" r="4" fill="#4caf50"/>
+<!-- Courbe (bon) -->
+<path d="M400 210 Q430 150 470 100 Q510 70 530 78 Q560 85 590 120 Q620 160 650 195" stroke="#4caf50" stroke-width="2" fill="none"/>
+<text x="525" y="250" fill="#4caf50" text-anchor="middle" font-size="10">La courbe suit parfaitement les données</text>
+</svg>
+
+<div class="box box-orange">
+<p><strong>Attention :</strong> Plus le degré du polynôme est élevé, plus la courbe est flexible. MAIS trop flexible = overfitting (elle colle trop aux données et ne généralise pas).</p>
+</div>
+
+<!-- CH6 -->
+<h2 id="ch6">6. Overfitting vs Underfitting</h2>
+
+<p>C'est le concept <strong>le plus important</strong> en ML !</p>
+
+<svg width="800" height="300" viewBox="0 0 800 300">
+<rect x="0" y="0" width="800" height="300" rx="15" fill="#16213e" stroke="#333"/>
+
+<!-- Underfitting -->
+<rect x="20" y="15" width="240" height="250" rx="10" fill="#1a1a2e" stroke="#f44336" stroke-width="2"/>
+<text x="140" y="40" fill="#f44336" text-anchor="middle" font-size="13" font-weight="bold">Underfitting</text>
+<text x="140" y="58" fill="#aaa" text-anchor="middle" font-size="10">"Le modèle est trop simple"</text>
+<line x1="40" y1="220" x2="240" y2="220" stroke="#555" stroke-width="1"/>
+<line x1="40" y1="220" x2="40" y2="70" stroke="#555" stroke-width="1"/>
+<circle cx="70" cy="180" r="4" fill="#4caf50"/>
+<circle cx="100" cy="140" r="4" fill="#4caf50"/>
+<circle cx="130" cy="100" r="4" fill="#4caf50"/>
+<circle cx="160" cy="90" r="4" fill="#4caf50"/>
+<circle cx="190" cy="130" r="4" fill="#4caf50"/>
+<circle cx="220" cy="170" r="4" fill="#4caf50"/>
+<line x1="60" y1="160" x2="230" y2="120" stroke="#f44336" stroke-width="2"/>
+<text x="140" y="245" fill="#f44336" text-anchor="middle" font-size="10">Trop simple. Rate le pattern.</text>
+
+<!-- Good fit -->
+<rect x="280" y="15" width="240" height="250" rx="10" fill="#1a1a2e" stroke="#4caf50" stroke-width="2"/>
+<text x="400" y="40" fill="#4caf50" text-anchor="middle" font-size="13" font-weight="bold">Good Fit !</text>
+<text x="400" y="58" fill="#aaa" text-anchor="middle" font-size="10">"Juste bien"</text>
+<line x1="300" y1="220" x2="500" y2="220" stroke="#555" stroke-width="1"/>
+<line x1="300" y1="220" x2="300" y2="70" stroke="#555" stroke-width="1"/>
+<circle cx="330" cy="180" r="4" fill="#4caf50"/>
+<circle cx="360" cy="140" r="4" fill="#4caf50"/>
+<circle cx="390" cy="100" r="4" fill="#4caf50"/>
+<circle cx="420" cy="90" r="4" fill="#4caf50"/>
+<circle cx="450" cy="130" r="4" fill="#4caf50"/>
+<circle cx="480" cy="170" r="4" fill="#4caf50"/>
+<path d="M320 190 Q360 130 400 95 Q430 85 460 120 Q485 160 490 175" stroke="#4caf50" stroke-width="2" fill="none"/>
+<text x="400" y="245" fill="#4caf50" text-anchor="middle" font-size="10">Capture le vrai pattern.</text>
+
+<!-- Overfitting -->
+<rect x="540" y="15" width="240" height="250" rx="10" fill="#1a1a2e" stroke="#ff9800" stroke-width="2"/>
+<text x="660" y="40" fill="#ff9800" text-anchor="middle" font-size="13" font-weight="bold">Overfitting</text>
+<text x="660" y="58" fill="#aaa" text-anchor="middle" font-size="10">"Le modèle mémorise"</text>
+<line x1="560" y1="220" x2="760" y2="220" stroke="#555" stroke-width="1"/>
+<line x1="560" y1="220" x2="560" y2="70" stroke="#555" stroke-width="1"/>
+<circle cx="590" cy="180" r="4" fill="#4caf50"/>
+<circle cx="620" cy="140" r="4" fill="#4caf50"/>
+<circle cx="650" cy="100" r="4" fill="#4caf50"/>
+<circle cx="680" cy="90" r="4" fill="#4caf50"/>
+<circle cx="710" cy="130" r="4" fill="#4caf50"/>
+<circle cx="740" cy="170" r="4" fill="#4caf50"/>
+<path d="M582 185 Q588 180 590 180 Q595 175 605 160 Q612 145 620 140 Q628 135 635 115 Q640 100 650 100 Q660 100 665 92 Q672 88 680 90 Q690 95 700 120 Q705 130 710 130 Q720 130 728 155 Q735 168 740 170 Q745 172 750 175" stroke="#ff9800" stroke-width="2" fill="none"/>
+<text x="660" y="245" fill="#ff9800" text-anchor="middle" font-size="10">Colle aux données. Ne généralise pas.</text>
+
+<text x="400" y="290" fill="#ffd700" text-anchor="middle" font-size="12">L'objectif : trouver le juste milieu (Good Fit)</text>
+</svg>
+
+<div class="analogy">
+<h4>📚 Analogie : L'étudiant</h4>
+<ul>
+<li><strong>Underfitting</strong> = l'étudiant n'a pas révisé. Il ne connaît rien → mauvaises notes</li>
+<li><strong>Good fit</strong> = l'étudiant a compris les concepts. Il sait répondre même aux questions nouvelles → bonnes notes</li>
+<li><strong>Overfitting</strong> = l'étudiant a mémorisé les réponses par coeur. Si la question change un peu, il est perdu → bonnes notes en entraînement, mauvaises à l'examen</li>
+</ul>
+</div>
+
+<!-- CH7 -->
+<h2 id="ch7">7. Régularisation (contre l'overfitting)</h2>
+
+<div class="box box-blue">
+<p><strong>La régularisation</strong> = une technique pour empêcher le modèle d'overfitter. Elle pénalise les modèles trop complexes.</p>
+</div>
+
+<table>
+<tr><th>Technique</th><th>Comment ça marche</th><th>Analogie</th></tr>
+<tr>
+<td><strong>Ridge (L2)</strong></td>
+<td>Réduit les paramètres mais ne les met jamais à zéro. Tous les features sont gardés mais avec moins d'impact.</td>
+<td>Comme baisser le volume de tous les instruments d'un orchestre</td>
+</tr>
+<tr>
+<td><strong>Lasso (L1)</strong></td>
+<td>Peut mettre certains paramètres à ZÉRO. Élimine les features inutiles.</td>
+<td>Comme virer les musiciens qui jouent faux</td>
+</tr>
+<tr>
+<td><strong>ElasticNet</strong></td>
+<td>Mélange de Ridge et Lasso. Le meilleur des deux mondes.</td>
+<td>Baisser le volume ET virer les pires</td>
+</tr>
+</table>
+
+<svg width="600" height="150" viewBox="0 0 600 150">
+<rect x="0" y="0" width="600" height="150" rx="15" fill="#16213e" stroke="#333"/>
+<text x="300" y="25" fill="#ff6b35" text-anchor="middle" font-size="13" font-weight="bold">L'effet de la régularisation</text>
+<!-- Sans -->
+<rect x="30" y="40" width="250" height="40" rx="5" fill="#1a1a2e" stroke="#f44336"/>
+<text x="155" y="65" fill="#f44336" text-anchor="middle" font-size="11">Sans régularisation : courbe folle</text>
+<!-- Avec -->
+<rect x="320" y="40" width="250" height="40" rx="5" fill="#1a1a2e" stroke="#4caf50"/>
+<text x="445" y="65" fill="#4caf50" text-anchor="middle" font-size="11">Avec régularisation : courbe lisse</text>
+
+<text x="300" y="110" fill="#aaa" text-anchor="middle" font-size="11">La régularisation dit au modèle : "reste simple, ne fais pas de folies"</text>
+<text x="300" y="135" fill="#ffd700" text-anchor="middle" font-size="11">Plus la régularisation est forte, plus le modèle est contraint</text>
+</svg>
+
+<!-- CH8 -->
+<h2 id="ch8">8. Les métriques de régression</h2>
+
+<p>Comment mesurer si notre modèle est bon ?</p>
+
+<table>
+<tr><th>Métrique</th><th>Signification</th><th>Idéal</th><th>Analogie</th></tr>
+<tr>
+<td><strong>MAE</strong><br>(Mean Absolute Error)</td>
+<td>Erreur moyenne en valeur absolue. "En moyenne, le modèle se trompe de X."</td>
+<td>Le plus bas possible</td>
+<td>En moyenne tu arrives 5 min en retard</td>
+</tr>
+<tr>
+<td><strong>MSE</strong><br>(Mean Squared Error)</td>
+<td>Erreur moyenne au carré. Pénalise plus les grosses erreurs.</td>
+<td>Le plus bas possible</td>
+<td>Les gros retards comptent beaucoup plus</td>
+</tr>
+<tr>
+<td><strong>RMSE</strong><br>(Root MSE)</td>
+<td>Racine de MSE. Même unité que la donnée (€, °C...)</td>
+<td>Le plus bas possible</td>
+<td>Le plus utilisé car interprétable</td>
+</tr>
+<tr>
+<td><strong>R²</strong><br>(R-squared)</td>
+<td>% de la variance expliquée. 1 = parfait. 0 = nul.</td>
+<td>Le plus proche de 1</td>
+<td>0.85 = le modèle explique 85% des variations</td>
+</tr>
+</table>
+
+<svg width="600" height="120" viewBox="0 0 600 120">
+<rect x="0" y="0" width="600" height="120" rx="15" fill="#16213e" stroke="#333"/>
+<text x="300" y="25" fill="#ff6b35" text-anchor="middle" font-size="13" font-weight="bold">Échelle du R²</text>
+<rect x="50" y="45" width="500" height="30" rx="5" fill="#1a1a2e"/>
+<rect x="50" y="45" width="500" height="30" rx="5" fill="none" stroke="#555"/>
+<!-- Gradient -->
+<rect x="50" y="45" width="100" height="30" fill="rgba(244,67,54,0.4)"/>
+<rect x="150" y="45" width="100" height="30" fill="rgba(255,152,0,0.4)"/>
+<rect x="250" y="45" width="100" height="30" fill="rgba(255,235,59,0.3)"/>
+<rect x="350" y="45" width="100" height="30" fill="rgba(139,195,74,0.4)"/>
+<rect x="450" y="45" width="100" height="30" rx="5" fill="rgba(76,175,80,0.4)"/>
+<text x="100" y="65" fill="#f44336" text-anchor="middle" font-size="10">0 - 0.2</text>
+<text x="200" y="65" fill="#ff9800" text-anchor="middle" font-size="10">0.2 - 0.4</text>
+<text x="300" y="65" fill="#ffd700" text-anchor="middle" font-size="10">0.4 - 0.6</text>
+<text x="400" y="65" fill="#8bc34a" text-anchor="middle" font-size="10">0.6 - 0.8</text>
+<text x="500" y="65" fill="#4caf50" text-anchor="middle" font-size="10">0.8 - 1.0</text>
+<text x="100" y="95" fill="#f44336" text-anchor="middle" font-size="9">Très mauvais</text>
+<text x="200" y="95" fill="#ff9800" text-anchor="middle" font-size="9">Mauvais</text>
+<text x="300" y="95" fill="#ffd700" text-anchor="middle" font-size="9">Moyen</text>
+<text x="400" y="95" fill="#8bc34a" text-anchor="middle" font-size="9">Bon</text>
+<text x="500" y="95" fill="#4caf50" text-anchor="middle" font-size="9">Excellent</text>
+</svg>
+
+<!-- CH9 -->
+<h2 id="ch9">9. Quand utiliser quoi ?</h2>
+
+<table>
+<tr><th>Situation</th><th>Modèle recommandé</th></tr>
+<tr><td>Relation simple et linéaire</td><td>Régression linéaire simple</td></tr>
+<tr><td>Plusieurs features</td><td>Régression linéaire multiple</td></tr>
+<tr><td>Relation courbe</td><td>Régression polynomiale</td></tr>
+<tr><td>Beaucoup de features, risque d'overfitting</td><td>Ridge ou Lasso</td></tr>
+<tr><td>On veut sélectionner les features importantes</td><td>Lasso</td></tr>
+<tr><td>Données complexes, non linéaires</td><td>Random Forest, XGBoost (cours suivants)</td></tr>
+</table>
+
+<!-- CH10 -->
+<h2 id="ch10">10. Exemples concrets</h2>
+
+<table>
+<tr><th>Problème</th><th>Features (X)</th><th>Label (Y)</th></tr>
+<tr><td>Prix d'une maison</td><td>Surface, chambres, localisation, âge</td><td>Prix (€)</td></tr>
+<tr><td>Salaire</td><td>Années d'expérience, diplôme, secteur</td><td>Salaire (€/an)</td></tr>
+<tr><td>Consommation d'essence</td><td>Poids du véhicule, cylindrée, vitesse</td><td>Litres/100km</td></tr>
+<tr><td>Ventes futures</td><td>Historique ventes, saison, pub dépensée</td><td>Ventes (unités)</td></tr>
+<tr><td>Température demain</td><td>Température aujourd'hui, humidité, vent</td><td>Température (°C)</td></tr>
+</table>
+
+<!-- CH11 -->
+<h2 id="ch11">11. Les erreurs courantes</h2>
+
+<table>
+<tr><th>Erreur</th><th>Pourquoi c'est grave</th><th>Solution</th></tr>
+<tr><td>Ne pas normaliser les données</td><td>Les features avec de grands nombres dominent</td><td>Normaliser/Standardiser avant</td></tr>
+<tr><td>Ignorer les outliers</td><td>Un outlier peut tirer toute la droite</td><td>Détecter et traiter les outliers</td></tr>
+<tr><td>Tester sur les données d'entraînement</td><td>R² sera artificiellement haut (triche)</td><td>Toujours séparer train/test</td></tr>
+<tr><td>Trop de features</td><td>Overfitting, le modèle mémorise le bruit</td><td>Sélection de features, régularisation</td></tr>
+<tr><td>Supposer que tout est linéaire</td><td>Le monde réel est rarement parfaitement linéaire</td><td>Essayer polynomiale ou autres modèles</td></tr>
+</table>
+
+<!-- CH12 -->
+<h2 id="ch12">12. Résumé</h2>
+
+<table>
+<tr><th>Concept</th><th>En une phrase</th></tr>
+<tr><td>Régression</td><td>Prédire un nombre continu</td></tr>
+<tr><td>Linéaire simple</td><td>1 feature → droite → prédiction</td></tr>
+<tr><td>Linéaire multiple</td><td>N features → hyperplan → prédiction</td></tr>
+<tr><td>Polynomiale</td><td>Courbe au lieu de droite (relations non linéaires)</td></tr>
+<tr><td>Moindres carrés</td><td>Minimiser la somme des erreurs au carré</td></tr>
+<tr><td>Overfitting</td><td>Trop complexe, mémorise au lieu d'apprendre</td></tr>
+<tr><td>Underfitting</td><td>Trop simple, ne capture pas le pattern</td></tr>
+<tr><td>Ridge (L2)</td><td>Régularisation qui réduit les paramètres</td></tr>
+<tr><td>Lasso (L1)</td><td>Régularisation qui élimine des features</td></tr>
+<tr><td>MAE / MSE / RMSE</td><td>Mesures de l'erreur (plus c'est bas = mieux)</td></tr>
+<tr><td>R²</td><td>% de variance expliquée (plus c'est haut = mieux)</td></tr>
+</table>
+
+<div class="box box-green" style="margin-top:30px">
+<p style="font-size:18px"><strong>✅ Cours 4/12 terminé !</strong> Tu maîtrises la régression. Prochain cours : <strong>La Classification</strong> (spam ou pas spam ?)</p>
+</div>
+
+</main>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

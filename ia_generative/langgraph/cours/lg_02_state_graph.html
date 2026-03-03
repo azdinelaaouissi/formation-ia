@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangGraph - Cours 2 : StateGraph, Noeuds et Edges</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>StateGraph, Noeuds et Edges</h1>
+    <p class="subtitle">Cours 2 — Construire des Graphes avec LangGraph</p>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1 : STATEGRAPH -->
+    <!-- ============================================================ -->
+    <h2>1. StateGraph — Le constructeur de graphes</h2>
+
+    <div class="definition">
+        <strong>StateGraph</strong> est la classe principale de LangGraph. C'est un <em>builder</em> (constructeur)
+        qui permet de définir un graphe en y ajoutant des noeuds et des arêtes. Il est paramétré par un type d'état
+        (<code>TypedDict</code> ou <code>Pydantic BaseModel</code>) qui définit la structure des données partagées
+        entre tous les noeuds du graphe.
+    </div>
+
+    <p>Le <code>StateGraph</code> n'est pas directement exécutable. Il sert uniquement à <strong>construire</strong>
+    le graphe. Une fois la construction terminée, on appelle <code>.compile()</code> pour obtenir un
+    <code>CompiledGraph</code> qui peut être invoqué.</p>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+
+<span class="comment"># Définir le type d'état</span>
+<span class="keyword">class</span> <span class="function">MonState</span>(TypedDict):
+    question: <span class="function">str</span>
+    reponse: <span class="function">str</span>
+
+<span class="comment"># Créer le StateGraph avec le type d'état</span>
+builder = StateGraph(MonState)
+
+<span class="comment"># À ce stade, le graphe est vide</span>
+<span class="comment"># Il faut ajouter des noeuds et des arêtes avant de compiler</span></div>
+
+    <h3>1.1 Signature de StateGraph</h3>
+
+    <div class="param-box">
+        <h4>StateGraph(state_schema)</h4>
+        <ul>
+            <li><strong>state_schema</strong> (type) : Le type qui définit la structure de l'état. Peut être un <code>TypedDict</code>, un <code>Pydantic BaseModel</code>, ou un <code>dataclass</code>.</li>
+        </ul>
+        <p>Retourne : un objet <code>StateGraph</code> (builder) sur lequel on appelle <code>add_node()</code>, <code>add_edge()</code>, puis <code>compile()</code>.</p>
+    </div>
+
+    <div class="prof-note">
+        Pensez au <code>StateGraph</code> comme à un plan d'architecte. Il décrit la structure du workflow, mais
+        ne peut pas être « habité » directement. C'est la compilation (<code>.compile()</code>) qui « construit la
+        maison » à partir du plan.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2 : DEFINIR LE STATE -->
+    <!-- ============================================================ -->
+    <h2>2. Définir le State</h2>
+
+    <p>Le State est le coeur de tout graphe LangGraph. C'est la structure de données qui circule entre tous les noeuds
+    et qui représente l'état courant du workflow.</p>
+
+    <h3>2.1 State basique avec TypedDict</h3>
+    <p>La manière la plus simple de définir un état est d'utiliser <code>TypedDict</code> :</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+
+<span class="keyword">class</span> <span class="function">ChatState</span>(TypedDict):
+    user_input: <span class="function">str</span>            <span class="comment"># Ce que l'utilisateur a dit</span>
+    ai_response: <span class="function">str</span>           <span class="comment"># La réponse de l'IA</span>
+    conversation_id: <span class="function">str</span>       <span class="comment"># Identifiant de la conversation</span>
+    turn_count: <span class="function">int</span>            <span class="comment"># Nombre de tours de conversation</span></div>
+
+    <div class="effect">
+        Avec un <code>TypedDict</code> simple, chaque mise à jour d'un champ <strong>remplace</strong> la valeur
+        précédente. C'est le comportement par défaut (stratégie <code>LastValue</code>).
+    </div>
+
+    <h3>2.2 State avec Reducers (Annotated)</h3>
+    <p>Pour des champs qui doivent <strong>accumuler</strong> des valeurs au lieu de les remplacer, on utilise
+    des <strong>reducers</strong> via le type <code>Annotated</code> :</p>
+
+    <div class="definition">
+        Un <strong>reducer</strong> est une fonction qui définit comment un champ de l'état est mis à jour lorsqu'un noeud
+        retourne une nouvelle valeur pour ce champ. La signature est : <code>(valeur_existante, nouvelle_valeur) -> valeur_finale</code>.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">import</span> operator
+
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    <span class="comment"># Champ avec reducer operator.add : les listes sont concaténées</span>
+    messages: Annotated[<span class="function">list</span>, operator.add]
+
+    <span class="comment"># Champ avec reducer operator.add : les entiers sont additionnés</span>
+    total_tokens: Annotated[<span class="function">int</span>, operator.add]
+
+    <span class="comment"># Champ sans reducer : la valeur est remplacée (LastValue)</span>
+    current_step: <span class="function">str</span></div>
+
+    <p>Voici comment les reducers affectent les mises à jour :</p>
+
+    <div class="code-block"><span class="comment"># Supposons un état initial :</span>
+<span class="comment"># {"messages": ["bonjour"], "total_tokens": 10, "current_step": "debut"}</span>
+
+<span class="comment"># Un noeud retourne :</span>
+<span class="comment"># {"messages": ["comment ça va ?"], "total_tokens": 5, "current_step": "milieu"}</span>
+
+<span class="comment"># Résultat AVEC reducers :</span>
+<span class="comment"># {</span>
+<span class="comment">#   "messages": ["bonjour", "comment ça va ?"],  ← concaténation (operator.add)</span>
+<span class="comment">#   "total_tokens": 15,                          ← addition (operator.add)</span>
+<span class="comment">#   "current_step": "milieu"                     ← remplacement (LastValue)</span>
+<span class="comment"># }</span></div>
+
+    <h3>2.3 Le reducer add_messages</h3>
+    <p>Pour les chatbots, LangGraph fournit un reducer spécialisé <code>add_messages</code> qui gère intelligemment
+    les messages LangChain :</p>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+<span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+
+<span class="keyword">class</span> <span class="function">ChatbotState</span>(TypedDict):
+    <span class="comment"># add_messages gère l'ajout et la déduplication des messages</span>
+    messages: Annotated[<span class="function">list</span>, add_messages]
+    user_name: <span class="function">str</span></div>
+
+    <div class="prof-note">
+        Le reducer <code>add_messages</code> est plus intelligent que <code>operator.add</code> pour les listes de
+        messages. Il gère la <strong>déduplication</strong> (si un message avec le même ID est ajouté, il remplace
+        l'ancien au lieu de le dupliquer) et fonctionne avec les types de messages LangChain (<code>HumanMessage</code>,
+        <code>AIMessage</code>, etc.).
+    </div>
+
+    <h3>2.4 Tableau des reducers courants</h3>
+    <table>
+        <tr><th>Reducer</th><th>Type</th><th>Comportement</th><th>Exemple</th></tr>
+        <tr><td><em>(aucun)</em></td><td>Tout type</td><td>Remplacement (LastValue)</td><td><code>"a"</code> → <code>"b"</code> = <code>"b"</code></td></tr>
+        <tr><td><code>operator.add</code></td><td>list</td><td>Concaténation</td><td><code>[1]</code> + <code>[2]</code> = <code>[1, 2]</code></td></tr>
+        <tr><td><code>operator.add</code></td><td>int</td><td>Addition</td><td><code>10</code> + <code>5</code> = <code>15</code></td></tr>
+        <tr><td><code>operator.add</code></td><td>str</td><td>Concaténation de chaînes</td><td><code>"bon"</code> + <code>"jour"</code> = <code>"bonjour"</code></td></tr>
+        <tr><td><code>add_messages</code></td><td>list[Message]</td><td>Ajout intelligent avec déduplication</td><td>Ajoute ou remplace les messages par ID</td></tr>
+    </table>
+
+    <div class="svg-container">
+        <svg width="800" height="250" viewBox="0 0 800 250" xmlns="http://www.w3.org/2000/svg">
+            <text x="400" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Flux du State à travers les Noeuds</text>
+
+            <!-- State initial -->
+            <rect x="20" y="55" width="140" height="80" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="90" y="75" fill="#ff8c42" font-size="11" text-anchor="middle">State initial</text>
+            <text x="90" y="95" fill="#aaa" font-size="10" text-anchor="middle">messages: []</text>
+            <text x="90" y="112" fill="#aaa" font-size="10" text-anchor="middle">step: "start"</text>
+            <text x="90" y="128" fill="#aaa" font-size="10" text-anchor="middle">tokens: 0</text>
+
+            <!-- Flèche -->
+            <line x1="160" y1="95" x2="200" y2="95" stroke="#00ff88" stroke-width="2" marker-end="url(#aw1)"/>
+
+            <!-- Noeud 1 -->
+            <rect x="200" y="60" width="130" height="70" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="265" y="82" fill="#569cd6" font-size="12" text-anchor="middle">Noeud A</text>
+            <text x="265" y="100" fill="#aaa" font-size="9" text-anchor="middle">retourne:</text>
+            <text x="265" y="116" fill="#00ff88" font-size="9" text-anchor="middle">{messages: ["hi"], tokens: 5}</text>
+
+            <!-- Flèche -->
+            <line x1="330" y1="95" x2="370" y2="95" stroke="#00ff88" stroke-width="2" marker-end="url(#aw1)"/>
+
+            <!-- State intermédiaire -->
+            <rect x="370" y="55" width="140" height="80" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="440" y="75" fill="#ff8c42" font-size="11" text-anchor="middle">State mis à jour</text>
+            <text x="440" y="95" fill="#00ff88" font-size="10" text-anchor="middle">messages: ["hi"]</text>
+            <text x="440" y="112" fill="#aaa" font-size="10" text-anchor="middle">step: "start"</text>
+            <text x="440" y="128" fill="#00ff88" font-size="10" text-anchor="middle">tokens: 5</text>
+
+            <!-- Flèche -->
+            <line x1="510" y1="95" x2="550" y2="95" stroke="#00ff88" stroke-width="2" marker-end="url(#aw1)"/>
+
+            <!-- Noeud 2 -->
+            <rect x="550" y="60" width="130" height="70" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="615" y="82" fill="#569cd6" font-size="12" text-anchor="middle">Noeud B</text>
+            <text x="615" y="100" fill="#aaa" font-size="9" text-anchor="middle">retourne:</text>
+            <text x="615" y="116" fill="#00ff88" font-size="9" text-anchor="middle">{messages: ["ok"], step: "end"}</text>
+
+            <!-- Flèche -->
+            <line x1="680" y1="95" x2="700" y2="95" stroke="#00ff88" stroke-width="2" marker-end="url(#aw1)"/>
+
+            <!-- State final -->
+            <rect x="20" y="165" width="760" height="60" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="400" y="188" fill="#00ff88" font-size="12" text-anchor="middle">State final : messages: ["hi", "ok"] | step: "end" | tokens: 5</text>
+            <text x="400" y="210" fill="#aaa" font-size="10" text-anchor="middle">messages concaténés (reducer) | step remplacé (LastValue) | tokens inchangés (pas de mise à jour par Noeud B)</text>
+
+            <!-- Flèche courbe vers State final -->
+            <path d="M 750 95 Q 780 95 780 150 Q 780 195 760 195 L 780 195" fill="none" stroke="#00ff88" stroke-width="2" marker-end="url(#aw1)"/>
+
+            <defs>
+                <marker id="aw1" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3 : NOEUDS -->
+    <!-- ============================================================ -->
+    <h2>3. Noeuds (Nodes)</h2>
+
+    <div class="definition">
+        Un <strong>noeud</strong> est une fonction Python qui constitue une étape de traitement dans le graphe. Elle
+        reçoit l'état courant complet en paramètre et retourne un <strong>dictionnaire partiel</strong> contenant
+        uniquement les champs de l'état à mettre à jour.
+    </div>
+
+    <h3>3.1 Anatomie d'un noeud</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">mon_noeud</span>(state: MonState) -> <span class="function">dict</span>:
+    <span class="string">"""
+    Un noeud LangGraph typique.
+
+    Args:
+        state: L'état complet du graphe (lecture seule)
+
+    Returns:
+        dict: Un dictionnaire partiel avec les champs à mettre à jour
+    """</span>
+    <span class="comment"># 1. Lire les données de l'état</span>
+    donnees = state[<span class="string">"mon_champ"</span>]
+
+    <span class="comment"># 2. Effectuer un traitement</span>
+    resultat = <span class="function">traitement</span>(donnees)
+
+    <span class="comment"># 3. Retourner les mises à jour</span>
+    <span class="keyword">return</span> {<span class="string">"mon_champ_resultat"</span>: resultat}</div>
+
+    <h3>3.2 Ajouter des noeuds au graphe</h3>
+
+    <div class="param-box">
+        <h4>add_node(name, function)</h4>
+        <ul>
+            <li><strong>name</strong> (str) : Le nom unique du noeud dans le graphe. Utilisé pour référencer le noeud dans les arêtes.</li>
+            <li><strong>function</strong> (callable) : La fonction Python à exécuter. Doit accepter l'état et retourner un dict.</li>
+        </ul>
+    </div>
+
+    <div class="code-block">builder = StateGraph(MonState)
+
+<span class="comment"># Méthode 1 : nom explicite</span>
+builder.<span class="function">add_node</span>(<span class="string">"analyser"</span>, analyser_question)
+
+<span class="comment"># Méthode 2 : le nom est inféré du nom de la fonction</span>
+builder.<span class="function">add_node</span>(analyser_question)  <span class="comment"># nom = "analyser_question"</span></div>
+
+    <h3>3.3 Exemples de noeuds concrets</h3>
+
+    <h3>Noeud LLM — Appeler un modèle de langage</h3>
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>)
+
+<span class="keyword">def</span> <span class="function">noeud_llm</span>(state: ChatState) -> <span class="function">dict</span>:
+    <span class="string">"""Appelle le LLM avec les messages de la conversation."""</span>
+    messages = state[<span class="string">"messages"</span>]
+    reponse = llm.<span class="function">invoke</span>(messages)
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [reponse]}  <span class="comment"># Le reducer add_messages concatène</span></div>
+
+    <h3>Noeud Outil — Exécuter un outil externe</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">noeud_recherche</span>(state: AgentState) -> <span class="function">dict</span>:
+    <span class="string">"""Effectue une recherche web basée sur la requête."""</span>
+    query = state[<span class="string">"query"</span>]
+    <span class="comment"># Simuler une recherche</span>
+    resultats = [
+        <span class="string">"Document 1 : LangGraph est un framework..."</span>,
+        <span class="string">"Document 2 : Les graphes permettent..."</span>
+    ]
+    <span class="keyword">return</span> {<span class="string">"documents"</span>: resultats, <span class="string">"step"</span>: <span class="string">"recherche_terminee"</span>}</div>
+
+    <h3>Noeud Décision — Préparer le routage</h3>
+    <div class="code-block"><span class="keyword">def</span> <span class="function">noeud_evaluation</span>(state: RAGState) -> <span class="function">dict</span>:
+    <span class="string">"""Évalue la pertinence des documents récupérés."""</span>
+    documents = state[<span class="string">"documents"</span>]
+    question = state[<span class="string">"question"</span>]
+
+    <span class="comment"># Logique d'évaluation</span>
+    score = <span class="function">calculer_pertinence</span>(question, documents)
+
+    <span class="keyword">if</span> score > <span class="number">0.7</span>:
+        decision = <span class="string">"pertinent"</span>
+    <span class="keyword">else</span>:
+        decision = <span class="string">"non_pertinent"</span>
+
+    <span class="keyword">return</span> {<span class="string">"score"</span>: score, <span class="string">"decision"</span>: decision}</div>
+
+    <div class="warning">
+        Un noeud ne doit <strong>jamais modifier l'état directement</strong>. Il doit toujours retourner un nouveau
+        dictionnaire. LangGraph gère la fusion avec l'état existant via les reducers. Modifier l'état directement
+        (ex: <code>state["champ"] = valeur</code>) peut provoquer des comportements imprévisibles.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4 : EDGES -->
+    <!-- ============================================================ -->
+    <h2>4. Edges (Arêtes)</h2>
+
+    <div class="definition">
+        Les <strong>edges</strong> (arêtes) définissent le flux d'exécution entre les noeuds. Ils indiquent à LangGraph
+        quel noeud exécuter après le noeud courant. Il existe des arêtes <strong>fixes</strong> (toujours le même chemin)
+        et des arêtes <strong>conditionnelles</strong> (le chemin dépend de l'état).
+    </div>
+
+    <h3>4.1 Arêtes fixes — add_edge()</h3>
+
+    <div class="param-box">
+        <h4>add_edge(source, destination)</h4>
+        <ul>
+            <li><strong>source</strong> (str | START) : Le noeud source. Peut être <code>START</code> pour le point d'entrée.</li>
+            <li><strong>destination</strong> (str | END) : Le noeud destination. Peut être <code>END</code> pour terminer le graphe.</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+
+builder = StateGraph(MonState)
+
+<span class="comment"># Ajouter les noeuds</span>
+builder.<span class="function">add_node</span>(<span class="string">"etape_1"</span>, fonction_etape_1)
+builder.<span class="function">add_node</span>(<span class="string">"etape_2"</span>, fonction_etape_2)
+builder.<span class="function">add_node</span>(<span class="string">"etape_3"</span>, fonction_etape_3)
+
+<span class="comment"># Connecter les noeuds avec des arêtes fixes</span>
+builder.<span class="function">add_edge</span>(START, <span class="string">"etape_1"</span>)       <span class="comment"># Le graphe commence par etape_1</span>
+builder.<span class="function">add_edge</span>(<span class="string">"etape_1"</span>, <span class="string">"etape_2"</span>)    <span class="comment"># etape_1 → etape_2 (toujours)</span>
+builder.<span class="function">add_edge</span>(<span class="string">"etape_2"</span>, <span class="string">"etape_3"</span>)    <span class="comment"># etape_2 → etape_3 (toujours)</span>
+builder.<span class="function">add_edge</span>(<span class="string">"etape_3"</span>, END)             <span class="comment"># etape_3 → FIN</span></div>
+
+    <h3>4.2 START et END — Les noeuds spéciaux</h3>
+
+    <div class="concept-box blue">
+        <h3>START et END</h3>
+        <ul>
+            <li><strong>START</strong> : Un noeud virtuel qui représente le point d'entrée du graphe. Il n'exécute aucune
+            fonction. L'arête <code>add_edge(START, "premier_noeud")</code> est <strong>obligatoire</strong>.</li>
+            <li><strong>END</strong> : Un noeud virtuel qui représente la fin du graphe. Quand un noeud est connecté à
+            <code>END</code>, l'exécution s'arrête et l'état final est retourné.</li>
+        </ul>
+        <p>Ces constantes sont importées depuis <code>langgraph.graph</code>.</p>
+    </div>
+
+    <div class="warning">
+        Oublier de connecter <code>START</code> à un noeud provoquera une erreur à la compilation.
+        De même, chaque chemin du graphe doit éventuellement atteindre <code>END</code>, sinon le graphe ne
+        terminera jamais (sauf en cas de boucle intentionnelle avec condition d'arrêt).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5 : CONDITIONAL EDGES -->
+    <!-- ============================================================ -->
+    <h2>5. Conditional Edges — Arêtes conditionnelles</h2>
+
+    <p>Les arêtes conditionnelles sont l'une des fonctionnalités les plus puissantes de LangGraph. Elles permettent
+    de <strong>router dynamiquement</strong> l'exécution en fonction de l'état courant.</p>
+
+    <h3>5.1 Syntaxe</h3>
+
+    <div class="param-box">
+        <h4>add_conditional_edges(source, router_function, path_map=None)</h4>
+        <ul>
+            <li><strong>source</strong> (str) : Le noeud après lequel la décision est prise.</li>
+            <li><strong>router_function</strong> (callable) : Fonction qui prend l'état et retourne le nom du prochain noeud (ou <code>END</code>).</li>
+            <li><strong>path_map</strong> (dict, optionnel) : Mappage entre les valeurs retournées par la router function et les noms de noeuds réels.</li>
+        </ul>
+    </div>
+
+    <h3>5.2 Exemple simple — Routage binaire</h3>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Literal
+
+<span class="keyword">def</span> <span class="function">router</span>(state: MonState) -> Literal[<span class="string">"positif"</span>, <span class="string">"negatif"</span>]:
+    <span class="string">"""Détermine le prochain noeud selon le sentiment."""</span>
+    <span class="keyword">if</span> state[<span class="string">"sentiment"</span>] == <span class="string">"positif"</span>:
+        <span class="keyword">return</span> <span class="string">"positif"</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">"negatif"</span>
+
+<span class="comment"># Ajouter l'arête conditionnelle</span>
+builder.<span class="function">add_conditional_edges</span>(
+    <span class="string">"analyser"</span>,     <span class="comment"># Après ce noeud...</span>
+    router           <span class="comment"># ...appeler cette fonction pour décider</span>
+)</div>
+
+    <h3>5.3 Exemple avec path_map</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">router_qualite</span>(state: MonState) -> Literal[<span class="string">"bon"</span>, <span class="string">"mauvais"</span>, <span class="string">"fin"</span>]:
+    <span class="string">"""Route selon la qualité du résultat."""</span>
+    score = state[<span class="string">"score"</span>]
+    <span class="keyword">if</span> score > <span class="number">0.8</span>:
+        <span class="keyword">return</span> <span class="string">"bon"</span>
+    <span class="keyword">elif</span> score > <span class="number">0.5</span>:
+        <span class="keyword">return</span> <span class="string">"mauvais"</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">"fin"</span>
+
+<span class="comment"># Avec un path_map pour mapper les retours aux vrais noms de noeuds</span>
+builder.<span class="function">add_conditional_edges</span>(
+    <span class="string">"evaluer"</span>,
+    router_qualite,
+    {
+        <span class="string">"bon"</span>: <span class="string">"generer_reponse"</span>,        <span class="comment"># "bon" → noeud "generer_reponse"</span>
+        <span class="string">"mauvais"</span>: <span class="string">"reformuler_question"</span>,  <span class="comment"># "mauvais" → noeud "reformuler_question"</span>
+        <span class="string">"fin"</span>: END                          <span class="comment"># "fin" → terminer le graphe</span>
+    }
+)</div>
+
+    <div class="svg-container">
+        <svg width="750" height="280" viewBox="0 0 750 280" xmlns="http://www.w3.org/2000/svg">
+            <text x="375" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Routage Conditionnel</text>
+
+            <!-- START -->
+            <circle cx="60" cy="140" r="22" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="60" y="145" fill="#00ff88" font-size="10" text-anchor="middle">START</text>
+
+            <!-- Evaluer -->
+            <rect x="120" y="115" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="180" y="145" fill="#569cd6" font-size="13" text-anchor="middle">Évaluer</text>
+
+            <!-- Losange routeur -->
+            <polygon points="330,140 370,110 410,140 370,170" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="370" y="144" fill="#ff8c42" font-size="10" text-anchor="middle">Router</text>
+
+            <!-- Noeud bon -->
+            <rect x="470" y="50" width="140" height="40" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="540" y="75" fill="#00ff88" font-size="12" text-anchor="middle">Générer réponse</text>
+
+            <!-- Noeud mauvais -->
+            <rect x="470" y="120" width="140" height="40" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="540" y="145" fill="#ff8c42" font-size="12" text-anchor="middle">Reformuler</text>
+
+            <!-- END -->
+            <circle cx="540" cy="230" r="22" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="540" y="235" fill="#ff4444" font-size="10" text-anchor="middle">END</text>
+
+            <!-- Arêtes -->
+            <line x1="82" y1="140" x2="120" y2="140" stroke="#00ff88" stroke-width="2" marker-end="url(#aw2)"/>
+            <line x1="240" y1="140" x2="330" y2="140" stroke="#569cd6" stroke-width="2" marker-end="url(#aw3)"/>
+            <line x1="410" y1="125" x2="470" y2="75" stroke="#00ff88" stroke-width="2" marker-end="url(#aw2)"/>
+            <line x1="410" y1="140" x2="470" y2="140" stroke="#ff8c42" stroke-width="2" marker-end="url(#aw4)"/>
+            <line x1="390" y1="170" x2="520" y2="212" stroke="#ff4444" stroke-width="2" marker-end="url(#aw5)"/>
+
+            <!-- Labels sur les arêtes -->
+            <text x="430" y="93" fill="#00ff88" font-size="10">score > 0.8</text>
+            <text x="430" y="133" fill="#ff8c42" font-size="10">score > 0.5</text>
+            <text x="430" y="210" fill="#ff4444" font-size="10">score &lt;= 0.5</text>
+
+            <!-- Boucle retour depuis Reformuler vers Evaluer -->
+            <path d="M 540 160 Q 540 190 400 190 Q 180 190 180 165" fill="none" stroke="#569cd6" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#aw3)"/>
+            <text x="340" y="205" fill="#569cd6" font-size="10" text-anchor="middle">boucle de retry</text>
+
+            <defs>
+                <marker id="aw2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+                <marker id="aw3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="aw4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/>
+                </marker>
+                <marker id="aw5" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        L'annotation <code>Literal</code> dans le type de retour de la router function est importante.
+        Elle indique à LangGraph les valeurs possibles et permet de valider le graphe à la compilation.
+        Si la router function retourne une valeur non prévue, une erreur sera levée.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6 : FLUX D'EXECUTION -->
+    <!-- ============================================================ -->
+    <h2>6. Le flux d'exécution</h2>
+
+    <p>Comprenons en détail comment LangGraph exécute un graphe, étape par étape :</p>
+
+    <h3>6.1 Cycle d'exécution (Super-step)</h3>
+    <p>LangGraph exécute le graphe par <strong>super-steps</strong>. Chaque super-step correspond à l'exécution
+    d'un ou plusieurs noeuds en parallèle, suivie de la mise à jour de l'état :</p>
+
+    <ol>
+        <li>L'exécution commence au noeud <code>START</code></li>
+        <li>Les arêtes sortantes de <code>START</code> déterminent le(s) premier(s) noeud(s)</li>
+        <li>Le(s) noeud(s) s'exécute(nt) et retourne(nt) des mises à jour</li>
+        <li>L'état est mis à jour via les reducers</li>
+        <li>Les arêtes sortantes déterminent le(s) prochain(s) noeud(s)</li>
+        <li>Le cycle continue jusqu'à atteindre <code>END</code></li>
+    </ol>
+
+    <h3>6.2 Trace d'exécution détaillée</h3>
+
+    <p>Prenons un exemple concret avec un graphe de 3 noeuds :</p>
+
+    <div class="code-block"><span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+
+<span class="keyword">class</span> <span class="function">TraceState</span>(TypedDict):
+    valeur: <span class="function">int</span>
+    historique: <span class="function">list</span>[<span class="function">str</span>]
+
+<span class="keyword">def</span> <span class="function">doubler</span>(state: TraceState) -> <span class="function">dict</span>:
+    v = state[<span class="string">"valeur"</span>]
+    <span class="function">print</span>(<span class="string">f"[doubler] valeur={v} → {v * 2}"</span>)
+    <span class="keyword">return</span> {<span class="string">"valeur"</span>: v * <span class="number">2</span>, <span class="string">"historique"</span>: [<span class="string">f"doublé: {v}→{v*2}"</span>]}
+
+<span class="keyword">def</span> <span class="function">incrementer</span>(state: TraceState) -> <span class="function">dict</span>:
+    v = state[<span class="string">"valeur"</span>]
+    <span class="function">print</span>(<span class="string">f"[incrementer] valeur={v} → {v + 1}"</span>)
+    <span class="keyword">return</span> {<span class="string">"valeur"</span>: v + <span class="number">1</span>, <span class="string">"historique"</span>: [<span class="string">f"incrémenté: {v}→{v+1}"</span>]}
+
+<span class="keyword">def</span> <span class="function">afficher</span>(state: TraceState) -> <span class="function">dict</span>:
+    <span class="function">print</span>(<span class="string">f"[afficher] Résultat final: {state['valeur']}"</span>)
+    <span class="function">print</span>(<span class="string">f"[afficher] Historique: {state['historique']}"</span>)
+    <span class="keyword">return</span> {}
+
+builder = StateGraph(TraceState)
+builder.<span class="function">add_node</span>(<span class="string">"doubler"</span>, doubler)
+builder.<span class="function">add_node</span>(<span class="string">"incrementer"</span>, incrementer)
+builder.<span class="function">add_node</span>(<span class="string">"afficher"</span>, afficher)
+
+builder.<span class="function">add_edge</span>(START, <span class="string">"doubler"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"doubler"</span>, <span class="string">"incrementer"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"incrementer"</span>, <span class="string">"afficher"</span>)
+builder.<span class="function">add_edge</span>(<span class="string">"afficher"</span>, END)
+
+graph = builder.<span class="function">compile</span>()
+resultat = graph.<span class="function">invoke</span>({<span class="string">"valeur"</span>: <span class="number">5</span>, <span class="string">"historique"</span>: []})</div>
+
+    <div class="output-block">[doubler] valeur=5 → 10
+[incrementer] valeur=10 → 11
+[afficher] Résultat final: 11
+[afficher] Historique: ['doublé: 5→10', 'incrémenté: 10→11']</div>
+
+    <div class="concept-box">
+        <h3>Trace de l'état à chaque étape</h3>
+        <table>
+            <tr><th>Étape</th><th>valeur</th><th>historique</th></tr>
+            <tr><td>Initial (input)</td><td>5</td><td>[]</td></tr>
+            <tr><td>Après "doubler"</td><td>10</td><td>["doublé: 5→10"]</td></tr>
+            <tr><td>Après "incrementer"</td><td>11</td><td>["doublé: 5→10", "incrémenté: 10→11"]</td></tr>
+            <tr><td>Après "afficher"</td><td>11</td><td>["doublé: 5→10", "incrémenté: 10→11"]</td></tr>
+        </table>
+    </div>
+
+    <div class="svg-container">
+        <svg width="750" height="160" viewBox="0 0 750 160" xmlns="http://www.w3.org/2000/svg">
+            <text x="375" y="20" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">Flux d'exécution : START → doubler → incrementer → afficher → END</text>
+
+            <circle cx="50" cy="80" r="20" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="50" y="85" fill="#00ff88" font-size="9" text-anchor="middle">START</text>
+
+            <line x1="70" y1="80" x2="110" y2="80" stroke="#00ff88" stroke-width="2" marker-end="url(#awf)"/>
+
+            <rect x="110" y="55" width="120" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="170" y="75" fill="#569cd6" font-size="12" text-anchor="middle">doubler</text>
+            <text x="170" y="95" fill="#aaa" font-size="9" text-anchor="middle">valeur * 2</text>
+
+            <line x1="230" y1="80" x2="270" y2="80" stroke="#00ff88" stroke-width="2" marker-end="url(#awf)"/>
+
+            <rect x="270" y="55" width="120" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="330" y="75" fill="#569cd6" font-size="12" text-anchor="middle">incrementer</text>
+            <text x="330" y="95" fill="#aaa" font-size="9" text-anchor="middle">valeur + 1</text>
+
+            <line x1="390" y1="80" x2="430" y2="80" stroke="#00ff88" stroke-width="2" marker-end="url(#awf)"/>
+
+            <rect x="430" y="55" width="120" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="490" y="75" fill="#569cd6" font-size="12" text-anchor="middle">afficher</text>
+            <text x="490" y="95" fill="#aaa" font-size="9" text-anchor="middle">print résultat</text>
+
+            <line x1="550" y1="80" x2="590" y2="80" stroke="#00ff88" stroke-width="2" marker-end="url(#awf)"/>
+
+            <circle cx="620" cy="80" r="20" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="620" y="85" fill="#ff4444" font-size="9" text-anchor="middle">END</text>
+
+            <!-- State labels sous chaque noeud -->
+            <text x="170" y="130" fill="#ff8c42" font-size="9" text-anchor="middle">val=10</text>
+            <text x="330" y="130" fill="#ff8c42" font-size="9" text-anchor="middle">val=11</text>
+            <text x="490" y="130" fill="#ff8c42" font-size="9" text-anchor="middle">val=11</text>
+
+            <defs>
+                <marker id="awf" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7 : COMPILATION -->
+    <!-- ============================================================ -->
+    <h2>7. Compilation</h2>
+
+    <p>La compilation est l'étape qui transforme un <code>StateGraph</code> (builder) en un <code>CompiledGraph</code>
+    (exécutable). C'est aussi à cette étape que l'on configure les options avancées.</p>
+
+    <div class="param-box">
+        <h4>graph.compile(checkpointer=None, interrupt_before=None, interrupt_after=None)</h4>
+        <ul>
+            <li><strong>checkpointer</strong> (BaseCheckpointSaver, optionnel) : Active la persistance de l'état. Chaque super-step est sauvegardé automatiquement.</li>
+            <li><strong>interrupt_before</strong> (list[str], optionnel) : Liste de noeuds avant lesquels l'exécution doit s'arrêter (human-in-the-loop).</li>
+            <li><strong>interrupt_after</strong> (list[str], optionnel) : Liste de noeuds après lesquels l'exécution doit s'arrêter.</li>
+        </ul>
+    </div>
+
+    <h3>7.1 Compilation simple</h3>
+    <div class="code-block"><span class="comment"># Compilation sans options</span>
+graph = builder.<span class="function">compile</span>()</div>
+
+    <h3>7.2 Compilation avec persistance</h3>
+    <div class="code-block"><span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+
+checkpointer = MemorySaver()
+graph = builder.<span class="function">compile</span>(checkpointer=checkpointer)</div>
+
+    <h3>7.3 Compilation avec interruption human-in-the-loop</h3>
+    <div class="code-block">graph = builder.<span class="function">compile</span>(
+    checkpointer=MemorySaver(),
+    interrupt_before=[<span class="string">"executer_action"</span>]  <span class="comment"># Pause avant ce noeud</span>
+)</div>
+
+    <div class="prof-note">
+        La compilation effectue plusieurs vérifications : existence d'une arête depuis <code>START</code>, pas de noeuds
+        orphelins, cohérence des noms de noeuds dans les arêtes, etc. Si une erreur est détectée, elle est levée à
+        cette étape plutôt qu'à l'exécution — c'est un mécanisme de <strong>fail-fast</strong>.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 8 : INVOCATION -->
+    <!-- ============================================================ -->
+    <h2>8. Invocation — Exécuter le Graphe</h2>
+
+    <h3>8.1 invoke() — Exécution complète</h3>
+    <div class="code-block"><span class="comment"># Invocation simple</span>
+resultat = graph.<span class="function">invoke</span>({<span class="string">"question"</span>: <span class="string">"Qu'est-ce que LangGraph ?"</span>})
+<span class="function">print</span>(resultat)</div>
+
+    <h3>8.2 stream() — Exécution avec streaming</h3>
+    <div class="code-block"><span class="comment"># Streaming par noeud (par défaut : stream_mode="updates")</span>
+<span class="keyword">for</span> chunk <span class="keyword">in</span> graph.<span class="function">stream</span>({<span class="string">"question"</span>: <span class="string">"Qu'est-ce que LangGraph ?"</span>}):
+    <span class="function">print</span>(<span class="string">f"Noeud: </span>{<span class="function">list</span>(chunk.keys())[<span class="number">0</span>]}<span class="string">"</span>)
+    <span class="function">print</span>(<span class="string">f"Mise à jour: </span>{chunk}<span class="string">"</span>)
+    <span class="function">print</span>(<span class="string">"---"</span>)</div>
+
+    <h3>8.3 Invocation avec config (persistance)</h3>
+    <p>Quand le graphe est compilé avec un checkpointer, on doit fournir un <code>thread_id</code> dans la
+    configuration pour identifier la conversation :</p>
+
+    <div class="code-block"><span class="comment"># Configuration avec thread_id pour la persistance</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"conversation_1"</span>}}
+
+<span class="comment"># Premier tour</span>
+resultat_1 = graph.<span class="function">invoke</span>(
+    {<span class="string">"messages"</span>: [(<span class="string">"user"</span>, <span class="string">"Bonjour !"</span>)]},
+    config
+)
+
+<span class="comment"># Deuxième tour — le graphe se souvient du premier tour</span>
+resultat_2 = graph.<span class="function">invoke</span>(
+    {<span class="string">"messages"</span>: [(<span class="string">"user"</span>, <span class="string">"De quoi on parlait ?"</span>)]},
+    config
+)</div>
+
+    <div class="effect">
+        Grâce au <code>thread_id</code>, LangGraph charge automatiquement l'état sauvegardé du tour précédent.
+        Les messages sont accumulés via le reducer <code>add_messages</code>, créant un historique de conversation
+        persistant.
+    </div>
+
+    <div class="warning">
+        Si le graphe est compilé avec un checkpointer, le paramètre <code>config</code> avec un <code>thread_id</code>
+        est <strong>obligatoire</strong>. L'oublier provoquera une erreur.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 9 : EXEMPLE COMPLET -->
+    <!-- ============================================================ -->
+    <h2>9. Exemple complet — Classificateur de sentiment</h2>
+
+    <p>Construisons un graphe complet à 3 noeuds qui classifie le sentiment d'un texte et génère une réponse
+    appropriée en fonction du résultat.</p>
+
+    <h3>9.1 Architecture du graphe</h3>
+
+    <div class="svg-container">
+        <svg width="700" height="220" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+            <text x="350" y="20" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">Graphe : Classificateur de Sentiment</text>
+
+            <circle cx="50" cy="110" r="20" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="50" y="115" fill="#00ff88" font-size="9" text-anchor="middle">START</text>
+
+            <line x1="70" y1="110" x2="120" y2="110" stroke="#00ff88" stroke-width="2" marker-end="url(#awex)"/>
+
+            <rect x="120" y="85" width="130" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="185" y="115" fill="#569cd6" font-size="12" text-anchor="middle">classifier</text>
+
+            <!-- Losange -->
+            <polygon points="330,110 365,80 400,110 365,140" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="365" y="114" fill="#ff8c42" font-size="9" text-anchor="middle">route</text>
+
+            <line x1="250" y1="110" x2="330" y2="110" stroke="#ff8c42" stroke-width="2" marker-end="url(#awex2)"/>
+
+            <!-- Positif -->
+            <rect x="440" y="45" width="150" height="45" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="515" y="72" fill="#00ff88" font-size="11" text-anchor="middle">repondre_positif</text>
+
+            <!-- Negatif -->
+            <rect x="440" y="130" width="150" height="45" rx="8" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="515" y="157" fill="#ff4444" font-size="11" text-anchor="middle">repondre_negatif</text>
+
+            <line x1="400" y1="97" x2="440" y2="70" stroke="#00ff88" stroke-width="2" marker-end="url(#awex)"/>
+            <line x1="400" y1="123" x2="440" y2="150" stroke="#ff4444" stroke-width="2" marker-end="url(#awex3)"/>
+
+            <text x="415" y="65" fill="#00ff88" font-size="9">positif</text>
+            <text x="415" y="170" fill="#ff4444" font-size="9">negatif</text>
+
+            <!-- END -->
+            <circle cx="650" cy="110" r="20" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="650" y="115" fill="#ff4444" font-size="9" text-anchor="middle">END</text>
+
+            <line x1="590" y1="67" x2="632" y2="100" stroke="#569cd6" stroke-width="2" marker-end="url(#awex4)"/>
+            <line x1="590" y1="152" x2="632" y2="120" stroke="#569cd6" stroke-width="2" marker-end="url(#awex4)"/>
+
+            <defs>
+                <marker id="awex" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+                <marker id="awex2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/>
+                </marker>
+                <marker id="awex3" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/>
+                </marker>
+                <marker id="awex4" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>9.2 Code complet</h3>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Literal
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 1. Définition du State</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">class</span> <span class="function">SentimentState</span>(TypedDict):
+    texte: <span class="function">str</span>            <span class="comment"># Le texte à analyser</span>
+    sentiment: <span class="function">str</span>        <span class="comment"># "positif" ou "negatif"</span>
+    score: <span class="function">float</span>          <span class="comment"># Score de confiance</span>
+    reponse: <span class="function">str</span>          <span class="comment"># La réponse générée</span>
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 2. Définition des Noeuds</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">def</span> <span class="function">classifier</span>(state: SentimentState) -> <span class="function">dict</span>:
+    <span class="string">"""Noeud 1 : Classifie le sentiment du texte."""</span>
+    texte = state[<span class="string">"texte"</span>].lower()
+
+    <span class="comment"># Mots-clés simples pour la classification</span>
+    mots_positifs = [<span class="string">"super"</span>, <span class="string">"génial"</span>, <span class="string">"excellent"</span>, <span class="string">"bien"</span>, <span class="string">"merci"</span>, <span class="string">"bravo"</span>, <span class="string">"content"</span>]
+    mots_negatifs = [<span class="string">"mauvais"</span>, <span class="string">"nul"</span>, <span class="string">"terrible"</span>, <span class="string">"problème"</span>, <span class="string">"erreur"</span>, <span class="string">"bug"</span>, <span class="string">"triste"</span>]
+
+    score_pos = <span class="function">sum</span>(<span class="number">1</span> <span class="keyword">for</span> mot <span class="keyword">in</span> mots_positifs <span class="keyword">if</span> mot <span class="keyword">in</span> texte)
+    score_neg = <span class="function">sum</span>(<span class="number">1</span> <span class="keyword">for</span> mot <span class="keyword">in</span> mots_negatifs <span class="keyword">if</span> mot <span class="keyword">in</span> texte)
+
+    <span class="keyword">if</span> score_pos >= score_neg:
+        <span class="keyword">return</span> {<span class="string">"sentiment"</span>: <span class="string">"positif"</span>, <span class="string">"score"</span>: score_pos / <span class="function">max</span>(score_pos + score_neg, <span class="number">1</span>)}
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> {<span class="string">"sentiment"</span>: <span class="string">"negatif"</span>, <span class="string">"score"</span>: score_neg / <span class="function">max</span>(score_pos + score_neg, <span class="number">1</span>)}
+
+<span class="keyword">def</span> <span class="function">repondre_positif</span>(state: SentimentState) -> <span class="function">dict</span>:
+    <span class="string">"""Noeud 2a : Génère une réponse pour un sentiment positif."""</span>
+    <span class="keyword">return</span> {
+        <span class="string">"reponse"</span>: <span class="string">f"Merci pour votre retour positif ! (confiance: {state['score']:.0%}). "</span>
+                  <span class="string">f"Nous sommes ravis que vous soyez satisfait."</span>
+    }
+
+<span class="keyword">def</span> <span class="function">repondre_negatif</span>(state: SentimentState) -> <span class="function">dict</span>:
+    <span class="string">"""Noeud 2b : Génère une réponse pour un sentiment négatif."""</span>
+    <span class="keyword">return</span> {
+        <span class="string">"reponse"</span>: <span class="string">f"Nous sommes désolés pour cette expérience (confiance: {state['score']:.0%}). "</span>
+                  <span class="string">f"Notre équipe va examiner votre retour."</span>
+    }
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 3. Fonction de routage</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">def</span> <span class="function">route_sentiment</span>(state: SentimentState) -> Literal[<span class="string">"repondre_positif"</span>, <span class="string">"repondre_negatif"</span>]:
+    <span class="string">"""Router : dirige vers le noeud approprié selon le sentiment."""</span>
+    <span class="keyword">if</span> state[<span class="string">"sentiment"</span>] == <span class="string">"positif"</span>:
+        <span class="keyword">return</span> <span class="string">"repondre_positif"</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">"repondre_negatif"</span>
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 4. Construction du Graphe</span>
+<span class="comment"># ============================================</span>
+builder = StateGraph(SentimentState)
+
+<span class="comment"># Ajouter les noeuds</span>
+builder.<span class="function">add_node</span>(<span class="string">"classifier"</span>, classifier)
+builder.<span class="function">add_node</span>(<span class="string">"repondre_positif"</span>, repondre_positif)
+builder.<span class="function">add_node</span>(<span class="string">"repondre_negatif"</span>, repondre_negatif)
+
+<span class="comment"># Arête fixe : START → classifier</span>
+builder.<span class="function">add_edge</span>(START, <span class="string">"classifier"</span>)
+
+<span class="comment"># Arête conditionnelle : classifier → positif OU négatif</span>
+builder.<span class="function">add_conditional_edges</span>(<span class="string">"classifier"</span>, route_sentiment)
+
+<span class="comment"># Arêtes fixes vers END</span>
+builder.<span class="function">add_edge</span>(<span class="string">"repondre_positif"</span>, END)
+builder.<span class="function">add_edge</span>(<span class="string">"repondre_negatif"</span>, END)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># 5. Compilation et Test</span>
+<span class="comment"># ============================================</span>
+graph = builder.<span class="function">compile</span>()
+
+<span class="comment"># Test 1 : Texte positif</span>
+resultat1 = graph.<span class="function">invoke</span>({<span class="string">"texte"</span>: <span class="string">"Super produit, vraiment excellent !"</span>})
+<span class="function">print</span>(<span class="string">"Test 1 :"</span>, resultat1[<span class="string">"reponse"</span>])
+
+<span class="comment"># Test 2 : Texte négatif</span>
+resultat2 = graph.<span class="function">invoke</span>({<span class="string">"texte"</span>: <span class="string">"Terrible, le produit a un bug majeur"</span>})
+<span class="function">print</span>(<span class="string">"Test 2 :"</span>, resultat2[<span class="string">"reponse"</span>])</div>
+
+    <div class="output-block">Test 1 : Merci pour votre retour positif ! (confiance: 100%). Nous sommes ravis que vous soyez satisfait.
+Test 2 : Nous sommes désolés pour cette expérience (confiance: 100%). Notre équipe va examiner votre retour.</div>
+
+    <h3>9.3 Streaming de l'exemple</h3>
+
+    <div class="code-block"><span class="comment"># Observer l'exécution étape par étape avec stream()</span>
+<span class="function">print</span>(<span class="string">"=== Streaming du graphe ==="</span>)
+<span class="keyword">for</span> step <span class="keyword">in</span> graph.<span class="function">stream</span>({<span class="string">"texte"</span>: <span class="string">"Merci, c'est bien fait !"</span>}):
+    nom_noeud = <span class="function">list</span>(step.keys())[<span class="number">0</span>]
+    mise_a_jour = step[nom_noeud]
+    <span class="function">print</span>(<span class="string">f"Noeud '{nom_noeud}' → {mise_a_jour}"</span>)</div>
+
+    <div class="output-block">=== Streaming du graphe ===
+Noeud 'classifier' → {'sentiment': 'positif', 'score': 1.0}
+Noeud 'repondre_positif' → {'reponse': 'Merci pour votre retour positif ! ...'}</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 10 : RESUME -->
+    <!-- ============================================================ -->
+    <h2>10. Résumé</h2>
+
+    <h3>10.1 Référence API</h3>
+    <table>
+        <tr><th>Méthode</th><th>Description</th><th>Exemple</th></tr>
+        <tr><td><code>StateGraph(State)</code></td><td>Crée un builder de graphe</td><td><code>builder = StateGraph(MonState)</code></td></tr>
+        <tr><td><code>add_node(nom, fn)</code></td><td>Ajoute un noeud</td><td><code>builder.add_node("a", fn_a)</code></td></tr>
+        <tr><td><code>add_edge(src, dst)</code></td><td>Ajoute une arête fixe</td><td><code>builder.add_edge(START, "a")</code></td></tr>
+        <tr><td><code>add_conditional_edges(src, router, map)</code></td><td>Ajoute une arête conditionnelle</td><td><code>builder.add_conditional_edges("a", router)</code></td></tr>
+        <tr><td><code>compile()</code></td><td>Compile le graphe</td><td><code>graph = builder.compile()</code></td></tr>
+        <tr><td><code>invoke(input, config)</code></td><td>Exécute et retourne le résultat final</td><td><code>graph.invoke({"q": "..."})</code></td></tr>
+        <tr><td><code>stream(input, config)</code></td><td>Exécute avec streaming</td><td><code>for s in graph.stream(...):</code></td></tr>
+    </table>
+
+    <h3>10.2 Patterns courants</h3>
+    <div class="concept-box green">
+        <h3>Cheatsheet des patterns</h3>
+        <ul>
+            <li><strong>Linéaire</strong> : START → A → B → C → END</li>
+            <li><strong>Branchement</strong> : A → (condition) → B1 | B2 → END</li>
+            <li><strong>Boucle</strong> : A → B → (condition) → A (retry) | END</li>
+            <li><strong>Fan-out / Fan-in</strong> : A → [B1, B2, B3] → C → END</li>
+            <li><strong>Human-in-the-loop</strong> : A → [INTERRUPT] → B → END</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Vous maîtrisez maintenant les briques fondamentales : State, Nodes, Edges et Conditional Edges.
+        Dans le prochain cours, nous approfondirons la gestion de l'état avec les reducers avancés,
+        <code>MessagesState</code>, et les checkpointers pour la persistance.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="lg_01_introduction.html">&larr; Cours Introduction</a>
+        <a href="lg_03_state_management.html">Cours suivant : State Management Avancé &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

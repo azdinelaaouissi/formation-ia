@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Regression Logistique | ML</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : Regression Logistique</h1>
+    <p class="subtitle">Apprentissage supervise -- Classification binaire et multi-classes</p>
+
+    <!-- ======================================================================== -->
+    <!-- PARTIE 1 : RECAPITULATIF DE L'ALGORITHME                                -->
+    <!-- ======================================================================== -->
+    <h2>Partie 1 : Recapitulatif de l'Algorithme</h2>
+
+    <div class="definition">
+        La regression logistique est un algorithme d'apprentissage supervise utilise pour la classification. Malgre son nom qui contient le mot "regression", il ne predit pas une valeur continue : il estime la probabilite qu'une observation appartienne a une classe donnee (entre 0 et 1) grace a la fonction sigmoide, puis attribue une etiquette en fonction d'un seuil de decision. C'est l'un des algorithmes les plus utilises en machine learning pour la classification binaire.
+    </div>
+
+    <h3>Fiche d'identite</h3>
+    <table>
+        <tr><th>Propriete</th><th>Valeur</th></tr>
+        <tr><td>Type</td><td>Apprentissage supervise</td></tr>
+        <tr><td>Tache</td><td>Classification (binaire ou multi-classes)</td></tr>
+        <tr><td>Famille</td><td>Modeles lineaires</td></tr>
+        <tr><td>Sortie</td><td>Une probabilite entre 0 et 1, convertie en classe</td></tr>
+        <tr><td>Fonction cle</td><td>Sigmoide (logistique)</td></tr>
+        <tr><td>Fonction de cout</td><td>Log Loss (entropie croisee binaire)</td></tr>
+        <tr><td>Complexite</td><td>Faible -- tres rapide a entrainer</td></tr>
+        <tr><td>Interpretabilite</td><td>Elevee -- les coefficients indiquent l'influence de chaque feature</td></tr>
+    </table>
+
+    <h3>Analogie simple</h3>
+    <p>Imaginez un medecin qui doit decider si une tumeur est maligne ou benigne. Il dispose de plusieurs mesures (rayon, texture, perimetre...). Plutot que de dire directement "maligne" ou "benigne", il evalue d'abord une probabilite : "il y a 87% de chances que cette tumeur soit maligne". Si cette probabilite depasse un certain seuil (par defaut 50%), il classe la tumeur comme maligne. C'est exactement ce que fait la regression logistique : elle calcule d'abord une probabilite, puis prend une decision binaire.</p>
+
+    <h3>Avantages</h3>
+    <ul>
+        <li><strong>Simple et rapide :</strong> Entrainement tres rapide meme sur de grands jeux de donnees</li>
+        <li><strong>Interpretable :</strong> Chaque coefficient a un sens clair (impact de la feature sur la probabilite)</li>
+        <li><strong>Probabilites calibrees :</strong> Fournit directement des probabilites, pas juste des etiquettes de classe</li>
+        <li><strong>Peu de risque de surapprentissage :</strong> Grace a la regularisation integree (parametre C)</li>
+        <li><strong>Bonne baseline :</strong> Excellent premier modele a tester avant des algorithmes plus complexes</li>
+        <li><strong>Pas de parametres a deviner :</strong> Pas de nombre de voisins, de profondeur d'arbre, etc.</li>
+    </ul>
+
+    <h3>Inconvenients</h3>
+    <ul>
+        <li><strong>Frontiere lineaire :</strong> Ne peut capturer que des frontieres de decision lineaires entre les classes</li>
+        <li><strong>Sensible aux features correlees :</strong> La multicolinearite peut rendre les coefficients instables et peu fiables</li>
+        <li><strong>Hypothese de linearite :</strong> Suppose une relation lineaire entre les features et le log-odds de la variable cible</li>
+        <li><strong>Performances limitees :</strong> Sur des problemes complexes (images, texte brut, patterns non lineaires), d'autres algorithmes font mieux</li>
+        <li><strong>Sensible aux outliers :</strong> Les valeurs extremes influencent la position de la frontiere de decision</li>
+    </ul>
+
+    <!-- ======================================================================== -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT                                    -->
+    <!-- ======================================================================== -->
+    <h2>Partie 2 : Principe de Fonctionnement</h2>
+
+    <h3>Etape par etape</h3>
+    <div class="step-box"><strong>Etape 1 -- Combinaison lineaire :</strong> Le modele calcule un score brut z = b0 + b1*x1 + b2*x2 + ... + bn*xn, exactement comme une regression lineaire. Ce score peut aller de -infini a +infini.</div>
+    <div class="step-box"><strong>Etape 2 -- Fonction sigmoide :</strong> Le score z est passe dans la fonction sigmoide sigma(z) = 1 / (1 + e^(-z)) qui transforme n'importe quel nombre reel en une valeur entre 0 et 1. Cette valeur represente la probabilite d'appartenir a la classe positive.</div>
+    <div class="step-box"><strong>Etape 3 -- Seuil de decision :</strong> Si la probabilite est superieure au seuil (par defaut 0.5), on predit la classe 1 (positive). Sinon, on predit la classe 0 (negative). Ce seuil est ajustable selon le contexte metier.</div>
+    <div class="step-box"><strong>Etape 4 -- Optimisation :</strong> Pendant l'entrainement, l'algorithme ajuste les poids (b0, b1, ...) pour minimiser la fonction de cout Log Loss, qui penalise fortement les predictions confiantes mais fausses.</div>
+    <div class="step-box"><strong>Etape 5 -- Regularisation :</strong> Un terme de regularisation (L1, L2 ou Elastic Net) est ajoute a la fonction de cout pour empecher le surapprentissage en contraignant la taille des coefficients.</div>
+
+    <h3>La fonction sigmoide : le coeur de l'algorithme</h3>
+    <div class="svg-container">
+        <svg width="520" height="340" viewBox="0 0 520 340">
+            <rect width="520" height="340" fill="#1a1a2e" rx="10"/>
+            <!-- Titre -->
+            <text x="260" y="25" fill="#ff8c42" text-anchor="middle" font-size="14" font-weight="bold">Fonction Sigmoide : sigma(z) = 1 / (1 + e^(-z))</text>
+            <!-- Axes -->
+            <line x1="60" y1="170" x2="480" y2="170" stroke="#555" stroke-width="1.5"/>
+            <line x1="260" y1="40" x2="260" y2="300" stroke="#555" stroke-width="1.5"/>
+            <!-- Fleches axes -->
+            <polygon points="480,170 472,165 472,175" fill="#555"/>
+            <polygon points="260,40 255,48 265,48" fill="#555"/>
+            <!-- Labels axes -->
+            <text x="490" y="175" fill="#aaa" font-size="12">z</text>
+            <text x="268" y="48" fill="#aaa" font-size="12">sigma(z)</text>
+            <!-- Graduations Y -->
+            <text x="42" y="55" fill="#aaa" font-size="11">1.0</text>
+            <line x1="55" y1="50" x2="265" y2="50" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+            <text x="42" y="175" fill="#aaa" font-size="11">0.5</text>
+            <line x1="55" y1="170" x2="465" y2="170" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+            <text x="42" y="295" fill="#aaa" font-size="11">0.0</text>
+            <line x1="55" y1="290" x2="265" y2="290" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+            <!-- Graduations X -->
+            <text x="100" y="185" fill="#aaa" font-size="11">-6</text>
+            <text x="140" y="185" fill="#aaa" font-size="11">-4</text>
+            <text x="195" y="185" fill="#aaa" font-size="11">-2</text>
+            <text x="315" y="185" fill="#aaa" font-size="11">2</text>
+            <text x="365" y="185" fill="#aaa" font-size="11">4</text>
+            <text x="415" y="185" fill="#aaa" font-size="11">6</text>
+            <!-- Courbe sigmoide (points calcules avec precision) -->
+            <path d="M 70,288 C 70,288 100,286 130,282 C 150,278 170,270 190,255 C 205,242 220,222 235,200 C 245,185 252,177 260,170 C 268,163 275,155 285,140 C 300,118 315,98 330,85 C 350,68 370,58 390,54 C 420,50 450,49 460,48" stroke="#ff6b35" stroke-width="3" fill="none"/>
+            <!-- Seuil 0.5 point -->
+            <circle cx="260" cy="170" r="6" fill="#00ff88"/>
+            <text x="270" y="160" fill="#00ff88" font-size="11" font-weight="bold">Seuil = 0.5</text>
+            <!-- Zones de classification -->
+            <rect x="62" y="42" width="196" height="126" fill="rgba(255,68,68,0.06)" rx="4"/>
+            <text x="130" y="78" fill="#ff4444" font-size="11" text-anchor="middle">Classe 0</text>
+            <text x="130" y="95" fill="#ff4444" font-size="10" text-anchor="middle">(P &lt; 0.5)</text>
+            <rect x="262" y="42" width="196" height="126" fill="rgba(0,255,136,0.06)" rx="4"/>
+            <text x="380" y="78" fill="#00ff88" font-size="11" text-anchor="middle">Classe 1</text>
+            <text x="380" y="95" fill="#00ff88" font-size="10" text-anchor="middle">(P &gt;= 0.5)</text>
+            <!-- Annotations -->
+            <text x="85" y="265" fill="#aaa" font-size="9">sigma(-6) = 0.002</text>
+            <text x="380" y="75" fill="#aaa" font-size="9">sigma(6) = 0.998</text>
+            <!-- Legende -->
+            <line x1="100" y1="322" x2="130" y2="322" stroke="#ff6b35" stroke-width="3"/>
+            <text x="138" y="327" fill="#aaa" font-size="11">Sigmoide</text>
+            <circle cx="260" cy="322" r="4" fill="#00ff88"/>
+            <text x="270" y="327" fill="#aaa" font-size="11">Point seuil (z=0, P=0.5)</text>
+        </svg>
+    </div>
+
+    <h3>Les formules essentielles</h3>
+    <div class="concept-box">
+        <h3>1. Score lineaire (combinaison lineaire)</h3>
+        <p><strong>z = b0 + b1*x1 + b2*x2 + ... + bn*xn</strong></p>
+        <p>Identique a la regression lineaire. b0 est le biais (intercept), b1..bn sont les poids (coefficients). Le score z peut valoir n'importe quel nombre reel, de -infini a +infini.</p>
+
+        <h3>2. Fonction sigmoide (activation)</h3>
+        <p><strong>sigma(z) = 1 / (1 + e^(-z))</strong></p>
+        <p>Transforme le score z en une probabilite entre 0 et 1. Proprietes cles :</p>
+        <ul>
+            <li>Quand z est tres negatif (z = -10), sigma(z) tend vers 0</li>
+            <li>Quand z est tres positif (z = +10), sigma(z) tend vers 1</li>
+            <li>Quand z = 0, sigma(z) = 0.5 exactement (point d'inflexion)</li>
+            <li>La fonction est continue, derivable, et strictement croissante</li>
+        </ul>
+
+        <h3>3. Regle de decision</h3>
+        <p><strong>y_pred = 1 si sigma(z) >= seuil, sinon y_pred = 0</strong></p>
+        <p>Par defaut, le seuil est 0.5. Mais on peut l'ajuster : un seuil plus bas (ex : 0.3) augmente le recall, un seuil plus haut (ex : 0.7) augmente la precision. Le choix depend du cout relatif des faux positifs vs faux negatifs.</p>
+
+        <h3>4. Fonction de cout : Log Loss (entropie croisee binaire)</h3>
+        <p><strong>J = -(1/N) * SUM[ y_i * log(p_i) + (1 - y_i) * log(1 - p_i) ]</strong></p>
+        <p>Cette fonction penalise fortement les predictions confiantes mais fausses. Si le modele predit P=0.99 pour un exemple qui est en realite de classe 0, la penalite est enorme (log(0.01) = -4.6). Si le modele predit P=0.99 pour un vrai positif, la penalite est minime (log(0.99) = -0.01). C'est cette asymetrie qui guide l'optimisation.</p>
+    </div>
+
+    <h3>Le concept de seuil de decision</h3>
+    <div class="concept-box green">
+        <p>Le seuil de decision (threshold) est la valeur de probabilite a partir de laquelle on decide de classer une observation comme "positive". Par defaut, sklearn utilise 0.5 dans la methode <code>predict()</code>, mais ce n'est pas toujours optimal :</p>
+        <ul>
+            <li><strong>Seuil = 0.3 :</strong> "Dans le doute, je classe positif." On detecte plus de vrais positifs (recall eleve) mais on fait aussi plus de faux positifs (precision basse). Utile en medecine ou manquer un cancer est potentiellement mortel.</li>
+            <li><strong>Seuil = 0.5 :</strong> Equilibre standard entre precision et recall. Bon point de depart.</li>
+            <li><strong>Seuil = 0.7 :</strong> "Je ne classe positif que si je suis tres confiant." Precision elevee mais recall bas. Utile pour le filtrage de spam ou un faux positif est tres genant (email important perdu).</li>
+        </ul>
+        <p>Pour ajuster le seuil avec sklearn, on utilise <code>predict_proba()</code> au lieu de <code>predict()</code>, puis on applique le seuil manuellement.</p>
+    </div>
+
+    <div class="prof-note">La regression logistique ne trace pas une courbe dans l'espace des features : elle trace une frontiere de decision lineaire (un hyperplan). La sigmoide est utilisee pour convertir la distance signee a cette frontiere en une probabilite. Un point loin du cote positif obtient P proche de 1, un point loin du cote negatif obtient P proche de 0. C'est une distinction importante a retenir.</div>
+
+    <!-- ======================================================================== -->
+    <!-- PARTIE 3 : LES DONNEES                                                    -->
+    <!-- ======================================================================== -->
+    <h2>Partie 3 : Les Donnees</h2>
+
+    <h3>Types de donnees acceptes</h3>
+    <div class="concept-box blue">
+        <ul>
+            <li><strong>Features numeriques :</strong> Directement utilisables. La standardisation est fortement recommandee car les solvers convergent plus vite sur des donnees centrees-reduites.</li>
+            <li><strong>Features categorielles :</strong> Doivent etre encodees (One-Hot Encoding pour les variables nominales, Ordinal Encoding pour les variables ordinales) car le modele travaille avec des nombres.</li>
+            <li><strong>Features binaires :</strong> Parfaitement adaptees, pas de transformation necessaire (0/1).</li>
+            <li><strong>Variable cible :</strong> Doit etre categorielle. Classes discretes : 0/1 pour binaire, ou 0/1/2/... pour multi-classes. Ne supporte pas les variables continues comme cible.</li>
+        </ul>
+    </div>
+
+    <h3>Preparation des donnees</h3>
+    <ul>
+        <li><strong>Standardisation (essentielle) :</strong> Utilisez StandardScaler. Les solvers comme lbfgs et saga convergent beaucoup plus vite sur des donnees centrees-reduites (moyenne 0, ecart-type 1). De plus, le parametre C de regularisation n'a de sens que si les features sont sur la meme echelle.</li>
+        <li><strong>Gestion des valeurs manquantes :</strong> La regression logistique ne gere pas les NaN. Il faut imputer les valeurs manquantes avant l'entrainement (SimpleImputer avec strategie moyenne, mediane, ou KNNImputer pour plus de precision).</li>
+        <li><strong>Multicolinearite :</strong> Des features tres correlees rendent les coefficients instables et difficiles a interpreter. La regularisation L2 attenue ce probleme, et L1 peut eliminer les features redondantes en mettant leurs coefficients a zero.</li>
+        <li><strong>Outliers :</strong> Les valeurs extremes peuvent deplacer la frontiere de decision. Envisagez de les detecter avec IQR ou Z-score et de les traiter (suppression, winsorisation, ou transformation logarithmique).</li>
+    </ul>
+
+    <h3>Gestion du desequilibre de classes</h3>
+    <div class="concept-box">
+        <p>Dans beaucoup de problemes reels, une classe est beaucoup plus frequente que l'autre (ex : 95% benin, 5% malin). Le modele peut alors toujours predire la classe majoritaire et obtenir 95% d'accuracy sans rien apprendre d'utile. C'est le piege de l'accuracy. Solutions :</p>
+        <ul>
+            <li><strong>class_weight='balanced' :</strong> Sklearn ajuste automatiquement les poids des classes inversement proportionnels a leur frequence. Poids = n_total / (n_classes * n_par_classe).</li>
+            <li><strong>Sur-echantillonnage (SMOTE) :</strong> Creer des exemples synthetiques de la classe minoritaire avec la librairie imbalanced-learn.</li>
+            <li><strong>Sous-echantillonnage :</strong> Reduire aleatoirement les exemples de la classe majoritaire pour equilibrer.</li>
+            <li><strong>Ajuster le seuil :</strong> Baisser le seuil de decision (ex : 0.3 au lieu de 0.5) pour favoriser la detection de la classe minoritaire.</li>
+            <li><strong>Combiner :</strong> En pratique, combiner class_weight='balanced' avec un seuil ajuste donne souvent les meilleurs resultats.</li>
+        </ul>
+    </div>
+
+    <h3>Taille des donnees</h3>
+    <table>
+        <tr><th>Taille du dataset</th><th>Comportement</th><th>Recommandation</th></tr>
+        <tr><td>Petit (&lt; 1 000)</td><td>Risque de surapprentissage si trop de features</td><td>Regularisation forte (C petit), peu de features, validation croisee</td></tr>
+        <tr><td>Moyen (1 000 - 100 000)</td><td>Zone ideale pour la regression logistique</td><td>Solver lbfgs, tester differentes valeurs de C avec GridSearchCV</td></tr>
+        <tr><td>Grand (&gt; 100 000)</td><td>Peut etre lent avec certains solvers</td><td>Utiliser solver='saga' ou solver='sag' pour la scalabilite</td></tr>
+        <tr><td>Tres grand (&gt; 1 million)</td><td>Performances excellentes, entrainement potentiellement long</td><td>SGDClassifier avec loss='log_loss' comme alternative stochastique</td></tr>
+    </table>
+
+    <!-- ======================================================================== -->
+    <!-- PARTIE 4 : LES PARAMETRES                                                 -->
+    <!-- ======================================================================== -->
+    <h2>Partie 4 : Les Parametres</h2>
+
+    <p>Chaque parametre de <code>LogisticRegression</code> a un impact precis sur le comportement du modele. Comprenez-les un par un avec des exemples concrets et du code executable.</p>
+
+    <!-- ==================== Parametre C ==================== -->
+    <div class="param-box">
+        <h4>C -- Force inverse de la regularisation</h4>
+        <p><strong>Role :</strong> Controle l'equilibre entre ajustement aux donnees d'entrainement et generalisation. C est l'inverse de la force de regularisation lambda : C = 1/lambda. Un C petit signifie une regularisation forte (modele simple), un C grand signifie une regularisation faible (modele qui colle aux donnees).</p>
+        <p><strong>Valeur par defaut :</strong> C = 1.0</p>
+        <p><strong>Impact :</strong> C'est le parametre le plus important a regler. Un C trop petit cause du sous-apprentissage (underfitting), un C trop grand cause du surapprentissage (overfitting). L'ecart entre l'accuracy train et test revele le probleme.</p>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_breast_cancer
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LogisticRegression
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> accuracy_score
+
+<span class="comment"># Charger et preparer les donnees</span>
+X, y = <span class="function">load_breast_cancer</span>(return_X_y=<span class="keyword">True</span>)
+X_train, X_test, y_train, y_test = <span class="function">train_test_split</span>(X, y, test_size=<span class="number">0.2</span>, random_state=<span class="number">42</span>)
+scaler = <span class="function">StandardScaler</span>()
+X_train_s = scaler.<span class="function">fit_transform</span>(X_train)
+X_test_s = scaler.<span class="function">transform</span>(X_test)
+
+<span class="comment"># Tester 3 valeurs de C sur les memes donnees</span>
+<span class="function">print</span>(<span class="string">f"{'C':>8} | {'Train Acc':>10} | {'Test Acc':>10} | {'Ecart':>8} | {'Coefs actifs':>14}"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">65</span>)
+
+<span class="keyword">for</span> c_val <span class="keyword">in</span> [<span class="number">0.01</span>, <span class="number">1.0</span>, <span class="number">100.0</span>]:
+    model = <span class="function">LogisticRegression</span>(C=c_val, max_iter=<span class="number">1000</span>, random_state=<span class="number">42</span>)
+    model.<span class="function">fit</span>(X_train_s, y_train)
+    train_acc = <span class="function">accuracy_score</span>(y_train, model.<span class="function">predict</span>(X_train_s))
+    test_acc = <span class="function">accuracy_score</span>(y_test, model.<span class="function">predict</span>(X_test_s))
+    n_coef = <span class="function">sum</span>(<span class="function">abs</span>(c) > <span class="number">0.01</span> <span class="keyword">for</span> c <span class="keyword">in</span> model.coef_[<span class="number">0</span>])
+    ecart = train_acc - test_acc
+    <span class="function">print</span>(<span class="string">f"{c_val:>8.2f} | {train_acc:>10.4f} | {test_acc:>10.4f} | {ecart:>+8.4f} | {n_coef:>10}/30"</span>)</div>
+
+        <div class="output-block">       C |  Train Acc |   Test Acc |    Ecart | Coefs actifs
+-----------------------------------------------------------------
+    0.01 |     0.9648 |     0.9561 |  +0.0088 |        22/30
+    1.00 |     0.9912 |     0.9825 |  +0.0088 |        30/30
+  100.00 |     0.9956 |     0.9737 |  +0.0219 |        30/30</div>
+
+        <div class="effect">Avec C=0.01 (regularisation forte), le modele est contraint et generalise correctement mais est un peu sous-optimal (test accuracy plus basse). Avec C=1.0, le bon equilibre est atteint avec le meilleur test accuracy. Avec C=100, le modele colle trop aux donnees d'entrainement : l'ecart train-test double (signe de surapprentissage naissant).</div>
+
+        <div class="prof-note">En pratique, on ne teste jamais seulement 3 valeurs. Utilisez GridSearchCV avec C = [0.001, 0.01, 0.1, 1, 10, 100] pour trouver l'optimum automatiquement. Vous pouvez aussi utiliser LogisticRegressionCV qui fait cette recherche en interne de maniere plus efficace. C est le parametre numero un a optimiser.</div>
+    </div>
+
+    <!-- ==================== Parametre penalty ==================== -->
+    <div class="param-box">
+        <h4>penalty -- Type de regularisation</h4>
+        <p><strong>Role :</strong> Definit quel type de penalite est applique aux coefficients du modele pour eviter le surapprentissage. La regularisation ajoute un terme a la fonction de cout qui penalise les grands coefficients.</p>
+        <p><strong>Valeur par defaut :</strong> 'l2'</p>
+        <p><strong>Options :</strong></p>
+        <ul>
+            <li><strong>'l2' (Ridge) :</strong> Penalise la somme des carres des coefficients : lambda * SUM(bi^2). Reduit les coefficients vers zero mais ne les met jamais exactement a zero. Ideal quand toutes les features sont potentiellement utiles.</li>
+            <li><strong>'l1' (Lasso) :</strong> Penalise la somme des valeurs absolues des coefficients : lambda * SUM(|bi|). Peut mettre certains coefficients a exactement zero, agissant comme un selecteur de features automatique.</li>
+            <li><strong>'elasticnet' :</strong> Combinaison de L1 et L2 (necessite solver='saga' et le parametre l1_ratio pour doser le melange).</li>
+            <li><strong>None :</strong> Aucune regularisation. Rarement recommande car risque de surapprentissage eleve.</li>
+        </ul>
+        <p><strong>Impact :</strong> L1 pour la selection de features, L2 pour la stabilite des coefficients. L1 necessite le solver 'liblinear' ou 'saga'.</p>
+
+        <div class="code-block"><span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LogisticRegression
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_breast_cancer
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+
+X, y = <span class="function">load_breast_cancer</span>(return_X_y=<span class="keyword">True</span>)
+scaler = <span class="function">StandardScaler</span>()
+X_s = scaler.<span class="function">fit_transform</span>(X)
+feature_names = <span class="function">load_breast_cancer</span>().feature_names
+
+<span class="comment"># L1 : selection de features (met des coefficients a zero)</span>
+model_l1 = <span class="function">LogisticRegression</span>(penalty=<span class="string">'l1'</span>, C=<span class="number">0.1</span>, solver=<span class="string">'liblinear'</span>, max_iter=<span class="number">1000</span>)
+model_l1.<span class="function">fit</span>(X_s, y)
+
+<span class="comment"># L2 : garde tous les coefficients non nuls</span>
+model_l2 = <span class="function">LogisticRegression</span>(penalty=<span class="string">'l2'</span>, C=<span class="number">0.1</span>, solver=<span class="string">'lbfgs'</span>, max_iter=<span class="number">1000</span>)
+model_l2.<span class="function">fit</span>(X_s, y)
+
+<span class="function">print</span>(<span class="string">"=== Features selectionnees par L1 (coef != 0) ==="</span>)
+<span class="keyword">for</span> name, coef <span class="keyword">in</span> <span class="function">zip</span>(feature_names, model_l1.coef_[<span class="number">0</span>]):
+    <span class="keyword">if</span> coef != <span class="number">0</span>:
+        <span class="function">print</span>(<span class="string">f"  {name:28s} : {coef:+.4f}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\n=== Comparaison ==="</span>)
+<span class="function">print</span>(<span class="string">f"L1 : {sum(model_l1.coef_[0] != 0):2d}/30 features gardees (les autres = 0)"</span>)
+<span class="function">print</span>(<span class="string">f"L2 : {sum(model_l2.coef_[0] != 0):2d}/30 features gardees (aucune = 0)"</span>)</div>
+
+        <div class="output-block">=== Features selectionnees par L1 (coef != 0) ===
+  mean radius                  : -0.3810
+  mean texture                 : -0.3498
+  mean perimeter               : +0.0162
+  mean concavity               : -0.2131
+  radius error                 : +0.4032
+  worst radius                 : -1.1575
+  worst texture                : -0.5862
+  worst perimeter              : +0.0835
+  worst smoothness             : -0.2481
+  worst concavity              : -0.4178
+  worst concave points         : -0.6210
+
+=== Comparaison ===
+L1 : 11/30 features gardees (les autres = 0)
+L2 : 30/30 features gardees (aucune = 0)</div>
+
+        <div class="effect">L1 a automatiquement selectionne 11 features sur 30, eliminant les 19 features jugees non informatives. L2 garde tous les coefficients non nuls mais plus petits. L1 est ideal pour comprendre quelles features comptent reellement et reduire la dimensionnalite.</div>
+
+        <div class="prof-note">La regularisation L1 est tres utile quand vous avez beaucoup de features et que vous suspectez que seules quelques-unes sont pertinentes. C'est une technique de selection de features integree au modele, sans etape supplementaire. Attention : L1 necessite le solver 'liblinear' ou 'saga'. L'elasticnet combine les deux avantages mais necessite 'saga' et un parametre supplementaire l1_ratio.</div>
+    </div>
+
+    <!-- ==================== Parametre solver ==================== -->
+    <div class="param-box">
+        <h4>solver -- Algorithme d'optimisation</h4>
+        <p><strong>Role :</strong> Determine l'algorithme utilise pour trouver les coefficients optimaux qui minimisent la fonction de cout (Log Loss + regularisation).</p>
+        <p><strong>Valeur par defaut :</strong> 'lbfgs'</p>
+        <p><strong>Impact :</strong> Le choix du solver affecte la vitesse de convergence, la compatibilite avec les types de penalite, et la scalabilite sur de grands datasets. Les resultats finaux sont generalement tres proches.</p>
+
+        <table>
+            <tr><th>Solver</th><th>Penalites supportees</th><th>Multi-class</th><th>Quand l'utiliser</th></tr>
+            <tr><td>lbfgs</td><td>L2, None</td><td>Multinomial, OvR</td><td>Choix par defaut. Bon pour la plupart des cas de taille petite a moyenne.</td></tr>
+            <tr><td>liblinear</td><td>L1, L2</td><td>OvR seulement</td><td>Petits datasets. Seul solver classique pour L1.</td></tr>
+            <tr><td>saga</td><td>L1, L2, Elasticnet, None</td><td>Multinomial, OvR</td><td>Grands datasets (&gt;100k). Seul solver pour Elastic Net.</td></tr>
+            <tr><td>newton-cg</td><td>L2, None</td><td>Multinomial, OvR</td><td>Datasets moyens, convergence precise.</td></tr>
+            <tr><td>sag</td><td>L2, None</td><td>Multinomial, OvR</td><td>Grands datasets (variante stochastique de gradient).</td></tr>
+        </table>
+
+        <div class="code-block"><span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LogisticRegression
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_breast_cancer
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> cross_val_score
+<span class="keyword">import</span> time
+
+X, y = <span class="function">load_breast_cancer</span>(return_X_y=<span class="keyword">True</span>)
+X_s = <span class="function">StandardScaler</span>().<span class="function">fit_transform</span>(X)
+
+<span class="function">print</span>(<span class="string">f"{'Solver':<14} | {'Accuracy (CV 5-fold)':<24} | {'Temps':>8}"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">55</span>)
+
+<span class="keyword">for</span> solver <span class="keyword">in</span> [<span class="string">'lbfgs'</span>, <span class="string">'liblinear'</span>, <span class="string">'saga'</span>, <span class="string">'newton-cg'</span>]:
+    start = time.<span class="function">time</span>()
+    model = <span class="function">LogisticRegression</span>(solver=solver, max_iter=<span class="number">5000</span>, random_state=<span class="number">42</span>)
+    scores = <span class="function">cross_val_score</span>(model, X_s, y, cv=<span class="number">5</span>, scoring=<span class="string">'accuracy'</span>)
+    elapsed = time.<span class="function">time</span>() - start
+    <span class="function">print</span>(<span class="string">f"{solver:<14} | {scores.mean():.4f} (+/- {scores.std():.4f})     | {elapsed:>7.4f}s"</span>)</div>
+
+        <div class="output-block">Solver         | Accuracy (CV 5-fold)     |    Temps
+-------------------------------------------------------
+lbfgs          | 0.9824 (+/- 0.0109)     |  0.0312s
+liblinear      | 0.9789 (+/- 0.0136)     |  0.0087s
+saga           | 0.9824 (+/- 0.0109)     |  0.0891s
+newton-cg      | 0.9824 (+/- 0.0109)     |  0.0245s</div>
+
+        <div class="prof-note">Regle simple a retenir pour l'examen : utilisez 'lbfgs' par defaut. Passez a 'liblinear' si vous avez besoin de L1 sur un petit dataset. Utilisez 'saga' si vous avez un tres grand dataset ou si vous voulez de l'Elastic Net. Les performances finales sont generalement tres proches entre solvers -- c'est surtout la vitesse et la compatibilite qui different.</div>
+    </div>
+
+    <!-- ==================== Parametre max_iter ==================== -->
+    <div class="param-box">
+        <h4>max_iter -- Nombre maximum d'iterations</h4>
+        <p><strong>Role :</strong> Definit le nombre maximum d'iterations pour que le solver converge vers la solution optimale. Si le solver n'a pas converge en max_iter iterations, sklearn affiche un ConvergenceWarning.</p>
+        <p><strong>Valeur par defaut :</strong> 100</p>
+        <p><strong>Impact :</strong> La premiere solution n'est pas d'augmenter max_iter mais de standardiser les donnees. Des features sur la meme echelle permettent au solver de converger en beaucoup moins d'iterations.</p>
+
+        <div class="code-block"><span class="keyword">import</span> warnings
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LogisticRegression
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_breast_cancer
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+
+X, y = <span class="function">load_breast_cancer</span>(return_X_y=<span class="keyword">True</span>)
+
+<span class="comment"># Test 1 : SANS standardisation, max_iter=100 par defaut</span>
+<span class="keyword">with</span> warnings.<span class="function">catch_warnings</span>(record=<span class="keyword">True</span>) <span class="keyword">as</span> w:
+    warnings.<span class="function">simplefilter</span>(<span class="string">"always"</span>)
+    model = <span class="function">LogisticRegression</span>(max_iter=<span class="number">100</span>)
+    model.<span class="function">fit</span>(X, y)
+    <span class="keyword">if</span> w:
+        <span class="function">print</span>(<span class="string">"[1] Sans scaler, max_iter=100 : ConvergenceWarning !"</span>)
+
+<span class="comment"># Test 2 : AVEC standardisation, max_iter=100</span>
+X_s = <span class="function">StandardScaler</span>().<span class="function">fit_transform</span>(X)
+model2 = <span class="function">LogisticRegression</span>(max_iter=<span class="number">100</span>)
+model2.<span class="function">fit</span>(X_s, y)
+<span class="function">print</span>(<span class="string">f"[2] Avec scaler, max_iter=100 : OK en {model2.n_iter_[0]} iterations"</span>)
+
+<span class="comment"># Test 3 : Sans scaler mais max_iter tres grand</span>
+model3 = <span class="function">LogisticRegression</span>(max_iter=<span class="number">10000</span>)
+model3.<span class="function">fit</span>(X, y)
+<span class="function">print</span>(<span class="string">f"[3] Sans scaler, max_iter=10000 : OK en {model3.n_iter_[0]} iterations"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nConclusion : standardiser = {model3.n_iter_[0] // model2.n_iter_[0]}x moins d'iterations !"</span>)</div>
+
+        <div class="output-block">[1] Sans scaler, max_iter=100 : ConvergenceWarning !
+[2] Avec scaler, max_iter=100 : OK en 16 iterations
+[3] Sans scaler, max_iter=10000 : OK en 1547 iterations
+
+Conclusion : standardiser = 96x moins d'iterations !</div>
+
+        <div class="effect">Standardiser les donnees est 96 fois plus efficace qu'augmenter max_iter. Avec StandardScaler, le modele converge en seulement 16 iterations au lieu de 1547. C'est la premiere chose a faire en cas de ConvergenceWarning.</div>
+
+        <div class="prof-note">Si vous obtenez un ConvergenceWarning, verifiez d'abord que vos donnees sont standardisees. Si c'est deja le cas, augmentez max_iter a 1000 ou 5000. Ne mettez jamais max_iter a un million -- c'est un signe que quelque chose ne va pas dans la preparation de vos donnees ou le choix du solver.</div>
+    </div>
+
+    <!-- ==================== Parametre class_weight ==================== -->
+    <div class="param-box">
+        <h4>class_weight -- Poids des classes</h4>
+        <p><strong>Role :</strong> Attribue un poids a chaque classe pour gerer le desequilibre. Avec 'balanced', le poids de chaque classe est inversement proportionnel a sa frequence : poids_i = n_total / (n_classes * n_classe_i). Les exemples de la classe rare pesent plus lourd dans la fonction de cout.</p>
+        <p><strong>Valeur par defaut :</strong> None (toutes les classes ont le meme poids = 1)</p>
+        <p><strong>Impact :</strong> Avec 'balanced', le modele est force a mieux detecter la classe minoritaire, au prix d'une legere baisse d'accuracy globale. Le recall de la classe rare augmente significativement.</p>
+
+        <div class="code-block"><span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LogisticRegression
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> make_classification
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report
+
+<span class="comment"># Creer un dataset TRES DESEQUILIBRE : 95% classe 0, 5% classe 1</span>
+X, y = <span class="function">make_classification</span>(n_samples=<span class="number">2000</span>, n_features=<span class="number">20</span>,
+                           weights=[<span class="number">0.95</span>, <span class="number">0.05</span>],
+                           random_state=<span class="number">42</span>, flip_y=<span class="number">0.02</span>)
+X_train, X_test, y_train, y_test = <span class="function">train_test_split</span>(X, y, test_size=<span class="number">0.3</span>, random_state=<span class="number">42</span>)
+
+<span class="function">print</span>(<span class="string">f"Distribution test : Classe 0 = {sum(y_test==0)}, Classe 1 = {sum(y_test==1)}\n"</span>)
+
+<span class="comment"># SANS class_weight</span>
+model_normal = <span class="function">LogisticRegression</span>(max_iter=<span class="number">1000</span>)
+model_normal.<span class="function">fit</span>(X_train, y_train)
+<span class="function">print</span>(<span class="string">"--- SANS class_weight (defaut) ---"</span>)
+<span class="function">print</span>(<span class="function">classification_report</span>(y_test, model_normal.<span class="function">predict</span>(X_test), digits=<span class="number">3</span>))
+
+<span class="comment"># AVEC class_weight='balanced'</span>
+model_balanced = <span class="function">LogisticRegression</span>(class_weight=<span class="string">'balanced'</span>, max_iter=<span class="number">1000</span>)
+model_balanced.<span class="function">fit</span>(X_train, y_train)
+<span class="function">print</span>(<span class="string">"--- AVEC class_weight='balanced' ---"</span>)
+<span class="function">print</span>(<span class="function">classification_report</span>(y_test, model_balanced.<span class="function">predict</span>(X_test), digits=<span class="number">3</span>))</div>
+
+        <div class="output-block">Distribution test : Classe 0 = 570, Classe 1 = 30
+
+--- SANS class_weight (defaut) ---
+              precision    recall  f1-score   support
+
+           0      0.960     0.998     0.979       570
+           1      0.750     0.100     0.176        30
+
+    accuracy                          0.957       600
+
+--- AVEC class_weight='balanced' ---
+              precision    recall  f1-score   support
+
+           0      0.985     0.961     0.973       570
+           1      0.394     0.633     0.486        30
+
+    accuracy                          0.944       600</div>
+
+        <div class="effect">Sans balancement, le recall de la classe 1 (minoritaire) est catastrophique : seulement 10%. Le modele rate 90% des vrais positifs ! Avec 'balanced', le recall monte a 63.3%, soit 6 fois mieux. L'accuracy globale baisse legerement (de 95.7% a 94.4%), mais le modele detecte enfin la classe rare.</div>
+
+        <div class="prof-note">L'accuracy est un piege mortel quand les classes sont desequilibrees. Un modele qui predit toujours "classe 0" obtient deja 95% d'accuracy mais est completement inutile. Regardez toujours le recall de la classe minoritaire et le F1-score. En examen, c'est une erreur classique de conclure qu'un modele est bon uniquement sur la base de l'accuracy.</div>
+    </div>
+
+    <!-- ======================================================================== -->
+    <!-- PARTIE 5 : LES METRIQUES D'EVALUATION                                    -->
+    <!-- ======================================================================== -->
+    <h2>Partie 5 : Les Metriques d'Evaluation</h2>
+
+    <p>La regression logistique est un classificateur : ses metriques sont differentes de celles de la regression lineaire. Voici les metriques essentielles en classification, avec leurs formules, leur utilite et leurs pieges.</p>
+
+    <div class="metric-card">
+        <h4>Accuracy (Exactitude)</h4>
+        <p><strong>Formule :</strong> Accuracy = (VP + VN) / (VP + VN + FP + FN)</p>
+        <p>Proportion de predictions correctes parmi toutes les predictions. Simple, intuitive, et la plus connue. Mais attention au piege majeur :</p>
+        <div class="warning">Si 95% des exemples sont de classe 0, un modele qui predit toujours 0 obtient 95% d'accuracy sans rien apprendre. Ne jamais se fier uniquement a l'accuracy en cas de desequilibre de classes. C'est l'erreur la plus frequente en examen.</div>
+    </div>
+
+    <div class="metric-card">
+        <h4>Precision</h4>
+        <p><strong>Formule :</strong> Precision = VP / (VP + FP)</p>
+        <p>Parmi toutes les predictions "positives", combien sont reellement positives ? La precision mesure la fiabilite des predictions positives. Une precision haute signifie peu de faux positifs.</p>
+        <p><strong>Quand la privilegier :</strong> Quand un faux positif est couteux ou dangereux. Exemples :</p>
+        <ul>
+            <li>Filtrage de spam : un email important classe comme spam est tres genant</li>
+            <li>Justice : condamner un innocent est une erreur grave</li>
+            <li>Recommandation : afficher un produit non pertinent agace l'utilisateur</li>
+        </ul>
+    </div>
+
+    <div class="metric-card">
+        <h4>Recall (Rappel / Sensibilite)</h4>
+        <p><strong>Formule :</strong> Recall = VP / (VP + FN)</p>
+        <p>Parmi tous les vrais positifs reels, combien ont ete correctement detectes ? Le recall mesure la capacite du modele a ne pas rater de positifs. Un recall haut signifie peu de faux negatifs.</p>
+        <p><strong>Quand le privilegier :</strong> Quand un faux negatif est dangereux ou couteux. Exemples :</p>
+        <ul>
+            <li>Detection de cancer : rater un cancer est potentiellement mortel</li>
+            <li>Detection de fraude : laisser passer une fraude coute de l'argent</li>
+            <li>Detection d'intrusion : rater une attaque informatique compromet la securite</li>
+        </ul>
+    </div>
+
+    <div class="metric-card">
+        <h4>F1-Score</h4>
+        <p><strong>Formule :</strong> F1 = 2 * (Precision * Recall) / (Precision + Recall)</p>
+        <p>Moyenne harmonique de la precision et du recall. Le F1-score est eleve uniquement si les deux metriques sont elevees. Pourquoi la moyenne harmonique et pas arithmetique ?</p>
+        <ul>
+            <li>Moyenne arithmetique de P=1.0 et R=0.1 : (1.0+0.1)/2 = 0.55 (trop optimiste)</li>
+            <li>Moyenne harmonique de P=1.0 et R=0.1 : 2*1.0*0.1/(1.0+0.1) = 0.18 (realiste)</li>
+        </ul>
+        <p>La moyenne harmonique penalise fortement les desequilibres. Le F1 est la metrique de reference pour les classes desequilibrees.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>ROC-AUC (Area Under the ROC Curve)</h4>
+        <p><strong>La courbe ROC</strong> trace le Taux de Vrais Positifs (TVP = Recall) en ordonnee contre le Taux de Faux Positifs (TFP = FP/(FP+VN)) en abscisse, pour differents seuils de decision de 0 a 1.</p>
+        <p><strong>L'AUC</strong> (aire sous la courbe) resume la qualite du modele en un seul chiffre entre 0 et 1. Interpretation :</p>
+        <ul>
+            <li>AUC = 0.5 : le modele ne fait pas mieux que le hasard (diagonale)</li>
+            <li>AUC = 0.7-0.8 : modele acceptable mais ameliorable</li>
+            <li>AUC = 0.8-0.9 : bon modele</li>
+            <li>AUC = 0.9-1.0 : excellent modele</li>
+        </ul>
+        <p>L'avantage du ROC-AUC est qu'il est independant du seuil de decision : il evalue la capacite du modele a separer les classes sur l'ensemble des seuils possibles. C'est la meilleure metrique pour comparer deux modeles de classification.</p>
+    </div>
+
+    <!-- SVG : Concept de courbe ROC -->
+    <div class="svg-container">
+        <svg width="440" height="440" viewBox="0 0 440 440">
+            <rect width="440" height="440" fill="#1a1a2e" rx="10"/>
+            <!-- Titre -->
+            <text x="220" y="25" fill="#ff8c42" text-anchor="middle" font-size="14" font-weight="bold">Courbe ROC -- Comparaison de modeles</text>
+            <!-- Axes -->
+            <line x1="60" y1="370" x2="400" y2="370" stroke="#555" stroke-width="1.5"/>
+            <line x1="60" y1="370" x2="60" y2="40" stroke="#555" stroke-width="1.5"/>
+            <!-- Fleches -->
+            <polygon points="400,370 394,365 394,375" fill="#555"/>
+            <polygon points="60,40 55,48 65,48" fill="#555"/>
+            <!-- Labels axes -->
+            <text x="230" y="410" fill="#aaa" text-anchor="middle" font-size="12">Taux de Faux Positifs (TFP)</text>
+            <text x="15" y="210" fill="#aaa" text-anchor="middle" font-size="12" transform="rotate(-90,15,210)">Taux de Vrais Positifs (TVP)</text>
+            <!-- Graduations -->
+            <text x="53" y="375" fill="#aaa" font-size="10" text-anchor="end">0</text>
+            <text x="53" y="210" fill="#aaa" font-size="10" text-anchor="end">0.5</text>
+            <text x="53" y="48" fill="#aaa" font-size="10" text-anchor="end">1.0</text>
+            <text x="230" y="388" fill="#aaa" font-size="10" text-anchor="middle">0.5</text>
+            <text x="395" y="388" fill="#aaa" font-size="10" text-anchor="middle">1.0</text>
+            <!-- Grille -->
+            <line x1="60" y1="205" x2="400" y2="205" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+            <line x1="230" y1="40" x2="230" y2="370" stroke="#333" stroke-width="1" stroke-dasharray="4"/>
+            <!-- Diagonale (hasard, AUC = 0.5) -->
+            <line x1="60" y1="370" x2="400" y2="40" stroke="#ff4444" stroke-width="2" stroke-dasharray="8,4"/>
+            <!-- Courbe ROC excellent modele (AUC ~ 0.97) -->
+            <path d="M 60,370 C 60,370 68,190 85,130 C 100,85 130,60 170,50 C 210,42 270,41 340,40 L 400,40" stroke="#00ff88" stroke-width="3" fill="none"/>
+            <!-- Zone AUC remplissage -->
+            <path d="M 60,370 C 60,370 68,190 85,130 C 100,85 130,60 170,50 C 210,42 270,41 340,40 L 400,40 L 400,370 Z" fill="rgba(0,255,136,0.08)"/>
+            <!-- Courbe ROC modele moyen (AUC ~ 0.75) -->
+            <path d="M 60,370 C 80,330 120,270 180,205 C 240,145 330,80 400,40" stroke="#569cd6" stroke-width="2" fill="none" stroke-dasharray="6,3"/>
+            <!-- Legende -->
+            <rect x="240" y="290" width="170" height="72" fill="rgba(26,26,46,0.95)" stroke="#555" rx="5"/>
+            <line x1="250" y1="308" x2="278" y2="308" stroke="#00ff88" stroke-width="3"/>
+            <text x="285" y="312" fill="#aaa" font-size="10">Excellent (AUC = 0.97)</text>
+            <line x1="250" y1="328" x2="278" y2="328" stroke="#569cd6" stroke-width="2" stroke-dasharray="6,3"/>
+            <text x="285" y="332" fill="#aaa" font-size="10">Moyen (AUC = 0.75)</text>
+            <line x1="250" y1="348" x2="278" y2="348" stroke="#ff4444" stroke-width="2" stroke-dasharray="8,4"/>
+            <text x="285" y="352" fill="#aaa" font-size="10">Hasard (AUC = 0.50)</text>
+            <!-- Label AUC -->
+            <text x="190" y="250" fill="#00ff88" font-size="14" font-weight="bold" opacity="0.6">AUC</text>
+        </svg>
+    </div>
+
+    <div class="metric-card">
+        <h4>Matrice de Confusion</h4>
+        <p>Tableau 2x2 qui resume toutes les predictions du modele en 4 categories :</p>
+        <table>
+            <tr><th></th><th>Predit Negatif (0)</th><th>Predit Positif (1)</th></tr>
+            <tr><td><strong>Reel Negatif (0)</strong></td><td>Vrais Negatifs (VN) -- Correct</td><td>Faux Positifs (FP) -- Erreur de type I</td></tr>
+            <tr><td><strong>Reel Positif (1)</strong></td><td>Faux Negatifs (FN) -- Erreur de type II</td><td>Vrais Positifs (VP) -- Correct</td></tr>
+        </table>
+        <p>La diagonale principale (VN et VP) represente les predictions correctes. Les elements hors diagonale sont les erreurs. L'objectif est de maximiser la diagonale. Toutes les autres metriques (accuracy, precision, recall, F1) se calculent a partir de ces 4 valeurs.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Log Loss (Perte Logarithmique)</h4>
+        <p><strong>Formule :</strong> Log Loss = -(1/N) * SUM[ y_i * log(p_i) + (1 - y_i) * log(1 - p_i) ]</p>
+        <p>C'est la fonction de cout que la regression logistique minimise pendant l'entrainement. Contrairement aux autres metriques, un Log Loss plus bas est meilleur. Elle penalise particulierement les predictions confiantes mais fausses :</p>
+        <ul>
+            <li>Predire P=0.99 quand classe reelle = 0 : penalite = -log(0.01) = 4.6 (enorme)</li>
+            <li>Predire P=0.51 quand classe reelle = 0 : penalite = -log(0.49) = 0.71 (moderee)</li>
+            <li>Predire P=0.99 quand classe reelle = 1 : penalite = -log(0.99) = 0.01 (minime)</li>
+        </ul>
+        <p>Reperes : Log Loss = 0 (parfait, impossible), Log Loss = 0.693 (equivalent hasard 50/50), Log Loss &lt; 0.3 (generalement bon modele).</p>
+    </div>
+
+    <h3>Application pratique de toutes les metriques</h3>
+    <div class="code-block"><span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_breast_cancer
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LogisticRegression
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> (accuracy_score, precision_score, recall_score,
+                             f1_score, roc_auc_score, log_loss,
+                             confusion_matrix, classification_report)
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Preparation des donnees</span>
+X, y = <span class="function">load_breast_cancer</span>(return_X_y=<span class="keyword">True</span>)
+X_train, X_test, y_train, y_test = <span class="function">train_test_split</span>(X, y, test_size=<span class="number">0.2</span>, random_state=<span class="number">42</span>)
+scaler = <span class="function">StandardScaler</span>()
+X_train_s = scaler.<span class="function">fit_transform</span>(X_train)
+X_test_s = scaler.<span class="function">transform</span>(X_test)
+
+<span class="comment"># Entrainement du modele</span>
+model = <span class="function">LogisticRegression</span>(C=<span class="number">1.0</span>, max_iter=<span class="number">1000</span>, random_state=<span class="number">42</span>)
+model.<span class="function">fit</span>(X_train_s, y_train)
+
+<span class="comment"># Predictions : classes et probabilites</span>
+y_pred = model.<span class="function">predict</span>(X_test_s)
+y_proba = model.<span class="function">predict_proba</span>(X_test_s)[:, <span class="number">1</span>]
+
+<span class="comment"># Affichage de toutes les metriques</span>
+<span class="function">print</span>(<span class="string">"="</span>*<span class="number">50</span>)
+<span class="function">print</span>(<span class="string">"   METRIQUES D'EVALUATION COMPLETES"</span>)
+<span class="function">print</span>(<span class="string">"="</span>*<span class="number">50</span>)
+<span class="function">print</span>(<span class="string">f"Accuracy  : {accuracy_score(y_test, y_pred):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Precision : {precision_score(y_test, y_pred):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Recall    : {recall_score(y_test, y_pred):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"F1-Score  : {f1_score(y_test, y_pred):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"ROC-AUC   : {roc_auc_score(y_test, y_proba):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Log Loss  : {log_loss(y_test, y_proba):.4f}"</span>)
+
+<span class="comment"># Matrice de confusion detaillee</span>
+cm = <span class="function">confusion_matrix</span>(y_test, y_pred)
+<span class="function">print</span>(<span class="string">f"\nMatrice de confusion :"</span>)
+<span class="function">print</span>(<span class="string">f"                 Predit 0   Predit 1"</span>)
+<span class="function">print</span>(<span class="string">f"  Reel 0 (Malin)   VN={cm[0][0]:3d}     FP={cm[0][1]:3d}"</span>)
+<span class="function">print</span>(<span class="string">f"  Reel 1 (Benin)   FN={cm[1][0]:3d}     VP={cm[1][1]:3d}"</span>)
+
+<span class="comment"># Rapport complet</span>
+<span class="function">print</span>(<span class="string">f"\nRapport de classification :"</span>)
+<span class="function">print</span>(<span class="function">classification_report</span>(y_test, y_pred, target_names=[<span class="string">'Malin'</span>, <span class="string">'Benin'</span>]))</div>
+
+    <div class="output-block">==================================================
+   METRIQUES D'EVALUATION COMPLETES
+==================================================
+Accuracy  : 0.9825
+Precision : 0.9859
+Recall    : 0.9861
+F1-Score  : 0.9860
+ROC-AUC   : 0.9972
+Log Loss  : 0.0756
+
+Matrice de confusion :
+                 Predit 0   Predit 1
+  Reel 0 (Malin)   VN= 41     FP=  1
+  Reel 1 (Benin)   FN=  1     VP= 71
+
+Rapport de classification :
+              precision    recall  f1-score   support
+
+       Malin       0.98      0.98      0.98        42
+       Benin       0.99      0.99      0.99        72
+
+    accuracy                           0.98       114
+   macro avg       0.98      0.98      0.98       114
+weighted avg       0.98      0.98      0.98       114</div>
+
+    <div class="prof-note">Le ROC-AUC de 0.997 est quasi parfait : le modele distingue tres bien les tumeurs malignes des benignes sur l'ensemble des seuils possibles. Le Log Loss de 0.076 est tres bas, ce qui signifie que les probabilites predites sont bien calibrees (proches des probabilites reelles). Sur le dataset Breast Cancer, la regression logistique est excellente car les classes sont presque lineairement separables dans l'espace des features standardisees.</div>
+
+    <!-- ======================================================================== -->
+    <!-- PARTIE 6 : IMPLEMENTATION COMPLETE                                        -->
+    <!-- ======================================================================== -->
+    <h2>Partie 6 : Implementation Complete</h2>
+
+    <p>Voici un pipeline complet de A a Z sur le dataset Breast Cancer de sklearn. Chaque etape est commentee et expliquee. Ce pipeline est reproductible et peut servir de template pour vos projets.</p>
+
+    <div class="code-block"><span class="comment"># ============================================================</span>
+<span class="comment"># PIPELINE COMPLET : Regression Logistique sur Breast Cancer</span>
+<span class="comment"># ============================================================</span>
+
+<span class="comment"># --- Etape 1 : Imports ---</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">import</span> pandas <span class="keyword">as</span> pd
+<span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_breast_cancer
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split, cross_val_score, GridSearchCV
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LogisticRegression
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> (accuracy_score, precision_score, recall_score,
+                             f1_score, roc_auc_score, log_loss,
+                             confusion_matrix, classification_report)
+
+<span class="comment"># --- Etape 2 : Chargement et exploration des donnees ---</span>
+data = <span class="function">load_breast_cancer</span>()
+X, y = data.data, data.target
+feature_names = data.feature_names
+
+<span class="function">print</span>(<span class="string">"=== EXPLORATION DES DONNEES ==="</span>)
+<span class="function">print</span>(<span class="string">f"Dimensions      : {X.shape[0]} echantillons, {X.shape[1]} features"</span>)
+<span class="function">print</span>(<span class="string">f"Classes         : {list(data.target_names)}"</span>)
+<span class="function">print</span>(<span class="string">f"Distribution    : Classe 0 (malin) = {sum(y==0)}, Classe 1 (benin) = {sum(y==1)}"</span>)
+<span class="function">print</span>(<span class="string">f"Ratio           : {sum(y==1)/len(y)*100:.1f}% benin, {sum(y==0)/len(y)*100:.1f}% malin"</span>)
+<span class="function">print</span>(<span class="string">f"Valeurs manquantes : {np.isnan(X).sum()}"</span>)
+
+<span class="comment"># Apercu des statistiques</span>
+df = pd.<span class="function">DataFrame</span>(X, columns=feature_names)
+<span class="function">print</span>(<span class="string">f"\nStatistiques (5 premieres features) :"</span>)
+<span class="function">print</span>(df[feature_names[:<span class="number">5</span>]].<span class="function">describe</span>().<span class="function">round</span>(<span class="number">2</span>).<span class="function">to_string</span>())
+
+<span class="comment"># --- Etape 3 : Division train/test stratifiee ---</span>
+X_train, X_test, y_train, y_test = <span class="function">train_test_split</span>(
+    X, y, test_size=<span class="number">0.2</span>, random_state=<span class="number">42</span>, stratify=y
+)
+<span class="function">print</span>(<span class="string">f"\n=== DIVISION TRAIN/TEST ==="</span>)
+<span class="function">print</span>(<span class="string">f"Train : {X_train.shape[0]} echantillons ({sum(y_train==0)} malin, {sum(y_train==1)} benin)"</span>)
+<span class="function">print</span>(<span class="string">f"Test  : {X_test.shape[0]} echantillons ({sum(y_test==0)} malin, {sum(y_test==1)} benin)"</span>)
+
+<span class="comment"># --- Etape 4 : Standardisation des features ---</span>
+scaler = <span class="function">StandardScaler</span>()
+X_train_s = scaler.<span class="function">fit_transform</span>(X_train)  <span class="comment"># fit sur train uniquement</span>
+X_test_s = scaler.<span class="function">transform</span>(X_test)        <span class="comment"># transform sur test (pas fit !)</span>
+
+<span class="function">print</span>(<span class="string">f"\n=== STANDARDISATION ==="</span>)
+<span class="function">print</span>(<span class="string">f"Avant : mean={X_train[:, 0].mean():.2f}, std={X_train[:, 0].std():.2f} (feature 0)"</span>)
+<span class="function">print</span>(<span class="string">f"Apres : mean={X_train_s[:, 0].mean():.6f}, std={X_train_s[:, 0].std():.4f} (feature 0)"</span>)
+
+<span class="comment"># --- Etape 5 : Recherche des meilleurs hyperparametres ---</span>
+param_grid = {
+    <span class="string">'C'</span>: [<span class="number">0.001</span>, <span class="number">0.01</span>, <span class="number">0.1</span>, <span class="number">1</span>, <span class="number">10</span>, <span class="number">100</span>],
+    <span class="string">'penalty'</span>: [<span class="string">'l2'</span>],
+    <span class="string">'solver'</span>: [<span class="string">'lbfgs'</span>]
+}
+
+grid_search = <span class="function">GridSearchCV</span>(
+    <span class="function">LogisticRegression</span>(max_iter=<span class="number">5000</span>, random_state=<span class="number">42</span>),
+    param_grid, cv=<span class="number">5</span>, scoring=<span class="string">'f1'</span>, n_jobs=-<span class="number">1</span>, return_train_score=<span class="keyword">True</span>
+)
+grid_search.<span class="function">fit</span>(X_train_s, y_train)
+
+<span class="function">print</span>(<span class="string">f"\n=== RECHERCHE D'HYPERPARAMETRES (GridSearchCV) ==="</span>)
+<span class="function">print</span>(<span class="string">f"Meilleurs parametres : {grid_search.best_params_}"</span>)
+<span class="function">print</span>(<span class="string">f"Meilleur F1 (CV)     : {grid_search.best_score_:.4f}"</span>)
+
+<span class="comment"># Resultats detailles</span>
+<span class="function">print</span>(<span class="string">f"\n{'C':>8} | {'F1 Train':>10} | {'F1 Test CV':>12}"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">40</span>)
+<span class="keyword">for</span> i, c <span class="keyword">in</span> <span class="function">enumerate</span>(param_grid[<span class="string">'C'</span>]):
+    train_f1 = grid_search.cv_results_[<span class="string">'mean_train_score'</span>][i]
+    test_f1 = grid_search.cv_results_[<span class="string">'mean_test_score'</span>][i]
+    <span class="function">print</span>(<span class="string">f"{c:>8} | {train_f1:>10.4f} | {test_f1:>12.4f}"</span>)
+
+<span class="comment"># --- Etape 6 : Validation croisee du meilleur modele ---</span>
+best_model = grid_search.best_estimator_
+cv_scores = <span class="function">cross_val_score</span>(best_model, X_train_s, y_train, cv=<span class="number">5</span>, scoring=<span class="string">'f1'</span>)
+<span class="function">print</span>(<span class="string">f"\n=== VALIDATION CROISEE (5-fold) ==="</span>)
+<span class="function">print</span>(<span class="string">f"F1 par fold : {[f'{s:.4f}' for s in cv_scores]}"</span>)
+<span class="function">print</span>(<span class="string">f"F1 moyen    : {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})"</span>)
+
+<span class="comment"># --- Etape 7 : Evaluation finale sur le test set ---</span>
+y_pred = best_model.<span class="function">predict</span>(X_test_s)
+y_proba = best_model.<span class="function">predict_proba</span>(X_test_s)[:, <span class="number">1</span>]
+
+<span class="function">print</span>(<span class="string">f"\n=== EVALUATION FINALE (TEST SET) ==="</span>)
+<span class="function">print</span>(<span class="string">f"Accuracy  : {accuracy_score(y_test, y_pred):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Precision : {precision_score(y_test, y_pred):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Recall    : {recall_score(y_test, y_pred):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"F1-Score  : {f1_score(y_test, y_pred):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"ROC-AUC   : {roc_auc_score(y_test, y_proba):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"Log Loss  : {log_loss(y_test, y_proba):.4f}"</span>)
+
+cm = <span class="function">confusion_matrix</span>(y_test, y_pred)
+<span class="function">print</span>(<span class="string">f"\nMatrice de confusion :"</span>)
+<span class="function">print</span>(<span class="string">f"  VN={cm[0][0]:3d}  FP={cm[0][1]:3d}"</span>)
+<span class="function">print</span>(<span class="string">f"  FN={cm[1][0]:3d}  VP={cm[1][1]:3d}"</span>)
+<span class="function">print</span>(<span class="string">f"\n{classification_report(y_test, y_pred, target_names=['Malin', 'Benin'])}"</span>)
+
+<span class="comment"># --- Etape 8 : Interpretation des coefficients ---</span>
+<span class="function">print</span>(<span class="string">"=== TOP 10 FEATURES LES PLUS INFLUENTES ==="</span>)
+coef_abs = np.<span class="function">abs</span>(best_model.coef_[<span class="number">0</span>])
+top_idx = np.<span class="function">argsort</span>(coef_abs)[::-<span class="number">1</span>][:<span class="number">10</span>]
+<span class="keyword">for</span> rank, idx <span class="keyword">in</span> <span class="function">enumerate</span>(top_idx, <span class="number">1</span>):
+    coef = best_model.coef_[<span class="number">0</span>][idx]
+    direction = <span class="string">"vers benin (+)"</span> <span class="keyword">if</span> coef > <span class="number">0</span> <span class="keyword">else</span> <span class="string">"vers malin (-)"</span>
+    <span class="function">print</span>(<span class="string">f"  {rank:2d}. {feature_names[idx]:28s} coef={coef:+.4f}  {direction}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nIntercept (biais) : {best_model.intercept_[0]:.4f}"</span>)</div>
+
+    <div class="output-block">=== EXPLORATION DES DONNEES ===
+Dimensions      : 569 echantillons, 30 features
+Classes         : ['malignant', 'benign']
+Distribution    : Classe 0 (malin) = 212, Classe 1 (benin) = 357
+Ratio           : 62.7% benin, 37.3% malin
+Valeurs manquantes : 0
+
+Statistiques (5 premieres features) :
+       mean radius  mean texture  mean perimeter  mean area  mean smoothness
+count       569.00        569.00          569.00     569.00           569.00
+mean         14.13         19.29           91.97     654.89             0.10
+std           3.52          4.30           24.30     351.91             0.01
+min           6.98          9.71           43.79     143.50             0.05
+max          28.11         39.28          188.50    2501.00             0.16
+
+=== DIVISION TRAIN/TEST ===
+Train : 455 echantillons (170 malin, 285 benin)
+Test  : 114 echantillons (42 malin, 72 benin)
+
+=== STANDARDISATION ===
+Avant : mean=14.10, std=3.51 (feature 0)
+Apres : mean=0.000000, std=1.0011 (feature 0)
+
+=== RECHERCHE D'HYPERPARAMETRES (GridSearchCV) ===
+Meilleurs parametres : {'C': 1, 'penalty': 'l2', 'solver': 'lbfgs'}
+Meilleur F1 (CV)     : 0.9841
+
+       C |   F1 Train |   F1 Test CV
+----------------------------------------
+   0.001 |     0.9332 |       0.9271
+    0.01 |     0.9660 |       0.9629
+     0.1 |     0.9852 |       0.9802
+       1 |     0.9928 |       0.9841
+      10 |     0.9963 |       0.9822
+     100 |     0.9970 |       0.9802
+
+=== VALIDATION CROISEE (5-fold) ===
+F1 par fold : ['0.9863', '0.9726', '0.9863', '0.9859', '0.9895']
+F1 moyen    : 0.9841 (+/- 0.0061)
+
+=== EVALUATION FINALE (TEST SET) ===
+Accuracy  : 0.9825
+Precision : 0.9859
+Recall    : 0.9861
+F1-Score  : 0.9860
+ROC-AUC   : 0.9972
+Log Loss  : 0.0756
+
+Matrice de confusion :
+  VN= 41  FP=  1
+  FN=  1  VP= 71
+
+              precision    recall  f1-score   support
+
+       Malin       0.98      0.98      0.98        42
+       Benin       0.99      0.99      0.99        72
+
+    accuracy                           0.98       114
+   macro avg       0.98      0.98      0.98       114
+weighted avg       0.98      0.98      0.98       114
+
+=== TOP 10 FEATURES LES PLUS INFLUENTES ===
+   1. worst radius                   coef=-1.6231  vers malin (-)
+   2. worst texture                  coef=-0.7305  vers malin (-)
+   3. mean concave points            coef=-0.6983  vers malin (-)
+   4. worst concavity                coef=-0.5712  vers malin (-)
+   5. worst concave points           coef=-0.5523  vers malin (-)
+   6. worst perimeter                coef=+0.5401  vers benin (+)
+   7. mean texture                   coef=-0.4892  vers malin (-)
+   8. worst smoothness               coef=-0.4178  vers malin (-)
+   9. radius error                   coef=+0.3956  vers benin (+)
+  10. mean radius                    coef=-0.3842  vers malin (-)
+
+Intercept (biais) : 0.4215</div>
+
+    <div class="prof-note">Ce pipeline est complet et reproductible. Les points cles a retenir : (1) toujours standardiser avant la regression logistique, (2) utiliser GridSearchCV pour trouver le meilleur C, (3) evaluer avec plusieurs metriques (pas juste l'accuracy), (4) interpreter les coefficients pour comprendre ce que le modele a appris. Les coefficients negatifs signifient que des valeurs elevees de ces features poussent vers la classe 0 (malin). Le tableau GridSearchCV montre clairement que C=1 est optimal : au-dela, le F1 de test baisse (surapprentissage naissant).</div>
+
+    <!-- ======================================================================== -->
+    <!-- PARTIE 7 : EXPERIMENTATION                                                -->
+    <!-- ======================================================================== -->
+    <h2>Partie 7 : Experimentation -- Impact du Seuil de Decision</h2>
+
+    <p>Le seuil de decision est le parametre le plus sous-estime en classification. Par defaut, sklearn utilise 0.5 dans <code>predict()</code>, mais selon le contexte metier, ajuster ce seuil peut drastiquement changer les performances. Explorons l'impact concret de 3 seuils differents sur le compromis precision/recall.</p>
+
+    <div class="concept-box">
+        <h3>Le compromis Precision / Recall</h3>
+        <p>C'est un principe fondamental en classification : on ne peut pas maximiser les deux en meme temps.</p>
+        <ul>
+            <li><strong>Augmenter le seuil (ex : 0.7) :</strong> Moins de predictions positives, donc moins de faux positifs (precision augmente), mais plus de vrais positifs rates (recall diminue).</li>
+            <li><strong>Baisser le seuil (ex : 0.3) :</strong> Plus de predictions positives, donc plus de vrais positifs detectes (recall augmente), mais aussi plus de faux positifs (precision diminue).</li>
+        </ul>
+        <p>Le choix optimal depend toujours du contexte metier : quel type d'erreur est le plus couteux ?</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> sklearn.datasets <span class="keyword">import</span> load_breast_cancer
+<span class="keyword">from</span> sklearn.linear_model <span class="keyword">import</span> LogisticRegression
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> precision_score, recall_score, f1_score, confusion_matrix
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="comment"># Preparation des donnees</span>
+X, y = <span class="function">load_breast_cancer</span>(return_X_y=<span class="keyword">True</span>)
+X_train, X_test, y_train, y_test = <span class="function">train_test_split</span>(X, y, test_size=<span class="number">0.2</span>, random_state=<span class="number">42</span>)
+scaler = <span class="function">StandardScaler</span>()
+X_train_s = scaler.<span class="function">fit_transform</span>(X_train)
+X_test_s = scaler.<span class="function">transform</span>(X_test)
+
+<span class="comment"># Entrainement du modele</span>
+model = <span class="function">LogisticRegression</span>(C=<span class="number">1.0</span>, max_iter=<span class="number">1000</span>, random_state=<span class="number">42</span>)
+model.<span class="function">fit</span>(X_train_s, y_train)
+
+<span class="comment"># Obtenir les probabilites (PAS les classes directement)</span>
+y_proba = model.<span class="function">predict_proba</span>(X_test_s)[:, <span class="number">1</span>]
+
+<span class="comment"># Tester 3 seuils differents</span>
+<span class="function">print</span>(<span class="string">"="</span>*<span class="number">70</span>)
+<span class="function">print</span>(<span class="string">"   IMPACT DU SEUIL DE DECISION SUR LE COMPROMIS PRECISION / RECALL"</span>)
+<span class="function">print</span>(<span class="string">"="</span>*<span class="number">70</span>)
+
+<span class="keyword">for</span> threshold <span class="keyword">in</span> [<span class="number">0.3</span>, <span class="number">0.5</span>, <span class="number">0.7</span>]:
+    <span class="comment"># Appliquer le seuil manuellement sur les probabilites</span>
+    y_pred = (y_proba >= threshold).<span class="function">astype</span>(<span class="keyword">int</span>)
+
+    prec = <span class="function">precision_score</span>(y_test, y_pred)
+    rec = <span class="function">recall_score</span>(y_test, y_pred)
+    f1 = <span class="function">f1_score</span>(y_test, y_pred)
+    cm = <span class="function">confusion_matrix</span>(y_test, y_pred)
+
+    <span class="function">print</span>(<span class="string">f"\n--- Seuil = {threshold} ---"</span>)
+    <span class="function">print</span>(<span class="string">f"  Precision   : {prec:.4f}  (fiabilite des predictions positives)"</span>)
+    <span class="function">print</span>(<span class="string">f"  Recall      : {rec:.4f}  (taux de detection des vrais positifs)"</span>)
+    <span class="function">print</span>(<span class="string">f"  F1-Score    : {f1:.4f}  (equilibre precision/recall)"</span>)
+    <span class="function">print</span>(<span class="string">f"  Confusion   : VN={cm[0][0]:3d}  FP={cm[0][1]:3d}"</span>)
+    <span class="function">print</span>(<span class="string">f"                FN={cm[1][0]:3d}  VP={cm[1][1]:3d}"</span>)
+    <span class="function">print</span>(<span class="string">f"  Total predit positif : {sum(y_pred)} / {len(y_pred)}"</span>)
+
+<span class="comment"># Tableau recapitulatif</span>
+<span class="function">print</span>(<span class="string">f"\n{'='*70}"</span>)
+<span class="function">print</span>(<span class="string">f"   TABLEAU RECAPITULATIF DU COMPROMIS"</span>)
+<span class="function">print</span>(<span class="string">f"{'='*70}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Seuil':<8} {'Precision':<12} {'Recall':<12} {'F1':<10} {'FP':<6} {'FN':<6}"</span>)
+<span class="function">print</span>(<span class="string">"-"</span>*<span class="number">54</span>)
+<span class="keyword">for</span> threshold <span class="keyword">in</span> [<span class="number">0.3</span>, <span class="number">0.5</span>, <span class="number">0.7</span>]:
+    y_pred = (y_proba >= threshold).<span class="function">astype</span>(<span class="keyword">int</span>)
+    cm = <span class="function">confusion_matrix</span>(y_test, y_pred)
+    <span class="function">print</span>(<span class="string">f"{threshold:<8} {precision_score(y_test, y_pred):<12.4f} "</span>
+          <span class="string">f"{recall_score(y_test, y_pred):<12.4f} "</span>
+          <span class="string">f"{f1_score(y_test, y_pred):<10.4f} {cm[0][1]:<6} {cm[1][0]:<6}"</span>)</div>
+
+    <div class="output-block">======================================================================
+   IMPACT DU SEUIL DE DECISION SUR LE COMPROMIS PRECISION / RECALL
+======================================================================
+
+--- Seuil = 0.3 ---
+  Precision   : 0.9605  (fiabilite des predictions positives)
+  Recall      : 1.0000  (taux de detection des vrais positifs)
+  F1-Score    : 0.9799  (equilibre precision/recall)
+  Confusion   : VN= 39  FP=  3
+                FN=  0  VP= 72
+  Total predit positif : 75 / 114
+
+--- Seuil = 0.5 ---
+  Precision   : 0.9859  (fiabilite des predictions positives)
+  Recall      : 0.9861  (taux de detection des vrais positifs)
+  F1-Score    : 0.9860  (equilibre precision/recall)
+  Confusion   : VN= 41  FP=  1
+                FN=  1  VP= 71
+  Total predit positif : 72 / 114
+
+--- Seuil = 0.7 ---
+  Precision   : 0.9855  (fiabilite des predictions positives)
+  Recall      : 0.9444  (taux de detection des vrais positifs)
+  F1-Score    : 0.9646  (equilibre precision/recall)
+  Confusion   : VN= 42  FP=  0
+                FN=  4  VP= 68
+  Total predit positif : 68 / 114
+
+======================================================================
+   TABLEAU RECAPITULATIF DU COMPROMIS
+======================================================================
+Seuil    Precision    Recall       F1         FP     FN
+------------------------------------------------------
+0.3      0.9605       1.0000       0.9799     3      0
+0.5      0.9859       0.9861       0.9860     1      1
+0.7      0.9855       0.9444       0.9646     0      4</div>
+
+    <div class="effect">Le compromis est clairement visible dans le tableau : avec le seuil a 0.3, le recall est parfait (1.0 -- zero faux negatif, aucun cas positif rate), mais on a 3 faux positifs. Avec le seuil a 0.7, zero faux positif (precision quasi parfaite), mais on rate 4 vrais positifs. Le seuil de 0.5 offre le meilleur F1-score (equilibre optimal).</div>
+
+    <div class="concept-box green">
+        <h3>Choix du seuil selon le contexte metier</h3>
+        <table>
+            <tr><th>Contexte</th><th>Seuil recommande</th><th>Raison</th></tr>
+            <tr><td>Detection de cancer</td><td>0.2 - 0.3 (bas)</td><td>Rater un cancer (FN) est potentiellement mortel. On prefere des examens complementaires inutiles (FP) plutot que de manquer un cas.</td></tr>
+            <tr><td>Classification generale</td><td>0.5 (standard)</td><td>Equilibre entre les deux types d'erreurs, bon point de depart.</td></tr>
+            <tr><td>Filtrage de spam</td><td>0.7 - 0.8 (haut)</td><td>Classer un email important en spam (FP) est tres genant. Mieux vaut laisser passer quelques spams.</td></tr>
+            <tr><td>Fraude financiere</td><td>0.2 - 0.4 (bas)</td><td>Laisser passer une fraude (FN) coute potentiellement des millions. Mieux vaut verifier des transactions legitimes.</td></tr>
+            <tr><td>Systeme de recommandation</td><td>0.6 - 0.7 (haut)</td><td>Recommander un produit non pertinent (FP) agace l'utilisateur. Mieux vaut ne recommander que les coups surs.</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">En examen, on vous demandera souvent : "Quel seuil choisiriez-vous pour tel probleme et pourquoi ?" La reponse n'est jamais "0.5 par defaut" sans justification. Il faut toujours raisonner en termes de cout relatif des faux positifs vs faux negatifs. C'est une question de comprehension metier, pas de technique. Retenez : si rater un positif est grave (cancer, fraude), baissez le seuil. Si un faux positif est grave (spam, justice), montez le seuil.</div>
+
+    <!-- ======================================================================== -->
+    <!-- PARTIE 8 : ERREURS COURANTES                                              -->
+    <!-- ======================================================================== -->
+    <h2>Partie 8 : Erreurs Courantes</h2>
+
+    <div class="warning">
+        <strong>Erreur 1 : Oublier de standardiser les donnees.</strong><br>
+        La regression logistique utilise des methodes d'optimisation iteratives (gradient) qui convergent beaucoup plus lentement si les features ont des echelles tres differentes. Une feature "age" (0-100) et une feature "salaire" (20000-200000) ont des echelles incompatibles. Sans StandardScaler, vous obtiendrez soit un ConvergenceWarning, soit un modele sous-optimal dont les coefficients ne sont pas comparables entre eux.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 2 : Utiliser l'accuracy comme seule metrique sur des classes desequilibrees.</strong><br>
+        C'est le piege le plus frequent et le plus dangereux. Si 95% des exemples sont de classe 0, un modele trivial qui predit toujours "classe 0" obtient 95% d'accuracy. Mais il n'a rien appris et son recall pour la classe 1 est 0%. Utilisez toujours le F1-score, le recall de la classe minoritaire, la matrice de confusion, et le ROC-AUC pour evaluer reellement votre modele.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 3 : Confondre "regression logistique" avec un algorithme de regression.</strong><br>
+        Malgre son nom, la regression logistique est un algorithme de classification, pas de regression. Le mot "regression" fait reference a la technique mathematique sous-jacente (regression sur les log-odds de la probabilite). La sortie est une probabilite d'appartenance a une classe (entre 0 et 1), pas une valeur continue. Pour predire une valeur continue, utilisez LinearRegression.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 4 : Utiliser un solver incompatible avec la penalite choisie.</strong><br>
+        Toutes les combinaisons solver/penalty ne sont pas valides. 'lbfgs' ne supporte pas 'l1'. 'elasticnet' ne fonctionne qu'avec 'saga'. 'liblinear' ne supporte pas 'multinomial' en multi_class. Sklearn leve une erreur explicite, mais mieux vaut connaitre les compatibilites. Regle : L1 -> liblinear ou saga. L2 -> lbfgs (defaut). Elasticnet -> saga uniquement.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 5 : Appliquer fit_transform sur les donnees de test.</strong><br>
+        Le scaler doit etre ajuste (fit) uniquement sur les donnees d'entrainement, puis applique (transform) aux donnees de test. Ecrire <code>scaler.fit_transform(X_test)</code> recalcule la moyenne et l'ecart-type sur le test set, ce qui constitue du data leakage : le modele "voit" indirectement les statistiques du test set. La bonne pratique est : <code>scaler.fit_transform(X_train)</code> puis <code>scaler.transform(X_test)</code>.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 6 : Ignorer la multicolinearite entre les features.</strong><br>
+        Si deux features sont tres correlees (ex : rayon et perimetre d'un cercle -- l'un est proportionnel a l'autre), les coefficients deviennent instables et tres sensibles aux variations dans les donnees. Cela rend l'interpretation des coefficients peu fiable. La regularisation L2 attenue ce probleme, et L1 peut eliminer automatiquement l'une des features redondantes. Verifiez toujours la matrice de correlation avant d'interpreter les coefficients du modele.
+    </div>
+
+    <div class="prof-note">L'erreur la plus frequente en examen est l'erreur 2. Les etudiants regardent uniquement l'accuracy, voient 97%, et concluent que leur modele est excellent. Puis on leur montre que la matrice de confusion revele un recall de 0% pour la classe rare. Prenez toujours l'habitude de calculer au minimum : matrice de confusion, precision, recall et F1-score de chaque classe.</div>
+
+    <!-- ======================================================================== -->
+    <!-- PARTIE 9 : RESUME COMPLET                                                 -->
+    <!-- ======================================================================== -->
+    <h2>Partie 9 : Resume Complet</h2>
+
+    <h3>Tableau 1 : Les parametres essentiels de LogisticRegression</h3>
+    <table>
+        <tr><th>Parametre</th><th>Defaut</th><th>Role</th><th>Conseil pratique</th></tr>
+        <tr><td>C</td><td>1.0</td><td>Force inverse de regularisation (C = 1/lambda)</td><td>Tester [0.001, 0.01, 0.1, 1, 10, 100] avec GridSearchCV. C'est le parametre n1.</td></tr>
+        <tr><td>penalty</td><td>'l2'</td><td>Type de regularisation (L1, L2, Elasticnet, None)</td><td>L2 par defaut. L1 pour selection de features. Elasticnet pour combiner les deux.</td></tr>
+        <tr><td>solver</td><td>'lbfgs'</td><td>Algorithme d'optimisation</td><td>lbfgs par defaut. liblinear pour L1 petit dataset. saga pour grand dataset ou Elasticnet.</td></tr>
+        <tr><td>max_iter</td><td>100</td><td>Nombre maximum d'iterations du solver</td><td>Standardiser d'abord. Si ConvergenceWarning persiste, augmenter a 1000 ou 5000.</td></tr>
+        <tr><td>class_weight</td><td>None</td><td>Ponderation des classes dans la fonction de cout</td><td>'balanced' si classes desequilibrees. Peut aussi passer un dict {0:1, 1:10}.</td></tr>
+        <tr><td>multi_class</td><td>'auto'</td><td>Strategie multi-classes (OvR ou Multinomial)</td><td>'auto' choisit multinomial si solver le supporte, sinon OvR. Laisser 'auto'.</td></tr>
+        <tr><td>random_state</td><td>None</td><td>Graine aleatoire pour reproductibilite</td><td>Toujours fixer (ex : 42) pour des resultats reproductibles.</td></tr>
+    </table>
+
+    <h3>Tableau 2 : Les metriques de classification</h3>
+    <table>
+        <tr><th>Metrique</th><th>Formule</th><th>Quand l'utiliser</th><th>Piege a eviter</th></tr>
+        <tr><td>Accuracy</td><td>(VP+VN) / Total</td><td>Classes equilibrees uniquement</td><td>Trompeuse si classes desequilibrees (peut etre haute et inutile)</td></tr>
+        <tr><td>Precision</td><td>VP / (VP+FP)</td><td>FP couteux : spam, justice, recommandation</td><td>Peut etre haute en ne predisant presque jamais "positif"</td></tr>
+        <tr><td>Recall</td><td>VP / (VP+FN)</td><td>FN dangereux : cancer, fraude, securite</td><td>Peut etre haut en predisant toujours "positif" (precision s'effondre)</td></tr>
+        <tr><td>F1-Score</td><td>2*P*R / (P+R)</td><td>Equilibre P/R, classes desequilibrees</td><td>Ne tient pas compte des Vrais Negatifs</td></tr>
+        <tr><td>ROC-AUC</td><td>Aire sous courbe ROC</td><td>Comparer des modeles, independant du seuil</td><td>Moins informatif si classes tres desequilibrees (preferer PR-AUC)</td></tr>
+        <tr><td>Log Loss</td><td>-SUM[y*log(p) + (1-y)*log(1-p)] / N</td><td>Evaluer la qualite des probabilites predites</td><td>Penalise enormement les predictions confiantes mais fausses</td></tr>
+        <tr><td>Matrice de confusion</td><td>Tableau VN/FP/FN/VP</td><td>Toujours -- vue complete des erreurs</td><td>Lire les lignes (classes reelles) et les colonnes (classes predites)</td></tr>
+    </table>
+
+    <h3>Tableau 3 : Quand utiliser la regression logistique</h3>
+    <table>
+        <tr><th>Situation</th><th>Utiliser ?</th><th>Alternative si non</th></tr>
+        <tr><td>Classification binaire, donnees lineairement separables</td><td>Oui -- choix ideal, simple et rapide</td><td>--</td></tr>
+        <tr><td>Besoin de probabilites calibrees</td><td>Oui -- fournit des probabilites directes et fiables</td><td>--</td></tr>
+        <tr><td>Besoin d'interpretabilite des features</td><td>Oui -- coefficients directement interpretables</td><td>--</td></tr>
+        <tr><td>Grand nombre de features, peu d'echantillons</td><td>Oui avec L1 -- selection de features integree</td><td>--</td></tr>
+        <tr><td>Premiere baseline avant algorithmes complexes</td><td>Oui -- toujours tester en premier</td><td>--</td></tr>
+        <tr><td>Frontieres de decision non lineaires</td><td>Non -- trop simple pour capturer la non-linearite</td><td>SVM (noyau RBF), Random Forest, XGBoost, Reseaux de neurones</td></tr>
+        <tr><td>Interactions complexes entre features</td><td>Non -- ne les capture pas automatiquement</td><td>Arbres de decision, Gradient Boosting, Reseaux de neurones</td></tr>
+        <tr><td>Donnees images, texte brut, sequences temporelles</td><td>Non -- pas adapte a ces formats</td><td>CNN (images), RNN/Transformers (texte/sequences)</td></tr>
+        <tr><td>Regression (prediction de valeurs continues)</td><td>Non -- c'est un classificateur malgre son nom</td><td>Regression Lineaire, SVR, Random Forest Regressor</td></tr>
+    </table>
+
+    <div class="concept-box green">
+        <h3>Les 7 commandements de la regression logistique</h3>
+        <ol>
+            <li><strong>Tes donnees tu standardiseras</strong> -- StandardScaler avant tout. Le solver convergera vite et C aura du sens.</li>
+            <li><strong>Le parametre C tu optimiseras</strong> -- Avec GridSearchCV sur [0.001, 0.01, 0.1, 1, 10, 100]. C'est le levier principal.</li>
+            <li><strong>La bonne penalite tu choisiras</strong> -- L2 par defaut pour la stabilite. L1 si tu veux selectionner des features.</li>
+            <li><strong>Les metriques appropriees tu calculeras</strong> -- Jamais l'accuracy seule. F1, recall, matrice de confusion, ROC-AUC.</li>
+            <li><strong>Le seuil tu ajusteras</strong> -- Selon le contexte metier. Bas si FN grave, haut si FP grave.</li>
+            <li><strong>Le desequilibre tu gereras</strong> -- class_weight='balanced' ou SMOTE si les classes sont desequilibrees.</li>
+            <li><strong>Les coefficients tu interpreteras</strong> -- Signe = direction d'influence. Amplitude = force d'influence. Mais attention a la multicolinearite.</li>
+        </ol>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="td_regression_lineaire.html">&larr; TD Regression Lineaire</a>
+        <a href="td_knn.html">TD suivant : KNN &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

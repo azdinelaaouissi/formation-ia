@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML 09 - Deep Learning | Formation ML Complete</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
+            background: #1a1a2e; border-right: 2px solid #ff6b35;
+            overflow-y: auto; z-index: 100; padding: 20px 0;
+        }
+        .sidebar h2 { color: #ff6b35; font-size: 1.1rem; padding: 0 20px 15px; border-bottom: 1px solid #333; }
+        .sidebar a { display: block; padding: 8px 20px; color: #aaa; text-decoration: none; font-size: 0.85rem; border-left: 3px solid transparent; transition: all 0.3s; }
+        .sidebar a:hover { color: #ff6b35; background: rgba(255,107,53,0.1); border-left-color: #ff6b35; }
+        .main-content { margin-left: 280px; padding: 40px 60px; max-width: 1100px; }
+        h1 { color: #ff6b35; font-size: 2.2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.6rem; margin: 40px 0 20px; padding-bottom: 10px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.3rem; margin: 25px 0 15px; }
+        h4 { color: #ffaa70; font-size: 1.1rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        p { margin-bottom: 15px; text-align: justify; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.blue { border-color: #00d2ff; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.purple { border-color: #a855f7; }
+        .analogy { background: rgba(255,107,53,0.1); border-left: 4px solid #ff6b35; padding: 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+        .analogy::before { content: "Analogie : "; color: #ff6b35; font-weight: bold; }
+        .important { background: rgba(255,68,68,0.1); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .important::before { content: "Important : "; color: #ff4444; font-weight: bold; }
+        .tip { background: rgba(0,255,136,0.1); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .tip::before { content: "A retenir : "; color: #00ff88; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #ff6b35; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px 12px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        .svg-container { text-align: center; margin: 25px 0; }
+        .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .card { background: #1a1a2e; border: 1px solid #333; border-radius: 10px; padding: 20px; }
+        .card:hover { border-color: #ff6b35; }
+        .card h4 { margin-top: 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 8px; }
+        @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; padding: 20px; } .comparison-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <h2>09 - Deep Learning</h2>
+    <a href="#ch1">1. Qu'est-ce que le Deep Learning ?</a>
+    <a href="#ch2">2. CNN - Convolution</a>
+    <a href="#ch3">3. CNN - Pooling et Architecture</a>
+    <a href="#ch4">4. CNN - Applications Vision</a>
+    <a href="#ch5">5. RNN - Sequences</a>
+    <a href="#ch6">6. LSTM et GRU</a>
+    <a href="#ch7">7. Le Transformer</a>
+    <a href="#ch8">8. Self-Attention</a>
+    <a href="#ch9">9. Encodeur et Decodeur</a>
+    <a href="#ch10">10. Transfer Learning</a>
+    <a href="#ch11">11. Autoencoders</a>
+    <a href="#ch12">12. GANs</a>
+    <a href="#ch13">13. Diffusion Models</a>
+    <a href="#ch14">14. Frameworks (PyTorch, TF)</a>
+    <a href="#ch15">15. Lien avec le RAG</a>
+    <a href="#ch16">16. Resume et Synthese</a>
+</nav>
+
+<div class="main-content">
+
+    <h1>Chapitre 9 : Le Deep Learning</h1>
+    <p class="subtitle">L'art des reseaux profonds - CNN, RNN, Transformers et au-dela</p>
+
+    <div class="concept-box">
+        <p><strong>Objectif :</strong> Comprendre les architectures de Deep Learning qui ont revolutionne l'IA : les CNN pour la vision, les RNN/LSTM pour les sequences, et surtout les <strong>Transformers</strong> qui sont au coeur des LLMs (GPT, Claude, BERT) et donc du RAG. Tout visuellement, sans code.</p>
+    </div>
+
+    <!-- CHAPITRE 1 -->
+    <h2 id="ch1">Chapitre 1 : Qu'est-ce que le Deep Learning ?</h2>
+
+    <h3>1.1 ML vs Deep Learning</h3>
+    <p>Le <strong>Deep Learning</strong> est un sous-domaine du Machine Learning qui utilise des reseaux de neurones avec <strong>de nombreuses couches</strong> (d'ou "deep" = profond). La difference cle : en ML classique, l'humain doit definir les features. En Deep Learning, le reseau <strong>apprend les features automatiquement</strong>.</p>
+
+    <div class="svg-container">
+        <svg width="700" height="250" viewBox="0 0 700 250">
+            <rect width="700" height="250" fill="#0f0f23"/>
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">ML Classique vs Deep Learning</text>
+
+            <!-- ML classique -->
+            <rect x="20" y="45" width="310" height="180" rx="12" fill="rgba(0,210,255,0.05)" stroke="#00d2ff"/>
+            <text x="175" y="70" text-anchor="middle" fill="#00d2ff" font-size="13" font-weight="bold">ML Classique</text>
+
+            <rect x="40" y="85" width="80" height="30" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="80" y="105" text-anchor="middle" fill="#00d2ff" font-size="9">Image</text>
+            <text x="135" y="103" fill="#aaa" font-size="14">&#8594;</text>
+            <rect x="150" y="85" width="80" height="30" rx="5" fill="rgba(255,170,0,0.2)" stroke="#ffaa00"/>
+            <text x="190" y="105" text-anchor="middle" fill="#ffaa00" font-size="8">Features</text>
+            <text x="183" y="97" text-anchor="middle" fill="#ffaa00" font-size="7">MANUELLES</text>
+            <text x="245" y="103" fill="#aaa" font-size="14">&#8594;</text>
+            <rect x="260" y="85" width="55" height="30" rx="5" fill="rgba(0,255,136,0.2)" stroke="#00ff88"/>
+            <text x="287" y="105" text-anchor="middle" fill="#00ff88" font-size="8">SVM</text>
+
+            <text x="175" y="145" text-anchor="middle" fill="#aaa" font-size="10">L'humain doit definir les features :</text>
+            <text x="175" y="165" text-anchor="middle" fill="#aaa" font-size="10">"contours", "couleur", "texture"...</text>
+            <text x="175" y="195" text-anchor="middle" fill="#ff4444" font-size="10">Fastidieux et limite !</text>
+
+            <!-- Deep Learning -->
+            <rect x="370" y="45" width="310" height="180" rx="12" fill="rgba(255,107,53,0.05)" stroke="#ff6b35"/>
+            <text x="525" y="70" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">Deep Learning</text>
+
+            <rect x="390" y="85" width="80" height="30" rx="5" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="430" y="105" text-anchor="middle" fill="#ff6b35" font-size="9">Image brute</text>
+            <text x="485" y="103" fill="#aaa" font-size="14">&#8594;</text>
+            <rect x="500" y="80" width="160" height="40" rx="5" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="580" y="98" text-anchor="middle" fill="#ff6b35" font-size="8">Reseau Profond</text>
+            <text x="580" y="112" text-anchor="middle" fill="#ff6b35" font-size="8">Features AUTOMATIQUES</text>
+
+            <text x="525" y="145" text-anchor="middle" fill="#aaa" font-size="10">Le reseau apprend seul les features :</text>
+            <text x="525" y="165" text-anchor="middle" fill="#aaa" font-size="10">pixels &#8594; lignes &#8594; formes &#8594; objets</text>
+            <text x="525" y="195" text-anchor="middle" fill="#00ff88" font-size="10">Automatique et puissant !</text>
+        </svg>
+    </div>
+
+    <h3>1.2 Pourquoi "maintenant" ?</h3>
+    <table>
+        <tr><th>Facteur</th><th>Avant 2012</th><th>Depuis 2012</th></tr>
+        <tr><td><strong>Donnees</strong></td><td>Milliers d'exemples</td><td>Milliards d'exemples (Internet)</td></tr>
+        <tr><td><strong>Calcul</strong></td><td>CPU lents</td><td>GPU puissants, Cloud, TPU</td></tr>
+        <tr><td><strong>Algorithmes</strong></td><td>Gradient qui disparait</td><td>ReLU, BatchNorm, Dropout, Adam</td></tr>
+        <tr><td><strong>Frameworks</strong></td><td>Code from scratch</td><td>PyTorch, TensorFlow (facile)</td></tr>
+    </table>
+
+    <!-- CHAPITRE 2 -->
+    <h2 id="ch2">Chapitre 2 : CNN - La Convolution</h2>
+
+    <h3>2.1 Pourquoi les CNN pour les images ?</h3>
+    <p>Un MLP classique traite chaque pixel independamment. Pour une image 224x224 RGB, cela ferait 150 528 entrees - impossible ! Les <strong>CNN</strong> (Convolutional Neural Networks) utilisent des <strong>filtres</strong> qui glissent sur l'image pour detecter des patterns locaux.</p>
+
+    <div class="analogy">
+        Imaginez que vous cherchez "Ou est Charlie?" dans une grande image. Vous ne regardez pas tous les pixels en meme temps. Vous balayez l'image zone par zone avec une "loupe" (le filtre), en cherchant des patterns specifiques (chapeau rouge, lunettes). C'est exactement ce que fait un CNN.
+    </div>
+
+    <h3>2.2 Comment fonctionne la convolution ?</h3>
+    <div class="svg-container">
+        <svg width="700" height="320" viewBox="0 0 700 320">
+            <rect width="700" height="320" fill="#0f0f23"/>
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Convolution : Un Filtre Glisse sur l'Image</text>
+
+            <!-- Input image -->
+            <text x="100" y="50" text-anchor="middle" fill="#00d2ff" font-size="12" font-weight="bold">Image d'entree (6x6)</text>
+            <!-- Grid -->
+            <g transform="translate(30,60)">
+                <rect x="0" y="0" width="140" height="140" fill="none" stroke="#555"/>
+                <!-- Highlight filter area -->
+                <rect x="0" y="0" width="70" height="70" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+                <!-- Grid lines -->
+                <line x1="23" y1="0" x2="23" y2="140" stroke="#333" stroke-width="0.5"/>
+                <line x1="47" y1="0" x2="47" y2="140" stroke="#333" stroke-width="0.5"/>
+                <line x1="70" y1="0" x2="70" y2="140" stroke="#333" stroke-width="0.5"/>
+                <line x1="93" y1="0" x2="93" y2="140" stroke="#333" stroke-width="0.5"/>
+                <line x1="117" y1="0" x2="117" y2="140" stroke="#333" stroke-width="0.5"/>
+                <line x1="0" y1="23" x2="140" y2="23" stroke="#333" stroke-width="0.5"/>
+                <line x1="0" y1="47" x2="140" y2="47" stroke="#333" stroke-width="0.5"/>
+                <line x1="0" y1="70" x2="140" y2="70" stroke="#333" stroke-width="0.5"/>
+                <line x1="0" y1="93" x2="140" y2="93" stroke="#333" stroke-width="0.5"/>
+                <line x1="0" y1="117" x2="140" y2="117" stroke="#333" stroke-width="0.5"/>
+                <!-- Numbers in filter area -->
+                <text x="10" y="17" fill="white" font-size="10">1</text>
+                <text x="33" y="17" fill="white" font-size="10">0</text>
+                <text x="57" y="17" fill="white" font-size="10">1</text>
+                <text x="10" y="40" fill="white" font-size="10">0</text>
+                <text x="33" y="40" fill="white" font-size="10">1</text>
+                <text x="57" y="40" fill="white" font-size="10">0</text>
+                <text x="10" y="63" fill="white" font-size="10">1</text>
+                <text x="33" y="63" fill="white" font-size="10">0</text>
+                <text x="57" y="63" fill="white" font-size="10">1</text>
+            </g>
+
+            <!-- Multiplication sign -->
+            <text x="195" y="135" fill="#ff6b35" font-size="20">*</text>
+
+            <!-- Filter/Kernel -->
+            <text x="290" y="50" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Filtre 3x3</text>
+            <g transform="translate(220,60)">
+                <rect x="0" y="0" width="70" height="70" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="2"/>
+                <line x1="23" y1="0" x2="23" y2="70" stroke="#ff6b35" stroke-width="0.5"/>
+                <line x1="47" y1="0" x2="47" y2="70" stroke="#ff6b35" stroke-width="0.5"/>
+                <line x1="0" y1="23" x2="70" y2="23" stroke="#ff6b35" stroke-width="0.5"/>
+                <line x1="0" y1="47" x2="70" y2="47" stroke="#ff6b35" stroke-width="0.5"/>
+                <text x="8" y="17" fill="#ff6b35" font-size="10">1</text>
+                <text x="31" y="17" fill="#ff6b35" font-size="10">0</text>
+                <text x="55" y="17" fill="#ff6b35" font-size="10">1</text>
+                <text x="8" y="40" fill="#ff6b35" font-size="10">0</text>
+                <text x="31" y="40" fill="#ff6b35" font-size="10">1</text>
+                <text x="55" y="40" fill="#ff6b35" font-size="10">0</text>
+                <text x="8" y="63" fill="#ff6b35" font-size="10">1</text>
+                <text x="31" y="63" fill="#ff6b35" font-size="10">0</text>
+                <text x="55" y="63" fill="#ff6b35" font-size="10">1</text>
+            </g>
+            <text x="270" y="150" text-anchor="middle" fill="#aaa" font-size="9">"Detecteur de X"</text>
+
+            <!-- Equals -->
+            <text x="320" y="100" fill="#aaa" font-size="18">=</text>
+
+            <!-- Output -->
+            <text x="430" y="50" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Feature Map (4x4)</text>
+            <g transform="translate(360,60)">
+                <rect x="0" y="0" width="95" height="95" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="2"/>
+                <rect x="0" y="0" width="24" height="24" fill="rgba(0,255,136,0.4)" stroke="#00ff88"/>
+                <text x="8" y="17" fill="#00ff88" font-size="9" font-weight="bold">5</text>
+                <line x1="24" y1="0" x2="24" y2="95" stroke="#333" stroke-width="0.5"/>
+                <line x1="48" y1="0" x2="48" y2="95" stroke="#333" stroke-width="0.5"/>
+                <line x1="72" y1="0" x2="72" y2="95" stroke="#333" stroke-width="0.5"/>
+                <line x1="0" y1="24" x2="95" y2="24" stroke="#333" stroke-width="0.5"/>
+                <line x1="0" y1="48" x2="95" y2="48" stroke="#333" stroke-width="0.5"/>
+                <line x1="0" y1="72" x2="95" y2="72" stroke="#333" stroke-width="0.5"/>
+            </g>
+
+            <!-- Explanation -->
+            <rect x="30" y="225" width="640" height="80" rx="10" fill="rgba(255,107,53,0.05)" stroke="#ff6b35"/>
+            <text x="350" y="250" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Comment ca marche :</text>
+            <text x="350" y="270" text-anchor="middle" fill="#aaa" font-size="11">1. Le filtre 3x3 glisse sur l'image position par position</text>
+            <text x="350" y="290" text-anchor="middle" fill="#aaa" font-size="11">2. A chaque position : multiplication element par element puis somme = 1 valeur</text>
+            <text x="350" y="305" text-anchor="middle" fill="#aaa" font-size="11">3. Le resultat forme une "Feature Map" (carte de features detectees)</text>
+        </svg>
+    </div>
+
+    <div class="concept-box blue">
+        <h4>Ce que detectent les filtres :</h4>
+        <ul>
+            <li><strong>Couche 1</strong> : Lignes horizontales, verticales, diagonales, couleurs</li>
+            <li><strong>Couche 2</strong> : Combinaisons de lignes = courbes, coins, textures</li>
+            <li><strong>Couche 3</strong> : Combinaisons de courbes = formes (yeux, nez, roues)</li>
+            <li><strong>Couche 4+</strong> : Objets complets (visage, voiture, chat)</li>
+        </ul>
+        <p style="margin-top:10px; color:#00ff88;">Plus on avance dans les couches, plus les features sont abstraites et complexes !</p>
+    </div>
+
+    <!-- CHAPITRE 3 -->
+    <h2 id="ch3">Chapitre 3 : CNN - Pooling et Architecture Complete</h2>
+
+    <h3>3.1 Le Pooling : reduire la taille</h3>
+    <p>Apres chaque convolution, on applique du <strong>Pooling</strong> (generalement Max Pooling 2x2) qui divise par 2 la taille de la feature map en gardant uniquement la valeur maximale de chaque region. Cela reduit le calcul et rend le modele plus robuste aux petites translations.</p>
+
+    <h3>3.2 Architecture CNN typique</h3>
+    <div class="svg-container">
+        <svg width="750" height="200" viewBox="0 0 750 200">
+            <rect width="750" height="200" fill="#0f0f23"/>
+            <text x="375" y="20" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Architecture CNN : Image &#8594; Prediction</text>
+
+            <!-- Input image -->
+            <rect x="15" y="50" width="60" height="60" rx="3" fill="rgba(0,210,255,0.3)" stroke="#00d2ff" stroke-width="2"/>
+            <text x="45" y="85" text-anchor="middle" fill="white" font-size="8">224x224</text>
+            <text x="45" y="130" text-anchor="middle" fill="#00d2ff" font-size="9">Image</text>
+
+            <text x="88" y="83" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Conv1 -->
+            <rect x="100" y="40" width="50" height="80" rx="3" fill="rgba(255,107,53,0.3)" stroke="#ff6b35"/>
+            <text x="125" y="75" text-anchor="middle" fill="white" font-size="7">Conv</text>
+            <text x="125" y="87" text-anchor="middle" fill="white" font-size="7">112x112</text>
+            <text x="125" y="130" text-anchor="middle" fill="#ff6b35" font-size="8">Conv+ReLU</text>
+
+            <text x="158" y="83" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Pool1 -->
+            <rect x="165" y="50" width="40" height="60" rx="3" fill="rgba(0,255,136,0.2)" stroke="#00ff88"/>
+            <text x="185" y="78" text-anchor="middle" fill="white" font-size="7">Pool</text>
+            <text x="185" y="88" text-anchor="middle" fill="white" font-size="7">56x56</text>
+            <text x="185" y="130" text-anchor="middle" fill="#00ff88" font-size="8">MaxPool</text>
+
+            <text x="213" y="83" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Conv2 -->
+            <rect x="220" y="45" width="45" height="70" rx="3" fill="rgba(255,107,53,0.3)" stroke="#ff6b35"/>
+            <text x="242" y="78" text-anchor="middle" fill="white" font-size="7">Conv</text>
+            <text x="242" y="88" text-anchor="middle" fill="white" font-size="7">56x56</text>
+            <text x="242" y="130" text-anchor="middle" fill="#ff6b35" font-size="8">Conv+ReLU</text>
+
+            <text x="273" y="83" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Pool2 -->
+            <rect x="280" y="55" width="35" height="50" rx="3" fill="rgba(0,255,136,0.2)" stroke="#00ff88"/>
+            <text x="297" y="78" text-anchor="middle" fill="white" font-size="7">Pool</text>
+            <text x="297" y="88" text-anchor="middle" fill="white" font-size="7">28x28</text>
+
+            <text x="323" y="83" fill="#aaa" font-size="10">...</text>
+
+            <!-- Conv N -->
+            <rect x="340" y="60" width="30" height="40" rx="3" fill="rgba(255,107,53,0.3)" stroke="#ff6b35"/>
+            <text x="355" y="83" text-anchor="middle" fill="white" font-size="7">Conv</text>
+            <text x="355" y="130" text-anchor="middle" fill="#ff6b35" font-size="8">7x7</text>
+
+            <text x="380" y="83" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Flatten -->
+            <rect x="390" y="40" width="20" height="80" rx="2" fill="rgba(168,85,247,0.3)" stroke="#a855f7"/>
+            <text x="400" y="130" text-anchor="middle" fill="#a855f7" font-size="8">Flatten</text>
+
+            <text x="418" y="83" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Dense layers -->
+            <rect x="425" y="50" width="80" height="60" rx="5" fill="rgba(255,170,0,0.2)" stroke="#ffaa00"/>
+            <text x="465" y="75" text-anchor="middle" fill="#ffaa00" font-size="8">Dense 512</text>
+            <text x="465" y="90" text-anchor="middle" fill="#ffaa00" font-size="8">Dense 256</text>
+            <text x="465" y="130" text-anchor="middle" fill="#ffaa00" font-size="8">Fully Connected</text>
+
+            <text x="513" y="83" fill="#aaa" font-size="12">&#8594;</text>
+
+            <!-- Output -->
+            <rect x="520" y="55" width="80" height="50" rx="5" fill="rgba(0,255,136,0.3)" stroke="#00ff88" stroke-width="2"/>
+            <text x="560" y="75" text-anchor="middle" fill="white" font-size="8">Softmax</text>
+            <text x="560" y="90" text-anchor="middle" fill="white" font-size="8">10 classes</text>
+            <text x="560" y="130" text-anchor="middle" fill="#00ff88" font-size="8">Chat: 92%</text>
+
+            <!-- Summary arrow -->
+            <text x="375" y="170" text-anchor="middle" fill="#aaa" font-size="10">Image (grande) &#8594; Features (petites mais profondes) &#8594; Classification</text>
+            <text x="375" y="188" text-anchor="middle" fill="#ff6b35" font-size="10">La taille diminue, le nombre de filtres augmente</text>
+        </svg>
+    </div>
+
+    <!-- CHAPITRE 4 -->
+    <h2 id="ch4">Chapitre 4 : Applications Vision (CNN)</h2>
+
+    <table>
+        <tr><th>Tache</th><th>Description</th><th>Modeles celebres</th></tr>
+        <tr><td><strong>Classification</strong></td><td>Identifier le contenu d'une image</td><td>AlexNet, VGG, ResNet, EfficientNet</td></tr>
+        <tr><td><strong>Detection d'objets</strong></td><td>Localiser et identifier plusieurs objets</td><td>YOLO, SSD, Faster R-CNN</td></tr>
+        <tr><td><strong>Segmentation</strong></td><td>Identifier chaque pixel (a quoi il appartient)</td><td>U-Net, Mask R-CNN</td></tr>
+        <tr><td><strong>Reconnaissance faciale</strong></td><td>Identifier qui est sur une photo</td><td>FaceNet, ArcFace</td></tr>
+        <tr><td><strong>Generation d'images</strong></td><td>Creer des images nouvelles</td><td>StyleGAN, Stable Diffusion</td></tr>
+    </table>
+
+    <!-- CHAPITRE 5 -->
+    <h2 id="ch5">Chapitre 5 : RNN - Les Sequences</h2>
+
+    <h3>5.1 Le probleme des sequences</h3>
+    <p>Les CNN traitent des entrees de taille fixe. Mais beaucoup de donnees sont <strong>sequentielles</strong> : texte (mots un par un), audio, series temporelles, video. Les <strong>RNN</strong> (Recurrent Neural Networks) sont concus pour traiter ces sequences en gardant une "memoire" des elements precedents.</p>
+
+    <div class="analogy">
+        Lire une phrase, c'est sequentiel : chaque mot depend des mots precedents. "La banque est au bord de la riviere" vs "La banque a augmente les taux" - le sens de "banque" depend du contexte. Un RNN lit mot par mot et accumule du contexte.
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="200" viewBox="0 0 700 200">
+            <rect width="700" height="200" fill="#0f0f23"/>
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">RNN : Traitement Sequentiel avec Memoire</text>
+
+            <!-- Word 1 -->
+            <rect x="60" y="120" width="70" height="30" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="95" y="140" text-anchor="middle" fill="#00d2ff" font-size="10">Le</text>
+            <!-- RNN cell -->
+            <line x1="95" y1="120" x2="95" y2="90" stroke="#aaa" stroke-width="1.5"/>
+            <rect x="65" y="55" width="60" height="35" rx="5" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="95" y="77" text-anchor="middle" fill="white" font-size="9">RNN</text>
+
+            <!-- Hidden state arrow -->
+            <line x1="125" y1="72" x2="195" y2="72" stroke="#00ff88" stroke-width="2"/>
+            <text x="160" y="65" fill="#00ff88" font-size="8">h1 &#8594;</text>
+
+            <!-- Word 2 -->
+            <rect x="190" y="120" width="70" height="30" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="225" y="140" text-anchor="middle" fill="#00d2ff" font-size="10">chat</text>
+            <line x1="225" y1="120" x2="225" y2="90" stroke="#aaa" stroke-width="1.5"/>
+            <rect x="195" y="55" width="60" height="35" rx="5" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="225" y="77" text-anchor="middle" fill="white" font-size="9">RNN</text>
+
+            <line x1="255" y1="72" x2="325" y2="72" stroke="#00ff88" stroke-width="2"/>
+            <text x="290" y="65" fill="#00ff88" font-size="8">h2 &#8594;</text>
+
+            <!-- Word 3 -->
+            <rect x="320" y="120" width="70" height="30" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="355" y="140" text-anchor="middle" fill="#00d2ff" font-size="10">est</text>
+            <line x1="355" y1="120" x2="355" y2="90" stroke="#aaa" stroke-width="1.5"/>
+            <rect x="325" y="55" width="60" height="35" rx="5" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="355" y="77" text-anchor="middle" fill="white" font-size="9">RNN</text>
+
+            <line x1="385" y1="72" x2="455" y2="72" stroke="#00ff88" stroke-width="2"/>
+            <text x="420" y="65" fill="#00ff88" font-size="8">h3 &#8594;</text>
+
+            <!-- Word 4 -->
+            <rect x="450" y="120" width="70" height="30" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="485" y="140" text-anchor="middle" fill="#00d2ff" font-size="10">noir</text>
+            <line x1="485" y1="120" x2="485" y2="90" stroke="#aaa" stroke-width="1.5"/>
+            <rect x="455" y="55" width="60" height="35" rx="5" fill="rgba(255,107,53,0.3)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="485" y="77" text-anchor="middle" fill="white" font-size="9">RNN</text>
+
+            <!-- Output -->
+            <line x1="515" y1="72" x2="580" y2="72" stroke="#00ff88" stroke-width="2"/>
+            <rect x="580" y="55" width="90" height="35" rx="8" fill="rgba(0,255,136,0.2)" stroke="#00ff88" stroke-width="2"/>
+            <text x="625" y="77" text-anchor="middle" fill="#00ff88" font-size="10">Prediction</text>
+
+            <!-- Memory label -->
+            <text x="350" y="45" text-anchor="middle" fill="#00ff88" font-size="10">h = etat cache (memoire) transmis d'un pas au suivant</text>
+            <text x="350" y="175" text-anchor="middle" fill="#aaa" font-size="10">Chaque cellule RNN voit le mot actuel + la memoire des mots precedents</text>
+        </svg>
+    </div>
+
+    <!-- CHAPITRE 6 -->
+    <h2 id="ch6">Chapitre 6 : LSTM et GRU</h2>
+
+    <h3>6.1 Le probleme de la memoire courte</h3>
+    <p>Les RNN basiques oublient rapidement : au bout de 10-20 mots, le contexte du debut est perdu (vanishing gradient). Les <strong>LSTM</strong> (Long Short-Term Memory) et <strong>GRU</strong> (Gated Recurrent Unit) resolvent ce probleme avec des "portes" qui controlent ce qu'il faut retenir et oublier.</p>
+
+    <div class="analogy">
+        Un RNN, c'est comme quelqu'un avec une memoire de 10 secondes. Un LSTM, c'est quelqu'un avec un carnet : il peut <strong>ecrire</strong> les informations importantes (porte d'entree), <strong>effacer</strong> ce qui n'est plus utile (porte d'oubli), et <strong>relire</strong> quand c'est pertinent (porte de sortie).
+    </div>
+
+    <div class="comparison-grid">
+        <div class="card" style="border-color:#00d2ff">
+            <h4 style="color:#00d2ff">LSTM (1997)</h4>
+            <ul>
+                <li>3 portes : oubli, entree, sortie</li>
+                <li>Memoire a long terme (cell state)</li>
+                <li>Plus de parametres, plus lent</li>
+                <li>Meilleur pour les longues sequences</li>
+            </ul>
+        </div>
+        <div class="card" style="border-color:#ff6b35">
+            <h4 style="color:#ff6b35">GRU (2014)</h4>
+            <ul>
+                <li>2 portes : reset, update</li>
+                <li>Plus simple que LSTM</li>
+                <li>Moins de parametres, plus rapide</li>
+                <li>Performance souvent similaire</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="important">
+        Depuis 2017, les <strong>Transformers</strong> ont largement remplace les LSTM pour le NLP car ils traitent toute la sequence en parallele au lieu de mot par mot. Les LSTM restent utiles pour les series temporelles et certaines applications audio.
+    </div>
+
+    <!-- CHAPITRE 7 -->
+    <h2 id="ch7">Chapitre 7 : Le Transformer - La Revolution</h2>
+
+    <h3>7.1 "Attention Is All You Need" (2017)</h3>
+    <p>Le <strong>Transformer</strong>, presente par Google dans le papier "Attention Is All You Need", est l'architecture la plus importante de la decennie. C'est la base de <strong>BERT, GPT, Claude, LLaMA, Mistral</strong> et tous les LLMs modernes utilises dans le RAG.</p>
+
+    <div class="concept-box">
+        <h4>Pourquoi le Transformer a tout change :</h4>
+        <table>
+            <tr><th>Probleme des RNN</th><th>Solution du Transformer</th></tr>
+            <tr><td>Traitement sequentiel (mot apres mot) = lent</td><td>Traitement <strong>parallele</strong> de tous les mots = rapide</td></tr>
+            <tr><td>Memoire limitee (oublie le debut)</td><td><strong>Attention</strong> : peut regarder n'importe quel mot a n'importe quelle distance</td></tr>
+            <tr><td>Impossible a paralleliser sur GPU</td><td>Entierement parallelisable = exploite les GPU a fond</td></tr>
+        </table>
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="280" viewBox="0 0 700 280">
+            <rect width="700" height="280" fill="#0f0f23"/>
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">RNN vs Transformer</text>
+
+            <!-- RNN side -->
+            <rect x="20" y="40" width="310" height="220" rx="12" fill="rgba(0,210,255,0.05)" stroke="#00d2ff"/>
+            <text x="175" y="65" text-anchor="middle" fill="#00d2ff" font-size="13" font-weight="bold">RNN (avant 2017)</text>
+            <text x="55" y="100" fill="#00d2ff" font-size="10">mot1</text>
+            <text x="95" y="100" fill="#aaa" font-size="14">&#8594;</text>
+            <text x="115" y="100" fill="#00d2ff" font-size="10">mot2</text>
+            <text x="155" y="100" fill="#aaa" font-size="14">&#8594;</text>
+            <text x="175" y="100" fill="#00d2ff" font-size="10">mot3</text>
+            <text x="215" y="100" fill="#aaa" font-size="14">&#8594;</text>
+            <text x="235" y="100" fill="#00d2ff" font-size="10">mot4</text>
+            <text x="275" y="100" fill="#aaa" font-size="14">&#8594;</text>
+            <text x="295" y="100" fill="#00d2ff" font-size="10">...</text>
+            <text x="175" y="135" text-anchor="middle" fill="#ff4444" font-size="11">SEQUENTIEL : un mot a la fois</text>
+            <text x="175" y="165" text-anchor="middle" fill="#aaa" font-size="10">Temps = O(n) sequences</text>
+            <text x="175" y="185" text-anchor="middle" fill="#aaa" font-size="10">Memoire limitee : oublie mot1</text>
+            <text x="175" y="205" text-anchor="middle" fill="#aaa" font-size="10">quand on arrive a mot100</text>
+            <text x="175" y="240" text-anchor="middle" fill="#ff4444" font-size="11">Lent et oublieux</text>
+
+            <!-- Transformer side -->
+            <rect x="370" y="40" width="310" height="220" rx="12" fill="rgba(255,107,53,0.05)" stroke="#ff6b35"/>
+            <text x="525" y="65" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">Transformer (depuis 2017)</text>
+            <!-- All words at once -->
+            <rect x="395" y="80" width="50" height="25" rx="3" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="420" y="97" text-anchor="middle" fill="#ff6b35" font-size="9">mot1</text>
+            <rect x="455" y="80" width="50" height="25" rx="3" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="480" y="97" text-anchor="middle" fill="#ff6b35" font-size="9">mot2</text>
+            <rect x="515" y="80" width="50" height="25" rx="3" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="540" y="97" text-anchor="middle" fill="#ff6b35" font-size="9">mot3</text>
+            <rect x="575" y="80" width="50" height="25" rx="3" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="600" y="97" text-anchor="middle" fill="#ff6b35" font-size="9">mot4</text>
+            <!-- Attention arrows between all -->
+            <g opacity="0.4">
+                <line x1="420" y1="105" x2="480" y2="105" stroke="#ffaa00" stroke-width="1"/>
+                <line x1="420" y1="105" x2="540" y2="105" stroke="#ffaa00" stroke-width="1"/>
+                <line x1="420" y1="105" x2="600" y2="105" stroke="#ffaa00" stroke-width="1"/>
+                <line x1="480" y1="105" x2="540" y2="105" stroke="#ffaa00" stroke-width="1"/>
+                <line x1="480" y1="105" x2="600" y2="105" stroke="#ffaa00" stroke-width="1"/>
+                <line x1="540" y1="105" x2="600" y2="105" stroke="#ffaa00" stroke-width="1"/>
+            </g>
+            <text x="525" y="135" text-anchor="middle" fill="#00ff88" font-size="11">PARALLELE : tous les mots en meme temps</text>
+            <text x="525" y="165" text-anchor="middle" fill="#aaa" font-size="10">Chaque mot "regarde" tous les autres</text>
+            <text x="525" y="185" text-anchor="middle" fill="#aaa" font-size="10">via le mecanisme d'ATTENTION</text>
+            <text x="525" y="205" text-anchor="middle" fill="#aaa" font-size="10">Memoire parfaite de toute la sequence</text>
+            <text x="525" y="240" text-anchor="middle" fill="#00ff88" font-size="11">Rapide et contextuel</text>
+        </svg>
+    </div>
+
+    <!-- CHAPITRE 8 -->
+    <h2 id="ch8">Chapitre 8 : Self-Attention - Le Coeur du Transformer</h2>
+
+    <h3>8.1 Comment fonctionne l'attention ?</h3>
+    <p>Le <strong>Self-Attention</strong> permet a chaque mot de "regarder" tous les autres mots de la phrase pour comprendre le contexte. Chaque mot pose 3 questions :</p>
+
+    <div class="concept-box">
+        <table>
+            <tr><th>Vecteur</th><th>Role</th><th>Analogie</th></tr>
+            <tr>
+                <td><strong style="color:#00d2ff">Query (Q)</strong></td>
+                <td>"Que cherche ce mot ?"</td>
+                <td>La question que pose le mot</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#ff6b35">Key (K)</strong></td>
+                <td>"Qu'est-ce que ce mot offre ?"</td>
+                <td>L'etiquette/resume de chaque mot</td>
+            </tr>
+            <tr>
+                <td><strong style="color:#00ff88">Value (V)</strong></td>
+                <td>"Quelle information ce mot contient ?"</td>
+                <td>Le contenu reel du mot</td>
+            </tr>
+        </table>
+        <p style="margin-top:15px;">L'attention = comparer la Query d'un mot avec les Keys de tous les autres mots. Les mots avec des Keys similaires recoivent plus d'attention, et on combine leurs Values.</p>
+    </div>
+
+    <div class="analogy">
+        Dans un cocktail, vous (Query) cherchez quelqu'un qui connait le Python. Vous regardez les badges de chaque personne (Key). Quand vous trouvez quelqu'un avec "Expert Python" sur son badge, vous lui pretez toute votre attention et ecoutez ce qu'il dit (Value). L'attention, c'est savoir A QUI preter attention en fonction de ce qu'on cherche.
+    </div>
+
+    <h3>8.2 Multi-Head Attention</h3>
+    <p>Au lieu d'un seul mecanisme d'attention, le Transformer utilise <strong>plusieurs "tetes"</strong> (8 ou 16) en parallele. Chaque tete apprend a faire attention a des aspects differents : l'une se concentre sur la grammaire, une autre sur le sens, une autre sur les references.</p>
+
+    <div class="tip">
+        GPT-4 utilise 96 tetes d'attention. Claude utilise un nombre similaire. Chaque tete "regarde" la phrase sous un angle different, donnant au modele une comprehension riche et nuancee du texte.
+    </div>
+
+    <!-- CHAPITRE 9 -->
+    <h2 id="ch9">Chapitre 9 : Encodeur et Decodeur</h2>
+
+    <h3>9.1 Les 3 types de Transformers</h3>
+    <table>
+        <tr><th>Type</th><th>Architecture</th><th>Exemple</th><th>Utilisation</th></tr>
+        <tr>
+            <td><strong style="color:#00d2ff">Encodeur seul</strong></td>
+            <td>Comprend le texte (bidirectionnel)</td>
+            <td>BERT, RoBERTa</td>
+            <td>Classification, NER, embeddings pour le RAG</td>
+        </tr>
+        <tr>
+            <td><strong style="color:#ff6b35">Decodeur seul</strong></td>
+            <td>Genere du texte (autoregressive)</td>
+            <td>GPT, Claude, LLaMA, Mistral</td>
+            <td>Generation de texte, chatbots, RAG</td>
+        </tr>
+        <tr>
+            <td><strong style="color:#00ff88">Encodeur-Decodeur</strong></td>
+            <td>Comprend puis genere</td>
+            <td>T5, BART, Whisper</td>
+            <td>Traduction, resume, speech-to-text</td>
+        </tr>
+    </table>
+
+    <div class="important">
+        Pour le RAG : les <strong>encodeurs</strong> (BERT) sont utilises pour creer les embeddings des documents. Les <strong>decodeurs</strong> (GPT, Claude) sont utilises pour generer les reponses. Le RAG combine les deux !
+    </div>
+
+    <!-- CHAPITRE 10 -->
+    <h2 id="ch10">Chapitre 10 : Transfer Learning</h2>
+
+    <h3>10.1 Ne pas repartir de zero</h3>
+    <p>Le <strong>Transfer Learning</strong> consiste a prendre un modele pre-entraine sur d'enormes donnees et a l'adapter a votre tache specifique. C'est l'approche dominante en Deep Learning aujourd'hui.</p>
+
+    <div class="analogy">
+        Un medecin qui se specialise en cardiologie ne reprend pas ses etudes de zero. Il reutilise ses 10 ans de formation medicale generale (pre-entrainement) et se specialise (fine-tuning). Le transfer learning fait pareil : on reutilise un modele general et on l'adapte.
+    </div>
+
+    <div class="concept-box green">
+        <h4>Les 2 etapes du Transfer Learning :</h4>
+        <ol>
+            <li><strong>Pre-entrainement</strong> (par les grands labos : Google, OpenAI, Anthropic) : Entrainer sur des milliards de donnees pendant des semaines sur des milliers de GPU. Coute des millions de dollars.</li>
+            <li><strong>Fine-tuning</strong> (par vous) : Adapter le modele pre-entraine a votre tache specifique avec vos propres donnees. Quelques heures sur 1 GPU suffisent.</li>
+        </ol>
+    </div>
+
+    <table>
+        <tr><th>Modele pre-entraine</th><th>Donnees de pre-entrainement</th><th>Taches de fine-tuning possibles</th></tr>
+        <tr><td><strong>BERT</strong></td><td>Wikipedia + livres (3.3B mots)</td><td>Classification, NER, Q&A, embeddings</td></tr>
+        <tr><td><strong>GPT-4 / Claude</strong></td><td>Internet + livres (trillions de mots)</td><td>Chatbot, resume, code, RAG</td></tr>
+        <tr><td><strong>ResNet</strong></td><td>ImageNet (14M images)</td><td>Detection medicale, qualite industrielle</td></tr>
+        <tr><td><strong>Whisper</strong></td><td>680K heures d'audio</td><td>Transcription dans votre langue/domaine</td></tr>
+    </table>
+
+    <!-- CHAPITRE 11 -->
+    <h2 id="ch11">Chapitre 11 : Autoencoders</h2>
+
+    <h3>11.1 Compresser et reconstruire</h3>
+    <p>Un <strong>Autoencoder</strong> apprend a compresser des donnees en une representation compacte (espace latent) puis a les reconstruire. L'objectif : la sortie doit etre identique a l'entree.</p>
+
+    <div class="svg-container">
+        <svg width="600" height="180" viewBox="0 0 600 180">
+            <rect width="600" height="180" fill="#0f0f23"/>
+            <text x="300" y="20" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Autoencoder : Compresser puis Reconstruire</text>
+
+            <!-- Input -->
+            <rect x="20" y="50" width="80" height="80" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="60" y="85" text-anchor="middle" fill="white" font-size="9">Entree</text>
+            <text x="60" y="100" text-anchor="middle" fill="#00d2ff" font-size="8">784 dim</text>
+
+            <text x="115" y="93" fill="#aaa" font-size="14">&#8594;</text>
+
+            <!-- Encoder -->
+            <rect x="130" y="55" width="90" height="70" rx="8" fill="rgba(255,107,53,0.2)" stroke="#ff6b35"/>
+            <text x="175" y="85" text-anchor="middle" fill="#ff6b35" font-size="10" font-weight="bold">Encodeur</text>
+            <text x="175" y="100" text-anchor="middle" fill="#ff6b35" font-size="8">Compression</text>
+
+            <text x="235" y="93" fill="#aaa" font-size="14">&#8594;</text>
+
+            <!-- Latent space -->
+            <rect x="250" y="65" width="70" height="50" rx="10" fill="rgba(168,85,247,0.3)" stroke="#a855f7" stroke-width="2"/>
+            <text x="285" y="85" text-anchor="middle" fill="white" font-size="9" font-weight="bold">Latent</text>
+            <text x="285" y="100" text-anchor="middle" fill="#a855f7" font-size="8">32 dim</text>
+
+            <text x="335" y="93" fill="#aaa" font-size="14">&#8594;</text>
+
+            <!-- Decoder -->
+            <rect x="350" y="55" width="90" height="70" rx="8" fill="rgba(0,255,136,0.2)" stroke="#00ff88"/>
+            <text x="395" y="85" text-anchor="middle" fill="#00ff88" font-size="10" font-weight="bold">Decodeur</text>
+            <text x="395" y="100" text-anchor="middle" fill="#00ff88" font-size="8">Reconstruction</text>
+
+            <text x="455" y="93" fill="#aaa" font-size="14">&#8594;</text>
+
+            <!-- Output -->
+            <rect x="470" y="50" width="80" height="80" rx="5" fill="rgba(0,210,255,0.2)" stroke="#00d2ff"/>
+            <text x="510" y="85" text-anchor="middle" fill="white" font-size="9">Sortie</text>
+            <text x="510" y="100" text-anchor="middle" fill="#00d2ff" font-size="8">784 dim</text>
+
+            <text x="300" y="155" text-anchor="middle" fill="#aaa" font-size="10">784 dimensions &#8594; 32 dimensions &#8594; 784 dimensions</text>
+            <text x="300" y="170" text-anchor="middle" fill="#a855f7" font-size="10">L'espace latent capture l'essence des donnees</text>
+        </svg>
+    </div>
+
+    <p><strong>Applications :</strong> Debruitage d'images, compression de donnees, detection d'anomalies, et surtout les <strong>VAE</strong> (Variational Autoencoders) utilises dans la generation d'images.</p>
+
+    <!-- CHAPITRE 12 -->
+    <h2 id="ch12">Chapitre 12 : GANs - Generative Adversarial Networks</h2>
+
+    <h3>12.1 Le duel Generateur vs Discriminateur</h3>
+    <p>Les <strong>GANs</strong> (2014, Ian Goodfellow) utilisent 2 reseaux qui s'affrontent : un <strong>Generateur</strong> qui cree de fausses donnees, et un <strong>Discriminateur</strong> qui essaie de distinguer le vrai du faux. Les deux s'ameliorent mutuellement.</p>
+
+    <div class="analogy">
+        Un faussaire (Generateur) essaie de creer des faux billets. Un detective (Discriminateur) essaie de les reperer. Plus le detective est bon, plus le faussaire s'ameliore. Plus le faussaire est bon, plus le detective doit etre vigilant. A la fin, les faux billets sont indiscernables des vrais.
+    </div>
+
+    <p><strong>Applications celebres :</strong> StyleGAN (visages ultra-realistes), CycleGAN (transformer un cheval en zebre), Pix2Pix (dessin en photo), generation de donnees synthetiques pour l'entrainement.</p>
+
+    <!-- CHAPITRE 13 -->
+    <h2 id="ch13">Chapitre 13 : Modeles de Diffusion</h2>
+
+    <h3>13.1 L'ere de la generation d'images</h3>
+    <p>Les <strong>modeles de diffusion</strong> (Stable Diffusion, DALL-E, Midjourney) sont devenus dominants pour la generation d'images depuis 2022. Leur principe : apprendre a <strong>enlever du bruit</strong> d'une image.</p>
+
+    <div class="concept-box blue">
+        <h4>Le principe en 2 phases :</h4>
+        <ol>
+            <li><strong>Forward (ajout de bruit) :</strong> Prendre une image reelle et y ajouter progressivement du bruit gaussien jusqu'a obtenir du bruit pur</li>
+            <li><strong>Reverse (debruitage) :</strong> Le modele apprend a inverser ce processus - partir du bruit pur et reconstruire une image etape par etape</li>
+        </ol>
+        <p style="margin-top:10px;">Une fois entraine, on peut partir de <strong>bruit aleatoire</strong> et le modele genere une image coherente en la "debruitant" progressivement. On peut guider le processus avec un texte ("un chat sur la lune").</p>
+    </div>
+
+    <!-- CHAPITRE 14 -->
+    <h2 id="ch14">Chapitre 14 : Frameworks - PyTorch vs TensorFlow</h2>
+
+    <table>
+        <tr><th>Critere</th><th style="color:#ff6b35">PyTorch</th><th style="color:#ff8c42">TensorFlow</th></tr>
+        <tr><td>Createur</td><td>Meta (Facebook)</td><td>Google</td></tr>
+        <tr><td>Style</td><td>Pythonic, intuitif, flexible</td><td>Plus rigide, API haut niveau (Keras)</td></tr>
+        <tr><td>Usage recherche</td><td style="color:#00ff88"><strong>Dominant (80%+)</strong></td><td>En baisse</td></tr>
+        <tr><td>Usage production</td><td>En forte croissance</td><td>Encore utilise</td></tr>
+        <tr><td>Popularite 2024-2026</td><td style="color:#00ff88"><strong>N 1 de loin</strong></td><td>N 2 mais loin derriere</td></tr>
+        <tr><td>Debug</td><td style="color:#00ff88">Facile (mode eager)</td><td>Plus difficile</td></tr>
+        <tr><td>Communaute</td><td style="color:#00ff88">Enorme et active</td><td>En declin relatif</td></tr>
+    </table>
+
+    <div class="tip">
+        En 2026, <strong>PyTorch</strong> est le framework standard du Deep Learning. Hugging Face, la plateforme N 1 pour les modeles, est construite autour de PyTorch. Si vous debutez, apprenez PyTorch.
+    </div>
+
+    <!-- CHAPITRE 15 -->
+    <h2 id="ch15">Chapitre 15 : Lien avec le RAG</h2>
+
+    <div class="concept-box">
+        <h4 style="color:#ff6b35">Le Deep Learning est le moteur du RAG !</h4>
+        <table>
+            <tr><th>Composant RAG</th><th>Technologie Deep Learning</th><th>Modele concret</th></tr>
+            <tr>
+                <td><strong>Embeddings de documents</strong></td>
+                <td>Transformer Encodeur</td>
+                <td>BERT, sentence-transformers, OpenAI Ada</td>
+            </tr>
+            <tr>
+                <td><strong>Generation de reponse</strong></td>
+                <td>Transformer Decodeur (LLM)</td>
+                <td>GPT-4, Claude, Mistral, LLaMA</td>
+            </tr>
+            <tr>
+                <td><strong>Reranking</strong></td>
+                <td>Cross-encodeur</td>
+                <td>Cohere Rerank, BGE Reranker</td>
+            </tr>
+            <tr>
+                <td><strong>Recherche semantique</strong></td>
+                <td>Similarite cosinus dans l'espace d'embeddings</td>
+                <td>FAISS, ChromaDB, Pinecone</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="important">
+        Sans le Deep Learning, il n'y aurait pas de RAG. Les embeddings (BERT), les LLMs (GPT/Claude), et la recherche semantique sont tous des produits du Deep Learning et specifiquement de l'architecture Transformer.
+    </div>
+
+    <!-- CHAPITRE 16 -->
+    <h2 id="ch16">Chapitre 16 : Resume et Synthese</h2>
+
+    <div class="concept-box">
+        <h3 style="color:#ff6b35; margin-top:0;">Tout ce qu'il faut retenir</h3>
+        <table>
+            <tr><th>Concept</th><th>En une phrase</th></tr>
+            <tr><td><strong>Deep Learning</strong></td><td>Reseaux de neurones profonds qui apprennent les features automatiquement</td></tr>
+            <tr><td><strong>CNN</strong></td><td>Filtres qui glissent sur les images pour detecter des patterns visuels</td></tr>
+            <tr><td><strong>RNN/LSTM</strong></td><td>Reseaux avec memoire pour traiter les sequences mot par mot</td></tr>
+            <tr><td><strong>Transformer</strong></td><td>Architecture a base d'attention qui traite toute la sequence en parallele</td></tr>
+            <tr><td><strong>Self-Attention</strong></td><td>Chaque mot regarde tous les autres pour comprendre le contexte (Q, K, V)</td></tr>
+            <tr><td><strong>BERT (Encodeur)</strong></td><td>Comprend le texte, cree des embeddings pour le RAG</td></tr>
+            <tr><td><strong>GPT/Claude (Decodeur)</strong></td><td>Genere du texte, repond aux questions dans le RAG</td></tr>
+            <tr><td><strong>Transfer Learning</strong></td><td>Reutiliser un modele pre-entraine et l'adapter a sa tache</td></tr>
+            <tr><td><strong>GAN</strong></td><td>Deux reseaux adversaires : generateur vs discriminateur</td></tr>
+            <tr><td><strong>Diffusion</strong></td><td>Apprendre a debruiter pour generer des images (Stable Diffusion)</td></tr>
+            <tr><td><strong>PyTorch</strong></td><td>Le framework N 1 du Deep Learning en 2026</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box green" style="margin-top:30px;">
+        <h3 style="color:#00ff88; margin-top:0;">Conseil Final du Professeur</h3>
+        <p>Le Deep Learning est le moteur de la revolution IA actuelle. Pour le RAG, concentrez-vous sur la comprehension des <strong>Transformers</strong> (attention, encodeur, decodeur) et du <strong>Transfer Learning</strong>. Vous n'avez pas besoin de les entrainer vous-meme - l'important est de comprendre comment ils fonctionnent pour les utiliser efficacement.</p>
+        <p style="margin-top:10px;"><strong>Prochain chapitre :</strong> Le NLP (Natural Language Processing) - comment les machines comprennent et traitent le langage humain, le lien direct avec le RAG.</p>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; margin-top:40px; padding:20px 0; border-top:1px solid #333;">
+        <a href="ml_08_reseaux_neurones.html" style="color:#ff6b35; text-decoration:none;">&larr; 08 - Reseaux de Neurones</a>
+        <a href="ml_10_nlp.html" style="color:#ff6b35; text-decoration:none;">10 - NLP &rarr;</a>
+    </div>
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

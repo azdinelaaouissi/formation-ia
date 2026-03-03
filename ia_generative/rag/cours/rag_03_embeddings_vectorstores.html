@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embeddings et Vector Stores pour le RAG</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Embeddings et Vector Stores pour le RAG</h1>
+    <p class="subtitle">Cours 3/4 -- Choisir les bons modeles d'embedding et bases vectorielles pour un RAG performant</p>
+
+    <!-- ============================================================ -->
+    <h2>1. Embeddings pour le RAG - Rappel et importance</h2>
+
+    <div class="definition">
+        Un <strong>embedding</strong> est une representation vectorielle d'un texte dans un espace mathematique de haute dimension. Deux textes semantiquement proches (meme sens, meme sujet) auront des vecteurs proches dans cet espace, meme si les mots utilises sont differents. Dans un systeme RAG, la qualite des embeddings determine directement la qualite du retrieval : si les embeddings ne capturent pas correctement le sens, le systeme ne retrouvera pas les bons documents.
+    </div>
+
+    <p>L'embedding est le <strong>pont</strong> entre le texte humain et les mathematiques. C'est ce qui permet de transformer une question comme "Comment faire un remboursement ?" en un vecteur [0.023, -0.145, 0.892, ...] qui sera compare aux vecteurs des chunks de votre base documentaire pour trouver les plus pertinents.</p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" style="max-width:870px;">
+            <rect width="900" height="300" fill="#0f0f23" rx="12"/>
+            <text x="450" y="28" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">Le Role des Embeddings dans le RAG</text>
+
+            <!-- Text input -->
+            <rect x="30" y="60" width="200" height="80" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="130" y="85" fill="#ff8c42" font-size="11" text-anchor="middle" font-weight="bold">Texte en entree</text>
+            <text x="130" y="105" fill="#e0e0e0" font-size="9" text-anchor="middle">"Comment faire un</text>
+            <text x="130" y="120" fill="#e0e0e0" font-size="9" text-anchor="middle">remboursement ?"</text>
+
+            <!-- Arrow -->
+            <line x1="230" y1="100" x2="280" y2="100" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr3)"/>
+
+            <!-- Embedding Model -->
+            <rect x="280" y="60" width="170" height="80" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="365" y="85" fill="#569cd6" font-size="11" text-anchor="middle" font-weight="bold">Modele d'Embedding</text>
+            <text x="365" y="105" fill="#aaa" font-size="9" text-anchor="middle">text-embedding-3-small</text>
+            <text x="365" y="120" fill="#aaa" font-size="9" text-anchor="middle">1536 dimensions</text>
+
+            <!-- Arrow -->
+            <line x1="450" y1="100" x2="500" y2="100" stroke="#569cd6" stroke-width="2" marker-end="url(#arrB3)"/>
+
+            <!-- Vector -->
+            <rect x="500" y="55" width="180" height="90" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="590" y="78" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">Vecteur</text>
+            <text x="590" y="98" fill="#e0e0e0" font-size="8" text-anchor="middle">[0.023, -0.145, 0.892,</text>
+            <text x="590" y="112" fill="#e0e0e0" font-size="8" text-anchor="middle">-0.034, 0.567, 0.234,</text>
+            <text x="590" y="126" fill="#e0e0e0" font-size="8" text-anchor="middle">... 1536 dimensions]</text>
+
+            <!-- Arrow -->
+            <line x1="680" y1="100" x2="730" y2="100" stroke="#00ff88" stroke-width="2" marker-end="url(#arrG3)"/>
+
+            <!-- Similarity -->
+            <rect x="730" y="55" width="140" height="90" rx="10" fill="#16213e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="800" y="78" fill="#00ff88" font-size="10" text-anchor="middle" font-weight="bold">Similarite</text>
+            <text x="800" y="96" fill="#e0e0e0" font-size="9" text-anchor="middle">cosine_sim = 0.94</text>
+            <text x="800" y="114" fill="#e0e0e0" font-size="9" text-anchor="middle">Chunk: "Politique</text>
+            <text x="800" y="128" fill="#e0e0e0" font-size="9" text-anchor="middle">de remboursement"</text>
+
+            <!-- Bottom: Key concept -->
+            <rect x="100" y="175" width="700" height="100" rx="10" fill="rgba(0,255,136,0.05)" stroke="#00ff88" stroke-width="1"/>
+            <text x="450" y="200" fill="#00ff88" font-size="12" text-anchor="middle" font-weight="bold">Principe fondamental</text>
+            <text x="450" y="222" fill="#e0e0e0" font-size="10" text-anchor="middle">"remboursement produit" et "retourner un article et recuperer l'argent"</text>
+            <text x="450" y="240" fill="#e0e0e0" font-size="10" text-anchor="middle">sont des phrases differentes mais leurs embeddings sont PROCHES dans l'espace vectoriel</text>
+            <text x="450" y="258" fill="#aaa" font-size="9" text-anchor="middle">C'est la magie de la recherche semantique : comprendre le SENS, pas juste les mots-cles</text>
+
+            <defs>
+                <marker id="arr3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrB3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arrG3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="concept-box">
+        <h3>Pourquoi la qualite des embeddings est cruciale pour le RAG ?</h3>
+        <p>Le systeme RAG suit la chaine : <strong>Question -> Embedding -> Similarite -> Chunks recuperes -> LLM -> Reponse</strong>. Si l'embedding de la question ne capture pas correctement son sens, les chunks recuperes seront non pertinents, et le LLM generera une reponse basee sur du mauvais contexte. C'est le principe <strong>"Garbage In, Garbage Out"</strong> applique au RAG.</p>
+        <ul>
+            <li><strong>Bon embedding</strong> : "politique de retour" est proche de "comment renvoyer un article" -> chunk pertinent recupere -> bonne reponse</li>
+            <li><strong>Mauvais embedding</strong> : "politique de retour" est plus proche de "politique de l'entreprise" (meme mot "politique") -> chunk non pertinent -> mauvaise reponse</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Demonstration : embeddings et similarite</span>
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Textes a comparer</span>
+textes = [
+    <span class="string">"Comment faire un remboursement ?"</span>,        <span class="comment"># Question</span>
+    <span class="string">"Politique de retour et remboursement"</span>,     <span class="comment"># Semantiquement proche</span>
+    <span class="string">"Renvoyer un produit et recuperer l'argent"</span>,<span class="comment"># Meme sens, mots differents</span>
+    <span class="string">"La meteo de demain sera ensoleillee"</span>,      <span class="comment"># Completement different</span>
+    <span class="string">"Les politiques de l'entreprise en 2024"</span>,   <span class="comment"># Piege : mot "politique"</span>
+]
+
+<span class="comment"># Calculer les embeddings</span>
+vecteurs = embeddings.<span class="function">embed_documents</span>(textes)
+
+<span class="comment"># Calculer la similarite cosinus avec la question (index 0)</span>
+<span class="keyword">def</span> <span class="function">cosine_sim</span>(a, b):
+    <span class="keyword">return</span> np.<span class="function">dot</span>(a, b) / (np.linalg.<span class="function">norm</span>(a) * np.linalg.<span class="function">norm</span>(b))
+
+question_vec = vecteurs[<span class="number">0</span>]
+<span class="function">print</span>(<span class="string">"Similarite avec 'Comment faire un remboursement ?':\n"</span>)
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">len</span>(textes)):
+    sim = <span class="function">cosine_sim</span>(question_vec, vecteurs[i])
+    <span class="function">print</span>(<span class="string">f"  {sim:.4f}  |  {textes[i]}"</span>)</div>
+
+    <div class="output-block">Similarite avec 'Comment faire un remboursement ?':
+
+  0.9234  |  Politique de retour et remboursement
+  0.8876  |  Renvoyer un produit et recuperer l'argent
+  0.1245  |  La meteo de demain sera ensoleillee
+  0.3421  |  Les politiques de l'entreprise en 2024</div>
+
+    <div class="effect">
+        Le modele d'embedding comprend que "remboursement" et "renvoyer un produit et recuperer l'argent" sont semantiquement proches (0.89) meme sans mots en commun. Il distingue aussi "politique de retour" (pertinent, 0.92) de "politiques de l'entreprise" (non pertinent, 0.34) malgre le mot "politique" en commun.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>2. Choisir le bon modele d'embeddings</h2>
+
+    <p>Le choix du modele d'embedding est une decision strategique qui impacte la qualite, le cout et la performance de votre systeme RAG. Voici une comparaison des principaux modeles disponibles en 2025-2026 :</p>
+
+    <h3>2.1 Comparaison des modeles d'embedding</h3>
+
+    <table>
+        <tr>
+            <th>Modele</th>
+            <th>Fournisseur</th>
+            <th>Dimensions</th>
+            <th>MTEB Score</th>
+            <th>Prix (1M tokens)</th>
+            <th>Cas d'usage</th>
+        </tr>
+        <tr>
+            <td><strong>text-embedding-3-small</strong></td>
+            <td>OpenAI</td>
+            <td>1536</td>
+            <td>62.3</td>
+            <td>$0.02</td>
+            <td>Prototype, cout reduit</td>
+        </tr>
+        <tr>
+            <td><strong>text-embedding-3-large</strong></td>
+            <td>OpenAI</td>
+            <td>3072</td>
+            <td>64.6</td>
+            <td>$0.13</td>
+            <td>Production, haute qualite</td>
+        </tr>
+        <tr>
+            <td><strong>embed-v4</strong></td>
+            <td>Cohere</td>
+            <td>1024</td>
+            <td>65.2</td>
+            <td>$0.10</td>
+            <td>Multilingue, leader MTEB</td>
+        </tr>
+        <tr>
+            <td><strong>voyage-3</strong></td>
+            <td>Voyage AI</td>
+            <td>1024</td>
+            <td>64.8</td>
+            <td>$0.06</td>
+            <td>RAG optimise, code</td>
+        </tr>
+        <tr>
+            <td><strong>all-MiniLM-L6-v2</strong></td>
+            <td>Open Source</td>
+            <td>384</td>
+            <td>56.3</td>
+            <td>Gratuit</td>
+            <td>Local, rapide, prototype</td>
+        </tr>
+        <tr>
+            <td><strong>BGE-M3</strong></td>
+            <td>BAAI (Open Source)</td>
+            <td>1024</td>
+            <td>63.0</td>
+            <td>Gratuit</td>
+            <td>Multilingue (100+ langues)</td>
+        </tr>
+        <tr>
+            <td><strong>NV-Embed-v2</strong></td>
+            <td>NVIDIA</td>
+            <td>4096</td>
+            <td>62.7 (retrieval)</td>
+            <td>Gratuit</td>
+            <td>Retrieval haute precision</td>
+        </tr>
+        <tr>
+            <td><strong>e5-mistral-7b-instruct</strong></td>
+            <td>Microsoft (Open Source)</td>
+            <td>4096</td>
+            <td>56.9 (retrieval)</td>
+            <td>Gratuit (GPU requis)</td>
+            <td>Haute qualite, auto-heberge</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        Le score MTEB (Massive Text Embedding Benchmark) est le benchmark de reference pour comparer les modeles d'embedding. Cependant, ne choisissez pas votre modele uniquement sur ce score. Un modele avec un score MTEB plus bas peut etre meilleur pour VOTRE cas d'usage specifique. Testez toujours avec vos propres donnees et questions. Cohere embed-v4 est actuellement le leader global (65.2), mais OpenAI text-embedding-3-large offre le meilleur rapport qualite/prix pour la plupart des projets.
+    </div>
+
+    <h3>2.2 Criteres de choix</h3>
+
+    <div class="concept-box blue">
+        <h3>Comment choisir votre modele d'embedding ?</h3>
+        <ul>
+            <li><strong>Budget limite / prototype</strong> : OpenAI text-embedding-3-small ($0.02/1M tokens) ou all-MiniLM-L6-v2 (gratuit)</li>
+            <li><strong>Production, meilleure qualite</strong> : OpenAI text-embedding-3-large ou Cohere embed-v4</li>
+            <li><strong>Corpus multilingue</strong> : BGE-M3 (100+ langues) ou Cohere embed-v4</li>
+            <li><strong>Code / technique</strong> : Voyage code-2 ou voyage-3</li>
+            <li><strong>Auto-heberge / confidentialite</strong> : BGE-M3 ou e5-mistral-7b-instruct</li>
+            <li><strong>Latence minimale</strong> : all-MiniLM-L6-v2 (384 dims, ultra rapide)</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>3. Embedding Dimensions - Impact sur qualite et cout</h2>
+
+    <p>Les dimensions de l'embedding representent la taille du vecteur genere. Plus de dimensions = plus de nuances capturees, mais aussi plus de stockage et de calcul.</p>
+
+    <table>
+        <tr>
+            <th>Dimensions</th>
+            <th>Stockage par vecteur</th>
+            <th>Qualite relative</th>
+            <th>Vitesse de recherche</th>
+            <th>Cas d'usage</th>
+        </tr>
+        <tr>
+            <td><strong>256</strong></td>
+            <td>1 KB</td>
+            <td>Acceptable</td>
+            <td>Tres rapide</td>
+            <td>Recherche rapide, IoT, edge</td>
+        </tr>
+        <tr>
+            <td><strong>384</strong></td>
+            <td>1.5 KB</td>
+            <td>Bonne</td>
+            <td>Rapide</td>
+            <td>Prototype, petits corpus</td>
+        </tr>
+        <tr>
+            <td><strong>768</strong></td>
+            <td>3 KB</td>
+            <td>Tres bonne</td>
+            <td>Moyenne</td>
+            <td>Production standard</td>
+        </tr>
+        <tr>
+            <td><strong>1536</strong></td>
+            <td>6 KB</td>
+            <td>Excellente</td>
+            <td>Plus lente</td>
+            <td>RAG haute qualite</td>
+        </tr>
+        <tr>
+            <td><strong>3072</strong></td>
+            <td>12 KB</td>
+            <td>Maximum</td>
+            <td>Lente</td>
+            <td>Precision critique, grands budgets</td>
+        </tr>
+    </table>
+
+    <div class="code-block"><span class="comment"># OpenAI text-embedding-3 supporte la reduction de dimensions</span>
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+<span class="comment"># Version complete (1536 dims pour small, 3072 pour large)</span>
+emb_full = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Version reduite (256 dims) - plus rapide, moins cher en stockage</span>
+emb_reduced = OpenAIEmbeddings(
+    model=<span class="string">"text-embedding-3-small"</span>,
+    dimensions=<span class="number">256</span>  <span class="comment"># Reduire a 256 dimensions</span>
+)
+
+texte = <span class="string">"Comment fonctionne la politique de retour ?"</span>
+vec_full = emb_full.<span class="function">embed_query</span>(texte)
+vec_reduced = emb_reduced.<span class="function">embed_query</span>(texte)
+
+<span class="function">print</span>(<span class="string">f"Dimensions completes : {len(vec_full)}"</span>)
+<span class="function">print</span>(<span class="string">f"Dimensions reduites : {len(vec_reduced)}"</span>)
+<span class="function">print</span>(<span class="string">f"Ratio stockage : {len(vec_reduced)/len(vec_full):.1%}"</span>)</div>
+
+    <div class="output-block">Dimensions completes : 1536
+Dimensions reduites : 256
+Ratio stockage : 16.7%</div>
+
+    <div class="prof-note">
+        La reduction de dimensions (Matryoshka embeddings) est une fonctionnalite puissante d'OpenAI text-embedding-3. Vous pouvez reduire a 256 ou 512 dimensions avec une perte de qualite minime (environ 2-5% de degradation sur les benchmarks) tout en divisant le stockage par 3 a 6x. Ideal pour les gros corpus ou la vitesse est critique.
+    </div>
+
+    <h3>3.1 Utiliser des embeddings open source locaux</h3>
+
+    <div class="code-block"><span class="comment"># Embeddings locaux avec sentence-transformers (gratuit, pas d'API)</span>
+<span class="keyword">from</span> langchain_community.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings
+
+<span class="comment"># Modele leger et rapide</span>
+embeddings_local = HuggingFaceEmbeddings(
+    model_name=<span class="string">"sentence-transformers/all-MiniLM-L6-v2"</span>,
+    model_kwargs={<span class="string">"device"</span>: <span class="string">"cpu"</span>},  <span class="comment"># ou "cuda" si GPU disponible</span>
+    encode_kwargs={<span class="string">"normalize_embeddings"</span>: <span class="keyword">True</span>}
+)
+
+<span class="comment"># Modele multilingue haute qualite</span>
+embeddings_multilingual = HuggingFaceEmbeddings(
+    model_name=<span class="string">"BAAI/bge-m3"</span>,
+    model_kwargs={<span class="string">"device"</span>: <span class="string">"cuda"</span>},
+    encode_kwargs={<span class="string">"normalize_embeddings"</span>: <span class="keyword">True</span>}
+)
+
+<span class="comment"># Tester</span>
+vec = embeddings_local.<span class="function">embed_query</span>(<span class="string">"Bonjour le monde"</span>)
+<span class="function">print</span>(<span class="string">f"Dimensions : {len(vec)}"</span>)
+<span class="function">print</span>(<span class="string">f"Premiers valeurs : {vec[:5]}"</span>)</div>
+
+    <div class="output-block">Dimensions : 384
+Premiers valeurs : [0.0234, -0.1456, 0.0892, -0.0345, 0.0567]</div>
+
+    <div class="warning">
+        Rappel crucial : vous devez utiliser le <strong>meme modele d'embedding</strong> pour l'indexation (stocker les chunks) et pour la requete (embedder la question). Si vous changez de modele d'embedding, vous devez re-indexer tous vos documents. Les vecteurs de modeles differents ne sont pas comparables entre eux.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>4. Vector Stores pour le RAG</h2>
+
+    <p>Un vector store est une base de donnees specialisee pour stocker et rechercher des vecteurs de maniere efficace. C'est le "coeur" du retrieval dans un systeme RAG. Le choix du vector store depend de votre echelle, de vos besoins en production et de votre budget.</p>
+
+    <h3>4.1 Comparaison des Vector Stores</h3>
+
+    <table>
+        <tr>
+            <th>Vector Store</th>
+            <th>Type</th>
+            <th>Persistance</th>
+            <th>Scalabilite</th>
+            <th>Cas d'usage</th>
+        </tr>
+        <tr>
+            <td><strong>FAISS</strong></td>
+            <td>Librairie (local)</td>
+            <td>Fichier local</td>
+            <td>Millions de vecteurs</td>
+            <td>Prototype rapide, recherche, benchmarks</td>
+        </tr>
+        <tr>
+            <td><strong>Chroma</strong></td>
+            <td>DB locale/serveur</td>
+            <td>SQLite / fichier</td>
+            <td>Centaines de milliers</td>
+            <td>Dev local, projets petits/moyens</td>
+        </tr>
+        <tr>
+            <td><strong>Pinecone</strong></td>
+            <td>Cloud (managed)</td>
+            <td>Cloud natif</td>
+            <td>Milliards (serverless)</td>
+            <td>Production SaaS, zero ops</td>
+        </tr>
+        <tr>
+            <td><strong>Qdrant</strong></td>
+            <td>OSS + Cloud</td>
+            <td>Disque / Cloud</td>
+            <td>Milliards</td>
+            <td>Production, filtrage avance</td>
+        </tr>
+        <tr>
+            <td><strong>Weaviate</strong></td>
+            <td>OSS + Cloud</td>
+            <td>Disque / Cloud</td>
+            <td>Milliards</td>
+            <td>Hybrid search, GraphQL</td>
+        </tr>
+        <tr>
+            <td><strong>Milvus</strong></td>
+            <td>OSS + Cloud</td>
+            <td>Disque / Cloud</td>
+            <td>Milliards+</td>
+            <td>Echelle industrielle, billion-scale</td>
+        </tr>
+        <tr>
+            <td><strong>pgvector</strong></td>
+            <td>Extension PostgreSQL</td>
+            <td>PostgreSQL</td>
+            <td>Millions</td>
+            <td>Si deja sur PostgreSQL</td>
+        </tr>
+    </table>
+
+    <div class="concept-box green">
+        <h3>Recommandation par situation</h3>
+        <ul>
+            <li><strong>Prototype / apprentissage</strong> : FAISS (zero config, en memoire) ou Chroma (persistant, simple)</li>
+            <li><strong>Projet perso / startup</strong> : Chroma ou Qdrant (gratuit, facile)</li>
+            <li><strong>Production SaaS (zero ops)</strong> : Pinecone (cloud managed, serverless)</li>
+            <li><strong>Production auto-heberge</strong> : Qdrant ou Weaviate (OSS, performant, filtrage riche)</li>
+            <li><strong>Echelle massive (milliards)</strong> : Milvus (concu pour le billion-scale)</li>
+            <li><strong>Stack PostgreSQL existant</strong> : pgvector (extension, pas de nouvelle infra)</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>5. Indexing Pipeline complet</h2>
+
+    <p>Voyons comment assembler un pipeline d'indexation complet avec differents vector stores.</p>
+
+    <h3>5.1 Pipeline avec FAISS (prototype rapide)</h3>
+
+    <div class="code-block"><span class="comment"># Pipeline complet avec FAISS - ideal pour prototype et tests</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+
+<span class="comment"># Etape 1 : Charger</span>
+loader = PyPDFLoader(<span class="string">"documentation_produit.pdf"</span>)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Pages chargees : {len(docs)}"</span>)
+
+<span class="comment"># Etape 2 : Decouper</span>
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">50</span>
+)
+chunks = splitter.<span class="function">split_documents</span>(docs)
+<span class="function">print</span>(<span class="string">f"Chunks crees : {len(chunks)}"</span>)
+
+<span class="comment"># Etape 3 : Creer le vector store FAISS</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+vectorstore = FAISS.<span class="function">from_documents</span>(chunks, embeddings)
+<span class="function">print</span>(<span class="string">"Vector store FAISS cree en memoire !"</span>)
+
+<span class="comment"># Sauvegarder sur disque (pour reutiliser sans re-embedder)</span>
+vectorstore.<span class="function">save_local</span>(<span class="string">"./faiss_index"</span>)
+<span class="function">print</span>(<span class="string">"Index FAISS sauvegarde sur disque."</span>)
+
+<span class="comment"># Recharger plus tard</span>
+vectorstore_loaded = FAISS.<span class="function">load_local</span>(
+    <span class="string">"./faiss_index"</span>,
+    embeddings,
+    allow_dangerous_deserialization=<span class="keyword">True</span>
+)
+
+<span class="comment"># Tester une recherche</span>
+results = vectorstore.<span class="function">similarity_search</span>(
+    <span class="string">"Comment configurer le produit ?"</span>,
+    k=<span class="number">4</span>
+)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results):
+    <span class="function">print</span>(<span class="string">f"\n--- Resultat {i+1} (page {doc.metadata.get('page', '?')}) ---"</span>)
+    <span class="function">print</span>(doc.page_content[:<span class="number">150</span>], <span class="string">"..."</span>)</div>
+
+    <div class="output-block">Pages chargees : 24
+Chunks crees : 89
+Vector store FAISS cree en memoire !
+Index FAISS sauvegarde sur disque.
+
+--- Resultat 1 (page 5) ---
+Configuration initiale
+
+Pour configurer votre produit, connectez-le a votre reseau Wi-Fi
+via l'application mobile. Ouvrez les parametres ...
+
+--- Resultat 2 (page 6) ---
+Parametres avances
+
+Accedez aux parametres avances depuis le menu principal.
+Vous pouvez modifier la langue, le fuseau horaire ...
+
+--- Resultat 3 (page 5) ---
+Pre-requis d'installation
+
+Avant de configurer le produit, assurez-vous d'avoir :
+- Un reseau Wi-Fi 2.4GHz ou 5GHz ...
+
+--- Resultat 4 (page 7) ---
+Depannage de la configuration
+
+Si la configuration echoue, verifiez que votre
+routeur est compatible et que le firmware est a jour ...</div>
+
+    <h3>5.2 Pipeline avec Chroma (persistant et local)</h3>
+
+    <div class="code-block"><span class="comment"># Pipeline complet avec Chroma - persistant, ideal pour dev local</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> DirectoryLoader, PyPDFLoader
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+
+<span class="comment"># Charger plusieurs PDFs</span>
+loader = DirectoryLoader(<span class="string">"./docs/"</span>, glob=<span class="string">"**/*.pdf"</span>, loader_cls=PyPDFLoader)
+docs = loader.<span class="function">load</span>()
+
+<span class="comment"># Decouper</span>
+splitter = RecursiveCharacterTextSplitter(chunk_size=<span class="number">500</span>, chunk_overlap=<span class="number">50</span>)
+chunks = splitter.<span class="function">split_documents</span>(docs)
+
+<span class="comment"># Creer le vector store Chroma (persistant sur disque)</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+vectorstore = Chroma.<span class="function">from_documents</span>(
+    documents=chunks,
+    embedding=embeddings,
+    persist_directory=<span class="string">"./chroma_db"</span>,          <span class="comment"># Sauvegarde automatique</span>
+    collection_name=<span class="string">"documentation_produit"</span>  <span class="comment"># Nom de la collection</span>
+)
+
+<span class="function">print</span>(<span class="string">f"Collection creee avec {vectorstore._collection.count()} vecteurs"</span>)
+
+<span class="comment"># Recharger plus tard (sans re-embedder !)</span>
+vectorstore = Chroma(
+    persist_directory=<span class="string">"./chroma_db"</span>,
+    embedding_function=embeddings,
+    collection_name=<span class="string">"documentation_produit"</span>
+)
+<span class="function">print</span>(<span class="string">f"Collection rechargee : {vectorstore._collection.count()} vecteurs"</span>)</div>
+
+    <div class="output-block">Collection creee avec 89 vecteurs
+Collection rechargee : 89 vecteurs</div>
+
+    <h3>5.3 Pipeline avec Pinecone (production cloud)</h3>
+
+    <div class="code-block"><span class="comment"># Pipeline avec Pinecone - production cloud, scalable</span>
+<span class="keyword">from</span> langchain_pinecone <span class="keyword">import</span> PineconeVectorStore
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> pinecone <span class="keyword">import</span> Pinecone, ServerlessSpec
+<span class="keyword">import</span> os
+
+<span class="comment"># Initialiser Pinecone</span>
+pc = Pinecone(api_key=os.environ[<span class="string">"PINECONE_API_KEY"</span>])
+
+<span class="comment"># Creer un index (une seule fois)</span>
+index_name = <span class="string">"rag-documentation"</span>
+<span class="keyword">if</span> index_name <span class="keyword">not in</span> pc.<span class="function">list_indexes</span>().<span class="function">names</span>():
+    pc.<span class="function">create_index</span>(
+        name=index_name,
+        dimension=<span class="number">1536</span>,       <span class="comment"># Doit matcher le modele d'embedding</span>
+        metric=<span class="string">"cosine"</span>,       <span class="comment"># ou "dotproduct", "euclidean"</span>
+        spec=ServerlessSpec(
+            cloud=<span class="string">"aws"</span>,
+            region=<span class="string">"us-east-1"</span>
+        )
+    )
+
+<span class="comment"># Creer le vector store</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+vectorstore = PineconeVectorStore.<span class="function">from_documents</span>(
+    documents=chunks,
+    embedding=embeddings,
+    index_name=index_name,
+    namespace=<span class="string">"v1"</span>  <span class="comment"># Namespace pour versionner</span>
+)
+
+<span class="function">print</span>(<span class="string">"Documents indexes dans Pinecone !"</span>)</div>
+
+    <!-- ============================================================ -->
+    <h2>6. Similarity Search - Les metriques de distance</h2>
+
+    <p>La recherche par similarite est l'operation fondamentale du retrieval RAG. Trois metriques de distance principales sont utilisees pour comparer les vecteurs :</p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 350" xmlns="http://www.w3.org/2000/svg" style="max-width:870px;">
+            <rect width="900" height="350" fill="#0f0f23" rx="12"/>
+            <text x="450" y="30" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">Metriques de Similarite pour le RAG</text>
+
+            <!-- Cosine Similarity -->
+            <rect x="30" y="50" width="270" height="270" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="165" y="75" fill="#00ff88" font-size="13" text-anchor="middle" font-weight="bold">Cosine Similarity</text>
+            <text x="165" y="95" fill="#aaa" font-size="9" text-anchor="middle">(La plus utilisee pour le RAG)</text>
+
+            <!-- Visual: angle between vectors -->
+            <line x1="80" y1="200" x2="200" y2="130" stroke="#00ff88" stroke-width="2"/>
+            <line x1="80" y1="200" x2="220" y2="160" stroke="#569cd6" stroke-width="2"/>
+            <text x="205" y="125" fill="#00ff88" font-size="9">A</text>
+            <text x="225" y="155" fill="#569cd6" font-size="9">B</text>
+            <path d="M 120 180 A 30 30 0 0 1 130 172" stroke="#ff8c42" stroke-width="1.5" fill="none"/>
+            <text x="140" y="178" fill="#ff8c42" font-size="8">angle</text>
+
+            <text x="165" y="240" fill="#e0e0e0" font-size="9" text-anchor="middle">Mesure l'angle entre les vecteurs</text>
+            <text x="165" y="256" fill="#e0e0e0" font-size="9" text-anchor="middle">sim = cos(angle) = A.B / |A|.|B|</text>
+            <text x="165" y="275" fill="#00ff88" font-size="9" text-anchor="middle">Valeurs : -1 a 1 (1 = identique)</text>
+            <text x="165" y="295" fill="#aaa" font-size="8" text-anchor="middle">Ignore la magnitude, compare</text>
+            <text x="165" y="308" fill="#aaa" font-size="8" text-anchor="middle">uniquement la direction</text>
+
+            <!-- Euclidean Distance -->
+            <rect x="315" y="50" width="270" height="270" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="450" y="75" fill="#569cd6" font-size="13" text-anchor="middle" font-weight="bold">Euclidean Distance (L2)</text>
+            <text x="450" y="95" fill="#aaa" font-size="9" text-anchor="middle">(Distance geometrique)</text>
+
+            <!-- Visual: distance between points -->
+            <circle cx="380" cy="170" r="5" fill="#00ff88"/>
+            <circle cx="500" cy="140" r="5" fill="#569cd6"/>
+            <line x1="380" y1="170" x2="500" y2="140" stroke="#ff8c42" stroke-width="2" stroke-dasharray="5,3"/>
+            <text x="375" y="190" fill="#00ff88" font-size="9">A</text>
+            <text x="505" y="135" fill="#569cd6" font-size="9">B</text>
+            <text x="440" y="145" fill="#ff8c42" font-size="8">distance</text>
+
+            <text x="450" y="240" fill="#e0e0e0" font-size="9" text-anchor="middle">Mesure la distance geometrique</text>
+            <text x="450" y="256" fill="#e0e0e0" font-size="9" text-anchor="middle">dist = sqrt(sum((Ai-Bi)^2))</text>
+            <text x="450" y="275" fill="#569cd6" font-size="9" text-anchor="middle">Valeurs : 0 a infini (0 = identique)</text>
+            <text x="450" y="295" fill="#aaa" font-size="8" text-anchor="middle">Sensible a la magnitude</text>
+            <text x="450" y="308" fill="#aaa" font-size="8" text-anchor="middle">des vecteurs</text>
+
+            <!-- Dot Product -->
+            <rect x="600" y="50" width="270" height="270" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="735" y="75" fill="#ff8c42" font-size="13" text-anchor="middle" font-weight="bold">Dot Product</text>
+            <text x="735" y="95" fill="#aaa" font-size="9" text-anchor="middle">(Produit scalaire)</text>
+
+            <!-- Visual -->
+            <line x1="660" y1="200" x2="780" y2="130" stroke="#00ff88" stroke-width="2"/>
+            <line x1="660" y1="200" x2="740" y2="155" stroke="#569cd6" stroke-width="2"/>
+            <text x="785" y="125" fill="#00ff88" font-size="9">A</text>
+            <text x="745" y="150" fill="#569cd6" font-size="9">B</text>
+
+            <text x="735" y="240" fill="#e0e0e0" font-size="9" text-anchor="middle">Combine angle ET magnitude</text>
+            <text x="735" y="256" fill="#e0e0e0" font-size="9" text-anchor="middle">dot = sum(Ai * Bi)</text>
+            <text x="735" y="275" fill="#ff8c42" font-size="9" text-anchor="middle">Valeurs : -inf a +inf</text>
+            <text x="735" y="295" fill="#aaa" font-size="8" text-anchor="middle">Si vecteurs normalises :</text>
+            <text x="735" y="308" fill="#aaa" font-size="8" text-anchor="middle">equivalent a cosine similarity</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Pour le RAG, utilisez la <strong>cosine similarity</strong> dans 95% des cas. C'est la metrique par defaut de la plupart des vector stores et modeles d'embedding. Elle est insensible a la longueur des textes (magnitude du vecteur) et compare uniquement le "sens" (direction du vecteur). Si vos embeddings sont normalises (comme c'est souvent le cas), le dot product donne les memes resultats et est plus rapide a calculer.
+    </div>
+
+    <div class="code-block"><span class="comment"># Comparaison des metriques de distance</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> numpy.linalg <span class="keyword">import</span> norm
+
+<span class="keyword">def</span> <span class="function">cosine_similarity</span>(a, b):
+    <span class="keyword">return</span> np.<span class="function">dot</span>(a, b) / (norm(a) * norm(b))
+
+<span class="keyword">def</span> <span class="function">euclidean_distance</span>(a, b):
+    <span class="keyword">return</span> norm(np.<span class="function">array</span>(a) - np.<span class="function">array</span>(b))
+
+<span class="keyword">def</span> <span class="function">dot_product</span>(a, b):
+    <span class="keyword">return</span> np.<span class="function">dot</span>(a, b)
+
+<span class="comment"># Exemple avec des embeddings reels</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+
+vec_q = embeddings.<span class="function">embed_query</span>(<span class="string">"politique de retour"</span>)
+vec_a = embeddings.<span class="function">embed_query</span>(<span class="string">"remboursement produit"</span>)
+vec_b = embeddings.<span class="function">embed_query</span>(<span class="string">"meteo de demain"</span>)
+
+<span class="function">print</span>(<span class="string">"Question vs 'remboursement produit' (pertinent) :"</span>)
+<span class="function">print</span>(<span class="string">f"  Cosine sim  : {cosine_similarity(vec_q, vec_a):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  Euclidean   : {euclidean_distance(vec_q, vec_a):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  Dot product : {dot_product(vec_q, vec_a):.4f}"</span>)
+
+<span class="function">print</span>(<span class="string">f"\nQuestion vs 'meteo de demain' (non pertinent) :"</span>)
+<span class="function">print</span>(<span class="string">f"  Cosine sim  : {cosine_similarity(vec_q, vec_b):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  Euclidean   : {euclidean_distance(vec_q, vec_b):.4f}"</span>)
+<span class="function">print</span>(<span class="string">f"  Dot product : {dot_product(vec_q, vec_b):.4f}"</span>)</div>
+
+    <div class="output-block">Question vs 'remboursement produit' (pertinent) :
+  Cosine sim  : 0.9234
+  Euclidean   : 0.3912
+  Dot product : 0.9234
+
+Question vs 'meteo de demain' (non pertinent) :
+  Cosine sim  : 0.1245
+  Euclidean   : 1.3218
+  Dot product : 0.1245</div>
+
+    <!-- ============================================================ -->
+    <h2>7. Search Parameters - Parametres de recherche</h2>
+
+    <p>Les parametres de recherche controlent combien et quels documents sont retournes par le retriever. Les bien configurer est essentiel.</p>
+
+    <h3>7.1 Le parametre k (nombre de resultats)</h3>
+
+    <div class="param-box">
+        <h4>k - Nombre de documents retournes</h4>
+        <p><strong>Valeur par defaut :</strong> 4</p>
+        <p><strong>Plage recommandee :</strong> 3 a 8</p>
+        <p><strong>Impact :</strong> k trop petit = risque de manquer des infos pertinentes. k trop grand = bruit, dilution du contexte, cout LLM accru.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># Configurer k lors de la recherche</span>
+results = vectorstore.<span class="function">similarity_search</span>(
+    <span class="string">"Comment configurer le produit ?"</span>,
+    k=<span class="number">4</span>  <span class="comment"># Retourner les 4 chunks les plus pertinents</span>
+)
+
+<span class="comment"># Avec le retriever (pour RetrievalQA)</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_kwargs={<span class="string">"k"</span>: <span class="number">6</span>}  <span class="comment"># Retourner 6 chunks</span>
+)
+
+<span class="comment"># Recherche avec score de similarite</span>
+results_with_score = vectorstore.<span class="function">similarity_search_with_score</span>(
+    <span class="string">"Comment configurer le produit ?"</span>,
+    k=<span class="number">4</span>
+)
+<span class="keyword">for</span> doc, score <span class="keyword">in</span> results_with_score:
+    <span class="function">print</span>(<span class="string">f"Score: {score:.4f} | {doc.page_content[:80]}..."</span>)</div>
+
+    <div class="output-block">Score: 0.9456 | Configuration initiale Pour configurer votre produit, connectez-le a votre reseau...
+Score: 0.8923 | Parametres avances Accedez aux parametres avances depuis le menu principal...
+Score: 0.8745 | Pre-requis d'installation Avant de configurer le produit, assurez-vous d'avoir...
+Score: 0.7234 | Depannage de la configuration Si la configuration echoue, verifiez que votre...</div>
+
+    <h3>7.2 score_threshold - Filtrage par score minimum</h3>
+
+    <div class="code-block"><span class="comment"># Retourner uniquement les resultats au-dessus d'un seuil de similarite</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity_score_threshold"</span>,
+    search_kwargs={
+        <span class="string">"score_threshold"</span>: <span class="number">0.75</span>,  <span class="comment"># Minimum 75% de similarite</span>
+        <span class="string">"k"</span>: <span class="number">10</span>                     <span class="comment"># Maximum 10 resultats</span>
+    }
+)
+
+<span class="comment"># Avec une question pertinente</span>
+results = retriever.<span class="function">invoke</span>(<span class="string">"Comment configurer le Wi-Fi ?"</span>)
+<span class="function">print</span>(<span class="string">f"Resultats au-dessus du seuil : {len(results)}"</span>)
+
+<span class="comment"># Avec une question hors-sujet</span>
+results = retriever.<span class="function">invoke</span>(<span class="string">"Quelle est la capitale du Japon ?"</span>)
+<span class="function">print</span>(<span class="string">f"Resultats au-dessus du seuil : {len(results)}"</span>)</div>
+
+    <div class="output-block">Resultats au-dessus du seuil : 4
+Resultats au-dessus du seuil : 0</div>
+
+    <div class="effect">
+        Le score_threshold empeche de retourner des chunks non pertinents quand la question est hors-sujet. Sans ce seuil, le systeme retournerait toujours k resultats, meme si aucun n'est pertinent, ce qui pourrait conduire le LLM a halluciner une reponse basee sur du contexte non pertinent.
+    </div>
+
+    <h3>7.3 MMR (Maximum Marginal Relevance)</h3>
+
+    <div class="code-block"><span class="comment"># MMR : diversifier les resultats en evitant la redondance</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={
+        <span class="string">"k"</span>: <span class="number">4</span>,           <span class="comment"># Retourner 4 resultats finaux</span>
+        <span class="string">"fetch_k"</span>: <span class="number">20</span>,     <span class="comment"># Chercher dans les 20 plus proches</span>
+        <span class="string">"lambda_mult"</span>: <span class="number">0.7</span> <span class="comment"># 0=diversite max, 1=similarite pure</span>
+    }
+)
+
+results = retriever.<span class="function">invoke</span>(<span class="string">"Comment configurer le produit ?"</span>)
+<span class="function">print</span>(<span class="string">f"Resultats MMR (diversifies) : {len(results)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results):
+    <span class="function">print</span>(<span class="string">f"  {i+1}. {doc.page_content[:80]}..."</span>)</div>
+
+    <div class="prof-note">
+        Le MMR est crucial quand vos chunks contiennent du contenu redondant (par exemple, la meme information reperee dans differentes pages ou documents). Sans MMR, vous pourriez recuperer 4 chunks quasi-identiques qui n'ajoutent rien au contexte. Le fetch_k=20 signifie qu'on cherche d'abord les 20 plus proches, puis on selectionne les 4 les plus diversifies parmi eux. Nous detaillerons le MMR dans le cours 4.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>8. Metadata Filtering - Filtrage par metadonnees</h2>
+
+    <p>Le filtrage par metadonnees est une technique puissante qui combine la recherche semantique avec des filtres structures. Cela permet de restreindre la recherche a un sous-ensemble de documents <strong>avant</strong> la recherche vectorielle.</p>
+
+    <div class="code-block"><span class="comment"># Filtrage par metadonnees avec Chroma</span>
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+
+<span class="comment"># Recherche avec filtre sur la source</span>
+results = vectorstore.<span class="function">similarity_search</span>(
+    <span class="string">"politique de conges"</span>,
+    k=<span class="number">4</span>,
+    filter={<span class="string">"source"</span>: <span class="string">"guide_rh_2024.pdf"</span>}  <span class="comment"># Uniquement dans ce fichier</span>
+)
+<span class="function">print</span>(<span class="string">f"Resultats filtres par source : {len(results)}"</span>)
+
+<span class="comment"># Filtre sur la categorie</span>
+results = vectorstore.<span class="function">similarity_search</span>(
+    <span class="string">"delai de livraison"</span>,
+    k=<span class="number">4</span>,
+    filter={<span class="string">"category"</span>: <span class="string">"logistique"</span>}  <span class="comment"># Uniquement les docs logistique</span>
+)
+
+<span class="comment"># Filtres multiples (AND)</span>
+results = vectorstore.<span class="function">similarity_search</span>(
+    <span class="string">"procedure de validation"</span>,
+    k=<span class="number">4</span>,
+    filter={
+        <span class="string">"$and"</span>: [
+            {<span class="string">"category"</span>: <span class="string">"RH"</span>},
+            {<span class="string">"department"</span>: <span class="string">"juridique"</span>}
+        ]
+    }
+)
+
+<span class="comment"># Filtrage avec Pinecone (syntaxe differente)</span>
+<span class="comment"># results = vectorstore.similarity_search(</span>
+<span class="comment">#     "politique de conges",</span>
+<span class="comment">#     k=4,</span>
+<span class="comment">#     filter={"category": {"$eq": "RH"}, "year": {"$gte": 2024}}</span>
+<span class="comment"># )</span></div>
+
+    <div class="code-block"><span class="comment"># Cas d'usage : RAG multi-source avec routage par metadonnees</span>
+<span class="keyword">def</span> <span class="function">smart_retrieval</span>(question, vectorstore, department=<span class="keyword">None</span>, year_min=<span class="keyword">None</span>):
+    <span class="string">"""Recherche intelligente avec filtrage contextuel."""</span>
+
+    <span class="comment"># Construire le filtre dynamiquement</span>
+    filters = []
+    <span class="keyword">if</span> department:
+        filters.<span class="function">append</span>({<span class="string">"department"</span>: department})
+    <span class="keyword">if</span> year_min:
+        filters.<span class="function">append</span>({<span class="string">"year"</span>: {<span class="string">"$gte"</span>: year_min}})
+
+    filter_dict = <span class="keyword">None</span>
+    <span class="keyword">if</span> <span class="function">len</span>(filters) == <span class="number">1</span>:
+        filter_dict = filters[<span class="number">0</span>]
+    <span class="keyword">elif</span> <span class="function">len</span>(filters) > <span class="number">1</span>:
+        filter_dict = {<span class="string">"$and"</span>: filters}
+
+    <span class="comment"># Recherche avec filtres</span>
+    results = vectorstore.<span class="function">similarity_search</span>(
+        question,
+        k=<span class="number">4</span>,
+        filter=filter_dict
+    )
+
+    <span class="function">print</span>(<span class="string">f"Question: {question}"</span>)
+    <span class="function">print</span>(<span class="string">f"Filtres: department={department}, year_min={year_min}"</span>)
+    <span class="function">print</span>(<span class="string">f"Resultats: {len(results)} chunks trouves"</span>)
+
+    <span class="keyword">return</span> results
+
+<span class="comment"># Exemples d'utilisation</span>
+<span class="function">smart_retrieval</span>(<span class="string">"politique de conges"</span>, vectorstore, department=<span class="string">"RH"</span>)
+<span class="function">smart_retrieval</span>(<span class="string">"procedure de deploiement"</span>, vectorstore, department=<span class="string">"IT"</span>, year_min=<span class="number">2024</span>)</div>
+
+    <div class="output-block">Question: politique de conges
+Filtres: department=RH, year_min=None
+Resultats: 4 chunks trouves
+
+Question: procedure de deploiement
+Filtres: department=IT, year_min=2024
+Resultats: 3 chunks trouves</div>
+
+    <div class="prof-note">
+        Le filtrage par metadonnees est ESSENTIEL pour les systemes RAG multi-sources en production. Sans filtrage, une question RH pourrait retourner des chunks de documentation technique. Investissez du temps dans l'enrichissement des metadonnees (cours 2) -- c'est ici que cet investissement porte ses fruits. Les filtres sont appliques AVANT la recherche vectorielle, ce qui accelere aussi la recherche.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>9. Updating the Index - Mise a jour de l'index</h2>
+
+    <p>Un systeme RAG en production doit etre capable de gerer l'ajout de nouveaux documents, la suppression de documents obsoletes et la reindexation complete quand le modele d'embedding change.</p>
+
+    <h3>9.1 Ajouter de nouveaux documents</h3>
+
+    <div class="code-block"><span class="comment"># Ajouter des documents a un vector store existant</span>
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document
+
+<span class="comment"># Recharger le vector store existant</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+vectorstore = Chroma(
+    persist_directory=<span class="string">"./chroma_db"</span>,
+    embedding_function=embeddings,
+    collection_name=<span class="string">"documentation"</span>
+)
+
+<span class="function">print</span>(<span class="string">f"Documents actuels : {vectorstore._collection.count()}"</span>)
+
+<span class="comment"># Nouveaux documents a ajouter</span>
+nouveaux_docs = [
+    Document(
+        page_content=<span class="string">"La nouvelle politique de teletravail permet 3 jours par semaine."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"politique_teletravail_2025.pdf"</span>, <span class="string">"category"</span>: <span class="string">"RH"</span>}
+    ),
+    Document(
+        page_content=<span class="string">"Les horaires flexibles sont autorises de 7h a 20h."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"politique_teletravail_2025.pdf"</span>, <span class="string">"category"</span>: <span class="string">"RH"</span>}
+    ),
+]
+
+<span class="comment"># Ajouter</span>
+vectorstore.<span class="function">add_documents</span>(nouveaux_docs)
+<span class="function">print</span>(<span class="string">f"Documents apres ajout : {vectorstore._collection.count()}"</span>)</div>
+
+    <div class="output-block">Documents actuels : 89
+Documents apres ajout : 91</div>
+
+    <h3>9.2 Supprimer des documents obsoletes</h3>
+
+    <div class="code-block"><span class="comment"># Supprimer des documents par ID ou par filtre de metadonnees</span>
+
+<span class="comment"># Methode 1 : Supprimer par IDs</span>
+ids_a_supprimer = [<span class="string">"doc_001"</span>, <span class="string">"doc_002"</span>, <span class="string">"doc_003"</span>]
+vectorstore.<span class="function">delete</span>(ids=ids_a_supprimer)
+
+<span class="comment"># Methode 2 : Supprimer par filtre de metadonnees (Chroma)</span>
+vectorstore._collection.<span class="function">delete</span>(
+    where={<span class="string">"source"</span>: <span class="string">"ancien_guide_2023.pdf"</span>}
+)
+
+<span class="comment"># Methode 3 : Supprimer et re-ajouter (pour mettre a jour)</span>
+<span class="keyword">def</span> <span class="function">update_source</span>(vectorstore, source_name, new_chunks):
+    <span class="string">"""Mettre a jour tous les chunks d'une source."""</span>
+    <span class="comment"># Supprimer l'ancienne version</span>
+    vectorstore._collection.<span class="function">delete</span>(
+        where={<span class="string">"source"</span>: source_name}
+    )
+    <span class="function">print</span>(<span class="string">f"Anciens chunks de '{source_name}' supprimes"</span>)
+
+    <span class="comment"># Ajouter la nouvelle version</span>
+    vectorstore.<span class="function">add_documents</span>(new_chunks)
+    <span class="function">print</span>(<span class="string">f"Nouveaux chunks ajoutes : {len(new_chunks)}"</span>)
+
+<span class="comment"># Utilisation</span>
+<span class="function">update_source</span>(vectorstore, <span class="string">"guide_rh_2024.pdf"</span>, new_chunks_rh_2025)</div>
+
+    <h3>9.3 Reindexation complete</h3>
+
+    <div class="code-block"><span class="comment"># Quand reindexer completement ?</span>
+<span class="comment"># - Changement de modele d'embedding</span>
+<span class="comment"># - Changement de chunk_size/overlap</span>
+<span class="comment"># - Mise a jour majeure du corpus</span>
+<span class="comment"># - Migration de vector store</span>
+
+<span class="keyword">import</span> shutil
+
+<span class="keyword">def</span> <span class="function">full_reindex</span>(docs_directory, persist_dir, embeddings, chunk_size=<span class="number">500</span>):
+    <span class="string">"""Reindexation complete du vector store."""</span>
+
+    <span class="comment"># 1. Supprimer l'ancien index</span>
+    <span class="keyword">if</span> os.path.<span class="function">exists</span>(persist_dir):
+        shutil.<span class="function">rmtree</span>(persist_dir)
+        <span class="function">print</span>(<span class="string">"Ancien index supprime."</span>)
+
+    <span class="comment"># 2. Recharger et re-decouper tous les documents</span>
+    loader = DirectoryLoader(docs_directory, glob=<span class="string">"**/*.pdf"</span>, loader_cls=PyPDFLoader)
+    docs = loader.<span class="function">load</span>()
+
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=<span class="function">int</span>(chunk_size * <span class="number">0.1</span>)
+    )
+    chunks = splitter.<span class="function">split_documents</span>(docs)
+    <span class="function">print</span>(<span class="string">f"Documents recharges : {len(docs)}, Chunks : {len(chunks)}"</span>)
+
+    <span class="comment"># 3. Creer le nouvel index</span>
+    vectorstore = Chroma.<span class="function">from_documents</span>(
+        chunks, embeddings,
+        persist_directory=persist_dir
+    )
+    <span class="function">print</span>(<span class="string">f"Nouvel index cree avec {vectorstore._collection.count()} vecteurs"</span>)
+
+    <span class="keyword">return</span> vectorstore
+
+<span class="comment"># Utilisation lors d'un changement de modele d'embedding</span>
+new_embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-large"</span>)  <span class="comment"># Nouveau modele</span>
+vectorstore = <span class="function">full_reindex</span>(<span class="string">"./documents/"</span>, <span class="string">"./chroma_db_v2"</span>, new_embeddings)</div>
+
+    <div class="warning">
+        Changer de modele d'embedding OBLIGE a reindexer tous les documents. Les vecteurs de l'ancien modele ne sont pas compatibles avec le nouveau. Prevoyez cette operation (temps + cout API) dans votre planning. Pour un corpus de 10 000 chunks avec text-embedding-3-small, la reindexation coute environ $0.01 et prend quelques minutes.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>10. Resume et bonnes pratiques</h2>
+
+    <div class="concept-box green">
+        <h3>Choix du modele d'embedding - Resume</h3>
+        <table>
+            <tr>
+                <th>Situation</th>
+                <th>Modele recommande</th>
+                <th>Justification</th>
+            </tr>
+            <tr>
+                <td>Prototype rapide</td>
+                <td>text-embedding-3-small</td>
+                <td>Tres bon marche, qualite correcte</td>
+            </tr>
+            <tr>
+                <td>Production standard</td>
+                <td>text-embedding-3-large</td>
+                <td>Meilleur rapport qualite/prix</td>
+            </tr>
+            <tr>
+                <td>Multilingue</td>
+                <td>Cohere embed-v4 ou BGE-M3</td>
+                <td>Leader sur les benchmarks multilingues</td>
+            </tr>
+            <tr>
+                <td>Confidentialite / auto-heberge</td>
+                <td>BGE-M3 ou all-MiniLM-L6-v2</td>
+                <td>Gratuit, pas d'API externe</td>
+            </tr>
+            <tr>
+                <td>Code / technique</td>
+                <td>Voyage code-2</td>
+                <td>Optimise pour le code source</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box blue">
+        <h3>Choix du Vector Store - Resume</h3>
+        <table>
+            <tr>
+                <th>Situation</th>
+                <th>Vector Store</th>
+                <th>Justification</th>
+            </tr>
+            <tr>
+                <td>Prototype / tests</td>
+                <td>FAISS</td>
+                <td>Zero config, en memoire, tres rapide</td>
+            </tr>
+            <tr>
+                <td>Dev local persistant</td>
+                <td>Chroma</td>
+                <td>Simple, SQLite, pas de serveur</td>
+            </tr>
+            <tr>
+                <td>Production cloud (zero ops)</td>
+                <td>Pinecone</td>
+                <td>Managed, serverless, scalable</td>
+            </tr>
+            <tr>
+                <td>Production auto-heberge</td>
+                <td>Qdrant ou Weaviate</td>
+                <td>OSS, performant, filtrage riche</td>
+            </tr>
+            <tr>
+                <td>Deja sur PostgreSQL</td>
+                <td>pgvector</td>
+                <td>Pas de nouvelle infrastructure</td>
+            </tr>
+            <tr>
+                <td>Echelle massive (milliards)</td>
+                <td>Milvus</td>
+                <td>Concu pour le billion-scale</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box">
+        <h3>Checklist des bonnes pratiques</h3>
+        <ol>
+            <li><strong>Meme modele d'embedding</strong> pour l'indexation et la requete -- OBLIGATOIRE</li>
+            <li><strong>Testez avec vos donnees</strong> -- ne vous fiez pas uniquement aux scores MTEB</li>
+            <li><strong>Commencez simple</strong> -- FAISS + text-embedding-3-small, puis iterez</li>
+            <li><strong>Enrichissez les metadonnees</strong> -- pour le filtrage et la tracabilite</li>
+            <li><strong>Utilisez le score_threshold</strong> -- evitez les resultats non pertinents</li>
+            <li><strong>Activez MMR</strong> -- pour la diversite des resultats</li>
+            <li><strong>Prevoyez la reindexation</strong> -- en cas de changement de modele ou parametres</li>
+            <li><strong>Sauvegardez votre index</strong> -- sur disque ou dans le cloud</li>
+            <li><strong>Surveillez les couts</strong> -- embeddings API + stockage vectoriel</li>
+            <li><strong>Mesurez la qualite</strong> -- avec des metriques de retrieval (precision, recall)</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        Ce cours vous a fourni les bases solides pour choisir et configurer les embeddings et vector stores de votre systeme RAG. Dans le cours suivant, nous plongerons dans les strategies de retrieval avancees (Multi-Query, HyDE, Hybrid Search, Reranking) qui sont le coeur de l'optimisation RAG. C'est la ou les vrais gains de performance se trouvent.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="rag_02_ingestion.html">&larr; Cours Ingestion</a>
+        <a href="rag_04_retrieval.html">Cours suivant : Strategies de Retrieval &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Construire un Agent Autonome avec LangGraph</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        p { margin-bottom: 12px; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .svg-container { text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Construire un Agent Autonome avec LangGraph</h1>
+    <p class="subtitle">Troisieme TD LangGraph -- Concevoir un agent autonome avec le pattern ReAct, outils et boucle de raisonnement</p>
+
+    <!-- ============================== SECTION 1 ============================== -->
+    <h2>1. Recapitulatif -- Qu'est-ce qu'un Agent Autonome ?</h2>
+
+    <div class="definition">
+        Un <strong>agent autonome</strong> est un programme qui, a partir d'un objectif en langage naturel,
+        est capable de <strong>raisonner</strong> sur les etapes necessaires, d'<strong>agir</strong> en
+        appelant des outils externes, et d'<strong>observer</strong> les resultats pour decider de la suite.
+        Contrairement a un chatbot qui repond a un seul message, l'agent boucle de facon autonome
+        jusqu'a atteindre son objectif ou depasser une limite d'iterations.
+    </div>
+
+    <div class="concept-box">
+        <h3>Le pattern ReAct (Reasoning + Acting)</h3>
+        <p>Le pattern <strong>ReAct</strong> combine le raisonnement (Reasoning) et l'action (Acting)
+        en une boucle iterative. A chaque tour :</p>
+        <ol>
+            <li><strong>Think (Penser)</strong> -- Le LLM analyse la situation et decide quoi faire</li>
+            <li><strong>Act (Agir)</strong> -- Le LLM appelle un outil ou produit une reponse finale</li>
+            <li><strong>Observe (Observer)</strong> -- Le resultat de l'outil est renvoye au LLM</li>
+        </ol>
+        <p>Cette boucle se repete jusqu'a ce que le LLM decide qu'il a assez d'informations pour
+        repondre, ou que la limite d'iterations est atteinte.</p>
+    </div>
+
+    <div class="concept-box">
+        <h3>Fiche d'identite de l'Agent Autonome LangGraph</h3>
+        <table>
+            <tr><th>Propriete</th><th>Valeur</th></tr>
+            <tr><td><strong>Type</strong></td><td>Agent autonome a boucle de raisonnement</td></tr>
+            <tr><td><strong>Pattern</strong></td><td>ReAct (Reasoning + Acting)</td></tr>
+            <tr><td><strong>Framework</strong></td><td>LangGraph avec cycles et routage conditionnel</td></tr>
+            <tr><td><strong>Etat principal</strong></td><td>Messages + historique d'appels d'outils</td></tr>
+            <tr><td><strong>Particularite</strong></td><td>Contient des <strong>cycles</strong> (boucles) dans le graphe</td></tr>
+            <tr><td><strong>Securite</strong></td><td>recursion_limit pour eviter les boucles infinies</td></tr>
+            <tr><td><strong>Cas d'usage</strong></td><td>Recherche web, analyse de donnees, automatisation de taches</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Imaginez l'agent autonome comme un detective qui resout une enquete. Il recoit une mission
+        (la question de l'utilisateur), reflechit aux pistes a explorer (Think), interroge des temoins
+        ou consulte des bases de donnees (Act), analyse les resultats (Observe), puis decide s'il a
+        assez d'elements pour conclure ou s'il doit continuer a enqueter. Le detective ne s'arrete
+        que quand il a la reponse -- ou quand le commissaire lui dit d'arreter (recursion_limit).
+    </div>
+
+    <h3>Agent vs Chatbot : quelle difference ?</h3>
+    <div class="concept-box blue">
+        <table>
+            <tr><th>Caracteristique</th><th>Chatbot</th><th>Agent Autonome</th></tr>
+            <tr><td><strong>Flux</strong></td><td>Lineaire (entree -> sortie)</td><td>Cyclique (boucle Think-Act-Observe)</td></tr>
+            <tr><td><strong>Outils</strong></td><td>Optionnels (0-1 appel)</td><td>Essentiels (multiples appels)</td></tr>
+            <tr><td><strong>Autonomie</strong></td><td>Repond a un seul message</td><td>Resout une tache en plusieurs etapes</td></tr>
+            <tr><td><strong>Graphe</strong></td><td>Acyclique (DAG)</td><td>Cyclique (contient des boucles)</td></tr>
+            <tr><td><strong>Risque</strong></td><td>Faible</td><td>Boucle infinie possible sans recursion_limit</td></tr>
+        </table>
+    </div>
+
+    <h3>Installation</h3>
+    <div class="code-block"><span class="comment"># Installation des dependances pour l'agent autonome</span>
+<span class="function">pip install</span> langgraph langchain-openai langchain-core langgraph-checkpoint</div>
+
+    <!-- ============================== SECTION 2 ============================== -->
+    <h2>2. Principe de Fonctionnement -- La Boucle ReAct</h2>
+
+    <p>Le coeur de l'agent autonome est un <strong>graphe cyclique</strong>. Contrairement au chatbot
+    dont le graphe est un DAG (graphe oriente acyclique), l'agent possede une boucle qui lui permet
+    de revenir a l'etape de reflexion apres chaque observation.</p>
+
+    <h3>Les trois phases de la boucle</h3>
+
+    <div class="step-box">
+        <strong>Phase 1 : Think (Raisonner)</strong> -- Le LLM recoit l'objectif et l'historique des actions
+        precedentes. Il analyse la situation et decide quelle action entreprendre : appeler un outil
+        specifique ou produire une reponse finale.
+    </div>
+    <div class="step-box">
+        <strong>Phase 2 : Act (Agir)</strong> -- Si le LLM a decide d'appeler un outil, le noeud <code>tools</code>
+        execute l'outil avec les parametres fournis par le LLM. Le resultat est enveloppe dans un
+        <code>ToolMessage</code> et ajoute a l'historique.
+    </div>
+    <div class="step-box">
+        <strong>Phase 3 : Observe (Observer)</strong> -- Le resultat de l'outil est renvoye au LLM qui
+        l'analyse. Le LLM peut alors decider d'appeler un autre outil (retour a Act) ou de produire
+        sa reponse finale (sortie vers END).
+    </div>
+
+    <h3>Diagramme de la boucle ReAct</h3>
+
+    <div class="svg-container">
+        <svg width="750" height="500" viewBox="0 0 750 500">
+            <rect width="750" height="500" fill="#0f0f23" rx="10"/>
+            <text x="375" y="28" text-anchor="middle" fill="#aaa" font-size="13">Boucle ReAct : Think - Act - Observe</text>
+
+            <!-- START -->
+            <circle cx="375" cy="70" r="28" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="375" y="75" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">START</text>
+
+            <!-- Fleche START -> agent -->
+            <line x1="375" y1="98" x2="375" y2="140" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowA)"/>
+
+            <!-- Agent (Think) -->
+            <rect x="270" y="140" width="210" height="60" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2.5"/>
+            <text x="375" y="165" text-anchor="middle" fill="#ff8c42" font-size="14" font-weight="bold">agent (Think)</text>
+            <text x="375" y="185" text-anchor="middle" fill="#aaa" font-size="10">LLM raisonne et decide</text>
+
+            <!-- Fleche agent -> route -->
+            <line x1="375" y1="200" x2="375" y2="240" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowA)"/>
+
+            <!-- Route (losange) -->
+            <polygon points="375,240 445,275 375,310 305,275" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="375" y="272" text-anchor="middle" fill="#ff8c42" font-size="10" font-weight="bold">tool_calls?</text>
+            <text x="375" y="286" text-anchor="middle" fill="#aaa" font-size="8">oui / non</text>
+
+            <!-- Branche gauche : END (pas d'outil) -->
+            <line x1="305" y1="275" x2="150" y2="275" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowB)"/>
+            <text x="228" y="265" text-anchor="middle" fill="#569cd6" font-size="9">reponse finale</text>
+
+            <circle cx="120" cy="275" r="28" fill="none" stroke="#ff4444" stroke-width="2"/>
+            <text x="120" y="280" text-anchor="middle" fill="#ff4444" font-size="12" font-weight="bold">END</text>
+
+            <!-- Branche droite : tools (Act) -->
+            <line x1="445" y1="275" x2="560" y2="275" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+            <text x="502" y="265" text-anchor="middle" fill="#00ff88" font-size="9">tool_calls</text>
+
+            <rect x="560" y="245" width="140" height="60" rx="12" fill="#1a1a2e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="630" y="270" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">tools (Act)</text>
+            <text x="630" y="290" text-anchor="middle" fill="#aaa" font-size="10">Executer les outils</text>
+
+            <!-- Boucle retour : tools -> agent (Observe) -->
+            <path d="M 630 305 L 630 380 Q 630 400 610 400 L 395 400 Q 375 400 375 380 L 375 200"
+                  fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="8,4" marker-end="url(#arrowG)"/>
+            <text x="520" y="420" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">Observe</text>
+            <text x="520" y="436" text-anchor="middle" fill="#aaa" font-size="9">Resultats renvoyes au LLM</text>
+
+            <!-- Label de la boucle -->
+            <rect x="540" y="370" width="170" height="30" rx="5" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="1" stroke-dasharray="3,3"/>
+            <text x="625" y="390" text-anchor="middle" fill="#00ff88" font-size="9">Boucle cyclique (ReAct)</text>
+
+            <!-- recursion_limit -->
+            <rect x="40" y="370" width="200" height="35" rx="6" fill="rgba(255,68,68,0.08)" stroke="#ff4444" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="140" y="385" text-anchor="middle" fill="#ff4444" font-size="9">recursion_limit = 25</text>
+            <text x="140" y="398" text-anchor="middle" fill="#aaa" font-size="8">Securite anti-boucle infinie</text>
+
+            <defs>
+                <marker id="arrowA" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrowB" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arrowG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        La grande difference avec le chatbot du TD precedent est la <strong>fleche de retour</strong>
+        (en vert pointille) qui va de <code>tools</code> vers <code>agent</code>. C'est cette fleche
+        qui cree le <strong>cycle</strong> dans le graphe : l'agent peut appeler un outil, observer
+        le resultat, puis decider d'appeler un autre outil. Sans le <code>recursion_limit</code>,
+        cette boucle pourrait tourner indefiniment.
+    </div>
+
+    <h3>Code de base de la boucle ReAct</h3>
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated, Literal
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+
+<span class="comment"># Etat de l'agent</span>
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+
+<span class="comment"># La structure de base d'un agent ReAct :</span>
+<span class="comment"># START -> agent -> route? -> tools -> agent (boucle)</span>
+<span class="comment">#                         -> END    (sortie)</span>
+</div>
+
+    <!-- ============================== SECTION 3 ============================== -->
+    <h2>3. Les Donnees -- Outils, Schemas et ToolMessage</h2>
+
+    <p>Les outils sont le <strong>bras arme</strong> de l'agent autonome. Sans outils, le LLM ne peut
+    que raisonner. Avec des outils, il peut agir sur le monde exterieur : rechercher sur le web,
+    interroger une base de donnees, executer du code, etc.</p>
+
+    <h3>3.1 Definition des outils avec @tool</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="comment"># Chaque outil est une fonction Python decoree avec @tool</span>
+<span class="comment"># La docstring est ESSENTIELLE : c'est elle que le LLM lit pour</span>
+<span class="comment"># decider quand et comment utiliser l'outil.</span>
+
+@tool
+<span class="keyword">def</span> <span class="function">rechercher_web</span>(query: str) -> str:
+    <span class="string">"""Recherche des informations sur le web.
+    Utilise cet outil quand tu as besoin d'informations actuelles
+    ou de donnees que tu ne possedes pas dans ta memoire.
+
+    Args:
+        query: La requete de recherche en langage naturel.
+
+    Returns:
+        Les resultats de la recherche web."""</span>
+    <span class="comment"># Simulation d'une recherche web</span>
+    resultats = {
+        <span class="string">"population france"</span>: <span class="string">"La population de la France est d'environ 68 millions d'habitants (2024)."</span>,
+        <span class="string">"capitale japon"</span>: <span class="string">"La capitale du Japon est Tokyo, avec 14 millions d'habitants."</span>,
+        <span class="string">"python version"</span>: <span class="string">"La derniere version stable de Python est 3.12.1 (decembre 2024)."</span>,
+    }
+    <span class="keyword">for</span> key, val <span class="keyword">in</span> resultats.items():
+        <span class="keyword">if</span> key <span class="keyword">in</span> query.lower():
+            <span class="keyword">return</span> val
+    <span class="keyword">return</span> f<span class="string">"Resultats de recherche pour '{query}': Aucun resultat specifique trouve."</span>
+
+@tool
+<span class="keyword">def</span> <span class="function">calculer_expression</span>(expression: str) -> str:
+    <span class="string">"""Evalue une expression mathematique.
+    Utilise cet outil pour tout calcul arithmetique, pourcentage ou conversion.
+
+    Args:
+        expression: L'expression mathematique a evaluer (ex: '15 * 24 + 30').
+
+    Returns:
+        Le resultat du calcul."""</span>
+    <span class="keyword">try</span>:
+        result = <span class="function">eval</span>(expression)
+        <span class="keyword">return</span> f<span class="string">"Resultat : {expression} = {result}"</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> f<span class="string">"Erreur de calcul : {str(e)}"</span>
+
+@tool
+<span class="keyword">def</span> <span class="function">lire_fichier</span>(chemin: str) -> str:
+    <span class="string">"""Lit le contenu d'un fichier texte.
+    Utilise cet outil pour acceder au contenu de fichiers locaux.
+
+    Args:
+        chemin: Le chemin du fichier a lire.
+
+    Returns:
+        Le contenu du fichier ou un message d'erreur."""</span>
+    <span class="keyword">try</span>:
+        <span class="keyword">with</span> <span class="function">open</span>(chemin, <span class="string">"r"</span>) <span class="keyword">as</span> f:
+            <span class="keyword">return</span> f.read()
+    <span class="keyword">except</span> FileNotFoundError:
+        <span class="keyword">return</span> f<span class="string">"Fichier non trouve : {chemin}"</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> f<span class="string">"Erreur de lecture : {str(e)}"</span>
+
+tools = [rechercher_web, calculer_expression, lire_fichier]
+</div>
+
+    <div class="prof-note">
+        La <strong>docstring</strong> de l'outil est son mode d'emploi. Le LLM la lit pour decider
+        quand utiliser l'outil et quels parametres lui passer. Une docstring vague produira des
+        appels d'outils imprecis. Soyez aussi clair et detaille que possible.
+    </div>
+
+    <h3>3.2 Les schemas d'outils (Tool Schemas)</h3>
+
+    <p>Quand vous liez des outils au LLM avec <code>bind_tools()</code>, LangChain convertit automatiquement
+    les signatures des fonctions et leurs docstrings en <strong>schemas JSON</strong> que le LLM comprend.</p>
+
+    <div class="code-block"><span class="comment"># Inspecter le schema genere automatiquement</span>
+<span class="keyword">for</span> t <span class="keyword">in</span> tools:
+    print(f<span class="string">"Outil : {t.name}"</span>)
+    print(f<span class="string">"  Description : {t.description[:80]}..."</span>)
+    print(f<span class="string">"  Schema args : {t.args_schema.model_json_schema()}"</span>)
+    print()
+</div>
+
+    <div class="output-block">Outil : rechercher_web
+  Description : Recherche des informations sur le web. Utilise cet outil quand tu as...
+  Schema args : {'properties': {'query': {'type': 'string', 'title': 'Query'}}, 'required': ['query']}
+
+Outil : calculer_expression
+  Description : Evalue une expression mathematique. Utilise cet outil pour tout calcu...
+  Schema args : {'properties': {'expression': {'type': 'string', 'title': 'Expression'}}, 'required': ['expression']}
+
+Outil : lire_fichier
+  Description : Lit le contenu d'un fichier texte. Utilise cet outil pour acceder au...
+  Schema args : {'properties': {'chemin': {'type': 'string', 'title': 'Chemin'}}, 'required': ['chemin']}</div>
+
+    <h3>3.3 Le ToolMessage</h3>
+
+    <p>Quand un outil est execute, son resultat est encapsule dans un <code>ToolMessage</code>,
+    un quatrieme type de message (en plus de HumanMessage, AIMessage, SystemMessage) :</p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> ToolMessage
+
+<span class="comment"># Un ToolMessage contient :</span>
+<span class="comment"># - content  : le resultat de l'outil (string)</span>
+<span class="comment"># - tool_call_id : l'identifiant de l'appel d'outil correspondant</span>
+<span class="comment"># - name : le nom de l'outil appele</span>
+
+<span class="comment"># Exemple de sequence de messages dans un agent :</span>
+<span class="comment"># 1. HumanMessage("Quelle est la population de la France ?")</span>
+<span class="comment"># 2. AIMessage(tool_calls=[{name: "rechercher_web", args: {...}}])</span>
+<span class="comment"># 3. ToolMessage("La population de la France est de 68 millions...")</span>
+<span class="comment"># 4. AIMessage("La France compte environ 68 millions d'habitants.")</span>
+</div>
+
+    <h3>3.4 L'etat de l'agent</h3>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+    <span class="comment"># L'historique messages contient TOUS les types :</span>
+    <span class="comment"># HumanMessage, AIMessage (avec tool_calls), ToolMessage, AIMessage (final)</span>
+    <span class="comment"># Le LLM voit tout cet historique pour prendre ses decisions</span>
+</div>
+
+    <div class="concept-box">
+        <h3>Cycle de vie des messages dans un agent</h3>
+        <table>
+            <tr><th>Etape</th><th>Type de message</th><th>Contenu</th></tr>
+            <tr><td><strong>1. Question</strong></td><td>HumanMessage</td><td>La question ou tache de l'utilisateur</td></tr>
+            <tr><td><strong>2. Reflexion</strong></td><td>AIMessage (avec tool_calls)</td><td>Le LLM decide d'appeler un outil</td></tr>
+            <tr><td><strong>3. Resultat</strong></td><td>ToolMessage</td><td>Le resultat de l'execution de l'outil</td></tr>
+            <tr><td><strong>4. Analyse</strong></td><td>AIMessage (avec ou sans tool_calls)</td><td>Le LLM analyse et decide de continuer ou conclure</td></tr>
+            <tr><td><strong>5. Reponse</strong></td><td>AIMessage (sans tool_calls)</td><td>La reponse finale en langage naturel</td></tr>
+        </table>
+    </div>
+
+    <!-- ============================== SECTION 4 ============================== -->
+    <h2>4. Les Parametres -- Controle de l'Agent</h2>
+
+    <h3>4.1 recursion_limit (critique)</h3>
+    <div class="param-box">
+        <h4 style="color:#ff6b35; margin:0 0 10px;">recursion_limit (int, defaut: 25)</h4>
+        <p>Le parametre <strong>le plus important</strong> pour un agent autonome. Il definit le nombre
+        maximum d'etapes (noeuds traverses) que le graphe peut executer avant de s'arreter de force.
+        Sans ce garde-fou, un agent mal configure pourrait boucler indefiniment.</p>
+        <table>
+            <tr><th>Valeur</th><th>Usage</th><th>Risque</th></tr>
+            <tr><td><strong>10-15</strong></td><td>Taches simples (1-2 outils)</td><td>L'agent pourrait manquer d'etapes</td></tr>
+            <tr><td><strong>25</strong></td><td>Taches moderees (defaut)</td><td>Bon equilibre securite/flexibilite</td></tr>
+            <tr><td><strong>50-100</strong></td><td>Taches complexes (nombreux outils)</td><td>Cout eleve si boucle inutile</td></tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Definir la recursion_limit dans la configuration</span>
+config = {
+    <span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"agent_1"</span>},
+    <span class="string">"recursion_limit"</span>: <span class="number">25</span>  <span class="comment"># Maximum 25 etapes</span>
+}
+
+<span class="comment"># Si la limite est atteinte, LangGraph leve :</span>
+<span class="comment"># GraphRecursionError: Recursion limit of 25 reached</span>
+</div>
+
+    <div class="warning">
+        Ne <strong>jamais</strong> deployer un agent sans <code>recursion_limit</code>. Un agent qui
+        boucle indefiniment consomme des tokens (et donc de l'argent) sans produire de resultat utile.
+        En production, commencez avec une limite basse (15-25) et augmentez si necessaire.
+    </div>
+
+    <h3>4.2 max_iterations (arret anticipe personnalise)</h3>
+    <div class="param-box">
+        <h4 style="color:#ff6b35; margin:0 0 10px;">max_iterations (int, personnalise)</h4>
+        <p>En complement de <code>recursion_limit</code>, vous pouvez implementer un compteur
+        d'iterations dans l'etat de l'agent pour un controle plus fin.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">AgentStateWithCounter</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+    iteration_count: int       <span class="comment"># Compteur d'iterations</span>
+    max_iterations: int        <span class="comment"># Limite personnalisee</span>
+
+<span class="keyword">def</span> <span class="function">agent_with_limit</span>(state: AgentStateWithCounter):
+    <span class="comment"># Verifier la limite avant de continuer</span>
+    <span class="keyword">if</span> state[<span class="string">"iteration_count"</span>] >= state[<span class="string">"max_iterations"</span>]:
+        <span class="keyword">return</span> {
+            <span class="string">"messages"</span>: [AIMessage(content=<span class="string">"Limite d'iterations atteinte. Voici ma meilleure reponse..."</span>)]
+        }
+    response = llm_with_tools.invoke(state[<span class="string">"messages"</span>])
+    <span class="keyword">return</span> {
+        <span class="string">"messages"</span>: [response],
+        <span class="string">"iteration_count"</span>: state[<span class="string">"iteration_count"</span>] + <span class="number">1</span>
+    }
+</div>
+
+    <h3>4.3 Selection des outils (tool_choice)</h3>
+    <div class="param-box">
+        <h4 style="color:#ff6b35; margin:0 0 10px;">tool_choice (str ou dict)</h4>
+        <p>Controle la facon dont le LLM choisit les outils.</p>
+        <table>
+            <tr><th>Valeur</th><th>Comportement</th></tr>
+            <tr><td><code>"auto"</code></td><td>Le LLM decide librement (defaut, recommande pour les agents)</td></tr>
+            <tr><td><code>"required"</code></td><td>Le LLM doit appeler au moins un outil a chaque tour</td></tr>
+            <tr><td><code>"none"</code></td><td>Le LLM ne peut pas appeler d'outils</td></tr>
+            <tr><td><code>{"type": "function", "function": {"name": "..."}}</code></td><td>Force l'appel d'un outil specifique</td></tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Differentes strategies de selection d'outils</span>
+llm_auto = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>).bind_tools(tools)                <span class="comment"># Auto (defaut)</span>
+llm_required = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>).bind_tools(tools, tool_choice=<span class="string">"required"</span>)  <span class="comment"># Force un outil</span>
+llm_specific = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>).bind_tools(tools, tool_choice={
+    <span class="string">"type"</span>: <span class="string">"function"</span>, <span class="string">"function"</span>: {<span class="string">"name"</span>: <span class="string">"rechercher_web"</span>}
+})  <span class="comment"># Force un outil specifique</span>
+</div>
+
+    <h3>4.4 Early stopping (arret anticipe)</h3>
+    <div class="param-box">
+        <h4 style="color:#ff6b35; margin:0 0 10px;">Strategies d'arret anticipe</h4>
+        <p>L'agent peut s'arreter de plusieurs manieres :</p>
+        <ul>
+            <li><strong>Naturel :</strong> Le LLM decide de ne plus appeler d'outils (reponse finale)</li>
+            <li><strong>recursion_limit :</strong> Le nombre maximum d'etapes est atteint</li>
+            <li><strong>max_iterations :</strong> Un compteur personnalise dans l'etat atteint sa limite</li>
+            <li><strong>Condition dans le routage :</strong> Une logique metier force l'arret</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        L'arret naturel est le comportement ideal : l'agent a reuni assez d'informations et produit
+        sa reponse finale. Les autres mecanismes sont des filets de securite. Dans un bon agent,
+        le <code>recursion_limit</code> ne devrait presque jamais etre atteint.
+    </div>
+
+    <!-- ============================== SECTION 5 ============================== -->
+    <h2>5. Les Metriques -- Evaluer la Performance de l'Agent</h2>
+
+    <p>Un agent autonome se mesure differemment d'un chatbot simple. Voici les metriques essentielles :</p>
+
+    <div class="metric-card">
+        <h4 style="color:#ff8c42; margin-bottom:8px;">Taux de completion des taches</h4>
+        <p><strong>Definition :</strong> Le pourcentage de taches que l'agent reussit a accomplir correctement
+        sans atteindre le recursion_limit et en produisant une reponse exacte.</p>
+        <p><strong>Comment mesurer :</strong> Preparer un jeu de test avec des taches et leurs reponses attendues.
+        Comparer la sortie de l'agent avec la reponse de reference.</p>
+        <p><strong>Cible :</strong> Superieur a 85% pour un agent en production.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4 style="color:#ff8c42; margin-bottom:8px;">Nombre d'etapes par tache</h4>
+        <p><strong>Definition :</strong> Le nombre moyen de tours de boucle (Think-Act-Observe) necessaires
+        pour accomplir une tache.</p>
+        <p><strong>Comment mesurer :</strong> Compter le nombre de ToolMessages dans l'historique final.</p>
+        <p><strong>Cible :</strong> Le moins possible. Un agent efficace resout une tache en 2-4 etapes.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4 style="color:#ff8c42; margin-bottom:8px;">Efficacite d'utilisation des outils</h4>
+        <p><strong>Definition :</strong> Le ratio entre les appels d'outils utiles (qui apportent de
+        l'information pertinente) et les appels inutiles (resultats non exploites ou redondants).</p>
+        <p><strong>Comment mesurer :</strong> Analyser les ToolMessages : est-ce que chaque resultat
+        contribue a la reponse finale ?</p>
+        <p><strong>Cible :</strong> Superieur a 80%. Un agent qui appelle 5 outils mais n'en utilise que 2
+        dans sa reponse a une efficacite de 40%.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">analyser_performance_agent</span>(result):
+    <span class="string">"""Analyse les metriques de performance apres l'execution d'un agent."""</span>
+    messages = result[<span class="string">"messages"</span>]
+
+    <span class="comment"># Compter les types de messages</span>
+    human_msgs = [m <span class="keyword">for</span> m <span class="keyword">in</span> messages <span class="keyword">if</span> m.type == <span class="string">"human"</span>]
+    ai_msgs = [m <span class="keyword">for</span> m <span class="keyword">in</span> messages <span class="keyword">if</span> m.type == <span class="string">"ai"</span>]
+    tool_msgs = [m <span class="keyword">for</span> m <span class="keyword">in</span> messages <span class="keyword">if</span> m.type == <span class="string">"tool"</span>]
+    tool_call_msgs = [m <span class="keyword">for</span> m <span class="keyword">in</span> ai_msgs <span class="keyword">if</span> <span class="function">getattr</span>(m, <span class="string">"tool_calls"</span>, [])]
+
+    print(f<span class="string">"Messages humains    : {len(human_msgs)}"</span>)
+    print(f<span class="string">"Messages IA         : {len(ai_msgs)}"</span>)
+    print(f<span class="string">"Appels d'outils     : {len(tool_call_msgs)}"</span>)
+    print(f<span class="string">"Resultats d'outils  : {len(tool_msgs)}"</span>)
+    print(f<span class="string">"Nombre de boucles   : {len(tool_msgs)}"</span>)
+
+    <span class="comment"># Outils utilises</span>
+    <span class="keyword">for</span> tm <span class="keyword">in</span> tool_msgs:
+        print(f<span class="string">"  - Outil '{tm.name}' : {tm.content[:60]}..."</span>)
+
+    <span class="keyword">return</span> {
+        <span class="string">"total_steps"</span>: <span class="function">len</span>(tool_msgs),
+        <span class="string">"tools_used"</span>: [tm.name <span class="keyword">for</span> tm <span class="keyword">in</span> tool_msgs],
+        <span class="string">"final_answer"</span>: ai_msgs[-<span class="number">1</span>].content <span class="keyword">if</span> ai_msgs <span class="keyword">else</span> <span class="string">"Pas de reponse"</span>
+    }
+</div>
+
+    <!-- ============================== SECTION 6 ============================== -->
+    <h2>6. Implementation Complete -- Agent Autonome avec Outils et Routage</h2>
+
+    <p>Nous allons construire un agent autonome complet qui peut :</p>
+    <ul>
+        <li>Rechercher des informations sur le web</li>
+        <li>Effectuer des calculs mathematiques</li>
+        <li>Lire des fichiers locaux</li>
+        <li>Combiner les resultats de plusieurs outils pour repondre a des questions complexes</li>
+    </ul>
+
+    <h3>Diagramme de l'agent complet</h3>
+
+    <div class="svg-container">
+        <svg width="780" height="560" viewBox="0 0 780 560">
+            <rect width="780" height="560" fill="#0f0f23" rx="10"/>
+            <text x="390" y="25" text-anchor="middle" fill="#aaa" font-size="13">Agent autonome complet avec 3 outils</text>
+
+            <!-- START -->
+            <circle cx="390" cy="65" r="25" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="390" y="70" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">START</text>
+
+            <!-- Fleche START -> agent -->
+            <line x1="390" y1="90" x2="390" y2="125" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowC)"/>
+
+            <!-- Agent node -->
+            <rect x="290" y="125" width="200" height="55" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2.5"/>
+            <text x="390" y="150" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">agent_node</text>
+            <text x="390" y="168" text-anchor="middle" fill="#aaa" font-size="9">LLM + tools (gpt-4o-mini)</text>
+
+            <!-- Fleche agent -> route -->
+            <line x1="390" y1="180" x2="390" y2="215" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowC)"/>
+
+            <!-- Route (losange) -->
+            <polygon points="390,215 455,248 390,281 325,248" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="390" y="251" text-anchor="middle" fill="#ff8c42" font-size="10" font-weight="bold">route</text>
+
+            <!-- Branche gauche : END -->
+            <line x1="325" y1="248" x2="160" y2="248" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowD)"/>
+            <text x="243" y="240" text-anchor="middle" fill="#569cd6" font-size="8">pas de tool_calls</text>
+
+            <circle cx="130" cy="248" r="25" fill="none" stroke="#ff4444" stroke-width="2"/>
+            <text x="130" y="253" text-anchor="middle" fill="#ff4444" font-size="11" font-weight="bold">END</text>
+
+            <!-- Branche droite : tools -->
+            <line x1="455" y1="248" x2="545" y2="248" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowE)"/>
+            <text x="500" y="240" text-anchor="middle" fill="#00ff88" font-size="8">tool_calls</text>
+
+            <rect x="545" y="223" width="160" height="50" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="625" y="248" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">tool_node</text>
+            <text x="625" y="263" text-anchor="middle" fill="#aaa" font-size="9">ToolNode(tools)</text>
+
+            <!-- Outils individuels -->
+            <rect x="540" y="310" width="110" height="32" rx="6" fill="rgba(0,255,136,0.06)" stroke="#00ff88" stroke-width="1"/>
+            <text x="595" y="330" text-anchor="middle" fill="#00ff88" font-size="9">rechercher_web</text>
+
+            <rect x="660" y="310" width="105" height="32" rx="6" fill="rgba(0,255,136,0.06)" stroke="#00ff88" stroke-width="1"/>
+            <text x="712" y="330" text-anchor="middle" fill="#00ff88" font-size="9">calculer_expr</text>
+
+            <rect x="600" y="350" width="100" height="32" rx="6" fill="rgba(0,255,136,0.06)" stroke="#00ff88" stroke-width="1"/>
+            <text x="650" y="370" text-anchor="middle" fill="#00ff88" font-size="9">lire_fichier</text>
+
+            <!-- Fleches vers outils -->
+            <line x1="595" y1="273" x2="595" y2="310" stroke="#00ff88" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="660" y1="273" x2="712" y2="310" stroke="#00ff88" stroke-width="1" stroke-dasharray="3,3"/>
+            <line x1="625" y1="273" x2="650" y2="350" stroke="#00ff88" stroke-width="1" stroke-dasharray="3,3"/>
+
+            <!-- Boucle retour tools -> agent -->
+            <path d="M 625 223 L 625 155 Q 625 140 610 140 L 495 152"
+                  fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrowE)"/>
+            <text x="570" y="132" fill="#00ff88" font-size="9" font-weight="bold">Boucle Observe</text>
+
+            <!-- recursion_limit box -->
+            <rect x="40" y="340" width="220" height="55" rx="8" fill="rgba(255,68,68,0.06)" stroke="#ff4444" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="150" y="360" text-anchor="middle" fill="#ff4444" font-size="10" font-weight="bold">Securite</text>
+            <text x="150" y="378" text-anchor="middle" fill="#aaa" font-size="9">recursion_limit = 25</text>
+            <text x="150" y="390" text-anchor="middle" fill="#aaa" font-size="8">max_iterations personnalise</text>
+
+            <!-- MemorySaver -->
+            <rect x="250" y="500" width="280" height="35" rx="6" fill="rgba(86,156,214,0.1)" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="390" y="522" text-anchor="middle" fill="#569cd6" font-size="10">MemorySaver (persistance optionnelle)</text>
+
+            <defs>
+                <marker id="arrowC" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrowD" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arrowE" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>Etape 1 : Imports et definition de l'etat</h3>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated, Literal
+<span class="keyword">from</span> typing_extensions <span class="keyword">import</span> TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, START, END
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+<span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> ToolNode
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, AIMessage, SystemMessage
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="comment"># --- Definition de l'etat de l'agent ---</span>
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+</div>
+
+    <h3>Etape 2 : Definition des outils</h3>
+
+    <div class="code-block"><span class="comment"># --- Outil 1 : Recherche web ---</span>
+@tool
+<span class="keyword">def</span> <span class="function">rechercher_web</span>(query: str) -> str:
+    <span class="string">"""Recherche des informations actuelles sur internet.
+    Utilise cet outil pour les questions factuelles, les donnees recentes
+    ou toute information que tu ne possedes pas.
+
+    Args:
+        query: La requete de recherche."""</span>
+    resultats = {
+        <span class="string">"population france"</span>: <span class="string">"France : 68.4 millions d'habitants (INSEE, 2024)."</span>,
+        <span class="string">"capitale japon"</span>: <span class="string">"Tokyo est la capitale du Japon, 14 millions d'habitants."</span>,
+        <span class="string">"pib france"</span>: <span class="string">"Le PIB de la France est de 2 780 milliards d'euros (2023)."</span>,
+        <span class="string">"superficie france"</span>: <span class="string">"La France metropolitaine a une superficie de 551 695 km2."</span>,
+        <span class="string">"python version"</span>: <span class="string">"Python 3.12.1 est la derniere version stable (decembre 2024)."</span>,
+    }
+    <span class="keyword">for</span> key, val <span class="keyword">in</span> resultats.items():
+        <span class="keyword">if</span> key <span class="keyword">in</span> query.lower():
+            <span class="keyword">return</span> val
+    <span class="keyword">return</span> f<span class="string">"Recherche '{query}' : information non trouvee dans la base simulee."</span>
+
+<span class="comment"># --- Outil 2 : Calculatrice ---</span>
+@tool
+<span class="keyword">def</span> <span class="function">calculer</span>(expression: str) -> str:
+    <span class="string">"""Effectue un calcul mathematique precis.
+    Utilise cet outil pour les operations arithmetiques, pourcentages,
+    conversions et tout calcul numerique.
+
+    Args:
+        expression: L'expression mathematique (ex: '68.4 * 1000000 / 551695')."""</span>
+    <span class="keyword">try</span>:
+        result = <span class="function">eval</span>(expression)
+        <span class="keyword">if</span> <span class="function">isinstance</span>(result, float):
+            <span class="keyword">return</span> f<span class="string">"Resultat : {expression} = {result:.4f}"</span>
+        <span class="keyword">return</span> f<span class="string">"Resultat : {expression} = {result}"</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> f<span class="string">"Erreur : impossible d'evaluer '{expression}'. Raison : {str(e)}"</span>
+
+<span class="comment"># --- Outil 3 : Lecture de fichiers ---</span>
+@tool
+<span class="keyword">def</span> <span class="function">lire_fichier</span>(chemin: str) -> str:
+    <span class="string">"""Lit le contenu d'un fichier texte local.
+    Utilise cet outil pour acceder a des donnees stockees dans des fichiers.
+
+    Args:
+        chemin: Le chemin absolu ou relatif du fichier a lire."""</span>
+    <span class="keyword">try</span>:
+        <span class="keyword">with</span> <span class="function">open</span>(chemin, <span class="string">"r"</span>, encoding=<span class="string">"utf-8"</span>) <span class="keyword">as</span> f:
+            content = f.read()
+        <span class="keyword">if</span> <span class="function">len</span>(content) > <span class="number">2000</span>:
+            <span class="keyword">return</span> content[:<span class="number">2000</span>] + <span class="string">"\n... (fichier tronque)"</span>
+        <span class="keyword">return</span> content
+    <span class="keyword">except</span> FileNotFoundError:
+        <span class="keyword">return</span> f<span class="string">"Erreur : fichier '{chemin}' introuvable."</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> f<span class="string">"Erreur de lecture : {str(e)}"</span>
+
+tools = [rechercher_web, calculer, lire_fichier]
+</div>
+
+    <h3>Etape 3 : Creer le LLM, les noeuds et le routage</h3>
+
+    <div class="code-block"><span class="comment"># --- Initialisation du LLM avec outils ---</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+llm_with_tools = llm.bind_tools(tools)
+
+AGENT_SYSTEM_PROMPT = <span class="string">"""Tu es un agent de recherche autonome et rigoureux.
+
+Tes regles :
+1. Decompose les questions complexes en sous-questions
+2. Utilise les outils disponibles pour obtenir des donnees factuelles
+3. Verifie tes calculs avec l'outil calculer
+4. Ne fais jamais d'approximations quand un outil peut donner une reponse precise
+5. Synthetise toutes les informations collectees dans une reponse claire et structuree"""</span>
+
+<span class="comment"># --- Noeud agent : reflexion et decision ---</span>
+<span class="keyword">def</span> <span class="function">agent_node</span>(state: AgentState):
+    <span class="string">"""Le cerveau de l'agent : raisonne et decide d'agir ou de repondre."""</span>
+    messages = state[<span class="string">"messages"</span>]
+    <span class="comment"># Ajouter le system prompt s'il est absent</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> messages <span class="keyword">or</span> messages[<span class="number">0</span>].type != <span class="string">"system"</span>:
+        messages = [SystemMessage(content=AGENT_SYSTEM_PROMPT)] + messages
+    response = llm_with_tools.invoke(messages)
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [response]}
+
+<span class="comment"># --- Fonction de routage conditionnel ---</span>
+<span class="keyword">def</span> <span class="function">should_continue</span>(state: AgentState) -> Literal[<span class="string">"tools"</span>, <span class="string">"__end__"</span>]:
+    <span class="string">"""Decide si l'agent doit appeler un outil ou produire la reponse finale."""</span>
+    last_message = state[<span class="string">"messages"</span>][-<span class="number">1</span>]
+    <span class="comment"># Si le dernier AIMessage contient des tool_calls, on continue</span>
+    <span class="keyword">if</span> <span class="function">hasattr</span>(last_message, <span class="string">"tool_calls"</span>) <span class="keyword">and</span> last_message.tool_calls:
+        <span class="keyword">return</span> <span class="string">"tools"</span>
+    <span class="comment"># Sinon, on a la reponse finale</span>
+    <span class="keyword">return</span> <span class="string">"__end__"</span>
+</div>
+
+    <h3>Etape 4 : Assembler le graphe avec cycle</h3>
+
+    <div class="code-block"><span class="comment"># --- Construction du graphe de l'agent ---</span>
+graph_builder = StateGraph(AgentState)
+
+<span class="comment"># Ajout des noeuds</span>
+graph_builder.add_node(<span class="string">"agent"</span>, agent_node)
+graph_builder.add_node(<span class="string">"tools"</span>, ToolNode(tools=tools))
+
+<span class="comment"># Aretes d'entree</span>
+graph_builder.add_edge(START, <span class="string">"agent"</span>)
+
+<span class="comment"># Routage conditionnel : c'est ici que la boucle ReAct se cree</span>
+graph_builder.add_conditional_edges(
+    <span class="string">"agent"</span>,                     <span class="comment"># Noeud source</span>
+    should_continue,              <span class="comment"># Fonction de decision</span>
+    {
+        <span class="string">"tools"</span>: <span class="string">"tools"</span>,          <span class="comment"># Si tool_calls -> executer les outils</span>
+        <span class="string">"__end__"</span>: END            <span class="comment"># Sinon -> reponse finale</span>
+    }
+)
+
+<span class="comment"># LA BOUCLE : apres les outils, retour a l'agent pour analyser les resultats</span>
+graph_builder.add_edge(<span class="string">"tools"</span>, <span class="string">"agent"</span>)
+
+<span class="comment"># Compilation avec memoire et recursion_limit</span>
+memory = MemorySaver()
+agent = graph_builder.compile(checkpointer=memory)
+
+print(<span class="string">"Agent autonome compile avec succes !"</span>)
+</div>
+
+    <div class="output-block">Agent autonome compile avec succes !</div>
+
+    <div class="effect">
+        La ligne <code>graph_builder.add_edge("tools", "agent")</code> est ce qui cree la
+        <strong>boucle cyclique</strong>. C'est la difference fondamentale avec un chatbot simple.
+        L'agent peut maintenant appeler des outils en boucle, tant que le LLM le juge necessaire.
+    </div>
+
+    <h3>Etape 5 : Fonction d'execution de l'agent</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">executer_agent</span>(tache: str, thread_id: str = <span class="string">"agent_default"</span>, verbose: bool = <span class="keyword">True</span>):
+    <span class="string">"""Execute l'agent autonome sur une tache donnee."""</span>
+    config = {
+        <span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: thread_id},
+        <span class="string">"recursion_limit"</span>: <span class="number">25</span>
+    }
+
+    <span class="keyword">if</span> verbose:
+        print(f<span class="string">"Tache : {tache}"</span>)
+        print(<span class="string">"="</span> * <span class="number">60</span>)
+
+    result = agent.invoke(
+        {<span class="string">"messages"</span>: [HumanMessage(content=tache)]},
+        config
+    )
+
+    <span class="keyword">if</span> verbose:
+        <span class="comment"># Afficher le deroulement etape par etape</span>
+        <span class="keyword">for</span> msg <span class="keyword">in</span> result[<span class="string">"messages"</span>]:
+            <span class="keyword">if</span> msg.type == <span class="string">"human"</span>:
+                print(f<span class="string">"[HUMAIN] {msg.content}"</span>)
+            <span class="keyword">elif</span> msg.type == <span class="string">"ai"</span> <span class="keyword">and</span> <span class="function">getattr</span>(msg, <span class="string">"tool_calls"</span>, []):
+                <span class="keyword">for</span> tc <span class="keyword">in</span> msg.tool_calls:
+                    print(f<span class="string">"[THINK+ACT] Appel outil : {tc['name']}({tc['args']})"</span>)
+            <span class="keyword">elif</span> msg.type == <span class="string">"tool"</span>:
+                print(f<span class="string">"[OBSERVE] Resultat de '{msg.name}' : {msg.content[:80]}..."</span>)
+            <span class="keyword">elif</span> msg.type == <span class="string">"ai"</span>:
+                print(f<span class="string">"[REPONSE FINALE] {msg.content}"</span>)
+        print(<span class="string">"="</span> * <span class="number">60</span>)
+
+    <span class="keyword">return</span> result
+</div>
+
+    <!-- ============================== SECTION 7 ============================== -->
+    <h2>7. Experimentation -- Tests avec Differentes Taches</h2>
+
+    <h3>Test 1 : Question simple (un seul outil)</h3>
+
+    <div class="code-block"><span class="comment"># L'agent utilise un seul outil pour une question factuelle</span>
+executer_agent(<span class="string">"Quelle est la population de la France ?"</span>, <span class="string">"test_simple"</span>)
+</div>
+
+    <div class="output-block">Tache : Quelle est la population de la France ?
+============================================================
+[HUMAIN] Quelle est la population de la France ?
+[THINK+ACT] Appel outil : rechercher_web({'query': 'population france'})
+[OBSERVE] Resultat de 'rechercher_web' : France : 68.4 millions d'habitants (IN...
+[REPONSE FINALE] La population de la France est d'environ 68,4 millions d'habitants selon les donnees de l'INSEE (2024).
+============================================================</div>
+
+    <div class="prof-note">
+        Observez le schema classique ReAct : l'agent recoit la question (Human), decide d'appeler
+        <code>rechercher_web</code> (Think+Act), observe le resultat (Observe), puis formule sa reponse
+        finale en langage naturel. Une seule boucle a suffi.
+    </div>
+
+    <h3>Test 2 : Question complexe (plusieurs outils, plusieurs boucles)</h3>
+
+    <div class="code-block"><span class="comment"># L'agent doit combiner recherche ET calcul</span>
+executer_agent(
+    <span class="string">"Quelle est la densite de population de la France ? "</span>
+    <span class="string">"Donne-moi la population, la superficie, et calcule la densite."</span>,
+    <span class="string">"test_complexe"</span>
+)
+</div>
+
+    <div class="output-block">Tache : Quelle est la densite de population de la France ? Donne-moi la population, la superficie, et calcule la densite.
+============================================================
+[HUMAIN] Quelle est la densite de population de la France ? ...
+[THINK+ACT] Appel outil : rechercher_web({'query': 'population france'})
+[OBSERVE] Resultat de 'rechercher_web' : France : 68.4 millions d'habitants (IN...
+[THINK+ACT] Appel outil : rechercher_web({'query': 'superficie france'})
+[OBSERVE] Resultat de 'rechercher_web' : La France metropolitaine a une superficie de 551 695 km2...
+[THINK+ACT] Appel outil : calculer({'expression': '68400000 / 551695'})
+[OBSERVE] Resultat de 'calculer' : Resultat : 68400000 / 551695 = 123.9732...
+[REPONSE FINALE] La densite de population de la France est d'environ 124 habitants par km2.
+- Population : 68,4 millions d'habitants (INSEE, 2024)
+- Superficie : 551 695 km2 (France metropolitaine)
+- Calcul : 68 400 000 / 551 695 = 123,97 hab/km2
+============================================================</div>
+
+    <div class="effect">
+        L'agent a effectue <strong>3 boucles</strong> de facon autonome : deux recherches (population
+        et superficie) puis un calcul. Il a combine les resultats pour produire une reponse complete
+        et structuree. C'est la puissance du pattern ReAct.
+    </div>
+
+    <h3>Test 3 : Question sans outil necessaire</h3>
+
+    <div class="code-block"><span class="comment"># L'agent repond directement sans appeler d'outil</span>
+executer_agent(<span class="string">"Bonjour, comment vas-tu ?"</span>, <span class="string">"test_direct"</span>)
+</div>
+
+    <div class="output-block">Tache : Bonjour, comment vas-tu ?
+============================================================
+[HUMAIN] Bonjour, comment vas-tu ?
+[REPONSE FINALE] Bonjour ! Je suis un agent de recherche, pret a vous aider. Posez-moi une question factuelle et je ferai des recherches pour vous repondre avec precision.
+============================================================</div>
+
+    <div class="prof-note">
+        L'agent a correctement decide que cette question conversationnelle ne necessite aucun outil.
+        Il a repondu directement en zero boucle. Un bon agent sait quand <em>ne pas</em> utiliser
+        ses outils -- c'est aussi un signe d'intelligence.
+    </div>
+
+    <h3>Test 4 : Comparer agent avec outils vs LLM sans outils</h3>
+
+    <div class="code-block"><span class="comment"># Comparaison : agent avec outils vs LLM seul</span>
+question = <span class="string">"Quel est le PIB par habitant de la France ?"</span>
+
+<span class="comment"># Avec l'agent (outils disponibles)</span>
+print(<span class="string">"=== AVEC AGENT ==="</span>)
+executer_agent(question, <span class="string">"test_avec_outils"</span>)
+
+<span class="comment"># Sans outils (LLM seul)</span>
+print(<span class="string">"=== SANS OUTILS ==="</span>)
+llm_seul = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+reponse = llm_seul.invoke([HumanMessage(content=question)])
+print(f<span class="string">"LLM seul : {reponse.content}"</span>)
+</div>
+
+    <div class="output-block">=== AVEC AGENT ===
+[THINK+ACT] Appel outil : rechercher_web({'query': 'pib france'})
+[OBSERVE] Resultat : Le PIB de la France est de 2 780 milliards d'euros (2023).
+[THINK+ACT] Appel outil : rechercher_web({'query': 'population france'})
+[OBSERVE] Resultat : France : 68.4 millions d'habitants (INSEE, 2024).
+[THINK+ACT] Appel outil : calculer({'expression': '2780000000000 / 68400000'})
+[OBSERVE] Resultat : 2780000000000 / 68400000 = 40643.2749
+[REPONSE FINALE] Le PIB par habitant de la France est d'environ 40 643 euros.
+
+=== SANS OUTILS ===
+LLM seul : Le PIB par habitant de la France est d'environ 42 000 euros (estimation).</div>
+
+    <div class="effect">
+        L'agent avec outils donne un resultat <strong>precis et source</strong> (40 643 euros, calcule
+        a partir de donnees verifiees). Le LLM seul donne une estimation approximative. C'est
+        la valeur ajoutee d'un agent autonome equipe d'outils.
+    </div>
+
+    <h3>Test 5 : Analyse des metriques</h3>
+
+    <div class="code-block"><span class="comment"># Analyser les performances d'une execution</span>
+result = executer_agent(
+    <span class="string">"Quelle est la densite de population de la France ?"</span>,
+    <span class="string">"test_metrics"</span>,
+    verbose=<span class="keyword">False</span>
+)
+metriques = analyser_performance_agent(result)
+print(f<span class="string">"\nResume : {metriques['total_steps']} etapes, outils = {metriques['tools_used']}"</span>)
+</div>
+
+    <div class="output-block">Messages humains    : 1
+Messages IA         : 4
+Appels d'outils     : 3
+Resultats d'outils  : 3
+Nombre de boucles   : 3
+  - Outil 'rechercher_web' : France : 68.4 millions d'habitants (INSEE, 2024)...
+  - Outil 'rechercher_web' : La France metropolitaine a une superficie de 551...
+  - Outil 'calculer' : Resultat : 68400000 / 551695 = 123.9732...
+
+Resume : 3 etapes, outils = ['rechercher_web', 'rechercher_web', 'calculer']</div>
+
+    <!-- ============================== SECTION 8 ============================== -->
+    <h2>8. Erreurs Courantes -- Les Six Pieges de l'Agent Autonome</h2>
+
+    <div class="warning">
+        <h3>Erreur 1 : Boucle infinie par absence de recursion_limit</h3>
+        <p><strong>Symptome :</strong> L'agent tourne en boucle indefiniment, consommant des tokens
+        et des ressources sans jamais produire de reponse.</p>
+        <div class="code-block"><span class="comment"># FAUX -- pas de limite, risque de boucle infinie</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"danger"</span>}}
+agent.invoke({<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Recherche tout sur la France"</span>)]}, config)
+<span class="comment"># Risque : l'agent appelle rechercher_web en boucle sans fin</span>
+
+<span class="comment"># CORRECT -- toujours definir une limite</span>
+config = {
+    <span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"safe"</span>},
+    <span class="string">"recursion_limit"</span>: <span class="number">25</span>  <span class="comment"># Maximum 25 etapes</span>
+}
+agent.invoke({<span class="string">"messages"</span>: [HumanMessage(content=<span class="string">"Recherche tout sur la France"</span>)]}, config)</div>
+        <p><em>Conseil : En developpement, utilisez <code>recursion_limit: 10</code> pour detecter
+        rapidement les boucles infinies.</em></p>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 2 : Schema d'outil incorrect ou docstring vague</h3>
+        <p><strong>Symptome :</strong> Le LLM passe de mauvais arguments a l'outil, ou ne l'utilise jamais car
+        il ne comprend pas quand l'appeler.</p>
+        <div class="code-block"><span class="comment"># FAUX -- docstring inutile, pas d'indication sur les parametres</span>
+@tool
+<span class="keyword">def</span> <span class="function">mauvais_outil</span>(x):
+    <span class="string">"""Fait quelque chose."""</span>  <span class="comment"># Trop vague !</span>
+    <span class="keyword">return</span> <span class="function">str</span>(x)
+
+<span class="comment"># CORRECT -- docstring precise avec Args et Returns</span>
+@tool
+<span class="keyword">def</span> <span class="function">bon_outil</span>(query: str) -> str:
+    <span class="string">"""Recherche des informations sur le web.
+    Utilise cet outil quand l'utilisateur demande des donnees factuelles.
+
+    Args:
+        query: La requete de recherche en langage naturel.
+
+    Returns:
+        Les resultats de la recherche."""</span>
+    <span class="keyword">return</span> f<span class="string">"Resultats pour '{query}'"</span></div>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 3 : Oublier l'arete de retour tools -> agent</h3>
+        <p><strong>Symptome :</strong> L'agent appelle un outil mais ne peut pas analyser le resultat.
+        Le graphe se termine immediatement apres l'execution de l'outil.</p>
+        <div class="code-block"><span class="comment"># FAUX -- les outils menent directement a END (pas de boucle)</span>
+graph_builder.add_edge(<span class="string">"tools"</span>, END)
+<span class="comment"># L'agent appelle un outil puis s'arrete : pas de ReAct !</span>
+
+<span class="comment"># CORRECT -- retour au noeud agent pour analyser le resultat</span>
+graph_builder.add_edge(<span class="string">"tools"</span>, <span class="string">"agent"</span>)
+<span class="comment"># L'agent voit le ToolMessage et peut raisonner a nouveau</span></div>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 4 : Ne pas gerer les erreurs d'outils</h3>
+        <p><strong>Symptome :</strong> Un outil leve une exception non capturee, ce qui plante tout
+        le graphe et perd l'etat de la conversation.</p>
+        <div class="code-block"><span class="comment"># FAUX -- pas de gestion d'erreur</span>
+@tool
+<span class="keyword">def</span> <span class="function">outil_fragile</span>(chemin: str) -> str:
+    <span class="string">"""Lit un fichier."""</span>
+    <span class="keyword">with</span> <span class="function">open</span>(chemin) <span class="keyword">as</span> f:
+        <span class="keyword">return</span> f.read()  <span class="comment"># Plante si le fichier n'existe pas !</span>
+
+<span class="comment"># CORRECT -- gestion robuste des erreurs</span>
+@tool
+<span class="keyword">def</span> <span class="function">outil_robuste</span>(chemin: str) -> str:
+    <span class="string">"""Lit un fichier."""</span>
+    <span class="keyword">try</span>:
+        <span class="keyword">with</span> <span class="function">open</span>(chemin) <span class="keyword">as</span> f:
+            <span class="keyword">return</span> f.read()
+    <span class="keyword">except</span> FileNotFoundError:
+        <span class="keyword">return</span> f<span class="string">"Erreur : fichier '{chemin}' introuvable."</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> f<span class="string">"Erreur : {str(e)}"</span></div>
+        <p><em>L'agent peut comprendre un message d'erreur et adapter sa strategie.
+        Une exception Python non capturee est irrecuperable.</em></p>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 5 : Utiliser tool_choice="required" sans arret conditionnel</h3>
+        <p><strong>Symptome :</strong> L'agent est force d'appeler un outil a chaque tour, ce qui
+        cree une boucle infinie car il ne peut jamais produire de reponse finale.</p>
+        <div class="code-block"><span class="comment"># FAUX -- le LLM doit toujours appeler un outil, jamais repondre</span>
+llm_stuck = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>).bind_tools(
+    tools, tool_choice=<span class="string">"required"</span>
+)
+<span class="comment"># Boucle infinie : tool -> agent -> tool -> agent -> ...</span>
+
+<span class="comment"># CORRECT -- utiliser "auto" pour que le LLM puisse choisir de conclure</span>
+llm_free = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>).bind_tools(tools)
+<span class="comment"># tool_choice="auto" est le defaut, le LLM peut repondre sans outil</span></div>
+    </div>
+
+    <div class="warning">
+        <h3>Erreur 6 : Confondre le nombre d'appels d'outils et le recursion_limit</h3>
+        <p><strong>Symptome :</strong> Le <code>recursion_limit</code> est atteint trop tot car il
+        compte toutes les etapes du graphe (noeuds traverses), pas seulement les appels d'outils.</p>
+        <div class="code-block"><span class="comment"># Attention : le recursion_limit compte les NOEUDS traverses</span>
+<span class="comment"># Une boucle ReAct complete = 2 noeuds (agent + tools)</span>
+<span class="comment"># Donc recursion_limit=10 permet environ 4-5 boucles, pas 10 !</span>
+
+<span class="comment"># Calcul : START(1) + agent(1) + tools(1) + agent(1) + tools(1) + ...</span>
+<span class="comment"># recursion_limit=10 -> environ 4 appels d'outils maximum</span>
+
+<span class="comment"># Si vous voulez 10 appels d'outils :</span>
+config = {
+    <span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"demo"</span>},
+    <span class="string">"recursion_limit"</span>: <span class="number">25</span>  <span class="comment"># Permet environ 12 appels d'outils</span>
+}</div>
+    </div>
+
+    <!-- ============================== SECTION 9 ============================== -->
+    <h2>9. Resume</h2>
+
+    <div class="concept-box green">
+        <h3>Ce que vous avez appris dans ce TD</h3>
+        <table>
+            <tr><th>Concept</th><th>Description</th></tr>
+            <tr><td><strong>Agent autonome</strong></td><td>Programme qui raisonne, agit et observe en boucle pour resoudre des taches</td></tr>
+            <tr><td><strong>Pattern ReAct</strong></td><td>Boucle Think-Act-Observe : le LLM reflechit, appelle un outil, analyse le resultat</td></tr>
+            <tr><td><strong>Graphe cyclique</strong></td><td>La boucle <code>tools -> agent</code> cree un cycle dans le graphe</td></tr>
+            <tr><td><strong>ToolMessage</strong></td><td>Type de message qui encapsule le resultat d'un outil execute</td></tr>
+            <tr><td><strong>recursion_limit</strong></td><td>Garde-fou essentiel qui limite le nombre d'etapes du graphe</td></tr>
+            <tr><td><strong>ToolNode</strong></td><td>Noeud pre-construit qui execute les outils demandes par le LLM</td></tr>
+            <tr><td><strong>should_continue</strong></td><td>Fonction de routage qui cree la branche cyclique du graphe</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box blue">
+        <h3>Schema recapitulatif : Agent Autonome vs Chatbot</h3>
+        <table>
+            <tr><th>Aspect</th><th>Chatbot (TD precedent)</th><th>Agent Autonome (ce TD)</th></tr>
+            <tr><td><strong>Graphe</strong></td><td>Acyclique (DAG)</td><td>Cyclique (boucle ReAct)</td></tr>
+            <tr><td><strong>Outils</strong></td><td>Optionnels (0-1 appel)</td><td>Centraux (multi-appels)</td></tr>
+            <tr><td><strong>Boucle</strong></td><td>Aucune</td><td>tools -> agent (cycle)</td></tr>
+            <tr><td><strong>Securite</strong></td><td>Pas de risque de boucle</td><td>recursion_limit obligatoire</td></tr>
+            <tr><td><strong>Complexite</strong></td><td>Taches simples</td><td>Taches multi-etapes</td></tr>
+            <tr><td><strong>Autonomie</strong></td><td>Repond a 1 message</td><td>Resout 1 tache en N etapes</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box">
+        <h3>Les trois regles d'or de l'agent autonome</h3>
+        <p><strong>1. Toujours definir un recursion_limit.</strong> Sans lui, un agent mal configure
+        peut boucler indefiniment et consommer des ressources.</p>
+        <p><strong>2. Ecrire des docstrings precises pour chaque outil.</strong> Le LLM les lit pour
+        decider quand et comment utiliser les outils. Vague = inutile.</p>
+        <p><strong>3. Gerer les erreurs dans chaque outil.</strong> Un outil qui leve une exception
+        plante tout le graphe. Un outil qui retourne un message d'erreur permet a l'agent de
+        s'adapter et de continuer.</p>
+    </div>
+
+    <div class="prof-note">
+        Felicitations ! Vous avez maintenant les bases pour construire des agents autonomes avec LangGraph.
+        La prochaine etape serait d'explorer les architectures <strong>multi-agents</strong>, ou plusieurs
+        agents collaborent pour resoudre des taches encore plus complexes. Mais avant cela, assurez-vous
+        de bien maitriser la boucle ReAct : c'est la brique fondamentale de tout systeme agentique.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="td_chatbot.html">&larr; TD Chatbot</a>
+        <span style="color: #666;">(Fin des TDs LangGraph)</span>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

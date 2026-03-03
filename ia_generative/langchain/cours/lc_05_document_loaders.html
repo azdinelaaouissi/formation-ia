@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangChain - Document Loaders et Text Splitters</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="main">
+
+        <h1>Document Loaders et Text Splitters</h1>
+        <p class="subtitle">Cours 5 - Ingerer des Documents dans le Pipeline RAG avec LangChain</p>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 1 : Le Pipeline d'ingestion                         -->
+        <!-- ============================================================ -->
+        <h2>1. Le Pipeline d'Ingestion de Documents</h2>
+
+        <p>
+            Avant qu'un LLM puisse repondre a des questions sur vos documents, ces derniers doivent traverser
+            un pipeline d'ingestion complet. Ce pipeline transforme des fichiers bruts (PDF, CSV, pages web, etc.)
+            en vecteurs stockes dans une base vectorielle, prets a etre recherches semantiquement.
+        </p>
+
+        <div class="definition">
+            Le <strong>pipeline d'ingestion</strong> est la sequence d'etapes qui transforme des documents sources
+            en representations vectorielles exploitables par un systeme RAG (Retrieval-Augmented Generation).
+            Il comprend le chargement, le decoupage, la vectorisation et le stockage.
+        </div>
+
+        <div class="svg-container">
+            <svg width="920" height="120" viewBox="0 0 920 120">
+                <defs>
+                    <marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                    </marker>
+                </defs>
+                <!-- Documents -->
+                <rect x="5" y="30" width="100" height="55" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+                <text x="55" y="52" text-anchor="middle" fill="#ff6b35" font-size="11" font-weight="bold">Documents</text>
+                <text x="55" y="72" text-anchor="middle" fill="#aaa" font-size="9">PDF, CSV, TXT...</text>
+                <line x1="105" y1="57" x2="140" y2="57" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+                <!-- Loader -->
+                <rect x="145" y="30" width="100" height="55" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="195" y="52" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">Loader</text>
+                <text x="195" y="72" text-anchor="middle" fill="#aaa" font-size="9">Chargement</text>
+                <line x1="245" y1="57" x2="280" y2="57" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+                <!-- Raw Text -->
+                <rect x="285" y="30" width="100" height="55" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+                <text x="335" y="52" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">Raw Text</text>
+                <text x="335" y="72" text-anchor="middle" fill="#aaa" font-size="9">Texte brut</text>
+                <line x1="385" y1="57" x2="420" y2="57" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+                <!-- Splitter -->
+                <rect x="425" y="30" width="100" height="55" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+                <text x="475" y="52" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">Splitter</text>
+                <text x="475" y="72" text-anchor="middle" fill="#aaa" font-size="9">Decoupage</text>
+                <line x1="525" y1="57" x2="560" y2="57" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+                <!-- Chunks -->
+                <rect x="565" y="30" width="100" height="55" rx="8" fill="#1a1a2e" stroke="#ce9178" stroke-width="2"/>
+                <text x="615" y="52" text-anchor="middle" fill="#ce9178" font-size="11" font-weight="bold">Chunks</text>
+                <text x="615" y="72" text-anchor="middle" fill="#aaa" font-size="9">Morceaux</text>
+                <line x1="665" y1="57" x2="700" y2="57" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+                <!-- Embeddings -->
+                <rect x="705" y="30" width="100" height="55" rx="8" fill="#1a1a2e" stroke="#b5cea8" stroke-width="2"/>
+                <text x="755" y="52" text-anchor="middle" fill="#b5cea8" font-size="11" font-weight="bold">Embeddings</text>
+                <text x="755" y="72" text-anchor="middle" fill="#aaa" font-size="9">Vecteurs</text>
+                <line x1="805" y1="57" x2="830" y2="57" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+                <!-- VectorStore -->
+                <rect x="835" y="30" width="80" height="55" rx="8" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+                <text x="875" y="52" text-anchor="middle" fill="#ff4444" font-size="10" font-weight="bold">Vector</text>
+                <text x="875" y="67" text-anchor="middle" fill="#ff4444" font-size="10" font-weight="bold">Store</text>
+            </svg>
+        </div>
+
+        <div class="prof-note">
+            Ce pipeline est la fondation de tout systeme RAG. Chaque etape est cruciale : un mauvais decoupage
+            ruinera la qualite de la recherche, meme avec le meilleur modele d'embeddings au monde. Dans ce cours,
+            nous detaillons les deux premieres etapes : le chargement (Loaders) et le decoupage (Splitters).
+        </div>
+
+        <p>
+            Voici les etapes en detail :
+        </p>
+        <ol>
+            <li><strong>Chargement (Loading)</strong> : Lire le document source et extraire le texte brut avec ses metadonnees.</li>
+            <li><strong>Decoupage (Splitting)</strong> : Diviser le texte brut en morceaux (chunks) de taille appropriee.</li>
+            <li><strong>Vectorisation (Embedding)</strong> : Convertir chaque chunk en vecteur numerique capturant le sens semantique.</li>
+            <li><strong>Stockage (Storing)</strong> : Sauvegarder les vecteurs dans une base vectorielle pour la recherche par similarite.</li>
+        </ol>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 2 : L'objet Document                                -->
+        <!-- ============================================================ -->
+        <h2>2. L'Objet Document de LangChain</h2>
+
+        <p>
+            Tous les loaders de LangChain retournent des objets <code>Document</code>. C'est la structure de
+            donnees fondamentale qui circule dans tout le pipeline. Comprendre cet objet est essentiel.
+        </p>
+
+        <div class="definition">
+            Un <strong>Document</strong> LangChain est un objet contenant deux attributs principaux :
+            <code>page_content</code> (le texte du document) et <code>metadata</code> (un dictionnaire
+            de metadonnees associees comme la source, le numero de page, etc.).
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+<span class="comment"># Creation manuelle d'un Document</span>
+doc = <span class="function">Document</span>(
+    page_content=<span class="string">"LangChain est un framework pour developper des applications basees sur les LLM."</span>,
+    metadata={
+        <span class="string">"source"</span>: <span class="string">"cours_langchain.pdf"</span>,
+        <span class="string">"page"</span>: <span class="number">1</span>,
+        <span class="string">"author"</span>: <span class="string">"Prof. Martin"</span>,
+        <span class="string">"date"</span>: <span class="string">"2025-09-15"</span>
+    }
+)
+
+<span class="comment"># Acceder au contenu</span>
+<span class="function">print</span>(doc.page_content)
+<span class="comment"># "LangChain est un framework pour developper des applications basees sur les LLM."</span>
+
+<span class="comment"># Acceder aux metadonnees</span>
+<span class="function">print</span>(doc.metadata)
+<span class="comment"># {"source": "cours_langchain.pdf", "page": 1, "author": "Prof. Martin", "date": "2025-09-15"}</span>
+
+<span class="comment"># Acceder a une metadonnee specifique</span>
+<span class="function">print</span>(doc.metadata[<span class="string">"source"</span>])
+<span class="comment"># "cours_langchain.pdf"</span></div>
+
+        <div class="output-block">LangChain est un framework pour developper des applications basees sur les LLM.
+{'source': 'cours_langchain.pdf', 'page': 1, 'author': 'Prof. Martin', 'date': '2025-09-15'}
+cours_langchain.pdf</div>
+
+        <div class="concept-box green">
+            <h3>Pourquoi les metadonnees sont-elles si importantes ?</h3>
+            <p>Les metadonnees permettent de :</p>
+            <ul>
+                <li><strong>Filtrer</strong> les resultats de recherche (ex: uniquement les documents d'une source specifique)</li>
+                <li><strong>Citer</strong> la source exacte dans la reponse generee (page, paragraphe, URL)</li>
+                <li><strong>Tracer</strong> l'origine de l'information pour la verification</li>
+                <li><strong>Organiser</strong> les documents par categorie, date, auteur, etc.</li>
+            </ul>
+        </div>
+
+        <div class="code-block"><span class="comment"># Creer une liste de Documents manuellement</span>
+documents = [
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Python est un langage de programmation polyvalent."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"wiki"</span>, <span class="string">"sujet"</span>: <span class="string">"programmation"</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"LangChain facilite la creation d'applications IA."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"blog"</span>, <span class="string">"sujet"</span>: <span class="string">"IA"</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Les vecteurs representent le sens semantique du texte."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"cours"</span>, <span class="string">"sujet"</span>: <span class="string">"embeddings"</span>}
+    ),
+]
+
+<span class="keyword">for</span> doc <span class="keyword">in</span> documents:
+    <span class="function">print</span>(<span class="string">f"[<span class="keyword">{</span>doc.metadata['source']<span class="keyword">}</span>] <span class="keyword">{</span>doc.page_content[:50]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">[wiki] Python est un langage de programmation polyv...
+[blog] LangChain facilite la creation d'application...
+[cours] Les vecteurs representent le sens semantique...</div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 3 : Les Principaux Loaders                          -->
+        <!-- ============================================================ -->
+        <h2>3. Les Principaux Document Loaders</h2>
+
+        <p>
+            LangChain fournit des dizaines de loaders specialises pour differents formats de fichiers.
+            Chaque loader gere les specificites de son format (encodage, pagination, structure) et retourne
+            une liste d'objets <code>Document</code> avec des metadonnees appropriees.
+        </p>
+
+        <table>
+            <tr>
+                <th>Loader</th>
+                <th>Format</th>
+                <th>Package</th>
+                <th>Metadonnees typiques</th>
+            </tr>
+            <tr>
+                <td><code>TextLoader</code></td>
+                <td>.txt</td>
+                <td>langchain_community</td>
+                <td>source (chemin du fichier)</td>
+            </tr>
+            <tr>
+                <td><code>PyPDFLoader</code></td>
+                <td>.pdf</td>
+                <td>langchain_community</td>
+                <td>source, page</td>
+            </tr>
+            <tr>
+                <td><code>CSVLoader</code></td>
+                <td>.csv</td>
+                <td>langchain_community</td>
+                <td>source, row (numero de ligne)</td>
+            </tr>
+            <tr>
+                <td><code>WebBaseLoader</code></td>
+                <td>URL (web)</td>
+                <td>langchain_community</td>
+                <td>source (URL), title</td>
+            </tr>
+            <tr>
+                <td><code>DirectoryLoader</code></td>
+                <td>Dossier entier</td>
+                <td>langchain_community</td>
+                <td>source (chemin de chaque fichier)</td>
+            </tr>
+            <tr>
+                <td><code>UnstructuredLoader</code></td>
+                <td>Multi-format</td>
+                <td>langchain_unstructured</td>
+                <td>source, category, element_type</td>
+            </tr>
+            <tr>
+                <td><code>JSONLoader</code></td>
+                <td>.json</td>
+                <td>langchain_community</td>
+                <td>source, jq_schema path</td>
+            </tr>
+            <tr>
+                <td><code>Docx2txtLoader</code></td>
+                <td>.docx</td>
+                <td>langchain_community</td>
+                <td>source</td>
+            </tr>
+        </table>
+
+        <!-- TextLoader -->
+        <h3>3.1 TextLoader - Fichiers Texte</h3>
+
+        <p>
+            Le loader le plus simple. Il charge un fichier texte brut et retourne un seul <code>Document</code>
+            contenant tout le contenu du fichier.
+        </p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader
+
+<span class="comment"># Charger un fichier texte</span>
+loader = <span class="function">TextLoader</span>(<span class="string">"./data/mon_fichier.txt"</span>, encoding=<span class="string">"utf-8"</span>)
+documents = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"Nombre de documents : <span class="keyword">{</span><span class="function">len</span>(documents)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Contenu (100 premiers chars) : <span class="keyword">{</span>documents[<span class="number">0</span>].page_content[:<span class="number">100</span>]<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Metadonnees : <span class="keyword">{</span>documents[<span class="number">0</span>].metadata<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Nombre de documents : 1
+Contenu (100 premiers chars) : LangChain est un framework open-source qui permet de creer des applications basees sur les modeles de
+Metadonnees : {'source': './data/mon_fichier.txt'}</div>
+
+        <div class="prof-note">
+            Le <code>TextLoader</code> charge TOUT le fichier en un seul Document. Pour un fichier de 10 000 lignes,
+            vous obtenez un seul Document enorme. C'est pourquoi le Text Splitter est indispensable apres le chargement.
+            Pensez toujours a specifier l'encodage (<code>encoding="utf-8"</code>) pour eviter les erreurs avec les accents.
+        </div>
+
+        <!-- PyPDFLoader -->
+        <h3>3.2 PyPDFLoader - Fichiers PDF</h3>
+
+        <p>
+            Le loader PDF le plus utilise. Il cree un <code>Document</code> par page du PDF, ce qui est
+            tres pratique pour la traçabilite (on sait de quelle page vient chaque information).
+        </p>
+
+        <div class="code-block"><span class="comment"># pip install pypdf</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader
+
+<span class="comment"># Charger un PDF - un Document par page</span>
+loader = <span class="function">PyPDFLoader</span>(<span class="string">"./data/rapport_annuel.pdf"</span>)
+pages = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"Nombre de pages : <span class="keyword">{</span><span class="function">len</span>(pages)<span class="keyword">}</span>"</span>)
+
+<span class="comment"># Chaque page est un Document avec son numero de page</span>
+<span class="keyword">for</span> i, page <span class="keyword">in</span> <span class="function">enumerate</span>(pages[:<span class="number">3</span>]):
+    <span class="function">print</span>(<span class="string">f"\n--- Page <span class="keyword">{</span>page.metadata[<span class="string">'page'</span>]<span class="keyword">}</span> ---"</span>)
+    <span class="function">print</span>(<span class="string">f"Source : <span class="keyword">{</span>page.metadata[<span class="string">'source'</span>]<span class="keyword">}</span>"</span>)
+    <span class="function">print</span>(<span class="string">f"Contenu : <span class="keyword">{</span>page.page_content[:<span class="number">80</span>]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Nombre de pages : 42
+--- Page 0 ---
+Source : ./data/rapport_annuel.pdf
+Contenu : RAPPORT ANNUEL 2025 - Societe XYZ Introduction Ce rapport presente les resultat...
+--- Page 1 ---
+Source : ./data/rapport_annuel.pdf
+Contenu : Chapitre 1 : Bilan Financier Le chiffre d'affaires de l'exercice 2025 s'eleve ...
+--- Page 2 ---
+Source : ./data/rapport_annuel.pdf
+Contenu : 1.2 Analyse des Couts Les couts operationnels ont augmente de 3.2% par rapport...</div>
+
+        <div class="concept-box">
+            <h3>Chargement paresseux avec lazy_load()</h3>
+            <p>
+                Pour les gros PDF (des centaines de pages), utilisez <code>lazy_load()</code> au lieu de <code>load()</code>.
+                Cela retourne un generateur qui charge les pages une par une, evitant de tout stocker en memoire.
+            </p>
+        </div>
+
+        <div class="code-block"><span class="comment"># Chargement paresseux pour les gros documents</span>
+loader = <span class="function">PyPDFLoader</span>(<span class="string">"./data/gros_rapport.pdf"</span>)
+
+<span class="comment"># lazy_load() retourne un generateur - ne charge pas tout en memoire</span>
+<span class="keyword">for</span> page <span class="keyword">in</span> loader.<span class="function">lazy_load</span>():
+    <span class="comment"># Traiter chaque page individuellement</span>
+    <span class="function">print</span>(<span class="string">f"Page <span class="keyword">{</span>page.metadata[<span class="string">'page'</span>]<span class="keyword">}</span> : <span class="keyword">{</span><span class="function">len</span>(page.page_content)<span class="keyword">}</span> caracteres"</span>)
+    <span class="comment"># Vous pouvez traiter et stocker ici sans attendre le chargement complet</span></div>
+
+        <!-- CSVLoader -->
+        <h3>3.3 CSVLoader - Fichiers CSV</h3>
+
+        <p>
+            Le <code>CSVLoader</code> cree un <code>Document</code> par ligne du fichier CSV. Chaque ligne
+            devient un document avec les colonnes du CSV transformees en contenu textuel et en metadonnees.
+        </p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_community.document_loaders.csv_loader <span class="keyword">import</span> CSVLoader
+
+<span class="comment"># Charger un CSV - un Document par ligne</span>
+loader = <span class="function">CSVLoader</span>(
+    file_path=<span class="string">"./data/produits.csv"</span>,
+    csv_args={
+        <span class="string">"delimiter"</span>: <span class="string">","</span>,
+        <span class="string">"quotechar"</span>: <span class="string">'"'</span>,
+    },
+    encoding=<span class="string">"utf-8"</span>
+)
+docs = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"Nombre de lignes chargees : <span class="keyword">{</span><span class="function">len</span>(docs)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"\nPremier document :"</span>)
+<span class="function">print</span>(docs[<span class="number">0</span>].page_content)
+<span class="function">print</span>(<span class="string">f"\nMetadonnees : <span class="keyword">{</span>docs[<span class="number">0</span>].metadata<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Nombre de lignes chargees : 150
+Premier document :
+nom: Ordinateur Portable Pro
+prix: 1299.99
+categorie: Informatique
+description: PC portable haute performance pour professionnels
+
+Metadonnees : {'source': './data/produits.csv', 'row': 0}</div>
+
+        <div class="code-block"><span class="comment"># CSVLoader avec une colonne specifique comme source de contenu</span>
+loader = <span class="function">CSVLoader</span>(
+    file_path=<span class="string">"./data/avis_clients.csv"</span>,
+    source_column=<span class="string">"url_avis"</span>,         <span class="comment"># Utiliser cette colonne comme metadata 'source'</span>
+    content_columns=[<span class="string">"commentaire"</span>],   <span class="comment"># Seule cette colonne sera le contenu</span>
+    metadata_columns=[<span class="string">"note"</span>, <span class="string">"date"</span>, <span class="string">"auteur"</span>]  <span class="comment"># Ces colonnes deviennent des metadonnees</span>
+)
+docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(docs[<span class="number">0</span>].page_content)
+<span class="function">print</span>(docs[<span class="number">0</span>].metadata)</div>
+
+        <div class="output-block">commentaire: Excellent produit, je recommande vivement !
+{'source': 'https://example.com/avis/12345', 'note': '5', 'date': '2025-06-12', 'auteur': 'Marie D.'}</div>
+
+        <!-- WebBaseLoader -->
+        <h3>3.4 WebBaseLoader - Pages Web</h3>
+
+        <p>
+            Charge le contenu de pages web en extrayant le texte HTML. Tres utile pour creer des systemes
+            RAG a partir de documentation en ligne, d'articles de blog, etc.
+        </p>
+
+        <div class="code-block"><span class="comment"># pip install beautifulsoup4</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> WebBaseLoader
+
+<span class="comment"># Charger une page web</span>
+loader = <span class="function">WebBaseLoader</span>(
+    web_paths=[<span class="string">"https://docs.langchain.com/docs/introduction"</span>],
+)
+docs = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"Nombre de documents : <span class="keyword">{</span><span class="function">len</span>(docs)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Source : <span class="keyword">{</span>docs[<span class="number">0</span>].metadata[<span class="string">'source'</span>]<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Titre : <span class="keyword">{</span>docs[<span class="number">0</span>].metadata.get(<span class="string">'title'</span>, <span class="string">'N/A'</span>)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Contenu (200 chars) : <span class="keyword">{</span>docs[<span class="number">0</span>].page_content[:<span class="number">200</span>]<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Nombre de documents : 1
+Source : https://docs.langchain.com/docs/introduction
+Titre : Introduction | LangChain
+Contenu (200 chars) : Introduction LangChain is a framework for developing applications powered by large language models (LLMs). LangChain simplifies every stage of the LLM application lifecycle...</div>
+
+        <div class="code-block"><span class="comment"># Charger plusieurs pages web en une seule fois</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> WebBaseLoader
+
+urls = [
+    <span class="string">"https://example.com/article1"</span>,
+    <span class="string">"https://example.com/article2"</span>,
+    <span class="string">"https://example.com/article3"</span>,
+]
+
+loader = <span class="function">WebBaseLoader</span>(web_paths=urls)
+docs = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"<span class="keyword">{</span><span class="function">len</span>(docs)<span class="keyword">}</span> pages chargees"</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> docs:
+    <span class="function">print</span>(<span class="string">f"  - <span class="keyword">{</span>doc.metadata[<span class="string">'source'</span>]<span class="keyword">}</span> (<span class="keyword">{</span><span class="function">len</span>(doc.page_content)<span class="keyword">}</span> chars)"</span>)</div>
+
+        <!-- DirectoryLoader -->
+        <h3>3.5 DirectoryLoader - Charger un Dossier Entier</h3>
+
+        <p>
+            Le <code>DirectoryLoader</code> charge tous les fichiers d'un repertoire. Il est capable de detecter
+            le type de fichier et d'utiliser le loader adapte pour chacun. Ideal pour ingerer un corpus complet.
+        </p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> DirectoryLoader, TextLoader
+
+<span class="comment"># Charger tous les fichiers .txt d'un dossier</span>
+loader = <span class="function">DirectoryLoader</span>(
+    path=<span class="string">"./data/documents/"</span>,
+    glob=<span class="string">"**/*.txt"</span>,                <span class="comment"># Pattern glob - ici tous les .txt recursifs</span>
+    loader_cls=TextLoader,           <span class="comment"># Quel loader utiliser pour chaque fichier</span>
+    loader_kwargs={<span class="string">"encoding"</span>: <span class="string">"utf-8"</span>},
+    show_progress=<span class="keyword">True</span>,              <span class="comment"># Afficher la progression</span>
+    use_multithreading=<span class="keyword">True</span>,         <span class="comment"># Charger en parallele (plus rapide)</span>
+)
+docs = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"<span class="keyword">{</span><span class="function">len</span>(docs)<span class="keyword">}</span> fichiers charges"</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> docs[:<span class="number">5</span>]:
+    <span class="function">print</span>(<span class="string">f"  - <span class="keyword">{</span>doc.metadata[<span class="string">'source'</span>]<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">100%|██████████| 23/23 [00:02&lt;00:00, 11.50it/s]
+23 fichiers charges
+  - data/documents/intro.txt
+  - data/documents/chapitre1.txt
+  - data/documents/chapitre2.txt
+  - data/documents/notes/reunion_01.txt
+  - data/documents/notes/reunion_02.txt</div>
+
+        <div class="code-block"><span class="comment"># Charger un dossier avec des types de fichiers mixtes</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> DirectoryLoader, PyPDFLoader
+
+<span class="comment"># Charger tous les PDFs recursivement</span>
+pdf_loader = <span class="function">DirectoryLoader</span>(
+    path=<span class="string">"./data/"</span>,
+    glob=<span class="string">"**/*.pdf"</span>,
+    loader_cls=PyPDFLoader,
+    show_progress=<span class="keyword">True</span>,
+)
+pdf_docs = pdf_loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"<span class="keyword">{</span><span class="function">len</span>(pdf_docs)<span class="keyword">}</span> pages PDF chargees depuis <span class="keyword">{</span><span class="function">len</span>(<span class="function">set</span>(d.metadata[<span class="string">'source'</span>] <span class="keyword">for</span> d <span class="keyword">in</span> pdf_docs))<span class="keyword">}</span> fichiers"</span>)</div>
+
+        <!-- UnstructuredLoader -->
+        <h3>3.6 UnstructuredLoader - Format Universel</h3>
+
+        <p>
+            La librairie <code>unstructured</code> est capable de parser quasiment tous les formats de fichiers :
+            PDF, DOCX, PPTX, HTML, images (avec OCR), emails, et bien plus. C'est le loader le plus polyvalent.
+        </p>
+
+        <div class="code-block"><span class="comment"># pip install unstructured</span>
+<span class="keyword">from</span> langchain_unstructured <span class="keyword">import</span> UnstructuredLoader
+
+<span class="comment"># Charger n'importe quel type de fichier</span>
+loader = <span class="function">UnstructuredLoader</span>(
+    file_path=<span class="string">"./data/presentation.pptx"</span>,
+    mode=<span class="string">"elements"</span>,   <span class="comment"># "single" = un document, "elements" = un par element</span>
+)
+docs = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"Nombre d'elements : <span class="keyword">{</span><span class="function">len</span>(docs)<span class="keyword">}</span>"</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> docs[:<span class="number">5</span>]:
+    <span class="function">print</span>(<span class="string">f"  Type: <span class="keyword">{</span>doc.metadata.get(<span class="string">'category'</span>, <span class="string">'unknown'</span>)<span class="keyword">}</span>"</span>)
+    <span class="function">print</span>(<span class="string">f"  Contenu: <span class="keyword">{</span>doc.page_content[:<span class="number">60</span>]<span class="keyword">}</span>..."</span>)
+    <span class="function">print</span>()</div>
+
+        <div class="output-block">Nombre d'elements : 47
+  Type: Title
+  Contenu: Strategie IA 2025 - Presentation au Comite de Direction...
+
+  Type: NarrativeText
+  Contenu: Notre entreprise investit massivement dans l'intelligen...
+
+  Type: ListItem
+  Contenu: Automatisation des processus metier avec les LLM...
+
+  Type: Table
+  Contenu: Budget IA | 2024 | 2025 | Prevision 2026 | R&amp;D | 2.5M...
+
+  Type: Image
+  Contenu: [Description OCR de l'image]...</div>
+
+        <!-- JSONLoader -->
+        <h3>3.7 JSONLoader - Fichiers JSON</h3>
+
+        <p>
+            Le <code>JSONLoader</code> utilise des expressions <code>jq</code> pour extraire des donnees specifiques
+            d'un fichier JSON. Tres puissant pour les APIs et les donnees structurees.
+        </p>
+
+        <div class="code-block"><span class="comment"># pip install jq</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> JSONLoader
+
+<span class="comment"># Supposons un fichier JSON avec cette structure :
+# {"articles": [{"titre": "...", "contenu": "...", "auteur": "..."}, ...]}
+</span>
+loader = <span class="function">JSONLoader</span>(
+    file_path=<span class="string">"./data/articles.json"</span>,
+    jq_schema=<span class="string">".articles[]"</span>,              <span class="comment"># Expression jq pour naviguer dans le JSON</span>
+    content_key=<span class="string">"contenu"</span>,                <span class="comment"># Cle a utiliser comme page_content</span>
+    metadata_func=<span class="keyword">lambda</span> record, metadata: {
+        **metadata,
+        <span class="string">"titre"</span>: record.get(<span class="string">"titre"</span>, <span class="string">""</span>),
+        <span class="string">"auteur"</span>: record.get(<span class="string">"auteur"</span>, <span class="string">""</span>),
+    }
+)
+docs = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"Articles charges : <span class="keyword">{</span><span class="function">len</span>(docs)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Titre : <span class="keyword">{</span>docs[<span class="number">0</span>].metadata[<span class="string">'titre'</span>]<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Contenu : <span class="keyword">{</span>docs[<span class="number">0</span>].page_content[:<span class="number">80</span>]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Articles charges : 25
+Titre : Introduction aux Transformers
+Contenu : Les Transformers sont une architecture de reseau de neurones qui a revolutionne le ...</div>
+
+        <!-- Docx2txtLoader -->
+        <h3>3.8 Docx2txtLoader - Fichiers Word</h3>
+
+        <div class="code-block"><span class="comment"># pip install docx2txt</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> Docx2txtLoader
+
+loader = <span class="function">Docx2txtLoader</span>(<span class="string">"./data/rapport.docx"</span>)
+docs = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"Contenu du Word : <span class="keyword">{</span>docs[<span class="number">0</span>].page_content[:<span class="number">150</span>]<span class="keyword">}</span>..."</span>)
+<span class="function">print</span>(<span class="string">f"Metadonnees : <span class="keyword">{</span>docs[<span class="number">0</span>].metadata<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Contenu du Word : RAPPORT DE STAGE - Departement Intelligence Artificielle Introduction Ce rapport presente les travaux realises durant mon stage de 6 mois au se...
+Metadonnees : {'source': './data/rapport.docx'}</div>
+
+        <div class="warning">
+            Chaque loader necessite l'installation de sa propre dependance Python. Par exemple,
+            <code>PyPDFLoader</code> necessite <code>pip install pypdf</code>, <code>CSVLoader</code> utilise
+            le module CSV standard, et <code>UnstructuredLoader</code> necessite <code>pip install unstructured</code>.
+            Verifiez toujours les dependances avant d'utiliser un loader.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 4 : Pourquoi le Splitting est crucial                -->
+        <!-- ============================================================ -->
+        <h2>4. Text Splitters : Pourquoi le Decoupage est Crucial</h2>
+
+        <p>
+            Apres le chargement, le texte brut est souvent trop long pour etre utilise directement.
+            Un document de 50 pages PDF contient potentiellement des dizaines de milliers de caracteres.
+            Les modeles d'embeddings ont des limites de tokens, et la recherche semantique fonctionne
+            mieux avec des morceaux de taille raisonnable.
+        </p>
+
+        <div class="definition">
+            Un <strong>Text Splitter</strong> est un outil qui decoupe un texte long en morceaux plus petits
+            (appeles <strong>chunks</strong>) tout en essayant de preserver la coherence semantique du contenu.
+            Le choix de la strategie de decoupage a un impact majeur sur la qualite du systeme RAG.
+        </div>
+
+        <div class="concept-box">
+            <h3>Le dilemme de la taille des chunks</h3>
+            <ul>
+                <li><strong>Chunks trop grands</strong> (ex: 5000 caracteres) : Le sens est dilue, l'embedding capture mal le sujet precis. La recherche retourne des resultats bruyants contenant beaucoup d'informations non pertinentes.</li>
+                <li><strong>Chunks trop petits</strong> (ex: 50 caracteres) : Le contexte est perdu, les phrases sont coupees en plein milieu. L'embedding d'une phrase isolee peut etre ambigu.</li>
+                <li><strong>Chunks equilibres</strong> (ex: 500-1000 caracteres) : Bon compromis entre precision et contexte. Assez pour capturer une idee complete sans noyer le signal.</li>
+            </ul>
+        </div>
+
+        <div class="svg-container">
+            <svg width="800" height="280" viewBox="0 0 800 280">
+                <text x="400" y="22" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Bon decoupage vs Mauvais decoupage</text>
+                <!-- Mauvais decoupage -->
+                <rect x="20" y="40" width="370" height="230" rx="10" fill="none" stroke="#ff4444" stroke-width="2" stroke-dasharray="5,5"/>
+                <text x="205" y="65" text-anchor="middle" fill="#ff4444" font-size="13" font-weight="bold">Mauvais Decoupage</text>
+                <rect x="40" y="80" width="330" height="35" rx="5" fill="#1a1a2e" stroke="#ff4444"/>
+                <text x="205" y="102" text-anchor="middle" fill="#e0e0e0" font-size="10">LangChain est un framework. Il perm | et de creer</text>
+                <rect x="40" y="125" width="330" height="35" rx="5" fill="#1a1a2e" stroke="#ff4444"/>
+                <text x="205" y="147" text-anchor="middle" fill="#e0e0e0" font-size="10">des applications IA. Les modeles de | langage (LLM)</text>
+                <rect x="40" y="170" width="330" height="35" rx="5" fill="#1a1a2e" stroke="#ff4444"/>
+                <text x="205" y="192" text-anchor="middle" fill="#e0e0e0" font-size="10">sont au coeur du systeme. | Les embeddings repr</text>
+                <text x="205" y="235" text-anchor="middle" fill="#ff4444" font-size="11">Phrases coupees en plein milieu !</text>
+                <text x="205" y="255" text-anchor="middle" fill="#ff4444" font-size="11">Contexte perdu, sens incomplet</text>
+                <!-- Bon decoupage -->
+                <rect x="410" y="40" width="370" height="230" rx="10" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="5,5"/>
+                <text x="595" y="65" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Bon Decoupage</text>
+                <rect x="430" y="80" width="330" height="35" rx="5" fill="#1a1a2e" stroke="#00ff88"/>
+                <text x="595" y="102" text-anchor="middle" fill="#e0e0e0" font-size="10">LangChain est un framework. Il permet de creer</text>
+                <rect x="430" y="125" width="330" height="35" rx="5" fill="#1a1a2e" stroke="#00ff88"/>
+                <text x="595" y="147" text-anchor="middle" fill="#e0e0e0" font-size="10">des applications IA avec les LLM.</text>
+                <rect x="430" y="170" width="330" height="35" rx="5" fill="#1a1a2e" stroke="#00ff88"/>
+                <text x="595" y="192" text-anchor="middle" fill="#e0e0e0" font-size="10">Les embeddings representent le sens semantique.</text>
+                <text x="595" y="235" text-anchor="middle" fill="#00ff88" font-size="11">Phrases completes et coherentes !</text>
+                <text x="595" y="255" text-anchor="middle" fill="#00ff88" font-size="11">Chaque chunk = une idee complete</text>
+            </svg>
+        </div>
+
+        <div class="prof-note">
+            Le choix du splitter et de ses parametres est l'un des facteurs les plus determinants dans la qualite
+            d'un systeme RAG. Un bon decoupage peut faire la difference entre un systeme qui repond correctement
+            80% du temps et un systeme qui atteint 95%. Experimentez toujours avec differents parametres sur
+            vos propres donnees.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 5 : RecursiveCharacterTextSplitter                   -->
+        <!-- ============================================================ -->
+        <h2>5. RecursiveCharacterTextSplitter - Le Splitter Incontournable</h2>
+
+        <p>
+            Le <code>RecursiveCharacterTextSplitter</code> est le splitter le plus recommande et le plus utilise
+            dans LangChain. Il tente de decouper le texte en respectant la hierarchie naturelle du langage :
+            d'abord par paragraphes, puis par phrases, puis par mots, et enfin par caracteres.
+        </p>
+
+        <div class="definition">
+            Le <strong>RecursiveCharacterTextSplitter</strong> fonctionne en essayant recursivement de decouper
+            le texte avec une liste ordonnee de separateurs : <code>["\n\n", "\n", " ", ""]</code>. Il commence par
+            essayer le premier separateur (double saut de ligne = paragraphe), et si les chunks resultants
+            sont encore trop grands, il passe au separateur suivant, et ainsi de suite.
+        </div>
+
+        <div class="param-box">
+            <h4>Parametres essentiels</h4>
+            <table>
+                <tr><th>Parametre</th><th>Description</th><th>Valeur par defaut</th></tr>
+                <tr>
+                    <td><code>chunk_size</code></td>
+                    <td>Taille maximale de chaque chunk (en caracteres)</td>
+                    <td>1000</td>
+                </tr>
+                <tr>
+                    <td><code>chunk_overlap</code></td>
+                    <td>Nombre de caracteres de chevauchement entre chunks consecutifs</td>
+                    <td>200</td>
+                </tr>
+                <tr>
+                    <td><code>separators</code></td>
+                    <td>Liste ordonnee de separateurs a essayer recursivement</td>
+                    <td>["\n\n", "\n", " ", ""]</td>
+                </tr>
+                <tr>
+                    <td><code>length_function</code></td>
+                    <td>Fonction pour mesurer la longueur d'un chunk</td>
+                    <td>len (nombre de caracteres)</td>
+                </tr>
+                <tr>
+                    <td><code>is_separator_regex</code></td>
+                    <td>Indique si les separateurs sont des expressions regulieres</td>
+                    <td>False</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Texte d'exemple</span>
+texte = <span class="string">"""LangChain est un framework open-source pour developper des applications
+utilisant des modeles de langage (LLM). Il fournit des outils pour la gestion
+des prompts, l'enchainement de taches, et l'integration avec des sources de donnees.
+
+Le framework est compose de plusieurs modules :
+- LangChain Core : les abstractions de base
+- LangChain Community : les integrations tierces
+- LangGraph : pour les workflows multi-agents
+- LangSmith : pour le monitoring et le debugging
+
+L'un des cas d'usage les plus populaires est le RAG (Retrieval-Augmented Generation).
+Le RAG permet d'enrichir les reponses du LLM avec des informations provenant de vos
+propres documents. Cela resout le probleme des hallucinations et du manque de
+connaissances specifiques au domaine.
+
+Pour implementer un systeme RAG, il faut :
+1. Charger les documents avec des Document Loaders
+2. Decouper le texte avec des Text Splitters
+3. Vectoriser les chunks avec des Embeddings
+4. Stocker les vecteurs dans un VectorStore
+5. Creer un Retriever pour la recherche semantique
+6. Connecter le tout dans une chaine LangChain"""</span>
+
+<span class="comment"># Creer le splitter</span>
+splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">300</span>,
+    chunk_overlap=<span class="number">50</span>,
+    separators=[<span class="string">"\n\n"</span>, <span class="string">"\n"</span>, <span class="string">" "</span>, <span class="string">""</span>],
+)
+
+<span class="comment"># Decouper le texte</span>
+chunks = splitter.<span class="function">split_text</span>(texte)
+
+<span class="function">print</span>(<span class="string">f"Texte original : <span class="keyword">{</span><span class="function">len</span>(texte)<span class="keyword">}</span> caracteres"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de chunks : <span class="keyword">{</span><span class="function">len</span>(chunks)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"{'='*60}"</span>)
+
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="function">print</span>(<span class="string">f"\n--- Chunk <span class="keyword">{</span>i+<span class="number">1</span><span class="keyword">}</span> (<span class="keyword">{</span><span class="function">len</span>(chunk)<span class="keyword">}</span> chars) ---"</span>)
+    <span class="function">print</span>(chunk)</div>
+
+        <div class="output-block">Texte original : 922 caracteres
+Nombre de chunks : 4
+============================================================
+
+--- Chunk 1 (253 chars) ---
+LangChain est un framework open-source pour developper des applications
+utilisant des modeles de langage (LLM). Il fournit des outils pour la gestion
+des prompts, l'enchainement de taches, et l'integration avec des sources de donnees.
+
+--- Chunk 2 (263 chars) ---
+Le framework est compose de plusieurs modules :
+- LangChain Core : les abstractions de base
+- LangChain Community : les integrations tierces
+- LangGraph : pour les workflows multi-agents
+- LangSmith : pour le monitoring et le debugging
+
+--- Chunk 3 (290 chars) ---
+L'un des cas d'usage les plus populaires est le RAG (Retrieval-Augmented Generation).
+Le RAG permet d'enrichir les reponses du LLM avec des informations provenant de vos
+propres documents. Cela resout le probleme des hallucinations et du manque de
+connaissances specifiques au domaine.
+
+--- Chunk 4 (295 chars) ---
+Pour implementer un systeme RAG, il faut :
+1. Charger les documents avec des Document Loaders
+2. Decouper le texte avec des Text Splitters
+3. Vectoriser les chunks avec des Embeddings
+4. Stocker les vecteurs dans un VectorStore
+5. Creer un Retriever pour la recherche semantique
+6. Connecter le tout dans une chaine LangChain</div>
+
+        <div class="effect">
+            Le splitter a d'abord essaye de couper par double saut de ligne (<code>\n\n</code>), ce qui a donne des
+            paragraphes. Comme chaque paragraphe fait moins de 300 caracteres, il n'a pas eu besoin de decouper
+            plus finement. Le texte est decoupe proprement en unites semantiques coherentes.
+        </div>
+
+        <h3>5.1 L'importance du chunk_overlap</h3>
+
+        <p>
+            Le chevauchement (<code>chunk_overlap</code>) est crucial pour eviter de perdre le contexte aux
+            frontieres entre deux chunks. Sans overlap, une phrase coupee entre deux chunks pourrait
+            perdre son sens complet.
+        </p>
+
+        <div class="svg-container">
+            <svg width="700" height="160" viewBox="0 0 700 160">
+                <text x="350" y="20" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Chunk Overlap - Chevauchement</text>
+                <!-- Chunk 1 -->
+                <rect x="30" y="40" width="300" height="40" rx="5" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+                <text x="180" y="65" text-anchor="middle" fill="#569cd6" font-size="12">Chunk 1 (300 chars)</text>
+                <!-- Overlap zone -->
+                <rect x="280" y="40" width="50" height="40" rx="0" fill="rgba(255,107,53,0.3)" stroke="none"/>
+                <rect x="280" y="90" width="50" height="40" rx="0" fill="rgba(255,107,53,0.3)" stroke="none"/>
+                <!-- Chunk 2 -->
+                <rect x="280" y="90" width="300" height="40" rx="5" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="430" y="115" text-anchor="middle" fill="#00ff88" font-size="12">Chunk 2 (300 chars)</text>
+                <!-- Overlap label -->
+                <line x1="305" y1="45" x2="305" y2="140" stroke="#ff6b35" stroke-width="1" stroke-dasharray="3,3"/>
+                <text x="305" y="155" text-anchor="middle" fill="#ff6b35" font-size="11">overlap = 50 chars</text>
+                <!-- Arrow -->
+                <line x1="280" y1="68" x2="280" y2="92" stroke="#ff6b35" stroke-width="2"/>
+                <line x1="330" y1="68" x2="330" y2="92" stroke="#ff6b35" stroke-width="2"/>
+            </svg>
+        </div>
+
+        <div class="code-block"><span class="comment"># Comparer avec et sans overlap</span>
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+texte_long = <span class="string">"Les embeddings sont des representations vectorielles du texte. "</span> * <span class="number">20</span>
+
+<span class="comment"># Sans overlap</span>
+splitter_no_overlap = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">200</span>,
+    chunk_overlap=<span class="number">0</span>,
+)
+chunks_no = splitter_no_overlap.<span class="function">split_text</span>(texte_long)
+
+<span class="comment"># Avec overlap</span>
+splitter_overlap = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">200</span>,
+    chunk_overlap=<span class="number">50</span>,
+)
+chunks_yes = splitter_overlap.<span class="function">split_text</span>(texte_long)
+
+<span class="function">print</span>(<span class="string">f"Sans overlap : <span class="keyword">{</span><span class="function">len</span>(chunks_no)<span class="keyword">}</span> chunks"</span>)
+<span class="function">print</span>(<span class="string">f"Avec overlap : <span class="keyword">{</span><span class="function">len</span>(chunks_yes)<span class="keyword">}</span> chunks"</span>)
+<span class="function">print</span>(<span class="string">f"\nFin du chunk 1 (sans overlap) : ...{chunks_no[<span class="number">0</span>][-<span class="number">60</span>:]}"</span>)
+<span class="function">print</span>(<span class="string">f"Debut du chunk 2 (sans overlap) : {chunks_no[<span class="number">1</span>][:<span class="number">60</span>]}..."</span>)
+<span class="function">print</span>(<span class="string">f"\nFin du chunk 1 (avec overlap) : ...{chunks_yes[<span class="number">0</span>][-<span class="number">60</span>:]}"</span>)
+<span class="function">print</span>(<span class="string">f"Debut du chunk 2 (avec overlap) : {chunks_yes[<span class="number">1</span>][:<span class="number">60</span>]}..."</span>)</div>
+
+        <div class="output-block">Sans overlap : 7 chunks
+Avec overlap : 8 chunks
+
+Fin du chunk 1 (sans overlap) : ...tions vectorielles du texte. Les embeddings sont des represe
+Debut du chunk 2 (sans overlap) : ntations vectorielles du texte. Les embeddings sont des repre...
+
+Fin du chunk 1 (avec overlap) : ...tions vectorielles du texte. Les embeddings sont des represe
+Debut du chunk 2 (avec overlap) : Les embeddings sont des representations vectorielles du texte...</div>
+
+        <h3>5.2 Utiliser split_documents() avec des objets Document</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader
+
+<span class="comment"># 1. Charger le PDF</span>
+loader = <span class="function">PyPDFLoader</span>(<span class="string">"./data/rapport.pdf"</span>)
+pages = loader.<span class="function">load</span>()
+
+<span class="comment"># 2. Creer le splitter</span>
+splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">100</span>,
+)
+
+<span class="comment"># 3. Decouper les Documents (les metadonnees sont preservees !)</span>
+chunks = splitter.<span class="function">split_documents</span>(pages)
+
+<span class="function">print</span>(<span class="string">f"Pages originales : <span class="keyword">{</span><span class="function">len</span>(pages)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Chunks apres split : <span class="keyword">{</span><span class="function">len</span>(chunks)<span class="keyword">}</span>"</span>)
+
+<span class="comment"># Les metadonnees de la page d'origine sont conservees</span>
+<span class="function">print</span>(<span class="string">f"\nChunk 0 metadata : <span class="keyword">{</span>chunks[<span class="number">0</span>].metadata<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Chunk 0 contenu : <span class="keyword">{</span>chunks[<span class="number">0</span>].page_content[:<span class="number">100</span>]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Pages originales : 42
+Chunks apres split : 187
+Chunk 0 metadata : {'source': './data/rapport.pdf', 'page': 0}
+Chunk 0 contenu : RAPPORT ANNUEL 2025 - Societe XYZ Introduction Ce rapport presente les resultats financiers et les ...</div>
+
+        <div class="prof-note">
+            Remarquez la difference entre <code>split_text()</code> qui prend une chaine de caracteres et retourne
+            une liste de chaines, et <code>split_documents()</code> qui prend une liste de Documents et retourne
+            une liste de Documents avec les metadonnees preservees. Dans un pipeline RAG, utilisez toujours
+            <code>split_documents()</code>.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 6 : CharacterTextSplitter                            -->
+        <!-- ============================================================ -->
+        <h2>6. CharacterTextSplitter - Decoupage Simple</h2>
+
+        <p>
+            Le <code>CharacterTextSplitter</code> est plus simple : il decoupe le texte en utilisant un seul
+            separateur (par defaut <code>"\n\n"</code>). Il ne fait pas de recursion. Il est utile quand vous
+            savez exactement comment votre texte est structure.
+        </p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> CharacterTextSplitter
+
+<span class="comment"># Le CharacterTextSplitter utilise UN SEUL separateur</span>
+splitter = <span class="function">CharacterTextSplitter</span>(
+    separator=<span class="string">"\n\n"</span>,      <span class="comment"># Couper par double saut de ligne (paragraphes)</span>
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">50</span>,
+)
+
+texte = <span class="string">"""Premier paragraphe qui parle de LangChain et de ses fonctionnalites
+principales pour le developpement d'applications IA.
+
+Deuxieme paragraphe qui aborde les Document Loaders et comment ils
+permettent de charger differents types de fichiers.
+
+Troisieme paragraphe qui explique les Text Splitters et leur importance
+dans le pipeline RAG pour le decoupage des documents.
+
+Quatrieme paragraphe sur les embeddings et la representation vectorielle
+du texte pour la recherche semantique."""</span>
+
+chunks = splitter.<span class="function">split_text</span>(texte)
+
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="function">print</span>(<span class="string">f"Chunk <span class="keyword">{</span>i+<span class="number">1</span><span class="keyword">}</span> (<span class="keyword">{</span><span class="function">len</span>(chunk)<span class="keyword">}</span> chars) : <span class="keyword">{</span>chunk[:<span class="number">60</span>]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Chunk 1 (117 chars) : Premier paragraphe qui parle de LangChain et de ses fonctionnalites...
+Chunk 2 (123 chars) : Deuxieme paragraphe qui aborde les Document Loaders et comment il...
+Chunk 3 (128 chars) : Troisieme paragraphe qui explique les Text Splitters et leur impo...
+Chunk 4 (121 chars) : Quatrieme paragraphe sur les embeddings et la representation vect...</div>
+
+        <div class="concept-box blue">
+            <h3>CharacterTextSplitter vs RecursiveCharacterTextSplitter</h3>
+            <table>
+                <tr><th>Critere</th><th>CharacterTextSplitter</th><th>RecursiveCharacterTextSplitter</th></tr>
+                <tr><td>Separateurs</td><td>Un seul</td><td>Liste ordonnee (recursif)</td></tr>
+                <tr><td>Qualite du decoupage</td><td>Correcte si texte bien structure</td><td>Excellente - s'adapte au texte</td></tr>
+                <tr><td>Usage recommande</td><td>Texte avec structure previsible</td><td>Usage general (recommande)</td></tr>
+                <tr><td>Complexite</td><td>Simple</td><td>Plus sophistique</td></tr>
+            </table>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 7 : TokenTextSplitter                                -->
+        <!-- ============================================================ -->
+        <h2>7. TokenTextSplitter - Decoupage par Tokens</h2>
+
+        <p>
+            Les LLM ne comptent pas en caracteres mais en <strong>tokens</strong>. Un token est une unite
+            de texte (mot, sous-mot, ponctuation) telle que traitee par le modele. Le <code>TokenTextSplitter</code>
+            decoupe en se basant sur le nombre de tokens, ce qui est plus precis pour respecter les limites
+            de contexte des modeles.
+        </p>
+
+        <div class="code-block"><span class="comment"># pip install tiktoken</span>
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> TokenTextSplitter
+
+<span class="comment"># Decouper par nombre de tokens (pas de caracteres)</span>
+splitter = <span class="function">TokenTextSplitter</span>(
+    encoding_name=<span class="string">"cl100k_base"</span>,   <span class="comment"># Encodage utilise par GPT-4 et GPT-3.5</span>
+    chunk_size=<span class="number">100</span>,                 <span class="comment"># 100 tokens par chunk</span>
+    chunk_overlap=<span class="number">20</span>,               <span class="comment"># 20 tokens de chevauchement</span>
+)
+
+texte = <span class="string">"""Les systemes de Retrieval-Augmented Generation (RAG) combinent la puissance
+des modeles de langage avec la precision des bases de connaissances. En recuperant
+des documents pertinents avant de generer une reponse, le RAG reduit considerablement
+les hallucinations et permet au modele de fournir des informations precises et a jour.
+Cette approche est devenue un standard dans l'industrie pour les applications d'IA
+d'entreprise, car elle permet de controler les sources d'information utilisees."""</span>
+
+chunks = splitter.<span class="function">split_text</span>(texte)
+
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="function">print</span>(<span class="string">f"Chunk <span class="keyword">{</span>i+<span class="number">1</span><span class="keyword">}</span> : <span class="keyword">{</span>chunk[:<span class="number">80</span>]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Chunk 1 : Les systemes de Retrieval-Augmented Generation (RAG) combinent la puissance des mo...
+Chunk 2 : le RAG reduit considerablement les hallucinations et permet au modele de fournir ...</div>
+
+        <div class="prof-note">
+            Utilisez le <code>TokenTextSplitter</code> quand vous devez garantir que chaque chunk respecte
+            une limite stricte de tokens (par exemple, pour un modele avec une fenetre de contexte limitee).
+            L'encodage <code>cl100k_base</code> est celui utilise par les modeles OpenAI (GPT-4, GPT-3.5-turbo).
+            Pour d'autres modeles, verifiez quel tokenizer ils utilisent.
+        </div>
+
+        <div class="code-block"><span class="comment"># Combiner RecursiveCharacterTextSplitter avec un compteur de tokens</span>
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">import</span> tiktoken
+
+<span class="comment"># Creer la fonction de comptage de tokens</span>
+encoding = tiktoken.<span class="function">get_encoding</span>(<span class="string">"cl100k_base"</span>)
+
+<span class="keyword">def</span> <span class="function">token_length</span>(text):
+    <span class="keyword">return</span> <span class="function">len</span>(encoding.<span class="function">encode</span>(text))
+
+<span class="comment"># Utiliser le RecursiveCharacterTextSplitter avec comptage de tokens</span>
+splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">256</span>,                   <span class="comment"># 256 tokens (pas caracteres !)</span>
+    chunk_overlap=<span class="number">30</span>,
+    length_function=token_length,    <span class="comment"># Fonction de mesure personnalisee</span>
+)
+
+<span class="comment"># Maintenant les chunks font max 256 tokens chacun</span>
+chunks = splitter.<span class="function">split_text</span>(texte)
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="function">print</span>(<span class="string">f"Chunk <span class="keyword">{</span>i+<span class="number">1</span><span class="keyword">}</span> : <span class="keyword">{</span><span class="function">token_length</span>(chunk)<span class="keyword">}</span> tokens, <span class="keyword">{</span><span class="function">len</span>(chunk)<span class="keyword">}</span> caracteres"</span>)</div>
+
+        <div class="output-block">Chunk 1 : 98 tokens, 487 caracteres
+Chunk 2 : 42 tokens, 175 caracteres</div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 8 : Splitters Specialises                            -->
+        <!-- ============================================================ -->
+        <h2>8. Splitters Specialises</h2>
+
+        <p>
+            LangChain fournit des splitters adaptes a des formats specifiques. Ces splitters comprennent
+            la structure du document et creent des chunks semantiquement plus coherents en exploitant
+            les en-tetes, les balises, ou la syntaxe du langage de programmation.
+        </p>
+
+        <!-- MarkdownHeaderTextSplitter -->
+        <h3>8.1 MarkdownHeaderTextSplitter</h3>
+
+        <p>
+            Decoupe un document Markdown en se basant sur les niveaux de titres (<code>#</code>, <code>##</code>,
+            <code>###</code>). Chaque section devient un chunk avec les titres parents dans les metadonnees.
+        </p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> MarkdownHeaderTextSplitter
+
+markdown_text = <span class="string">"""# Introduction a LangChain
+
+LangChain est un framework pour les applications LLM.
+
+## Document Loaders
+
+Les Document Loaders chargent des fichiers dans des objets Document.
+Ils supportent de nombreux formats : PDF, CSV, JSON, etc.
+
+### TextLoader
+
+Le TextLoader charge des fichiers texte simples.
+Il retourne un seul Document par fichier.
+
+### PyPDFLoader
+
+Le PyPDFLoader charge des fichiers PDF page par page.
+Chaque page devient un Document distinct.
+
+## Text Splitters
+
+Les Text Splitters decoupent les documents en chunks.
+
+### RecursiveCharacterTextSplitter
+
+Le splitter le plus recommande pour un usage general.
+Il decoupe recursivement en respectant la structure du texte."""</span>
+
+<span class="comment"># Definir les en-tetes a utiliser pour le decoupage</span>
+headers_to_split_on = [
+    (<span class="string">"#"</span>, <span class="string">"Titre_1"</span>),
+    (<span class="string">"##"</span>, <span class="string">"Titre_2"</span>),
+    (<span class="string">"###"</span>, <span class="string">"Titre_3"</span>),
+]
+
+splitter = <span class="function">MarkdownHeaderTextSplitter</span>(
+    headers_to_split_on=headers_to_split_on,
+    strip_headers=<span class="keyword">False</span>,   <span class="comment"># Garder les en-tetes dans le contenu</span>
+)
+
+chunks = splitter.<span class="function">split_text</span>(markdown_text)
+
+<span class="keyword">for</span> chunk <span class="keyword">in</span> chunks:
+    <span class="function">print</span>(<span class="string">f"Metadata : <span class="keyword">{</span>chunk.metadata<span class="keyword">}</span>"</span>)
+    <span class="function">print</span>(<span class="string">f"Contenu : <span class="keyword">{</span>chunk.page_content[:<span class="number">80</span>]<span class="keyword">}</span>..."</span>)
+    <span class="function">print</span>()</div>
+
+        <div class="output-block">Metadata : {'Titre_1': 'Introduction a LangChain'}
+Contenu : LangChain est un framework pour les applications LLM....
+
+Metadata : {'Titre_1': 'Introduction a LangChain', 'Titre_2': 'Document Loaders'}
+Contenu : Les Document Loaders chargent des fichiers dans des objets Document. Ils support...
+
+Metadata : {'Titre_1': 'Introduction a LangChain', 'Titre_2': 'Document Loaders', 'Titre_3': 'TextLoader'}
+Contenu : Le TextLoader charge des fichiers texte simples. Il retourne un seul Document pa...
+
+Metadata : {'Titre_1': 'Introduction a LangChain', 'Titre_2': 'Document Loaders', 'Titre_3': 'PyPDFLoader'}
+Contenu : Le PyPDFLoader charge des fichiers PDF page par page. Chaque page devient un Doc...
+
+Metadata : {'Titre_1': 'Introduction a LangChain', 'Titre_2': 'Text Splitters'}
+Contenu : Les Text Splitters decoupent les documents en chunks....
+
+Metadata : {'Titre_1': 'Introduction a LangChain', 'Titre_2': 'Text Splitters', 'Titre_3': 'RecursiveCharacterTextSplitter'}
+Contenu : Le splitter le plus recommande pour un usage general. Il decoupe recursivement e...</div>
+
+        <div class="effect">
+            Chaque chunk contient dans ses metadonnees la hierarchie complete des titres parents.
+            Cela permet de retrouver facilement le contexte d'un chunk lors de la recherche.
+            Par exemple, on sait qu'un chunk parle du "TextLoader" dans le cadre des "Document Loaders"
+            de l'"Introduction a LangChain".
+        </div>
+
+        <!-- HTMLHeaderTextSplitter -->
+        <h3>8.2 HTMLHeaderTextSplitter</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> HTMLHeaderTextSplitter
+
+html_string = <span class="string">"""
+&lt;html&gt;
+&lt;body&gt;
+    &lt;h1&gt;Guide LangChain&lt;/h1&gt;
+    &lt;p&gt;Ce guide couvre les bases du framework.&lt;/p&gt;
+    &lt;h2&gt;Installation&lt;/h2&gt;
+    &lt;p&gt;Installez LangChain avec pip install langchain.&lt;/p&gt;
+    &lt;p&gt;Verifiez l'installation avec python -c "import langchain".&lt;/p&gt;
+    &lt;h2&gt;Configuration&lt;/h2&gt;
+    &lt;h3&gt;Cle API&lt;/h3&gt;
+    &lt;p&gt;Configurez votre cle API OpenAI dans les variables d'environnement.&lt;/p&gt;
+    &lt;h3&gt;Parametres&lt;/h3&gt;
+    &lt;p&gt;Ajustez les parametres de temperature et de tokens max.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;"""</span>
+
+headers_to_split_on = [
+    (<span class="string">"h1"</span>, <span class="string">"Titre_1"</span>),
+    (<span class="string">"h2"</span>, <span class="string">"Titre_2"</span>),
+    (<span class="string">"h3"</span>, <span class="string">"Titre_3"</span>),
+]
+
+splitter = <span class="function">HTMLHeaderTextSplitter</span>(headers_to_split_on=headers_to_split_on)
+chunks = splitter.<span class="function">split_text</span>(html_string)
+
+<span class="keyword">for</span> chunk <span class="keyword">in</span> chunks:
+    <span class="function">print</span>(<span class="string">f"<span class="keyword">{</span>chunk.metadata<span class="keyword">}</span> -> <span class="keyword">{</span>chunk.page_content[:<span class="number">70</span>]<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">{'Titre_1': 'Guide LangChain'} -> Ce guide couvre les bases du framework.
+{'Titre_1': 'Guide LangChain', 'Titre_2': 'Installation'} -> Installez LangChain avec pip install langchain. Verifiez l'insta
+{'Titre_1': 'Guide LangChain', 'Titre_2': 'Configuration', 'Titre_3': 'Cle API'} -> Configurez votre cle API OpenAI dans les variables d'environnemen
+{'Titre_1': 'Guide LangChain', 'Titre_2': 'Configuration', 'Titre_3': 'Parametres'} -> Ajustez les parametres de temperature et de tokens max.</div>
+
+        <!-- CodeTextSplitter -->
+        <h3>8.3 CodeTextSplitter (RecursiveCharacterTextSplitter.from_language)</h3>
+
+        <p>
+            Pour le code source, LangChain fournit des splitters qui comprennent la syntaxe des langages
+            de programmation. Ils evitent de couper au milieu d'une fonction ou d'une classe.
+        </p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter, Language
+
+<span class="comment"># Splitter pour du code Python</span>
+python_splitter = RecursiveCharacterTextSplitter.<span class="function">from_language</span>(
+    language=Language.PYTHON,
+    chunk_size=<span class="number">200</span>,
+    chunk_overlap=<span class="number">20</span>,
+)
+
+code_python = <span class="string">"""
+class DocumentLoader:
+    def __init__(self, path):
+        self.path = path
+        self.documents = []
+
+    def load(self):
+        with open(self.path, 'r') as f:
+            content = f.read()
+        return Document(page_content=content)
+
+    def lazy_load(self):
+        with open(self.path, 'r') as f:
+            for line in f:
+                yield Document(page_content=line)
+
+class TextSplitter:
+    def __init__(self, chunk_size=1000):
+        self.chunk_size = chunk_size
+
+    def split_text(self, text):
+        chunks = []
+        for i in range(0, len(text), self.chunk_size):
+            chunks.append(text[i:i+self.chunk_size])
+        return chunks
+"""</span>
+
+chunks = python_splitter.<span class="function">split_text</span>(code_python)
+
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="function">print</span>(<span class="string">f"--- Chunk <span class="keyword">{</span>i+<span class="number">1</span><span class="keyword">}</span> ---"</span>)
+    <span class="function">print</span>(chunk)
+    <span class="function">print</span>()</div>
+
+        <div class="output-block">--- Chunk 1 ---
+class DocumentLoader:
+    def __init__(self, path):
+        self.path = path
+        self.documents = []
+
+    def load(self):
+        with open(self.path, 'r') as f:
+            content = f.read()
+        return Document(page_content=content)
+
+--- Chunk 2 ---
+    def lazy_load(self):
+        with open(self.path, 'r') as f:
+            for line in f:
+                yield Document(page_content=line)
+
+--- Chunk 3 ---
+class TextSplitter:
+    def __init__(self, chunk_size=1000):
+        self.chunk_size = chunk_size
+
+    def split_text(self, text):
+        chunks = []
+        for i in range(0, len(text), self.chunk_size):
+            chunks.append(text[i:i+self.chunk_size])
+        return chunks</div>
+
+        <div class="code-block"><span class="comment"># Langages supportes</span>
+<span class="function">print</span>(<span class="string">"Langages supportes :"</span>)
+<span class="keyword">for</span> lang <span class="keyword">in</span> Language:
+    <span class="function">print</span>(<span class="string">f"  - <span class="keyword">{</span>lang.value<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Langages supportes :
+  - python
+  - javascript
+  - typescript
+  - java
+  - go
+  - ruby
+  - rust
+  - cpp
+  - scala
+  - swift
+  - markdown
+  - latex
+  - html
+  - sol
+  - csharp
+  - cobol
+  - c
+  - lua
+  - perl
+  - haskell
+  - php</div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 9 : Metadonnees                                      -->
+        <!-- ============================================================ -->
+        <h2>9. Gestion des Metadonnees</h2>
+
+        <p>
+            Les metadonnees sont un element crucial du pipeline RAG. Elles permettent non seulement de
+            tracer l'origine de chaque chunk, mais aussi de filtrer les resultats de recherche et
+            d'enrichir les reponses generees par le LLM.
+        </p>
+
+        <h3>9.1 Ajouter des metadonnees personnalisees</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="comment"># 1. Charger le document</span>
+loader = <span class="function">TextLoader</span>(<span class="string">"./data/politique_rh.txt"</span>, encoding=<span class="string">"utf-8"</span>)
+docs = loader.<span class="function">load</span>()
+
+<span class="comment"># 2. Enrichir les metadonnees AVANT le split</span>
+<span class="keyword">for</span> doc <span class="keyword">in</span> docs:
+    doc.metadata[<span class="string">"categorie"</span>] = <span class="string">"ressources_humaines"</span>
+    doc.metadata[<span class="string">"departement"</span>] = <span class="string">"RH"</span>
+    doc.metadata[<span class="string">"date_ingestion"</span>] = datetime.<span class="function">now</span>().<span class="function">isoformat</span>()
+    doc.metadata[<span class="string">"version"</span>] = <span class="string">"2.1"</span>
+    doc.metadata[<span class="string">"confidentialite"</span>] = <span class="string">"interne"</span>
+
+<span class="comment"># 3. Decouper - les metadonnees sont propagees a TOUS les chunks</span>
+splitter = <span class="function">RecursiveCharacterTextSplitter</span>(chunk_size=<span class="number">500</span>, chunk_overlap=<span class="number">50</span>)
+chunks = splitter.<span class="function">split_documents</span>(docs)
+
+<span class="function">print</span>(<span class="string">f"Nombre de chunks : <span class="keyword">{</span><span class="function">len</span>(chunks)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"\nMetadonnees du chunk 0 :"</span>)
+<span class="keyword">for</span> key, value <span class="keyword">in</span> chunks[<span class="number">0</span>].metadata.<span class="function">items</span>():
+    <span class="function">print</span>(<span class="string">f"  <span class="keyword">{</span>key<span class="keyword">}</span> : <span class="keyword">{</span>value<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Nombre de chunks : 12
+
+Metadonnees du chunk 0 :
+  source : ./data/politique_rh.txt
+  categorie : ressources_humaines
+  departement : RH
+  date_ingestion : 2025-10-15T14:32:01.123456
+  version : 2.1
+  confidentialite : interne</div>
+
+        <h3>9.2 Ajouter des metadonnees apres le split (par chunk)</h3>
+
+        <div class="code-block"><span class="comment"># Ajouter un identifiant unique a chaque chunk</span>
+<span class="keyword">import</span> hashlib
+
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    <span class="comment"># ID unique base sur le contenu (deduplication possible)</span>
+    chunk.metadata[<span class="string">"chunk_id"</span>] = hashlib.<span class="function">md5</span>(
+        chunk.page_content.<span class="function">encode</span>()
+    ).<span class="function">hexdigest</span>()[:<span class="number">12</span>]
+
+    <span class="comment"># Position dans le document original</span>
+    chunk.metadata[<span class="string">"chunk_index"</span>] = i
+    chunk.metadata[<span class="string">"total_chunks"</span>] = <span class="function">len</span>(chunks)
+
+<span class="comment"># Verifier</span>
+<span class="function">print</span>(<span class="string">f"Chunk 3 ID : <span class="keyword">{</span>chunks[<span class="number">3</span>].metadata[<span class="string">'chunk_id'</span>]<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Position : <span class="keyword">{</span>chunks[<span class="number">3</span>].metadata[<span class="string">'chunk_index'</span>]<span class="keyword">}</span>/<span class="keyword">{</span>chunks[<span class="number">3</span>].metadata[<span class="string">'total_chunks'</span>]<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Chunk 3 ID : a3f8c2d91b4e
+Position : 3/12</div>
+
+        <div class="warning">
+            Les metadonnees doivent etre des types simples (str, int, float, bool) pour etre compatibles
+            avec la plupart des vector stores. Evitez les objets complexes, les listes ou les dictionnaires
+            imbriques dans les metadonnees. FAISS, Chroma et Pinecone ont chacun leurs propres contraintes.
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 10 : Strategies de chunking                          -->
+        <!-- ============================================================ -->
+        <h2>10. Strategies de Chunking</h2>
+
+        <p>
+            Le choix de la strategie de chunking depend de votre cas d'usage, du type de documents,
+            et de la precision souhaitee. Voici les recommandations basees sur l'experience pratique
+            et les bonnes pratiques de la communaute.
+        </p>
+
+        <h3>10.1 Tailles recommandees par cas d'usage</h3>
+
+        <table>
+            <tr>
+                <th>Cas d'usage</th>
+                <th>chunk_size</th>
+                <th>chunk_overlap</th>
+                <th>Justification</th>
+            </tr>
+            <tr>
+                <td>FAQ / Questions courtes</td>
+                <td>200-300</td>
+                <td>30-50</td>
+                <td>Reponses precises et concises</td>
+            </tr>
+            <tr>
+                <td>Documentation technique</td>
+                <td>500-800</td>
+                <td>50-100</td>
+                <td>Contexte suffisant pour comprendre</td>
+            </tr>
+            <tr>
+                <td>Articles / Blog</td>
+                <td>800-1200</td>
+                <td>100-200</td>
+                <td>Paragraphes complets et coherents</td>
+            </tr>
+            <tr>
+                <td>Code source</td>
+                <td>1000-2000</td>
+                <td>100-200</td>
+                <td>Fonctions/classes entieres</td>
+            </tr>
+            <tr>
+                <td>Documents juridiques</td>
+                <td>500-1000</td>
+                <td>100-150</td>
+                <td>Clauses et articles complets</td>
+            </tr>
+            <tr>
+                <td>Conversations / Chat</td>
+                <td>300-500</td>
+                <td>50-80</td>
+                <td>Echanges individuels</td>
+            </tr>
+        </table>
+
+        <h3>10.2 La regle du chevauchement</h3>
+
+        <div class="concept-box green">
+            <h3>Regle pratique pour le chunk_overlap</h3>
+            <p>
+                En general, le <code>chunk_overlap</code> devrait representer environ <strong>10% a 20%</strong>
+                du <code>chunk_size</code>. Par exemple :
+            </p>
+            <ul>
+                <li><code>chunk_size=500</code> -> <code>chunk_overlap=50 a 100</code></li>
+                <li><code>chunk_size=1000</code> -> <code>chunk_overlap=100 a 200</code></li>
+                <li><code>chunk_size=200</code> -> <code>chunk_overlap=20 a 40</code></li>
+            </ul>
+            <p>
+                Un overlap trop grand cree de la redondance inutile et augmente le nombre de chunks.
+                Un overlap trop petit risque de perdre le contexte aux frontieres.
+            </p>
+        </div>
+
+        <h3>10.3 Chunking hierarchique</h3>
+
+        <p>
+            Le chunking hierarchique consiste a combiner plusieurs niveaux de decoupage : d'abord par
+            structure (chapitres, sections), puis par taille. C'est la strategie la plus avancee.
+        </p>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> (
+    MarkdownHeaderTextSplitter,
+    RecursiveCharacterTextSplitter
+)
+
+markdown_doc = <span class="string">"""# Chapitre 1 : Les Fondamentaux
+
+## 1.1 Introduction
+Paragraphe tres long sur l'introduction qui depasse la taille maximale...
+(imaginez 2000 caracteres ici)
+
+## 1.2 Concepts Cles
+Un autre paragraphe tres long sur les concepts cles...
+(imaginez 1500 caracteres ici)
+
+# Chapitre 2 : Mise en Pratique
+
+## 2.1 Installation
+Instructions detaillees d'installation tres longues...
+(imaginez 1800 caracteres ici)"""</span>
+
+<span class="comment"># Etape 1 : Decouper par en-tetes Markdown</span>
+headers_to_split = [
+    (<span class="string">"#"</span>, <span class="string">"chapitre"</span>),
+    (<span class="string">"##"</span>, <span class="string">"section"</span>),
+]
+md_splitter = <span class="function">MarkdownHeaderTextSplitter</span>(headers_to_split_on=headers_to_split)
+md_chunks = md_splitter.<span class="function">split_text</span>(markdown_doc)
+
+<span class="comment"># Etape 2 : Re-decouper les sections trop longues</span>
+text_splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">50</span>,
+)
+final_chunks = text_splitter.<span class="function">split_documents</span>(md_chunks)
+
+<span class="function">print</span>(<span class="string">f"Apres Markdown split : <span class="keyword">{</span><span class="function">len</span>(md_chunks)<span class="keyword">}</span> sections"</span>)
+<span class="function">print</span>(<span class="string">f"Apres re-split : <span class="keyword">{</span><span class="function">len</span>(final_chunks)<span class="keyword">}</span> chunks finaux"</span>)
+
+<span class="keyword">for</span> chunk <span class="keyword">in</span> final_chunks:
+    <span class="function">print</span>(<span class="string">f"  [<span class="keyword">{</span>chunk.metadata<span class="keyword">}</span>] <span class="keyword">{</span>chunk.page_content[:<span class="number">50</span>]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Apres Markdown split : 3 sections
+Apres re-split : 3 chunks finaux
+  [{'chapitre': 'Chapitre 1 : Les Fondamentaux', 'section': '1.1 Introduction'}] Paragraphe tres long sur l'introduction qui de...
+  [{'chapitre': 'Chapitre 1 : Les Fondamentaux', 'section': '1.2 Concepts Cles'}] Un autre paragraphe tres long sur les concepts...
+  [{'chapitre': 'Chapitre 2 : Mise en Pratique', 'section': '2.1 Installation'}] Instructions detaillees d'installation tres lo...</div>
+
+        <h3>10.4 Pipeline complet d'ingestion</h3>
+
+        <div class="code-block"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> DirectoryLoader, PyPDFLoader
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="comment"># ============================</span>
+<span class="comment"># PIPELINE D'INGESTION COMPLET</span>
+<span class="comment"># ============================</span>
+
+<span class="comment"># 1. CHARGEMENT - Tous les PDFs du dossier</span>
+loader = <span class="function">DirectoryLoader</span>(
+    path=<span class="string">"./data/knowledge_base/"</span>,
+    glob=<span class="string">"**/*.pdf"</span>,
+    loader_cls=PyPDFLoader,
+    show_progress=<span class="keyword">True</span>,
+    use_multithreading=<span class="keyword">True</span>,
+)
+raw_docs = loader.<span class="function">load</span>()
+<span class="function">print</span>(<span class="string">f"Etape 1 : <span class="keyword">{</span><span class="function">len</span>(raw_docs)<span class="keyword">}</span> pages chargees"</span>)
+
+<span class="comment"># 2. ENRICHISSEMENT DES METADONNEES</span>
+<span class="keyword">for</span> doc <span class="keyword">in</span> raw_docs:
+    doc.metadata[<span class="string">"ingested_at"</span>] = datetime.<span class="function">now</span>().<span class="function">isoformat</span>()
+    <span class="comment"># Determiner la categorie a partir du chemin</span>
+    <span class="keyword">if</span> <span class="string">"technique"</span> <span class="keyword">in</span> doc.metadata[<span class="string">"source"</span>]:
+        doc.metadata[<span class="string">"categorie"</span>] = <span class="string">"technique"</span>
+    <span class="keyword">elif</span> <span class="string">"rh"</span> <span class="keyword">in</span> doc.metadata[<span class="string">"source"</span>]:
+        doc.metadata[<span class="string">"categorie"</span>] = <span class="string">"ressources_humaines"</span>
+    <span class="keyword">else</span>:
+        doc.metadata[<span class="string">"categorie"</span>] = <span class="string">"general"</span>
+
+<span class="comment"># 3. DECOUPAGE</span>
+splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">800</span>,
+    chunk_overlap=<span class="number">100</span>,
+    separators=[<span class="string">"\n\n"</span>, <span class="string">"\n"</span>, <span class="string">". "</span>, <span class="string">" "</span>, <span class="string">""</span>],
+)
+chunks = splitter.<span class="function">split_documents</span>(raw_docs)
+<span class="function">print</span>(<span class="string">f"Etape 3 : <span class="keyword">{</span><span class="function">len</span>(chunks)<span class="keyword">}</span> chunks crees"</span>)
+
+<span class="comment"># 4. AJOUT D'INDEX AUX CHUNKS</span>
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+    chunk.metadata[<span class="string">"chunk_index"</span>] = i
+
+<span class="function">print</span>(<span class="string">f"\nPipeline termine !"</span>)
+<span class="function">print</span>(<span class="string">f"  Documents sources : <span class="keyword">{</span><span class="function">len</span>(<span class="function">set</span>(d.metadata[<span class="string">'source'</span>] <span class="keyword">for</span> d <span class="keyword">in</span> raw_docs))<span class="keyword">}</span> fichiers"</span>)
+<span class="function">print</span>(<span class="string">f"  Pages totales : <span class="keyword">{</span><span class="function">len</span>(raw_docs)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"  Chunks finaux : <span class="keyword">{</span><span class="function">len</span>(chunks)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"  Taille moyenne : <span class="keyword">{</span><span class="function">sum</span>(<span class="function">len</span>(c.page_content) <span class="keyword">for</span> c <span class="keyword">in</span> chunks) // <span class="function">len</span>(chunks)<span class="keyword">}</span> chars/chunk"</span>)</div>
+
+        <div class="output-block">100%|██████████| 15/15 [00:05&lt;00:00, 3.00it/s]
+Etape 1 : 234 pages chargees
+Etape 3 : 892 chunks crees
+
+Pipeline termine !
+  Documents sources : 15 fichiers
+  Pages totales : 234
+  Chunks finaux : 892
+  Taille moyenne : 652 chars/chunk</div>
+
+        <!-- ============================================================ -->
+        <!-- SECTION 11 : Resume                                          -->
+        <!-- ============================================================ -->
+        <h2>11. Resume du Cours</h2>
+
+        <h3>Comparaison des Loaders</h3>
+
+        <table>
+            <tr>
+                <th>Loader</th>
+                <th>Meilleur pour</th>
+                <th>Documents par fichier</th>
+                <th>Dependance</th>
+            </tr>
+            <tr>
+                <td>TextLoader</td>
+                <td>Fichiers .txt simples</td>
+                <td>1 par fichier</td>
+                <td>Aucune</td>
+            </tr>
+            <tr>
+                <td>PyPDFLoader</td>
+                <td>Documents PDF</td>
+                <td>1 par page</td>
+                <td>pypdf</td>
+            </tr>
+            <tr>
+                <td>CSVLoader</td>
+                <td>Donnees tabulaires</td>
+                <td>1 par ligne</td>
+                <td>Aucune</td>
+            </tr>
+            <tr>
+                <td>WebBaseLoader</td>
+                <td>Pages web</td>
+                <td>1 par URL</td>
+                <td>beautifulsoup4</td>
+            </tr>
+            <tr>
+                <td>DirectoryLoader</td>
+                <td>Dossiers entiers</td>
+                <td>Variable</td>
+                <td>Selon sous-loader</td>
+            </tr>
+            <tr>
+                <td>UnstructuredLoader</td>
+                <td>Tout format</td>
+                <td>1 ou par element</td>
+                <td>unstructured</td>
+            </tr>
+            <tr>
+                <td>JSONLoader</td>
+                <td>APIs, donnees JSON</td>
+                <td>1 par element jq</td>
+                <td>jq</td>
+            </tr>
+            <tr>
+                <td>Docx2txtLoader</td>
+                <td>Documents Word</td>
+                <td>1 par fichier</td>
+                <td>docx2txt</td>
+            </tr>
+        </table>
+
+        <h3>Comparaison des Splitters</h3>
+
+        <table>
+            <tr>
+                <th>Splitter</th>
+                <th>Strategie</th>
+                <th>Recommande pour</th>
+                <th>Qualite</th>
+            </tr>
+            <tr>
+                <td>RecursiveCharacterTextSplitter</td>
+                <td>Recursif (paragraphes, phrases, mots)</td>
+                <td>Usage general - LE splitter par defaut</td>
+                <td>Excellente</td>
+            </tr>
+            <tr>
+                <td>CharacterTextSplitter</td>
+                <td>Un seul separateur</td>
+                <td>Texte a structure previsible</td>
+                <td>Correcte</td>
+            </tr>
+            <tr>
+                <td>TokenTextSplitter</td>
+                <td>Compte les tokens</td>
+                <td>Respect strict des limites de tokens</td>
+                <td>Bonne</td>
+            </tr>
+            <tr>
+                <td>MarkdownHeaderTextSplitter</td>
+                <td>Par en-tetes Markdown</td>
+                <td>Documentation Markdown</td>
+                <td>Excellente</td>
+            </tr>
+            <tr>
+                <td>HTMLHeaderTextSplitter</td>
+                <td>Par balises HTML</td>
+                <td>Pages web structurees</td>
+                <td>Excellente</td>
+            </tr>
+            <tr>
+                <td>from_language()</td>
+                <td>Par syntaxe du langage</td>
+                <td>Code source</td>
+                <td>Excellente</td>
+            </tr>
+        </table>
+
+        <div class="svg-container">
+            <svg width="700" height="320" viewBox="0 0 700 320">
+                <text x="350" y="22" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Arbre de Decision - Choix du Splitter</text>
+                <!-- Root -->
+                <rect x="250" y="35" width="200" height="35" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+                <text x="350" y="57" text-anchor="middle" fill="#ff6b35" font-size="11">Quel type de document ?</text>
+                <!-- Branch: Markdown -->
+                <line x1="290" y1="70" x2="120" y2="105" stroke="#569cd6" stroke-width="1.5"/>
+                <rect x="30" y="105" width="180" height="30" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+                <text x="120" y="124" text-anchor="middle" fill="#569cd6" font-size="10">Markdown? -> MarkdownHeader</text>
+                <!-- Branch: HTML -->
+                <line x1="310" y1="70" x2="210" y2="145" stroke="#00ff88" stroke-width="1.5"/>
+                <rect x="120" y="145" width="180" height="30" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+                <text x="210" y="164" text-anchor="middle" fill="#00ff88" font-size="10">HTML? -> HTMLHeader</text>
+                <!-- Branch: Code -->
+                <line x1="380" y1="70" x2="470" y2="145" stroke="#ce9178" stroke-width="1.5"/>
+                <rect x="380" y="145" width="180" height="30" rx="6" fill="#1a1a2e" stroke="#ce9178" stroke-width="1.5"/>
+                <text x="470" y="164" text-anchor="middle" fill="#ce9178" font-size="10">Code? -> from_language()</text>
+                <!-- Branch: Token limit -->
+                <line x1="400" y1="70" x2="570" y2="105" stroke="#b5cea8" stroke-width="1.5"/>
+                <rect x="490" y="105" width="180" height="30" rx="6" fill="#1a1a2e" stroke="#b5cea8" stroke-width="1.5"/>
+                <text x="580" y="124" text-anchor="middle" fill="#b5cea8" font-size="10">Limite tokens? -> Token</text>
+                <!-- Default branch -->
+                <line x1="350" y1="70" x2="350" y2="200" stroke="#ff6b35" stroke-width="2"/>
+                <rect x="210" y="200" width="280" height="40" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2.5"/>
+                <text x="350" y="218" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Sinon -> RecursiveCharacter</text>
+                <text x="350" y="233" text-anchor="middle" fill="#aaa" font-size="10">(choix par defaut recommande)</text>
+                <!-- Combine note -->
+                <rect x="150" y="260" width="400" height="40" rx="8" fill="rgba(86,156,214,0.1)" stroke="#569cd6" stroke-width="1" stroke-dasharray="4,4"/>
+                <text x="350" y="280" text-anchor="middle" fill="#569cd6" font-size="11">Astuce : combinez MarkdownHeader + RecursiveCharacter</text>
+                <text x="350" y="295" text-anchor="middle" fill="#569cd6" font-size="11">pour un chunking hierarchique optimal</text>
+            </svg>
+        </div>
+
+        <div class="concept-box">
+            <h3>Points cles a retenir</h3>
+            <ol>
+                <li>Choisissez le <strong>loader adapte</strong> au format de vos documents.</li>
+                <li>Le <strong>RecursiveCharacterTextSplitter</strong> est le choix par defaut pour 90% des cas.</li>
+                <li>Commencez avec <code>chunk_size=800</code> et <code>chunk_overlap=100</code>, puis ajustez.</li>
+                <li>L'overlap doit representer <strong>10% a 20%</strong> du chunk_size.</li>
+                <li>Enrichissez les <strong>metadonnees</strong> avant le split : elles sont propagees aux chunks.</li>
+                <li>Pour le Markdown/HTML, combinez les splitters specialises avec le RecursiveCharacter.</li>
+                <li>Utilisez <code>lazy_load()</code> pour les gros documents afin de preserver la memoire.</li>
+                <li>Testez toujours vos parametres sur un echantillon de vos vrais documents.</li>
+            </ol>
+        </div>
+
+        <div class="prof-note">
+            Ce cours pose les bases de l'ingestion de documents. Dans le cours suivant, nous verrons comment
+            transformer ces chunks en vecteurs avec les Embeddings et les stocker dans des VectorStores
+            pour la recherche semantique. C'est la suite logique du pipeline : apres le chargement et le
+            decoupage, il faut vectoriser et stocker.
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="lc_04_memory.html">&larr; Cours Memory</a>
+            <a href="lc_06_embeddings_vectorstores.html">Cours suivant : Embeddings &amp; VectorStores &rarr;</a>
+        </div>
+
+    </div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

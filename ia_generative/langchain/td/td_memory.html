@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Memory avec LangChain</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Memory avec LangChain</h1>
+    <p class="subtitle">LangChain v0.3 -- Systemes de memoire conversationnelle -- ConversationBufferMemory, WindowMemory, SummaryMemory, TokenBufferMemory</p>
+
+    <!-- =========================================================== -->
+    <!-- 1. RECAPITULATIF                                             -->
+    <!-- =========================================================== -->
+    <h2>1. Recapitulatif</h2>
+
+    <div class="definition">
+        La <strong>Memory</strong> (memoire) dans LangChain est un mecanisme qui permet a un chatbot ou une chain
+        de se souvenir des echanges precedents. Sans memoire, chaque appel au LLM est independant : le modele ne
+        sait pas ce qui a ete dit avant. La memoire stocke l'historique des messages et le reinjecte automatiquement
+        dans le prompt a chaque nouvel echange.
+    </div>
+
+    <h3>Fiche d'identite</h3>
+    <table>
+        <tr><th>Propriete</th><th>Valeur</th></tr>
+        <tr><td>Module principal</td><td><code>langchain.memory</code></td></tr>
+        <tr><td>Version recommandee</td><td>LangChain v0.3+</td></tr>
+        <tr><td>Types principaux</td><td>Buffer, Window, Summary, TokenBuffer</td></tr>
+        <tr><td>Integration LCEL</td><td>Via <code>RunnableWithMessageHistory</code> ou injection manuelle</td></tr>
+        <tr><td>Stockage</td><td>En memoire (RAM), Redis, PostgreSQL, fichiers</td></tr>
+        <tr><td>Cas d'usage</td><td>Chatbots, assistants conversationnels, support client</td></tr>
+    </table>
+
+    <h3>Analogie</h3>
+    <div class="concept-box">
+        <p>Imaginez une conversation avec un ami. Si votre ami oubliait tout apres chaque phrase, la discussion
+        serait impossible. La <strong>Memory</strong> joue le role du cerveau : elle retient ce qui a ete dit
+        et utilise ce contexte pour formuler des reponses coherentes.</p>
+        <ul>
+            <li><strong>Buffer</strong> = se souvenir de TOUT mot pour mot (enregistrement audio complet)</li>
+            <li><strong>Window</strong> = se souvenir des N derniers echanges (memoire a court terme)</li>
+            <li><strong>Summary</strong> = se souvenir d'un resume (notes de cours)</li>
+            <li><strong>TokenBuffer</strong> = se souvenir de ce qui tient dans un budget (carnet a pages limitees)</li>
+        </ul>
+    </div>
+
+    <h3>Avantages et Inconvenients</h3>
+    <table>
+        <tr><th>Avantages</th><th>Inconvenients</th></tr>
+        <tr><td>Conversations coherentes et contextuelles</td><td>Augmente le nombre de tokens envoyes (cout)</td></tr>
+        <tr><td>Plusieurs strategies selon le besoin</td><td>Risque de depasser la fenetre de contexte du LLM</td></tr>
+        <tr><td>Integration native avec les chains LangChain</td><td>La memoire Summary necessite des appels LLM supplementaires</td></tr>
+        <tr><td>Persistance possible (Redis, bases de donnees)</td><td>Complexite accrue de l'architecture</td></tr>
+    </table>
+
+    <div class="prof-note">
+        En LangChain v0.3, l'approche moderne est d'utiliser <code>RunnableWithMessageHistory</code> avec un
+        <code>ChatMessageHistory</code>. Les anciennes classes comme <code>ConversationChain</code> sont
+        toujours fonctionnelles mais considerees comme legacy. Ce TD couvre les deux approches.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 2. PRINCIPE DE FONCTIONNEMENT                                -->
+    <!-- =========================================================== -->
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <p>La memoire dans LangChain suit un cycle precis a chaque echange conversationnel :</p>
+
+    <div class="step-box"><strong>Etape 1 -- Chargement :</strong> Recuperer l'historique des messages precedents depuis le stockage.</div>
+    <div class="step-box"><strong>Etape 2 -- Injection :</strong> Inserer l'historique dans le prompt via un <code>MessagesPlaceholder</code>.</div>
+    <div class="step-box"><strong>Etape 3 -- Generation :</strong> Le LLM recoit le prompt complet (systeme + historique + question) et genere une reponse.</div>
+    <div class="step-box"><strong>Etape 4 -- Sauvegarde :</strong> La question ET la reponse sont sauvegardees dans la memoire.</div>
+
+    <div class="svg-container">
+        <svg width="900" height="480" viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg">
+            <rect width="900" height="480" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="450" y="30" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Cycle de la Memoire dans LangChain</text>
+            <defs>
+                <marker id="arrow-o" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker>
+                <marker id="arrow-g" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/></marker>
+                <marker id="arrow-b" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/></marker>
+                <marker id="arrow-r" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/></marker>
+            </defs>
+            <!-- User -->
+            <rect x="30" y="60" width="150" height="70" rx="10" fill="#0d1117" stroke="#569cd6" stroke-width="2"/>
+            <text x="105" y="90" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Utilisateur</text>
+            <text x="105" y="112" text-anchor="middle" fill="#aaa" font-size="10">"Quel est mon prenom ?"</text>
+            <!-- Arrow User -> Prompt -->
+            <line x1="180" y1="95" x2="235" y2="95" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow-b)"/>
+            <!-- Memory Store -->
+            <rect x="310" y="185" width="280" height="100" rx="10" fill="#0d1117" stroke="#ff8c42" stroke-width="2"/>
+            <text x="450" y="212" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">Memory Store</text>
+            <text x="450" y="235" text-anchor="middle" fill="#aaa" font-size="10">Human: "Je m'appelle Alice"</text>
+            <text x="450" y="255" text-anchor="middle" fill="#aaa" font-size="10">AI: "Bonjour Alice !"</text>
+            <text x="450" y="275" text-anchor="middle" fill="#ce9178" font-size="9">(historique precedent)</text>
+            <!-- Prompt Assembly -->
+            <rect x="235" y="55" width="200" height="80" rx="10" fill="#0d1117" stroke="#ff6b35" stroke-width="2"/>
+            <text x="335" y="82" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">Prompt Assembly</text>
+            <text x="335" y="102" text-anchor="middle" fill="#aaa" font-size="10">system + historique + question</text>
+            <text x="335" y="120" text-anchor="middle" fill="#ce9178" font-size="9">MessagesPlaceholder("history")</text>
+            <!-- Arrow Memory -> Prompt -->
+            <line x1="390" y1="185" x2="350" y2="140" stroke="#ff8c42" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow-r)"/>
+            <text x="342" y="170" text-anchor="middle" fill="#ff8c42" font-size="10" font-weight="bold">1. charger</text>
+            <!-- Arrow Prompt -> LLM -->
+            <line x1="435" y1="95" x2="505" y2="95" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow-o)"/>
+            <text x="470" y="83" text-anchor="middle" fill="#ff6b35" font-size="20" font-weight="bold">|</text>
+            <!-- LLM -->
+            <rect x="505" y="60" width="155" height="70" rx="10" fill="#0d1117" stroke="#00ff88" stroke-width="2"/>
+            <text x="582" y="90" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">ChatOpenAI</text>
+            <text x="582" y="112" text-anchor="middle" fill="#aaa" font-size="10">gpt-4o-mini</text>
+            <!-- Arrow LLM -> Output -->
+            <line x1="660" y1="95" x2="720" y2="95" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow-g)"/>
+            <!-- Output -->
+            <rect x="720" y="60" width="150" height="70" rx="10" fill="#0d1117" stroke="#00ff88" stroke-width="2"/>
+            <text x="795" y="88" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Reponse</text>
+            <text x="795" y="112" text-anchor="middle" fill="#aaa" font-size="10">"Votre prenom est Alice"</text>
+            <!-- Arrow Output -> Memory -->
+            <path d="M 795 130 L 795 310 L 590 260" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow-g)"/>
+            <text x="720" y="300" text-anchor="middle" fill="#00ff88" font-size="10" font-weight="bold">4. sauvegarder</text>
+            <!-- Arrow User -> Memory -->
+            <path d="M 105 130 L 105 235 L 310 235" fill="none" stroke="#569cd6" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow-b)"/>
+            <text x="175" y="250" text-anchor="middle" fill="#569cd6" font-size="10" font-weight="bold">4. sauvegarder</text>
+            <!-- Legend -->
+            <rect x="100" y="340" width="700" height="115" rx="8" fill="rgba(255,107,53,0.05)" stroke="#ff6b35" stroke-width="1"/>
+            <text x="450" y="368" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">Resume du cycle a chaque echange</text>
+            <text x="450" y="392" text-anchor="middle" fill="#aaa" font-size="11">1. CHARGER l'historique depuis la memoire (load_memory_variables)</text>
+            <text x="450" y="412" text-anchor="middle" fill="#aaa" font-size="11">2. INJECTER l'historique dans le prompt via MessagesPlaceholder</text>
+            <text x="450" y="432" text-anchor="middle" fill="#aaa" font-size="11">3. GENERER la reponse contextuelle via le LLM</text>
+            <text x="450" y="452" text-anchor="middle" fill="#aaa" font-size="11">4. SAUVEGARDER la question ET la reponse pour le prochain tour</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Le point crucial : le LLM lui-meme n'a aucune memoire intrinseque. C'est LangChain qui stocke
+        l'historique et le reinjecte a chaque appel. Le LLM recoit a chaque fois un prompt complet contenant
+        tout le contexte. Plus la conversation est longue, plus le prompt grandit et plus l'appel coute cher.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 3. LES DONNEES - Types de memoire                            -->
+    <!-- =========================================================== -->
+    <h2>3. Les Donnees : Types de Memoire</h2>
+
+    <p>LangChain propose quatre types principaux de memoire, chacun avec une strategie differente
+    pour gerer l'historique conversationnel.</p>
+
+    <h3>3.1 ConversationBufferMemory</h3>
+    <div class="definition">
+        <code>ConversationBufferMemory</code> stocke l'integralite de la conversation mot pour mot.
+        Rien n'est oublie, rien n'est resume. Chaque message est conserve dans une liste ordonnee.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory
+
+memory = <span class="function">ConversationBufferMemory</span>(memory_key=<span class="string">"history"</span>, return_messages=<span class="keyword">True</span>)
+
+<span class="comment"># Simuler des echanges</span>
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Bonjour, je m'appelle Alice"</span>},
+    {<span class="string">"output"</span>: <span class="string">"Bonjour Alice ! Comment puis-je vous aider ?"</span>}
+)
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Quel temps fait-il a Paris ?"</span>},
+    {<span class="string">"output"</span>: <span class="string">"Je n'ai pas acces a la meteo en temps reel."</span>}
+)
+<span class="function">print</span>(memory.<span class="function">load_memory_variables</span>({}))</div>
+
+    <div class="output-block">{'history': [
+  HumanMessage(content="Bonjour, je m'appelle Alice"),
+  AIMessage(content="Bonjour Alice ! Comment puis-je vous aider ?"),
+  HumanMessage(content="Quel temps fait-il a Paris ?"),
+  AIMessage(content="Je n'ai pas acces a la meteo en temps reel.")
+]}</div>
+
+    <div class="effect">
+        Tous les messages sont conserves. La memoire grandit lineairement avec le nombre d'echanges.
+        Ideal pour les conversations courtes (moins de 20 echanges).
+    </div>
+
+    <h3>3.2 ConversationBufferWindowMemory</h3>
+    <div class="definition">
+        <code>ConversationBufferWindowMemory</code> conserve uniquement les <strong>k</strong> derniers
+        echanges. Les echanges plus anciens sont automatiquement supprimes (fenetre glissante).
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferWindowMemory
+
+memory_window = <span class="function">ConversationBufferWindowMemory</span>(k=<span class="number">2</span>, memory_key=<span class="string">"history"</span>, return_messages=<span class="keyword">True</span>)
+
+memory_window.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"Je m'appelle Alice"</span>}, {<span class="string">"output"</span>: <span class="string">"Bonjour Alice !"</span>})
+memory_window.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"J'habite a Lyon"</span>}, {<span class="string">"output"</span>: <span class="string">"Lyon est une belle ville !"</span>})
+memory_window.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"Quel est mon prenom ?"</span>}, {<span class="string">"output"</span>: <span class="string">"Desole, je n'ai pas cette information."</span>})
+
+<span class="comment"># Le premier echange (prenom) a ete supprime !</span>
+<span class="function">print</span>(memory_window.<span class="function">load_memory_variables</span>({}))</div>
+
+    <div class="output-block">{'history': [
+  HumanMessage(content="J'habite a Lyon"),
+  AIMessage(content="Lyon est une belle ville !"),
+  HumanMessage(content="Quel est mon prenom ?"),
+  AIMessage(content="Desole, je n'ai pas cette information.")
+]}</div>
+
+    <div class="warning">
+        Avec <code>k=2</code>, le premier echange (ou Alice donne son prenom) est supprime. Le LLM ne peut
+        plus se souvenir du prenom. C'est le compromis de la fenetre glissante.
+    </div>
+
+    <h3>3.3 ConversationSummaryMemory</h3>
+    <div class="definition">
+        <code>ConversationSummaryMemory</code> utilise un LLM pour generer un <strong>resume</strong> de la
+        conversation. Le resume est mis a jour apres chaque echange, conservant les informations cles en
+        moins de tokens.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationSummaryMemory
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+memory_summary = <span class="function">ConversationSummaryMemory</span>(llm=llm, memory_key=<span class="string">"history"</span>, return_messages=<span class="keyword">True</span>)
+
+memory_summary.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Je m'appelle Alice et j'ai 25 ans"</span>},
+    {<span class="string">"output"</span>: <span class="string">"Bonjour Alice ! Vous avez 25 ans, c'est note !"</span>}
+)
+memory_summary.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Je suis etudiante en informatique a Lyon"</span>},
+    {<span class="string">"output"</span>: <span class="string">"L'informatique a Lyon, excellent choix !"</span>}
+)
+memory_summary.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"J'adore le machine learning et Python"</span>},
+    {<span class="string">"output"</span>: <span class="string">"Python est le langage ideal pour le ML !"</span>}
+)
+<span class="function">print</span>(memory_summary.<span class="function">load_memory_variables</span>({}))</div>
+
+    <div class="output-block">{'history': [
+  SystemMessage(content="L'utilisatrice s'appelle Alice, 25 ans. Elle est
+  etudiante en informatique a Lyon. Elle s'interesse au machine learning
+  et programme en Python.")
+]}</div>
+
+    <div class="effect">
+        Au lieu de 6 messages, la memoire contient un seul resume. Toutes les informations cles sont
+        preservees en beaucoup moins de tokens. Le cout : un appel LLM supplementaire apres chaque echange.
+    </div>
+
+    <h3>3.4 ConversationTokenBufferMemory</h3>
+    <div class="definition">
+        <code>ConversationTokenBufferMemory</code> conserve les messages recents tant que le nombre total
+        de tokens ne depasse pas <code>max_token_limit</code>. Les anciens sont supprimes en premier.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationTokenBufferMemory
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>)
+memory_token = <span class="function">ConversationTokenBufferMemory</span>(llm=llm, max_token_limit=<span class="number">100</span>, memory_key=<span class="string">"history"</span>, return_messages=<span class="keyword">True</span>)
+
+memory_token.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Bonjour, je m'appelle Alice et je suis etudiante"</span>},
+    {<span class="string">"output"</span>: <span class="string">"Bonjour Alice ! Bienvenue !"</span>}
+)
+memory_token.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Peux-tu m'expliquer les reseaux de neurones ?"</span>},
+    {<span class="string">"output"</span>: <span class="string">"Les reseaux de neurones sont des modeles inspires du cerveau humain."</span>}
+)
+<span class="function">print</span>(memory_token.<span class="function">load_memory_variables</span>({}))</div>
+
+    <div class="output-block">{'history': [
+  HumanMessage(content="Peux-tu m'expliquer les reseaux de neurones ?"),
+  AIMessage(content="Les reseaux de neurones sont des modeles inspires du cerveau humain.")
+]}</div>
+
+    <div class="prof-note">
+        La <code>ConversationTokenBufferMemory</code> est souvent le meilleur choix en production :
+        elle garantit un budget de tokens fixe, contrairement a la WindowMemory qui raisonne en nombre
+        d'echanges (un echange court et un long comptent pareil).
+    </div>
+
+    <h3>Tableau comparatif</h3>
+    <table>
+        <tr><th>Type</th><th>Strategie</th><th>Perte d'info</th><th>Cout tokens</th></tr>
+        <tr><td><code>BufferMemory</code></td><td>Tout garder</td><td>Aucune</td><td>Eleve (croissant)</td></tr>
+        <tr><td><code>WindowMemory</code></td><td>K derniers echanges</td><td>Anciens perdus</td><td>Controle (fixe)</td></tr>
+        <tr><td><code>SummaryMemory</code></td><td>Resume par LLM</td><td>Details perdus</td><td>Faible + appels LLM</td></tr>
+        <tr><td><code>TokenBufferMemory</code></td><td>Budget tokens</td><td>Anciens perdus</td><td>Controle (fixe)</td></tr>
+    </table>
+
+    <!-- =========================================================== -->
+    <!-- 4. LES PARAMETRES                                            -->
+    <!-- =========================================================== -->
+    <h2>4. Les Parametres</h2>
+
+    <h3>4.1 memory_key</h3>
+    <div class="param-box">
+        <h4>memory_key (str) -- defaut : "history"</h4>
+        <p>Cle sous laquelle l'historique est stocke. Doit correspondre exactement au <code>variable_name</code>
+        du <code>MessagesPlaceholder</code> dans le prompt.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate, MessagesPlaceholder
+
+<span class="comment"># La cle doit correspondre entre memory et prompt</span>
+memory = <span class="function">ConversationBufferMemory</span>(memory_key=<span class="string">"chat_history"</span>, return_messages=<span class="keyword">True</span>)
+
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un assistant utile."</span>),
+    <span class="function">MessagesPlaceholder</span>(variable_name=<span class="string">"chat_history"</span>),  <span class="comment"># meme cle !</span>
+    (<span class="string">"human"</span>, <span class="string">"{input}"</span>)
+])
+
+memory.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"Salut !"</span>}, {<span class="string">"output"</span>: <span class="string">"Bonjour !"</span>})
+<span class="function">print</span>(<span class="string">"Cle :"</span>, <span class="function">list</span>(memory.<span class="function">load_memory_variables</span>({}).<span class="function">keys</span>()))</div>
+
+    <div class="output-block">Cle : ['chat_history']</div>
+
+    <h3>4.2 return_messages</h3>
+    <div class="param-box">
+        <h4>return_messages (bool) -- defaut : False</h4>
+        <p>Si <code>True</code>, retourne une liste d'objets <code>Message</code> (pour les ChatModels).
+        Si <code>False</code>, retourne une chaine de texte brut.</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># return_messages=False (defaut) : chaine texte</span>
+mem_str = <span class="function">ConversationBufferMemory</span>(memory_key=<span class="string">"history"</span>)
+mem_str.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"Salut"</span>}, {<span class="string">"output"</span>: <span class="string">"Bonjour !"</span>})
+<span class="function">print</span>(<span class="function">repr</span>(mem_str.<span class="function">load_memory_variables</span>({})))
+
+<span class="comment"># return_messages=True : liste de Messages</span>
+mem_msg = <span class="function">ConversationBufferMemory</span>(memory_key=<span class="string">"history"</span>, return_messages=<span class="keyword">True</span>)
+mem_msg.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"Salut"</span>}, {<span class="string">"output"</span>: <span class="string">"Bonjour !"</span>})
+<span class="function">print</span>(mem_msg.<span class="function">load_memory_variables</span>({}))</div>
+
+    <div class="output-block">{'history': 'Human: Salut\nAI: Bonjour !'}
+{'history': [HumanMessage(content='Salut'), AIMessage(content='Bonjour !')]}</div>
+
+    <div class="effect">
+        Avec les ChatModels (GPT-4, Claude), utilisez toujours <code>return_messages=True</code> pour que
+        l'historique soit compatible avec <code>MessagesPlaceholder</code>.
+    </div>
+
+    <h3>4.3 k (WindowMemory)</h3>
+    <div class="param-box">
+        <h4>k (int) -- defaut : 5</h4>
+        <p>Nombre d'echanges (paires question-reponse) a conserver. Avec <code>k=3</code>,
+        la memoire conserve au maximum 6 messages (3 paires).</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">for</span> k_val <span class="keyword">in</span> [<span class="number">1</span>, <span class="number">3</span>]:
+    mem = <span class="function">ConversationBufferWindowMemory</span>(k=k_val, return_messages=<span class="keyword">True</span>)
+    mem.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"Msg 1"</span>}, {<span class="string">"output"</span>: <span class="string">"Rep 1"</span>})
+    mem.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"Msg 2"</span>}, {<span class="string">"output"</span>: <span class="string">"Rep 2"</span>})
+    mem.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"Msg 3"</span>}, {<span class="string">"output"</span>: <span class="string">"Rep 3"</span>})
+    msgs = mem.<span class="function">load_memory_variables</span>({})[<span class="string">"history"</span>]
+    <span class="function">print</span>(<span class="string">f"k={k_val} : {len(msgs)} messages"</span>)</div>
+
+    <div class="output-block">k=1 : 2 messages
+k=3 : 6 messages</div>
+
+    <h3>4.4 max_token_limit (TokenBufferMemory)</h3>
+    <div class="param-box">
+        <h4>max_token_limit (int) -- defaut : 2000</h4>
+        <p>Nombre maximum de tokens en memoire. Les anciens messages sont supprimes quand la limite est atteinte.
+        En production, une valeur typique est entre 500 et 4000 selon le modele.</p>
+    </div>
+
+    <h3>4.5 human_prefix et ai_prefix</h3>
+    <div class="param-box">
+        <h4>human_prefix / ai_prefix (str) -- defaut : "Human" / "AI"</h4>
+        <p>Personnalise les prefixes dans le format texte (<code>return_messages=False</code>).</p>
+    </div>
+
+    <div class="code-block">memory_custom = <span class="function">ConversationBufferMemory</span>(human_prefix=<span class="string">"Etudiant"</span>, ai_prefix=<span class="string">"Professeur"</span>)
+memory_custom.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Qu'est-ce qu'un tenseur ?"</span>},
+    {<span class="string">"output"</span>: <span class="string">"Un tenseur est une generalisation des matrices."</span>}
+)
+<span class="function">print</span>(memory_custom.<span class="function">load_memory_variables</span>({})[<span class="string">"history"</span>])</div>
+
+    <div class="output-block">Etudiant: Qu'est-ce qu'un tenseur ?
+Professeur: Un tenseur est une generalisation des matrices.</div>
+
+    <!-- =========================================================== -->
+    <!-- 5. LES METRIQUES                                             -->
+    <!-- =========================================================== -->
+    <h2>5. Les Metriques</h2>
+
+    <div class="metric-card">
+        <h4>5.1 Consommation de Tokens</h4>
+        <p>Nombre de tokens utilises pour l'historique a chaque appel. Impacte directement le cout et la latence.</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> tiktoken
+
+<span class="keyword">def</span> <span class="function">compter_tokens</span>(messages, model=<span class="string">"gpt-4o-mini"</span>):
+    encoding = tiktoken.<span class="function">encoding_for_model</span>(model)
+    <span class="keyword">return</span> <span class="function">sum</span>(<span class="function">len</span>(encoding.<span class="function">encode</span>(m.content)) <span class="keyword">for</span> m <span class="keyword">in</span> messages)
+
+<span class="comment"># Comparer Buffer vs Window apres 5 echanges</span>
+echanges = [
+    (<span class="string">"Bonjour, je suis Alice"</span>, <span class="string">"Bonjour Alice !"</span>),
+    (<span class="string">"J'etudie l'informatique"</span>, <span class="string">"C'est passionnant !"</span>),
+    (<span class="string">"J'aime Python"</span>, <span class="string">"Python est populaire en IA."</span>),
+    (<span class="string">"Qu'est-ce que le deep learning ?"</span>, <span class="string">"C'est une branche du ML."</span>),
+    (<span class="string">"Et le NLP ?"</span>, <span class="string">"Le NLP traite du langage naturel."</span>),
+]
+
+mem_buf = <span class="function">ConversationBufferMemory</span>(return_messages=<span class="keyword">True</span>)
+mem_win = <span class="function">ConversationBufferWindowMemory</span>(k=<span class="number">2</span>, return_messages=<span class="keyword">True</span>)
+<span class="keyword">for</span> i, o <span class="keyword">in</span> echanges:
+    mem_buf.<span class="function">save_context</span>({<span class="string">"input"</span>: i}, {<span class="string">"output"</span>: o})
+    mem_win.<span class="function">save_context</span>({<span class="string">"input"</span>: i}, {<span class="string">"output"</span>: o})
+
+<span class="function">print</span>(<span class="string">f"Buffer : {compter_tokens(mem_buf.load_memory_variables({})['history'])} tokens"</span>)
+<span class="function">print</span>(<span class="string">f"Window : {compter_tokens(mem_win.load_memory_variables({})['history'])} tokens"</span>)</div>
+
+    <div class="output-block">Buffer : 112 tokens
+Window : 38 tokens</div>
+
+    <div class="metric-card">
+        <h4>5.2 Retention d'Information</h4>
+        <p>Capacite a conserver les informations cles mentionnees plus tot. Mesurable en verifiant si des
+        faits specifiques sont toujours accessibles apres N echanges.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>5.3 Latence et Cout</h4>
+        <p>Buffer/Window : latence negligeable. Summary : +1 appel LLM par echange (latence et cout supplementaires).
+        TokenBuffer : negligeable. Plus l'historique est long, plus chaque appel coute cher en tokens d'entree.</p>
+    </div>
+
+    <table>
+        <tr><th>Metrique</th><th>Buffer</th><th>Window (k=3)</th><th>Summary</th><th>TokenBuffer</th></tr>
+        <tr><td>Tokens (10 echanges)</td><td>~200+</td><td>~60</td><td>~50</td><td>configurable</td></tr>
+        <tr><td>Retention ancienne</td><td>100%</td><td>0% hors fenetre</td><td>~80%</td><td>Variable</td></tr>
+        <tr><td>Latence ajoutee</td><td>Negligeable</td><td>Negligeable</td><td>+1 appel LLM</td><td>Negligeable</td></tr>
+    </table>
+
+    <!-- =========================================================== -->
+    <!-- 6. IMPLEMENTATION COMPLETE                                   -->
+    <!-- =========================================================== -->
+    <h2>6. Implementation Complete</h2>
+
+    <h3>6.1 Approche moderne : RunnableWithMessageHistory</h3>
+    <div class="definition">
+        <code>RunnableWithMessageHistory</code> est la methode recommandee en LangChain v0.3. Elle encapsule
+        une chain LCEL et gere automatiquement le chargement et la sauvegarde de l'historique.
+    </div>
+
+    <div class="svg-container">
+        <svg width="900" height="380" viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg">
+            <rect width="900" height="380" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="450" y="28" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Architecture LCEL avec RunnableWithMessageHistory</text>
+            <defs>
+                <marker id="a-o" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker>
+                <marker id="a-g" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/></marker>
+                <marker id="a-b" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/></marker>
+                <marker id="a-r" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/></marker>
+            </defs>
+            <!-- Wrapper -->
+            <rect x="25" y="45" width="850" height="195" rx="12" fill="none" stroke="#ff8c42" stroke-width="2" stroke-dasharray="8,4"/>
+            <text x="450" y="68" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">RunnableWithMessageHistory (encapsule la chain)</text>
+            <!-- Store -->
+            <rect x="50" y="255" width="240" height="75" rx="10" fill="#0d1117" stroke="#ff8c42" stroke-width="2"/>
+            <text x="170" y="280" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">ChatMessageHistory</text>
+            <text x="170" y="298" text-anchor="middle" fill="#aaa" font-size="10">session_id: "user_123"</text>
+            <text x="170" y="316" text-anchor="middle" fill="#aaa" font-size="10">[HumanMsg, AIMsg, ...]</text>
+            <!-- Load arrow -->
+            <line x1="180" y1="255" x2="260" y2="160" stroke="#ff8c42" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#a-r)"/>
+            <text x="200" y="210" fill="#ff8c42" font-size="9">charger</text>
+            <!-- Input -->
+            <rect x="50" y="90" width="120" height="55" rx="10" fill="#0d1117" stroke="#569cd6" stroke-width="2"/>
+            <text x="110" y="115" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Input</text>
+            <text x="110" y="133" text-anchor="middle" fill="#aaa" font-size="9">{"input": "..."}</text>
+            <line x1="170" y1="117" x2="218" y2="117" stroke="#569cd6" stroke-width="2" marker-end="url(#a-b)"/>
+            <!-- Prompt -->
+            <rect x="218" y="85" width="170" height="65" rx="10" fill="#0d1117" stroke="#ff6b35" stroke-width="2"/>
+            <text x="303" y="110" text-anchor="middle" fill="#ff6b35" font-size="11" font-weight="bold">ChatPromptTemplate</text>
+            <text x="303" y="128" text-anchor="middle" fill="#aaa" font-size="9">system + history + human</text>
+            <text x="405" y="108" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">|</text>
+            <line x1="388" y1="117" x2="430" y2="117" stroke="#ff6b35" stroke-width="2" marker-end="url(#a-o)"/>
+            <!-- Model -->
+            <rect x="430" y="85" width="140" height="65" rx="10" fill="#0d1117" stroke="#00ff88" stroke-width="2"/>
+            <text x="500" y="110" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">ChatOpenAI</text>
+            <text x="500" y="128" text-anchor="middle" fill="#aaa" font-size="9">gpt-4o-mini</text>
+            <text x="587" y="108" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">|</text>
+            <line x1="570" y1="117" x2="612" y2="117" stroke="#00ff88" stroke-width="2" marker-end="url(#a-g)"/>
+            <!-- Parser -->
+            <rect x="612" y="88" width="145" height="58" rx="10" fill="#0d1117" stroke="#569cd6" stroke-width="2"/>
+            <text x="684" y="113" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">StrOutputParser</text>
+            <text x="684" y="131" text-anchor="middle" fill="#aaa" font-size="9">AIMessage -> str</text>
+            <!-- Save arrow -->
+            <path d="M 684 146 L 684 293 L 290 293" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#a-g)"/>
+            <text x="560" y="310" fill="#00ff88" font-size="9">sauvegarder</text>
+            <!-- Legend -->
+            <rect x="340" y="255" width="510" height="75" rx="8" fill="rgba(255,107,53,0.05)" stroke="#ff6b35" stroke-width="1"/>
+            <text x="595" y="278" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">chain = prompt | model | StrOutputParser()</text>
+            <text x="595" y="296" text-anchor="middle" fill="#aaa" font-size="10">with_history = RunnableWithMessageHistory(chain, get_session_history)</text>
+            <text x="595" y="314" text-anchor="middle" fill="#aaa" font-size="10">Chargement automatique avant, sauvegarde automatique apres</text>
+        </svg>
+    </div>
+
+    <div class="step-box"><strong>Etape 1 :</strong> Installer les dependances.</div>
+
+    <div class="code-block"><span class="comment"># pip install langchain langchain-openai langchain-community python-dotenv</span>
+<span class="keyword">import</span> os
+<span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+<span class="function">load_dotenv</span>()  <span class="comment"># Charge OPENAI_API_KEY depuis .env</span></div>
+
+    <div class="step-box"><strong>Etape 2 :</strong> Creer la chain LCEL (prompt + model + parser).</div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+
+prompt = ChatPromptTemplate.<span class="function">from_messages</span>([
+    (<span class="string">"system"</span>, <span class="string">"Tu es un assistant pedagogique bienveillant. Reponds en francais."</span>),
+    <span class="function">MessagesPlaceholder</span>(variable_name=<span class="string">"history"</span>),
+    (<span class="string">"human"</span>, <span class="string">"{input}"</span>)
+])
+model = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.7</span>)
+chain = prompt | model | <span class="function">StrOutputParser</span>()</div>
+
+    <div class="step-box"><strong>Etape 3 :</strong> Configurer les sessions et encapsuler la chain.</div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.runnables.history <span class="keyword">import</span> RunnableWithMessageHistory
+<span class="keyword">from</span> langchain_community.chat_message_histories <span class="keyword">import</span> ChatMessageHistory
+
+store = {}  <span class="comment"># Stockage des historiques par session (en RAM)</span>
+
+<span class="keyword">def</span> <span class="function">get_session_history</span>(session_id: <span class="keyword">str</span>):
+    <span class="keyword">if</span> session_id <span class="keyword">not</span> <span class="keyword">in</span> store:
+        store[session_id] = <span class="function">ChatMessageHistory</span>()
+    <span class="keyword">return</span> store[session_id]
+
+chain_with_history = <span class="function">RunnableWithMessageHistory</span>(
+    chain, get_session_history,
+    input_messages_key=<span class="string">"input"</span>,
+    history_messages_key=<span class="string">"history"</span>
+)</div>
+
+    <div class="step-box"><strong>Etape 4 :</strong> Utiliser la chain avec memoire.</div>
+
+    <div class="code-block">config = {<span class="string">"configurable"</span>: {<span class="string">"session_id"</span>: <span class="string">"etudiant_01"</span>}}
+
+<span class="comment"># Premier echange</span>
+r1 = chain_with_history.<span class="function">invoke</span>(
+    {<span class="string">"input"</span>: <span class="string">"Bonjour ! Je m'appelle Alice et j'etudie le machine learning."</span>},
+    config=config
+)
+<span class="function">print</span>(<span class="string">"Bot :"</span>, r1)
+
+<span class="comment"># Deuxieme echange -- le bot se souvient !</span>
+r2 = chain_with_history.<span class="function">invoke</span>(
+    {<span class="string">"input"</span>: <span class="string">"Quel est mon prenom et qu'est-ce que j'etudie ?"</span>},
+    config=config
+)
+<span class="function">print</span>(<span class="string">"Bot :"</span>, r2)</div>
+
+    <div class="output-block">Bot : Bonjour Alice ! Le machine learning est fascinant. Comment puis-je t'aider ?
+Bot : Tu t'appelles Alice et tu etudies le machine learning !</div>
+
+    <h3>6.2 Approche legacy : ConversationChain</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> ConversationChain
+<span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.7</span>)
+memory = <span class="function">ConversationBufferMemory</span>(return_messages=<span class="keyword">True</span>)
+
+conversation = <span class="function">ConversationChain</span>(llm=llm, memory=memory, verbose=<span class="keyword">True</span>)
+
+r1 = conversation.<span class="function">predict</span>(input=<span class="string">"Je m'appelle Bob, j'ai 30 ans."</span>)
+<span class="function">print</span>(<span class="string">"Bot :"</span>, r1)
+r2 = conversation.<span class="function">predict</span>(input=<span class="string">"Quel est mon age ?"</span>)
+<span class="function">print</span>(<span class="string">"Bot :"</span>, r2)</div>
+
+    <div class="output-block">Bot : Bonjour Bob ! Vous avez 30 ans, c'est note.
+Bot : Vous avez 30 ans, Bob !</div>
+
+    <h3>6.3 Sessions multiples</h3>
+
+    <div class="code-block"><span class="comment"># Chaque utilisateur a son propre session_id</span>
+config_a = {<span class="string">"configurable"</span>: {<span class="string">"session_id"</span>: <span class="string">"user_alice"</span>}}
+config_b = {<span class="string">"configurable"</span>: {<span class="string">"session_id"</span>: <span class="string">"user_bob"</span>}}
+
+chain_with_history.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Je suis Alice, j'aime Python."</span>}, config=config_a)
+chain_with_history.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Je suis Bob, je prefere JavaScript."</span>}, config=config_b)
+
+r_a = chain_with_history.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Quel langage j'aime ?"</span>}, config=config_a)
+r_b = chain_with_history.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Quel langage j'aime ?"</span>}, config=config_b)
+<span class="function">print</span>(<span class="string">"Alice :"</span>, r_a)
+<span class="function">print</span>(<span class="string">"Bob   :"</span>, r_b)</div>
+
+    <div class="output-block">Alice : Vous aimez Python !
+Bob   : Vous preferez JavaScript !</div>
+
+    <div class="prof-note">
+        L'isolation par session est fondamentale en production. En production reelle, remplacez le
+        dictionnaire <code>store</code> par Redis (<code>RedisChatMessageHistory</code>) ou PostgreSQL.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 7. EXPERIMENTATION                                           -->
+    <!-- =========================================================== -->
+    <h2>7. Experimentation</h2>
+
+    <p>Comparons les quatre types de memoire sur la meme conversation de 5 echanges.</p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> (
+    ConversationBufferMemory, ConversationBufferWindowMemory,
+    ConversationSummaryMemory, ConversationTokenBufferMemory
+)
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+conversation = [
+    (<span class="string">"Je m'appelle Alice, j'ai 25 ans, j'habite a Lyon."</span>, <span class="string">"Bonjour Alice !"</span>),
+    (<span class="string">"Je suis en master informatique."</span>, <span class="string">"Excellent choix !"</span>),
+    (<span class="string">"Mon langage prefere est Python."</span>, <span class="string">"Python est tres populaire."</span>),
+    (<span class="string">"J'ai un chat nomme Moustache."</span>, <span class="string">"Quel joli nom !"</span>),
+    (<span class="string">"Je fais un stage chez Google."</span>, <span class="string">"Impressionnant !"</span>),
+]
+
+memories = {
+    <span class="string">"Buffer"</span>: <span class="function">ConversationBufferMemory</span>(return_messages=<span class="keyword">True</span>, memory_key=<span class="string">"history"</span>),
+    <span class="string">"Window(k=2)"</span>: <span class="function">ConversationBufferWindowMemory</span>(k=<span class="number">2</span>, return_messages=<span class="keyword">True</span>, memory_key=<span class="string">"history"</span>),
+    <span class="string">"Summary"</span>: <span class="function">ConversationSummaryMemory</span>(llm=llm, return_messages=<span class="keyword">True</span>, memory_key=<span class="string">"history"</span>),
+    <span class="string">"TokenBuf(100)"</span>: <span class="function">ConversationTokenBufferMemory</span>(llm=llm, max_token_limit=<span class="number">100</span>, return_messages=<span class="keyword">True</span>, memory_key=<span class="string">"history"</span>),
+}
+
+<span class="keyword">for</span> inp, out <span class="keyword">in</span> conversation:
+    <span class="keyword">for</span> mem <span class="keyword">in</span> memories.<span class="function">values</span>():
+        mem.<span class="function">save_context</span>({<span class="string">"input"</span>: inp}, {<span class="string">"output"</span>: out})</div>
+
+    <h3>7.2 Test de retention</h3>
+
+    <div class="code-block">infos = [(<span class="string">"prenom"</span>,<span class="string">"Alice"</span>), (<span class="string">"age"</span>,<span class="string">"25"</span>), (<span class="string">"ville"</span>,<span class="string">"Lyon"</span>), (<span class="string">"etudes"</span>,<span class="string">"informatique"</span>),
+        (<span class="string">"langage"</span>,<span class="string">"Python"</span>), (<span class="string">"animal"</span>,<span class="string">"Moustache"</span>), (<span class="string">"stage"</span>,<span class="string">"Google"</span>)]
+
+<span class="function">print</span>(<span class="string">f"{'Info':<12} {'Buffer':<10} {'Window':<10} {'Summary':<10} {'TokenBuf':<10}"</span>)
+<span class="function">print</span>(<span class="string">"-"</span> * <span class="number">52</span>)
+<span class="keyword">for</span> info, mot <span class="keyword">in</span> infos:
+    res = []
+    <span class="keyword">for</span> mem <span class="keyword">in</span> memories.<span class="function">values</span>():
+        h = mem.<span class="function">load_memory_variables</span>({})[<span class="string">"history"</span>]
+        contenu = <span class="string">" "</span>.<span class="function">join</span>([m.content <span class="keyword">for</span> m <span class="keyword">in</span> h])
+        res.<span class="function">append</span>(<span class="string">"oui"</span> <span class="keyword">if</span> mot <span class="keyword">in</span> contenu <span class="keyword">else</span> <span class="string">"NON"</span>)
+    <span class="function">print</span>(<span class="string">f"{info:<12} {res[0]:<10} {res[1]:<10} {res[2]:<10} {res[3]:<10}"</span>)</div>
+
+    <div class="output-block">Info         Buffer     Window     Summary    TokenBuf
+----------------------------------------------------
+prenom       oui        NON        oui        NON
+age          oui        NON        oui        NON
+ville        oui        NON        oui        NON
+etudes       oui        NON        oui        NON
+langage      oui        NON        oui        NON
+animal       oui        oui        oui        oui
+stage        oui        oui        oui        oui</div>
+
+    <div class="concept-box green">
+        <h3>Analyse des resultats</h3>
+        <ul>
+            <li><strong>Buffer</strong> : Retention parfaite (7/7), mais le plus gros volume de tokens.</li>
+            <li><strong>Window (k=2)</strong> : Seuls les 2 derniers echanges retenus (2/7). Infos anciennes perdues.</li>
+            <li><strong>Summary</strong> : Excellent rapport retention/tokens (7/7). Le resume conserve tout.</li>
+            <li><strong>TokenBuffer (100)</strong> : Similaire a Window (2/7). Anciens messages supprimes.</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Le choix depend du cas d'usage. Support client (nom, commande) : SummaryMemory. Chatbot
+        decontracte (contexte recent) : WindowMemory. Prototypage rapide : BufferMemory.
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 8. ERREURS COURANTES                                         -->
+    <!-- =========================================================== -->
+    <h2>8. Erreurs Courantes</h2>
+
+    <h3>Erreur 1 : Oublier de vider la memoire entre les tests</h3>
+    <div class="warning">
+        L'historique des tests precedents s'accumule et pollue les nouvelles conversations.
+        <strong>Solution :</strong> appeler <code>memory.clear()</code> avant de recommencer.
+    </div>
+    <div class="code-block">memory = <span class="function">ConversationBufferMemory</span>(return_messages=<span class="keyword">True</span>)
+memory.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"test 1"</span>}, {<span class="string">"output"</span>: <span class="string">"reponse 1"</span>})
+memory.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"test 2"</span>}, {<span class="string">"output"</span>: <span class="string">"reponse 2"</span>})
+<span class="function">print</span>(<span class="function">len</span>(memory.<span class="function">load_memory_variables</span>({})[<span class="string">"history"</span>]))  <span class="comment"># 4</span>
+
+memory.<span class="function">clear</span>()  <span class="comment"># Nettoyer !</span>
+memory.<span class="function">save_context</span>({<span class="string">"input"</span>: <span class="string">"test 2"</span>}, {<span class="string">"output"</span>: <span class="string">"reponse 2"</span>})
+<span class="function">print</span>(<span class="function">len</span>(memory.<span class="function">load_memory_variables</span>({})[<span class="string">"history"</span>]))  <span class="comment"># 2</span></div>
+
+    <h3>Erreur 2 : memory_key differente du MessagesPlaceholder</h3>
+    <div class="warning">
+        Si les cles ne correspondent pas, le LLM ne recoit jamais l'historique.
+        <strong>Solution :</strong> verifier que <code>memory_key</code> == <code>variable_name</code>.
+    </div>
+    <div class="code-block"><span class="comment"># ERREUR</span>
+memory = <span class="function">ConversationBufferMemory</span>(memory_key=<span class="string">"history"</span>, return_messages=<span class="keyword">True</span>)
+<span class="function">MessagesPlaceholder</span>(variable_name=<span class="string">"chat_history"</span>)  <span class="comment"># "history" != "chat_history" !</span>
+
+<span class="comment"># SOLUTION : meme cle partout</span>
+memory = <span class="function">ConversationBufferMemory</span>(memory_key=<span class="string">"chat_history"</span>, return_messages=<span class="keyword">True</span>)
+<span class="function">MessagesPlaceholder</span>(variable_name=<span class="string">"chat_history"</span>)  <span class="comment"># OK !</span></div>
+
+    <h3>Erreur 3 : Oublier return_messages=True</h3>
+    <div class="warning">
+        Sans <code>return_messages=True</code>, la memoire retourne du texte brut. Or <code>MessagesPlaceholder</code>
+        attend une liste de Messages. <strong>Solution :</strong> toujours activer <code>return_messages=True</code>
+        pour les ChatModels.
+    </div>
+
+    <h3>Erreur 4 : Depassement de la fenetre de contexte</h3>
+    <div class="warning">
+        Avec <code>BufferMemory</code>, l'historique croit indefiniment. Apres 1000 echanges, le prompt
+        depasse la limite du modele. <strong>Solution :</strong> utiliser <code>TokenBufferMemory</code>
+        ou <code>WindowMemory</code> en production.
+    </div>
+
+    <h3>Erreur 5 : Oublier le session_id</h3>
+    <div class="warning">
+        <code>RunnableWithMessageHistory</code> necessite un <code>session_id</code> dans le config.
+        Sans lui, LangChain leve une erreur.
+    </div>
+    <div class="code-block"><span class="comment"># ERREUR : config manquant</span>
+<span class="comment"># chain_with_history.invoke({"input": "Bonjour"})</span>
+
+<span class="comment"># SOLUTION</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"session_id"</span>: <span class="string">"user_42"</span>}}
+chain_with_history.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Bonjour"</span>}, config=config)</div>
+
+    <h3>Erreur 6 : Partager une session entre utilisateurs</h3>
+    <div class="warning">
+        Si tous les utilisateurs partagent le meme <code>session_id</code>, leurs historiques se melangent.
+        L'utilisateur B voit les messages de A. <strong>Solution :</strong> un <code>session_id</code>
+        unique (UUID) par utilisateur authentifie.
+    </div>
+    <div class="code-block"><span class="comment"># ERREUR : meme session pour tous</span>
+config_shared = {<span class="string">"configurable"</span>: {<span class="string">"session_id"</span>: <span class="string">"shared"</span>}}  <span class="comment"># Fuite de donnees !</span>
+
+<span class="comment"># SOLUTION : sessions isolees</span>
+config_alice = {<span class="string">"configurable"</span>: {<span class="string">"session_id"</span>: <span class="string">"user_alice_abc123"</span>}}
+config_bob   = {<span class="string">"configurable"</span>: {<span class="string">"session_id"</span>: <span class="string">"user_bob_def456"</span>}}</div>
+
+    <!-- =========================================================== -->
+    <!-- 9. RESUME                                                    -->
+    <!-- =========================================================== -->
+    <h2>9. Resume</h2>
+
+    <h3>Types de memoire</h3>
+    <table>
+        <tr><th>Type</th><th>Strategie</th><th>Quand l'utiliser</th><th>Parametre cle</th></tr>
+        <tr><td><code>ConversationBufferMemory</code></td><td>Tout conserver</td><td>Conversations courtes, prototypage</td><td><code>return_messages</code></td></tr>
+        <tr><td><code>ConversationBufferWindowMemory</code></td><td>Fenetre glissante</td><td>Chatbots, contexte recent</td><td><code>k</code></td></tr>
+        <tr><td><code>ConversationSummaryMemory</code></td><td>Resume par LLM</td><td>Longues conversations, infos cles</td><td><code>llm</code></td></tr>
+        <tr><td><code>ConversationTokenBufferMemory</code></td><td>Budget tokens</td><td>Production, controle couts</td><td><code>max_token_limit</code></td></tr>
+    </table>
+
+    <h3>Parametres</h3>
+    <table>
+        <tr><th>Parametre</th><th>Type</th><th>Defaut</th><th>Role</th></tr>
+        <tr><td><code>memory_key</code></td><td>str</td><td>"history"</td><td>Cle de l'historique dans les variables</td></tr>
+        <tr><td><code>return_messages</code></td><td>bool</td><td>False</td><td>Retourne des Messages (True) ou du texte (False)</td></tr>
+        <tr><td><code>k</code></td><td>int</td><td>5</td><td>Nombre d'echanges a conserver (Window)</td></tr>
+        <tr><td><code>max_token_limit</code></td><td>int</td><td>2000</td><td>Budget max de tokens (TokenBuffer)</td></tr>
+        <tr><td><code>llm</code></td><td>BaseChatModel</td><td>--</td><td>Modele pour les resumes (Summary)</td></tr>
+        <tr><td><code>human_prefix</code></td><td>str</td><td>"Human"</td><td>Prefixe messages humains (mode texte)</td></tr>
+        <tr><td><code>ai_prefix</code></td><td>str</td><td>"AI"</td><td>Prefixe messages IA (mode texte)</td></tr>
+        <tr><td><code>input_messages_key</code></td><td>str</td><td>"input"</td><td>Cle entree utilisateur (RunnableWithMessageHistory)</td></tr>
+        <tr><td><code>history_messages_key</code></td><td>str</td><td>"history"</td><td>Cle historique (RunnableWithMessageHistory)</td></tr>
+    </table>
+
+    <h3>Bonnes pratiques</h3>
+    <div class="concept-box green">
+        <ol>
+            <li>Toujours utiliser <code>return_messages=True</code> avec les ChatModels</li>
+            <li>Verifier que <code>memory_key</code> correspond au <code>MessagesPlaceholder</code></li>
+            <li>Utiliser <code>WindowMemory</code> ou <code>TokenBufferMemory</code> en production</li>
+            <li>Isoler les sessions avec un <code>session_id</code> unique par utilisateur</li>
+            <li>Appeler <code>memory.clear()</code> entre les tests</li>
+            <li>Preferer <code>RunnableWithMessageHistory</code> a <code>ConversationChain</code></li>
+            <li>Prevoir une marge dans la fenetre de contexte (prompt + reponse)</li>
+            <li>Utiliser un backend persistant (Redis, PostgreSQL) en production</li>
+        </ol>
+    </div>
+
+    <h3>Arbre de decision</h3>
+    <div class="concept-box blue">
+        <p><strong>Votre conversation depasse-t-elle 20 echanges ?</strong></p>
+        <ul>
+            <li><strong>Non</strong> : <code>ConversationBufferMemory</code> (simple et complet)</li>
+            <li><strong>Oui</strong> : Les infos du debut sont-elles critiques ?
+                <ul>
+                    <li><strong>Non</strong> : <code>ConversationBufferWindowMemory</code> (k=5 a 10)</li>
+                    <li><strong>Oui</strong> : Le cout d'appels LLM extra est acceptable ?
+                        <ul>
+                            <li><strong>Oui</strong> : <code>ConversationSummaryMemory</code></li>
+                            <li><strong>Non</strong> : <code>ConversationTokenBufferMemory</code> (2000-4000 tokens)</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <h3>Imports a retenir</h3>
+    <div class="code-block"><span class="comment"># Types de memoire</span>
+<span class="keyword">from</span> langchain.memory <span class="keyword">import</span> (
+    ConversationBufferMemory, ConversationBufferWindowMemory,
+    ConversationSummaryMemory, ConversationTokenBufferMemory
+)
+<span class="comment"># Approche moderne LCEL</span>
+<span class="keyword">from</span> langchain_core.runnables.history <span class="keyword">import</span> RunnableWithMessageHistory
+<span class="keyword">from</span> langchain_community.chat_message_histories <span class="keyword">import</span> ChatMessageHistory
+<span class="comment"># Composants de chain</span>
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate, MessagesPlaceholder
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="comment"># Approche legacy</span>
+<span class="keyword">from</span> langchain.chains <span class="keyword">import</span> ConversationChain</div>
+
+    <div class="prof-note">
+        Ce TD couvre les fondamentaux de la memoire conversationnelle dans LangChain. Retenez que le LLM
+        n'a aucune memoire propre : c'est le systeme autour qui gere stockage et re-injection. En pratique,
+        on combine souvent une memoire a court terme (Buffer/Window) avec un systeme RAG pour la memoire
+        a long terme. Le prochain TD sur les Agents montrera comment la memoire s'integre avec des outils
+        externes pour creer des assistants encore plus puissants.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="td_prompts_chains.html">Precedent : Prompts et Chains</a>
+        <a href="td_agents.html">Suivant : Agents</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

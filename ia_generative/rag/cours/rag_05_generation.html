@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG 05 - Génération et Prompts RAG</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Génération et Prompts RAG</h1>
+    <p class="subtitle">Cours 05 - Produire des Réponses de Qualité à partir du Contexte Récupéré</p>
+
+    <!-- ============================================================ -->
+    <h2>1. Le Rôle de la Génération dans le Pipeline RAG</h2>
+
+    <div class="definition">
+        La <strong>génération</strong> est l'étape finale du pipeline RAG où un modèle de langage (LLM) prend en entrée la question de l'utilisateur et les documents récupérés (contexte) pour produire une réponse précise, cohérente et fidèle aux sources.
+    </div>
+
+    <p>Dans un système RAG complet, la génération ne se limite pas à "demander au LLM de répondre". C'est une étape critique qui détermine la qualité finale de la réponse. Un excellent système de retrieval est inutile si la génération est mal configurée : le LLM peut halluciner, ignorer le contexte, ou produire des réponses hors sujet.</p>
+
+    <div class="svg-container">
+        <svg width="900" height="220" viewBox="0 0 900 220">
+            <defs>
+                <marker id="arrow1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+            <!-- Question -->
+            <rect x="10" y="80" width="140" height="60" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="115" text-anchor="middle" fill="#569cd6" font-size="14">Question</text>
+            <!-- Arrow -->
+            <line x1="150" y1="110" x2="195" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <!-- Retrieval -->
+            <rect x="200" y="80" width="140" height="60" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="270" y="108" text-anchor="middle" fill="#00ff88" font-size="13">Retrieval</text>
+            <text x="270" y="126" text-anchor="middle" fill="#aaa" font-size="11">(Récupération)</text>
+            <!-- Arrow -->
+            <line x1="340" y1="110" x2="385" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <!-- Context -->
+            <rect x="390" y="20" width="140" height="60" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="460" y="48" text-anchor="middle" fill="#ff8c42" font-size="13">Documents</text>
+            <text x="460" y="66" text-anchor="middle" fill="#aaa" font-size="11">Contexte récupéré</text>
+            <!-- Arrow from context down -->
+            <line x1="460" y1="80" x2="460" y2="90" stroke="#ff8c42" stroke-width="2"/>
+            <!-- Prompt Construction -->
+            <rect x="390" y="80" width="140" height="60" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="460" y="108" text-anchor="middle" fill="#ff6b35" font-size="13">Construction</text>
+            <text x="460" y="126" text-anchor="middle" fill="#aaa" font-size="11">du Prompt</text>
+            <!-- Arrow -->
+            <line x1="530" y1="110" x2="575" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <!-- LLM -->
+            <rect x="580" y="80" width="140" height="60" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="650" y="108" text-anchor="middle" fill="#569cd6" font-size="14" font-weight="bold">LLM</text>
+            <text x="650" y="126" text-anchor="middle" fill="#aaa" font-size="11">Génération</text>
+            <!-- Arrow -->
+            <line x1="720" y1="110" x2="755" y2="110" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <!-- Response -->
+            <rect x="760" y="80" width="130" height="60" rx="10" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="825" y="108" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Réponse</text>
+            <text x="825" y="126" text-anchor="middle" fill="#aaa" font-size="11">+ Sources</text>
+            <!-- Title -->
+            <text x="450" y="195" text-anchor="middle" fill="#aaa" font-size="12" font-style="italic">Pipeline complet : Question -> Retrieval -> Construction du Prompt -> LLM -> Réponse</text>
+        </svg>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Les 3 composantes de la génération RAG</h3>
+        <ul>
+            <li><strong>Le prompt système</strong> : Instructions qui définissent le comportement du LLM (rester fidèle au contexte, citer les sources, etc.)</li>
+            <li><strong>Le contexte</strong> : Les documents/chunks récupérés par le système de retrieval</li>
+            <li><strong>La question</strong> : La requête originale de l'utilisateur (parfois reformulée)</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        La génération est l'étape où la magie opère, mais aussi où les erreurs surviennent. Un prompt mal conçu peut conduire le LLM à ignorer le contexte et à halluciner. La qualité du prompt est au moins aussi importante que la qualité du retrieval.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>2. Le Prompt RAG Standard</h2>
+
+    <p>Le prompt RAG est structuré en trois parties distinctes qui guident le LLM pour produire une réponse fidèle au contexte récupéré.</p>
+
+    <h3>2.1 Structure de base</h3>
+
+    <div class="code-block"><span class="comment"># Template de prompt RAG standard</span>
+
+<span class="keyword">RAG_PROMPT_TEMPLATE</span> = <span class="string">"""Tu es un assistant expert qui répond aux questions
+en se basant UNIQUEMENT sur le contexte fourni ci-dessous.
+
+Règles :
+- Réponds UNIQUEMENT à partir des informations du contexte
+- Si le contexte ne contient pas la réponse, dis "Je ne trouve pas
+  cette information dans les documents disponibles"
+- Cite les sources pertinentes dans ta réponse
+- Sois précis et concis
+
+--- CONTEXTE ---
+{context}
+--- FIN DU CONTEXTE ---
+
+Question : {question}
+
+Réponse :"""</span></div>
+
+    <h3>2.2 Implémentation Python complète</h3>
+
+    <div class="code-block"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+<span class="keyword">from</span> typing <span class="keyword">import</span> List, Dict
+
+<span class="keyword">class</span> <span class="function">RAGGenerator</span>:
+    <span class="string">"""Générateur de réponses RAG avec prompt structuré."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, model: str = <span class="string">"gpt-4o"</span>):
+        self.client = OpenAI()
+        self.model = model
+
+    <span class="keyword">def</span> <span class="function">format_context</span>(self, documents: List[Dict]) -> str:
+        <span class="string">"""Formate les documents récupérés en contexte textuel."""</span>
+        context_parts = []
+        <span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(documents, <span class="number">1</span>):
+            source = doc.get(<span class="string">"metadata"</span>, {}).get(<span class="string">"source"</span>, <span class="string">"Inconnu"</span>)
+            context_parts.<span class="function">append</span>(
+                <span class="string">f"[Document {i}] (Source: {source})\n{doc['content']}"</span>
+            )
+        <span class="keyword">return</span> <span class="string">"\n\n"</span>.join(context_parts)
+
+    <span class="keyword">def</span> <span class="function">generate</span>(self, question: str, documents: List[Dict]) -> str:
+        <span class="string">"""Génère une réponse à partir de la question et des documents."""</span>
+        context = self.<span class="function">format_context</span>(documents)
+
+        system_prompt = <span class="string">"""Tu es un assistant expert qui répond aux questions
+en se basant UNIQUEMENT sur le contexte fourni. Cite toujours
+les numéros de documents entre crochets [Document X] pour
+chaque affirmation. Si l'information n'est pas dans le contexte,
+dis-le clairement."""</span>
+
+        user_prompt = <span class="string">f"""Contexte :
+{context}
+
+Question : {question}
+
+Réponds de manière précise en citant les sources."""</span>
+
+        response = self.client.chat.completions.<span class="function">create</span>(
+            model=self.model,
+            messages=[
+                {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: system_prompt},
+                {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: user_prompt}
+            ],
+            temperature=<span class="number">0.1</span>,  <span class="comment"># Basse pour plus de fidélité</span>
+            max_tokens=<span class="number">1024</span>
+        )
+        <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.content
+
+<span class="comment"># Utilisation</span>
+generator = <span class="function">RAGGenerator</span>()
+documents = [
+    {<span class="string">"content"</span>: <span class="string">"Python a été créé par Guido van Rossum en 1991."</span>,
+     <span class="string">"metadata"</span>: {<span class="string">"source"</span>: <span class="string">"wiki_python.pdf"</span>}},
+    {<span class="string">"content"</span>: <span class="string">"Python 3.12 introduit les f-strings améliorées."</span>,
+     <span class="string">"metadata"</span>: {<span class="string">"source"</span>: <span class="string">"changelog_3.12.md"</span>}}
+]
+answer = generator.<span class="function">generate</span>(<span class="string">"Qui a créé Python ?"</span>, documents)
+<span class="function">print</span>(answer)</div>
+
+    <div class="output-block">D'après les documents disponibles, Python a été créé par Guido van Rossum en 1991 [Document 1].</div>
+
+    <div class="effect">La température basse (0.1) force le LLM à rester proche du contexte fourni, réduisant les hallucinations. Pour des tâches créatives, on augmenterait cette valeur.</div>
+
+    <h3>2.3 Paramètres clés du LLM pour le RAG</h3>
+
+    <table>
+        <tr><th>Paramètre</th><th>Valeur RAG</th><th>Raison</th></tr>
+        <tr><td>temperature</td><td>0.0 - 0.2</td><td>Minimiser la créativité, maximiser la fidélité</td></tr>
+        <tr><td>max_tokens</td><td>512 - 2048</td><td>Assez pour des réponses complètes mais pas trop longues</td></tr>
+        <tr><td>top_p</td><td>0.9</td><td>Limiter le vocabulaire au plus probable</td></tr>
+        <tr><td>frequency_penalty</td><td>0.0</td><td>Pas de pénalité : les termes techniques se répètent</td></tr>
+        <tr><td>presence_penalty</td><td>0.0</td><td>Pas de forçage de diversité thématique</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2>3. Prompt Engineering pour RAG</h2>
+
+    <p>Le prompt engineering pour RAG est fondamentalement différent du prompt engineering général. L'objectif n'est pas de stimuler la créativité du LLM mais de le contraindre à extraire et synthétiser l'information du contexte fourni.</p>
+
+    <h3>3.1 Instructions pour citer les sources</h3>
+
+    <div class="code-block"><span class="comment"># Prompt avec instructions de citation détaillées</span>
+<span class="keyword">CITATION_PROMPT</span> = <span class="string">"""Tu es un assistant de recherche documentaire.
+
+INSTRUCTIONS DE CITATION :
+1. Chaque affirmation doit être suivie d'une référence [Doc X]
+2. Si plusieurs documents confirment la même info, cite-les tous [Doc 1, Doc 3]
+3. Ne fais JAMAIS d'affirmation sans référence au contexte
+4. Si tu synthétises plusieurs documents, indique lesquels
+
+Contexte :
+{context}
+
+Question : {question}
+
+Réponse (avec citations) :"""</span></div>
+
+    <h3>3.2 Instructions pour gérer l'absence d'information</h3>
+
+    <div class="code-block"><span class="comment"># Prompt qui gère gracieusement le "je ne sais pas"</span>
+<span class="keyword">HONEST_PROMPT</span> = <span class="string">"""Tu es un assistant honnête et précis.
+
+RÈGLES FONDAMENTALES :
+- Réponds UNIQUEMENT à partir du contexte fourni
+- Si le contexte ne contient PAS l'information demandée,
+  réponds exactement : "Cette information n'est pas disponible
+  dans les documents consultés."
+- Ne complète JAMAIS avec tes connaissances générales
+- Si le contexte est partiellement pertinent, précise ce que
+  tu as trouvé ET ce qui manque
+
+CONTEXTE :
+{context}
+
+QUESTION : {question}
+
+RÉPONSE :"""</span></div>
+
+    <h3>3.3 Gestion des contradictions entre sources</h3>
+
+    <div class="code-block"><span class="comment"># Prompt pour gérer les contradictions entre documents</span>
+<span class="keyword">CONTRADICTION_PROMPT</span> = <span class="string">"""Tu es un assistant d'analyse documentaire.
+
+Si tu détectes des CONTRADICTIONS entre les documents :
+1. Signale explicitement la contradiction
+2. Présente les deux versions avec leurs sources
+3. Ne tranche PAS en faveur d'une version
+4. Suggère de vérifier les sources originales
+
+Format de réponse si contradiction :
+"Attention : Les documents présentent des informations
+contradictoires sur ce point.
+- Selon [Doc X] : ...
+- Selon [Doc Y] : ...
+Il est recommandé de vérifier les sources originales."
+
+CONTEXTE :
+{context}
+
+QUESTION : {question}
+
+RÉPONSE :"""</span></div>
+
+    <div class="concept-box blue">
+        <h3>Bibliothèque de directives de prompt RAG</h3>
+        <ul>
+            <li><strong>Fidélité</strong> : "Base ta réponse EXCLUSIVEMENT sur le contexte fourni"</li>
+            <li><strong>Honnêteté</strong> : "Si l'information n'est pas dans le contexte, dis-le"</li>
+            <li><strong>Attribution</strong> : "Cite les sources pour chaque affirmation"</li>
+            <li><strong>Précision</strong> : "Utilise les termes exacts des documents"</li>
+            <li><strong>Concision</strong> : "Réponds de manière concise et structurée"</li>
+            <li><strong>Contradictions</strong> : "Signale les incohérences entre documents"</li>
+            <li><strong>Limites</strong> : "N'extrapole pas au-delà du contexte"</li>
+        </ul>
+    </div>
+
+    <h3>3.4 Prompt structuré avancé avec Few-Shot</h3>
+
+    <div class="code-block"><span class="comment"># Prompt avec exemples (few-shot) pour guider le format</span>
+<span class="keyword">FEW_SHOT_RAG_PROMPT</span> = <span class="string">"""Tu es un assistant expert.
+
+Voici un exemple du format de réponse attendu :
+
+EXEMPLE :
+Question : Quelle est la population de Paris ?
+Contexte : [Doc 1] Paris compte 2,1 millions d'habitants intra-muros.
+[Doc 2] L'agglomération parisienne regroupe 12 millions de personnes.
+Réponse : Paris compte 2,1 millions d'habitants dans sa zone
+intra-muros [Doc 1]. Si l'on considère l'agglomération élargie,
+ce chiffre atteint 12 millions de personnes [Doc 2].
+
+Maintenant réponds à cette question :
+CONTEXTE :
+{context}
+
+QUESTION : {question}
+
+RÉPONSE :"""</span></div>
+
+    <div class="prof-note">
+        Le few-shot est particulièrement utile pour imposer un format de réponse précis. En montrant un exemple, le LLM comprend exactement comment structurer sa réponse avec les citations et le niveau de détail attendu.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>4. Stuffing vs Map-Reduce vs Refine</h2>
+
+    <p>Lorsque le système de retrieval renvoie de nombreux documents, il existe trois stratégies principales pour les passer au LLM. Le choix de la stratégie dépend du nombre de documents, de la taille de la fenêtre de contexte du LLM, et du type de réponse attendu.</p>
+
+    <div class="svg-container">
+        <svg width="900" height="480" viewBox="0 0 900 480">
+            <!-- Title -->
+            <text x="450" y="25" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">3 Stratégies de Génération Multi-Documents</text>
+
+            <!-- STUFFING -->
+            <rect x="20" y="50" width="260" height="400" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="150" y="80" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">STUFFING</text>
+            <text x="150" y="100" text-anchor="middle" fill="#aaa" font-size="11">(Bourrage)</text>
+            <rect x="40" y="115" width="85" height="30" rx="5" fill="#16213e" stroke="#569cd6"/>
+            <text x="82" y="135" text-anchor="middle" fill="#569cd6" font-size="10">Doc 1</text>
+            <rect x="130" y="115" width="85" height="30" rx="5" fill="#16213e" stroke="#569cd6"/>
+            <text x="172" y="135" text-anchor="middle" fill="#569cd6" font-size="10">Doc 2</text>
+            <rect x="85" y="150" width="85" height="30" rx="5" fill="#16213e" stroke="#569cd6"/>
+            <text x="127" y="170" text-anchor="middle" fill="#569cd6" font-size="10">Doc 3</text>
+            <text x="150" y="210" text-anchor="middle" fill="#aaa" font-size="11">Tous dans 1 prompt</text>
+            <line x1="150" y1="220" x2="150" y2="250" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <rect x="60" y="255" width="180" height="40" rx="8" fill="#16213e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="150" y="280" text-anchor="middle" fill="#ff6b35" font-size="12">1 appel LLM</text>
+            <line x1="150" y1="295" x2="150" y2="325" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <rect x="60" y="330" width="180" height="40" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="150" y="355" text-anchor="middle" fill="#00ff88" font-size="12">Réponse finale</text>
+            <text x="150" y="400" text-anchor="middle" fill="#aaa" font-size="10">Simple, rapide</text>
+            <text x="150" y="418" text-anchor="middle" fill="#aaa" font-size="10">Limité par context window</text>
+            <text x="150" y="436" text-anchor="middle" fill="#00ff88" font-size="10">Meilleur si &lt; 10 docs</text>
+
+            <!-- MAP-REDUCE -->
+            <rect x="320" y="50" width="260" height="400" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="450" y="80" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">MAP-REDUCE</text>
+            <text x="450" y="100" text-anchor="middle" fill="#aaa" font-size="11">(Distribué)</text>
+            <rect x="340" y="115" width="70" height="28" rx="5" fill="#16213e" stroke="#569cd6"/>
+            <text x="375" y="134" text-anchor="middle" fill="#569cd6" font-size="10">Doc 1</text>
+            <rect x="415" y="115" width="70" height="28" rx="5" fill="#16213e" stroke="#569cd6"/>
+            <text x="450" y="134" text-anchor="middle" fill="#569cd6" font-size="10">Doc 2</text>
+            <rect x="490" y="115" width="70" height="28" rx="5" fill="#16213e" stroke="#569cd6"/>
+            <text x="525" y="134" text-anchor="middle" fill="#569cd6" font-size="10">Doc 3</text>
+            <text x="450" y="170" text-anchor="middle" fill="#aaa" font-size="11">Chacun séparément</text>
+            <line x1="375" y1="178" x2="375" y2="205" stroke="#ff6b35" stroke-width="1"/>
+            <line x1="450" y1="178" x2="450" y2="205" stroke="#ff6b35" stroke-width="1"/>
+            <line x1="525" y1="178" x2="525" y2="205" stroke="#ff6b35" stroke-width="1"/>
+            <rect x="340" y="208" width="70" height="28" rx="5" fill="#16213e" stroke="#ff8c42"/>
+            <text x="375" y="226" text-anchor="middle" fill="#ff8c42" font-size="9">Rés. 1</text>
+            <rect x="415" y="208" width="70" height="28" rx="5" fill="#16213e" stroke="#ff8c42"/>
+            <text x="450" y="226" text-anchor="middle" fill="#ff8c42" font-size="9">Rés. 2</text>
+            <rect x="490" y="208" width="70" height="28" rx="5" fill="#16213e" stroke="#ff8c42"/>
+            <text x="525" y="226" text-anchor="middle" fill="#ff8c42" font-size="9">Rés. 3</text>
+            <text x="450" y="265" text-anchor="middle" fill="#aaa" font-size="11">Combinaison (Reduce)</text>
+            <line x1="450" y1="275" x2="450" y2="305" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+            <rect x="360" y="310" width="180" height="40" rx="8" fill="#16213e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="450" y="335" text-anchor="middle" fill="#ff6b35" font-size="12">N+1 appels LLM</text>
+            <line x1="450" y1="350" x2="450" y2="370" stroke="#ff6b35" stroke-width="1"/>
+            <rect x="360" y="375" width="180" height="40" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="450" y="400" text-anchor="middle" fill="#00ff88" font-size="12">Réponse finale</text>
+            <text x="450" y="436" text-anchor="middle" fill="#ff6b35" font-size="10">Scalable, parallélisable</text>
+
+            <!-- REFINE -->
+            <rect x="620" y="50" width="260" height="400" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="750" y="80" text-anchor="middle" fill="#569cd6" font-size="14" font-weight="bold">REFINE</text>
+            <text x="750" y="100" text-anchor="middle" fill="#aaa" font-size="11">(Itératif)</text>
+            <rect x="700" y="115" width="100" height="28" rx="5" fill="#16213e" stroke="#569cd6"/>
+            <text x="750" y="134" text-anchor="middle" fill="#569cd6" font-size="10">Doc 1 + Q</text>
+            <line x1="750" y1="143" x2="750" y2="165" stroke="#ff6b35" stroke-width="1"/>
+            <rect x="700" y="168" width="100" height="28" rx="5" fill="#16213e" stroke="#ff8c42"/>
+            <text x="750" y="187" text-anchor="middle" fill="#ff8c42" font-size="10">Rép. v1</text>
+            <line x1="750" y1="196" x2="750" y2="218" stroke="#ff6b35" stroke-width="1"/>
+            <rect x="680" y="221" width="140" height="28" rx="5" fill="#16213e" stroke="#569cd6"/>
+            <text x="750" y="240" text-anchor="middle" fill="#569cd6" font-size="10">Doc 2 + Rép. v1</text>
+            <line x1="750" y1="249" x2="750" y2="271" stroke="#ff6b35" stroke-width="1"/>
+            <rect x="700" y="274" width="100" height="28" rx="5" fill="#16213e" stroke="#ff8c42"/>
+            <text x="750" y="293" text-anchor="middle" fill="#ff8c42" font-size="10">Rép. v2</text>
+            <line x1="750" y1="302" x2="750" y2="324" stroke="#ff6b35" stroke-width="1"/>
+            <rect x="680" y="327" width="140" height="28" rx="5" fill="#16213e" stroke="#569cd6"/>
+            <text x="750" y="346" text-anchor="middle" fill="#569cd6" font-size="10">Doc 3 + Rép. v2</text>
+            <line x1="750" y1="355" x2="750" y2="377" stroke="#ff6b35" stroke-width="1"/>
+            <rect x="660" y="380" width="180" height="40" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="750" y="405" text-anchor="middle" fill="#00ff88" font-size="12">Rép. finale (v3)</text>
+            <text x="750" y="436" text-anchor="middle" fill="#569cd6" font-size="10">Précis, itératif, séquentiel</text>
+        </svg>
+    </div>
+
+    <h3>4.1 Stratégie Stuffing (Bourrage)</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">stuffing_strategy</span>(question: str, documents: list, llm) -> str:
+    <span class="string">"""Tous les documents sont concaténés dans un seul prompt."""</span>
+    context = <span class="string">"\n\n"</span>.join([
+        <span class="string">f"[Doc {i+1}] {doc['content']}"</span>
+        <span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(documents)
+    ])
+
+    prompt = <span class="string">f"""Contexte :
+{context}
+
+Question : {question}
+Réponse :"""</span>
+
+    <span class="keyword">return</span> llm.<span class="function">generate</span>(prompt)
+
+<span class="comment"># Avantage : 1 seul appel LLM, simple et rapide</span>
+<span class="comment"># Inconvénient : Limité par la fenêtre de contexte</span>
+<span class="comment"># Utiliser quand : Peu de documents (&lt; 10), context window large</span></div>
+
+    <h3>4.2 Stratégie Map-Reduce</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">map_reduce_strategy</span>(question: str, documents: list, llm) -> str:
+    <span class="string">"""Phase MAP : chaque document traité séparément.
+    Phase REDUCE : les résumés sont combinés."""</span>
+
+    <span class="comment"># Phase MAP : extraire l'info pertinente de chaque document</span>
+    summaries = []
+    <span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(documents):
+        map_prompt = <span class="string">f"""Extrais les informations pertinentes pour
+répondre à cette question.
+
+Document :
+{doc['content']}
+
+Question : {question}
+
+Informations pertinentes (ou "Aucune info pertinente") :"""</span>
+
+        summary = llm.<span class="function">generate</span>(map_prompt)
+        <span class="keyword">if</span> <span class="string">"aucune"</span> <span class="keyword">not in</span> summary.lower():
+            summaries.<span class="function">append</span>(<span class="string">f"[Doc {i+1}] {summary}"</span>)
+
+    <span class="comment"># Phase REDUCE : combiner les résumés en réponse finale</span>
+    reduce_prompt = <span class="string">f"""Voici des extraits pertinents de différents documents.
+Synthétise-les en une réponse complète et cohérente.
+
+Extraits :
+{chr(10).join(summaries)}
+
+Question : {question}
+
+Réponse synthétisée :"""</span>
+
+    <span class="keyword">return</span> llm.<span class="function">generate</span>(reduce_prompt)
+
+<span class="comment"># Avantage : Scalable, parallélisable, gère beaucoup de docs</span>
+<span class="comment"># Inconvénient : Plus d'appels LLM (coût + latence)</span>
+<span class="comment"># Utiliser quand : Nombreux documents (&gt; 20), résumés longs</span></div>
+
+    <h3>4.3 Stratégie Refine (Itérative)</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">refine_strategy</span>(question: str, documents: list, llm) -> str:
+    <span class="string">"""Raffine itérativement la réponse avec chaque nouveau document."""</span>
+
+    <span class="comment"># Première réponse avec le premier document</span>
+    initial_prompt = <span class="string">f"""Contexte :
+{documents[0]['content']}
+
+Question : {question}
+
+Réponse initiale :"""</span>
+
+    current_answer = llm.<span class="function">generate</span>(initial_prompt)
+
+    <span class="comment"># Raffiner avec chaque document suivant</span>
+    <span class="keyword">for</span> doc <span class="keyword">in</span> documents[<span class="number">1</span>:]:
+        refine_prompt = <span class="string">f"""Voici une réponse existante et un nouveau document.
+Améliore la réponse en intégrant les nouvelles informations.
+
+Réponse actuelle :
+{current_answer}
+
+Nouveau document :
+{doc['content']}
+
+Question originale : {question}
+
+Réponse améliorée (intègre les nouvelles infos si pertinentes) :"""</span>
+
+        current_answer = llm.<span class="function">generate</span>(refine_prompt)
+
+    <span class="keyword">return</span> current_answer
+
+<span class="comment"># Avantage : Réponse progressive, pas de perte d'info</span>
+<span class="comment"># Inconvénient : Séquentiel (pas parallélisable), N appels</span>
+<span class="comment"># Utiliser quand : Documents complémentaires, besoin de précision</span></div>
+
+    <h3>4.4 Tableau comparatif</h3>
+
+    <table>
+        <tr><th>Critère</th><th>Stuffing</th><th>Map-Reduce</th><th>Refine</th></tr>
+        <tr><td>Appels LLM</td><td>1</td><td>N + 1</td><td>N</td></tr>
+        <tr><td>Latence</td><td>Faible</td><td>Moyenne (parallélisable)</td><td>Haute (séquentiel)</td></tr>
+        <tr><td>Coût</td><td>Faible</td><td>Élevé</td><td>Élevé</td></tr>
+        <tr><td>Max documents</td><td>~10-15</td><td>Illimité</td><td>~20-30</td></tr>
+        <tr><td>Qualité</td><td>Bonne si peu de docs</td><td>Bonne pour synthèse</td><td>Excellente, précise</td></tr>
+        <tr><td>Cas d'usage</td><td>RAG standard</td><td>Résumé de corpus</td><td>Analyse détaillée</td></tr>
+    </table>
+
+    <div class="warning">
+        Avec les modèles modernes ayant des fenêtres de contexte très larges (128K tokens pour GPT-4o, 200K pour Claude), le stuffing est devenu la stratégie par défaut dans la plupart des cas. Map-Reduce et Refine restent utiles pour des corpus vraiment massifs ou quand on veut maîtriser les coûts.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>5. Attribution des Sources</h2>
+
+    <p>L'attribution des sources est essentielle pour la crédibilité d'un système RAG. Elle permet aux utilisateurs de vérifier les informations et de remonter aux documents originaux.</p>
+
+    <h3>5.1 Sortie structurée avec citations</h3>
+
+    <div class="code-block"><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel
+<span class="keyword">from</span> typing <span class="keyword">import</span> List
+<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+<span class="keyword">import</span> json
+
+<span class="keyword">class</span> <span class="function">Citation</span>(BaseModel):
+    <span class="string">"""Une citation avec sa source."""</span>
+    text: str          <span class="comment"># Le texte affirmé</span>
+    source_doc: int    <span class="comment"># Numéro du document source</span>
+    source_page: str   <span class="comment"># Page/section dans le document</span>
+    confidence: float  <span class="comment"># Confiance dans la citation (0-1)</span>
+
+<span class="keyword">class</span> <span class="function">RAGResponse</span>(BaseModel):
+    <span class="string">"""Réponse RAG structurée avec citations."""</span>
+    answer: str                 <span class="comment"># La réponse complète</span>
+    citations: List[Citation]   <span class="comment"># Liste des citations</span>
+    confidence: float           <span class="comment"># Confiance globale (0-1)</span>
+    has_sufficient_context: bool <span class="comment"># Le contexte suffit-il ?</span>
+
+<span class="keyword">def</span> <span class="function">generate_with_citations</span>(question: str, documents: list) -> RAGResponse:
+    <span class="string">"""Génère une réponse structurée avec citations vérifiables."""</span>
+    client = OpenAI()
+
+    context = <span class="string">"\n\n"</span>.join([
+        <span class="string">f"[Document {i+1}] (Source: {d['source']})\n{d['content']}"</span>
+        <span class="keyword">for</span> i, d <span class="keyword">in</span> <span class="function">enumerate</span>(documents)
+    ])
+
+    response = client.beta.chat.completions.<span class="function">parse</span>(
+        model=<span class="string">"gpt-4o"</span>,
+        messages=[
+            {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"""Réponds à la question en citant
+tes sources. Retourne une réponse structurée JSON avec :
+- answer: la réponse complète
+- citations: liste de {text, source_doc, source_page, confidence}
+- confidence: score global de confiance
+- has_sufficient_context: true/false"""</span>},
+            {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">f"Contexte:\n{context}\n\nQuestion: {question}"</span>}
+        ],
+        response_format=RAGResponse,
+        temperature=<span class="number">0.1</span>
+    )
+
+    <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.parsed
+
+<span class="comment"># Utilisation</span>
+docs = [
+    {<span class="string">"content"</span>: <span class="string">"Le chiffre d'affaires 2024 est de 5,2M EUR."</span>,
+     <span class="string">"source"</span>: <span class="string">"rapport_annuel_2024.pdf, page 12"</span>},
+    {<span class="string">"content"</span>: <span class="string">"La croissance prévue pour 2025 est de 15%."</span>,
+     <span class="string">"source"</span>: <span class="string">"prévisions_2025.pdf, page 3"</span>}
+]
+
+result = <span class="function">generate_with_citations</span>(<span class="string">"Quel est le CA 2024 ?"</span>, docs)
+<span class="function">print</span>(<span class="string">f"Réponse: {result.answer}"</span>)
+<span class="function">print</span>(<span class="string">f"Confiance: {result.confidence}"</span>)
+<span class="keyword">for</span> c <span class="keyword">in</span> result.citations:
+    <span class="function">print</span>(<span class="string">f"  - '{c.text}' [Doc {c.source_doc}] ({c.confidence:.0%})"</span>)</div>
+
+    <div class="output-block">Réponse: Le chiffre d'affaires 2024 s'élève à 5,2 millions d'euros.
+Confiance: 0.95
+  - 'Le chiffre d'affaires 2024 est de 5,2M EUR' [Doc 1] (95%)</div>
+
+    <div class="prof-note">
+        L'utilisation de la sortie structurée (structured output) via Pydantic est une pratique de production essentielle. Elle garantit que la réponse est toujours parseable et que les citations sont exploitables programmatiquement pour l'affichage dans l'interface utilisateur.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>6. Gérer le "Je ne sais pas"</h2>
+
+    <p>Un des problèmes les plus critiques du RAG est quand le contexte récupéré ne contient pas la réponse à la question. Le LLM a tendance à halluciner plutôt qu'à admettre son ignorance. Il faut explicitement programmer ce comportement.</p>
+
+    <h3>6.1 Stratégie de détection d'absence d'information</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">SafeRAGGenerator</span>:
+    <span class="string">"""Générateur RAG qui sait dire 'je ne sais pas'."""</span>
+
+    <span class="keyword">SYSTEM_PROMPT</span> = <span class="string">"""Tu es un assistant documentaire strict.
+
+RÈGLE ABSOLUE : Tu ne dois JAMAIS inventer d'information.
+
+Processus de réponse :
+1. Lis attentivement TOUT le contexte fourni
+2. Identifie les passages pertinents pour la question
+3. Si des passages pertinents existent : réponds en les citant
+4. Si AUCUN passage n'est pertinent : utilise la réponse type ci-dessous
+
+RÉPONSE TYPE (absence d'info) :
+"Je n'ai pas trouvé d'information sur [sujet] dans les documents
+disponibles. Les documents consultés portent sur [thèmes des docs].
+Vous pourriez reformuler votre question ou consulter d'autres sources."
+
+RÉPONSE TYPE (info partielle) :
+"J'ai trouvé des informations partielles : [info trouvée].
+Cependant, je n'ai pas trouvé [ce qui manque]."
+"""</span>
+
+    <span class="keyword">def</span> <span class="function">generate</span>(self, question: str, documents: list) -> dict:
+        context = self.<span class="function">_format_docs</span>(documents)
+
+        response = self.client.chat.completions.<span class="function">create</span>(
+            model=<span class="string">"gpt-4o"</span>,
+            messages=[
+                {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: self.SYSTEM_PROMPT},
+                {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">f"""Contexte :
+{context}
+
+Question : {question}
+
+AVANT de répondre, vérifie que le contexte contient
+l'information nécessaire."""</span>}
+            ],
+            temperature=<span class="number">0.0</span>  <span class="comment"># Température à 0 pour max fidélité</span>
+        )
+
+        answer = response.choices[<span class="number">0</span>].message.content
+
+        <span class="comment"># Détection automatique du "je ne sais pas"</span>
+        no_info_markers = [
+            <span class="string">"pas trouvé"</span>, <span class="string">"pas d'information"</span>,
+            <span class="string">"ne contient pas"</span>, <span class="string">"n'ai pas trouvé"</span>,
+            <span class="string">"information partielle"</span>, <span class="string">"pas disponible"</span>
+        ]
+        has_answer = <span class="keyword">not</span> <span class="function">any</span>(m <span class="keyword">in</span> answer.lower() <span class="keyword">for</span> m <span class="keyword">in</span> no_info_markers)
+
+        <span class="keyword">return</span> {
+            <span class="string">"answer"</span>: answer,
+            <span class="string">"has_answer"</span>: has_answer,
+            <span class="string">"confidence"</span>: <span class="string">"high"</span> <span class="keyword">if</span> has_answer <span class="keyword">else</span> <span class="string">"low"</span>
+        }</div>
+
+    <h3>6.2 Vérification post-génération</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">verify_grounding</span>(answer: str, context: str, llm) -> dict:
+    <span class="string">"""Vérifie si la réponse est bien ancrée dans le contexte."""</span>
+
+    verification_prompt = <span class="string">f"""Analyse cette réponse et détermine si CHAQUE
+affirmation est supportée par le contexte.
+
+CONTEXTE :
+{context}
+
+RÉPONSE À VÉRIFIER :
+{answer}
+
+Pour chaque affirmation de la réponse, indique :
+- "SUPPORTÉ" si elle vient directement du contexte
+- "INFÉRÉ" si c'est une déduction logique du contexte
+- "NON SUPPORTÉ" si elle n'est pas dans le contexte
+
+Retourne aussi un score de fidélité global (0-1)."""</span>
+
+    result = llm.<span class="function">generate</span>(verification_prompt)
+    <span class="keyword">return</span> result</div>
+
+    <div class="warning">
+        Ne faites JAMAIS confiance au LLM à 100% pour dire "je ne sais pas". Même avec des instructions explicites, il peut parfois halluciner. La vérification post-génération (grounding check) est une couche de sécurité essentielle en production.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>7. RAG Multi-Langues</h2>
+
+    <p>Dans un contexte international, les documents peuvent être dans une langue (ex: anglais) et les questions dans une autre (ex: français). Plusieurs stratégies existent pour gérer cette situation.</p>
+
+    <h3>7.1 Stratégies de traduction</h3>
+
+    <div class="svg-container">
+        <svg width="800" height="300" viewBox="0 0 800 300">
+            <text x="400" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">3 Stratégies pour le RAG Multi-Langues</text>
+
+            <!-- Stratégie 1 -->
+            <rect x="20" y="50" width="230" height="230" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="135" y="75" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Traduire la question</text>
+            <text x="135" y="105" text-anchor="middle" fill="#569cd6" font-size="11">Question (FR)</text>
+            <text x="135" y="130" text-anchor="middle" fill="#aaa" font-size="20">&#8595;</text>
+            <text x="135" y="150" text-anchor="middle" fill="#ff8c42" font-size="11">Traduction FR &#8594; EN</text>
+            <text x="135" y="175" text-anchor="middle" fill="#aaa" font-size="20">&#8595;</text>
+            <text x="135" y="195" text-anchor="middle" fill="#569cd6" font-size="11">Retrieval (EN)</text>
+            <text x="135" y="220" text-anchor="middle" fill="#aaa" font-size="20">&#8595;</text>
+            <text x="135" y="240" text-anchor="middle" fill="#00ff88" font-size="11">Réponse (FR)</text>
+            <text x="135" y="268" text-anchor="middle" fill="#aaa" font-size="10">Simple, efficace</text>
+
+            <!-- Stratégie 2 -->
+            <rect x="280" y="50" width="230" height="230" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="395" y="75" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Traduire les documents</text>
+            <text x="395" y="105" text-anchor="middle" fill="#569cd6" font-size="11">Documents (EN)</text>
+            <text x="395" y="130" text-anchor="middle" fill="#aaa" font-size="20">&#8595;</text>
+            <text x="395" y="150" text-anchor="middle" fill="#ff8c42" font-size="11">Traduction EN &#8594; FR</text>
+            <text x="395" y="175" text-anchor="middle" fill="#aaa" font-size="20">&#8595;</text>
+            <text x="395" y="195" text-anchor="middle" fill="#569cd6" font-size="11">Index FR + Retrieval</text>
+            <text x="395" y="220" text-anchor="middle" fill="#aaa" font-size="20">&#8595;</text>
+            <text x="395" y="240" text-anchor="middle" fill="#00ff88" font-size="11">Réponse (FR)</text>
+            <text x="395" y="268" text-anchor="middle" fill="#aaa" font-size="10">Meilleure qualité, coûteux</text>
+
+            <!-- Stratégie 3 -->
+            <rect x="540" y="50" width="240" height="230" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="660" y="75" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Embeddings multilingues</text>
+            <text x="660" y="105" text-anchor="middle" fill="#569cd6" font-size="11">Question (FR) + Docs (EN)</text>
+            <text x="660" y="130" text-anchor="middle" fill="#aaa" font-size="20">&#8595;</text>
+            <text x="660" y="150" text-anchor="middle" fill="#ff8c42" font-size="11">Modèle multilingual-e5</text>
+            <text x="660" y="175" text-anchor="middle" fill="#aaa" font-size="20">&#8595;</text>
+            <text x="660" y="195" text-anchor="middle" fill="#569cd6" font-size="11">Retrieval cross-lingue</text>
+            <text x="660" y="220" text-anchor="middle" fill="#aaa" font-size="20">&#8595;</text>
+            <text x="660" y="240" text-anchor="middle" fill="#00ff88" font-size="11">Réponse (FR)</text>
+            <text x="660" y="268" text-anchor="middle" fill="#aaa" font-size="10">Le plus élégant</text>
+        </svg>
+    </div>
+
+    <h3>7.2 Implémentation avec embeddings multilingues</h3>
+
+    <div class="code-block"><span class="keyword">from</span> sentence_transformers <span class="keyword">import</span> SentenceTransformer
+
+<span class="comment"># Modèle multilingue : comprend 100+ langues</span>
+model = SentenceTransformer(<span class="string">"intfloat/multilingual-e5-large"</span>)
+
+<span class="comment"># Documents en anglais</span>
+docs_en = [
+    <span class="string">"The Eiffel Tower was completed in 1889."</span>,
+    <span class="string">"Python was created by Guido van Rossum in 1991."</span>
+]
+
+<span class="comment"># Embeddings des documents anglais</span>
+doc_embeddings = model.<span class="function">encode</span>(
+    [<span class="string">f"passage: {d}"</span> <span class="keyword">for</span> d <span class="keyword">in</span> docs_en]
+)
+
+<span class="comment"># Question en français (cross-lingue !)</span>
+question_fr = <span class="string">"Quand a été construite la Tour Eiffel ?"</span>
+query_embedding = model.<span class="function">encode</span>(<span class="string">f"query: {question_fr}"</span>)
+
+<span class="comment"># La recherche sémantique fonctionne entre les langues</span>
+<span class="keyword">from</span> sklearn.metrics.pairwise <span class="keyword">import</span> cosine_similarity
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+similarities = <span class="function">cosine_similarity</span>(
+    [query_embedding], doc_embeddings
+)[<span class="number">0</span>]
+
+best_idx = np.<span class="function">argmax</span>(similarities)
+<span class="function">print</span>(<span class="string">f"Meilleur document : {docs_en[best_idx]}"</span>)
+<span class="function">print</span>(<span class="string">f"Score : {similarities[best_idx]:.3f}"</span>)</div>
+
+    <div class="output-block">Meilleur document : The Eiffel Tower was completed in 1889.
+Score : 0.847</div>
+
+    <h3>7.3 Prompt multilingue pour la génération</h3>
+
+    <div class="code-block"><span class="keyword">MULTILINGUAL_PROMPT</span> = <span class="string">"""Tu es un assistant multilingue.
+
+RÈGLES :
+- Les documents de contexte peuvent être dans n'importe quelle langue
+- Réponds TOUJOURS dans la langue de la question de l'utilisateur
+- Si un document est dans une autre langue, traduis l'information
+  pertinente dans ta réponse
+- Cite les sources même si elles sont dans une autre langue
+
+Contexte (potentiellement multilangue) :
+{context}
+
+Question : {question}
+
+Réponse (dans la langue de la question) :"""</span></div>
+
+    <div class="effect">
+        Les modèles d'embeddings multilingues comme multilingual-e5 ou Cohere multilingual permettent de faire du retrieval cross-lingue sans aucune étape de traduction, ce qui est plus rapide et évite les erreurs de traduction.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>8. RAG Conversationnel</h2>
+
+    <p>Le RAG conversationnel ajoute la dimension de la mémoire de conversation. Le défi principal : comment reformuler une question qui dépend du contexte de la conversation pour en faire une question autonome utilisable par le système de retrieval.</p>
+
+    <div class="definition">
+        Le <strong>RAG conversationnel</strong> est un système qui maintient un historique de conversation et reformule automatiquement les questions contextuelles en questions autonomes avant d'effectuer le retrieval.
+    </div>
+
+    <div class="svg-container">
+        <svg width="900" height="380" viewBox="0 0 900 380">
+            <text x="450" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Pipeline RAG Conversationnel</text>
+
+            <!-- User question -->
+            <rect x="30" y="50" width="180" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="120" y="72" text-anchor="middle" fill="#569cd6" font-size="11">Nouvelle question</text>
+            <text x="120" y="90" text-anchor="middle" fill="#aaa" font-size="10">"Et son créateur ?"</text>
+
+            <!-- History -->
+            <rect x="30" y="120" width="180" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="120" y="142" text-anchor="middle" fill="#ff8c42" font-size="11">Historique</text>
+            <text x="120" y="160" text-anchor="middle" fill="#aaa" font-size="10">"Parle-moi de Python"</text>
+
+            <!-- Arrows to condenser -->
+            <line x1="210" y1="75" x2="260" y2="100" stroke="#ff6b35" stroke-width="1.5"/>
+            <line x1="210" y1="145" x2="260" y2="115" stroke="#ff6b35" stroke-width="1.5"/>
+
+            <!-- Condenser LLM -->
+            <rect x="265" y="80" width="170" height="55" rx="8" fill="#16213e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="350" y="103" text-anchor="middle" fill="#ff6b35" font-size="12" font-weight="bold">Condenseur</text>
+            <text x="350" y="123" text-anchor="middle" fill="#aaa" font-size="10">LLM reformule</text>
+
+            <!-- Arrow -->
+            <line x1="435" y1="107" x2="480" y2="107" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+
+            <!-- Standalone question -->
+            <rect x="485" y="80" width="180" height="55" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="575" y="100" text-anchor="middle" fill="#00ff88" font-size="11">Question autonome</text>
+            <text x="575" y="122" text-anchor="middle" fill="#aaa" font-size="10">"Qui a créé Python ?"</text>
+
+            <!-- Arrow down -->
+            <line x1="575" y1="135" x2="575" y2="170" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+
+            <!-- Retrieval -->
+            <rect x="485" y="175" width="180" height="45" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="575" y="203" text-anchor="middle" fill="#569cd6" font-size="12">Retrieval</text>
+
+            <!-- Arrow down -->
+            <line x1="575" y1="220" x2="575" y2="255" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+
+            <!-- Generation -->
+            <rect x="485" y="260" width="180" height="45" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="575" y="288" text-anchor="middle" fill="#ff6b35" font-size="12">Génération + Contexte</text>
+
+            <!-- Arrow down -->
+            <line x1="575" y1="305" x2="575" y2="340" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow1)"/>
+
+            <!-- Response -->
+            <rect x="485" y="345" width="180" height="30" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="575" y="365" text-anchor="middle" fill="#00ff88" font-size="12">Réponse</text>
+
+            <!-- Save to history arrow -->
+            <line x1="485" y1="360" x2="120" y2="360" stroke="#ff8c42" stroke-width="1" stroke-dasharray="5,5"/>
+            <line x1="120" y1="360" x2="120" y2="170" stroke="#ff8c42" stroke-width="1" stroke-dasharray="5,5"/>
+            <text x="300" y="355" text-anchor="middle" fill="#ff8c42" font-size="10">Sauvegarde dans l'historique</text>
+        </svg>
+    </div>
+
+    <h3>8.1 Condenseur de questions</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">QuestionCondenser</span>:
+    <span class="string">"""Reformule les questions contextuelles en questions autonomes."""</span>
+
+    <span class="keyword">CONDENSE_PROMPT</span> = <span class="string">"""Étant donné l'historique de conversation et
+la nouvelle question, reformule la question pour qu'elle soit
+autonome (compréhensible sans l'historique).
+
+Historique de conversation :
+{chat_history}
+
+Nouvelle question : {question}
+
+Question autonome reformulée :"""</span>
+
+    <span class="keyword">def</span> <span class="function">condense</span>(self, question: str, history: list) -> str:
+        <span class="keyword">if not</span> history:
+            <span class="keyword">return</span> question  <span class="comment"># Pas besoin de reformuler</span>
+
+        formatted_history = <span class="string">"\n"</span>.join([
+            <span class="string">f"{'Utilisateur' if m['role']=='user' else 'Assistant'}: {m['content']}"</span>
+            <span class="keyword">for</span> m <span class="keyword">in</span> history[-<span class="number">6</span>:]  <span class="comment"># Derniers 6 messages max</span>
+        ])
+
+        prompt = self.CONDENSE_PROMPT.<span class="function">format</span>(
+            chat_history=formatted_history,
+            question=question
+        )
+        <span class="keyword">return</span> self.llm.<span class="function">generate</span>(prompt)</div>
+
+    <h3>8.2 Pipeline conversationnel complet</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">ConversationalRAG</span>:
+    <span class="string">"""RAG avec mémoire de conversation complète."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, retriever, generator, condenser):
+        self.retriever = retriever
+        self.generator = generator
+        self.condenser = condenser
+        self.history = []
+
+    <span class="keyword">def</span> <span class="function">chat</span>(self, user_message: str) -> str:
+        <span class="comment"># Étape 1 : Reformuler la question avec le contexte</span>
+        standalone_question = self.condenser.<span class="function">condense</span>(
+            question=user_message,
+            history=self.history
+        )
+        <span class="function">print</span>(<span class="string">f"Question reformulée: {standalone_question}"</span>)
+
+        <span class="comment"># Étape 2 : Retrieval avec la question autonome</span>
+        documents = self.retriever.<span class="function">search</span>(standalone_question, k=<span class="number">5</span>)
+
+        <span class="comment"># Étape 3 : Génération de la réponse</span>
+        answer = self.generator.<span class="function">generate</span>(
+            question=standalone_question,
+            documents=documents,
+            chat_history=self.history[-<span class="number">4</span>:]  <span class="comment"># Contexte récent</span>
+        )
+
+        <span class="comment"># Étape 4 : Mise à jour de l'historique</span>
+        self.history.<span class="function">append</span>({<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: user_message})
+        self.history.<span class="function">append</span>({<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: answer})
+
+        <span class="comment"># Limiter la taille de l'historique</span>
+        <span class="keyword">if</span> <span class="function">len</span>(self.history) > <span class="number">20</span>:
+            self.history = self.history[-<span class="number">20</span>:]
+
+        <span class="keyword">return</span> answer
+
+    <span class="keyword">def</span> <span class="function">reset</span>(self):
+        <span class="string">"""Réinitialise la conversation."""</span>
+        self.history = []
+
+<span class="comment"># Exemple d'utilisation</span>
+rag = <span class="function">ConversationalRAG</span>(retriever, generator, condenser)
+
+<span class="comment"># Tour 1</span>
+r1 = rag.<span class="function">chat</span>(<span class="string">"Parle-moi de Python"</span>)
+<span class="comment"># Question reformulée: "Parle-moi de Python"</span>
+<span class="comment"># → Pas de reformulation nécessaire</span>
+
+<span class="comment"># Tour 2</span>
+r2 = rag.<span class="function">chat</span>(<span class="string">"Et qui l'a créé ?"</span>)
+<span class="comment"># Question reformulée: "Qui a créé Python ?"</span>
+<span class="comment"># → "l'" a été résolu en "Python" grâce à l'historique</span>
+
+<span class="comment"># Tour 3</span>
+r3 = rag.<span class="function">chat</span>(<span class="string">"En quelle année ?"</span>)
+<span class="comment"># Question reformulée: "En quelle année Python a-t-il été créé ?"</span></div>
+
+    <div class="output-block">Tour 1 - Question reformulée: Parle-moi de Python
+Tour 2 - Question reformulée: Qui a créé le langage de programmation Python ?
+Tour 3 - Question reformulée: En quelle année le langage Python a-t-il été créé ?</div>
+
+    <h3>8.3 Gestion avancée de la mémoire</h3>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">SmartMemory</span>:
+    <span class="string">"""Mémoire intelligente qui résume les anciennes conversations."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, max_messages=<span class="number">10</span>, llm=<span class="keyword">None</span>):
+        self.messages = []
+        self.summary = <span class="string">""</span>
+        self.max_messages = max_messages
+        self.llm = llm
+
+    <span class="keyword">def</span> <span class="function">add</span>(self, role: str, content: str):
+        self.messages.<span class="function">append</span>({<span class="string">"role"</span>: role, <span class="string">"content"</span>: content})
+
+        <span class="comment"># Si trop de messages, résumer les anciens</span>
+        <span class="keyword">if</span> <span class="function">len</span>(self.messages) > self.max_messages:
+            old_msgs = self.messages[:self.max_messages // <span class="number">2</span>]
+            self.summary = self.<span class="function">_summarize</span>(old_msgs)
+            self.messages = self.messages[self.max_messages // <span class="number">2</span>:]
+
+    <span class="keyword">def</span> <span class="function">_summarize</span>(self, messages: list) -> str:
+        text = <span class="string">"\n"</span>.join([<span class="string">f"{m['role']}: {m['content']}"</span> <span class="keyword">for</span> m <span class="keyword">in</span> messages])
+        prompt = <span class="string">f"""Résume cette conversation en 2-3 phrases :
+{text}
+Résumé :"""</span>
+        <span class="keyword">return</span> self.llm.<span class="function">generate</span>(prompt)
+
+    <span class="keyword">def</span> <span class="function">get_context</span>(self) -> str:
+        parts = []
+        <span class="keyword">if</span> self.summary:
+            parts.<span class="function">append</span>(<span class="string">f"Résumé des échanges précédents : {self.summary}"</span>)
+        <span class="keyword">for</span> m <span class="keyword">in</span> self.messages:
+            parts.<span class="function">append</span>(<span class="string">f"{m['role']}: {m['content']}"</span>)
+        <span class="keyword">return</span> <span class="string">"\n"</span>.join(parts)</div>
+
+    <div class="prof-note">
+        La gestion de la mémoire est un compromis entre contexte disponible et coût/latence. La technique de résumé progressif est utilisée par ChatGPT et d'autres chatbots pour maintenir une conversation cohérente sur de longues sessions sans dépasser la fenêtre de contexte.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>9. Résumé et Bibliothèque de Prompts</h2>
+
+    <h3>9.1 Bibliothèque de templates de prompts RAG</h3>
+
+    <div class="concept-box">
+        <h3>Templates essentiels</h3>
+        <table>
+            <tr><th>Template</th><th>Usage</th><th>Caractéristique clé</th></tr>
+            <tr><td>Standard RAG</td><td>Q&A simple</td><td>Contexte + Question = Réponse</td></tr>
+            <tr><td>Citation</td><td>Réponses vérifiables</td><td>Chaque affirmation citée</td></tr>
+            <tr><td>Honnêteté</td><td>Domaines critiques</td><td>Dit "je ne sais pas"</td></tr>
+            <tr><td>Contradiction</td><td>Multi-sources</td><td>Signale les incohérences</td></tr>
+            <tr><td>Few-shot</td><td>Format précis</td><td>Exemples de réponse idéale</td></tr>
+            <tr><td>Multilingue</td><td>Cross-lingue</td><td>Langue de réponse = langue de question</td></tr>
+            <tr><td>Conversationnel</td><td>Chat + RAG</td><td>Reformulation autonome</td></tr>
+        </table>
+    </div>
+
+    <h3>9.2 Tableau comparatif des stratégies</h3>
+
+    <table>
+        <tr><th>Stratégie</th><th>Appels LLM</th><th>Quand l'utiliser</th></tr>
+        <tr><td>Stuffing</td><td>1</td><td>Moins de 10-15 docs, fenêtre large</td></tr>
+        <tr><td>Map-Reduce</td><td>N+1</td><td>Beaucoup de docs, parallélisable</td></tr>
+        <tr><td>Refine</td><td>N</td><td>Besoin de précision maximale</td></tr>
+    </table>
+
+    <h3>9.3 Checklist de la génération RAG</h3>
+
+    <div class="concept-box green">
+        <ul>
+            <li>Le prompt contient des instructions claires de fidélité au contexte</li>
+            <li>Le LLM sait dire "je ne sais pas" quand l'info manque</li>
+            <li>Les sources sont citées dans chaque réponse</li>
+            <li>La température est basse (0.0 - 0.2) pour maximiser la fidélité</li>
+            <li>Les contradictions entre sources sont signalées</li>
+            <li>La sortie est structurée (JSON/Pydantic) pour le parsing</li>
+            <li>La stratégie multi-documents est adaptée au cas d'usage</li>
+            <li>Le système gère les conversations multi-tours</li>
+            <li>Le prompt est testé avec des cas limites (pas d'info, contradictions)</li>
+            <li>Une vérification post-génération détecte les hallucinations</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        La génération est la partie la plus visible du RAG mais aussi la plus délicate. Un bon pipeline RAG investit autant dans le prompt engineering et la vérification que dans le retrieval. Dans le prochain cours, nous verrons comment mesurer objectivement la qualité de chaque composant avec les métriques d'évaluation.
+    </div>
+
+    <div class="nav">
+        <a href="rag_04_retrieval.html">&larr; Cours précédent : Retrieval</a>
+        <a href="rag_06_evaluation.html">Cours suivant : Évaluation du RAG &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

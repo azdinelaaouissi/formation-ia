@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Strategies de Chunking pour le RAG</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "D&eacute;finition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Strategies de Chunking pour le RAG</h1>
+    <p class="subtitle">Le parametre le plus impactant sur la qualite de votre RAG</p>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 1 : RECAPITULATIF                                -->
+    <!-- ======================================================= -->
+    <h2>1. Recapitulatif -- Pourquoi le chunking est crucial</h2>
+
+    <div class="definition">
+        Le <strong>chunking</strong> (decoupage en morceaux) est le processus de division d'un document en segments plus petits qui seront indexes individuellement dans la base vectorielle. La qualite du chunking determine directement la qualite de la retrieval, et donc la qualite finale des reponses du RAG.
+    </div>
+
+    <p>Des etudes recentes (2024-2025) montrent que <strong>la qualite du chunking contraint la precision du retrieval davantage que le choix du modele d'embeddings</strong>. Un decoupage naif a taille fixe produit des scores de fidelite de 0.47 a 0.51, tandis qu'un chunking optimise atteint 0.79 a 0.82.</p>
+
+    <div class="concept-box">
+        <h4 style="color:#ff8c42; margin-bottom:12px;">Impact du chunking sur la chaine RAG</h4>
+        <ul>
+            <li><strong>Chunks trop petits</strong> : perte de contexte, informations fragmentees, reponses incompletes</li>
+            <li><strong>Chunks trop grands</strong> : bruit excessif, recherche imprecise, contexte dilue</li>
+            <li><strong>Mauvaise strategie</strong> : coupure au milieu des phrases, perte de structure logique</li>
+            <li><strong>Pas d'overlap</strong> : informations frontieres perdues entre deux chunks</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Si vous ne devez optimiser qu'un seul parametre de votre RAG, optimisez le chunking. C'est le levier qui a le plus d'impact sur la qualite des reponses, devant le choix du LLM, le nombre de chunks recuperes (k), ou meme le prompt template.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 2 : PRINCIPE -- SVG                              -->
+    <!-- ======================================================= -->
+    <h2>2. Principe -- Bon vs Mauvais chunking</h2>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" style="max-width:860px;">
+            <text x="450" y="30" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Impact du Chunking sur la Qualite du RAG</text>
+
+            <!-- Mauvais chunking (gauche) -->
+            <rect x="20" y="50" width="410" height="410" rx="12" fill="none" stroke="#ff4444" stroke-width="2"/>
+            <text x="225" y="78" text-anchor="middle" fill="#ff4444" font-size="14" font-weight="bold">MAUVAIS CHUNKING</text>
+
+            <!-- Document original -->
+            <rect x="40" y="95" width="370" height="60" rx="6" fill="#1a1a2e" stroke="#666" stroke-width="1"/>
+            <text x="225" y="120" text-anchor="middle" fill="#aaa" font-size="11">Document original : "La societe a ete fondee en 2019.</text>
+            <text x="225" y="138" text-anchor="middle" fill="#aaa" font-size="11">Elle emploie 150 personnes a Paris et Lyon."</text>
+
+            <!-- Coupure naive -->
+            <line x1="225" y1="155" x2="225" y2="180" stroke="#ff4444" stroke-width="2" marker-end="url(#arrowRed)"/>
+
+            <!-- Chunk 1 mauvais -->
+            <rect x="40" y="185" width="170" height="55" rx="6" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="125" y="205" text-anchor="middle" fill="#ff4444" font-size="10">Chunk 1</text>
+            <text x="125" y="225" text-anchor="middle" fill="#aaa" font-size="9">"La societe a ete fon"</text>
+
+            <!-- Chunk 2 mauvais -->
+            <rect x="230" y="185" width="170" height="55" rx="6" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="315" y="205" text-anchor="middle" fill="#ff4444" font-size="10">Chunk 2</text>
+            <text x="315" y="225" text-anchor="middle" fill="#aaa" font-size="9">"dee en 2019. Elle em"</text>
+
+            <!-- Resultat mauvais -->
+            <rect x="60" y="270" width="310" height="80" rx="6" fill="rgba(255,68,68,0.1)" stroke="#ff4444" stroke-width="1"/>
+            <text x="215" y="295" text-anchor="middle" fill="#ff4444" font-size="11" font-weight="bold">Recherche : "Quand fondee ?"</text>
+            <text x="215" y="315" text-anchor="middle" fill="#aaa" font-size="10">Chunk 1: "La societe a ete fon" (incomplet)</text>
+            <text x="215" y="335" text-anchor="middle" fill="#aaa" font-size="10">Date perdue entre les deux chunks !</text>
+
+            <!-- Score -->
+            <rect x="120" y="370" width="200" height="40" rx="8" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="220" y="395" text-anchor="middle" fill="#ff4444" font-size="14" font-weight="bold">Qualite : 47%</text>
+
+            <!-- Bon chunking (droite) -->
+            <rect x="470" y="50" width="410" height="410" rx="12" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="675" y="78" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">BON CHUNKING</text>
+
+            <!-- Document original -->
+            <rect x="490" y="95" width="370" height="60" rx="6" fill="#1a1a2e" stroke="#666" stroke-width="1"/>
+            <text x="675" y="120" text-anchor="middle" fill="#aaa" font-size="11">Document original : "La societe a ete fondee en 2019.</text>
+            <text x="675" y="138" text-anchor="middle" fill="#aaa" font-size="11">Elle emploie 150 personnes a Paris et Lyon."</text>
+
+            <!-- Coupure intelligente -->
+            <line x1="675" y1="155" x2="675" y2="180" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowGreen)"/>
+
+            <!-- Chunk 1 bon -->
+            <rect x="490" y="185" width="170" height="55" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="575" y="205" text-anchor="middle" fill="#00ff88" font-size="10">Chunk 1</text>
+            <text x="575" y="225" text-anchor="middle" fill="#aaa" font-size="9">"La societe a ete fondee</text>
+
+            <!-- Chunk 2 bon (avec overlap) -->
+            <rect x="680" y="185" width="180" height="55" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="770" y="205" text-anchor="middle" fill="#00ff88" font-size="10">Chunk 2 (overlap)</text>
+            <text x="770" y="225" text-anchor="middle" fill="#aaa" font-size="9">en 2019. Elle emploie 150</text>
+
+            <!-- Zone overlap -->
+            <rect x="680" y="190" width="50" height="45" rx="4" fill="rgba(0,255,136,0.1)" stroke="none"/>
+
+            <!-- Resultat bon -->
+            <rect x="510" y="270" width="310" height="80" rx="6" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="1"/>
+            <text x="665" y="295" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">Recherche : "Quand fondee ?"</text>
+            <text x="665" y="315" text-anchor="middle" fill="#aaa" font-size="10">Chunk 1: "fondee en 2019" (complet !)</text>
+            <text x="665" y="335" text-anchor="middle" fill="#aaa" font-size="10">L'overlap preserve le contexte</text>
+
+            <!-- Score -->
+            <rect x="570" y="370" width="200" height="40" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="670" y="395" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">Qualite : 82%</text>
+
+            <!-- Fleches -->
+            <defs>
+                <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/>
+                </marker>
+                <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 3 : EXERCICE 1 -- COMPARAISON TAILLES            -->
+    <!-- ======================================================= -->
+    <h2>3. Exercice 1 -- Comparer 3 tailles de chunks</h2>
+
+    <p>Decoupons le meme document avec trois tailles differentes et observons l'impact sur le nombre et le contenu des chunks.</p>
+
+    <h3>3.1 Preparation du document de test</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Document technique detaille</span>
+doc_technique = Document(
+    page_content=<span class="string">"""Guide d'installation de la plateforme MedIA
+
+Chapitre 1 : Prerequis systeme
+
+La plateforme MedIA necessite un serveur sous Linux Ubuntu 22.04 LTS
+ou plus recent. La configuration minimale requise est de 32 Go de RAM,
+un processeur 8 coeurs, et 500 Go d'espace disque SSD. Pour les
+installations avec GPU (recommande), une carte NVIDIA avec au moins
+16 Go de VRAM est necessaire (RTX 4090 ou A100 recommandee).
+
+Le serveur doit disposer d'une connexion reseau stable avec une bande
+passante minimale de 100 Mbps pour le telechargement des modeles et
+les mises a jour. Un certificat SSL valide est requis pour le chiffrement
+des communications.
+
+Chapitre 2 : Installation
+
+L'installation se fait en trois etapes principales :
+
+Etape 1 : Configuration de l'environnement
+Installez Docker version 24.0 ou superieure et Docker Compose v2.
+Clonez le depot Git de MedIA et configurez les variables d'environnement
+dans le fichier .env. Les cles d'API pour le service de licence doivent
+etre obtenues aupres du support NovaTech.
+
+Etape 2 : Deploiement des conteneurs
+Lancez la commande 'docker compose up -d' pour demarrer les 5 services :
+la base de donnees PostgreSQL, le serveur d'inference, le service API,
+l'interface web, et le moniteur de sante. Le premier demarrage prend
+environ 15 minutes pour telecharger les images.
+
+Etape 3 : Configuration initiale
+Accedez a l'interface d'administration via https://votre-serveur:8443.
+Creez le compte administrateur, configurez la connexion PACS via le
+protocole DICOM, et importez la licence fournie par NovaTech. Lancez
+ensuite le test de diagnostic integre pour verifier que tous les
+composants fonctionnent correctement.
+
+Chapitre 3 : Maintenance
+
+Les mises a jour sont publiees chaque trimestre. Pour appliquer une mise
+a jour, arretez les services avec 'docker compose down', telechargez
+la nouvelle version avec 'git pull', puis relancez avec 'docker compose
+up -d'. Sauvegardez toujours la base de donnees avant une mise a jour.
+
+La surveillance des performances se fait via le tableau de bord Grafana
+accessible sur le port 3000. Les metriques cles a surveiller sont :
+le temps de reponse moyen (seuil : moins de 2 secondes), l'utilisation
+GPU (seuil : moins de 85%), et l'espace disque disponible."""</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"guide_installation.pdf"</span>, <span class="string">"section"</span>: <span class="string">"complete"</span>}
+)
+
+<span class="function">print</span>(<span class="string">f"Taille du document : {len(doc_technique.page_content)} caracteres"</span>)</div>
+
+    <div class="output-block">Taille du document : 1842 caracteres</div>
+
+    <h3>3.2 Decoupage avec 3 tailles</h3>
+
+    <div class="code-block"><span class="comment"># Tester 3 tailles de chunks</span>
+tailles = [<span class="number">200</span>, <span class="number">500</span>, <span class="number">1000</span>]
+
+<span class="keyword">for</span> size <span class="keyword">in</span> tailles:
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=size,
+        chunk_overlap=<span class="number">50</span>,
+        separators=[<span class="string">"\n\n"</span>, <span class="string">"\n"</span>, <span class="string">". "</span>, <span class="string">" "</span>, <span class="string">""</span>]
+    )
+    chunks = splitter.split_documents([doc_technique])
+
+    <span class="function">print</span>(<span class="string">f"\n{'='*60}"</span>)
+    <span class="function">print</span>(<span class="string">f"chunk_size = {size}"</span>)
+    <span class="function">print</span>(<span class="string">f"{'='*60}"</span>)
+    <span class="function">print</span>(<span class="string">f"Nombre de chunks : {len(chunks)}"</span>)
+    <span class="function">print</span>(<span class="string">f"Taille moyenne   : {sum(len(c.page_content) for c in chunks) // len(chunks)} car."</span>)
+    <span class="function">print</span>(<span class="string">f"Taille min       : {min(len(c.page_content) for c in chunks)} car."</span>)
+    <span class="function">print</span>(<span class="string">f"Taille max       : {max(len(c.page_content) for c in chunks)} car."</span>)
+
+    <span class="function">print</span>(<span class="string">f"\n--- Contenu des chunks ---"</span>)
+    <span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks):
+        <span class="function">print</span>(<span class="string">f"\nChunk {i+1} ({len(chunk.page_content)} car.):"</span>)
+        <span class="function">print</span>(<span class="string">f"  Debut : '{chunk.page_content[:60]}...'"</span>)
+        <span class="function">print</span>(<span class="string">f"  Fin   : '...{chunk.page_content[-60:]}'"</span>)</div>
+
+    <div class="output-block">============================================================
+chunk_size = 200
+============================================================
+Nombre de chunks : 14
+Taille moyenne   : 152 car.
+Taille min       : 87 car.
+Taille max       : 199 car.
+
+--- Contenu des chunks ---
+
+Chunk 1 (178 car.):
+  Debut : 'Guide d'installation de la plateforme MedIA
+
+Chapitre 1 :...'
+  Fin   : '...32 Go de RAM, un processeur 8 coeurs, et 500 Go d'espace'
+
+Chunk 2 (195 car.):
+  Debut : 'espace disque SSD. Pour les installations avec GPU (recom...'
+  Fin   : '...4090 ou A100 recommandee).'
+...
+
+============================================================
+chunk_size = 500
+============================================================
+Nombre de chunks : 5
+Taille moyenne   : 392 car.
+Taille min       : 287 car.
+Taille max       : 498 car.
+
+--- Contenu des chunks ---
+
+Chunk 1 (487 car.):
+  Debut : 'Guide d'installation de la plateforme MedIA
+
+Chapitre 1 :...'
+  Fin   : '...requis pour le chiffrement des communications.'
+...
+
+============================================================
+chunk_size = 1000
+============================================================
+Nombre de chunks : 3
+Taille moyenne   : 672 car.
+Taille min       : 487 car.
+Taille max       : 893 car.
+
+--- Contenu des chunks ---
+
+Chunk 1 (893 car.):
+  Debut : 'Guide d'installation de la plateforme MedIA
+
+Chapitre 1 :...'
+  Fin   : '...fichier .env. Les cles d'API pour le service de licence'
+...</div>
+
+    <div class="concept-box">
+        <h4 style="color:#ff8c42; margin-bottom:12px;">Analyse comparative</h4>
+        <table>
+            <tr><th>chunk_size</th><th>Nb chunks</th><th>Taille moy.</th><th>Avantages</th><th>Inconvenients</th></tr>
+            <tr><td>200</td><td>14</td><td>152 car.</td><td>Recherche precise</td><td>Contexte fragmente</td></tr>
+            <tr><td>500</td><td>5</td><td>392 car.</td><td>Bon equilibre</td><td>-</td></tr>
+            <tr><td>1000</td><td>3</td><td>672 car.</td><td>Contexte riche</td><td>Recherche imprecise</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Avec chunk_size=200, la phrase "La configuration minimale requise est de 32 Go de RAM, un processeur 8 coeurs" peut etre coupee en deux chunks. Avec chunk_size=500, elle reste dans un seul chunk. C'est pourquoi 500 est souvent le meilleur compromis pour des documents techniques.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 4 : EXERCICE 2 -- CHUNK OVERLAP                  -->
+    <!-- ======================================================= -->
+    <h2>4. Exercice 2 -- Impact du chunk_overlap</h2>
+
+    <p>Le <code>chunk_overlap</code> definit combien de caracteres sont partages entre chunks consecutifs. Voyons son impact concret.</p>
+
+    <h3>4.1 Comparaison de 4 niveaux d'overlap</h3>
+
+    <div class="code-block"><span class="comment"># Tester differents overlaps</span>
+overlaps = [<span class="number">0</span>, <span class="number">50</span>, <span class="number">100</span>, <span class="number">200</span>]
+chunk_size = <span class="number">400</span>
+
+<span class="keyword">for</span> overlap <span class="keyword">in</span> overlaps:
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=overlap
+    )
+    chunks = splitter.split_documents([doc_technique])
+
+    <span class="function">print</span>(<span class="string">f"\n{'='*55}"</span>)
+    <span class="function">print</span>(<span class="string">f"chunk_overlap = {overlap} (chunk_size = {chunk_size})"</span>)
+    <span class="function">print</span>(<span class="string">f"{'='*55}"</span>)
+    <span class="function">print</span>(<span class="string">f"Nombre de chunks : {len(chunks)}"</span>)
+    <span class="function">print</span>(<span class="string">f"Ratio overlap    : {overlap/chunk_size*100:.0f}%"</span>)</div>
+
+    <div class="output-block">=======================================================
+chunk_overlap = 0 (chunk_size = 400)
+=======================================================
+Nombre de chunks : 6
+Ratio overlap    : 0%
+
+=======================================================
+chunk_overlap = 50 (chunk_size = 400)
+=======================================================
+Nombre de chunks : 6
+Ratio overlap    : 12%
+
+=======================================================
+chunk_overlap = 100 (chunk_size = 400)
+=======================================================
+Nombre de chunks : 7
+Ratio overlap    : 25%
+
+=======================================================
+chunk_overlap = 200 (chunk_size = 400)
+=======================================================
+Nombre de chunks : 9
+Ratio overlap    : 50%</div>
+
+    <h3>4.2 Visualiser ce que l'overlap capture</h3>
+
+    <div class="code-block"><span class="comment"># Voir concretement ce qui est partage entre chunks</span>
+splitter_no_overlap = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">400</span>, chunk_overlap=<span class="number">0</span>
+)
+splitter_with_overlap = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">400</span>, chunk_overlap=<span class="number">100</span>
+)
+
+chunks_no = splitter_no_overlap.split_documents([doc_technique])
+chunks_yes = splitter_with_overlap.split_documents([doc_technique])
+
+<span class="function">print</span>(<span class="string">"=== SANS OVERLAP ==="</span>)
+<span class="function">print</span>(<span class="string">f"Fin du chunk 1   : '...{chunks_no[0].page_content[-80:]}'"</span>)
+<span class="function">print</span>(<span class="string">f"Debut du chunk 2 : '{chunks_no[1].page_content[:80]}...'"</span>)
+<span class="function">print</span>()
+
+<span class="function">print</span>(<span class="string">"=== AVEC OVERLAP (100 car.) ==="</span>)
+<span class="function">print</span>(<span class="string">f"Fin du chunk 1   : '...{chunks_yes[0].page_content[-80:]}'"</span>)
+<span class="function">print</span>(<span class="string">f"Debut du chunk 2 : '{chunks_yes[1].page_content[:80]}...'"</span>)
+
+<span class="comment"># Trouver le texte partage</span>
+fin_c1 = chunks_yes[<span class="number">0</span>].page_content[-<span class="number">100</span>:]
+debut_c2 = chunks_yes[<span class="number">1</span>].page_content[:<span class="number">100</span>]
+
+<span class="comment"># Chercher le chevauchement</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(min(len(fin_c1), len(debut_c2)), <span class="number">0</span>, -<span class="number">1</span>):
+    <span class="keyword">if</span> fin_c1[-i:] == debut_c2[:i]:
+        <span class="function">print</span>(<span class="string">f"\nTexte partage ({i} car.) :"</span>)
+        <span class="function">print</span>(<span class="string">f"  '{fin_c1[-i:]}'"</span>)
+        <span class="keyword">break</span></div>
+
+    <div class="output-block">=== SANS OVERLAP ===
+Fin du chunk 1   : '...une carte NVIDIA avec au moins 16 Go de VRAM est necessaire (RTX 4090 ou A100'
+Debut du chunk 2 : 'recommandee).
+
+Le serveur doit disposer d'une connexion reseau stable avec une...'
+
+=== AVEC OVERLAP (100 car.) ===
+Fin du chunk 1   : '...une carte NVIDIA avec au moins 16 Go de VRAM est necessaire (RTX 4090 ou A100'
+Debut du chunk 2 : 'au moins 16 Go de VRAM est necessaire (RTX 4090 ou A100 recommandee).
+
+Le ser...'
+
+Texte partage (78 car.) :
+  'au moins 16 Go de VRAM est necessaire (RTX 4090 ou A100'</div>
+
+    <div class="effect">
+        L'overlap fait que la phrase sur les prerequis GPU apparait dans les deux chunks. Si l'utilisateur cherche "quelle carte graphique pour MedIA", les deux chunks seront potentiellement retournes, augmentant la probabilite de retrouver l'information complete.
+    </div>
+
+    <div class="concept-box green">
+        <h4 style="color:#00ff88; margin-bottom:10px;">Regle d'or pour l'overlap</h4>
+        <p>Utilisez un overlap de <strong>10% a 20%</strong> de la taille du chunk :</p>
+        <table>
+            <tr><th>chunk_size</th><th>chunk_overlap recommande</th></tr>
+            <tr><td>200</td><td>20-40</td></tr>
+            <tr><td>500</td><td>50-100</td></tr>
+            <tr><td>1000</td><td>100-200</td></tr>
+        </table>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 5 : EXERCICE 3 -- RECURSIVE vs CHARACTER         -->
+    <!-- ======================================================= -->
+    <h2>5. Exercice 3 -- RecursiveCharacterTextSplitter vs CharacterTextSplitter</h2>
+
+    <p>LangChain propose plusieurs splitters. Comparons les deux plus courants pour comprendre pourquoi <code>RecursiveCharacterTextSplitter</code> est recommande.</p>
+
+    <h3>5.1 CharacterTextSplitter (naif)</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> CharacterTextSplitter
+
+<span class="comment"># CharacterTextSplitter : coupe sur UN SEUL separateur</span>
+char_splitter = CharacterTextSplitter(
+    separator=<span class="string">"\n"</span>,
+    chunk_size=<span class="number">400</span>,
+    chunk_overlap=<span class="number">50</span>
+)
+
+chunks_char = char_splitter.split_documents([doc_technique])
+
+<span class="function">print</span>(<span class="string">"=== CharacterTextSplitter ==="</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de chunks : {len(chunks_char)}"</span>)
+<span class="keyword">for</span> i, c <span class="keyword">in</span> <span class="function">enumerate</span>(chunks_char):
+    <span class="function">print</span>(<span class="string">f"\nChunk {i+1} ({len(c.page_content)} car.):"</span>)
+    <span class="function">print</span>(<span class="string">f"  '{c.page_content[:80]}...'"</span>)</div>
+
+    <div class="output-block">=== CharacterTextSplitter ===
+Nombre de chunks : 5
+Chunk 1 (398 car.):
+  'Guide d'installation de la plateforme MedIA
+Chapitre 1 : Prerequis systeme
+La...'
+
+Chunk 2 (387 car.):
+  'Le serveur doit disposer d'une connexion reseau stable avec une bande
+passante...'
+
+Chunk 3 (396 car.):
+  'Etape 1 : Configuration de l'environnement
+Installez Docker version 24.0 ou s...'
+
+Chunk 4 (392 car.):
+  'Etape 3 : Configuration initiale
+Accedez a l'interface d'administration via ht...'
+
+Chunk 5 (356 car.):
+  'Les mises a jour sont publiees chaque trimestre. Pour appliquer une mise
+a jour...'</div>
+
+    <h3>5.2 RecursiveCharacterTextSplitter (intelligent)</h3>
+
+    <div class="code-block"><span class="comment"># RecursiveCharacterTextSplitter : essaie PLUSIEURS separateurs en cascade</span>
+recursive_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">400</span>,
+    chunk_overlap=<span class="number">50</span>,
+    separators=[<span class="string">"\n\n"</span>, <span class="string">"\n"</span>, <span class="string">". "</span>, <span class="string">" "</span>, <span class="string">""</span>]
+)
+
+chunks_recursive = recursive_splitter.split_documents([doc_technique])
+
+<span class="function">print</span>(<span class="string">"=== RecursiveCharacterTextSplitter ==="</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de chunks : {len(chunks_recursive)}"</span>)
+<span class="keyword">for</span> i, c <span class="keyword">in</span> <span class="function">enumerate</span>(chunks_recursive):
+    <span class="function">print</span>(<span class="string">f"\nChunk {i+1} ({len(c.page_content)} car.):"</span>)
+    <span class="function">print</span>(<span class="string">f"  '{c.page_content[:80]}...'"</span>)</div>
+
+    <div class="output-block">=== RecursiveCharacterTextSplitter ===
+Nombre de chunks : 6
+Chunk 1 (389 car.):
+  'Guide d'installation de la plateforme MedIA
+
+Chapitre 1 : Prerequis systeme
+
+L...'
+
+Chunk 2 (376 car.):
+  'Le serveur doit disposer d'une connexion reseau stable avec une bande
+passante...'
+
+Chunk 3 (391 car.):
+  'Chapitre 2 : Installation
+
+L'installation se fait en trois etapes principale...'
+
+Chunk 4 (384 car.):
+  'Etape 2 : Deploiement des conteneurs
+Lancez la commande 'docker compose up -d'...'
+
+Chunk 5 (378 car.):
+  'Etape 3 : Configuration initiale
+Accedez a l'interface d'administration via ht...'
+
+Chunk 6 (356 car.):
+  'Chapitre 3 : Maintenance
+
+Les mises a jour sont publiees chaque trimestre...'</div>
+
+    <h3>5.3 Comparaison des resultats</h3>
+
+    <div class="code-block"><span class="comment"># Comparaison detaillee</span>
+<span class="function">print</span>(<span class="string">"=== COMPARAISON ==="</span>)
+<span class="function">print</span>(<span class="string">f"{'Critere':<30} {'Character':<15} {'Recursive':<15}"</span>)
+<span class="function">print</span>(<span class="string">f"{'-'*60}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Nombre de chunks':<30} {len(chunks_char):<15} {len(chunks_recursive):<15}"</span>)
+
+avg_char = sum(len(c.page_content) <span class="keyword">for</span> c <span class="keyword">in</span> chunks_char) // len(chunks_char)
+avg_rec = sum(len(c.page_content) <span class="keyword">for</span> c <span class="keyword">in</span> chunks_recursive) // len(chunks_recursive)
+<span class="function">print</span>(<span class="string">f"{'Taille moyenne':<30} {avg_char:<15} {avg_rec:<15}"</span>)
+
+<span class="comment"># Verifier si les chunks respectent les frontieres de paragraphes</span>
+<span class="keyword">def</span> <span class="function">commence_par_titre</span>(chunks):
+    count = <span class="function">sum</span>(<span class="number">1</span> <span class="keyword">for</span> c <span class="keyword">in</span> chunks
+               <span class="keyword">if</span> c.page_content.strip().startswith((<span class="string">"Chapitre"</span>, <span class="string">"Etape"</span>, <span class="string">"Guide"</span>)))
+    <span class="keyword">return</span> count
+
+<span class="function">print</span>(<span class="string">f"{'Chunks avec titre en debut':<30} {commence_par_titre(chunks_char):<15} {commence_par_titre(chunks_recursive):<15}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Respecte la structure':<30} {'Partiel':<15} {'Oui':<15}"</span>)</div>
+
+    <div class="output-block">=== COMPARAISON ===
+Critere                        Character       Recursive
+------------------------------------------------------------
+Nombre de chunks               5               6
+Taille moyenne                 386             379
+Chunks avec titre en debut     3               5
+Respecte la structure          Partiel         Oui</div>
+
+    <div class="prof-note">
+        Le <code>RecursiveCharacterTextSplitter</code> est superieur car il essaie d'abord de couper sur <code>"\n\n"</code> (paragraphes), puis <code>"\n"</code> (lignes), puis <code>". "</code> (phrases), puis <code>" "</code> (mots). Il preserve ainsi la structure logique du document. Utilisez <strong>toujours</strong> le Recursive en premiere approche.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 6 : EXERCICE 4 -- MARKDOWN SPLITTER              -->
+    <!-- ======================================================= -->
+    <h2>6. Exercice 4 -- MarkdownHeaderTextSplitter pour documents structures</h2>
+
+    <p>Pour les documents Markdown, un splitter specialise peut exploiter les en-tetes pour un decoupage semantiquement coherent.</p>
+
+    <h3>6.1 Document Markdown de test</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> MarkdownHeaderTextSplitter
+
+<span class="comment"># Document Markdown structure</span>
+markdown_doc = <span class="string">"""# Documentation MedIA
+
+## Installation
+
+### Prerequis
+Le serveur doit disposer de 32 Go de RAM minimum et d'un GPU NVIDIA
+avec 16 Go de VRAM. Le systeme d'exploitation doit etre Ubuntu 22.04.
+
+### Procedure
+1. Clonez le depot Git
+2. Configurez le fichier .env
+3. Lancez docker compose up
+
+## Configuration
+
+### Connexion PACS
+Configurez l'adresse IP du serveur PACS dans l'interface d'administration.
+Le protocole DICOM est utilise pour la communication. Le port par defaut
+est 4242.
+
+### Parametres du modele
+Le seuil de detection par defaut est fixe a 0.7. Pour les mammographies,
+un seuil de 0.8 est recommande pour reduire les faux positifs.
+Le temps d'inference moyen est de 1.2 secondes par image.
+
+## Maintenance
+
+### Mises a jour
+Les mises a jour sont publiees trimestriellement. Sauvegardez toujours
+la base de donnees avant de mettre a jour.
+
+### Monitoring
+Utilisez Grafana (port 3000) pour surveiller les performances.
+Les alertes sont configurees automatiquement lors de l'installation."""</span>
+
+<span class="comment"># Definir les en-tetes a utiliser pour le decoupage</span>
+headers_to_split = [
+    (<span class="string">"#"</span>, <span class="string">"titre"</span>),
+    (<span class="string">"##"</span>, <span class="string">"section"</span>),
+    (<span class="string">"###"</span>, <span class="string">"sous_section"</span>),
+]
+
+<span class="comment"># Creer le splitter Markdown</span>
+markdown_splitter = MarkdownHeaderTextSplitter(
+    headers_to_split_on=headers_to_split
+)
+
+<span class="comment"># Decouper</span>
+md_chunks = markdown_splitter.split_text(markdown_doc)
+
+<span class="function">print</span>(<span class="string">f"Nombre de chunks Markdown : {len(md_chunks)}\n"</span>)
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(md_chunks):
+    <span class="function">print</span>(<span class="string">f"--- Chunk {i+1} ---"</span>)
+    <span class="function">print</span>(<span class="string">f"Metadonnees : {chunk.metadata}"</span>)
+    <span class="function">print</span>(<span class="string">f"Contenu     : {chunk.page_content[:100]}..."</span>)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">Nombre de chunks Markdown : 6
+
+--- Chunk 1 ---
+Metadonnees : {'titre': 'Documentation MedIA', 'section': 'Installation', 'sous_section': 'Prerequis'}
+Contenu     : Le serveur doit disposer de 32 Go de RAM minimum et d'un GPU NVIDIA
+avec 16 Go de VRAM. Le sys...
+
+--- Chunk 2 ---
+Metadonnees : {'titre': 'Documentation MedIA', 'section': 'Installation', 'sous_section': 'Procedure'}
+Contenu     : 1. Clonez le depot Git
+2. Configurez le fichier .env
+3. Lancez docker compose up...
+
+--- Chunk 3 ---
+Metadonnees : {'titre': 'Documentation MedIA', 'section': 'Configuration', 'sous_section': 'Connexion PACS'}
+Contenu     : Configurez l'adresse IP du serveur PACS dans l'interface d'administration.
+Le protocole DICOM...
+
+--- Chunk 4 ---
+Metadonnees : {'titre': 'Documentation MedIA', 'section': 'Configuration', 'sous_section': 'Parametres du modele'}
+Contenu     : Le seuil de detection par defaut est fixe a 0.7. Pour les mammographies,
+un seuil de 0.8 est...
+
+--- Chunk 5 ---
+Metadonnees : {'titre': 'Documentation MedIA', 'section': 'Maintenance', 'sous_section': 'Mises a jour'}
+Contenu     : Les mises a jour sont publiees trimestriellement. Sauvegardez toujours
+la base de donnees avan...
+
+--- Chunk 6 ---
+Metadonnees : {'titre': 'Documentation MedIA', 'section': 'Maintenance', 'sous_section': 'Monitoring'}
+Contenu     : Utilisez Grafana (port 3000) pour surveiller les performances.
+Les alertes sont configurees a...</div>
+
+    <div class="effect">
+        Le MarkdownHeaderTextSplitter respecte parfaitement la structure du document. Chaque chunk correspond a une sous-section logique, et les metadonnees incluent automatiquement la hierarchie des en-tetes (titre > section > sous-section).
+    </div>
+
+    <h3>6.2 Combiner Markdown + Recursive pour des sections longues</h3>
+
+    <div class="code-block"><span class="comment"># Pour les sections longues : d'abord Markdown, puis Recursive</span>
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Etape 1 : Decouper par en-tetes Markdown</span>
+md_chunks = markdown_splitter.split_text(markdown_doc)
+
+<span class="comment"># Etape 2 : Re-decouper les chunks trop longs</span>
+recursive_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">200</span>,
+    chunk_overlap=<span class="number">30</span>
+)
+
+<span class="comment"># Convertir les md_chunks en Documents pour le recursive splitter</span>
+final_chunks = recursive_splitter.split_documents(md_chunks)
+
+<span class="function">print</span>(<span class="string">f"Chunks Markdown initiaux : {len(md_chunks)}"</span>)
+<span class="function">print</span>(<span class="string">f"Chunks finaux (apres re-decoupage) : {len(final_chunks)}"</span>)
+<span class="function">print</span>()
+<span class="keyword">for</span> i, c <span class="keyword">in</span> <span class="function">enumerate</span>(final_chunks):
+    <span class="function">print</span>(<span class="string">f"Chunk {i+1} ({len(c.page_content):>3} car.) | "
+          f"Section: {c.metadata.get('section', '?')} > "
+          f"{c.metadata.get('sous_section', '?')}"</span>)</div>
+
+    <div class="output-block">Chunks Markdown initiaux : 6
+Chunks finaux (apres re-decoupage) : 8
+
+Chunk 1 (142 car.) | Section: Installation > Prerequis
+Chunk 2 ( 87 car.) | Section: Installation > Procedure
+Chunk 3 (189 car.) | Section: Configuration > Connexion PACS
+Chunk 4 (185 car.) | Section: Configuration > Parametres du modele
+Chunk 5 ( 98 car.) | Section: Configuration > Parametres du modele
+Chunk 6 (132 car.) | Section: Maintenance > Mises a jour
+Chunk 7 (148 car.) | Section: Maintenance > Monitoring
+Chunk 8 ( 92 car.) | Section: Maintenance > Monitoring</div>
+
+    <div class="prof-note">
+        La strategie "Markdown d'abord, puis Recursive" est la meilleure approche pour les documents structures. Vous obtenez des chunks semantiquement coherents qui respectent la structure logique ET dont la taille est controlee. Les metadonnees de section sont propagees automatiquement.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 7 : EXERCICE 5 -- RAG SMALL vs LARGE CHUNKS      -->
+    <!-- ======================================================= -->
+    <h2>7. Exercice 5 -- RAG avec petits vs grands chunks</h2>
+
+    <p>Construisons deux pipelines RAG identiques sauf la taille des chunks, et comparons la qualite des reponses.</p>
+
+    <h3>7.1 Preparation des deux configurations</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings, ChatOpenAI
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+<span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser
+<span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnablePassthrough
+<span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">import</span> os
+
+os.environ[<span class="string">"OPENAI_API_KEY"</span>] = <span class="string">"votre-cle-api"</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Prompt identique pour les deux</span>
+prompt = ChatPromptTemplate.from_template(
+<span class="string">"""Reponds a la question en te basant UNIQUEMENT sur le contexte.
+Si l'information manque, dis-le.
+
+Contexte : {context}
+
+Question : {question}
+
+Reponse :"""</span>
+)
+
+<span class="keyword">def</span> <span class="function">format_docs</span>(docs):
+    <span class="keyword">return</span> <span class="string">"\n\n"</span>.join(d.page_content <span class="keyword">for</span> d <span class="keyword">in</span> docs)
+
+<span class="comment"># Config 1 : Petits chunks (200)</span>
+splitter_small = RecursiveCharacterTextSplitter(chunk_size=<span class="number">200</span>, chunk_overlap=<span class="number">30</span>)
+chunks_small = splitter_small.split_documents([doc_technique])
+vs_small = FAISS.from_documents(chunks_small, embeddings)
+
+rag_small = (
+    {<span class="string">"context"</span>: vs_small.as_retriever(search_kwargs={<span class="string">"k"</span>: <span class="number">3</span>}) | format_docs,
+     <span class="string">"question"</span>: RunnablePassthrough()}
+    | prompt | llm | StrOutputParser()
+)
+
+<span class="comment"># Config 2 : Grands chunks (1000)</span>
+splitter_large = RecursiveCharacterTextSplitter(chunk_size=<span class="number">1000</span>, chunk_overlap=<span class="number">100</span>)
+chunks_large = splitter_large.split_documents([doc_technique])
+vs_large = FAISS.from_documents(chunks_large, embeddings)
+
+rag_large = (
+    {<span class="string">"context"</span>: vs_large.as_retriever(search_kwargs={<span class="string">"k"</span>: <span class="number">3</span>}) | format_docs,
+     <span class="string">"question"</span>: RunnablePassthrough()}
+    | prompt | llm | StrOutputParser()
+)
+
+<span class="function">print</span>(<span class="string">f"RAG petits chunks : {len(chunks_small)} chunks de ~{sum(len(c.page_content) for c in chunks_small)//len(chunks_small)} car."</span>)
+<span class="function">print</span>(<span class="string">f"RAG grands chunks : {len(chunks_large)} chunks de ~{sum(len(c.page_content) for c in chunks_large)//len(chunks_large)} car."</span>)</div>
+
+    <div class="output-block">RAG petits chunks : 14 chunks de ~152 car.
+RAG grands chunks : 3 chunks de ~672 car.</div>
+
+    <h3>7.2 Comparaison des reponses</h3>
+
+    <div class="code-block"><span class="comment"># Questions de test</span>
+questions = [
+    <span class="string">"Quelle est la configuration minimale requise pour installer MedIA ?"</span>,
+    <span class="string">"Comment appliquer une mise a jour de MedIA ?"</span>,
+    <span class="string">"Quel est le port de Grafana et quelles metriques surveiller ?"</span>,
+]
+
+<span class="function">print</span>(<span class="string">"=== COMPARAISON : Petits (200) vs Grands (1000) chunks ===\n"</span>)
+
+<span class="keyword">for</span> q <span class="keyword">in</span> questions:
+    rep_small = rag_small.invoke(q)
+    rep_large = rag_large.invoke(q)
+
+    <span class="function">print</span>(<span class="string">f"Q: {q}"</span>)
+    <span class="function">print</span>(<span class="string">f"\n  [Petits chunks (200)] : {rep_small}"</span>)
+    <span class="function">print</span>(<span class="string">f"\n  [Grands chunks (1000)] : {rep_large}"</span>)
+    <span class="function">print</span>(<span class="string">f"\n{'='*70}\n"</span>)</div>
+
+    <div class="output-block">=== COMPARAISON : Petits (200) vs Grands (1000) chunks ===
+
+Q: Quelle est la configuration minimale requise pour installer MedIA ?
+
+  [Petits chunks (200)] : La configuration minimale est de 32 Go de RAM
+  et un processeur 8 coeurs. Un GPU NVIDIA avec 16 Go de VRAM est
+  recommande.
+
+  [Grands chunks (1000)] : La configuration minimale requise est de
+  32 Go de RAM, un processeur 8 coeurs, 500 Go d'espace disque SSD.
+  Pour les installations avec GPU, une carte NVIDIA avec au moins
+  16 Go de VRAM est necessaire (RTX 4090 ou A100 recommandee). Le
+  serveur doit aussi avoir une connexion de 100 Mbps minimum et un
+  certificat SSL valide.
+
+======================================================================
+
+Q: Comment appliquer une mise a jour de MedIA ?
+
+  [Petits chunks (200)] : Pour mettre a jour, arretez les services
+  avec 'docker compose down' et telechargez la nouvelle version.
+
+  [Grands chunks (1000)] : Pour appliquer une mise a jour : arretez
+  les services avec 'docker compose down', telechargez la nouvelle
+  version avec 'git pull', puis relancez avec 'docker compose up -d'.
+  Sauvegardez toujours la base de donnees avant.
+
+======================================================================
+
+Q: Quel est le port de Grafana et quelles metriques surveiller ?
+
+  [Petits chunks (200)] : Grafana est accessible sur le port 3000.
+  Cette information ne contient pas les metriques dans les documents.
+
+  [Grands chunks (1000)] : Grafana est accessible sur le port 3000.
+  Les metriques cles sont : le temps de reponse moyen (seuil : moins
+  de 2 secondes), l'utilisation GPU (seuil : moins de 85%), et
+  l'espace disque disponible.
+
+======================================================================</div>
+
+    <div class="concept-box">
+        <h4 style="color:#ff8c42; margin-bottom:12px;">Analyse des resultats</h4>
+        <table>
+            <tr><th>Question</th><th>Petits chunks (200)</th><th>Grands chunks (1000)</th></tr>
+            <tr><td>Config minimale</td><td>Partiel (manque SSD et reseau)</td><td>Complet</td></tr>
+            <tr><td>Mise a jour</td><td>Partiel (manque git pull)</td><td>Complet</td></tr>
+            <tr><td>Grafana + metriques</td><td>Incomplet (metriques manquantes)</td><td>Complet</td></tr>
+        </table>
+        <p style="margin-top:10px;"><strong>Conclusion :</strong> Pour des documents techniques avec des informations liees, des chunks de 500-1000 caracteres sont preferes. Les petits chunks fragmentent les reponses multi-facettes.</p>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 8 : EXERCICE 6 -- METADATA ENRICHMENT            -->
+    <!-- ======================================================= -->
+    <h2>8. Exercice 6 -- Enrichissement des metadonnees</h2>
+
+    <p>Les metadonnees permettent de filtrer les resultats, de citer les sources, et d'ameliorer la pertinence du retrieval.</p>
+
+    <h3>8.1 Ajouter des metadonnees riches aux chunks</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">import</span> hashlib
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="comment"># Documents avec metadonnees enrichies</span>
+documents_enrichis = [
+    Document(
+        page_content=<span class="string">"""La plateforme MedIA necessite un serveur sous Linux Ubuntu 22.04.
+La configuration minimale est de 32 Go de RAM, 8 coeurs CPU, et 500 Go SSD.
+Pour le GPU : NVIDIA RTX 4090 ou A100 avec 16 Go de VRAM minimum."""</span>,
+        metadata={
+            <span class="string">"source"</span>: <span class="string">"guide_installation.pdf"</span>,
+            <span class="string">"page"</span>: <span class="number">2</span>,
+            <span class="string">"section"</span>: <span class="string">"Prerequis systeme"</span>,
+            <span class="string">"categorie"</span>: <span class="string">"technique"</span>,
+            <span class="string">"date_mise_a_jour"</span>: <span class="string">"2024-09-15"</span>,
+            <span class="string">"version"</span>: <span class="string">"3.2"</span>,
+            <span class="string">"auteur"</span>: <span class="string">"Thomas Dubois"</span>
+        }
+    ),
+    Document(
+        page_content=<span class="string">"""MedIA Pro coute 7 500 EUR/mois. L'offre inclut l'acces multi-sites,
+le support 24/7, l'integration PACS et le tableau de bord analytique.
+Contrat minimum de 12 mois avec un preavis de 3 mois."""</span>,
+        metadata={
+            <span class="string">"source"</span>: <span class="string">"tarifs_2024.pdf"</span>,
+            <span class="string">"page"</span>: <span class="number">5</span>,
+            <span class="string">"section"</span>: <span class="string">"Offre Pro"</span>,
+            <span class="string">"categorie"</span>: <span class="string">"commercial"</span>,
+            <span class="string">"date_mise_a_jour"</span>: <span class="string">"2024-11-01"</span>,
+            <span class="string">"version"</span>: <span class="string">"2024-Q4"</span>,
+            <span class="string">"auteur"</span>: <span class="string">"Marie Chen"</span>
+        }
+    )
+]
+
+<span class="comment"># Decouper avec propagation des metadonnees</span>
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=<span class="number">300</span>, chunk_overlap=<span class="number">50</span>
+)
+chunks_enrichis = splitter.split_documents(documents_enrichis)
+
+<span class="comment"># Ajouter un identifiant unique a chaque chunk</span>
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks_enrichis):
+    <span class="comment"># Hash du contenu pour un ID unique</span>
+    chunk.metadata[<span class="string">"chunk_id"</span>] = hashlib.md5(
+        chunk.page_content.encode()
+    ).hexdigest()[:<span class="number">8</span>]
+    chunk.metadata[<span class="string">"chunk_index"</span>] = i
+    chunk.metadata[<span class="string">"chunk_size"</span>] = len(chunk.page_content)
+    chunk.metadata[<span class="string">"date_indexation"</span>] = datetime.now().isoformat()
+
+<span class="comment"># Afficher les metadonnees</span>
+<span class="keyword">for</span> chunk <span class="keyword">in</span> chunks_enrichis:
+    <span class="function">print</span>(<span class="string">f"Chunk '{chunk.metadata['chunk_id']}' :"</span>)
+    <span class="keyword">for</span> k, v <span class="keyword">in</span> chunk.metadata.items():
+        <span class="function">print</span>(<span class="string">f"  {k:<20} : {v}"</span>)
+    <span class="function">print</span>()</div>
+
+    <div class="output-block">Chunk 'a3f2c1e8' :
+  source               : guide_installation.pdf
+  page                 : 2
+  section              : Prerequis systeme
+  categorie            : technique
+  date_mise_a_jour     : 2024-09-15
+  version              : 3.2
+  auteur               : Thomas Dubois
+  chunk_id             : a3f2c1e8
+  chunk_index          : 0
+  chunk_size           : 218
+  date_indexation      : 2025-01-15T14:30:22.123456
+
+Chunk 'b7d9e4f1' :
+  source               : tarifs_2024.pdf
+  page                 : 5
+  section              : Offre Pro
+  categorie            : commercial
+  date_mise_a_jour     : 2024-11-01
+  version              : 2024-Q4
+  auteur               : Marie Chen
+  chunk_id             : b7d9e4f1
+  chunk_index          : 1
+  chunk_size           : 206
+  date_indexation      : 2025-01-15T14:30:22.123789</div>
+
+    <div class="prof-note">
+        Les metadonnees enrichies permettent de filtrer par categorie (technique/commercial), par date, par auteur, ou par section. Elles permettent aussi de citer precisement la source dans les reponses du RAG. C'est un investissement minimal pour un gain enorme en tracabilite.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 9 : EXERCICE 7 -- EXPERIENCE OPTIMALE            -->
+    <!-- ======================================================= -->
+    <h2>9. Exercice 7 -- Experience d'optimisation du chunking</h2>
+
+    <p>Testons systematiquement 5 configurations de chunking et evaluons la qualite du retrieval sur un ensemble de questions de test.</p>
+
+    <h3>9.1 Configuration de l'experience</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document
+
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Nos documents de test (reutiliser doc_technique + les 4 docs NovaTech)</span>
+all_docs = [doc_technique] + documents_enrichis
+
+<span class="comment"># 5 configurations a tester</span>
+configs = [
+    {<span class="string">"name"</span>: <span class="string">"Tiny"</span>,   <span class="string">"chunk_size"</span>: <span class="number">150</span>,  <span class="string">"overlap"</span>: <span class="number">20</span>},
+    {<span class="string">"name"</span>: <span class="string">"Small"</span>,  <span class="string">"chunk_size"</span>: <span class="number">300</span>,  <span class="string">"overlap"</span>: <span class="number">50</span>},
+    {<span class="string">"name"</span>: <span class="string">"Medium"</span>, <span class="string">"chunk_size"</span>: <span class="number">500</span>,  <span class="string">"overlap"</span>: <span class="number">75</span>},
+    {<span class="string">"name"</span>: <span class="string">"Large"</span>,  <span class="string">"chunk_size"</span>: <span class="number">800</span>,  <span class="string">"overlap"</span>: <span class="number">100</span>},
+    {<span class="string">"name"</span>: <span class="string">"XLarge"</span>, <span class="string">"chunk_size"</span>: <span class="number">1200</span>, <span class="string">"overlap"</span>: <span class="number">150</span>},
+]
+
+<span class="comment"># Questions de test avec la reponse attendue (mot-cle)</span>
+test_questions = [
+    {
+        <span class="string">"question"</span>: <span class="string">"Quelle est la RAM minimale pour MedIA ?"</span>,
+        <span class="string">"expected_keyword"</span>: <span class="string">"32 Go"</span>
+    },
+    {
+        <span class="string">"question"</span>: <span class="string">"Combien coute MedIA Pro ?"</span>,
+        <span class="string">"expected_keyword"</span>: <span class="string">"7 500"</span>
+    },
+    {
+        <span class="string">"question"</span>: <span class="string">"Comment surveiller les performances ?"</span>,
+        <span class="string">"expected_keyword"</span>: <span class="string">"Grafana"</span>
+    },
+    {
+        <span class="string">"question"</span>: <span class="string">"Quelle commande pour demarrer MedIA ?"</span>,
+        <span class="string">"expected_keyword"</span>: <span class="string">"docker compose up"</span>
+    },
+]
+
+<span class="function">print</span>(<span class="string">f"Nombre de documents : {len(all_docs)}"</span>)
+<span class="function">print</span>(<span class="string">f"Configurations a tester : {len(configs)}"</span>)
+<span class="function">print</span>(<span class="string">f"Questions de test : {len(test_questions)}"</span>)</div>
+
+    <div class="output-block">Nombre de documents : 3
+Configurations a tester : 5
+Questions de test : 4</div>
+
+    <h3>9.2 Execution de l'experience</h3>
+
+    <div class="code-block"><span class="comment"># Evaluer chaque configuration</span>
+results = []
+
+<span class="keyword">for</span> config <span class="keyword">in</span> configs:
+    <span class="comment"># Decouper</span>
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=config[<span class="string">"chunk_size"</span>],
+        chunk_overlap=config[<span class="string">"overlap"</span>]
+    )
+    chunks = splitter.split_documents(all_docs)
+
+    <span class="comment"># Creer le vector store</span>
+    vs = FAISS.from_documents(chunks, embeddings)
+
+    <span class="comment"># Tester le retrieval</span>
+    score_total = <span class="number">0</span>
+    <span class="keyword">for</span> test <span class="keyword">in</span> test_questions:
+        retrieved = vs.similarity_search(test[<span class="string">"question"</span>], k=<span class="number">3</span>)
+        <span class="comment"># Verifier si le mot-cle attendu est dans les chunks recuperes</span>
+        combined = <span class="string">" "</span>.join(d.page_content <span class="keyword">for</span> d <span class="keyword">in</span> retrieved)
+        <span class="keyword">if</span> test[<span class="string">"expected_keyword"</span>] <span class="keyword">in</span> combined:
+            score_total += <span class="number">1</span>
+
+    accuracy = score_total / len(test_questions) * <span class="number">100</span>
+
+    results.append({
+        <span class="string">"name"</span>: config[<span class="string">"name"</span>],
+        <span class="string">"chunk_size"</span>: config[<span class="string">"chunk_size"</span>],
+        <span class="string">"overlap"</span>: config[<span class="string">"overlap"</span>],
+        <span class="string">"nb_chunks"</span>: len(chunks),
+        <span class="string">"accuracy"</span>: accuracy
+    })
+
+    <span class="function">print</span>(<span class="string">f"Config '{config['name']}' (size={config['chunk_size']}, "
+          f"overlap={config['overlap']}): "
+          f"{len(chunks)} chunks, accuracy={accuracy:.0f}%"</span>)</div>
+
+    <div class="output-block">Config 'Tiny' (size=150, overlap=20): 22 chunks, accuracy=50%
+Config 'Small' (size=300, overlap=50): 10 chunks, accuracy=75%
+Config 'Medium' (size=500, overlap=75): 7 chunks, accuracy=100%
+Config 'Large' (size=800, overlap=100): 4 chunks, accuracy=100%
+Config 'XLarge' (size=1200, overlap=150): 3 chunks, accuracy=100%</div>
+
+    <h3>9.3 Tableau comparatif final</h3>
+
+    <div class="code-block"><span class="comment"># Tableau de resultats</span>
+<span class="function">print</span>(<span class="string">f"\n{'='*75}"</span>)
+<span class="function">print</span>(<span class="string">f"{'Config':<10} {'Size':<8} {'Overlap':<10} {'Chunks':<10} {'Accuracy':<12} {'Verdict'}"</span>)
+<span class="function">print</span>(<span class="string">f"{'='*75}"</span>)
+
+<span class="keyword">for</span> r <span class="keyword">in</span> results:
+    <span class="keyword">if</span> r[<span class="string">"accuracy"</span>] == <span class="number">100</span> <span class="keyword">and</span> r[<span class="string">"nb_chunks"</span>] <= <span class="number">10</span>:
+        verdict = <span class="string">"OPTIMAL"</span>
+    <span class="keyword">elif</span> r[<span class="string">"accuracy"</span>] == <span class="number">100</span>:
+        verdict = <span class="string">"Bon (chunks gros)"</span>
+    <span class="keyword">elif</span> r[<span class="string">"accuracy"</span>] >= <span class="number">75</span>:
+        verdict = <span class="string">"Acceptable"</span>
+    <span class="keyword">else</span>:
+        verdict = <span class="string">"Insuffisant"</span>
+
+    <span class="function">print</span>(<span class="string">f"{r['name']:<10} {r['chunk_size']:<8} {r['overlap']:<10} "
+          f"{r['nb_chunks']:<10} {r['accuracy']:<12.0f} {verdict}"</span>)
+
+<span class="function">print</span>(<span class="string">f"{'='*75}"</span>)
+<span class="function">print</span>(<span class="string">f"\nRecommandation : Config 'Medium' (500/75) offre le meilleur"</span>)
+<span class="function">print</span>(<span class="string">f"equilibre entre precision de recherche (peu de chunks) et"</span>)
+<span class="function">print</span>(<span class="string">f"completude des reponses (accuracy 100%)."</span>)</div>
+
+    <div class="output-block">===========================================================================
+Config     Size     Overlap    Chunks     Accuracy     Verdict
+===========================================================================
+Tiny       150      20         22         50           Insuffisant
+Small      300      50         10         75           Acceptable
+Medium     500      75         7          100          OPTIMAL
+Large      800      100        4          100          Bon (chunks gros)
+XLarge     1200     150        3          100          Bon (chunks gros)
+===========================================================================
+
+Recommandation : Config 'Medium' (500/75) offre le meilleur
+equilibre entre precision de recherche (peu de chunks) et
+completude des reponses (accuracy 100%).</div>
+
+    <div class="effect">
+        L'experience montre clairement que des chunks trop petits (150) perdent du contexte et degradent la qualite. A partir de 500 caracteres, l'accuracy atteint 100%. Le choix optimal est "Medium" car il offre la meilleure precision de recherche (7 chunks) tout en maintenant 100% de completude.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 10 : ERREURS COURANTES                           -->
+    <!-- ======================================================= -->
+    <h2>10. Erreurs Courantes</h2>
+
+    <div class="warning">
+        <strong>Utiliser CharacterTextSplitter au lieu de RecursiveCharacterTextSplitter :</strong> Le CharacterTextSplitter ne coupe que sur un seul separateur et peut couper au milieu de phrases. Utilisez toujours le Recursive en premiere intention.
+    </div>
+
+    <div class="warning">
+        <strong>Chunk_size trop petit (&lt;100 caracteres) :</strong> Des chunks ultra-courts perdent tout contexte semantique. Le retriever peut retourner "32 Go de RAM" sans qu'on sache a quoi ca se rapporte. Minimum recommande : 200 caracteres.
+    </div>
+
+    <div class="warning">
+        <strong>Overlap superieur a 50% du chunk_size :</strong> Un overlap excessif cree des chunks quasi-identiques, augmente le nombre de vecteurs sans gain, et ralentit la recherche. Restez entre 10% et 20% du chunk_size.
+    </div>
+
+    <div class="warning">
+        <strong>Ignorer les metadonnees :</strong> Sans metadonnees, vous ne pouvez pas filtrer les resultats ni citer les sources. Ajoutez toujours au minimum : source, page, et date. C'est un effort minimal pour un benefice enorme.
+    </div>
+
+    <div class="warning">
+        <strong>Ne pas adapter la strategie au type de document :</strong> Un code source, un document Markdown, un PDF juridique et un article de blog necessitent des strategies de chunking differentes. Le "one size fits all" n'existe pas.
+    </div>
+
+    <div class="warning">
+        <strong>Ne pas evaluer empiriquement :</strong> Choisir un chunk_size "au feeling" au lieu de tester systematiquement. Faites toujours une experience comme l'Exercice 7 avec vos propres documents et questions avant de deployer.
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- SECTION 11 : RESUME                                      -->
+    <!-- ======================================================= -->
+    <h2>11. Resume -- Table de decision pour le chunking</h2>
+
+    <div class="concept-box green">
+        <h4 style="color:#00ff88; margin-bottom:12px;">Guide de decision rapide</h4>
+        <table>
+            <tr><th>Type de document</th><th>Splitter recommande</th><th>chunk_size</th><th>overlap</th></tr>
+            <tr><td>Texte brut general</td><td>RecursiveCharacterTextSplitter</td><td>400-600</td><td>50-100</td></tr>
+            <tr><td>Documentation Markdown</td><td>Markdown + Recursive</td><td>300-500</td><td>30-50</td></tr>
+            <tr><td>Articles / Blog</td><td>RecursiveCharacterTextSplitter</td><td>500-800</td><td>50-100</td></tr>
+            <tr><td>Documents juridiques</td><td>RecursiveCharacterTextSplitter</td><td>800-1200</td><td>100-200</td></tr>
+            <tr><td>Code source</td><td>Language-specific splitter</td><td>500-1000</td><td>0-50</td></tr>
+            <tr><td>FAQ / Q&A</td><td>Par question-reponse</td><td>Naturel</td><td>0</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box">
+        <h4 style="color:#ff8c42; margin-bottom:12px;">Points cles du TD</h4>
+        <ul>
+            <li><strong>Le chunking est le parametre n1</strong> de la qualite du RAG, devant le LLM ou les embeddings</li>
+            <li><strong>RecursiveCharacterTextSplitter</strong> doit etre votre choix par defaut (cascade de separateurs)</li>
+            <li><strong>chunk_size=500, overlap=75</strong> est un excellent point de depart universel</li>
+            <li><strong>Le MarkdownHeaderTextSplitter</strong> est ideal pour les documents structures</li>
+            <li><strong>Combiner les splitters</strong> (Markdown puis Recursive) donne les meilleurs resultats</li>
+            <li><strong>Les metadonnees</strong> sont indispensables pour le filtrage et la citation des sources</li>
+            <li><strong>Evaluez empiriquement</strong> sur vos propres donnees : ne devinez pas, mesurez !</li>
+        </ul>
+    </div>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg" style="max-width:680px;">
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Workflow de decision pour le chunking</text>
+
+            <rect x="10" y="50" width="130" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="75" y="72" text-anchor="middle" fill="#569cd6" font-size="10">Document</text>
+            <text x="75" y="88" text-anchor="middle" fill="#aaa" font-size="9">Markdown ?</text>
+
+            <line x1="140" y1="65" x2="175" y2="55" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="158" y="52" fill="#00ff88" font-size="9">Oui</text>
+            <line x1="140" y1="85" x2="175" y2="95" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="158" y="102" fill="#ff6b35" font-size="9">Non</text>
+
+            <rect x="175" y="35" width="140" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="245" y="57" text-anchor="middle" fill="#00ff88" font-size="9">MarkdownHeader + Recursive</text>
+
+            <rect x="175" y="80" width="140" height="35" rx="6" fill="#1a1a2e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="245" y="102" text-anchor="middle" fill="#ff6b35" font-size="9">RecursiveCharacter</text>
+
+            <line x1="315" y1="52" x2="360" y2="75" stroke="#ff8c42" stroke-width="1.5"/>
+            <line x1="315" y1="97" x2="360" y2="75" stroke="#ff8c42" stroke-width="1.5"/>
+
+            <rect x="360" y="50" width="130" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="425" y="72" text-anchor="middle" fill="#ff8c42" font-size="10">Tester 3-5 configs</text>
+            <text x="425" y="88" text-anchor="middle" fill="#aaa" font-size="9">Evaluer accuracy</text>
+
+            <line x1="490" y1="75" x2="530" y2="75" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrC)"/>
+
+            <rect x="530" y="50" width="130" height="50" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="595" y="72" text-anchor="middle" fill="#00ff88" font-size="10" font-weight="bold">Config optimale</text>
+            <text x="595" y="88" text-anchor="middle" fill="#aaa" font-size="9">Deployer</text>
+
+            <defs>
+                <marker id="arrC" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="td_rag_basique.html">&larr; TD RAG Basique</a>
+        <a href="td_retrieval_avance.html">TD suivant : Retrieval Avance &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

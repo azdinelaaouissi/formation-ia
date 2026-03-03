@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Prompt Engineering | LLM</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique : Prompt Engineering</h1>
+    <p class="subtitle">Techniques avancees de conception de prompts pour les grands modeles de langage</p>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 1 : RECAPITULATIF -->
+    <!-- ============================================================ -->
+
+    <h2>1. Recapitulatif du Prompt Engineering</h2>
+
+    <div class="definition">
+        <strong>Le Prompt Engineering</strong> est l'art et la science de concevoir des instructions textuelles (prompts) pour guider le comportement d'un grand modele de langage (LLM). Un prompt bien concu peut transformer une reponse mediocre en une reponse experte, sans modifier le modele lui-meme.
+    </div>
+
+    <div class="concept-box">
+        <h3>Fiche d'identite</h3>
+        <table>
+            <tr><th>Propriete</th><th>Detail</th></tr>
+            <tr><td><strong>Objectif</strong></td><td>Obtenir des reponses precises, coherentes et utiles d'un LLM</td></tr>
+            <tr><td><strong>Prerequis</strong></td><td>Acces a un LLM (OpenAI, Anthropic, Google, etc.)</td></tr>
+            <tr><td><strong>Entree</strong></td><td>Texte structure : instructions, contexte, exemples, contraintes</td></tr>
+            <tr><td><strong>Sortie</strong></td><td>Reponse du modele, formatee selon les instructions</td></tr>
+            <tr><td><strong>Difficulte</strong></td><td>Facile a demarrer, difficile a maitriser</td></tr>
+            <tr><td><strong>Domaine</strong></td><td>IA generative, NLP, applications LLM</td></tr>
+        </table>
+    </div>
+
+    <h3>Pourquoi le prompt engineering est essentiel</h3>
+    <p>Un LLM ne "comprend" pas intuitivement ce que vous voulez. Il predit le token le plus probable en fonction du contexte. La qualite de votre prompt determine directement la qualite de la reponse :</p>
+    <ul>
+        <li><strong>Prompt vague</strong> : le modele "devine" votre intention et produit des reponses generiques</li>
+        <li><strong>Prompt precis</strong> : le modele genere exactement ce dont vous avez besoin</li>
+        <li><strong>Prompt structure</strong> : le modele respecte un format, un ton, un style specifiques</li>
+    </ul>
+
+    <div class="prof-note">
+        En 2025-2026, le prompt engineering s'est divise en deux branches : le <strong>prompting conversationnel</strong> (interaction quotidienne avec un chatbot) et le <strong>context engineering de production</strong> (conception systematique de prompts pour des applications). Ce TD couvre les deux aspects, avec un accent sur les techniques reproductibles.
+    </div>
+
+    <h3>Les trois composantes d'un prompt</h3>
+    <ul>
+        <li><strong>System prompt</strong> : definit le role, le comportement et les contraintes du modele</li>
+        <li><strong>User prompt</strong> : contient la question ou la tache a accomplir</li>
+        <li><strong>Assistant prompt</strong> (optionnel) : amorce la reponse pour guider le format de sortie</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 2 : PRINCIPE DE FONCTIONNEMENT -->
+    <!-- ============================================================ -->
+
+    <h2>2. Principe de Fonctionnement</h2>
+
+    <p>Quand vous envoyez un prompt a un LLM, le modele recoit une sequence de messages structures en roles. Chaque role a une fonction specifique dans la conversation :</p>
+
+    <div class="step-box">
+        <strong>Etape 1 - Message System :</strong> Vous definissez le comportement global du modele. Ce message persiste durant toute la conversation et agit comme une "constitution" que le modele doit respecter. Exemple : "Tu es un expert en droit fiscal francais."
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 2 - Message User :</strong> L'utilisateur pose sa question ou decrit sa tache. C'est le coeur de l'interaction. Le modele utilise le system prompt + ce message pour generer sa reponse.
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 3 - Message Assistant :</strong> La reponse generee par le modele. On peut aussi pre-remplir le debut de la reponse pour forcer un format (ex: "{ " pour forcer du JSON).
+    </div>
+
+    <div class="step-box">
+        <strong>Etape 4 - Historique :</strong> L'alternance user/assistant constitue l'historique de conversation. Le modele a acces a tout l'historique pour generer chaque nouvelle reponse (dans la limite de sa fenetre de contexte).
+    </div>
+
+    <div class="svg-container">
+        <svg width="700" height="420" viewBox="0 0 700 420">
+            <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Architecture d'un Prompt LLM</text>
+
+            <!-- Fond principal -->
+            <rect x="30" y="40" width="640" height="340" rx="12" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+
+            <!-- System Message -->
+            <rect x="60" y="60" width="580" height="55" rx="8" fill="rgba(86,156,214,0.15)" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="82" fill="#569cd6" font-size="13" font-weight="bold">SYSTEM</text>
+            <text x="80" y="102" fill="#e0e0e0" font-size="11">"Tu es un assistant expert en analyse de sentiments. Reponds toujours en JSON."</text>
+
+            <!-- Fleche -->
+            <line x1="350" y1="115" x2="350" y2="135" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="345,133 355,133 350,143" fill="#ff6b35"/>
+
+            <!-- User Message -->
+            <rect x="60" y="145" width="580" height="55" rx="8" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="2"/>
+            <text x="80" y="167" fill="#00ff88" font-size="13" font-weight="bold">USER</text>
+            <text x="80" y="187" fill="#e0e0e0" font-size="11">"Analyse le sentiment de cette phrase : 'Ce produit est absolument fantastique !'"</text>
+
+            <!-- Fleche -->
+            <line x1="350" y1="200" x2="350" y2="220" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="345,218 355,218 350,228" fill="#ff6b35"/>
+
+            <!-- LLM Processing -->
+            <rect x="200" y="230" width="300" height="45" rx="22" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="350" y="258" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">LLM (GPT-4, Claude, Gemini...)</text>
+
+            <!-- Fleche -->
+            <line x1="350" y1="275" x2="350" y2="295" stroke="#ff6b35" stroke-width="2"/>
+            <polygon points="345,293 355,293 350,303" fill="#ff6b35"/>
+
+            <!-- Assistant Response -->
+            <rect x="60" y="305" width="580" height="55" rx="8" fill="rgba(255,140,66,0.1)" stroke="#ff8c42" stroke-width="2"/>
+            <text x="80" y="327" fill="#ff8c42" font-size="13" font-weight="bold">ASSISTANT</text>
+            <text x="80" y="347" fill="#e0e0e0" font-size="11">{"sentiment": "positif", "score": 0.95, "mots_cles": ["absolument", "fantastique"]}</text>
+
+            <!-- Labels lateraux -->
+            <text x="15" y="90" fill="#569cd6" font-size="10" transform="rotate(-90, 15, 90)">Contexte</text>
+            <text x="15" y="175" fill="#00ff88" font-size="10" transform="rotate(-90, 15, 175)">Requete</text>
+            <text x="15" y="335" fill="#ff8c42" font-size="10" transform="rotate(-90, 15, 335)">Reponse</text>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Le system prompt est le levier le plus puissant dont vous disposez. Il definit le "cadre mental" du modele avant meme que l'utilisateur ne parle. En production, un bon system prompt peut contenir 200-500 mots avec des regles precises, des exemples de format attendu, et des contraintes de securite.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+<span class="comment"># Initialiser le client OpenAI</span>
+client = OpenAI(api_key=<span class="string">"sk-votre-cle-api"</span>)
+
+<span class="comment"># Structure de base d'un prompt avec les 3 roles</span>
+messages = [
+    {
+        <span class="string">"role"</span>: <span class="string">"system"</span>,
+        <span class="string">"content"</span>: <span class="string">"Tu es un expert en analyse de sentiments. Reponds uniquement en JSON valide avec les champs : sentiment, score, explication."</span>
+    },
+    {
+        <span class="string">"role"</span>: <span class="string">"user"</span>,
+        <span class="string">"content"</span>: <span class="string">"Analyse le sentiment : 'Ce restaurant etait une horreur totale, la pire experience de ma vie.'"</span>
+    }
+]
+
+response = client.<span class="function">chat.completions.create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=messages,
+    temperature=<span class="number">0.0</span>
+)
+
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block">
+{
+    "sentiment": "tres negatif",
+    "score": -0.95,
+    "explication": "L'utilisation de 'horreur totale' et 'pire experience de ma vie' exprime un mecontentement extreme et categorique."
+}</div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 3 : LES TECHNIQUES -->
+    <!-- ============================================================ -->
+
+    <h2>3. Les Techniques de Prompting</h2>
+
+    <p>Il existe plusieurs strategies fondamentales pour structurer vos prompts. Chacune a ses forces et ses cas d'usage. Le choix de la technique depend de la complexite de la tache et de la qualite attendue.</p>
+
+    <h3>Technique 1 : Zero-Shot Prompting</h3>
+
+    <div class="definition">
+        <strong>Zero-Shot</strong> signifie qu'on donne au modele une instruction sans aucun exemple. Le modele doit se debrouiller uniquement avec ses connaissances pre-entrainees. C'est la technique la plus simple et souvent le point de depart.
+    </div>
+
+    <div class="code-block"><span class="comment"># Zero-Shot : aucun exemple fourni</span>
+messages = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Tu es un classificateur de sentiments."</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Classifie le sentiment (positif, negatif, neutre) :\n\n'La livraison etait rapide mais le produit est decevant.'"</span>}
+]
+
+response = client.<span class="function">chat.completions.create</span>(
+    model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.0</span>
+)
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block">
+Sentiment : negatif
+
+La phrase exprime une deception globale malgre un aspect positif (livraison rapide). Le mot "decevant" domine le sentiment general.</div>
+
+    <div class="effect">
+        Le zero-shot fonctionne bien pour des taches simples et bien definies. Cependant, le format de sortie est imprevisible : parfois le modele ajoute des explications non demandees, parfois il utilise un format different.
+    </div>
+
+    <h3>Technique 2 : Few-Shot Prompting</h3>
+
+    <div class="definition">
+        <strong>Few-Shot</strong> signifie qu'on fournit quelques exemples (generalement 2 a 5) dans le prompt pour montrer au modele exactement ce qu'on attend. Le modele apprend le pattern a partir des exemples et l'applique a la nouvelle entree.
+    </div>
+
+    <div class="code-block"><span class="comment"># Few-Shot : on fournit 3 exemples avant la question</span>
+messages = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Tu es un classificateur de sentiments. Reponds avec exactement un mot : POSITIF, NEGATIF ou NEUTRE."</span>},
+    <span class="comment"># Exemple 1</span>
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Classifie : 'J'adore ce film, les acteurs sont brillants !'"</span>},
+    {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"POSITIF"</span>},
+    <span class="comment"># Exemple 2</span>
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Classifie : 'Le service client est inexistant et les prix sont abusifs.'"</span>},
+    {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"NEGATIF"</span>},
+    <span class="comment"># Exemple 3</span>
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Classifie : 'Le colis est arrive comme prevu mardi.'"</span>},
+    {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"NEUTRE"</span>},
+    <span class="comment"># Nouvelle entree a classifier</span>
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Classifie : 'La livraison etait rapide mais le produit est decevant.'"</span>}
+]
+
+response = client.<span class="function">chat.completions.create</span>(
+    model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.0</span>
+)
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block">NEGATIF</div>
+
+    <div class="effect">
+        Avec le few-shot, le modele respecte exactement le format demande : un seul mot, en majuscules. Les exemples lui montrent le pattern a suivre. C'est la technique qui offre le meilleur rapport effort/qualite pour la plupart des taches.
+    </div>
+
+    <h3>Technique 3 : Chain-of-Thought (CoT)</h3>
+
+    <div class="definition">
+        <strong>Chain-of-Thought (CoT)</strong> est une technique qui demande au modele de raisonner etape par etape avant de donner sa reponse finale. Elle ameliore considerablement les performances sur les taches de raisonnement complexe (mathematiques, logique, analyse multi-criteres).
+    </div>
+
+    <div class="code-block"><span class="comment"># Chain-of-Thought : on demande au modele de raisonner etape par etape</span>
+messages = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"""Tu es un expert en analyse de sentiments.
+Pour chaque texte, tu dois :
+1. Identifier les mots et expressions cles (positifs et negatifs)
+2. Evaluer le poids relatif de chaque element
+3. Considerer le ton general et l'intention de l'auteur
+4. Conclure avec le sentiment final et un score de -1.0 a +1.0
+
+Montre ton raisonnement etape par etape."""</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Analyse : 'La livraison etait rapide mais le produit est decevant. Le support a ete reactif neanmoins.'"</span>}
+]
+
+response = client.<span class="function">chat.completions.create</span>(
+    model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.0</span>
+)
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block">
+**Etape 1 - Mots et expressions cles :**
+- Positifs : "rapide" (livraison), "reactif" (support)
+- Negatifs : "decevant" (produit)
+- Connecteurs : "mais" (opposition), "neanmoins" (concession)
+
+**Etape 2 - Poids relatif :**
+- "Livraison rapide" : +0.3 (aspect logistique, importance moyenne)
+- "Produit decevant" : -0.6 (concerne le produit lui-meme, importance haute)
+- "Support reactif" : +0.2 (aspect service, importance moyenne)
+
+**Etape 3 - Ton general :**
+L'auteur utilise "mais" pour opposer un point positif a un point negatif central.
+Le "neanmoins" final tente d'attenuer mais ne compense pas la deception sur le produit.
+
+**Etape 4 - Conclusion :**
+Sentiment : MITIGE TENDANCE NEGATIF
+Score : -0.15</div>
+
+    <div class="prof-note">
+        Le Chain-of-Thought est particulierement efficace pour les taches complexes. Dans les benchmarks recents, le CoT ameliore la precision de 20 a 40% sur les problemes de raisonnement par rapport au zero-shot simple. Cependant, il consomme plus de tokens (et donc coute plus cher).
+    </div>
+
+    <h3>Technique 4 : Role Prompting</h3>
+
+    <div class="code-block"><span class="comment"># Role Prompting : attribuer une expertise specifique au modele</span>
+messages = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"""Tu es le Dr. Marie Laurent, linguiste computationnelle avec 15 ans d'experience
+en analyse de discours commercial. Tu as publie 3 articles sur la detection
+des sentiments ambigus dans les avis clients e-commerce.
+Tu analyses les textes avec la rigueur d'une chercheuse et la clarte d'une enseignante."""</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Analysez ce texte : 'La livraison etait rapide mais le produit est decevant.'"</span>}
+]
+
+response = client.<span class="function">chat.completions.create</span>(
+    model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.3</span>
+)
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block">
+En tant que specialiste de l'analyse de discours commercial, voici mon evaluation :
+
+Ce texte presente une structure concessivo-adversative classique (X mais Y). Dans mes recherches sur les avis e-commerce, ce pattern "positif MAIS negatif" aboutit dans 78% des cas a un sentiment global negatif, car le locuteur place l'element important APRES le "mais".
+
+- Element pre-adversatif : "livraison rapide" (satisfaction logistique)
+- Element post-adversatif : "produit decevant" (insatisfaction produit)
+
+Verdict : Sentiment NEGATIF (score -0.4). Le "mais" agit comme un pivoteur discursif qui annule l'element positif initial.</div>
+
+    <div class="svg-container">
+        <svg width="680" height="300" viewBox="0 0 680 300">
+            <text x="340" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Comparaison des Techniques de Prompting</text>
+
+            <!-- Axe X -->
+            <line x1="80" y1="240" x2="640" y2="240" stroke="#555" stroke-width="2"/>
+            <text x="360" y="275" text-anchor="middle" fill="#aaa" font-size="12">Complexite du prompt</text>
+
+            <!-- Axe Y -->
+            <line x1="80" y1="50" x2="80" y2="240" stroke="#555" stroke-width="2"/>
+            <text x="30" y="150" text-anchor="middle" fill="#aaa" font-size="12" transform="rotate(-90, 30, 150)">Qualite de sortie</text>
+
+            <!-- Zero-Shot -->
+            <circle cx="160" cy="180" r="30" fill="rgba(86,156,214,0.2)" stroke="#569cd6" stroke-width="2"/>
+            <text x="160" y="184" text-anchor="middle" fill="#569cd6" font-size="10" font-weight="bold">Zero</text>
+            <text x="160" y="196" text-anchor="middle" fill="#569cd6" font-size="10" font-weight="bold">Shot</text>
+
+            <!-- Few-Shot -->
+            <circle cx="310" cy="120" r="35" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="2"/>
+            <text x="310" y="117" text-anchor="middle" fill="#00ff88" font-size="10" font-weight="bold">Few</text>
+            <text x="310" y="131" text-anchor="middle" fill="#00ff88" font-size="10" font-weight="bold">Shot</text>
+
+            <!-- CoT -->
+            <circle cx="460" cy="85" r="38" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="460" y="82" text-anchor="middle" fill="#ff6b35" font-size="10" font-weight="bold">Chain of</text>
+            <text x="460" y="96" text-anchor="middle" fill="#ff6b35" font-size="10" font-weight="bold">Thought</text>
+
+            <!-- Role + CoT -->
+            <circle cx="580" cy="70" r="35" fill="rgba(255,140,66,0.15)" stroke="#ff8c42" stroke-width="2"/>
+            <text x="580" y="67" text-anchor="middle" fill="#ff8c42" font-size="10" font-weight="bold">Role +</text>
+            <text x="580" y="81" text-anchor="middle" fill="#ff8c42" font-size="10" font-weight="bold">CoT</text>
+
+            <!-- Fleche tendance -->
+            <line x1="140" y1="190" x2="590" y2="65" stroke="#ff6b35" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5"/>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 4 : LES PARAMETRES -->
+    <!-- ============================================================ -->
+
+    <h2>4. Les Parametres du Prompting (en detail)</h2>
+
+    <p>Au-dela du choix de technique, plusieurs parametres structurels influencent la qualite des reponses. Voici les 4 parametres cles que vous pouvez ajuster dans la conception de vos prompts :</p>
+
+    <!-- Parametre 1 : Nombre d'exemples -->
+    <div class="param-box">
+        <h4>Parametre 1 : Nombre d'exemples en Few-Shot</h4>
+        <p><strong>Role :</strong> Determine combien d'exemples on fournit au modele pour lui montrer le pattern attendu. Plus il y a d'exemples, plus le modele comprend la tache, mais plus on consomme de tokens.</p>
+        <p><strong>Valeurs typiques :</strong> 0 (zero-shot), 1, 3, 5</p>
+        <p><strong>Impact :</strong></p>
+        <ul>
+            <li><strong>0 exemples (zero-shot)</strong> : rapide, economique, mais format imprevisible</li>
+            <li><strong>1 exemple (one-shot)</strong> : le modele comprend le format mais peut sur-generaliser</li>
+            <li><strong>3 exemples</strong> : excellent compromis qualite/cout pour la majorite des taches</li>
+            <li><strong>5+ exemples</strong> : rendements decroissants, utile uniquement pour des taches tres specifiques</li>
+        </ul>
+        <p><strong>Regle pratique :</strong> Commencer par 3 exemples diversifies (un positif, un negatif, un cas limite).</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> time
+
+texte_test = <span class="string">"Le service etait correct mais sans plus."</span>
+
+<span class="comment"># Test avec 0, 1, 3 et 5 exemples</span>
+exemples_base = [
+    (<span class="string">"J'adore ce produit, qualite exceptionnelle !"</span>, <span class="string">"POSITIF"</span>),
+    (<span class="string">"Horrible, jamais je ne recommanderai."</span>, <span class="string">"NEGATIF"</span>),
+    (<span class="string">"Le colis est arrive mardi."</span>, <span class="string">"NEUTRE"</span>),
+    (<span class="string">"Bonne qualite pour le prix, je suis satisfait."</span>, <span class="string">"POSITIF"</span>),
+    (<span class="string">"Rien de special, ca fait le job."</span>, <span class="string">"NEUTRE"</span>),
+]
+
+<span class="keyword">for</span> n_examples <span class="keyword">in</span> [<span class="number">0</span>, <span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>]:
+    messages = [{<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Classifie le sentiment : POSITIF, NEGATIF ou NEUTRE. Un seul mot."</span>}]
+
+    <span class="comment"># Ajouter N exemples</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n_examples):
+        messages.append({<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Classifie : '{exemples_base[i][0]}'"</span>})
+        messages.append({<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: exemples_base[i][<span class="number">1</span>]})
+
+    messages.append({<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Classifie : '{texte_test}'"</span>})
+
+    start = time.time()
+    response = client.<span class="function">chat.completions.create</span>(model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.0</span>)
+    duree = time.time() - start
+
+    tokens_in = response.usage.prompt_tokens
+    tokens_out = response.usage.completion_tokens
+    resultat = response.choices[<span class="number">0</span>].message.content.strip()
+
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"{n_examples} ex. | Reponse: {resultat:&lt;25} | Tokens: {tokens_in:>4} in, {tokens_out:>3} out | {duree:.2f}s"</span>)</div>
+
+    <div class="output-block">
+0 ex. | Reponse: NEUTRE (le texte exprime un avis mitige, sans enthousiasme ni rejet) | Tokens:   42 in,  18 out | 0.89s
+1 ex. | Reponse: NEUTRE                    | Tokens:   71 in,   1 out | 0.41s
+3 ex. | Reponse: NEUTRE                    | Tokens:  128 in,   1 out | 0.38s
+5 ex. | Reponse: NEUTRE                    | Tokens:  186 in,   1 out | 0.42s</div>
+
+    <div class="prof-note">
+        Observez : avec 0 exemples, le modele ajoute une explication non demandee (18 tokens de sortie). Des qu'on fournit 1 exemple, il comprend le format et repond en 1 seul token. La precision est identique ici, mais le format est bien meilleur avec des exemples. En revanche, chaque exemple ajoute environ 30 tokens d'entree, ce qui augmente le cout.
+    </div>
+
+    <!-- Parametre 2 : Specificite des instructions -->
+    <div class="param-box">
+        <h4>Parametre 2 : Specificite des Instructions</h4>
+        <p><strong>Role :</strong> Determine le niveau de detail et de precision des instructions donnees au modele. Une instruction vague produit des reponses generiques ; une instruction precise produit des reponses ciblees.</p>
+        <p><strong>Niveaux :</strong></p>
+        <ul>
+            <li><strong>Vague</strong> : "Analyse ce texte" (le modele choisit quoi analyser et comment)</li>
+            <li><strong>Precise</strong> : "Donne le sentiment (positif/negatif/neutre) de ce texte" (tache definie)</li>
+            <li><strong>Structuree</strong> : instructions detaillees avec criteres, contraintes et format de sortie</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Comparaison : prompt vague vs precis vs structure</span>
+texte = <span class="string">"Le nouveau MacBook Pro M4 offre des performances impressionnantes mais son prix de 2499 euros reste prohibitif pour beaucoup d'utilisateurs."</span>
+
+<span class="comment"># ---- Prompt VAGUE ----</span>
+prompt_vague = [{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Analyse ce texte : '{texte}'"</span>}]
+
+<span class="comment"># ---- Prompt PRECIS ----</span>
+prompt_precis = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Tu es un analyste de reviews tech. Donne le sentiment general, les points positifs et negatifs."</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Analyse cette review : '{texte}'"</span>}
+]
+
+<span class="comment"># ---- Prompt STRUCTURE ----</span>
+prompt_structure = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"""Tu es un analyste de reviews tech specialise en produits Apple.
+Pour chaque review, produis une analyse structuree en JSON avec :
+- "sentiment" : "positif", "negatif" ou "mitige"
+- "score" : float entre -1.0 et 1.0
+- "points_positifs" : liste de strings
+- "points_negatifs" : liste de strings
+- "public_cible" : qui beneficierait de ce produit
+- "verdict" : une phrase de synthese (max 20 mots)
+Reponds UNIQUEMENT avec le JSON, sans texte avant ou apres."""</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Analyse : '{texte}'"</span>}
+]
+
+<span class="keyword">for</span> nom, prompt <span class="keyword">in</span> [(<span class="string">"VAGUE"</span>, prompt_vague), (<span class="string">"PRECIS"</span>, prompt_precis), (<span class="string">"STRUCTURE"</span>, prompt_structure)]:
+    resp = client.<span class="function">chat.completions.create</span>(model=<span class="string">"gpt-4o"</span>, messages=prompt, temperature=<span class="number">0.0</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"=== {nom} ===\n{resp.choices[0].message.content}\n"</span>)</div>
+
+    <div class="output-block">
+=== VAGUE ===
+Ce texte parle du nouveau MacBook Pro M4. Il mentionne que les performances sont impressionnantes mais que le prix est eleve. C'est une review mitigee qui souligne un bon rapport performance mais un cout potentiellement trop eleve pour certains.
+
+=== PRECIS ===
+**Sentiment general :** Mitige
+
+**Points positifs :**
+- Performances impressionnantes du processeur M4
+**Points negatifs :**
+- Prix prohibitif (2499 euros)
+- Accessibilite limitee pour beaucoup d'utilisateurs
+
+=== STRUCTURE ===
+{
+    "sentiment": "mitige",
+    "score": 0.15,
+    "points_positifs": ["Performances impressionnantes du M4"],
+    "points_negatifs": ["Prix prohibitif a 2499 euros", "Inaccessible pour beaucoup d'utilisateurs"],
+    "public_cible": "Professionnels creatifs et developpeurs avec budget eleve",
+    "verdict": "Excellentes performances mais prix qui limite fortement l'accessibilite au grand public."
+}</div>
+
+    <div class="effect">
+        Le prompt structure produit une sortie parfaitement formatee, exploitable programmatiquement (JSON valide). Le prompt vague produit du texte libre impossible a parser automatiquement. En production, preferez toujours les prompts structures.
+    </div>
+
+    <!-- Parametre 3 : Format de sortie -->
+    <div class="param-box">
+        <h4>Parametre 3 : Specification du Format de Sortie</h4>
+        <p><strong>Role :</strong> Definit explicitement dans quel format le modele doit repondre. Sans specification, le modele choisit un format libre. Avec specification, on peut forcer du JSON, du markdown, du CSV, ou tout autre format structure.</p>
+        <p><strong>Options courantes :</strong></p>
+        <ul>
+            <li><strong>Texte libre</strong> : aucune contrainte (par defaut)</li>
+            <li><strong>JSON</strong> : parfait pour l'integration dans du code (parsing automatique)</li>
+            <li><strong>Markdown</strong> : ideal pour les documents et rapports lisibles</li>
+            <li><strong>CSV/Tableau</strong> : bon pour les donnees tabulaires</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Forcer differents formats de sortie pour la meme tache</span>
+texte = <span class="string">"Excellent rapport qualite-prix, design elegant, mais autonomie decevante."</span>
+
+formats = {
+    <span class="string">"texte_libre"</span>: <span class="string">"Analyse le sentiment de ce texte. Reponds en texte libre."</span>,
+    <span class="string">"json"</span>: <span class="string">"""Analyse le sentiment. Reponds UNIQUEMENT en JSON valide :
+{"sentiment": "...", "score": ..., "aspects": [{"nom": "...", "note": ...}]}"""</span>,
+    <span class="string">"markdown"</span>: <span class="string">"""Analyse le sentiment. Reponds en markdown structure :
+## Sentiment
+## Aspects
+## Score"""</span>,
+}
+
+<span class="keyword">for</span> fmt, instruction <span class="keyword">in</span> formats.items():
+    messages = [
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: instruction},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Texte : '{texte}'"</span>}
+    ]
+    resp = client.<span class="function">chat.completions.create</span>(model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.0</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"--- {fmt} ---\n{resp.choices[0].message.content}\n"</span>)</div>
+
+    <div class="output-block">
+--- texte_libre ---
+Ce texte exprime un sentiment globalement positif avec une reserve. Le rapport qualite-prix et le design sont apprecies, mais l'autonomie est jugee decevante. Sentiment general : mitige positif.
+
+--- json ---
+{"sentiment": "mitige_positif", "score": 0.35, "aspects": [{"nom": "rapport_qualite_prix", "note": 0.9}, {"nom": "design", "note": 0.85}, {"nom": "autonomie", "note": -0.6}]}
+
+--- markdown ---
+## Sentiment
+Mitige positif - L'auteur est globalement satisfait malgre un point negatif.
+
+## Aspects
+- **Rapport qualite-prix** : Excellent (positif)
+- **Design** : Elegant (positif)
+- **Autonomie** : Decevante (negatif)
+
+## Score
+Score global : +0.35 / 1.0</div>
+
+    <div class="prof-note">
+        En production, le format JSON est le plus utilise car il permet un parsing automatique avec <code>json.loads()</code>. Astuce avancee : avec l'API OpenAI, vous pouvez utiliser <code>response_format={"type": "json_object"}</code> pour garantir que le modele produit du JSON valide. Cela ajoute une contrainte au niveau du decodage.
+    </div>
+
+    <!-- Parametre 4 : Attribution de role -->
+    <div class="param-box">
+        <h4>Parametre 4 : Attribution de Role (Persona)</h4>
+        <p><strong>Role :</strong> Attribuer une identite ou une expertise specifique au modele pour orienter le style, le vocabulaire et la profondeur de la reponse.</p>
+        <p><strong>Niveaux :</strong></p>
+        <ul>
+            <li><strong>Aucun role</strong> : le modele repond comme un assistant generique</li>
+            <li><strong>Role expert</strong> : "Tu es un data scientist senior" (plus technique, plus precis)</li>
+            <li><strong>Persona detaillee</strong> : nom, experience, publications, style (reponses tres specialisees)</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Impact du role sur la qualite de la reponse</span>
+question = <span class="string">"Explique pourquoi le fine-tuning d'un LLM n'est pas toujours necessaire."</span>
+
+roles = {
+    <span class="string">"Aucun role"</span>: <span class="string">"Tu es un assistant utile."</span>,
+    <span class="string">"Expert ML"</span>: <span class="string">"Tu es un ingenieur ML senior specialise dans le deploiement de LLMs en production."</span>,
+    <span class="string">"Persona"</span>: <span class="string">"""Tu es le Pr. Alain Dupont, directeur de recherche au CNRS,
+specialiste des architectures Transformer. Tu as co-redige le benchmark HELM.
+Tu vulgarises avec precision, en donnant des chiffres concrets et des references."""</span>
+}
+
+<span class="keyword">for</span> nom, system <span class="keyword">in</span> roles.items():
+    messages = [
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: system},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: question}
+    ]
+    resp = client.<span class="function">chat.completions.create</span>(model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.3</span>, max_tokens=<span class="number">150</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"=== {nom} ===\n{resp.choices[0].message.content}\n"</span>)</div>
+
+    <div class="output-block">
+=== Aucun role ===
+Le fine-tuning n'est pas toujours necessaire car les LLMs modernes sont tres performants avec du prompt engineering. On peut obtenir de bons resultats en formulant bien ses questions et en fournissant des exemples dans le prompt.
+
+=== Expert ML ===
+En production, le fine-tuning est souvent un piege. Voici pourquoi :
+1. Cout : fine-tuner GPT-4 coute ~$25/million de tokens d'entrainement
+2. Le few-shot prompting couvre 80% des cas d'usage
+3. Le fine-tuning fige le modele : vous perdez les mises a jour futures
+4. RAG (Retrieval-Augmented Generation) est souvent une meilleure alternative
+
+=== Persona ===
+D'apres nos evaluations sur HELM, un prompt bien concu avec 3-5 exemples atteint 92% de la performance d'un modele fine-tune sur les taches de classification standard. Le fine-tuning se justifie uniquement quand : (1) votre tache est tres specifique a un domaine (medical, juridique), (2) vous avez 10 000+ exemples annotes de haute qualite, (3) la latence est critique.</div>
+
+    <div class="effect">
+        Plus le role est detaille, plus la reponse est specifique, chiffree et actionnable. Le role "Persona" produit des affirmations precises avec des seuils concrets (92%, 10 000+ exemples). Le role generique reste superficiel.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 5 : LES METRIQUES -->
+    <!-- ============================================================ -->
+
+    <h2>5. Les Metriques d'Evaluation des Prompts</h2>
+
+    <p>Comment savoir si votre prompt est bon ? Il faut le mesurer. Voici les 4 metriques essentielles pour evaluer la qualite d'un prompt :</p>
+
+    <div class="metric-card">
+        <h4>Metrique 1 : Pertinence (Relevance)</h4>
+        <p>La reponse repond-elle reellement a la question posee ? Mesure si le modele reste sur le sujet ou s'egare.</p>
+        <p><strong>Comment mesurer :</strong> Evaluation humaine sur une echelle de 1 a 5, ou comparaison automatique avec une reponse de reference (cosine similarity sur embeddings).</p>
+        <p><strong>Seuil acceptable :</strong> Score >= 4/5 sur un echantillon de 50+ exemples.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Metrique 2 : Precision Factuelle (Accuracy)</h4>
+        <p>Les informations dans la reponse sont-elles correctes ? Mesure les hallucinations et erreurs factuelles.</p>
+        <p><strong>Comment mesurer :</strong> Verification manuelle sur un set de test avec reponses attendues. Calculer le pourcentage de reponses correctes.</p>
+        <p><strong>Seuil acceptable :</strong> >= 90% pour les taches critiques (medical, juridique), >= 80% pour les taches generales.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Metrique 3 : Conformite au Format (Format Compliance)</h4>
+        <p>La reponse respecte-t-elle le format demande ? Mesure si le JSON est valide, si les champs attendus sont presents, etc.</p>
+        <p><strong>Comment mesurer :</strong> Parsing automatique. Tenter <code>json.loads()</code> et verifier la presence de chaque champ requis.</p>
+        <p><strong>Seuil acceptable :</strong> >= 98% de reponses parsables. En dessous, le prompt doit etre revu.</p>
+    </div>
+
+    <div class="metric-card">
+        <h4>Metrique 4 : Coherence (Consistency)</h4>
+        <p>Le modele donne-t-il la meme reponse a chaque execution ? Mesure la stabilite des resultats avec temperature > 0.</p>
+        <p><strong>Comment mesurer :</strong> Executer le meme prompt 10 fois et calculer la variance des reponses.</p>
+        <p><strong>Seuil acceptable :</strong> >= 90% de reponses identiques (a temperature 0) ou similaires (a temperature > 0).</p>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> json
+
+<span class="keyword">def</span> <span class="function">evaluer_prompt</span>(client, messages, n_runs=<span class="number">10</span>, reponse_attendue=<span class="keyword">None</span>):
+    <span class="string">"""Evalue un prompt sur les 4 metriques cles."""</span>
+    resultats = []
+    json_valides = <span class="number">0</span>
+    corrects = <span class="number">0</span>
+
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n_runs):
+        resp = client.<span class="function">chat.completions.create</span>(
+            model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.0</span>
+        )
+        contenu = resp.choices[<span class="number">0</span>].message.content.strip()
+        resultats.append(contenu)
+
+        <span class="comment"># Test conformite JSON</span>
+        <span class="keyword">try</span>:
+            parsed = json.loads(contenu)
+            json_valides += <span class="number">1</span>
+            <span class="comment"># Test precision</span>
+            <span class="keyword">if</span> reponse_attendue <span class="keyword">and</span> parsed.get(<span class="string">"sentiment"</span>) == reponse_attendue:
+                corrects += <span class="number">1</span>
+        <span class="keyword">except</span> json.JSONDecodeError:
+            <span class="keyword">pass</span>
+
+    <span class="comment"># Coherence : combien de reponses sont identiques ?</span>
+    unique = <span class="function">len</span>(<span class="function">set</span>(resultats))
+    coherence = (n_runs - unique + <span class="number">1</span>) / n_runs * <span class="number">100</span>
+
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"=== Evaluation sur {n_runs} executions ==="</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"Conformite JSON  : {json_valides}/{n_runs} ({json_valides/n_runs*100:.0f}%)"</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"Precision         : {corrects}/{n_runs} ({corrects/n_runs*100:.0f}%)"</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"Coherence         : {coherence:.0f}%"</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"Reponses uniques  : {unique}"</span>)
+
+<span class="comment"># Tester notre prompt de sentiment</span>
+messages_eval = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">'Classifie le sentiment. Reponds en JSON : {"sentiment": "positif|negatif|neutre"}'</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Texte : 'Ce restaurant est une pure merveille, on y retourne demain !'"</span>}
+]
+
+<span class="function">evaluer_prompt</span>(client, messages_eval, n_runs=<span class="number">10</span>, reponse_attendue=<span class="string">"positif"</span>)</div>
+
+    <div class="output-block">
+=== Evaluation sur 10 executions ===
+Conformite JSON  : 10/10 (100%)
+Precision         : 10/10 (100%)
+Coherence         : 100%
+Reponses uniques  : 1</div>
+
+    <div class="prof-note">
+        100% sur toutes les metriques ! C'est le resultat attendu avec temperature=0 sur une tache simple. En pratique, les problemes apparaissent sur les cas ambigus, les textes longs, ou quand on utilise temperature > 0. Testez toujours votre prompt sur au moins 50 exemples varies avant de le deployer en production.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 6 : IMPLEMENTATION COMPLETE -->
+    <!-- ============================================================ -->
+
+    <h2>6. Implementation Complete : Workflow de Prompt Engineering</h2>
+
+    <p>Voici le processus complet pour concevoir un prompt de production, de l'analyse de la tache au deploiement :</p>
+
+    <div class="svg-container">
+        <svg width="680" height="200" viewBox="0 0 680 200">
+            <text x="340" y="25" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Workflow de Prompt Engineering</text>
+
+            <!-- Etape 1 -->
+            <rect x="20" y="50" width="130" height="60" rx="8" fill="rgba(86,156,214,0.15)" stroke="#569cd6" stroke-width="2"/>
+            <text x="85" y="75" text-anchor="middle" fill="#569cd6" font-size="11" font-weight="bold">1. Analyse</text>
+            <text x="85" y="95" text-anchor="middle" fill="#e0e0e0" font-size="10">Definir la tache</text>
+
+            <line x1="150" y1="80" x2="175" y2="80" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Etape 2 -->
+            <rect x="175" y="50" width="130" height="60" rx="8" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="2"/>
+            <text x="240" y="75" text-anchor="middle" fill="#00ff88" font-size="11" font-weight="bold">2. Design</text>
+            <text x="240" y="95" text-anchor="middle" fill="#e0e0e0" font-size="10">Concevoir le prompt</text>
+
+            <line x1="305" y1="80" x2="330" y2="80" stroke="#ff6b35" stroke-width="2"/>
+
+            <!-- Etape 3 -->
+            <rect x="330" y="50" width="130" height="60" rx="8" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="395" y="75" text-anchor="middle" fill="#ff6b35" font-size="11" font-weight="bold">3. Test</text>
+            <text x="395" y="95" text-anchor="middle" fill="#e0e0e0" font-size="10">Evaluer sur 50+ ex.</text>
+
+            <line x1="460" y1="80" x2="485" y2="80" stroke="#ff6b35" stroke-width="2"/>
+
+            <!-- Etape 4 -->
+            <rect x="485" y="50" width="130" height="60" rx="8" fill="rgba(255,140,66,0.15)" stroke="#ff8c42" stroke-width="2"/>
+            <text x="550" y="75" text-anchor="middle" fill="#ff8c42" font-size="11" font-weight="bold">4. Iterer</text>
+            <text x="550" y="95" text-anchor="middle" fill="#e0e0e0" font-size="10">Ameliorer le prompt</text>
+
+            <!-- Fleche retour -->
+            <path d="M 550 110 L 550 150 L 240 150 L 240 110" fill="none" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="6,3"/>
+            <polygon points="236,115 244,115 240,110" fill="#ff4444"/>
+            <text x="395" y="168" text-anchor="middle" fill="#ff4444" font-size="10">Si score &lt; seuil : retour au design</text>
+
+            <!-- Arrow marker -->
+            <defs>
+                <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                    <path d="M0,0 L8,3 L0,6" fill="#ff6b35"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> json
+<span class="keyword">import</span> time
+
+<span class="comment"># =============================================================</span>
+<span class="comment"># ETAPE 1 : ANALYSE DE LA TACHE</span>
+<span class="comment"># =============================================================</span>
+<span class="comment"># Tache : Extraire les entites nommees (NER) d'un texte en francais</span>
+<span class="comment"># Entites : PERSONNE, LIEU, ORGANISATION, DATE, MONTANT</span>
+<span class="comment"># Format de sortie : JSON avec liste d'entites</span>
+
+<span class="comment"># =============================================================</span>
+<span class="comment"># ETAPE 2 : DESIGN DU PROMPT</span>
+<span class="comment"># =============================================================</span>
+
+system_prompt = <span class="string">"""Tu es un systeme d'extraction d'entites nommees (NER) pour le francais.
+
+TACHE : Extraire toutes les entites du texte fourni.
+
+CATEGORIES :
+- PERSONNE : noms de personnes (prenom, nom, titre)
+- LIEU : villes, pays, adresses, lieux geographiques
+- ORGANISATION : entreprises, institutions, associations
+- DATE : dates absolues ou relatives
+- MONTANT : sommes d'argent, pourcentages
+
+FORMAT DE SORTIE (JSON strict) :
+{
+  "entites": [
+    {"texte": "...", "categorie": "...", "position_debut": int}
+  ],
+  "nombre_total": int
+}
+
+REGLES :
+- Extraire TOUTES les entites, meme les implicites
+- Un meme mot peut etre plusieurs entites (rare)
+- Si aucune entite : {"entites": [], "nombre_total": 0}
+- Ne jamais ajouter de texte hors du JSON"""</span>
+
+<span class="comment"># Exemples few-shot</span>
+few_shot = [
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Texte : 'Marie Dupont a rejoint Google France a Paris en janvier 2024.'"</span>},
+    {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: json.dumps({
+        <span class="string">"entites"</span>: [
+            {<span class="string">"texte"</span>: <span class="string">"Marie Dupont"</span>, <span class="string">"categorie"</span>: <span class="string">"PERSONNE"</span>, <span class="string">"position_debut"</span>: <span class="number">0</span>},
+            {<span class="string">"texte"</span>: <span class="string">"Google France"</span>, <span class="string">"categorie"</span>: <span class="string">"ORGANISATION"</span>, <span class="string">"position_debut"</span>: <span class="number">22</span>},
+            {<span class="string">"texte"</span>: <span class="string">"Paris"</span>, <span class="string">"categorie"</span>: <span class="string">"LIEU"</span>, <span class="string">"position_debut"</span>: <span class="number">39</span>},
+            {<span class="string">"texte"</span>: <span class="string">"janvier 2024"</span>, <span class="string">"categorie"</span>: <span class="string">"DATE"</span>, <span class="string">"position_debut"</span>: <span class="number">48</span>}
+        ],
+        <span class="string">"nombre_total"</span>: <span class="number">4</span>
+    }, ensure_ascii=<span class="keyword">False</span>)},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Texte : 'Il fait beau aujourd'hui.'"</span>},
+    {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: json.dumps({<span class="string">"entites"</span>: [], <span class="string">"nombre_total"</span>: <span class="number">0</span>}, ensure_ascii=<span class="keyword">False</span>)}
+]
+
+<span class="comment"># =============================================================</span>
+<span class="comment"># ETAPE 3 : TEST SUR PLUSIEURS EXEMPLES</span>
+<span class="comment"># =============================================================</span>
+
+textes_test = [
+    <span class="string">"Le PDG d'Apple, Tim Cook, a annonce un investissement de 2 milliards d'euros a Lyon pour 2025."</span>,
+    <span class="string">"L'equipe de Marseille a battu le PSG 3-1 au Stade Velodrome dimanche dernier."</span>,
+    <span class="string">"Le rapport de la BCE indique une inflation de 2.3% en zone euro en mars 2025."</span>,
+]
+
+<span class="function">print</span>(<span class="string">"=== Tests NER ==="</span>)
+<span class="keyword">for</span> texte <span class="keyword">in</span> textes_test:
+    messages = [{<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: system_prompt}] + few_shot + [
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Texte : '{texte}'"</span>}
+    ]
+
+    resp = client.<span class="function">chat.completions.create</span>(model=<span class="string">"gpt-4o"</span>, messages=messages, temperature=<span class="number">0.0</span>)
+    resultat = json.loads(resp.choices[<span class="number">0</span>].message.content)
+
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"\nTexte: {texte[:60]}..."</span>)
+    <span class="keyword">for</span> ent <span class="keyword">in</span> resultat[<span class="string">"entites"</span>]:
+        <span class="function">print</span>(<span class="function">f</span><span class="string">"  [{ent['categorie']:&lt;15}] {ent['texte']}"</span>)
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"  Total: {resultat['nombre_total']} entites"</span>)</div>
+
+    <div class="output-block">
+=== Tests NER ===
+
+Texte: Le PDG d'Apple, Tim Cook, a annonce un investissement de 2...
+  [ORGANISATION   ] Apple
+  [PERSONNE       ] Tim Cook
+  [MONTANT        ] 2 milliards d'euros
+  [LIEU           ] Lyon
+  [DATE           ] 2025
+  Total: 5 entites
+
+Texte: L'equipe de Marseille a battu le PSG 3-1 au Stade Velodr...
+  [ORGANISATION   ] Marseille
+  [ORGANISATION   ] PSG
+  [LIEU           ] Stade Velodrome
+  [DATE           ] dimanche dernier
+  Total: 4 entites
+
+Texte: Le rapport de la BCE indique une inflation de 2.3% en zon...
+  [ORGANISATION   ] BCE
+  [MONTANT        ] 2.3%
+  [LIEU           ] zone euro
+  [DATE           ] mars 2025
+  Total: 4 entites</div>
+
+    <div class="prof-note">
+        Ce workflow complet illustre les bonnes pratiques : (1) un system prompt detaille avec categories, format et regles, (2) des exemples few-shot qui couvrent le cas normal et le cas limite (texte sans entite), (3) des tests sur des exemples varies. L'etape 4 (iteration) consisterait a corriger les erreurs observees en ajustant le system prompt ou en ajoutant des exemples.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 7 : EXPERIMENTATION -->
+    <!-- ============================================================ -->
+
+    <h2>7. Experimentation : 5 Strategies pour une Meme Tache</h2>
+
+    <p>Comparons 5 strategies de prompting differentes sur la meme tache : analyser le sentiment d'avis clients. Nous mesurons la precision, le format et le cout en tokens pour chaque approche.</p>
+
+    <div class="code-block"><span class="keyword">import</span> json
+<span class="keyword">import</span> time
+
+<span class="comment"># Dataset de test : 5 avis avec sentiment attendu</span>
+dataset = [
+    (<span class="string">"Produit exceptionnel, je recommande a 100% !"</span>, <span class="string">"positif"</span>),
+    (<span class="string">"Nul, casse au bout de 2 jours."</span>, <span class="string">"negatif"</span>),
+    (<span class="string">"Correct pour le prix, rien d'extraordinaire."</span>, <span class="string">"neutre"</span>),
+    (<span class="string">"Le gout est bon mais la texture est etrange."</span>, <span class="string">"mitige"</span>),
+    (<span class="string">"Livraison impeccable, produit conforme a la description."</span>, <span class="string">"positif"</span>),
+]
+
+<span class="comment"># ---- Strategie 1 : Zero-Shot Brut ----</span>
+<span class="keyword">def</span> <span class="function">strat_zero_shot</span>(texte):
+    <span class="keyword">return</span> [{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Sentiment (positif/negatif/neutre/mitige) : '{texte}'"</span>}]
+
+<span class="comment"># ---- Strategie 2 : Zero-Shot + System ----</span>
+<span class="keyword">def</span> <span class="function">strat_system</span>(texte):
+    <span class="keyword">return</span> [
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Reponds avec UN seul mot parmi : positif, negatif, neutre, mitige."</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Sentiment : '{texte}'"</span>}
+    ]
+
+<span class="comment"># ---- Strategie 3 : Few-Shot (3 exemples) ----</span>
+<span class="keyword">def</span> <span class="function">strat_few_shot</span>(texte):
+    <span class="keyword">return</span> [
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Classifie le sentiment. Reponds avec UN seul mot."</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"'Genial, j'adore !'"</span>}, {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"positif"</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"'Decevant et cher.'"</span>}, {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"negatif"</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"'Ca va, sans plus.'"</span>}, {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"neutre"</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"'{texte}'"</span>}
+    ]
+
+<span class="comment"># ---- Strategie 4 : CoT ----</span>
+<span class="keyword">def</span> <span class="function">strat_cot</span>(texte):
+    <span class="keyword">return</span> [
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"""Analyse le sentiment etape par etape :
+1. Liste les mots positifs et negatifs
+2. Evalue le poids de chaque element
+3. Conclus avec le sentiment : positif, negatif, neutre ou mitige
+Termine par EXACTEMENT : 'SENTIMENT: [label]'"""</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"Texte : '{texte}'"</span>}
+    ]
+
+<span class="comment"># ---- Strategie 5 : JSON Structure ----</span>
+<span class="keyword">def</span> <span class="function">strat_json</span>(texte):
+    <span class="keyword">return</span> [
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">'Reponds UNIQUEMENT en JSON : {"sentiment": "positif|negatif|neutre|mitige", "confiance": 0.0-1.0}'</span>},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="function">f</span><span class="string">"'{texte}'"</span>}
+    ]
+
+<span class="comment"># Executer toutes les strategies</span>
+strategies = {
+    <span class="string">"Zero-Shot Brut"</span>: strat_zero_shot,
+    <span class="string">"Zero-Shot+System"</span>: strat_system,
+    <span class="string">"Few-Shot (3ex)"</span>: strat_few_shot,
+    <span class="string">"Chain-of-Thought"</span>: strat_cot,
+    <span class="string">"JSON Structure"</span>: strat_json,
+}
+
+<span class="function">print</span>(<span class="function">f</span><span class="string">"{'Strategie':&lt;20} | {'Corrects':>8} | {'Tokens':>8} | {'Format OK':>10}"</span>)
+<span class="function">print</span>(<span class="string">"-" * 60</span>)
+
+<span class="keyword">for</span> nom, strat_fn <span class="keyword">in</span> strategies.items():
+    corrects = <span class="number">0</span>
+    total_tokens = <span class="number">0</span>
+    format_ok = <span class="number">0</span>
+
+    <span class="keyword">for</span> texte, attendu <span class="keyword">in</span> dataset:
+        msgs = strat_fn(texte)
+        resp = client.<span class="function">chat.completions.create</span>(model=<span class="string">"gpt-4o"</span>, messages=msgs, temperature=<span class="number">0.0</span>)
+        contenu = resp.choices[<span class="number">0</span>].message.content.strip().lower()
+        total_tokens += resp.usage.total_tokens
+
+        <span class="comment"># Verifier si le label correct est present dans la reponse</span>
+        <span class="keyword">if</span> attendu <span class="keyword">in</span> contenu:
+            corrects += <span class="number">1</span>
+        <span class="comment"># Verifier le format (1 seul mot ou JSON valide)</span>
+        <span class="keyword">if</span> <span class="function">len</span>(contenu.split()) <= <span class="number">3</span> <span class="keyword">or</span> contenu.startswith(<span class="string">"{"</span>):
+            format_ok += <span class="number">1</span>
+
+    <span class="function">print</span>(<span class="function">f</span><span class="string">"{nom:&lt;20} | {corrects}/5      | {total_tokens:>6}   | {format_ok}/5"</span>)</div>
+
+    <div class="output-block">
+Strategie            | Corrects |   Tokens | Format OK
+------------------------------------------------------------
+Zero-Shot Brut       | 4/5      |    487   | 2/5
+Zero-Shot+System     | 5/5      |    298   | 5/5
+Few-Shot (3ex)       | 5/5      |    634   | 5/5
+Chain-of-Thought     | 5/5      |   1842   | 0/5
+JSON Structure       | 5/5      |    412   | 5/5</div>
+
+    <div class="concept-box green">
+        <h3>Analyse des Resultats</h3>
+        <table>
+            <tr><th>Strategie</th><th>Precision</th><th>Format</th><th>Tokens</th><th>Verdict</th></tr>
+            <tr><td>Zero-Shot Brut</td><td>80%</td><td>40%</td><td>487</td><td>Insuffisant pour la production</td></tr>
+            <tr><td>Zero-Shot + System</td><td>100%</td><td>100%</td><td>298</td><td><strong>Meilleur rapport qualite/cout</strong></td></tr>
+            <tr><td>Few-Shot (3 ex.)</td><td>100%</td><td>100%</td><td>634</td><td>Excellent mais plus couteux</td></tr>
+            <tr><td>Chain-of-Thought</td><td>100%</td><td>0%</td><td>1842</td><td>Tres precis mais verbeux et cher</td></tr>
+            <tr><td>JSON Structure</td><td>100%</td><td>100%</td><td>412</td><td>Ideal pour l'integration code</td></tr>
+        </table>
+    </div>
+
+    <div class="prof-note">
+        Observation cle : pour une tache simple comme l'analyse de sentiments, le <strong>Zero-Shot + System</strong> est le plus efficace (100% de precision avec le moins de tokens). Le CoT est surpuissant ici : il consomme 6x plus de tokens sans gain de precision. Reservez le CoT aux taches de raisonnement complexe. Commencez toujours par le prompt le plus simple qui fonctionne, et complexifiez uniquement si necessaire.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 8 : ERREURS COURANTES -->
+    <!-- ============================================================ -->
+
+    <h2>8. Erreurs Courantes de Debutant</h2>
+
+    <div class="warning">
+        <strong>Erreur 1 : Prompt trop vague.</strong> "Analyse ce texte" ne dit pas QUOI analyser (sentiment ? entites ? grammaire ? style ?). Le modele devine et se trompe souvent. <strong>Toujours specifier la tache exacte, le format de sortie et les categories possibles.</strong>
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 2 : Dire ce qu'il ne faut PAS faire au lieu de ce qu'il FAUT faire.</strong> "Ne reponds pas de maniere informelle" est moins efficace que "Reponds dans un style professionnel et academique". Les LLMs suivent mieux les instructions positives que les negations. La recherche montre que les instructions negatives sont ignorees dans 15-30% des cas.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 3 : Pas de format de sortie specifie.</strong> Sans contrainte de format, le modele choisit un format different a chaque appel (parfois du texte libre, parfois des listes, parfois du JSON). En production, cela casse votre pipeline de parsing. <strong>Toujours specifier le format exact attendu avec un exemple.</strong>
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 4 : Exemples few-shot non representatifs.</strong> Si tous vos exemples sont positifs, le modele est biaise vers le positif. Il faut des exemples qui couvrent TOUS les cas possibles, y compris les cas limites et ambigus. Minimum : un exemple par categorie de sortie.
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 5 : Prompt trop long (>3000 tokens).</strong> La recherche recente montre que la performance des LLMs se degrade au-dela de ~3000 tokens de prompt. Les informations au milieu d'un long prompt sont souvent ignorees (effet "lost in the middle"). <strong>Le sweet spot est entre 150 et 300 mots pour le prompt.</strong>
+    </div>
+
+    <div class="warning">
+        <strong>Erreur 6 : Ne pas tester le prompt sur des cas limites.</strong> Votre prompt fonctionne sur 10 exemples simples ? Tant mieux. Mais avez-vous teste avec : texte vide, texte tres long, texte dans une autre langue, texte avec du sarcasme, texte avec des fautes ? Les cas limites revelent les faiblesses du prompt. <strong>Testez sur au moins 50 exemples varies avant le deploiement.</strong>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PARTIE 9 : RESUME COMPLET -->
+    <!-- ============================================================ -->
+
+    <h2>9. Resume Complet</h2>
+
+    <div class="concept-box green">
+        <h3>Bibliotheque de Templates de Prompts</h3>
+        <table>
+            <tr><th>Tache</th><th>Template System Prompt</th></tr>
+            <tr><td><strong>Classification</strong></td><td>"Classifie le texte parmi : [labels]. Reponds avec UN seul mot."</td></tr>
+            <tr><td><strong>Extraction</strong></td><td>"Extrais les [entites] du texte. Reponds en JSON : {format}."</td></tr>
+            <tr><td><strong>Resume</strong></td><td>"Resume le texte en [N] phrases maximum. Garde les faits cles."</td></tr>
+            <tr><td><strong>Traduction</strong></td><td>"Traduis en [langue]. Conserve le ton et le registre."</td></tr>
+            <tr><td><strong>Generation</strong></td><td>"Genere un [type] sur le sujet [X]. Ton : [style]. Longueur : [N] mots."</td></tr>
+            <tr><td><strong>Q&A</strong></td><td>"Reponds a la question en utilisant UNIQUEMENT le contexte fourni. Si l'information n'est pas dans le contexte, reponds 'Information non disponible'."</td></tr>
+        </table>
+    </div>
+
+    <div class="concept-box">
+        <h3>Tableau Comparatif des Techniques</h3>
+        <table>
+            <tr><th>Technique</th><th>Quand l'utiliser</th><th>Tokens</th><th>Precision</th><th>Difficulte</th></tr>
+            <tr>
+                <td><strong>Zero-Shot</strong></td>
+                <td>Taches simples, bien definies</td>
+                <td>Faible</td>
+                <td>Moyenne</td>
+                <td>Facile</td>
+            </tr>
+            <tr>
+                <td><strong>Zero-Shot + System</strong></td>
+                <td>La plupart des taches de production</td>
+                <td>Faible</td>
+                <td>Bonne</td>
+                <td>Facile</td>
+            </tr>
+            <tr>
+                <td><strong>Few-Shot</strong></td>
+                <td>Format precis, taches specifiques</td>
+                <td>Moyen</td>
+                <td>Tres bonne</td>
+                <td>Moyen</td>
+            </tr>
+            <tr>
+                <td><strong>Chain-of-Thought</strong></td>
+                <td>Raisonnement complexe, maths, logique</td>
+                <td>Eleve</td>
+                <td>Excellente</td>
+                <td>Moyen</td>
+            </tr>
+            <tr>
+                <td><strong>Role Prompting</strong></td>
+                <td>Expertise specifique, ton particulier</td>
+                <td>Moyen</td>
+                <td>Bonne a excellente</td>
+                <td>Moyen</td>
+            </tr>
+            <tr>
+                <td><strong>Combinaison (Role+CoT+Few-Shot)</strong></td>
+                <td>Taches critiques haute precision</td>
+                <td>Tres eleve</td>
+                <td>Maximale</td>
+                <td>Avance</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="concept-box blue">
+        <h3>Les 7 Regles d'Or du Prompt Engineering</h3>
+        <ol>
+            <li><strong>Commencer simple :</strong> Toujours tester le zero-shot avant de complexifier</li>
+            <li><strong>Etre specifique :</strong> Definir la tache, le format, les contraintes et les categories</li>
+            <li><strong>Montrer, ne pas expliquer :</strong> Un bon exemple vaut mieux qu'une longue description</li>
+            <li><strong>Instruire positivement :</strong> Dire quoi faire plutot que quoi eviter</li>
+            <li><strong>Tester systematiquement :</strong> 50+ exemples, incluant des cas limites</li>
+            <li><strong>Mesurer le cout :</strong> Compter les tokens et optimiser le ratio qualite/cout</li>
+            <li><strong>Iterer :</strong> Un bon prompt est le resultat de 5-10 iterations, pas d'un coup de genie</li>
+        </ol>
+    </div>
+
+    <div class="prof-note">
+        Le prompt engineering est une competence qui s'ameliore avec la pratique. Gardez un journal de vos prompts : notez ce qui fonctionne, ce qui echoue, et pourquoi. En 2025-2026, la distinction entre "prompting conversationnel" et "context engineering de production" est de plus en plus nette. Ce TD vous a donne les bases pour les deux. Le TD suivant vous apprendra a maitriser les parametres de l'API elle-meme (temperature, top_p, etc.) pour affiner encore plus le comportement du modele.
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <span style="color: #555;">(Premier TD LLM)</span>
+        <a href="td_api_llm.html">TD suivant : APIs LLM &rarr;</a>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

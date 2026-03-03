@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cours LangSmith - Complet</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0f0f23;color:#e0e0e0;line-height:1.7}
+nav{position:fixed;top:0;left:0;width:250px;height:100vh;background:#1a1a2e;padding:20px 15px;overflow-y:auto;border-right:2px solid #ff6b35;z-index:10}
+nav h2{color:#ff6b35;font-size:16px;margin-bottom:15px;text-align:center}
+nav a{display:block;color:#aaa;text-decoration:none;padding:6px 10px;font-size:13px;border-radius:5px;margin-bottom:3px}
+nav a:hover{background:#16213e;color:#ff6b35}
+main{margin-left:260px;padding:30px 40px;max-width:1000px}
+h1{color:#ff6b35;font-size:32px;margin-bottom:10px;border-bottom:3px solid #ff6b35;padding-bottom:10px}
+h2{color:#ff6b35;font-size:24px;margin:40px 0 15px;border-left:4px solid #ff6b35;padding-left:15px}
+h3{color:#ff8c5a;font-size:18px;margin:25px 0 10px}
+p{margin-bottom:12px}
+code{background:#1e1e3f;color:#7fdbca;padding:2px 6px;border-radius:3px;font-size:14px}
+pre{background:#1e1e3f;padding:20px;border-radius:8px;overflow-x:auto;margin:15px 0;border-left:4px solid #ff6b35;font-size:13px;line-height:1.6}
+pre code{background:none;padding:0}
+.box{background:#16213e;border:1px solid #333;border-radius:10px;padding:20px;margin:15px 0}
+.box-green{border-left:4px solid #4caf50}
+.box-orange{border-left:4px solid #ff9800}
+.box-red{border-left:4px solid #f44336}
+.box-blue{border-left:4px solid #2196f3}
+.box-purple{border-left:4px solid #9c27b0}
+table{width:100%;border-collapse:collapse;margin:15px 0}
+th{background:#1a1a2e;color:#ff6b35;padding:12px;text-align:left;border:1px solid #333}
+td{padding:10px;border:1px solid #333;background:#16213e}
+.emoji{font-size:20px;margin-right:8px}
+.comment{color:#637777;font-style:italic}
+.string{color:#addb67}
+.keyword{color:#c792ea}
+.func{color:#82aaff}
+img{max-width:100%;border-radius:8px;margin:10px 0}
+.td-section{background:#0d1b2a;border:2px solid #ff6b35;border-radius:15px;padding:25px;margin:30px 0}
+.td-section h2{color:#00ff88;border-left-color:#00ff88}
+.step{display:flex;align-items:flex-start;margin:15px 0;gap:15px}
+.step-num{background:#ff6b35;color:#fff;width:35px;height:35px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0}
+.step-content{flex:1}
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav>
+<h2>🔍 Cours LangSmith</h2>
+<a href="#ch1">1. C'est quoi LangSmith ?</a>
+<a href="#ch2">2. Pourquoi LangSmith ?</a>
+<a href="#ch3">3. Créer un compte</a>
+<a href="#ch4">4. Installation et config</a>
+<a href="#ch5">5. Tracing automatique</a>
+<a href="#ch6">6. Le décorateur @traceable</a>
+<a href="#ch7">7. Lire les traces</a>
+<a href="#ch8">8. Projets et organisation</a>
+<a href="#ch9">9. Datasets et exemples</a>
+<a href="#ch10">10. Évaluation (Evaluators)</a>
+<a href="#ch11">11. LLM-as-Judge</a>
+<a href="#ch12">12. Annotation humaine</a>
+<a href="#ch13">13. Monitoring et dashboards</a>
+<a href="#ch14">14. Prompt Hub</a>
+<a href="#ch15">15. Comparaison de modèles</a>
+<a href="#ch16">16. Production et bonnes pratiques</a>
+<a href="#td1">TD1 - Premier tracing</a>
+<a href="#td2">TD2 - Évaluer un RAG</a>
+<a href="#td3">TD3 - Dashboard monitoring</a>
+</nav>
+
+<!-- CONTENU PRINCIPAL -->
+<main>
+
+<h1>🔍 Cours Complet LangSmith</h1>
+<p>Monitoring, tracing et évaluation de tes applications LLM</p>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 1 -->
+<!-- ============================================ -->
+<h2 id="ch1">1. C'est quoi LangSmith ?</h2>
+
+<div class="box box-blue">
+<p><span class="emoji">🎯</span><strong>Définition simple :</strong> LangSmith est une <strong>plateforme web</strong> créée par LangChain qui te permet de <strong>voir</strong>, <strong>tester</strong> et <strong>surveiller</strong> tout ce que fait ton application IA. C'est comme une caméra de surveillance pour ton code LLM.</p>
+</div>
+
+<h3>Analogie</h3>
+<div class="box box-green">
+<p><span class="emoji">🏥</span><strong>Imagine un hôpital :</strong></p>
+<ul>
+<li>Ton application IA = le patient</li>
+<li><strong>Tracing</strong> = le scanner qui montre ce qui se passe à l'intérieur</li>
+<li><strong>Évaluation</strong> = les tests sanguins qui vérifient si tout va bien</li>
+<li><strong>Monitoring</strong> = le moniteur cardiaque qui surveille en continu</li>
+<li><strong>LangSmith</strong> = tout l'hôpital réuni en une seule plateforme</li>
+</ul>
+</div>
+
+<h3>Les 4 piliers de LangSmith</h3>
+<table>
+<tr><th>Pilier</th><th>Ce que ça fait</th><th>Quand l'utiliser</th></tr>
+<tr><td><strong>Tracing</strong></td><td>Enregistre chaque étape de ton application</td><td>Développement, debug</td></tr>
+<tr><td><strong>Évaluation</strong></td><td>Teste si tes réponses sont bonnes</td><td>Avant le déploiement</td></tr>
+<tr><td><strong>Monitoring</strong></td><td>Surveille les performances en temps réel</td><td>En production</td></tr>
+<tr><td><strong>Prompt Hub</strong></td><td>Stocke et versione tes prompts</td><td>Collaboration en équipe</td></tr>
+</table>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 2 -->
+<!-- ============================================ -->
+<h2 id="ch2">2. Pourquoi LangSmith ?</h2>
+
+<h3>Les problèmes sans LangSmith</h3>
+<div class="box box-red">
+<p><span class="emoji">😫</span><strong>Sans LangSmith, tu es aveugle :</strong></p>
+<ul>
+<li>"Pourquoi mon RAG donne une mauvaise réponse ?" → Tu ne sais pas quel chunk a été récupéré</li>
+<li>"Pourquoi c'est si lent ?" → Tu ne sais pas quelle étape prend du temps</li>
+<li>"Est-ce que ma version 2 est meilleure ?" → Tu n'as pas de métriques pour comparer</li>
+<li>"Combien ça me coûte en tokens ?" → Tu ne comptes pas</li>
+</ul>
+</div>
+
+<h3>Les solutions avec LangSmith</h3>
+<div class="box box-green">
+<p><span class="emoji">😎</span><strong>Avec LangSmith, tu vois tout :</strong></p>
+<ul>
+<li>Chaque appel LLM avec l'input et l'output exact</li>
+<li>Le temps de chaque étape (en millisecondes)</li>
+<li>Le nombre de tokens utilisés et le coût</li>
+<li>Les documents récupérés par le retriever</li>
+<li>Les erreurs avec le stacktrace complet</li>
+<li>La comparaison entre différentes versions</li>
+</ul>
+</div>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 3 -->
+<!-- ============================================ -->
+<h2 id="ch3">3. Créer un compte</h2>
+
+<div class="step">
+<div class="step-num">1</div>
+<div class="step-content">
+<strong>Aller sur smith.langchain.com</strong>
+<p>Ouvre ton navigateur et va sur <code>https://smith.langchain.com</code></p>
+</div>
+</div>
+
+<div class="step">
+<div class="step-num">2</div>
+<div class="step-content">
+<strong>Créer un compte gratuit</strong>
+<p>Clique "Sign Up" et utilise Google, GitHub, ou un email.</p>
+<p>Le plan gratuit inclut : 5 000 traces/mois, 1 utilisateur, toutes les fonctionnalités de base.</p>
+</div>
+</div>
+
+<div class="step">
+<div class="step-num">3</div>
+<div class="step-content">
+<strong>Créer une clé API</strong>
+<p>Va dans Settings → API Keys → Create API Key</p>
+<p>Copie la clé, elle ressemble à : <code>lsv2_pt_xxxxxxxxxx</code></p>
+</div>
+</div>
+
+<div class="step">
+<div class="step-num">4</div>
+<div class="step-content">
+<strong>Créer un projet</strong>
+<p>Un projet = un espace pour regrouper les traces d'une même application.</p>
+<p>Clique "New Project" et donne un nom, par exemple "mon-rag-projet".</p>
+</div>
+</div>
+
+<div class="box box-orange">
+<p><span class="emoji">⚠️</span><strong>Important :</strong> Ne partage JAMAIS ta clé API. Mets-la dans un fichier <code>.env</code> et ajoute <code>.env</code> dans ton <code>.gitignore</code>.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 4 -->
+<!-- ============================================ -->
+<h2 id="ch4">4. Installation et configuration</h2>
+
+<h3>Installer</h3>
+<pre><code><span class="comment"># Installer le SDK LangSmith</span>
+pip install langsmith
+
+<span class="comment"># Installer python-dotenv pour les variables d'environnement</span>
+pip install python-dotenv</code></pre>
+
+<h3>Configurer avec un fichier .env</h3>
+<pre><code><span class="comment"># Fichier .env (à la racine de ton projet)</span>
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_API_KEY=lsv2_pt_ta_cle_api_ici
+LANGCHAIN_PROJECT=mon-rag-projet
+LANGCHAIN_ENDPOINT=https://api.smith.langchain.com</code></pre>
+
+<h3>Charger la config dans Python</h3>
+<pre><code><span class="keyword">import</span> os
+<span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+
+<span class="comment"># Charger les variables du fichier .env</span>
+load_dotenv()
+
+<span class="comment"># Vérifier que c'est chargé</span>
+print(os.getenv(<span class="string">"LANGCHAIN_TRACING_V2"</span>))  <span class="comment"># → "true"</span>
+print(os.getenv(<span class="string">"LANGCHAIN_PROJECT"</span>))      <span class="comment"># → "mon-rag-projet"</span></code></pre>
+
+<div class="box box-green">
+<p><span class="emoji">💡</span><strong>Explication des variables :</strong></p>
+<table>
+<tr><th>Variable</th><th>Valeur</th><th>Rôle</th></tr>
+<tr><td><code>LANGCHAIN_TRACING_V2</code></td><td><code>true</code></td><td>Active le tracing automatique</td></tr>
+<tr><td><code>LANGCHAIN_API_KEY</code></td><td>Ta clé</td><td>Authentification</td></tr>
+<tr><td><code>LANGCHAIN_PROJECT</code></td><td>Nom du projet</td><td>Où envoyer les traces</td></tr>
+<tr><td><code>LANGCHAIN_ENDPOINT</code></td><td>URL de l'API</td><td>Serveur LangSmith</td></tr>
+</table>
+</div>
+
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>C'est tout !</strong> Une fois ces 4 variables définies, <strong>tout ton code LangChain est automatiquement tracé</strong>. Tu n'as rien d'autre à faire dans ton code.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 5 -->
+<!-- ============================================ -->
+<h2 id="ch5">5. Tracing automatique</h2>
+
+<p>Dès que <code>LANGCHAIN_TRACING_V2=true</code>, chaque appel LangChain est enregistré automatiquement.</p>
+
+<pre><code><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+load_dotenv()
+
+<span class="keyword">from</span> langchain_ollama <span class="keyword">import</span> ChatOllama
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+llm = ChatOllama(model=<span class="string">"mistral"</span>)
+prompt = ChatPromptTemplate.from_template(<span class="string">"Explique {sujet} en 2 phrases."</span>)
+chain = prompt | llm
+
+<span class="comment"># Cet appel est AUTOMATIQUEMENT tracé dans LangSmith</span>
+result = chain.invoke({<span class="string">"sujet"</span>: <span class="string">"le RAG"</span>})
+print(result.content)
+
+<span class="comment"># Va sur smith.langchain.com → ton projet → tu verras la trace !</span></code></pre>
+
+<h3>Ce que tu vois dans LangSmith</h3>
+<table>
+<tr><th>Information</th><th>Exemple</th></tr>
+<tr><td>Input du prompt</td><td>"Explique le RAG en 2 phrases."</td></tr>
+<tr><td>Output du LLM</td><td>"Le RAG est une technique qui..."</td></tr>
+<tr><td>Modèle utilisé</td><td>mistral</td></tr>
+<tr><td>Tokens (input/output)</td><td>12 / 45</td></tr>
+<tr><td>Latence</td><td>1.2 secondes</td></tr>
+<tr><td>Statut</td><td>Succès / Erreur</td></tr>
+<tr><td>Timestamp</td><td>2026-03-02 14:30:00</td></tr>
+</table>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 6 -->
+<!-- ============================================ -->
+<h2 id="ch6">6. Le décorateur @traceable</h2>
+
+<p>Pour tracer tes <strong>propres fonctions Python</strong> (pas juste les appels LangChain), utilise <code>@traceable</code>.</p>
+
+<pre><code><span class="keyword">from</span> langsmith <span class="keyword">import</span> traceable
+
+@traceable                         <span class="comment"># ← Ajoute juste ce décorateur !</span>
+<span class="keyword">def</span> <span class="func">nettoyer_texte</span>(texte: str) -> str:
+    <span class="string">"""Nettoyer un texte brut"""</span>
+    texte = texte.strip()
+    texte = texte.lower()
+    texte = <span class="string">" "</span>.join(texte.split())  <span class="comment"># Enlever les espaces doubles</span>
+    <span class="keyword">return</span> texte
+
+@traceable(name=<span class="string">"Mon RAG Pipeline"</span>)  <span class="comment"># ← Nom personnalisé</span>
+<span class="keyword">def</span> <span class="func">rag_pipeline</span>(question: str) -> str:
+    <span class="string">"""Pipeline RAG complet"""</span>
+    <span class="comment"># Étape 1 : Nettoyer</span>
+    question_propre = nettoyer_texte(question)
+
+    <span class="comment"># Étape 2 : Chercher (simulé)</span>
+    contexte = <span class="string">"Le RAG combine recherche et génération..."</span>
+
+    <span class="comment"># Étape 3 : Générer</span>
+    reponse = f<span class="string">"Basé sur : {contexte}. Réponse à : {question_propre}"</span>
+
+    <span class="keyword">return</span> reponse
+
+<span class="comment"># Appeler - tout est tracé dans LangSmith</span>
+result = rag_pipeline(<span class="string">"  QU'EST-CE QUE LE RAG ?  "</span>)
+print(result)</code></pre>
+
+<h3>Ce que tu vois dans LangSmith</h3>
+<pre><code><span class="comment"># Trace hiérarchique :</span>
+📁 Mon RAG Pipeline (1.5s)
+  ├── 📄 nettoyer_texte (0.01s)
+  │     Input: "  QU'EST-CE QUE LE RAG ?  "
+  │     Output: "qu'est-ce que le rag ?"
+  └── 📄 (le reste de la pipeline)</code></pre>
+
+<div class="box box-green">
+<p><span class="emoji">💡</span><strong>Le tracing est hiérarchique :</strong> Si une fonction @traceable appelle une autre fonction @traceable, LangSmith montre l'arborescence parent → enfant. C'est super pour le debug !</p>
+</div>
+
+<h3>Options de @traceable</h3>
+<table>
+<tr><th>Option</th><th>Exemple</th><th>Effet</th></tr>
+<tr><td><code>name</code></td><td><code>@traceable(name="Mon Step")</code></td><td>Nom affiché dans LangSmith</td></tr>
+<tr><td><code>run_type</code></td><td><code>@traceable(run_type="retriever")</code></td><td>Type : llm, retriever, tool, chain</td></tr>
+<tr><td><code>metadata</code></td><td><code>@traceable(metadata={"version": "2"})</code></td><td>Données supplémentaires</td></tr>
+<tr><td><code>tags</code></td><td><code>@traceable(tags=["prod", "v2"])</code></td><td>Tags pour filtrer</td></tr>
+</table>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 7 -->
+<!-- ============================================ -->
+<h2 id="ch7">7. Lire les traces dans l'interface</h2>
+
+<p>Quand tu vas sur <code>smith.langchain.com</code>, voici comment lire une trace :</p>
+
+<h3>Vue liste des traces</h3>
+<div class="box">
+<pre><code>| Nom           | Statut  | Latence | Tokens | Date               |
+|---------------|---------|---------|--------|--------------------|
+| RunnableSeq.. | ✅ OK   | 1.2s    | 57     | 2026-03-02 14:30  |
+| Mon RAG Pipe..| ✅ OK   | 2.1s    | 124    | 2026-03-02 14:28  |
+| RunnableSeq.. | ❌ Error| 0.3s    | 0      | 2026-03-02 14:25  |</code></pre>
+</div>
+
+<h3>Vue détail d'une trace</h3>
+<div class="box">
+<pre><code>📁 RunnableSequence (1.2s total)
+│
+├── 📄 ChatPromptTemplate (0.001s)
+│     Input:  {"sujet": "le RAG"}
+│     Output: "Explique le RAG en 2 phrases."
+│
+└── 📄 ChatOllama (1.199s)
+      Input:  "Explique le RAG en 2 phrases."
+      Output: "Le RAG est une technique qui combine..."
+      Tokens: 12 input, 45 output
+      Modèle: mistral</code></pre>
+</div>
+
+<h3>Les filtres utiles</h3>
+<table>
+<tr><th>Filtre</th><th>Utilité</th></tr>
+<tr><td>Par statut (OK/Erreur)</td><td>Trouver les appels qui ont échoué</td></tr>
+<tr><td>Par latence (&gt; 5s)</td><td>Trouver les appels trop lents</td></tr>
+<tr><td>Par nom</td><td>Trouver un type d'appel spécifique</td></tr>
+<tr><td>Par date</td><td>Voir l'historique</td></tr>
+<tr><td>Par tags</td><td>Filtrer par version, environnement, etc.</td></tr>
+</table>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 8 -->
+<!-- ============================================ -->
+<h2 id="ch8">8. Projets et organisation</h2>
+
+<p>Un <strong>projet</strong> dans LangSmith regroupe toutes les traces d'une même application.</p>
+
+<h3>Changer de projet en Python</h3>
+<pre><code><span class="keyword">import</span> os
+
+<span class="comment"># Méthode 1 : variable d'environnement</span>
+os.environ[<span class="string">"LANGCHAIN_PROJECT"</span>] = <span class="string">"mon-rag-v2"</span>
+
+<span class="comment"># Méthode 2 : dans le .env</span>
+<span class="comment"># LANGCHAIN_PROJECT=mon-rag-v2</span></code></pre>
+
+<h3>Organisation recommandée</h3>
+<table>
+<tr><th>Projet</th><th>Contenu</th></tr>
+<tr><td><code>rag-dev</code></td><td>Traces pendant le développement</td></tr>
+<tr><td><code>rag-test</code></td><td>Traces des tests et évaluations</td></tr>
+<tr><td><code>rag-prod</code></td><td>Traces en production</td></tr>
+</table>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 9 -->
+<!-- ============================================ -->
+<h2 id="ch9">9. Datasets et exemples</h2>
+
+<p>Un <strong>Dataset</strong> = un ensemble de paires (question, réponse attendue) pour tester ton application.</p>
+
+<h3>Créer un dataset en Python</h3>
+<pre><code><span class="keyword">from</span> langsmith <span class="keyword">import</span> Client
+
+client = Client()  <span class="comment"># Utilise automatiquement LANGCHAIN_API_KEY</span>
+
+<span class="comment"># Créer un dataset</span>
+dataset = client.create_dataset(
+    dataset_name=<span class="string">"questions-rag-test"</span>,
+    description=<span class="string">"Questions pour tester mon RAG"</span>
+)
+
+<span class="comment"># Ajouter des exemples</span>
+client.create_examples(
+    inputs=[
+        {<span class="string">"question"</span>: <span class="string">"Qu'est-ce que le RAG ?"</span>},
+        {<span class="string">"question"</span>: <span class="string">"Quels sont les types de RAG ?"</span>},
+        {<span class="string">"question"</span>: <span class="string">"Comment fonctionne un embedding ?"</span>},
+        {<span class="string">"question"</span>: <span class="string">"Qu'est-ce que ChromaDB ?"</span>},
+        {<span class="string">"question"</span>: <span class="string">"Explique le chunking"</span>},
+    ],
+    outputs=[
+        {<span class="string">"reponse"</span>: <span class="string">"Le RAG combine la recherche de documents avec la génération par LLM"</span>},
+        {<span class="string">"reponse"</span>: <span class="string">"Naive, Advanced, Modular, Agentic, Graph, Corrective, Self, Hybrid, Multimodal"</span>},
+        {<span class="string">"reponse"</span>: <span class="string">"Un embedding convertit du texte en vecteur numérique"</span>},
+        {<span class="string">"reponse"</span>: <span class="string">"ChromaDB est une base de données vectorielle open-source"</span>},
+        {<span class="string">"reponse"</span>: <span class="string">"Le chunking découpe un document en morceaux plus petits"</span>},
+    ],
+    dataset_id=dataset.id
+)
+
+print(f<span class="string">"Dataset créé avec {5} exemples !"</span>)</code></pre>
+
+<h3>Créer depuis l'interface web</h3>
+<div class="box box-blue">
+<p><span class="emoji">📌</span>Tu peux aussi créer des datasets directement dans l'interface LangSmith :</p>
+<ol>
+<li>Aller dans "Datasets" → "New Dataset"</li>
+<li>Ajouter des exemples manuellement ou importer un CSV</li>
+<li>Format CSV : <code>question,reponse_attendue</code></li>
+</ol>
+</div>
+
+<h3>Créer depuis des traces existantes</h3>
+<pre><code><span class="comment"># Super pratique : transformer des traces réelles en dataset de test</span>
+<span class="comment"># Dans l'interface LangSmith :</span>
+<span class="comment"># 1. Sélectionner des traces</span>
+<span class="comment"># 2. Cliquer "Add to Dataset"</span>
+<span class="comment"># 3. Choisir ou créer un dataset</span>
+<span class="comment"># → Les inputs/outputs réels deviennent des exemples de test</span></code></pre>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 10 -->
+<!-- ============================================ -->
+<h2 id="ch10">10. Évaluation (Evaluators)</h2>
+
+<p>L'évaluation permet de <strong>tester automatiquement</strong> si ton application donne de bonnes réponses.</p>
+
+<h3>Évaluation simple avec une fonction</h3>
+<pre><code><span class="keyword">from</span> langsmith <span class="keyword">import</span> Client, evaluate
+
+client = Client()
+
+<span class="comment"># Ta fonction à tester (ton RAG par exemple)</span>
+<span class="keyword">def</span> <span class="func">mon_rag</span>(inputs: dict) -> dict:
+    question = inputs[<span class="string">"question"</span>]
+    <span class="comment"># ... ton pipeline RAG ici ...</span>
+    reponse = <span class="string">"Le RAG combine recherche et génération"</span>  <span class="comment"># Simplifié</span>
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: reponse}
+
+<span class="comment"># Évaluateur personnalisé</span>
+<span class="keyword">def</span> <span class="func">contient_mots_cles</span>(run, example) -> dict:
+    <span class="string">"""Vérifie si la réponse contient des mots-clés importants"""</span>
+    prediction = run.outputs[<span class="string">"reponse"</span>]                <span class="comment"># Ce que ton RAG a répondu</span>
+    reference = example.outputs[<span class="string">"reponse"</span>]              <span class="comment"># La réponse attendue</span>
+
+    <span class="comment"># Vérifier si au moins 50% des mots importants sont présents</span>
+    mots_ref = set(reference.lower().split())
+    mots_pred = set(prediction.lower().split())
+    overlap = len(mots_ref & mots_pred) / len(mots_ref)
+
+    <span class="keyword">return</span> {
+        <span class="string">"key"</span>: <span class="string">"mots_cles_score"</span>,     <span class="comment"># Nom de la métrique</span>
+        <span class="string">"score"</span>: overlap,               <span class="comment"># Score entre 0 et 1</span>
+        <span class="string">"comment"</span>: f<span class="string">"Overlap: {overlap:.0%}"</span>
+    }
+
+<span class="comment"># Lancer l'évaluation</span>
+results = evaluate(
+    mon_rag,                                <span class="comment"># Fonction à tester</span>
+    data=<span class="string">"questions-rag-test"</span>,              <span class="comment"># Nom du dataset</span>
+    evaluators=[contient_mots_cles],        <span class="comment"># Liste d'évaluateurs</span>
+    experiment_prefix=<span class="string">"test-rag-v1"</span>         <span class="comment"># Nom de l'expérience</span>
+)
+
+print(<span class="string">"Évaluation terminée ! Voir les résultats sur LangSmith."</span>)</code></pre>
+
+<div class="box box-green">
+<p><span class="emoji">💡</span><strong>Comment ça marche :</strong></p>
+<ol>
+<li>LangSmith prend chaque exemple du dataset</li>
+<li>Il appelle ta fonction <code>mon_rag</code> avec l'input</li>
+<li>Il compare l'output avec la réponse attendue via l'évaluateur</li>
+<li>Il enregistre les scores et les affiche dans l'interface</li>
+</ol>
+</div>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 11 -->
+<!-- ============================================ -->
+<h2 id="ch11">11. LLM-as-Judge (Le LLM évalue)</h2>
+
+<p>Au lieu d'écrire des règles manuelles, on demande à un <strong>LLM de juger</strong> la qualité des réponses.</p>
+
+<pre><code><span class="keyword">from</span> langsmith <span class="keyword">import</span> evaluate
+<span class="keyword">from</span> langchain_ollama <span class="keyword">import</span> ChatOllama
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+llm_juge = ChatOllama(model=<span class="string">"mistral"</span>)
+
+<span class="comment"># Évaluateur LLM-as-Judge</span>
+<span class="keyword">def</span> <span class="func">llm_evaluator</span>(run, example) -> dict:
+    <span class="string">"""Un LLM évalue la qualité de la réponse"""</span>
+    question = example.inputs[<span class="string">"question"</span>]
+    prediction = run.outputs[<span class="string">"reponse"</span>]
+    reference = example.outputs[<span class="string">"reponse"</span>]
+
+    prompt = ChatPromptTemplate.from_template(
+        <span class="string">"""Évalue la qualité de cette réponse.
+
+Question: {question}
+Réponse attendue: {reference}
+Réponse à évaluer: {prediction}
+
+Donne une note de 1 à 5 :
+1 = Complètement faux
+2 = Partiellement correct mais très incomplet
+3 = Correct mais incomplet
+4 = Bon, presque complet
+5 = Excellent, complet et précis
+
+Réponds UNIQUEMENT avec le chiffre."""</span>
+    )
+
+    chain = prompt | llm_juge
+    result = chain.invoke({
+        <span class="string">"question"</span>: question,
+        <span class="string">"reference"</span>: reference,
+        <span class="string">"prediction"</span>: prediction
+    })
+
+    <span class="keyword">try</span>:
+        score = int(result.content.strip()) / 5  <span class="comment"># Normaliser entre 0 et 1</span>
+    <span class="keyword">except</span>:
+        score = 0.5
+
+    <span class="keyword">return</span> {
+        <span class="string">"key"</span>: <span class="string">"llm_qualite"</span>,
+        <span class="string">"score"</span>: score,
+        <span class="string">"comment"</span>: result.content.strip()
+    }
+
+<span class="comment"># Lancer</span>
+results = evaluate(
+    mon_rag,
+    data=<span class="string">"questions-rag-test"</span>,
+    evaluators=[contient_mots_cles, llm_evaluator],  <span class="comment"># Plusieurs évaluateurs !</span>
+    experiment_prefix=<span class="string">"test-rag-v1-llm-judge"</span>
+)</code></pre>
+
+<h3>Évaluateurs pré-construits par LangChain</h3>
+<pre><code><span class="keyword">from</span> langsmith.evaluation <span class="keyword">import</span> LangChainStringEvaluator
+
+<span class="comment"># Évaluateurs prêts à l'emploi</span>
+evaluators = [
+    LangChainStringEvaluator(<span class="string">"correctness"</span>),   <span class="comment"># Vérifie si c'est correct</span>
+    LangChainStringEvaluator(<span class="string">"helpfulness"</span>),   <span class="comment"># Vérifie si c'est utile</span>
+    LangChainStringEvaluator(<span class="string">"relevance"</span>),     <span class="comment"># Vérifie si c'est pertinent</span>
+]
+
+results = evaluate(
+    mon_rag,
+    data=<span class="string">"questions-rag-test"</span>,
+    evaluators=evaluators
+)</code></pre>
+
+<table>
+<tr><th>Évaluateur</th><th>Ce qu'il vérifie</th></tr>
+<tr><td><code>correctness</code></td><td>La réponse est-elle factuelle et correcte ?</td></tr>
+<tr><td><code>helpfulness</code></td><td>La réponse est-elle utile pour l'utilisateur ?</td></tr>
+<tr><td><code>relevance</code></td><td>La réponse est-elle en rapport avec la question ?</td></tr>
+<tr><td><code>coherence</code></td><td>La réponse est-elle cohérente et bien structurée ?</td></tr>
+<tr><td><code>conciseness</code></td><td>La réponse est-elle concise (pas trop longue) ?</td></tr>
+</table>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 12 -->
+<!-- ============================================ -->
+<h2 id="ch12">12. Annotation humaine</h2>
+
+<p>Parfois, un humain doit vérifier les réponses. LangSmith permet de créer des <strong>queues d'annotation</strong>.</p>
+
+<h3>Créer une queue d'annotation</h3>
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>Dans l'interface LangSmith :</strong></p>
+<ol>
+<li>Aller dans "Annotation Queues" → "New Queue"</li>
+<li>Donner un nom (ex: "review-rag-reponses")</li>
+<li>Sélectionner des traces à reviewer</li>
+<li>L'annotateur humain note chaque réponse (pouce haut/bas, score 1-5, commentaire)</li>
+</ol>
+</div>
+
+<h3>Ajouter du feedback en Python</h3>
+<pre><code><span class="keyword">from</span> langsmith <span class="keyword">import</span> Client
+
+client = Client()
+
+<span class="comment"># Ajouter un feedback sur une trace spécifique</span>
+client.create_feedback(
+    run_id=<span class="string">"id-de-la-trace"</span>,    <span class="comment"># L'ID de la trace à évaluer</span>
+    key=<span class="string">"qualite"</span>,               <span class="comment"># Nom du critère</span>
+    score=0.8,                    <span class="comment"># Score (0 à 1)</span>
+    comment=<span class="string">"Bonne réponse mais manque un exemple"</span>
+)
+
+<span class="comment"># Feedback binaire (pouce haut/bas)</span>
+client.create_feedback(
+    run_id=<span class="string">"id-de-la-trace"</span>,
+    key=<span class="string">"user_satisfaction"</span>,
+    score=1,                      <span class="comment"># 1 = pouce haut, 0 = pouce bas</span>
+)</code></pre>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 13 -->
+<!-- ============================================ -->
+<h2 id="ch13">13. Monitoring et dashboards</h2>
+
+<p>Le monitoring permet de surveiller ton application en <strong>production</strong>.</p>
+
+<h3>Métriques disponibles</h3>
+<table>
+<tr><th>Métrique</th><th>Ce que ça mesure</th><th>Seuil recommandé</th></tr>
+<tr><td><strong>Latence P50</strong></td><td>Temps médian de réponse</td><td>&lt; 2 secondes</td></tr>
+<tr><td><strong>Latence P99</strong></td><td>Temps pour 99% des requêtes</td><td>&lt; 10 secondes</td></tr>
+<tr><td><strong>Taux d'erreur</strong></td><td>% de requêtes en erreur</td><td>&lt; 1%</td></tr>
+<tr><td><strong>Tokens/requête</strong></td><td>Consommation moyenne</td><td>Selon ton budget</td></tr>
+<tr><td><strong>Coût</strong></td><td>Coût en $ par requête</td><td>Selon ton budget</td></tr>
+<tr><td><strong>Feedback score</strong></td><td>Satisfaction utilisateur</td><td>&gt; 0.8</td></tr>
+<tr><td><strong>Traces/heure</strong></td><td>Volume de requêtes</td><td>Monitorer la tendance</td></tr>
+</table>
+
+<h3>Créer un dashboard personnalisé</h3>
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>Dans l'interface LangSmith :</strong></p>
+<ol>
+<li>Aller dans ton projet</li>
+<li>Onglet "Monitor" → Voir les graphiques automatiques</li>
+<li>Filtrer par date, statut, tags</li>
+<li>Exporter les données en CSV si besoin</li>
+</ol>
+</div>
+
+<h3>Alertes automatiques</h3>
+<pre><code><span class="comment"># LangSmith supporte les alertes via webhooks</span>
+<span class="comment"># Configurable dans Settings → Alerts</span>
+<span class="comment"># Exemples d'alertes :</span>
+<span class="comment"># - Taux d'erreur > 5% → notification Slack</span>
+<span class="comment"># - Latence P99 > 10s → notification email</span>
+<span class="comment"># - Coût journalier > 50$ → notification PagerDuty</span></code></pre>
+
+<h3>Ajouter des métadonnées pour le monitoring</h3>
+<pre><code><span class="keyword">from</span> langsmith <span class="keyword">import</span> traceable
+
+@traceable(
+    tags=[<span class="string">"production"</span>, <span class="string">"v2.1"</span>],
+    metadata={
+        <span class="string">"user_type"</span>: <span class="string">"premium"</span>,
+        <span class="string">"region"</span>: <span class="string">"europe"</span>,
+        <span class="string">"version"</span>: <span class="string">"2.1.0"</span>
+    }
+)
+<span class="keyword">def</span> <span class="func">mon_rag_prod</span>(question: str) -> str:
+    <span class="comment"># ... pipeline RAG ...</span>
+    <span class="keyword">return</span> reponse</code></pre>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 14 -->
+<!-- ============================================ -->
+<h2 id="ch14">14. Prompt Hub</h2>
+
+<p>Le <strong>Prompt Hub</strong> permet de stocker, versionner et partager tes prompts.</p>
+
+<h3>Sauvegarder un prompt</h3>
+<pre><code><span class="keyword">from</span> langchain <span class="keyword">import</span> hub
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+<span class="comment"># Créer un prompt</span>
+prompt = ChatPromptTemplate.from_template(
+    <span class="string">"Tu es un assistant expert en {domaine}.\n"
+    "Réponds à cette question de manière claire :\n"
+    "{question}"</span>
+)
+
+<span class="comment"># Sauvegarder sur le Hub</span>
+hub.push(<span class="string">"mon-username/rag-prompt-v1"</span>, prompt)
+print(<span class="string">"Prompt sauvegardé !"</span>)</code></pre>
+
+<h3>Charger un prompt depuis le Hub</h3>
+<pre><code><span class="keyword">from</span> langchain <span class="keyword">import</span> hub
+
+<span class="comment"># Charger le prompt</span>
+prompt = hub.pull(<span class="string">"mon-username/rag-prompt-v1"</span>)
+
+<span class="comment"># Charger une version spécifique</span>
+prompt_v2 = hub.pull(<span class="string">"mon-username/rag-prompt-v1:v2"</span>)
+
+<span class="comment"># Utiliser</span>
+chain = prompt | llm
+result = chain.invoke({<span class="string">"domaine"</span>: <span class="string">"nutrition"</span>, <span class="string">"question"</span>: <span class="string">"..."</span>})</code></pre>
+
+<div class="box box-green">
+<p><span class="emoji">💡</span><strong>Avantages du Prompt Hub :</strong></p>
+<ul>
+<li>Versioning automatique (v1, v2, v3...)</li>
+<li>Partage avec ton équipe</li>
+<li>Modifier un prompt SANS changer le code</li>
+<li>Tester différentes versions facilement</li>
+</ul>
+</div>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 15 -->
+<!-- ============================================ -->
+<h2 id="ch15">15. Comparaison de modèles</h2>
+
+<p>LangSmith permet de comparer les performances de différents modèles ou configurations.</p>
+
+<pre><code><span class="keyword">from</span> langsmith <span class="keyword">import</span> evaluate
+<span class="keyword">from</span> langchain_ollama <span class="keyword">import</span> ChatOllama
+
+<span class="comment"># ---- Configuration 1 : Mistral ----</span>
+<span class="keyword">def</span> <span class="func">rag_mistral</span>(inputs):
+    llm = ChatOllama(model=<span class="string">"mistral"</span>)
+    result = llm.invoke(inputs[<span class="string">"question"</span>])
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: result.content}
+
+<span class="comment"># ---- Configuration 2 : Llama3 ----</span>
+<span class="keyword">def</span> <span class="func">rag_llama</span>(inputs):
+    llm = ChatOllama(model=<span class="string">"llama3"</span>)
+    result = llm.invoke(inputs[<span class="string">"question"</span>])
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: result.content}
+
+<span class="comment"># Évaluer les deux avec le même dataset</span>
+results_mistral = evaluate(
+    rag_mistral,
+    data=<span class="string">"questions-rag-test"</span>,
+    evaluators=[contient_mots_cles, llm_evaluator],
+    experiment_prefix=<span class="string">"compare-mistral"</span>
+)
+
+results_llama = evaluate(
+    rag_llama,
+    data=<span class="string">"questions-rag-test"</span>,
+    evaluators=[contient_mots_cles, llm_evaluator],
+    experiment_prefix=<span class="string">"compare-llama3"</span>
+)
+
+<span class="comment"># Aller sur LangSmith → Dataset → Comparer les deux expériences</span>
+<span class="comment"># Tu verras côte à côte : scores, latence, coût</span></code></pre>
+
+<div class="box box-blue">
+<p><span class="emoji">📌</span><strong>Dans l'interface :</strong> Va dans ton dataset → onglet "Experiments" → sélectionne les deux expériences → tu vois la comparaison détaillée question par question.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- CHAPITRE 16 -->
+<!-- ============================================ -->
+<h2 id="ch16">16. Production et bonnes pratiques</h2>
+
+<h3>Checklist avant la production</h3>
+<div class="box box-green">
+<p><span class="emoji">✅</span><strong>Avant de mettre en production :</strong></p>
+<ol>
+<li>Créer un dataset de test avec au moins 20 exemples</li>
+<li>Évaluer avec au minimum 2 évaluateurs (un automatique, un LLM-as-judge)</li>
+<li>Score moyen > 0.7 sur tous les évaluateurs</li>
+<li>Latence P99 < 10 secondes</li>
+<li>Taux d'erreur < 1% sur le dataset de test</li>
+<li>Configurer le monitoring dans un projet dédié "prod"</li>
+<li>Mettre en place des alertes sur les métriques critiques</li>
+</ol>
+</div>
+
+<h3>Échantillonnage en production</h3>
+<pre><code><span class="keyword">import</span> os
+
+<span class="comment"># En production, tu ne veux pas tracer 100% des requêtes</span>
+<span class="comment"># (ça coûte des traces sur ton quota)</span>
+
+<span class="comment"># Solution : échantillonner (ex: 10% des requêtes)</span>
+<span class="keyword">import</span> random
+
+<span class="keyword">if</span> random.random() < 0.1:  <span class="comment"># 10% de chance</span>
+    os.environ[<span class="string">"LANGCHAIN_TRACING_V2"</span>] = <span class="string">"true"</span>
+<span class="keyword">else</span>:
+    os.environ[<span class="string">"LANGCHAIN_TRACING_V2"</span>] = <span class="string">"false"</span></code></pre>
+
+<h3>Séparer dev et prod</h3>
+<pre><code><span class="keyword">import</span> os
+
+environment = os.getenv(<span class="string">"ENVIRONMENT"</span>, <span class="string">"dev"</span>)
+
+<span class="keyword">if</span> environment == <span class="string">"production"</span>:
+    os.environ[<span class="string">"LANGCHAIN_PROJECT"</span>] = <span class="string">"mon-rag-prod"</span>
+<span class="keyword">else</span>:
+    os.environ[<span class="string">"LANGCHAIN_PROJECT"</span>] = <span class="string">"mon-rag-dev"</span></code></pre>
+
+<h3>Résumé des bonnes pratiques</h3>
+<table>
+<tr><th>Pratique</th><th>Pourquoi</th></tr>
+<tr><td>Séparer les projets dev/prod</td><td>Ne pas mélanger les traces</td></tr>
+<tr><td>Utiliser des tags (version, env)</td><td>Filtrer facilement</td></tr>
+<tr><td>Créer des datasets de test</td><td>Tester avant de déployer</td></tr>
+<tr><td>Évaluer régulièrement</td><td>Détecter les régressions</td></tr>
+<tr><td>Échantillonner en prod</td><td>Économiser le quota</td></tr>
+<tr><td>Configurer des alertes</td><td>Réagir vite aux problèmes</td></tr>
+<tr><td>Versionner les prompts</td><td>Pouvoir revenir en arrière</td></tr>
+<tr><td>Ne JAMAIS mettre la clé API dans le code</td><td>Sécurité</td></tr>
+</table>
+
+<!-- ============================================ -->
+<!-- TD 1 -->
+<!-- ============================================ -->
+<div class="td-section">
+<h2 id="td1">TD1 - Premier tracing (15 min)</h2>
+
+<div class="box box-green">
+<p><span class="emoji">🎯</span><strong>Objectif :</strong> Configurer LangSmith et tracer une chaîne LangChain simple.</p>
+</div>
+
+<h3>Étapes</h3>
+<ol>
+<li>Créer un compte sur smith.langchain.com</li>
+<li>Récupérer ta clé API</li>
+<li>Créer un fichier <code>.env</code></li>
+<li>Écrire un script qui appelle un LLM</li>
+<li>Vérifier la trace dans l'interface</li>
+</ol>
+
+<h3>Solution</h3>
+<pre><code><span class="comment"># Fichier: .env</span>
+<span class="comment"># LANGCHAIN_TRACING_V2=true</span>
+<span class="comment"># LANGCHAIN_API_KEY=lsv2_pt_ta_cle</span>
+<span class="comment"># LANGCHAIN_PROJECT=td1-premier-tracing</span>
+<span class="comment"># LANGCHAIN_ENDPOINT=https://api.smith.langchain.com</span>
+
+<span class="comment"># Fichier: td1_tracing.py</span>
+<span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+load_dotenv()
+
+<span class="keyword">from</span> langchain_ollama <span class="keyword">import</span> ChatOllama
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+<span class="keyword">from</span> langsmith <span class="keyword">import</span> traceable
+
+llm = ChatOllama(model=<span class="string">"mistral"</span>)
+
+<span class="comment"># Chaîne simple</span>
+prompt = ChatPromptTemplate.from_template(
+    <span class="string">"Tu es un prof de {matiere}. Explique {concept} simplement."</span>
+)
+chain = prompt | llm
+
+<span class="comment"># Test 1</span>
+result1 = chain.invoke({<span class="string">"matiere"</span>: <span class="string">"informatique"</span>, <span class="string">"concept"</span>: <span class="string">"le RAG"</span>})
+print(f<span class="string">"Test 1: {result1.content[:100]}..."</span>)
+
+<span class="comment"># Test 2</span>
+result2 = chain.invoke({<span class="string">"matiere"</span>: <span class="string">"mathématiques"</span>, <span class="string">"concept"</span>: <span class="string">"les vecteurs"</span>})
+print(f<span class="string">"Test 2: {result2.content[:100]}..."</span>)
+
+<span class="comment"># Fonction personnalisée tracée</span>
+@traceable(name=<span class="string">"Mon Traitement"</span>)
+<span class="keyword">def</span> <span class="func">traiter</span>(texte):
+    texte = texte.upper()
+    result = chain.invoke({<span class="string">"matiere"</span>: <span class="string">"general"</span>, <span class="string">"concept"</span>: texte})
+    <span class="keyword">return</span> result.content
+
+result3 = traiter(<span class="string">"l'intelligence artificielle"</span>)
+print(f<span class="string">"Test 3: {result3[:100]}..."</span>)
+
+print(<span class="string">"\n✅ Va sur smith.langchain.com → projet 'td1-premier-tracing'"</span>)
+print(<span class="string">"Tu devrais voir 3 traces !"</span>)</code></pre>
+</div>
+
+<!-- ============================================ -->
+<!-- TD 2 -->
+<!-- ============================================ -->
+<div class="td-section">
+<h2 id="td2">TD2 - Évaluer un RAG (30 min)</h2>
+
+<div class="box box-green">
+<p><span class="emoji">🎯</span><strong>Objectif :</strong> Créer un dataset de test, évaluer ton RAG avec 2 évaluateurs, et comparer les résultats.</p>
+</div>
+
+<h3>Solution</h3>
+<pre><code><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+load_dotenv()
+
+<span class="keyword">from</span> langsmith <span class="keyword">import</span> Client, evaluate
+<span class="keyword">from</span> langchain_ollama <span class="keyword">import</span> ChatOllama
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+client = Client()
+llm = ChatOllama(model=<span class="string">"mistral"</span>)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># ÉTAPE 1 : Créer le dataset</span>
+<span class="comment"># ============================================</span>
+dataset_name = <span class="string">"td2-evaluation-rag"</span>
+
+<span class="comment"># Vérifier si le dataset existe déjà</span>
+<span class="keyword">try</span>:
+    dataset = client.read_dataset(dataset_name=dataset_name)
+    print(<span class="string">"Dataset existant trouvé."</span>)
+<span class="keyword">except</span>:
+    dataset = client.create_dataset(dataset_name=dataset_name)
+    client.create_examples(
+        inputs=[
+            {<span class="string">"question"</span>: <span class="string">"Qu'est-ce que le RAG ?"</span>},
+            {<span class="string">"question"</span>: <span class="string">"Comment fonctionne ChromaDB ?"</span>},
+            {<span class="string">"question"</span>: <span class="string">"Qu'est-ce qu'un embedding ?"</span>},
+            {<span class="string">"question"</span>: <span class="string">"Explique le chunking"</span>},
+            {<span class="string">"question"</span>: <span class="string">"Qu'est-ce que FAISS ?"</span>},
+        ],
+        outputs=[
+            {<span class="string">"reponse"</span>: <span class="string">"RAG signifie Retrieval Augmented Generation. Il combine la recherche de documents pertinents avec la génération de texte par un LLM."</span>},
+            {<span class="string">"reponse"</span>: <span class="string">"ChromaDB est une base de données vectorielle open-source qui stocke des embeddings et permet de faire des recherches par similarité."</span>},
+            {<span class="string">"reponse"</span>: <span class="string">"Un embedding est une représentation numérique (vecteur) d'un texte qui capture son sens sémantique."</span>},
+            {<span class="string">"reponse"</span>: <span class="string">"Le chunking est le processus de découpage d'un document en morceaux plus petits pour faciliter l'indexation et la recherche."</span>},
+            {<span class="string">"reponse"</span>: <span class="string">"FAISS est une bibliothèque de Facebook pour la recherche efficace de similarité entre vecteurs."</span>},
+        ],
+        dataset_id=dataset.id
+    )
+    print(<span class="string">"Dataset créé avec 5 exemples."</span>)
+
+<span class="comment"># ============================================</span>
+<span class="comment"># ÉTAPE 2 : Fonction RAG à tester</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">def</span> <span class="func">mon_rag</span>(inputs: dict) -> dict:
+    prompt = ChatPromptTemplate.from_template(
+        <span class="string">"Réponds à cette question de manière précise et concise :\n{question}"</span>
+    )
+    chain = prompt | llm
+    result = chain.invoke({<span class="string">"question"</span>: inputs[<span class="string">"question"</span>]})
+    <span class="keyword">return</span> {<span class="string">"reponse"</span>: result.content}
+
+<span class="comment"># ============================================</span>
+<span class="comment"># ÉTAPE 3 : Évaluateurs</span>
+<span class="comment"># ============================================</span>
+<span class="keyword">def</span> <span class="func">eval_longueur</span>(run, example) -> dict:
+    <span class="string">"""La réponse fait-elle au moins 20 mots ?"""</span>
+    reponse = run.outputs[<span class="string">"reponse"</span>]
+    nb_mots = len(reponse.split())
+    <span class="keyword">return</span> {
+        <span class="string">"key"</span>: <span class="string">"longueur_suffisante"</span>,
+        <span class="string">"score"</span>: 1.0 <span class="keyword">if</span> nb_mots >= 20 <span class="keyword">else</span> nb_mots / 20,
+        <span class="string">"comment"</span>: f<span class="string">"{nb_mots} mots"</span>
+    }
+
+<span class="keyword">def</span> <span class="func">eval_pertinence</span>(run, example) -> dict:
+    <span class="string">"""Un LLM évalue la pertinence"""</span>
+    prompt = ChatPromptTemplate.from_template(
+        <span class="string">"Question: {q}\nRéponse attendue: {ref}\nRéponse donnée: {pred}\n\n"
+        "Note de 1 à 5 la pertinence. Réponds JUSTE le chiffre."</span>
+    )
+    chain = prompt | llm
+    r = chain.invoke({
+        <span class="string">"q"</span>: example.inputs[<span class="string">"question"</span>],
+        <span class="string">"ref"</span>: example.outputs[<span class="string">"reponse"</span>],
+        <span class="string">"pred"</span>: run.outputs[<span class="string">"reponse"</span>]
+    })
+    <span class="keyword">try</span>:
+        score = int(r.content.strip()[0]) / 5
+    <span class="keyword">except</span>:
+        score = 0.5
+    <span class="keyword">return</span> {<span class="string">"key"</span>: <span class="string">"pertinence_llm"</span>, <span class="string">"score"</span>: score}
+
+<span class="comment"># ============================================</span>
+<span class="comment"># ÉTAPE 4 : Lancer l'évaluation</span>
+<span class="comment"># ============================================</span>
+results = evaluate(
+    mon_rag,
+    data=dataset_name,
+    evaluators=[eval_longueur, eval_pertinence],
+    experiment_prefix=<span class="string">"td2-rag-eval"</span>
+)
+
+print(<span class="string">"\n✅ Évaluation terminée !"</span>)
+print(<span class="string">"Va sur LangSmith → Dataset 'td2-evaluation-rag' → onglet Experiments"</span>)</code></pre>
+</div>
+
+<!-- ============================================ -->
+<!-- TD 3 -->
+<!-- ============================================ -->
+<div class="td-section">
+<h2 id="td3">TD3 - Dashboard de monitoring (20 min)</h2>
+
+<div class="box box-green">
+<p><span class="emoji">🎯</span><strong>Objectif :</strong> Simuler un environnement de production et analyser les métriques dans LangSmith.</p>
+</div>
+
+<h3>Solution</h3>
+<pre><code><span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+load_dotenv()
+
+<span class="keyword">import</span> os
+<span class="keyword">import</span> time
+<span class="keyword">import</span> random
+<span class="keyword">from</span> langsmith <span class="keyword">import</span> traceable, Client
+<span class="keyword">from</span> langchain_ollama <span class="keyword">import</span> ChatOllama
+<span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate
+
+<span class="comment"># Projet spécifique pour la prod</span>
+os.environ[<span class="string">"LANGCHAIN_PROJECT"</span>] = <span class="string">"td3-monitoring-prod"</span>
+
+llm = ChatOllama(model=<span class="string">"mistral"</span>)
+client = Client()
+
+<span class="comment"># Simuler différents utilisateurs et questions</span>
+questions = [
+    <span class="string">"Qu'est-ce que le RAG ?"</span>,
+    <span class="string">"Comment installer LangChain ?"</span>,
+    <span class="string">"Explique les embeddings"</span>,
+    <span class="string">"Qu'est-ce que ChromaDB ?"</span>,
+    <span class="string">"Comment fonctionne le chunking ?"</span>,
+    <span class="string">"Qu'est-ce qu'un vecteur ?"</span>,
+    <span class="string">"Compare FAISS et ChromaDB"</span>,
+    <span class="string">"Explique le cosine similarity"</span>,
+]
+
+users = [<span class="string">"alice"</span>, <span class="string">"bob"</span>, <span class="string">"charlie"</span>, <span class="string">"diana"</span>]
+
+@traceable(name=<span class="string">"RAG Production"</span>)
+<span class="keyword">def</span> <span class="func">rag_prod</span>(question: str, user: str) -> str:
+    <span class="string">"""Simuler un appel RAG en production"""</span>
+    prompt = ChatPromptTemplate.from_template(
+        <span class="string">"Réponds à cette question :\n{question}"</span>
+    )
+    chain = prompt | llm
+    result = chain.invoke({<span class="string">"question"</span>: question})
+    <span class="keyword">return</span> result.content
+
+<span class="comment"># Simuler 10 requêtes de "production"</span>
+print(<span class="string">"Simulation de production en cours..."</span>)
+<span class="keyword">for</span> i <span class="keyword">in</span> range(10):
+    question = random.choice(questions)
+    user = random.choice(users)
+
+    print(f<span class="string">"  Requête {i+1}/10 - User: {user} - Q: {question[:30]}..."</span>)
+
+    <span class="keyword">try</span>:
+        reponse = rag_prod(question, user)
+
+        <span class="comment"># Simuler du feedback utilisateur (aléatoire)</span>
+        satisfaction = random.choice([0, 0, 1, 1, 1])  <span class="comment"># 60% satisfait</span>
+        print(f<span class="string">"    → {'👍' if satisfaction else '👎'}"</span>)
+
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        print(f<span class="string">"    → ❌ Erreur: {e}"</span>)
+
+    time.sleep(1)  <span class="comment"># Pause entre les requêtes</span>
+
+print(<span class="string">"\n✅ Simulation terminée !"</span>)
+print(<span class="string">"Va sur LangSmith → projet 'td3-monitoring-prod'"</span>)
+print(<span class="string">"Regarde :"</span>)
+print(<span class="string">"  - Le nombre de traces"</span>)
+print(<span class="string">"  - La latence moyenne"</span>)
+print(<span class="string">"  - Les tokens consommés"</span>)
+print(<span class="string">"  - Le taux d'erreur"</span>)</code></pre>
+</div>
+
+<!-- ============================================ -->
+<!-- RÉSUMÉ FINAL -->
+<!-- ============================================ -->
+<h2>Résumé - Mémo LangSmith</h2>
+
+<table>
+<tr><th>Action</th><th>Comment</th></tr>
+<tr><td>Activer le tracing</td><td><code>LANGCHAIN_TRACING_V2=true</code> dans .env</td></tr>
+<tr><td>Tracer une fonction custom</td><td><code>@traceable</code></td></tr>
+<tr><td>Créer un dataset</td><td><code>client.create_dataset(...)</code></td></tr>
+<tr><td>Ajouter des exemples</td><td><code>client.create_examples(...)</code></td></tr>
+<tr><td>Évaluer</td><td><code>evaluate(fn, data=..., evaluators=[...])</code></td></tr>
+<tr><td>LLM-as-Judge</td><td>Évaluateur custom qui utilise un LLM pour noter</td></tr>
+<tr><td>Feedback humain</td><td><code>client.create_feedback(...)</code></td></tr>
+<tr><td>Sauver un prompt</td><td><code>hub.push("user/nom", prompt)</code></td></tr>
+<tr><td>Charger un prompt</td><td><code>hub.pull("user/nom")</code></td></tr>
+<tr><td>Changer de projet</td><td><code>LANGCHAIN_PROJECT=nouveau-nom</code></td></tr>
+<tr><td>Monitoring prod</td><td>Tags + métadonnées + alertes</td></tr>
+</table>
+
+<div class="box box-green" style="margin-top:30px">
+<p><span class="emoji">✅</span><strong>Bravo !</strong> Tu maîtrises maintenant les 3 outils essentiels : <strong>LangChain</strong> (le framework), <strong>LangGraph</strong> (les graphes), <strong>LangSmith</strong> (le monitoring). Tu es prêt pour construire ton projet RAG !</p>
+</div>
+
+</main>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

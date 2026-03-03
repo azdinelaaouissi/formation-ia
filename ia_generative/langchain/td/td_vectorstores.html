@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Documents, Embeddings et VectorStores</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        .metric-card { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .metric-card h4 { color: #ff8c42; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="main">
+
+        <h1>TD Pratique - Documents, Embeddings et VectorStores</h1>
+        <p class="subtitle">LangChain v0.3 -- Pipeline complet : du texte brut a la recherche semantique</p>
+
+        <!-- ============================== SECTION 1 ============================== -->
+        <h2>1. Recapitulatif du Pipeline</h2>
+
+        <div class="definition">
+            Un <strong>VectorStore</strong> est une base de donnees specialisee qui stocke des documents sous forme de vecteurs numeriques (embeddings) et permet la recherche par similarite semantique plutot que par mots-cles exacts.
+        </div>
+
+        <p>Le pipeline RAG complet suit cinq etapes fondamentales :</p>
+
+        <div class="step-box">
+            <strong>Etape 1 - Load :</strong> Charger les documents bruts (texte, PDF, CSV, web...) avec des <em>DocumentLoaders</em>.
+        </div>
+        <div class="step-box">
+            <strong>Etape 2 - Split :</strong> Decouper les documents en morceaux (chunks) de taille geree avec des <em>TextSplitters</em>.
+        </div>
+        <div class="step-box">
+            <strong>Etape 3 - Embed :</strong> Convertir chaque chunk en vecteur numerique avec un modele d'<em>Embeddings</em>.
+        </div>
+        <div class="step-box">
+            <strong>Etape 4 - Store :</strong> Stocker les vecteurs dans un <em>VectorStore</em> (FAISS, Chroma, Pinecone...).
+        </div>
+        <div class="step-box">
+            <strong>Etape 5 - Search :</strong> Rechercher les documents les plus pertinents par <em>similarite cosinus</em>.
+        </div>
+
+        <div class="prof-note">
+            Ce pipeline est le coeur de tout systeme RAG (Retrieval-Augmented Generation). Chaque etape influence la qualite des resultats finaux. Un mauvais decoupage peut ruiner une excellente recherche.
+        </div>
+
+        <!-- ============================== SECTION 2 ============================== -->
+        <h2>2. Principe - Pipeline d'Indexation et de Recherche</h2>
+
+        <div class="svg-container">
+            <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width:860px;">
+                <!-- Titre -->
+                <text x="450" y="30" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Pipeline d'Indexation et de Recherche</text>
+
+                <!-- Phase Indexation -->
+                <rect x="30" y="50" width="840" height="160" rx="12" fill="none" stroke="#569cd6" stroke-width="1.5" stroke-dasharray="6,3"/>
+                <text x="450" y="72" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">PHASE D'INDEXATION</text>
+
+                <!-- Load -->
+                <rect x="50" y="90" width="130" height="55" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+                <text x="115" y="115" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">1. LOAD</text>
+                <text x="115" y="133" text-anchor="middle" fill="#aaa" font-size="10">TextLoader</text>
+
+                <!-- Fleche -->
+                <line x1="180" y1="117" x2="215" y2="117" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowOrange)"/>
+
+                <!-- Split -->
+                <rect x="215" y="90" width="150" height="55" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+                <text x="290" y="115" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">2. SPLIT</text>
+                <text x="290" y="133" text-anchor="middle" fill="#aaa" font-size="10">TextSplitter</text>
+
+                <!-- Fleche -->
+                <line x1="365" y1="117" x2="400" y2="117" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowOrange)"/>
+
+                <!-- Embed -->
+                <rect x="400" y="90" width="150" height="55" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+                <text x="475" y="115" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">3. EMBED</text>
+                <text x="475" y="133" text-anchor="middle" fill="#aaa" font-size="10">OpenAIEmbeddings</text>
+
+                <!-- Fleche -->
+                <line x1="550" y1="117" x2="585" y2="117" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowOrange)"/>
+
+                <!-- Store -->
+                <rect x="585" y="90" width="140" height="55" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="655" y="115" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">4. STORE</text>
+                <text x="655" y="133" text-anchor="middle" fill="#aaa" font-size="10">FAISS / Chroma</text>
+
+                <!-- Icones documents -->
+                <rect x="60" y="155" width="18" height="22" rx="2" fill="none" stroke="#aaa" stroke-width="1"/>
+                <line x1="65" y1="162" x2="73" y2="162" stroke="#aaa" stroke-width="1"/>
+                <line x1="65" y1="167" x2="73" y2="167" stroke="#aaa" stroke-width="1"/>
+                <line x1="65" y1="172" x2="73" y2="172" stroke="#aaa" stroke-width="1"/>
+                <text x="85" y="171" fill="#aaa" font-size="10">Documents bruts</text>
+
+                <!-- Icones chunks -->
+                <rect x="225" y="155" width="12" height="15" rx="1" fill="none" stroke="#aaa" stroke-width="1"/>
+                <rect x="242" y="155" width="12" height="15" rx="1" fill="none" stroke="#aaa" stroke-width="1"/>
+                <rect x="259" y="155" width="12" height="15" rx="1" fill="none" stroke="#aaa" stroke-width="1"/>
+                <text x="235" y="185" fill="#aaa" font-size="10">Chunks</text>
+
+                <!-- Icones vecteurs -->
+                <text x="420" y="170" fill="#aaa" font-size="10">[0.12, -0.34, ...]</text>
+                <text x="420" y="185" fill="#aaa" font-size="10">[0.56, 0.78, ...]</text>
+
+                <!-- Phase Recherche -->
+                <rect x="30" y="230" width="840" height="170" rx="12" fill="none" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="6,3"/>
+                <text x="450" y="252" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">PHASE DE RECHERCHE</text>
+
+                <!-- Query -->
+                <rect x="50" y="270" width="150" height="55" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+                <text x="125" y="295" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">QUERY</text>
+                <text x="125" y="313" text-anchor="middle" fill="#aaa" font-size="10">"Question user"</text>
+
+                <!-- Fleche -->
+                <line x1="200" y1="297" x2="240" y2="297" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowOrange)"/>
+
+                <!-- Embed Query -->
+                <rect x="240" y="270" width="150" height="55" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+                <text x="315" y="295" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">EMBED</text>
+                <text x="315" y="313" text-anchor="middle" fill="#aaa" font-size="10">Meme modele</text>
+
+                <!-- Fleche -->
+                <line x1="390" y1="297" x2="430" y2="297" stroke="#ff8c42" stroke-width="2" marker-end="url(#arrowOrange)"/>
+
+                <!-- Search -->
+                <rect x="430" y="270" width="160" height="55" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="510" y="295" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">5. SEARCH</text>
+                <text x="510" y="313" text-anchor="middle" fill="#aaa" font-size="10">Similarite cosinus</text>
+
+                <!-- Fleche -->
+                <line x1="590" y1="297" x2="630" y2="297" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowGreen)"/>
+
+                <!-- Resultats -->
+                <rect x="630" y="270" width="150" height="55" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+                <text x="705" y="295" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">RESULTATS</text>
+                <text x="705" y="313" text-anchor="middle" fill="#aaa" font-size="10">Top-K documents</text>
+
+                <!-- Ligne reliant Store a Search -->
+                <line x1="655" y1="145" x2="655" y2="230" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="4,3"/>
+                <line x1="655" y1="230" x2="510" y2="270" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+                <!-- Markers -->
+                <defs>
+                    <marker id="arrowOrange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/>
+                    </marker>
+                    <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+
+        <div class="concept-box green">
+            <h3>Installation des dependances</h3>
+            <div class="code-block"><span class="comment"># Installation des packages necessaires</span>
+pip install langchain langchain-community langchain-openai
+pip install langchain-text-splitters
+pip install faiss-cpu chromadb
+pip install sentence-transformers</div>
+        </div>
+
+        <!-- ============================== EXERCICE 1 ============================== -->
+        <h2>Exercice 1 - Creer des Documents manuellement</h2>
+
+        <p>La classe <code>Document</code> est l'unite de base dans LangChain. Chaque document contient un <strong>page_content</strong> (le texte) et des <strong>metadata</strong> (informations supplementaires).</p>
+
+        <div class="param-box">
+            <h4>Parametres de Document</h4>
+            <table>
+                <tr><th>Parametre</th><th>Type</th><th>Description</th></tr>
+                <tr><td>page_content</td><td>str</td><td>Le contenu textuel du document</td></tr>
+                <tr><td>metadata</td><td>dict</td><td>Dictionnaire de metadonnees (source, date, auteur...)</td></tr>
+            </table>
+        </div>
+
+        <div class="code-block"><span class="comment"># Exercice 1 : Creation manuelle de documents</span>
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+<span class="comment"># Creer des documents avec du contenu et des metadonnees</span>
+doc1 = <span class="function">Document</span>(
+    page_content=<span class="string">"L'intelligence artificielle est un domaine de l'informatique "</span>
+                 <span class="string">"qui vise a creer des systemes capables de simuler "</span>
+                 <span class="string">"l'intelligence humaine."</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"cours_ia.pdf"</span>, <span class="string">"page"</span>: <span class="number">1</span>, <span class="string">"chapitre"</span>: <span class="string">"Introduction"</span>}
+)
+
+doc2 = <span class="function">Document</span>(
+    page_content=<span class="string">"Le machine learning est une sous-branche de l'IA qui permet "</span>
+                 <span class="string">"aux machines d'apprendre a partir de donnees sans etre "</span>
+                 <span class="string">"explicitement programmees."</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"cours_ia.pdf"</span>, <span class="string">"page"</span>: <span class="number">5</span>, <span class="string">"chapitre"</span>: <span class="string">"ML"</span>}
+)
+
+doc3 = <span class="function">Document</span>(
+    page_content=<span class="string">"Le deep learning utilise des reseaux de neurones profonds "</span>
+                 <span class="string">"avec plusieurs couches cachees pour apprendre des "</span>
+                 <span class="string">"representations hierarchiques des donnees."</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"cours_ia.pdf"</span>, <span class="string">"page"</span>: <span class="number">12</span>, <span class="string">"chapitre"</span>: <span class="string">"DL"</span>}
+)
+
+doc4 = <span class="function">Document</span>(
+    page_content=<span class="string">"Les transformers sont une architecture de reseau de neurones "</span>
+                 <span class="string">"basee sur le mecanisme d'attention. GPT et BERT sont "</span>
+                 <span class="string">"des exemples celebres de modeles transformers."</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"cours_nlp.pdf"</span>, <span class="string">"page"</span>: <span class="number">3</span>, <span class="string">"chapitre"</span>: <span class="string">"Transformers"</span>}
+)
+
+doc5 = <span class="function">Document</span>(
+    page_content=<span class="string">"Le RAG (Retrieval-Augmented Generation) combine la recherche "</span>
+                 <span class="string">"d'information avec la generation de texte pour produire "</span>
+                 <span class="string">"des reponses factuelles et sourcees."</span>,
+    metadata={<span class="string">"source"</span>: <span class="string">"cours_nlp.pdf"</span>, <span class="string">"page"</span>: <span class="number">20</span>, <span class="string">"chapitre"</span>: <span class="string">"RAG"</span>}
+)
+
+documents = [doc1, doc2, doc3, doc4, doc5]
+
+<span class="comment"># Inspecter les documents</span>
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(documents):
+    <span class="function">print</span>(<span class="string">f"--- Document <span class="keyword">{</span>i+1<span class="keyword">}</span> ---"</span>)
+    <span class="function">print</span>(<span class="string">f"Contenu : <span class="keyword">{</span>doc.page_content[:80]<span class="keyword">}</span>..."</span>)
+    <span class="function">print</span>(<span class="string">f"Metadata : <span class="keyword">{</span>doc.metadata<span class="keyword">}</span>"</span>)
+    <span class="function">print</span>()</div>
+
+        <div class="output-block">--- Document 1 ---
+Contenu : L'intelligence artificielle est un domaine de l'informatique qui vise a creer d...
+Metadata : {'source': 'cours_ia.pdf', 'page': 1, 'chapitre': 'Introduction'}
+
+--- Document 2 ---
+Contenu : Le machine learning est une sous-branche de l'IA qui permet aux machines d'appr...
+Metadata : {'source': 'cours_ia.pdf', 'page': 5, 'chapitre': 'ML'}
+
+--- Document 3 ---
+Contenu : Le deep learning utilise des reseaux de neurones profonds avec plusieurs couches...
+Metadata : {'source': 'cours_ia.pdf', 'page': 12, 'chapitre': 'DL'}
+
+--- Document 4 ---
+Contenu : Les transformers sont une architecture de reseau de neurones basee sur le mecani...
+Metadata : {'source': 'cours_nlp.pdf', 'page': 3, 'chapitre': 'Transformers'}
+
+--- Document 5 ---
+Contenu : Le RAG (Retrieval-Augmented Generation) combine la recherche d'information avec ...
+Metadata : {'source': 'cours_nlp.pdf', 'page': 20, 'chapitre': 'RAG'}</div>
+
+        <div class="prof-note">
+            Les metadonnees sont essentielles pour le filtrage et la tracabilite. Ajoutez toujours au minimum la <strong>source</strong> et la <strong>date</strong> a vos documents. En production, ces metadonnees permettent de citer les sources dans les reponses du LLM.
+        </div>
+
+        <!-- ============================== EXERCICE 2 ============================== -->
+        <h2>Exercice 2 - Charger des fichiers avec TextLoader</h2>
+
+        <p>En pratique, on ne cree pas les documents manuellement. LangChain fournit des <strong>DocumentLoaders</strong> pour charger automatiquement depuis differentes sources.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 2 : Chargement de fichiers texte</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader
+
+<span class="comment"># Creer d'abord un fichier texte de demonstration</span>
+contenu_demo = <span class="string">"""Introduction a l'Intelligence Artificielle
+
+L'intelligence artificielle (IA) est un ensemble de theories et de techniques
+visant a realiser des machines capables de simuler l'intelligence humaine.
+Elle englobe le machine learning, le deep learning, le traitement du langage
+naturel et la vision par ordinateur.
+
+Le Machine Learning
+
+Le machine learning est une methode d'analyse de donnees qui automatise la
+construction de modeles analytiques. En utilisant des algorithmes qui apprennent
+iterativement a partir de donnees, le machine learning permet aux ordinateurs
+de trouver des insights caches sans etre explicitement programmes pour cela.
+
+Les Reseaux de Neurones
+
+Les reseaux de neurones artificiels sont inspires du fonctionnement du cerveau
+humain. Ils sont composes de couches de neurones interconnectes qui traitent
+l'information de maniere parallele et distribuee.
+
+Le Deep Learning
+
+Le deep learning est une sous-categorie du machine learning qui utilise des
+reseaux de neurones avec de nombreuses couches cachees. Cette profondeur
+permet d'apprendre des representations de plus en plus abstraites des donnees.
+
+Les Transformers et les LLM
+
+Les transformers sont une architecture revolutionnaire introduite en 2017.
+Les Large Language Models (LLM) comme GPT-4, Claude et Llama sont bases
+sur cette architecture et ont transforme le domaine du NLP.
+"""</span>
+
+<span class="comment"># Sauvegarder le fichier</span>
+<span class="keyword">with</span> <span class="function">open</span>(<span class="string">"cours_ia_demo.txt"</span>, <span class="string">"w"</span>, encoding=<span class="string">"utf-8"</span>) <span class="keyword">as</span> f:
+    f.write(contenu_demo)
+
+<span class="comment"># Charger avec TextLoader</span>
+loader = <span class="function">TextLoader</span>(<span class="string">"cours_ia_demo.txt"</span>, encoding=<span class="string">"utf-8"</span>)
+documents = loader.<span class="function">load</span>()
+
+<span class="function">print</span>(<span class="string">f"Nombre de documents charges : <span class="keyword">{</span>len(documents)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Type : <span class="keyword">{</span>type(documents[0])<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Metadata : <span class="keyword">{</span>documents[0].metadata<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Longueur du contenu : <span class="keyword">{</span>len(documents[0].page_content)<span class="keyword">}</span> caracteres"</span>)
+<span class="function">print</span>(<span class="string">f"\nApercu du contenu :\n<span class="keyword">{</span>documents[0].page_content[:300]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Nombre de documents charges : 1
+Type : &lt;class 'langchain_core.documents.base.Document'&gt;
+Metadata : {'source': 'cours_ia_demo.txt'}
+Longueur du contenu : 1283 caracteres
+
+Apercu du contenu :
+Introduction a l'Intelligence Artificielle
+
+L'intelligence artificielle (IA) est un ensemble de theories et de techniques
+visant a realiser des machines capables de simuler l'intelligence humaine.
+Elle englobe le machine learning, le deep learning, le traitement du langage
+naturel et la vision par o...</div>
+
+        <div class="concept-box blue">
+            <h3>Autres loaders courants</h3>
+            <table>
+                <tr><th>Loader</th><th>Package</th><th>Usage</th></tr>
+                <tr><td>PyPDFLoader</td><td>langchain-community</td><td>Fichiers PDF (une page = un document)</td></tr>
+                <tr><td>CSVLoader</td><td>langchain-community</td><td>Fichiers CSV (une ligne = un document)</td></tr>
+                <tr><td>DirectoryLoader</td><td>langchain-community</td><td>Tous les fichiers d'un dossier</td></tr>
+                <tr><td>WebBaseLoader</td><td>langchain-community</td><td>Pages web via URL</td></tr>
+                <tr><td>JSONLoader</td><td>langchain-community</td><td>Fichiers JSON structures</td></tr>
+            </table>
+        </div>
+
+        <!-- ============================== EXERCICE 3 ============================== -->
+        <h2>Exercice 3 - Decoupage avec RecursiveCharacterTextSplitter</h2>
+
+        <p>Un document entier est souvent trop long pour etre traite par un LLM. Le <strong>RecursiveCharacterTextSplitter</strong> decoupe intelligemment le texte en preservant la coherence semantique.</p>
+
+        <div class="definition">
+            Le <strong>RecursiveCharacterTextSplitter</strong> decoupe le texte en essayant recursivement differents separateurs dans l'ordre : <code>['\n\n', '\n', ' ', '']</code>. Il tente d'abord de couper aux paragraphes, puis aux lignes, puis aux mots.
+        </div>
+
+        <div class="param-box">
+            <h4>Parametres cles du TextSplitter</h4>
+            <table>
+                <tr><th>Parametre</th><th>Defaut</th><th>Description</th></tr>
+                <tr><td>chunk_size</td><td>1000</td><td>Taille maximale de chaque chunk (en caracteres)</td></tr>
+                <tr><td>chunk_overlap</td><td>200</td><td>Chevauchement entre chunks consecutifs</td></tr>
+                <tr><td>separators</td><td>['\n\n', '\n', ' ', '']</td><td>Ordre des separateurs a essayer</td></tr>
+                <tr><td>length_function</td><td>len</td><td>Fonction pour mesurer la taille</td></tr>
+            </table>
+        </div>
+
+        <div class="code-block"><span class="comment"># Exercice 3 : Comparaison de differentes tailles de chunks</span>
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+
+<span class="comment"># Charger le document</span>
+<span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader
+loader = <span class="function">TextLoader</span>(<span class="string">"cours_ia_demo.txt"</span>, encoding=<span class="string">"utf-8"</span>)
+documents = loader.<span class="function">load</span>()
+
+texte = documents[<span class="number">0</span>].page_content
+<span class="function">print</span>(<span class="string">f"Longueur totale du texte : <span class="keyword">{</span>len(texte)<span class="keyword">}</span> caracteres\n"</span>)
+
+<span class="comment"># Test avec chunk_size = 200</span>
+splitter_200 = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">200</span>,
+    chunk_overlap=<span class="number">30</span>,
+    length_function=len,
+    is_separator_regex=<span class="keyword">False</span>
+)
+chunks_200 = splitter_200.<span class="function">split_documents</span>(documents)
+
+<span class="comment"># Test avec chunk_size = 500</span>
+splitter_500 = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">50</span>
+)
+chunks_500 = splitter_500.<span class="function">split_documents</span>(documents)
+
+<span class="comment"># Test avec chunk_size = 1000</span>
+splitter_1000 = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">1000</span>,
+    chunk_overlap=<span class="number">100</span>
+)
+chunks_1000 = splitter_1000.<span class="function">split_documents</span>(documents)
+
+<span class="comment"># Comparer les resultats</span>
+<span class="function">print</span>(<span class="string">"="</span> * <span class="number">60</span>)
+<span class="function">print</span>(<span class="string">f"{'chunk_size':<span class="number">15</span>} {'overlap':<span class="number">10</span>} {'nb_chunks':<span class="number">12</span>} {'taille_moy'}"</span>)
+<span class="function">print</span>(<span class="string">"="</span> * <span class="number">60</span>)
+
+<span class="keyword">for</span> name, chunks <span class="keyword">in</span> [(<span class="string">"200"</span>, chunks_200), (<span class="string">"500"</span>, chunks_500), (<span class="string">"1000"</span>, chunks_1000)]:
+    tailles = [len(c.page_content) <span class="keyword">for</span> c <span class="keyword">in</span> chunks]
+    moy = <span class="function">sum</span>(tailles) / len(tailles)
+    <span class="function">print</span>(<span class="string">f"<span class="keyword">{</span>name:<span class="number">15</span><span class="keyword">}</span> <span class="keyword">{</span>'30/50/100'.split('/')[['200','500','1000'].index(name)]:<span class="number">10</span><span class="keyword">}</span> <span class="keyword">{</span>len(chunks):<span class="number">12</span><span class="keyword">}</span> <span class="keyword">{</span>moy:.0f<span class="keyword">}</span>"</span>)
+
+<span class="function">print</span>(<span class="string">f"\n--- Apercu des chunks (chunk_size=200) ---"</span>)
+<span class="keyword">for</span> i, chunk <span class="keyword">in</span> <span class="function">enumerate</span>(chunks_200[:3]):
+    <span class="function">print</span>(<span class="string">f"\nChunk <span class="keyword">{</span>i+1<span class="keyword">}</span> (<span class="keyword">{</span>len(chunk.page_content)<span class="keyword">}</span> cars) :"</span>)
+    <span class="function">print</span>(<span class="string">f"  '<span class="keyword">{</span>chunk.page_content[:100]<span class="keyword">}</span>...'"</span>)</div>
+
+        <div class="output-block">Longueur totale du texte : 1283 caracteres
+
+============================================================
+chunk_size      overlap    nb_chunks    taille_moy
+============================================================
+200             30                  9   153
+500             50                  4   345
+1000            100                 2   689
+
+--- Apercu des chunks (chunk_size=200) ---
+
+Chunk 1 (194 cars) :
+  'Introduction a l'Intelligence Artificielle
+
+L'intelligence artificielle (IA) est un ensemble de theories et de techniques...'
+
+Chunk 2 (189 cars) :
+  'visant a realiser des machines capables de simuler l'intelligence humaine.
+Elle englobe le machine learning, le deep lear...'
+
+Chunk 3 (196 cars) :
+  'Le Machine Learning
+
+Le machine learning est une methode d'analyse de donnees qui automatise la construction de modeles ...'</div>
+
+        <div class="effect">
+            Plus le <code>chunk_size</code> est petit, plus on obtient de chunks granulaires. Un chunk_size de 200 donne 9 chunks, tandis que 1000 n'en donne que 2. Le <code>chunk_overlap</code> assure la continuite contextuelle entre chunks adjacents.
+        </div>
+
+        <div class="prof-note">
+            La taille optimale depend du cas d'usage. Pour des FAQ courtes, 200-300 est ideal. Pour des documents techniques, 500-1000 preserve mieux le contexte. Testez toujours avec vos propres donnees et mesurez la qualite de la recherche.
+        </div>
+
+        <!-- ============================== EXERCICE 4 ============================== -->
+        <h2>Exercice 4 - Creer des Embeddings</h2>
+
+        <p>Les <strong>embeddings</strong> transforment du texte en vecteurs numeriques dans un espace de haute dimension. Les textes semantiquement proches auront des vecteurs proches.</p>
+
+        <div class="svg-container">
+            <svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" style="max-width:680px;">
+                <text x="350" y="25" text-anchor="middle" fill="#ff6b35" font-size="16" font-weight="bold">Embeddings : du Texte aux Vecteurs</text>
+
+                <!-- Textes a gauche -->
+                <rect x="20" y="50" width="200" height="40" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+                <text x="120" y="75" text-anchor="middle" fill="#e0e0e0" font-size="11">"Chat mignon"</text>
+
+                <rect x="20" y="110" width="200" height="40" rx="6" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+                <text x="120" y="135" text-anchor="middle" fill="#e0e0e0" font-size="11">"Chaton adorable"</text>
+
+                <rect x="20" y="170" width="200" height="40" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+                <text x="120" y="195" text-anchor="middle" fill="#e0e0e0" font-size="11">"Voiture rapide"</text>
+
+                <!-- Fleches -->
+                <line x1="220" y1="70" x2="290" y2="70" stroke="#ff8c42" stroke-width="1.5" marker-end="url(#arrowO2)"/>
+                <line x1="220" y1="130" x2="290" y2="130" stroke="#ff8c42" stroke-width="1.5" marker-end="url(#arrowO2)"/>
+                <line x1="220" y1="190" x2="290" y2="190" stroke="#569cd6" stroke-width="1.5" marker-end="url(#arrowB2)"/>
+
+                <text x="255" y="62" fill="#aaa" font-size="9">Embed</text>
+                <text x="255" y="122" fill="#aaa" font-size="9">Embed</text>
+                <text x="255" y="182" fill="#aaa" font-size="9">Embed</text>
+
+                <!-- Vecteurs a droite -->
+                <rect x="290" y="50" width="250" height="40" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+                <text x="415" y="75" text-anchor="middle" fill="#00ff88" font-size="10">[0.23, -0.45, 0.67, ..., 0.12]</text>
+
+                <rect x="290" y="110" width="250" height="40" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+                <text x="415" y="135" text-anchor="middle" fill="#00ff88" font-size="10">[0.21, -0.43, 0.65, ..., 0.14]</text>
+
+                <rect x="290" y="170" width="250" height="40" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+                <text x="415" y="195" text-anchor="middle" fill="#00ff88" font-size="10">[0.89, 0.12, -0.34, ..., 0.77]</text>
+
+                <!-- Annotation similarite -->
+                <line x1="555" y1="70" x2="600" y2="70" stroke="#00ff88" stroke-width="1" stroke-dasharray="3,2"/>
+                <line x1="555" y1="130" x2="600" y2="130" stroke="#00ff88" stroke-width="1" stroke-dasharray="3,2"/>
+                <line x1="600" y1="70" x2="600" y2="130" stroke="#00ff88" stroke-width="1.5"/>
+                <text x="620" y="105" fill="#00ff88" font-size="10">Proches !</text>
+                <text x="620" y="118" fill="#00ff88" font-size="9">cos=0.97</text>
+
+                <line x1="555" y1="190" x2="640" y2="190" stroke="#569cd6" stroke-width="1" stroke-dasharray="3,2"/>
+                <text x="650" y="194" fill="#569cd6" font-size="10">Eloigne</text>
+
+                <defs>
+                    <marker id="arrowO2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                        <polygon points="0 0, 8 3, 0 6" fill="#ff8c42"/>
+                    </marker>
+                    <marker id="arrowB2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                        <polygon points="0 0, 8 3, 0 6" fill="#569cd6"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+
+        <div class="code-block"><span class="comment"># Exercice 4a : Embeddings avec OpenAI</span>
+<span class="keyword">import</span> os
+os.environ[<span class="string">"OPENAI_API_KEY"</span>] = <span class="string">"votre-cle-api"</span>
+
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+<span class="comment"># Initialiser le modele d'embeddings</span>
+embeddings_openai = <span class="function">OpenAIEmbeddings</span>(
+    model=<span class="string">"text-embedding-3-small"</span>  <span class="comment"># 1536 dimensions</span>
+)
+
+<span class="comment"># Generer un embedding pour un texte</span>
+texte_test = <span class="string">"Le deep learning utilise des reseaux de neurones profonds"</span>
+vecteur = embeddings_openai.<span class="function">embed_query</span>(texte_test)
+
+<span class="function">print</span>(<span class="string">f"Modele : text-embedding-3-small"</span>)
+<span class="function">print</span>(<span class="string">f"Dimensions : <span class="keyword">{</span>len(vecteur)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Premiers elements : <span class="keyword">{</span>vecteur[:5]<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Type : <span class="keyword">{</span>type(vecteur)<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Modele : text-embedding-3-small
+Dimensions : 1536
+Premiers elements : [0.0234, -0.0156, 0.0389, -0.0271, 0.0198]
+Type : &lt;class 'list'&gt;</div>
+
+        <div class="code-block"><span class="comment"># Exercice 4b : Embeddings avec HuggingFace (gratuit, local)</span>
+<span class="keyword">from</span> langchain_community.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings
+
+<span class="comment"># Modele leger et performant pour le francais</span>
+embeddings_hf = <span class="function">HuggingFaceEmbeddings</span>(
+    model_name=<span class="string">"sentence-transformers/all-MiniLM-L6-v2"</span>
+)
+
+<span class="comment"># Comparer les dimensions</span>
+vecteur_hf = embeddings_hf.<span class="function">embed_query</span>(texte_test)
+<span class="function">print</span>(<span class="string">f"Modele : all-MiniLM-L6-v2"</span>)
+<span class="function">print</span>(<span class="string">f"Dimensions : <span class="keyword">{</span>len(vecteur_hf)<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Premiers elements : <span class="keyword">{</span>[round(x, 4) for x in vecteur_hf[:5]]<span class="keyword">}</span>"</span>)
+
+<span class="comment"># Embeddings de plusieurs documents en batch</span>
+textes = [
+    <span class="string">"L'intelligence artificielle"</span>,
+    <span class="string">"Le machine learning"</span>,
+    <span class="string">"La cuisine francaise"</span>
+]
+vecteurs_batch = embeddings_hf.<span class="function">embed_documents</span>(textes)
+<span class="function">print</span>(<span class="string">f"\nBatch de <span class="keyword">{</span>len(vecteurs_batch)<span class="keyword">}</span> documents embeddes"</span>)
+<span class="function">print</span>(<span class="string">f"Chaque vecteur : <span class="keyword">{</span>len(vecteurs_batch[0])<span class="keyword">}</span> dimensions"</span>)
+
+<span class="comment"># Calculer la similarite cosinus manuellement</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+
+<span class="keyword">def</span> <span class="function">cosine_similarity</span>(a, b):
+    <span class="keyword">return</span> np.<span class="function">dot</span>(a, b) / (np.linalg.<span class="function">norm</span>(a) * np.linalg.<span class="function">norm</span>(b))
+
+sim_ia_ml = <span class="function">cosine_similarity</span>(vecteurs_batch[<span class="number">0</span>], vecteurs_batch[<span class="number">1</span>])
+sim_ia_cuisine = <span class="function">cosine_similarity</span>(vecteurs_batch[<span class="number">0</span>], vecteurs_batch[<span class="number">2</span>])
+
+<span class="function">print</span>(<span class="string">f"\nSimilarite 'IA' vs 'ML' : <span class="keyword">{</span>sim_ia_ml:.4f<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Similarite 'IA' vs 'Cuisine' : <span class="keyword">{</span>sim_ia_cuisine:.4f<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Modele : all-MiniLM-L6-v2
+Dimensions : 384
+Premiers elements : [0.0521, -0.0234, 0.0678, -0.0112, 0.0453]
+
+Batch de 3 documents embeddes
+Chaque vecteur : 384 dimensions
+
+Similarite 'IA' vs 'ML' : 0.7823
+Similarite 'IA' vs 'Cuisine' : 0.1245</div>
+
+        <div class="effect">
+            La similarite cosinus entre "IA" et "ML" est de 0.78 (tres proche), tandis qu'entre "IA" et "Cuisine" elle n'est que de 0.12 (tres eloigne). Les embeddings capturent bien la proximite semantique.
+        </div>
+
+        <!-- ============================== EXERCICE 5 ============================== -->
+        <h2>Exercice 5 - VectorStore FAISS : Indexation et Recherche</h2>
+
+        <p><strong>FAISS</strong> (Facebook AI Similarity Search) est une bibliotheque haute performance pour la recherche par similarite. Elle fonctionne entierement en memoire et est optimisee pour les grands volumes de vecteurs.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 5 : Creer un VectorStore FAISS et faire une recherche</span>
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+<span class="keyword">from</span> langchain_community.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+<span class="comment"># Preparer les embeddings</span>
+embeddings = <span class="function">HuggingFaceEmbeddings</span>(
+    model_name=<span class="string">"sentence-transformers/all-MiniLM-L6-v2"</span>
+)
+
+<span class="comment"># Creer nos documents</span>
+documents = [
+    <span class="function">Document</span>(page_content=<span class="string">"L'intelligence artificielle simule l'intelligence humaine via des algorithmes."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"ia.pdf"</span>, <span class="string">"chapitre"</span>: <span class="number">1</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Le machine learning permet aux machines d'apprendre a partir de donnees."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"ml.pdf"</span>, <span class="string">"chapitre"</span>: <span class="number">2</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Le deep learning utilise des reseaux de neurones a plusieurs couches."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"dl.pdf"</span>, <span class="string">"chapitre"</span>: <span class="number">3</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Les transformers utilisent le mecanisme d'attention pour le NLP."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"nlp.pdf"</span>, <span class="string">"chapitre"</span>: <span class="number">4</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Le RAG combine recherche d'information et generation de texte."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"rag.pdf"</span>, <span class="string">"chapitre"</span>: <span class="number">5</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Python est le langage le plus utilise en data science et en IA."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"python.pdf"</span>, <span class="string">"chapitre"</span>: <span class="number">6</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Les embeddings transforment du texte en vecteurs numeriques."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"embeddings.pdf"</span>, <span class="string">"chapitre"</span>: <span class="number">7</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"FAISS est une bibliotheque de Meta pour la recherche par similarite."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"faiss.pdf"</span>, <span class="string">"chapitre"</span>: <span class="number">8</span>}),
+]
+
+<span class="comment"># Creer le VectorStore FAISS a partir des documents</span>
+vectorstore = FAISS.<span class="function">from_documents</span>(
+    documents=documents,
+    embedding=embeddings
+)
+
+<span class="function">print</span>(<span class="string">f"VectorStore FAISS cree avec <span class="keyword">{</span>vectorstore.index.ntotal<span class="keyword">}</span> vecteurs"</span>)
+
+<span class="comment"># Recherche par similarite - Top 3</span>
+query = <span class="string">"Comment fonctionne l'apprentissage automatique ?"</span>
+resultats = vectorstore.<span class="function">similarity_search</span>(query, k=<span class="number">3</span>)
+
+<span class="function">print</span>(<span class="string">f"\nQuery : '<span class="keyword">{</span>query<span class="keyword">}</span>'"</span>)
+<span class="function">print</span>(<span class="string">f"Top <span class="keyword">{</span>len(resultats)<span class="keyword">}</span> resultats :\n"</span>)
+
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(resultats):
+    <span class="function">print</span>(<span class="string">f"  Resultat <span class="keyword">{</span>i+1<span class="keyword">}</span>:"</span>)
+    <span class="function">print</span>(<span class="string">f"    Contenu  : <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)
+    <span class="function">print</span>(<span class="string">f"    Source   : <span class="keyword">{</span>doc.metadata['source']<span class="keyword">}</span>"</span>)
+    <span class="function">print</span>()</div>
+
+        <div class="output-block">VectorStore FAISS cree avec 8 vecteurs
+
+Query : 'Comment fonctionne l'apprentissage automatique ?'
+Top 3 resultats :
+
+  Resultat 1:
+    Contenu  : Le machine learning permet aux machines d'apprendre a partir de donnees.
+    Source   : ml.pdf
+
+  Resultat 2:
+    Contenu  : L'intelligence artificielle simule l'intelligence humaine via des algorithmes.
+    Source   : ia.pdf
+
+  Resultat 3:
+    Contenu  : Le deep learning utilise des reseaux de neurones a plusieurs couches.
+    Source   : dl.pdf</div>
+
+        <div class="code-block"><span class="comment"># Recherche avec scores de similarite</span>
+resultats_scores = vectorstore.<span class="function">similarity_search_with_score</span>(query, k=<span class="number">3</span>)
+
+<span class="function">print</span>(<span class="string">"Resultats avec scores (distance L2, plus bas = plus similaire) :"</span>)
+<span class="keyword">for</span> doc, score <span class="keyword">in</span> resultats_scores:
+    <span class="function">print</span>(<span class="string">f"  Score: <span class="keyword">{</span>score:.4f<span class="keyword">}</span> | <span class="keyword">{</span>doc.page_content[:60]<span class="keyword">}</span>..."</span>)</div>
+
+        <div class="output-block">Resultats avec scores (distance L2, plus bas = plus similaire) :
+  Score: 0.4523 | Le machine learning permet aux machines d'apprendre a partir...
+  Score: 0.6218 | L'intelligence artificielle simule l'intelligence humaine vi...
+  Score: 0.6891 | Le deep learning utilise des reseaux de neurones a plusieurs...</div>
+
+        <div class="prof-note">
+            FAISS utilise la distance L2 (euclidienne) par defaut. Un score plus bas signifie que les documents sont plus similaires. C'est l'inverse de la similarite cosinus ou un score plus haut est meilleur. Gardez cela en tete lors de l'interpretation des resultats.
+        </div>
+
+        <!-- ============================== EXERCICE 6 ============================== -->
+        <h2>Exercice 6 - Chroma : VectorStore Persistant</h2>
+
+        <p><strong>Chroma</strong> offre un compromis entre performance et fonctionnalites. Contrairement a FAISS qui est en memoire, Chroma peut persister ses donnees sur disque et offre un filtrage par metadonnees natif.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 6 : Creer un VectorStore Chroma persistant</span>
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_community.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+embeddings = <span class="function">HuggingFaceEmbeddings</span>(
+    model_name=<span class="string">"sentence-transformers/all-MiniLM-L6-v2"</span>
+)
+
+<span class="comment"># Documents avec metadonnees enrichies</span>
+documents = [
+    <span class="function">Document</span>(page_content=<span class="string">"L'IA transforme les industries de la sante a la finance."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"rapport_2024.pdf"</span>, <span class="string">"date"</span>: <span class="string">"2024-01-15"</span>, <span class="string">"categorie"</span>: <span class="string">"general"</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Les LLM sont entraines sur des milliards de tokens de texte."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"rapport_2024.pdf"</span>, <span class="string">"date"</span>: <span class="string">"2024-03-20"</span>, <span class="string">"categorie"</span>: <span class="string">"llm"</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Le fine-tuning adapte un modele pre-entraine a une tache specifique."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"guide_ml.pdf"</span>, <span class="string">"date"</span>: <span class="string">"2024-06-10"</span>, <span class="string">"categorie"</span>: <span class="string">"technique"</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Le prompt engineering est l'art de formuler des instructions pour les LLM."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"guide_prompt.pdf"</span>, <span class="string">"date"</span>: <span class="string">"2024-08-05"</span>, <span class="string">"categorie"</span>: <span class="string">"llm"</span>}),
+    <span class="function">Document</span>(page_content=<span class="string">"Les agents IA peuvent utiliser des outils pour accomplir des taches."</span>,
+             metadata={<span class="string">"source"</span>: <span class="string">"guide_agents.pdf"</span>, <span class="string">"date"</span>: <span class="string">"2024-09-12"</span>, <span class="string">"categorie"</span>: <span class="string">"agents"</span>}),
+]
+
+<span class="comment"># Creer Chroma AVEC persistance sur disque</span>
+persist_directory = <span class="string">"./chroma_db"</span>
+
+vectorstore_chroma = Chroma.<span class="function">from_documents</span>(
+    documents=documents,
+    embedding=embeddings,
+    persist_directory=persist_directory,
+    collection_name=<span class="string">"cours_ia"</span>
+)
+
+<span class="function">print</span>(<span class="string">f"Chroma VectorStore cree"</span>)
+<span class="function">print</span>(<span class="string">f"Collection : cours_ia"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de documents : <span class="keyword">{</span>vectorstore_chroma._collection.count()<span class="keyword">}</span>"</span>)
+<span class="function">print</span>(<span class="string">f"Persiste dans : <span class="keyword">{</span>persist_directory<span class="keyword">}</span>"</span>)
+
+<span class="comment"># Test de recherche</span>
+resultats = vectorstore_chroma.<span class="function">similarity_search</span>(
+    <span class="string">"Comment entrainer un modele de langage ?"</span>, k=<span class="number">2</span>
+)
+<span class="function">print</span>(<span class="string">f"\nRecherche : 'Comment entrainer un modele de langage ?'"</span>)
+<span class="keyword">for</span> r <span class="keyword">in</span> resultats:
+    <span class="function">print</span>(<span class="string">f"  -> <span class="keyword">{</span>r.page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Chroma VectorStore cree
+Collection : cours_ia
+Nombre de documents : 5
+Persiste dans : ./chroma_db
+
+Recherche : 'Comment entrainer un modele de langage ?'
+  -> Les LLM sont entraines sur des milliards de tokens de texte.
+  -> Le fine-tuning adapte un modele pre-entraine a une tache specifique.</div>
+
+        <div class="code-block"><span class="comment"># Recharger depuis le disque (dans un nouveau script/session)</span>
+vectorstore_reload = <span class="function">Chroma</span>(
+    persist_directory=persist_directory,
+    embedding_function=embeddings,
+    collection_name=<span class="string">"cours_ia"</span>
+)
+
+<span class="function">print</span>(<span class="string">f"Chroma recharge depuis le disque"</span>)
+<span class="function">print</span>(<span class="string">f"Documents retrouves : <span class="keyword">{</span>vectorstore_reload._collection.count()<span class="keyword">}</span>"</span>)
+
+<span class="comment"># Verifier que la recherche fonctionne apres rechargement</span>
+resultats = vectorstore_reload.<span class="function">similarity_search</span>(<span class="string">"agents outils"</span>, k=<span class="number">1</span>)
+<span class="function">print</span>(<span class="string">f"Test apres reload : <span class="keyword">{</span>resultats[0].page_content<span class="keyword">}</span>"</span>)</div>
+
+        <div class="output-block">Chroma recharge depuis le disque
+Documents retrouves : 5
+Test apres reload : Les agents IA peuvent utiliser des outils pour accomplir des taches.</div>
+
+        <div class="effect">
+            Chroma persiste automatiquement les donnees dans <code>persist_directory</code>. Au prochain demarrage, on peut recharger le VectorStore sans re-calculer les embeddings, ce qui economise du temps et des appels API.
+        </div>
+
+        <div class="concept-box">
+            <h3>FAISS vs Chroma : quand choisir lequel ?</h3>
+            <table>
+                <tr><th>Critere</th><th>FAISS</th><th>Chroma</th></tr>
+                <tr><td>Persistance</td><td>Manuelle (save_local / load_local)</td><td>Automatique (persist_directory)</td></tr>
+                <tr><td>Performance</td><td>Tres rapide, support GPU</td><td>Bonne, optimise pour mid-scale</td></tr>
+                <tr><td>Filtrage metadata</td><td>Basique (post-filtrage)</td><td>Natif (where clause)</td></tr>
+                <tr><td>Cas d'usage</td><td>Prototypage rapide, grands volumes</td><td>Projets avec filtrage, persistance</td></tr>
+                <tr><td>Installation</td><td>pip install faiss-cpu</td><td>pip install chromadb</td></tr>
+            </table>
+        </div>
+
+        <!-- ============================== EXERCICE 7 ============================== -->
+        <h2>Exercice 7 - Comparer les Types de Recherche</h2>
+
+        <p>LangChain supporte plusieurs strategies de recherche. Chacune a ses avantages selon le contexte.</p>
+
+        <div class="definition">
+            <strong>Similarity</strong> : retourne les K documents les plus proches. <strong>MMR</strong> (Maximal Marginal Relevance) : retourne des documents pertinents ET diversifies. <strong>Score Threshold</strong> : retourne uniquement les documents au-dessus d'un seuil de similarite.
+        </div>
+
+        <div class="svg-container">
+            <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="max-width:780px;">
+                <text x="400" y="25" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">Comparaison des Strategies de Recherche</text>
+
+                <!-- Similarity -->
+                <rect x="20" y="45" width="230" height="140" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+                <text x="135" y="70" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">SIMILARITY</text>
+                <text x="135" y="92" text-anchor="middle" fill="#e0e0e0" font-size="10">Les K plus proches</text>
+                <circle cx="80" cy="120" r="8" fill="#00ff88" opacity="0.9"/><text x="95" y="124" fill="#aaa" font-size="9">Score 0.95</text>
+                <circle cx="80" cy="140" r="8" fill="#00ff88" opacity="0.7"/><text x="95" y="144" fill="#aaa" font-size="9">Score 0.91</text>
+                <circle cx="80" cy="160" r="8" fill="#00ff88" opacity="0.5"/><text x="95" y="164" fill="#aaa" font-size="9">Score 0.88</text>
+
+                <!-- MMR -->
+                <rect x="280" y="45" width="230" height="140" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+                <text x="395" y="70" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">MMR</text>
+                <text x="395" y="92" text-anchor="middle" fill="#e0e0e0" font-size="10">Pertinents ET diversifies</text>
+                <circle cx="340" cy="120" r="8" fill="#00ff88" opacity="0.9"/><text x="355" y="124" fill="#aaa" font-size="9">Score 0.95</text>
+                <circle cx="340" cy="140" r="8" fill="#569cd6" opacity="0.7"/><text x="355" y="144" fill="#aaa" font-size="9">Score 0.72 (divers)</text>
+                <circle cx="340" cy="160" r="8" fill="#ff8c42" opacity="0.5"/><text x="355" y="164" fill="#aaa" font-size="9">Score 0.65 (divers)</text>
+
+                <!-- Threshold -->
+                <rect x="540" y="45" width="230" height="140" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+                <text x="655" y="70" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">SCORE THRESHOLD</text>
+                <text x="655" y="92" text-anchor="middle" fill="#e0e0e0" font-size="10">Au-dessus du seuil</text>
+                <circle cx="600" cy="120" r="8" fill="#00ff88" opacity="0.9"/><text x="615" y="124" fill="#aaa" font-size="9">Score 0.95 (OK)</text>
+                <circle cx="600" cy="140" r="8" fill="#00ff88" opacity="0.7"/><text x="615" y="144" fill="#aaa" font-size="9">Score 0.91 (OK)</text>
+                <line x1="580" y1="155" x2="750" y2="155" stroke="#ff4444" stroke-width="1" stroke-dasharray="4,3"/>
+                <text x="655" y="172" text-anchor="middle" fill="#ff4444" font-size="9">Seuil = 0.90</text>
+            </svg>
+        </div>
+
+        <div class="code-block"><span class="comment"># Exercice 7 : Comparer similarity, MMR et score_threshold</span>
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+<span class="keyword">from</span> langchain_community.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+embeddings = <span class="function">HuggingFaceEmbeddings</span>(
+    model_name=<span class="string">"sentence-transformers/all-MiniLM-L6-v2"</span>
+)
+
+<span class="comment"># Documents volontairement proches et redondants</span>
+docs = [
+    <span class="function">Document</span>(page_content=<span class="string">"Python est un langage de programmation tres populaire pour l'IA."</span>),
+    <span class="function">Document</span>(page_content=<span class="string">"Python est le langage prefere des data scientists et chercheurs en IA."</span>),
+    <span class="function">Document</span>(page_content=<span class="string">"Python offre des bibliotheques comme TensorFlow et PyTorch pour le ML."</span>),
+    <span class="function">Document</span>(page_content=<span class="string">"JavaScript est utilise pour le developpement web front-end et back-end."</span>),
+    <span class="function">Document</span>(page_content=<span class="string">"R est un langage specialise dans les statistiques et la visualisation."</span>),
+    <span class="function">Document</span>(page_content=<span class="string">"Java est utilise en entreprise pour des applications robustes et scalables."</span>),
+]
+
+vectorstore = FAISS.<span class="function">from_documents</span>(docs, embeddings)
+query = <span class="string">"Quel langage utiliser pour l'intelligence artificielle ?"</span>
+
+<span class="comment"># --- 1. Recherche par similarite classique ---</span>
+<span class="function">print</span>(<span class="string">"=== SIMILARITY SEARCH (k=3) ==="</span>)
+results_sim = vectorstore.<span class="function">similarity_search</span>(query, k=<span class="number">3</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results_sim):
+    <span class="function">print</span>(<span class="string">f"  <span class="keyword">{</span>i+1<span class="keyword">}</span>. <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)
+
+<span class="comment"># --- 2. Recherche MMR (diversite) ---</span>
+<span class="function">print</span>(<span class="string">"\n=== MMR SEARCH (k=3, fetch_k=6, lambda_mult=0.5) ==="</span>)
+results_mmr = vectorstore.<span class="function">max_marginal_relevance_search</span>(
+    query, k=<span class="number">3</span>, fetch_k=<span class="number">6</span>, lambda_mult=<span class="number">0.5</span>
+)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results_mmr):
+    <span class="function">print</span>(<span class="string">f"  <span class="keyword">{</span>i+1<span class="keyword">}</span>. <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)
+
+<span class="comment"># --- 3. Recherche avec seuil de score ---</span>
+<span class="function">print</span>(<span class="string">"\n=== SCORE THRESHOLD (threshold=0.5) ==="</span>)
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity_score_threshold"</span>,
+    search_kwargs={<span class="string">"score_threshold"</span>: <span class="number">0.5</span>}
+)
+results_threshold = retriever.<span class="function">invoke</span>(query)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results_threshold):
+    <span class="function">print</span>(<span class="string">f"  <span class="keyword">{</span>i+1<span class="keyword">}</span>. <span class="keyword">{</span>doc.page_content<span class="keyword">}</span>"</span>)
+<span class="keyword">if</span> <span class="keyword">not</span> results_threshold:
+    <span class="function">print</span>(<span class="string">"  Aucun document au-dessus du seuil."</span>)</div>
+
+        <div class="output-block">=== SIMILARITY SEARCH (k=3) ===
+  1. Python est un langage de programmation tres populaire pour l'IA.
+  2. Python est le langage prefere des data scientists et chercheurs en IA.
+  3. Python offre des bibliotheques comme TensorFlow et PyTorch pour le ML.
+
+=== MMR SEARCH (k=3, fetch_k=6, lambda_mult=0.5) ===
+  1. Python est un langage de programmation tres populaire pour l'IA.
+  2. R est un langage specialise dans les statistiques et la visualisation.
+  3. Python offre des bibliotheques comme TensorFlow et PyTorch pour le ML.
+
+=== SCORE THRESHOLD (threshold=0.5) ===
+  1. Python est un langage de programmation tres populaire pour l'IA.
+  2. Python est le langage prefere des data scientists et chercheurs en IA.</div>
+
+        <div class="effect">
+            La recherche par similarite retourne 3 resultats Python (redondants). MMR introduit de la diversite en incluant R. Le seuil de score ne retourne que les documents tres pertinents. Choisissez votre strategie selon le besoin.
+        </div>
+
+        <div class="param-box">
+            <h4>Parametres MMR importants</h4>
+            <table>
+                <tr><th>Parametre</th><th>Description</th></tr>
+                <tr><td>k</td><td>Nombre de documents a retourner</td></tr>
+                <tr><td>fetch_k</td><td>Nombre de candidats a recuperer avant le re-ranking MMR</td></tr>
+                <tr><td>lambda_mult</td><td>0.0 = diversite maximale, 1.0 = pertinence maximale (defaut: 0.5)</td></tr>
+            </table>
+        </div>
+
+        <!-- ============================== EXERCICE 8 ============================== -->
+        <h2>Exercice 8 - Filtrage par Metadonnees</h2>
+
+        <p>Les metadonnees permettent de filtrer les resultats de recherche sans affecter la recherche semantique elle-meme. C'est essentiel pour restreindre les resultats a une source, une date ou une categorie specifique.</p>
+
+        <div class="code-block"><span class="comment"># Exercice 8 : Recherche avec filtrage par metadonnees</span>
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_community.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+
+embeddings = <span class="function">HuggingFaceEmbeddings</span>(
+    model_name=<span class="string">"sentence-transformers/all-MiniLM-L6-v2"</span>
+)
+
+<span class="comment"># Documents avec metadonnees riches</span>
+docs = [
+    <span class="function">Document</span>(
+        page_content=<span class="string">"GPT-4 est un modele multimodal capable de traiter texte et images."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"openai_blog"</span>, <span class="string">"date"</span>: <span class="string">"2024-01"</span>, <span class="string">"type"</span>: <span class="string">"llm"</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Claude est developpe par Anthropic et se distingue par sa securite."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"anthropic_blog"</span>, <span class="string">"date"</span>: <span class="string">"2024-03"</span>, <span class="string">"type"</span>: <span class="string">"llm"</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Llama 3 est un modele open source de Meta tres performant."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"meta_blog"</span>, <span class="string">"date"</span>: <span class="string">"2024-04"</span>, <span class="string">"type"</span>: <span class="string">"llm"</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"FAISS permet la recherche par similarite sur des millions de vecteurs."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"meta_blog"</span>, <span class="string">"date"</span>: <span class="string">"2023-06"</span>, <span class="string">"type"</span>: <span class="string">"outil"</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"LangChain orchestre les composants LLM pour creer des applications."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"langchain_docs"</span>, <span class="string">"date"</span>: <span class="string">"2024-06"</span>, <span class="string">"type"</span>: <span class="string">"framework"</span>}
+    ),
+    <span class="function">Document</span>(
+        page_content=<span class="string">"Mistral AI propose des modeles legers et rapides pour l'inference."</span>,
+        metadata={<span class="string">"source"</span>: <span class="string">"mistral_blog"</span>, <span class="string">"date"</span>: <span class="string">"2024-02"</span>, <span class="string">"type"</span>: <span class="string">"llm"</span>}
+    ),
+]
+
+<span class="comment"># Creer le VectorStore Chroma</span>
+vectorstore = Chroma.<span class="function">from_documents</span>(docs, embeddings)
+
+query = <span class="string">"Quel est le meilleur modele de langage ?"</span>
+
+<span class="comment"># --- Recherche SANS filtre ---</span>
+<span class="function">print</span>(<span class="string">"=== SANS FILTRE ==="</span>)
+results = vectorstore.<span class="function">similarity_search</span>(query, k=<span class="number">3</span>)
+<span class="keyword">for</span> doc <span class="keyword">in</span> results:
+    <span class="function">print</span>(<span class="string">f"  [{doc.metadata['type']}] {doc.page_content}"</span>)
+
+<span class="comment"># --- Filtre par TYPE ---</span>
+<span class="function">print</span>(<span class="string">"\n=== FILTRE : type='llm' ==="</span>)
+results = vectorstore.<span class="function">similarity_search</span>(
+    query, k=<span class="number">3</span>,
+    filter={<span class="string">"type"</span>: <span class="string">"llm"</span>}
+)
+<span class="keyword">for</span> doc <span class="keyword">in</span> results:
+    <span class="function">print</span>(<span class="string">f"  [{doc.metadata['source']}] {doc.page_content}"</span>)
+
+<span class="comment"># --- Filtre par SOURCE ---</span>
+<span class="function">print</span>(<span class="string">"\n=== FILTRE : source='meta_blog' ==="</span>)
+results = vectorstore.<span class="function">similarity_search</span>(
+    query, k=<span class="number">3</span>,
+    filter={<span class="string">"source"</span>: <span class="string">"meta_blog"</span>}
+)
+<span class="keyword">for</span> doc <span class="keyword">in</span> results:
+    <span class="function">print</span>(<span class="string">f"  [{doc.metadata['date']}] {doc.page_content}"</span>)
+
+<span class="comment"># --- Utilisation comme Retriever avec filtre ---</span>
+<span class="function">print</span>(<span class="string">"\n=== RETRIEVER avec filtre ==="</span>)
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={
+        <span class="string">"k"</span>: <span class="number">2</span>,
+        <span class="string">"filter"</span>: {<span class="string">"type"</span>: <span class="string">"llm"</span>},
+        <span class="string">"fetch_k"</span>: <span class="number">5</span>
+    }
+)
+results = retriever.<span class="function">invoke</span>(query)
+<span class="keyword">for</span> doc <span class="keyword">in</span> results:
+    <span class="function">print</span>(<span class="string">f"  [{doc.metadata['source']}] {doc.page_content}"</span>)</div>
+
+        <div class="output-block">=== SANS FILTRE ===
+  [llm] GPT-4 est un modele multimodal capable de traiter texte et images.
+  [llm] Claude est developpe par Anthropic et se distingue par sa securite.
+  [llm] Mistral AI propose des modeles legers et rapides pour l'inference.
+
+=== FILTRE : type='llm' ===
+  [openai_blog] GPT-4 est un modele multimodal capable de traiter texte et images.
+  [anthropic_blog] Claude est developpe par Anthropic et se distingue par sa securite.
+  [mistral_blog] Mistral AI propose des modeles legers et rapides pour l'inference.
+
+=== FILTRE : source='meta_blog' ===
+  [2024-04] Llama 3 est un modele open source de Meta tres performant.
+  [2023-06] FAISS permet la recherche par similarite sur des millions de vecteurs.
+
+=== RETRIEVER avec filtre ===
+  [openai_blog] GPT-4 est un modele multimodal capable de traiter texte et images.
+  [meta_blog] Llama 3 est un modele open source de Meta tres performant.</div>
+
+        <div class="prof-note">
+            Le filtrage par metadonnees est un outil puissant en production. Par exemple, dans un chatbot de support client, vous pouvez filtrer par version de produit pour ne retourner que la documentation pertinente. Combinez toujours filtrage et recherche semantique pour des resultats precis.
+        </div>
+
+        <!-- ============================== ERREURS COURANTES ============================== -->
+        <h2>Erreurs Courantes</h2>
+
+        <div class="warning">
+            <strong>chunk_size trop grand :</strong> Si vos chunks font 5000+ caracteres, la recherche semantique sera imprecise car trop de sujets seront melanges dans un seul vecteur. Visez 200 a 1000 caracteres selon le contenu.
+        </div>
+
+        <div class="warning">
+            <strong>chunk_overlap a zero :</strong> Sans chevauchement, les informations a la frontiere de deux chunks sont perdues. Utilisez toujours un overlap de 10 a 20% du chunk_size (ex: chunk_size=500, overlap=50 a 100).
+        </div>
+
+        <div class="warning">
+            <strong>Oublier de persister le VectorStore :</strong> Avec FAISS, si vous ne faites pas <code>vectorstore.save_local("dossier")</code>, toutes les donnees sont perdues a la fermeture du programme. Avec Chroma, specifiez toujours un <code>persist_directory</code>.
+        </div>
+
+        <div class="warning">
+            <strong>Melanger les modeles d'embeddings :</strong> Si vous indexez avec <code>all-MiniLM-L6-v2</code> (384 dimensions) et cherchez avec <code>text-embedding-3-small</code> (1536 dimensions), les resultats seront absurdes. Utilisez toujours le meme modele pour l'indexation et la recherche.
+        </div>
+
+        <div class="warning">
+            <strong>Ne pas gerer l'encodage :</strong> Lors du chargement de fichiers avec TextLoader, specifiez toujours <code>encoding="utf-8"</code> pour eviter les erreurs avec les caracteres accentues en francais.
+        </div>
+
+        <div class="warning">
+            <strong>Ignorer les metadonnees :</strong> Ne pas ajouter de metadonnees rend impossible le filtrage et la tracabilite. Ajoutez au minimum <code>source</code>, <code>date</code>, et un identifiant unique a chaque document.
+        </div>
+
+        <!-- ============================== RESUME ============================== -->
+        <h2>Resume</h2>
+
+        <div class="concept-box green">
+            <h3>Comparaison des VectorStores</h3>
+            <table>
+                <tr><th>Caracteristique</th><th>FAISS</th><th>Chroma</th><th>Pinecone</th></tr>
+                <tr><td>Type</td><td>Local (memoire)</td><td>Local (disque)</td><td>Cloud (SaaS)</td></tr>
+                <tr><td>Performance</td><td>Excellente</td><td>Bonne</td><td>Tres bonne</td></tr>
+                <tr><td>Persistance</td><td>Manuelle</td><td>Automatique</td><td>Automatique</td></tr>
+                <tr><td>Filtrage metadata</td><td>Basique</td><td>Avance</td><td>Avance</td></tr>
+                <tr><td>Scalabilite</td><td>Millions de vecteurs</td><td>Milliers a millions</td><td>Milliards</td></tr>
+                <tr><td>Cout</td><td>Gratuit</td><td>Gratuit</td><td>Payant</td></tr>
+                <tr><td>GPU</td><td>Oui (faiss-gpu)</td><td>Non</td><td>N/A (cloud)</td></tr>
+            </table>
+        </div>
+
+        <div class="concept-box blue">
+            <h3>Chunking Cheatsheet</h3>
+            <table>
+                <tr><th>Type de contenu</th><th>chunk_size recommande</th><th>chunk_overlap</th></tr>
+                <tr><td>FAQ / Questions courtes</td><td>200 - 300</td><td>20 - 30</td></tr>
+                <tr><td>Articles de blog</td><td>500 - 800</td><td>50 - 100</td></tr>
+                <tr><td>Documentation technique</td><td>800 - 1200</td><td>100 - 200</td></tr>
+                <tr><td>Code source</td><td>1000 - 2000</td><td>100 - 200</td></tr>
+                <tr><td>Livres / longs textes</td><td>1000 - 1500</td><td>150 - 200</td></tr>
+            </table>
+        </div>
+
+        <div class="concept-box">
+            <h3>Pipeline complet en 10 lignes</h3>
+            <div class="code-block"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS
+<span class="keyword">from</span> langchain_community.embeddings <span class="keyword">import</span> HuggingFaceEmbeddings
+
+<span class="comment"># 1. Load</span>
+docs = <span class="function">TextLoader</span>(<span class="string">"mon_fichier.txt"</span>, encoding=<span class="string">"utf-8"</span>).<span class="function">load</span>()
+<span class="comment"># 2. Split</span>
+chunks = <span class="function">RecursiveCharacterTextSplitter</span>(chunk_size=<span class="number">500</span>, chunk_overlap=<span class="number">50</span>).<span class="function">split_documents</span>(docs)
+<span class="comment"># 3-4. Embed + Store</span>
+vectorstore = FAISS.<span class="function">from_documents</span>(chunks, <span class="function">HuggingFaceEmbeddings</span>())
+<span class="comment"># 5. Search</span>
+resultats = vectorstore.<span class="function">similarity_search</span>(<span class="string">"ma question"</span>, k=<span class="number">3</span>)</div>
+        </div>
+
+        <div class="prof-note">
+            Ce TD vous a donne les bases pour indexer et rechercher des documents avec LangChain. Dans le TD suivant sur les Agents, vous verrez comment combiner ces VectorStores avec des outils et un LLM pour creer des systemes conversationnels autonomes.
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="#">&larr; TD Memory</a>
+            <a href="td_agents.html">TD suivant : Agents &rarr;</a>
+        </div>
+
+    </div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

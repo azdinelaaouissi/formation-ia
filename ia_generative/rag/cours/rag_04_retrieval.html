@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategies de Retrieval - Retrouver l'Information Pertinente</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Strategies de Retrieval - Retrouver l'Information Pertinente</h1>
+    <p class="subtitle">Cours 4/4 -- Les techniques avancees de recherche : le coeur de l'optimisation RAG</p>
+
+    <div class="concept-box">
+        <p>Ce cours est <strong>le plus important</strong> de la serie RAG. La qualite du retrieval est le facteur numero 1 de la performance d'un systeme RAG. Un LLM, meme le meilleur, ne peut pas generer une bonne reponse si les chunks fournis ne sont pas pertinents. Toutes les strategies presentees ici visent a ameliorer la qualite, la diversite et la pertinence des documents recuperes.</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>1. Naive Retrieval - La ligne de base</h2>
+
+    <div class="definition">
+        Le <strong>Naive Retrieval</strong> (retrieval naif) est l'approche la plus simple : on transforme la question en embedding, on cherche les k vecteurs les plus proches dans le vector store par similarite cosinus, et on retourne les chunks correspondants. C'est la strategie par defaut de tout systeme RAG.
+    </div>
+
+    <div class="code-block"><span class="comment"># Naive Retrieval : la base de reference</span>
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+vectorstore = Chroma(
+    persist_directory=<span class="string">"./chroma_db"</span>,
+    embedding_function=embeddings
+)
+
+<span class="comment"># Retrieval naif : similarity search avec k=4</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"similarity"</span>,
+    search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>}
+)
+
+results = retriever.<span class="function">invoke</span>(<span class="string">"Quels sont les delais de livraison ?"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results):
+    <span class="function">print</span>(<span class="string">f"\n--- Resultat {i+1} ---"</span>)
+    <span class="function">print</span>(<span class="string">f"Source: {doc.metadata.get('source', 'N/A')}"</span>)
+    <span class="function">print</span>(doc.page_content[:<span class="number">120</span>])</div>
+
+    <div class="output-block">--- Resultat 1 ---
+Source: catalogue_2024.pdf
+Les delais de livraison standard sont de 3 a 5 jours ouvrables pour la France metropolitaine...
+
+--- Resultat 2 ---
+Source: catalogue_2024.pdf
+La livraison express est disponible sous 24h pour les commandes passees avant 14h...
+
+--- Resultat 3 ---
+Source: catalogue_2024.pdf
+Les delais de livraison pour la France metropolitaine varient selon le mode choisi...
+
+--- Resultat 4 ---
+Source: faq_livraison.pdf
+Nos partenaires transporteurs assurent la livraison dans les meilleurs delais...</div>
+
+    <h3>1.1 Les problemes du Naive Retrieval</h3>
+
+    <div class="concept-box">
+        <h3 style="color:#ff4444;">Pourquoi le Naive Retrieval ne suffit pas ?</h3>
+        <ul>
+            <li><strong>Redondance</strong> : Les resultats 1 et 3 ci-dessus parlent du meme sujet (delais standard). On gaspille 2 slots sur la meme information au lieu d'avoir des infos complementaires.</li>
+            <li><strong>Mismatch question-document</strong> : L'utilisateur formule sa question differemment des documents. "Comment renvoyer un article ?" peut ne pas matcher "Politique de retour" car les embeddings ne capturent pas parfaitement la relation.</li>
+            <li><strong>Pas de filtrage intelligent</strong> : La question "articles Python publies apres 2024" ne peut pas etre traitee car il n'y a pas d'extraction de filtres structures.</li>
+            <li><strong>Precision limitee</strong> : Les chunks retournes contiennent souvent du contenu partiellement pertinent avec du bruit.</li>
+        </ul>
+    </div>
+
+    <div class="prof-note">
+        Le Naive Retrieval est votre <strong>baseline</strong> -- le point de reference. Chaque technique avancee que nous verrons dans ce cours doit etre evaluee par rapport a cette baseline. Si une technique avancee ne fait pas mieux que le Naive Retrieval sur vos donnees, elle n'est pas utile pour votre cas. Mesurez TOUJOURS.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>2. MMR (Maximum Marginal Relevance) - Diversite</h2>
+
+    <div class="definition">
+        Le <strong>MMR (Maximum Marginal Relevance)</strong> est une strategie de retrieval qui equilibre la <strong>pertinence</strong> par rapport a la question et la <strong>diversite</strong> entre les resultats. Au lieu de retourner les k resultats les plus similaires a la question (qui peuvent etre redondants entre eux), MMR selectionne iterativement des resultats qui sont a la fois pertinents ET differents des resultats deja selectionnes.
+    </div>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="max-width:870px;">
+            <rect width="900" height="320" fill="#0f0f23" rx="12"/>
+            <text x="450" y="28" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">Similarity Search vs MMR</text>
+
+            <!-- Left: Similarity only -->
+            <rect x="30" y="45" width="400" height="250" rx="10" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="230" y="72" fill="#ff4444" font-size="13" text-anchor="middle" font-weight="bold">Similarity Search (k=4)</text>
+            <text x="230" y="90" fill="#aaa" font-size="9" text-anchor="middle">Resultats redondants</text>
+
+            <rect x="50" y="105" width="360" height="30" rx="5" fill="#16213e" stroke="#ff4444" stroke-width="1"/>
+            <text x="60" y="125" fill="#ff8c42" font-size="9">1. sim=0.95</text>
+            <text x="140" y="125" fill="#e0e0e0" font-size="9">Delais livraison standard : 3-5 jours</text>
+
+            <rect x="50" y="142" width="360" height="30" rx="5" fill="#16213e" stroke="#ff4444" stroke-width="1"/>
+            <text x="60" y="162" fill="#ff8c42" font-size="9">2. sim=0.93</text>
+            <text x="140" y="162" fill="#e0e0e0" font-size="9">Livraison standard en 3 a 5 jours</text>
+
+            <rect x="50" y="179" width="360" height="30" rx="5" fill="#16213e" stroke="#ff4444" stroke-width="1"/>
+            <text x="60" y="199" fill="#ff8c42" font-size="9">3. sim=0.91</text>
+            <text x="140" y="199" fill="#e0e0e0" font-size="9">Delais de livraison metropolitaine</text>
+
+            <rect x="50" y="216" width="360" height="30" rx="5" fill="#16213e" stroke="#ff4444" stroke-width="1"/>
+            <text x="60" y="236" fill="#ff8c42" font-size="9">4. sim=0.89</text>
+            <text x="140" y="236" fill="#e0e0e0" font-size="9">Temps livraison France : 3-5j</text>
+
+            <text x="230" y="275" fill="#ff4444" font-size="10" text-anchor="middle">4 chunks quasi-identiques</text>
+            <text x="230" y="290" fill="#ff4444" font-size="10" text-anchor="middle">Contexte pauvre et redondant</text>
+
+            <!-- Right: MMR -->
+            <rect x="470" y="45" width="400" height="250" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="670" y="72" fill="#00ff88" font-size="13" text-anchor="middle" font-weight="bold">MMR (k=4, fetch_k=20)</text>
+            <text x="670" y="90" fill="#aaa" font-size="9" text-anchor="middle">Resultats diversifies ET pertinents</text>
+
+            <rect x="490" y="105" width="360" height="30" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="1"/>
+            <text x="500" y="125" fill="#00ff88" font-size="9">1. sim=0.95</text>
+            <text x="580" y="125" fill="#e0e0e0" font-size="9">Delais livraison standard : 3-5 jours</text>
+
+            <rect x="490" y="142" width="360" height="30" rx="5" fill="#16213e" stroke="#569cd6" stroke-width="1"/>
+            <text x="500" y="162" fill="#569cd6" font-size="9">2. sim=0.85</text>
+            <text x="580" y="162" fill="#e0e0e0" font-size="9">Livraison express : 24h avant 14h</text>
+
+            <rect x="490" y="179" width="360" height="30" rx="5" fill="#16213e" stroke="#569cd6" stroke-width="1"/>
+            <text x="500" y="199" fill="#569cd6" font-size="9">3. sim=0.78</text>
+            <text x="580" y="199" fill="#e0e0e0" font-size="9">Suivi de colis et notification SMS</text>
+
+            <rect x="490" y="216" width="360" height="30" rx="5" fill="#16213e" stroke="#569cd6" stroke-width="1"/>
+            <text x="500" y="236" fill="#569cd6" font-size="9">4. sim=0.74</text>
+            <text x="580" y="236" fill="#e0e0e0" font-size="9">Frais de port et livraison gratuite</text>
+
+            <text x="670" y="275" fill="#00ff88" font-size="10" text-anchor="middle">4 chunks complementaires</text>
+            <text x="670" y="290" fill="#00ff88" font-size="10" text-anchor="middle">Contexte riche et diversifie</text>
+        </svg>
+    </div>
+
+    <h3>2.1 La formule MMR</h3>
+
+    <div class="concept-box blue">
+        <p>MMR selectionne le prochain document Di qui maximise :</p>
+        <p><strong>MMR(Di) = lambda * Sim(Di, Q) - (1 - lambda) * max(Sim(Di, Dj))</strong></p>
+        <ul>
+            <li><strong>Sim(Di, Q)</strong> : similarite entre le document candidat et la question (pertinence)</li>
+            <li><strong>max(Sim(Di, Dj))</strong> : similarite maximale avec les documents deja selectionnes (redondance)</li>
+            <li><strong>lambda (lambda_mult)</strong> : controle l'equilibre entre pertinence et diversite</li>
+        </ul>
+        <p><strong>lambda_mult = 1.0</strong> : pure similarite (comme le naive retrieval)</p>
+        <p><strong>lambda_mult = 0.0</strong> : pure diversite (maximise les differences)</p>
+        <p><strong>lambda_mult = 0.5 a 0.7</strong> : equilibre recommande pour le RAG</p>
+    </div>
+
+    <div class="code-block"><span class="comment"># MMR avec LangChain</span>
+<span class="comment"># fetch_k = combien de candidats initiaux a considerer</span>
+<span class="comment"># k = combien de resultats finaux a retourner</span>
+<span class="comment"># lambda_mult = equilibre pertinence/diversite</span>
+
+retriever_mmr = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={
+        <span class="string">"k"</span>: <span class="number">4</span>,            <span class="comment"># 4 resultats finaux</span>
+        <span class="string">"fetch_k"</span>: <span class="number">20</span>,      <span class="comment"># Considerer les 20 plus proches</span>
+        <span class="string">"lambda_mult"</span>: <span class="number">0.7</span>  <span class="comment"># 70% pertinence, 30% diversite</span>
+    }
+)
+
+<span class="comment"># Comparaison : Similarity vs MMR</span>
+question = <span class="string">"Quels sont les delais de livraison ?"</span>
+
+<span class="function">print</span>(<span class="string">"=== Similarity Search ==="</span>)
+sim_results = vectorstore.<span class="function">similarity_search</span>(question, k=<span class="number">4</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(sim_results):
+    <span class="function">print</span>(<span class="string">f"  {i+1}. {doc.page_content[:80]}..."</span>)
+
+<span class="function">print</span>(<span class="string">"\n=== MMR ==="</span>)
+mmr_results = retriever_mmr.<span class="function">invoke</span>(question)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(mmr_results):
+    <span class="function">print</span>(<span class="string">f"  {i+1}. {doc.page_content[:80]}..."</span>)</div>
+
+    <div class="output-block">=== Similarity Search ===
+  1. Les delais de livraison standard sont de 3 a 5 jours ouvrables pour la Fran...
+  2. Les delais de livraison pour la France metropolitaine varient selon le mode c...
+  3. Livraison standard : 3 a 5 jours ouvrables. Les commandes passees avant 14h ...
+  4. Nos partenaires transporteurs assurent la livraison dans les meilleurs delais...
+
+=== MMR ===
+  1. Les delais de livraison standard sont de 3 a 5 jours ouvrables pour la Fran...
+  2. La livraison express est disponible sous 24h pour les commandes passees avan...
+  3. Les frais de port sont offerts a partir de 50 euros d'achat. En dessous, les...
+  4. Le suivi de votre colis est disponible via le lien envoye par email. Vous re...</div>
+
+    <div class="effect">
+        Avec le Naive Retrieval, 3 des 4 resultats parlaient des delais standard (redondance). Avec MMR, chaque resultat apporte une information differente : delais standard, express, frais de port, suivi. Le contexte fourni au LLM est beaucoup plus riche et complet.
+    </div>
+
+    <div class="prof-note">
+        MMR est la premiere optimisation a ajouter a votre systeme RAG. C'est simple, sans cout supplementaire, et l'amelioration est immediate. Mes recommandations : fetch_k=20 (ou 4x votre k), lambda_mult=0.7 pour commencer, puis ajustez selon vos resultats.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>3. Multi-Query Retrieval - Reformulation de la question</h2>
+
+    <div class="definition">
+        Le <strong>Multi-Query Retrieval</strong> utilise un LLM pour generer plusieurs reformulations de la question originale. Chaque reformulation est ensuite utilisee pour une recherche independante, et les resultats sont fusionnes (union) et dedupliques. Cela augmente considerablement le recall en capturant differentes "facettes" de la question.
+    </div>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 360" xmlns="http://www.w3.org/2000/svg" style="max-width:870px;">
+            <rect width="900" height="360" fill="#0f0f23" rx="12"/>
+            <text x="450" y="28" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">Multi-Query Retrieval : Expansion de requete</text>
+
+            <!-- Original question -->
+            <rect x="30" y="50" width="200" height="55" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="130" y="73" fill="#ff6b35" font-size="10" text-anchor="middle" font-weight="bold">Question originale</text>
+            <text x="130" y="92" fill="#e0e0e0" font-size="9" text-anchor="middle">"Comment fonctionne</text>
+            <text x="130" y="102" fill="#e0e0e0" font-size="8" text-anchor="middle">le remboursement ?"</text>
+
+            <!-- Arrow to LLM -->
+            <line x1="230" y1="77" x2="275" y2="77" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr4)"/>
+
+            <!-- LLM -->
+            <rect x="275" y="50" width="130" height="55" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="340" y="73" fill="#569cd6" font-size="10" text-anchor="middle" font-weight="bold">LLM</text>
+            <text x="340" y="90" fill="#aaa" font-size="8" text-anchor="middle">Genere 3 variantes</text>
+
+            <!-- Generated queries -->
+            <line x1="405" y1="60" x2="450" y2="45" stroke="#569cd6" stroke-width="1.5"/>
+            <line x1="405" y1="77" x2="450" y2="77" stroke="#569cd6" stroke-width="1.5"/>
+            <line x1="405" y1="95" x2="450" y2="110" stroke="#569cd6" stroke-width="1.5"/>
+
+            <rect x="450" y="30" width="230" height="28" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="1"/>
+            <text x="565" y="49" fill="#e0e0e0" font-size="8" text-anchor="middle">Q1: "Quelle est la politique de remboursement ?"</text>
+
+            <rect x="450" y="63" width="230" height="28" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="1"/>
+            <text x="565" y="82" fill="#e0e0e0" font-size="8" text-anchor="middle">Q2: "Procedure pour se faire rembourser"</text>
+
+            <rect x="450" y="96" width="230" height="28" rx="5" fill="#16213e" stroke="#00ff88" stroke-width="1"/>
+            <text x="565" y="115" fill="#e0e0e0" font-size="8" text-anchor="middle">Q3: "Delai et conditions de retour produit"</text>
+
+            <!-- Arrows to Vector Store -->
+            <line x1="680" y1="44" x2="720" y2="170" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="680" y1="77" x2="720" y2="190" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="680" y1="110" x2="720" y2="210" stroke="#00ff88" stroke-width="1.5"/>
+
+            <!-- Vector Store -->
+            <rect x="720" y="155" width="150" height="70" rx="10" fill="#16213e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="795" y="180" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">Vector Store</text>
+            <text x="795" y="197" fill="#aaa" font-size="9" text-anchor="middle">3 recherches</text>
+            <text x="795" y="212" fill="#aaa" font-size="9" text-anchor="middle">independantes</text>
+
+            <!-- Results merge -->
+            <line x1="795" y1="225" x2="795" y2="260" stroke="#00ff88" stroke-width="2" marker-end="url(#arrG4)"/>
+
+            <!-- Merged results -->
+            <rect x="630" y="260" width="250" height="75" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="755" y="283" fill="#ff6b35" font-size="10" text-anchor="middle" font-weight="bold">Fusion + Deduplication</text>
+            <text x="755" y="300" fill="#e0e0e0" font-size="9" text-anchor="middle">Union des resultats des 3 requetes</text>
+            <text x="755" y="315" fill="#e0e0e0" font-size="9" text-anchor="middle">Doublons supprimes -> top-k final</text>
+            <text x="755" y="330" fill="#00ff88" font-size="9" text-anchor="middle">Recall significativement ameliore</text>
+
+            <defs>
+                <marker id="arr4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/>
+                </marker>
+                <marker id="arrG4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># Multi-Query Retrieval avec LangChain</span>
+<span class="keyword">from</span> langchain.retrievers.multi_query <span class="keyword">import</span> MultiQueryRetriever
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.3</span>)
+
+<span class="comment"># Creer le multi-query retriever</span>
+multi_retriever = MultiQueryRetriever.<span class="function">from_llm</span>(
+    retriever=vectorstore.<span class="function">as_retriever</span>(search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>}),
+    llm=llm
+)
+
+<span class="comment"># Activer le logging pour voir les requetes generees</span>
+<span class="keyword">import</span> logging
+logging.<span class="function">getLogger</span>(<span class="string">"langchain.retrievers.multi_query"</span>).<span class="function">setLevel</span>(logging.INFO)
+
+<span class="comment"># Recherche</span>
+question = <span class="string">"Comment fonctionne le remboursement ?"</span>
+results = multi_retriever.<span class="function">invoke</span>(question)
+<span class="function">print</span>(<span class="string">f"\nNombre de chunks uniques recuperes : {len(results)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results):
+    <span class="function">print</span>(<span class="string">f"  {i+1}. [{doc.metadata.get('source', 'N/A')}] {doc.page_content[:80]}..."</span>)</div>
+
+    <div class="output-block">INFO:langchain.retrievers.multi_query:Generated queries:
+  1. Quelle est la politique de remboursement pour les produits achetes ?
+  2. Quels sont les delais et conditions pour obtenir un remboursement ?
+  3. Comment retourner un produit et recevoir un remboursement ?
+
+Nombre de chunks uniques recuperes : 8
+  1. [politique_retour.pdf] Les remboursements sont effectues sous 5 a 10 jours ouvrables apres recep...
+  2. [politique_retour.pdf] Pour initier un retour, connectez-vous a votre compte et accedez a la sec...
+  3. [faq.pdf] Q: Combien de temps pour etre rembourse ? R: Le remboursement est traite en...
+  4. [politique_retour.pdf] Les articles personnalises et les produits d'hygiene ne sont pas eligible...
+  5. [cgv.pdf] Article 8 - Droit de retractation : Le client dispose d'un delai de 14 jo...
+  6. [politique_retour.pdf] Le remboursement est effectue sur le meme moyen de paiement utilise lors...
+  7. [faq.pdf] Q: Puis-je echanger un article ? R: Oui, l'echange est possible dans les...
+  8. [cgv.pdf] Article 9 - Modalites de remboursement : En cas de retour, le montant de...</div>
+
+    <div class="effect">
+        Au lieu de 4 chunks avec le naive retrieval, on obtient 8 chunks uniques couvrant : la politique generale, la procedure, les delais, les exceptions, le droit de retractation, le moyen de paiement, l'echange, et les modalites legales. Le contexte est beaucoup plus complet et diversifie.
+    </div>
+
+    <div class="warning">
+        Le Multi-Query ajoute un appel LLM supplementaire (pour generer les variantes de la question). Cela augmente la latence (typiquement +500ms a 1s) et le cout. Pour les applications temps reel, evaluez si le gain en recall justifie la latence supplementaire.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>4. HyDE (Hypothetical Document Embeddings)</h2>
+
+    <div class="definition">
+        <strong>HyDE (Hypothetical Document Embeddings)</strong> est une technique ingenieuse : au lieu de chercher des documents similaires a la <em>question</em>, on demande au LLM de generer une <em>reponse hypothetique</em>, puis on cherche des documents similaires a cette <em>reponse</em>. L'intuition : une reponse hypothetique ressemble plus aux documents reels qu'une question.
+    </div>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" style="max-width:870px;">
+            <rect width="900" height="300" fill="#0f0f23" rx="12"/>
+            <text x="450" y="28" fill="#ff6b35" font-size="15" text-anchor="middle" font-weight="bold">HyDE : Le "truc" des embeddings hypothetiques</text>
+
+            <!-- Question -->
+            <rect x="30" y="55" width="170" height="55" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="115" y="78" fill="#ff6b35" font-size="10" text-anchor="middle" font-weight="bold">Question</text>
+            <text x="115" y="97" fill="#e0e0e0" font-size="9" text-anchor="middle">"Quelle est la politique</text>
+            <text x="115" y="107" fill="#e0e0e0" font-size="8" text-anchor="middle">de teletravail ?"</text>
+
+            <line x1="200" y1="82" x2="240" y2="82" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr4)"/>
+
+            <!-- LLM generates hypothetical answer -->
+            <rect x="240" y="45" width="200" height="75" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="340" y="68" fill="#569cd6" font-size="10" text-anchor="middle" font-weight="bold">LLM genere une</text>
+            <text x="340" y="83" fill="#569cd6" font-size="10" text-anchor="middle" font-weight="bold">reponse hypothetique</text>
+            <text x="340" y="100" fill="#aaa" font-size="8" text-anchor="middle">(peut etre imprecise, c'est ok)</text>
+
+            <line x1="440" y1="82" x2="475" y2="82" stroke="#569cd6" stroke-width="2" marker-end="url(#arrB4)"/>
+
+            <!-- Hypothetical doc -->
+            <rect x="475" y="45" width="200" height="75" rx="8" fill="#16213e" stroke="#00ff88" stroke-width="2"/>
+            <text x="575" y="65" fill="#00ff88" font-size="9" text-anchor="middle" font-weight="bold">Document Hypothetique</text>
+            <text x="575" y="82" fill="#e0e0e0" font-size="8" text-anchor="middle">"La politique de teletravail</text>
+            <text x="575" y="94" fill="#e0e0e0" font-size="8" text-anchor="middle">permet aux employes de travailler</text>
+            <text x="575" y="106" fill="#e0e0e0" font-size="8" text-anchor="middle">depuis chez eux 3 jours/semaine..."</text>
+
+            <line x1="675" y1="82" x2="710" y2="82" stroke="#00ff88" stroke-width="2" marker-end="url(#arrG4)"/>
+
+            <!-- Embed hypothetical -->
+            <rect x="710" y="55" width="100" height="55" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="760" y="78" fill="#569cd6" font-size="9" text-anchor="middle" font-weight="bold">Embed</text>
+            <text x="760" y="95" fill="#aaa" font-size="8" text-anchor="middle">ce document</text>
+
+            <!-- Search -->
+            <line x1="760" y1="110" x2="760" y2="150" stroke="#569cd6" stroke-width="2" marker-end="url(#arrB4)"/>
+
+            <!-- Vector Store -->
+            <rect x="680" y="150" width="160" height="60" rx="10" fill="#16213e" stroke="#00ff88" stroke-width="2.5"/>
+            <text x="760" y="175" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">Vector Store</text>
+            <text x="760" y="195" fill="#aaa" font-size="9" text-anchor="middle">Cherche docs SIMILAIRES</text>
+
+            <line x1="760" y1="210" x2="760" y2="245" stroke="#00ff88" stroke-width="2" marker-end="url(#arrG4)"/>
+
+            <!-- Results -->
+            <rect x="630" y="245" width="260" height="40" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="760" y="270" fill="#00ff88" font-size="10" text-anchor="middle" font-weight="bold">Vrais documents pertinents recuperes</text>
+
+            <!-- Insight -->
+            <rect x="30" y="150" width="600" height="110" rx="10" fill="rgba(86,156,214,0.06)" stroke="#569cd6" stroke-width="1"/>
+            <text x="330" y="175" fill="#569cd6" font-size="11" text-anchor="middle" font-weight="bold">Pourquoi ca marche ?</text>
+            <text x="330" y="198" fill="#e0e0e0" font-size="9" text-anchor="middle">Les DOCUMENTS dans votre base sont des REPONSES, pas des questions.</text>
+            <text x="330" y="216" fill="#e0e0e0" font-size="9" text-anchor="middle">Un document hypothetique (reponse) est plus SIMILAIRE aux vrais documents</text>
+            <text x="330" y="234" fill="#e0e0e0" font-size="9" text-anchor="middle">qu'une question ne l'est. C'est une recherche document-a-document au lieu de question-a-document.</text>
+
+            <defs>
+                <marker id="arrB4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="code-block"><span class="comment"># HyDE avec LangChain</span>
+<span class="keyword">from</span> langchain.chains <span class="keyword">import</span> HypotheticalDocumentEmbedder, LLMChain
+<span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> PromptTemplate
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI, OpenAIEmbeddings
+
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0.5</span>)
+base_embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+
+<span class="comment"># Prompt pour generer le document hypothetique</span>
+prompt = PromptTemplate(
+    input_variables=[<span class="string">"question"</span>],
+    template=<span class="string">"""Ecris un court paragraphe qui pourrait etre la reponse
+a cette question dans un document d'entreprise :
+
+Question : {question}
+
+Reponse hypothetique (1 paragraphe) :"""</span>
+)
+
+<span class="comment"># Creer l'embedder HyDE</span>
+hyde_embeddings = HypotheticalDocumentEmbedder.<span class="function">from_llm</span>(
+    llm=llm,
+    base_embeddings=base_embeddings,
+    prompt_key=<span class="string">"question"</span>
+)
+
+<span class="comment"># Utiliser HyDE comme embeddings dans le retriever</span>
+retriever_hyde = vectorstore.<span class="function">as_retriever</span>(
+    search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>}
+)
+
+<span class="comment"># La recherche utilise maintenant l'embedding du doc hypothetique</span>
+<span class="comment"># au lieu de l'embedding de la question directement</span>
+question = <span class="string">"Quelle est la politique de teletravail ?"</span>
+
+<span class="comment"># Generer le document hypothetique</span>
+hypothetical_vec = hyde_embeddings.<span class="function">embed_query</span>(question)
+<span class="function">print</span>(<span class="string">f"Vecteur HyDE genere : {len(hypothetical_vec)} dimensions"</span>)
+
+<span class="comment"># Chercher avec ce vecteur</span>
+results = vectorstore.<span class="function">similarity_search_by_vector</span>(hypothetical_vec, k=<span class="number">4</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results):
+    <span class="function">print</span>(<span class="string">f"\n{i+1}. {doc.page_content[:100]}..."</span>)</div>
+
+    <div class="output-block">Vecteur HyDE genere : 1536 dimensions
+
+1. La politique de teletravail de l'entreprise permet aux collaborateurs de travailler a distance jus...
+2. Les conditions du teletravail : l'employe doit avoir au moins 6 mois d'anciennete et disposer d'u...
+3. Equipement teletravail : l'entreprise fournit un ordinateur portable, un ecran supplementaire et ...
+4. Les jours de teletravail doivent etre declares a l'avance via le portail RH et valides par le man...</div>
+
+    <div class="prof-note">
+        HyDE est particulierement efficace quand il y a un "gap semantique" entre la facon dont les utilisateurs posent des questions et la facon dont l'information est ecrite dans les documents. Par exemple, une question courte et informelle vs des documents formels et techniques. Cependant, HyDE ajoute un appel LLM (latence + cout). A utiliser quand le naive retrieval montre des problemes de recall.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>5. Self-Query Retrieval - Extraction de filtres</h2>
+
+    <div class="definition">
+        Le <strong>Self-Query Retrieval</strong> utilise un LLM pour analyser la question et extraire automatiquement des filtres structures (metadonnees) en plus de la requete semantique. Cela permet de traiter des questions comme "les articles sur Python publies apres 2023" en separant la partie semantique ("articles sur Python") de la partie filtre ("publies apres 2023").
+    </div>
+
+    <div class="code-block"><span class="comment"># Self-Query Retrieval avec LangChain</span>
+<span class="keyword">from</span> langchain.retrievers.self_query.base <span class="keyword">import</span> SelfQueryRetriever
+<span class="keyword">from</span> langchain.chains.query_constructor.base <span class="keyword">import</span> AttributeInfo
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+<span class="comment"># Decrire les metadonnees disponibles dans votre vector store</span>
+metadata_field_info = [
+    AttributeInfo(
+        name=<span class="string">"source"</span>,
+        description=<span class="string">"Le nom du fichier source du document"</span>,
+        type=<span class="string">"string"</span>
+    ),
+    AttributeInfo(
+        name=<span class="string">"category"</span>,
+        description=<span class="string">"La categorie du document : 'RH', 'technique', 'commercial', 'juridique'"</span>,
+        type=<span class="string">"string"</span>
+    ),
+    AttributeInfo(
+        name=<span class="string">"year"</span>,
+        description=<span class="string">"L'annee de publication du document"</span>,
+        type=<span class="string">"integer"</span>
+    ),
+    AttributeInfo(
+        name=<span class="string">"department"</span>,
+        description=<span class="string">"Le departement concerne : 'IT', 'RH', 'Finance', 'Marketing'"</span>,
+        type=<span class="string">"string"</span>
+    ),
+]
+
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Creer le Self-Query Retriever</span>
+self_query_retriever = SelfQueryRetriever.<span class="function">from_llm</span>(
+    llm=llm,
+    vectorstore=vectorstore,
+    document_contents=<span class="string">"Documentation interne de l'entreprise couvrant RH, technique, commercial et juridique"</span>,
+    metadata_field_info=metadata_field_info,
+    verbose=<span class="keyword">True</span>
+)
+
+<span class="comment"># Exemple 1 : Question avec filtre implicite sur la categorie</span>
+results = self_query_retriever.<span class="function">invoke</span>(
+    <span class="string">"Politique de conges dans le departement RH"</span>
+)
+<span class="function">print</span>(<span class="string">f"Resultats : {len(results)}"</span>)
+
+<span class="comment"># Exemple 2 : Question avec filtre sur l'annee</span>
+results = self_query_retriever.<span class="function">invoke</span>(
+    <span class="string">"Documents techniques publies apres 2024"</span>
+)
+<span class="function">print</span>(<span class="string">f"Resultats : {len(results)}"</span>)
+
+<span class="comment"># Exemple 3 : Question avec filtres multiples</span>
+results = self_query_retriever.<span class="function">invoke</span>(
+    <span class="string">"Procedures de securite IT mises a jour en 2025"</span>
+)
+<span class="function">print</span>(<span class="string">f"Resultats : {len(results)}"</span>)</div>
+
+    <div class="output-block">Query: "Politique de conges"  |  Filter: department = "RH"
+Resultats : 4
+
+Query: "Documents techniques"  |  Filter: category = "technique" AND year > 2024
+Resultats : 3
+
+Query: "Procedures de securite"  |  Filter: department = "IT" AND year = 2025
+Resultats : 2</div>
+
+    <div class="effect">
+        Le LLM a automatiquement extrait les filtres structures de chaque question en langage naturel. "Documents techniques publies apres 2024" a ete decompose en une requete semantique ("Documents techniques") + un filtre structure (category="technique" AND year>2024). Cela combine la puissance de la recherche semantique avec la precision du filtrage structure.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>6. Parent Document Retrieval</h2>
+
+    <div class="definition">
+        Le <strong>Parent Document Retrieval</strong> utilise le chunking hierarchique (cours 2) au moment du retrieval : on indexe des <strong>petits chunks</strong> (enfants) pour une recherche precise, mais on retourne les <strong>grands chunks</strong> (parents) au LLM pour un contexte riche. C'est le meilleur des deux mondes : precision de recherche + richesse de contexte.
+    </div>
+
+    <div class="code-block"><span class="comment"># Parent Document Retriever avec LangChain</span>
+<span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> ParentDocumentRetriever
+<span class="keyword">from</span> langchain.text_splitter <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain.storage <span class="keyword">import</span> InMemoryStore
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+<span class="comment"># Petits chunks pour la recherche (precise)</span>
+child_splitter = RecursiveCharacterTextSplitter(chunk_size=<span class="number">200</span>, chunk_overlap=<span class="number">20</span>)
+
+<span class="comment"># Grands chunks pour le contexte (riche)</span>
+parent_splitter = RecursiveCharacterTextSplitter(chunk_size=<span class="number">1000</span>, chunk_overlap=<span class="number">100</span>)
+
+<span class="comment"># Stores</span>
+vectorstore = Chroma(
+    collection_name=<span class="string">"child_chunks"</span>,
+    embedding_function=OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+)
+docstore = InMemoryStore()  <span class="comment"># Stocke les parents</span>
+
+<span class="comment"># Le retriever parent-enfant</span>
+retriever = ParentDocumentRetriever(
+    vectorstore=vectorstore,
+    docstore=docstore,
+    child_splitter=child_splitter,
+    parent_splitter=parent_splitter,
+)
+
+<span class="comment"># Indexer les documents</span>
+retriever.<span class="function">add_documents</span>(documents)
+
+<span class="comment"># Recherche : cherche dans les enfants, retourne les parents</span>
+results = retriever.<span class="function">invoke</span>(<span class="string">"Comment configurer le Wi-Fi ?"</span>)
+
+<span class="function">print</span>(<span class="string">f"Parents retournes : {len(results)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results):
+    <span class="function">print</span>(<span class="string">f"\n--- Parent {i+1} ({len(doc.page_content)} caracteres) ---"</span>)
+    <span class="function">print</span>(doc.page_content[:<span class="number">200</span>], <span class="string">"..."</span>)</div>
+
+    <div class="output-block">Parents retournes : 2
+
+--- Parent 1 (987 caracteres) ---
+Configuration du reseau Wi-Fi
+
+Pour connecter votre appareil au reseau Wi-Fi, accedez aux parametres
+systeme puis selectionnez "Reseau". Choisissez votre reseau parmi la
+liste des reseaux disponibles. Entrez votre mot ...
+
+--- Parent 2 (1024 caracteres) ---
+Depannage reseau
+
+Si la connexion Wi-Fi echoue, verifiez les points suivants :
+1. Le routeur est allume et fonctionne normalement
+2. Votre appareil est a portee du routeur (max 30 metres)
+3. Le mot de passe est correct ...</div>
+
+    <div class="prof-note">
+        Le Parent Document Retrieval est l'une des techniques les plus efficaces du Advanced RAG. La recherche se fait sur des petits chunks de 200 caracteres (tres precis), mais le LLM recoit des blocs de 1000 caracteres (contexte riche). En pratique, cette technique ameliore de 15 a 25% la qualite des reponses sur les documents longs.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>7. Contextual Compression</h2>
+
+    <div class="definition">
+        La <strong>Contextual Compression</strong> post-traite les chunks recuperes pour ne garder que les parties reellement pertinentes par rapport a la question. Au lieu de donner tout le chunk (500 caracteres) au LLM, on extrait uniquement les phrases pertinentes (100-200 caracteres), ce qui reduit le bruit et le cout LLM.
+    </div>
+
+    <div class="code-block"><span class="comment"># Contextual Compression avec LangChain</span>
+<span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> ContextualCompressionRetriever
+<span class="keyword">from</span> langchain.retrievers.document_compressors <span class="keyword">import</span> LLMChainExtractor
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = ChatOpenAI(model=<span class="string">"gpt-4o-mini"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Le compresseur : extrait les parties pertinentes</span>
+compressor = LLMChainExtractor.<span class="function">from_llm</span>(llm)
+
+<span class="comment"># Le retriever de base (naive ou MMR)</span>
+base_retriever = vectorstore.<span class="function">as_retriever</span>(search_kwargs={<span class="string">"k"</span>: <span class="number">6</span>})
+
+<span class="comment"># Combiner : retrieval + compression</span>
+compression_retriever = ContextualCompressionRetriever(
+    base_compressor=compressor,
+    base_retriever=base_retriever
+)
+
+<span class="comment"># Recherche avec compression</span>
+question = <span class="string">"Quel est le delai de livraison express ?"</span>
+compressed_results = compression_retriever.<span class="function">invoke</span>(question)
+
+<span class="function">print</span>(<span class="string">f"Chunks apres compression : {len(compressed_results)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(compressed_results):
+    <span class="function">print</span>(<span class="string">f"\n{i+1}. ({len(doc.page_content)} car.) {doc.page_content}"</span>)</div>
+
+    <div class="output-block">Chunks apres compression : 3
+
+1. (89 car.) La livraison express est disponible sous 24h pour les commandes passees avant 14h.
+
+2. (76 car.) Les frais de livraison express sont de 9.99 euros, gratuits au-dessus de 100 euros.
+
+3. (112 car.) La livraison express n'est pas disponible pour les DOM-TOM. Les delais pour ces zones sont de 5 a 10 jours ouvrables.</div>
+
+    <div class="effect">
+        Sur les 6 chunks recuperes initialement, 3 ont ete juges non pertinents et supprimes. Les 3 restants ont ete comprimes pour ne garder que les phrases repondant directement a la question. Le contexte est passe de ~3000 caracteres a ~277 caracteres -- beaucoup plus precis et moins cher a traiter par le LLM generateur.
+    </div>
+
+    <div class="warning">
+        La compression contextuelle ajoute un appel LLM pour CHAQUE chunk recupere. Pour k=6, cela represente 6 appels LLM supplementaires, ce qui augmente significativement la latence et le cout. A utiliser uniquement quand la precision est critique et que le budget le permet. Alternative plus legere : les filtres par score minimum (score_threshold).
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>8. Ensemble/Hybrid Retrieval - BM25 + Vecteurs</h2>
+
+    <div class="definition">
+        Le <strong>Hybrid Retrieval</strong> combine la recherche lexicale (BM25, basee sur les mots-cles) et la recherche semantique (vecteurs, basee sur le sens). Cette combinaison est souvent superieure a chaque methode seule car elles sont complementaires : BM25 excelle pour les termes exacts (noms, acronymes, numeros), tandis que les vecteurs excellent pour comprendre le sens global.
+    </div>
+
+    <div class="concept-box blue">
+        <h3>Pourquoi l'hybrid search bat les deux approches seules ?</h3>
+        <table>
+            <tr>
+                <th>Type de requete</th>
+                <th>BM25 (lexical)</th>
+                <th>Vecteurs (semantique)</th>
+                <th>Hybrid (les deux)</th>
+            </tr>
+            <tr>
+                <td>"erreur 404 nginx"</td>
+                <td>Excellent (termes exacts)</td>
+                <td>Moyen (confondrait avec d'autres erreurs)</td>
+                <td>Excellent</td>
+            </tr>
+            <tr>
+                <td>"le site ne marche pas"</td>
+                <td>Mauvais (pas de mots-cles techniques)</td>
+                <td>Bon (comprend le sens)</td>
+                <td>Bon</td>
+            </tr>
+            <tr>
+                <td>"article 42 du reglement"</td>
+                <td>Excellent (numero exact)</td>
+                <td>Moyen (ignore l'importance du numero)</td>
+                <td>Excellent</td>
+            </tr>
+            <tr>
+                <td>"comment reduire les couts"</td>
+                <td>Moyen (cherche "couts" litteralement)</td>
+                <td>Excellent (comprend economiser, optimiser)</td>
+                <td>Excellent</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="code-block"><span class="comment"># Hybrid Retrieval avec EnsembleRetriever (BM25 + Vecteurs)</span>
+<span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> EnsembleRetriever
+<span class="keyword">from</span> langchain_community.retrievers <span class="keyword">import</span> BM25Retriever
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+
+<span class="comment"># Retriever 1 : BM25 (recherche lexicale)</span>
+bm25_retriever = BM25Retriever.<span class="function">from_documents</span>(chunks)
+bm25_retriever.k = <span class="number">4</span>
+
+<span class="comment"># Retriever 2 : Vector store (recherche semantique)</span>
+embeddings = OpenAIEmbeddings(model=<span class="string">"text-embedding-3-small"</span>)
+vectorstore = Chroma.<span class="function">from_documents</span>(chunks, embeddings)
+vector_retriever = vectorstore.<span class="function">as_retriever</span>(search_kwargs={<span class="string">"k"</span>: <span class="number">4</span>})
+
+<span class="comment"># Combiner avec EnsembleRetriever (Reciprocal Rank Fusion)</span>
+ensemble_retriever = EnsembleRetriever(
+    retrievers=[bm25_retriever, vector_retriever],
+    weights=[<span class="number">0.4</span>, <span class="number">0.6</span>]  <span class="comment"># 40% BM25, 60% semantique</span>
+)
+
+<span class="comment"># Test 1 : Question avec termes techniques (BM25 aide)</span>
+results = ensemble_retriever.<span class="function">invoke</span>(<span class="string">"erreur 503 serveur nginx"</span>)
+<span class="function">print</span>(<span class="string">f"Hybrid - termes techniques : {len(results)} resultats"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results[:<span class="number">3</span>]):
+    <span class="function">print</span>(<span class="string">f"  {i+1}. {doc.page_content[:80]}..."</span>)
+
+<span class="comment"># Test 2 : Question en langage naturel (vecteurs aident)</span>
+results = ensemble_retriever.<span class="function">invoke</span>(<span class="string">"le site web ne repond plus depuis ce matin"</span>)
+<span class="function">print</span>(<span class="string">f"\nHybrid - langage naturel : {len(results)} resultats"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results[:<span class="number">3</span>]):
+    <span class="function">print</span>(<span class="string">f"  {i+1}. {doc.page_content[:80]}..."</span>)</div>
+
+    <div class="output-block">Hybrid - termes techniques : 6 resultats
+  1. Erreur 503 : Le serveur est temporairement indisponible. Verifier la config nginx...
+  2. Codes d'erreur HTTP : 400 Bad Request, 403 Forbidden, 404 Not Found, 503 Servic...
+  3. Diagnostic serveur : Pour les erreurs 5xx, verifier les logs nginx dans /var/log...
+
+Hybrid - langage naturel : 5 resultats
+  1. Procedure d'incident : Si un service est indisponible, verifier en priorite le s...
+  2. Monitoring : Le systeme de surveillance alerte automatiquement l'equipe en cas de...
+  3. Erreur 503 : Le serveur est temporairement indisponible. Verifier la config nginx...</div>
+
+    <div class="effect">
+        L'hybrid search a combine les forces des deux approches. Pour "erreur 503 nginx" (termes techniques), BM25 a trouve les documents avec ces mots exacts. Pour "le site ne repond plus" (langage naturel), la recherche semantique a compris qu'il s'agissait d'un probleme de disponibilite et a trouve les documents pertinents meme sans les mots-cles techniques.
+    </div>
+
+    <div class="prof-note">
+        L'hybrid search (BM25 + vecteurs) est LA technique qui offre le meilleur rapport amelioration/complexite. Les benchmarks montrent que l'hybrid search surpasse systematiquement chaque methode seule. Les poids recommandes sont 0.3-0.4 pour BM25 et 0.6-0.7 pour les vecteurs. Ajustez selon vos donnees : si votre corpus contient beaucoup de termes techniques, augmentez le poids BM25.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>9. Reranking - Reordonner les resultats</h2>
+
+    <div class="definition">
+        Le <strong>Reranking</strong> est une etape post-retrieval ou un modele specialise (cross-encoder) re-evalue et reordonne les resultats du retrieval initial. Contrairement aux bi-encoders (embeddings), un cross-encoder prend en entree la PAIRE (question, document) et calcule un score de pertinence beaucoup plus precis, mais aussi plus couteux.
+    </div>
+
+    <p>L'approche en deux etapes est la suivante : (1) le retrieval initial (rapide, embeddings) recupere les top-k candidats (ex: 20), puis (2) le reranker (lent mais precis, cross-encoder) reordonne ces candidats et ne garde que les top-n (ex: 4).</p>
+
+    <div class="code-block"><span class="comment"># Reranking avec Cohere Reranker</span>
+<span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> ContextualCompressionRetriever
+<span class="keyword">from</span> langchain_cohere <span class="keyword">import</span> CohereRerank
+
+<span class="comment"># Retrieval initial : top-20 candidats</span>
+base_retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_kwargs={<span class="string">"k"</span>: <span class="number">20</span>}  <span class="comment"># Recuperer plus de candidats</span>
+)
+
+<span class="comment"># Reranker : reordonne et ne garde que les top-4</span>
+reranker = CohereRerank(
+    model=<span class="string">"rerank-v3.5"</span>,
+    top_n=<span class="number">4</span>  <span class="comment"># Ne garder que les 4 meilleurs apres reranking</span>
+)
+
+<span class="comment"># Pipeline : retrieval + reranking</span>
+rerank_retriever = ContextualCompressionRetriever(
+    base_compressor=reranker,
+    base_retriever=base_retriever
+)
+
+<span class="comment"># Recherche avec reranking</span>
+question = <span class="string">"Comment obtenir un remboursement pour un produit defectueux ?"</span>
+results = rerank_retriever.<span class="function">invoke</span>(question)
+
+<span class="function">print</span>(<span class="string">f"Resultats apres reranking : {len(results)}"</span>)
+<span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(results):
+    score = doc.metadata.get(<span class="string">"relevance_score"</span>, <span class="string">"N/A"</span>)
+    <span class="function">print</span>(<span class="string">f"\n{i+1}. Score: {score} | {doc.page_content[:100]}..."</span>)</div>
+
+    <div class="output-block">Resultats apres reranking : 4
+
+1. Score: 0.9823 | En cas de produit defectueux, le remboursement est integrale et les frais de retour sont a notre cha...
+
+2. Score: 0.9456 | Pour demander un remboursement, accedez a votre espace client, selectionnez la commande et cliquez ...
+
+3. Score: 0.8934 | Les produits defectueux doivent etre signales dans les 30 jours suivant la reception. Joignez des p...
+
+4. Score: 0.7812 | Le remboursement est effectue sous 5 a 10 jours ouvrables sur le moyen de paiement d'origine...</div>
+
+    <div class="code-block"><span class="comment"># Reranking avec un cross-encoder open source (sentence-transformers)</span>
+<span class="keyword">from</span> langchain_community.document_compressors <span class="keyword">import</span> CrossEncoderReranker
+<span class="keyword">from</span> langchain_community.cross_encoders <span class="keyword">import</span> HuggingFaceCrossEncoder
+
+<span class="comment"># Modele cross-encoder gratuit et local</span>
+model = HuggingFaceCrossEncoder(
+    model_name=<span class="string">"cross-encoder/ms-marco-MiniLM-L-6-v2"</span>
+)
+
+<span class="comment"># Reranker</span>
+compressor = CrossEncoderReranker(
+    model=model,
+    top_n=<span class="number">4</span>
+)
+
+<span class="comment"># Pipeline</span>
+rerank_retriever = ContextualCompressionRetriever(
+    base_compressor=compressor,
+    base_retriever=base_retriever
+)
+
+results = rerank_retriever.<span class="function">invoke</span>(<span class="string">"Comment obtenir un remboursement ?"</span>)
+<span class="function">print</span>(<span class="string">f"Resultats rerankes (open source) : {len(results)}"</span>)</div>
+
+    <div class="output-block">Resultats rerankes (open source) : 4</div>
+
+    <div class="prof-note">
+        Le reranking est souvent la technique qui apporte le gain le plus significatif en production (gain de 5 a 15% en precision). Le principe est simple : le retrieval initial est rapide mais approximatif (bi-encoder), le reranking est lent mais precis (cross-encoder). On combine les deux pour avoir rapidite ET precision. Cohere rerank-v3.5 est le meilleur reranker commercial, mais le cross-encoder open source ms-marco-MiniLM est excellent pour les budgets limites.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>10. Comparaison de toutes les strategies</h2>
+
+    <table>
+        <tr>
+            <th>Strategie</th>
+            <th>Comment ca marche</th>
+            <th>Quand l'utiliser</th>
+            <th>Complexite</th>
+            <th>Amelioration attendue</th>
+        </tr>
+        <tr>
+            <td><strong>Naive (Similarity)</strong></td>
+            <td>Similarite cosinus directe, top-k</td>
+            <td>Baseline, prototype, cas simples</td>
+            <td>Tres faible</td>
+            <td>Baseline (reference)</td>
+        </tr>
+        <tr>
+            <td><strong>MMR</strong></td>
+            <td>Equilibre pertinence + diversite</td>
+            <td>Toujours ! Surtout si contenu redondant</td>
+            <td>Faible</td>
+            <td>+5-15% (diversite)</td>
+        </tr>
+        <tr>
+            <td><strong>Multi-Query</strong></td>
+            <td>LLM reformule la question en 3-5 variantes</td>
+            <td>Questions ambigues ou courtes</td>
+            <td>Moyenne</td>
+            <td>+10-25% (recall)</td>
+        </tr>
+        <tr>
+            <td><strong>HyDE</strong></td>
+            <td>LLM genere une reponse hypothetique, cherche docs similaires</td>
+            <td>Gap question-document important</td>
+            <td>Moyenne</td>
+            <td>+10-20% (precision)</td>
+        </tr>
+        <tr>
+            <td><strong>Self-Query</strong></td>
+            <td>LLM extrait des filtres structures de la question</td>
+            <td>Multi-source, metadata riche</td>
+            <td>Moyenne</td>
+            <td>+15-30% (precision filtree)</td>
+        </tr>
+        <tr>
+            <td><strong>Parent Document</strong></td>
+            <td>Cherche petits chunks, retourne grands</td>
+            <td>Documents longs, besoin de contexte</td>
+            <td>Moyenne</td>
+            <td>+15-25% (contexte)</td>
+        </tr>
+        <tr>
+            <td><strong>Contextual Compression</strong></td>
+            <td>LLM extrait les parties pertinentes des chunks</td>
+            <td>Precision critique, budget ok</td>
+            <td>Elevee</td>
+            <td>+10-20% (precision)</td>
+        </tr>
+        <tr>
+            <td><strong>Hybrid (BM25+Vecteurs)</strong></td>
+            <td>Combine recherche lexicale et semantique</td>
+            <td>Toujours en production ! Termes techniques</td>
+            <td>Faible</td>
+            <td>+10-25% (recall + precision)</td>
+        </tr>
+        <tr>
+            <td><strong>Reranking</strong></td>
+            <td>Cross-encoder reordonne les resultats du retrieval</td>
+            <td>Production, precision critique</td>
+            <td>Faible-Moyenne</td>
+            <td>+5-15% (precision)</td>
+        </tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2>11. Resume - Pipeline de production recommande</h2>
+
+    <div class="concept-box green">
+        <h3>Decision : quelle strategie pour quel probleme ?</h3>
+        <ul>
+            <li><strong>Les resultats sont redondants</strong> --> Ajouter <strong>MMR</strong> (lambda_mult=0.7)</li>
+            <li><strong>Les bons docs ne sont pas trouves (recall faible)</strong> --> Ajouter <strong>Multi-Query</strong> ou <strong>Hybrid Search</strong></li>
+            <li><strong>La question est differente du vocabulaire des docs</strong> --> Essayer <strong>HyDE</strong></li>
+            <li><strong>Besoin de filtrer par metadonnees naturellement</strong> --> Ajouter <strong>Self-Query</strong></li>
+            <li><strong>Les chunks sont trop courts pour le contexte LLM</strong> --> Utiliser <strong>Parent Document Retrieval</strong></li>
+            <li><strong>Les resultats contiennent trop de bruit</strong> --> Ajouter <strong>Reranking</strong> ou <strong>Contextual Compression</strong></li>
+            <li><strong>Termes techniques/acronymes importants</strong> --> Ajouter <strong>BM25 (Hybrid Search)</strong></li>
+        </ul>
+    </div>
+
+    <div class="concept-box blue">
+        <h3>Pipeline de production recommande (Advanced RAG)</h3>
+        <p>Voici l'architecture recommandee pour un systeme RAG performant en production :</p>
+        <ol>
+            <li><strong>Ingestion</strong> : RecursiveCharacterTextSplitter (500/50) + metadata enrichment + deduplication</li>
+            <li><strong>Embeddings</strong> : text-embedding-3-large (production) ou embed-v4 (multilingue)</li>
+            <li><strong>Vector Store</strong> : Qdrant ou Pinecone (production), Chroma (dev)</li>
+            <li><strong>Pre-retrieval</strong> : Multi-Query pour les questions complexes</li>
+            <li><strong>Retrieval</strong> : Hybrid Search (BM25 + vecteurs) avec MMR + metadata filtering</li>
+            <li><strong>Post-retrieval</strong> : Reranking (Cohere rerank-v3.5 ou cross-encoder)</li>
+            <li><strong>Generation</strong> : GPT-4o ou Claude avec prompt structure</li>
+            <li><strong>Evaluation</strong> : RAGAS (faithfulness, answer_relevancy, context_precision, context_recall)</li>
+        </ol>
+    </div>
+
+    <div class="code-block"><span class="comment"># Pipeline Advanced RAG complet - Production Ready</span>
+<span class="keyword">from</span> langchain.retrievers <span class="keyword">import</span> EnsembleRetriever, ContextualCompressionRetriever
+<span class="keyword">from</span> langchain_community.retrievers <span class="keyword">import</span> BM25Retriever
+<span class="keyword">from</span> langchain_cohere <span class="keyword">import</span> CohereRerank
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings, ChatOpenAI
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain.chains <span class="keyword">import</span> RetrievalQA
+
+<span class="comment"># 1. Hybrid Retrieval (BM25 + Vecteurs)</span>
+bm25_retriever = BM25Retriever.<span class="function">from_documents</span>(chunks, k=<span class="number">10</span>)
+vector_retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_type=<span class="string">"mmr"</span>,
+    search_kwargs={<span class="string">"k"</span>: <span class="number">10</span>, <span class="string">"fetch_k"</span>: <span class="number">30</span>, <span class="string">"lambda_mult"</span>: <span class="number">0.7</span>}
+)
+hybrid_retriever = EnsembleRetriever(
+    retrievers=[bm25_retriever, vector_retriever],
+    weights=[<span class="number">0.4</span>, <span class="number">0.6</span>]
+)
+
+<span class="comment"># 2. Reranking</span>
+reranker = CohereRerank(model=<span class="string">"rerank-v3.5"</span>, top_n=<span class="number">5</span>)
+advanced_retriever = ContextualCompressionRetriever(
+    base_compressor=reranker,
+    base_retriever=hybrid_retriever
+)
+
+<span class="comment"># 3. LLM + Chain</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+qa_chain = RetrievalQA.<span class="function">from_chain_type</span>(
+    llm=llm,
+    retriever=advanced_retriever,
+    return_source_documents=<span class="keyword">True</span>,
+    chain_type_kwargs={
+        <span class="string">"prompt"</span>: prompt_template  <span class="comment"># Votre prompt RAG personnalise</span>
+    }
+)
+
+<span class="comment"># Utilisation</span>
+response = qa_chain.<span class="function">invoke</span>({<span class="string">"query"</span>: <span class="string">"Comment obtenir un remboursement ?"</span>})
+<span class="function">print</span>(<span class="string">"Reponse :"</span>, response[<span class="string">"result"</span>])
+<span class="function">print</span>(<span class="string">"Sources :"</span>, [d.metadata[<span class="string">"source"</span>] <span class="keyword">for</span> d <span class="keyword">in</span> response[<span class="string">"source_documents"</span>]])</div>
+
+    <div class="output-block">Reponse : Pour obtenir un remboursement, suivez ces etapes :
+1. Connectez-vous a votre espace client et accedez a "Mes commandes"
+2. Selectionnez la commande concernee et cliquez sur "Demander un retour"
+3. Vous recevrez un email avec une etiquette de retour prepayee
+4. Renvoyez le produit dans son emballage d'origine sous 30 jours
+
+Le remboursement est effectue sous 5 a 10 jours ouvrables sur votre moyen
+de paiement d'origine. En cas de produit defectueux, les frais de retour
+sont pris en charge par l'entreprise.
+
+Sources : ['politique_retour.pdf', 'faq.pdf', 'cgv.pdf']</div>
+
+    <div class="prof-note">
+        Ce pipeline combine 3 techniques complementaires : Hybrid Search (recall), MMR (diversite), et Reranking (precision). En production, ce pipeline offre typiquement 30 a 50% d'amelioration par rapport au Naive Retrieval. N'ajoutez pas toutes les techniques d'un coup -- commencez par Hybrid Search + MMR, mesurez l'amelioration, puis ajoutez le Reranking si necessaire. Chaque ajout doit etre justifie par une amelioration mesurable des metriques RAGAS (faithfulness, context precision, answer relevancy).
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <a href="rag_03_embeddings_vectorstores.html">&larr; Cours Embeddings &amp; VectorStores</a>
+        <span style="color:#555;">Cours suivant : Generation &amp; Prompts RAG &rarr;</span>
+    </div>
+
+</div>
+<!-- Signature Azdine Laaouissi -->
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>
