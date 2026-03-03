@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agents IA - Cours 10 : Deployer des Agents en Production</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Cours 10 : Deployer des Agents en Production</h1>
+    <p class="subtitle">Du prototype fonctionnel a l'agent robuste, scalable et observable</p>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1 : DU PROTOTYPE A LA PRODUCTION -->
+    <!-- ============================================================ -->
+
+    <h2>1. Du Prototype a la Production : Les Defis</h2>
+
+    <p>Vous avez construit un agent qui fonctionne parfaitement dans votre notebook Jupyter. Il repond correctement, utilise ses outils avec precision, et votre demo impressionne tout le monde. Maintenant, il faut le deployer en production. C'est la que les vrais defis commencent.</p>
+
+    <div class="concept-box">
+        <h3>Les differences fondamentales entre prototype et production</h3>
+        <table>
+            <tr>
+                <th>Aspect</th>
+                <th>Prototype</th>
+                <th>Production</th>
+            </tr>
+            <tr>
+                <td><strong>Utilisateurs</strong></td>
+                <td>Vous seul, requetes controlees</td>
+                <td>Centaines/milliers d'utilisateurs imprevisibles</td>
+            </tr>
+            <tr>
+                <td><strong>Disponibilite</strong></td>
+                <td>Acceptable si ca plante</td>
+                <td>99.9% uptime requis</td>
+            </tr>
+            <tr>
+                <td><strong>Couts</strong></td>
+                <td>Quelques dollars de test</td>
+                <td>Budget a maitriser au centime pres</td>
+            </tr>
+            <tr>
+                <td><strong>Latence</strong></td>
+                <td>30 secondes ? Pas grave</td>
+                <td>L'utilisateur s'impatiente apres 5s</td>
+            </tr>
+            <tr>
+                <td><strong>Erreurs</strong></td>
+                <td>Stacktrace dans le terminal</td>
+                <td>Message d'erreur user-friendly + alerte equipe</td>
+            </tr>
+            <tr>
+                <td><strong>Securite</strong></td>
+                <td>API key en dur</td>
+                <td>Secrets Manager, authentification, guardrails</td>
+            </tr>
+            <tr>
+                <td><strong>Observabilite</strong></td>
+                <td>print() partout</td>
+                <td>Traces structurees, metriques, dashboards</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>1.1 Les risques specifiques aux agents en production</h3>
+
+    <ul>
+        <li><strong>Non-determinisme</strong> : le meme input peut produire des outputs differents a chaque execution</li>
+        <li><strong>Couts imprevisibles</strong> : un agent qui boucle peut consommer des centaines de dollars en minutes</li>
+        <li><strong>Latence variable</strong> : un agent peut repondre en 2s ou en 30s selon la complexite</li>
+        <li><strong>Dependances externes</strong> : APIs LLM, outils externes, bases de donnees... chaque dependance est un point de panne</li>
+        <li><strong>Prompt injection</strong> : les utilisateurs malveillants testeront les limites de votre agent</li>
+    </ul>
+
+    <div class="svg-container">
+        <svg width="750" height="350" viewBox="0 0 750 350">
+            <text x="375" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Architecture de Production d'un Agent IA</text>
+
+            <!-- Client -->
+            <rect x="10" y="120" width="100" height="50" rx="10" fill="#1a1a2e" stroke="#e0e0e0" stroke-width="2"/>
+            <text x="60" y="150" fill="#e0e0e0" font-size="11" text-anchor="middle">Client</text>
+            <text x="60" y="163" fill="#aaa" font-size="9" text-anchor="middle">(Web/Mobile)</text>
+
+            <!-- API Gateway -->
+            <rect x="140" y="105" width="100" height="80" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="190" y="135" fill="#ff6b35" font-size="10" text-anchor="middle">API Gateway</text>
+            <text x="190" y="150" fill="#aaa" font-size="8" text-anchor="middle">Rate Limit</text>
+            <text x="190" y="163" fill="#aaa" font-size="8" text-anchor="middle">Auth</text>
+            <text x="190" y="176" fill="#aaa" font-size="8" text-anchor="middle">Guardrails</text>
+
+            <!-- Agent Service -->
+            <rect x="280" y="90" width="160" height="110" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="360" y="118" fill="#569cd6" font-size="12" font-weight="bold" text-anchor="middle">Agent Service</text>
+            <text x="360" y="138" fill="#aaa" font-size="9" text-anchor="middle">FastAPI + LangGraph</text>
+            <rect x="295" y="148" width="55" height="25" rx="4" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="322" y="165" fill="#aaa" font-size="8" text-anchor="middle">LLM</text>
+            <rect x="358" y="148" width="55" height="25" rx="4" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="385" y="165" fill="#aaa" font-size="8" text-anchor="middle">Tools</text>
+            <rect x="325" y="175" width="70" height="20" rx="4" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="360" y="189" fill="#aaa" font-size="8" text-anchor="middle">State</text>
+
+            <!-- Observability -->
+            <rect x="490" y="50" width="120" height="70" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="550" y="75" fill="#00ff88" font-size="10" text-anchor="middle">Observabilite</text>
+            <text x="550" y="92" fill="#aaa" font-size="8" text-anchor="middle">LangSmith / LangFuse</text>
+            <text x="550" y="105" fill="#aaa" font-size="8" text-anchor="middle">Logs + Traces</text>
+
+            <!-- Cache -->
+            <rect x="490" y="140" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#dcdcaa" stroke-width="2"/>
+            <text x="550" y="162" fill="#dcdcaa" font-size="10" text-anchor="middle">Cache</text>
+            <text x="550" y="178" fill="#aaa" font-size="8" text-anchor="middle">Redis / Semantic</text>
+
+            <!-- DB -->
+            <rect x="490" y="210" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#ce9178" stroke-width="2"/>
+            <text x="550" y="232" fill="#ce9178" font-size="10" text-anchor="middle">Vector Store</text>
+            <text x="550" y="248" fill="#aaa" font-size="8" text-anchor="middle">Pinecone / Chroma</text>
+
+            <!-- Monitoring -->
+            <rect x="640" y="120" width="100" height="60" rx="10" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="690" y="145" fill="#ff4444" font-size="10" text-anchor="middle">Monitoring</text>
+            <text x="690" y="162" fill="#aaa" font-size="8" text-anchor="middle">Prometheus</text>
+            <text x="690" y="175" fill="#aaa" font-size="8" text-anchor="middle">Grafana</text>
+
+            <!-- Connexions -->
+            <line x1="110" y1="145" x2="140" y2="145" stroke="#e0e0e0" stroke-width="1.5" marker-end="url(#arr1)"/>
+            <line x1="240" y1="145" x2="280" y2="145" stroke="#ff6b35" stroke-width="1.5" marker-end="url(#arr1)"/>
+            <line x1="440" y1="110" x2="490" y2="90" stroke="#00ff88" stroke-width="1" stroke-dasharray="4,3"/>
+            <line x1="440" y1="145" x2="490" y2="160" stroke="#dcdcaa" stroke-width="1" stroke-dasharray="4,3"/>
+            <line x1="440" y1="175" x2="490" y2="230" stroke="#ce9178" stroke-width="1" stroke-dasharray="4,3"/>
+            <line x1="610" y1="85" x2="640" y2="130" stroke="#ff4444" stroke-width="1" stroke-dasharray="4,3"/>
+
+            <!-- LLM Provider -->
+            <rect x="280" y="270" width="160" height="50" rx="10" fill="#1a1a2e" stroke="#b5cea8" stroke-width="2"/>
+            <text x="360" y="293" fill="#b5cea8" font-size="10" text-anchor="middle">LLM Provider</text>
+            <text x="360" y="308" fill="#aaa" font-size="8" text-anchor="middle">OpenAI / Anthropic / Local</text>
+            <line x1="360" y1="200" x2="360" y2="270" stroke="#b5cea8" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+            <defs>
+                <marker id="arr1" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2 : FASTAPI + LANGSERVE -->
+    <!-- ============================================================ -->
+
+    <h2>2. Architecture de Deploiement : FastAPI + LangServe</h2>
+
+    <div class="definition">
+        <strong>LangServe</strong> est la couche de deploiement officielle de LangChain. Il transforme automatiquement vos chains et agents LangChain en APIs REST avec documentation OpenAPI, playground integre, et support du streaming.
+    </div>
+
+    <h3>2.1 Structure du projet</h3>
+
+    <div class="code-block"><span class="comment"># Structure recommandee pour un agent en production</span>
+agent-production/
+    app/
+        __init__.py
+        main.py              <span class="comment"># Point d'entree FastAPI</span>
+        agent.py              <span class="comment"># Definition de l'agent LangGraph</span>
+        tools.py              <span class="comment"># Outils de l'agent</span>
+        config.py             <span class="comment"># Configuration (env vars, constantes)</span>
+        guardrails.py         <span class="comment"># Guardrails et validation</span>
+        middleware.py         <span class="comment"># Middleware (logging, auth, rate limit)</span>
+        schemas.py            <span class="comment"># Schemas Pydantic</span>
+    tests/
+        test_agent.py
+        test_tools.py
+        test_guardrails.py
+    Dockerfile
+    docker-compose.yml
+    requirements.txt
+    .env</div>
+
+    <h3>2.2 Implementation FastAPI complete</h3>
+
+    <div class="code-block"><span class="comment"># app/config.py - Configuration centralisee</span>
+<span class="keyword">from</span> pydantic_settings <span class="keyword">import</span> BaseSettings
+
+<span class="keyword">class</span> <span class="function">Settings</span>(BaseSettings):
+    openai_api_key: <span class="keyword">str</span>
+    model_name: <span class="keyword">str</span> = <span class="string">"gpt-4"</span>
+    temperature: <span class="keyword">float</span> = <span class="number">0.3</span>
+    max_iterations: <span class="keyword">int</span> = <span class="number">15</span>
+    max_tokens_per_request: <span class="keyword">int</span> = <span class="number">4000</span>
+    budget_per_request: <span class="keyword">float</span> = <span class="number">0.50</span>
+    rate_limit_per_minute: <span class="keyword">int</span> = <span class="number">60</span>
+    redis_url: <span class="keyword">str</span> = <span class="string">"redis://localhost:6379"</span>
+    langsmith_api_key: <span class="keyword">str</span> = <span class="string">""</span>
+    langsmith_project: <span class="keyword">str</span> = <span class="string">"agent-production"</span>
+
+    <span class="keyword">class</span> <span class="function">Config</span>:
+        env_file = <span class="string">".env"</span>
+
+settings = Settings()</div>
+
+    <div class="code-block"><span class="comment"># app/schemas.py - Schemas de requetes/reponses</span>
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field
+<span class="keyword">from</span> typing <span class="keyword">import</span> Optional, List
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+<span class="keyword">class</span> <span class="function">AgentRequest</span>(BaseModel):
+    message: <span class="keyword">str</span> = Field(..., max_length=<span class="number">5000</span>, description=<span class="string">"Message de l'utilisateur"</span>)
+    session_id: Optional[<span class="keyword">str</span>] = Field(<span class="keyword">None</span>, description=<span class="string">"ID de session pour le suivi"</span>)
+    stream: <span class="keyword">bool</span> = Field(<span class="keyword">False</span>, description=<span class="string">"Activer le streaming SSE"</span>)
+
+<span class="keyword">class</span> <span class="function">ToolCall</span>(BaseModel):
+    tool_name: <span class="keyword">str</span>
+    tool_input: <span class="keyword">dict</span>
+    tool_output: <span class="keyword">str</span>
+
+<span class="keyword">class</span> <span class="function">AgentResponse</span>(BaseModel):
+    answer: <span class="keyword">str</span>
+    session_id: <span class="keyword">str</span>
+    tool_calls: List[ToolCall] = []
+    tokens_used: <span class="keyword">int</span> = <span class="number">0</span>
+    cost: <span class="keyword">float</span> = <span class="number">0.0</span>
+    latency_ms: <span class="keyword">int</span> = <span class="number">0</span>
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+<span class="keyword">class</span> <span class="function">HealthResponse</span>(BaseModel):
+    status: <span class="keyword">str</span>
+    version: <span class="keyword">str</span>
+    uptime_seconds: <span class="keyword">float</span></div>
+
+    <div class="code-block"><span class="comment"># app/main.py - Point d'entree FastAPI</span>
+<span class="keyword">from</span> fastapi <span class="keyword">import</span> FastAPI, HTTPException, Depends, Request
+<span class="keyword">from</span> fastapi.middleware.cors <span class="keyword">import</span> CORSMiddleware
+<span class="keyword">from</span> fastapi.responses <span class="keyword">import</span> StreamingResponse
+<span class="keyword">from</span> contextlib <span class="keyword">import</span> asynccontextmanager
+<span class="keyword">import</span> time
+<span class="keyword">import</span> uuid
+<span class="keyword">import</span> logging
+
+<span class="keyword">from</span> app.config <span class="keyword">import</span> settings
+<span class="keyword">from</span> app.schemas <span class="keyword">import</span> AgentRequest, AgentResponse, HealthResponse
+<span class="keyword">from</span> app.agent <span class="keyword">import</span> create_agent
+<span class="keyword">from</span> app.guardrails <span class="keyword">import</span> AgentGuardrails
+<span class="keyword">from</span> app.middleware <span class="keyword">import</span> RateLimiter
+
+<span class="comment"># Configuration du logging</span>
+logging.<span class="function">basicConfig</span>(level=logging.INFO)
+logger = logging.<span class="function">getLogger</span>(<span class="string">"agent-api"</span>)
+
+<span class="comment"># Variables globales</span>
+start_time = time.<span class="function">time</span>()
+agent = <span class="keyword">None</span>
+guardrails = AgentGuardrails()
+rate_limiter = RateLimiter(max_requests=settings.rate_limit_per_minute)
+
+<span class="keyword">@asynccontextmanager</span>
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">lifespan</span>(app: FastAPI):
+    <span class="comment"># Demarrage : initialiser l'agent</span>
+    <span class="keyword">global</span> agent
+    agent = <span class="function">create_agent</span>()
+    logger.<span class="function">info</span>(<span class="string">"Agent initialise avec succes"</span>)
+    <span class="keyword">yield</span>
+    <span class="comment"># Arret : nettoyage</span>
+    logger.<span class="function">info</span>(<span class="string">"Arret du service agent"</span>)
+
+app = FastAPI(
+    title=<span class="string">"Agent IA API"</span>,
+    version=<span class="string">"1.0.0"</span>,
+    description=<span class="string">"API de production pour agent IA"</span>,
+    lifespan=lifespan
+)
+
+<span class="comment"># CORS</span>
+app.<span class="function">add_middleware</span>(
+    CORSMiddleware,
+    allow_origins=[<span class="string">"*"</span>],
+    allow_methods=[<span class="string">"*"</span>],
+    allow_headers=[<span class="string">"*"</span>]
+)
+
+<span class="comment"># --- Endpoints ---</span>
+
+<span class="keyword">@app.get</span>(<span class="string">"/health"</span>, response_model=HealthResponse)
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">health_check</span>():
+    <span class="keyword">return</span> HealthResponse(
+        status=<span class="string">"healthy"</span>,
+        version=<span class="string">"1.0.0"</span>,
+        uptime_seconds=time.<span class="function">time</span>() - start_time
+    )
+
+<span class="keyword">@app.post</span>(<span class="string">"/agent/invoke"</span>, response_model=AgentResponse)
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">invoke_agent</span>(request: AgentRequest):
+    <span class="comment"># 1. Rate limiting</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> rate_limiter.<span class="function">allow</span>():
+        <span class="keyword">raise</span> HTTPException(status_code=<span class="number">429</span>, detail=<span class="string">"Rate limit depasse"</span>)
+
+    <span class="comment"># 2. Guardrails input</span>
+    input_check = guardrails.<span class="function">check_input</span>(request.message)
+    <span class="keyword">if</span> input_check:
+        <span class="keyword">raise</span> HTTPException(status_code=<span class="number">400</span>, detail=input_check)
+
+    <span class="comment"># 3. Executer l'agent</span>
+    session_id = request.session_id <span class="keyword">or</span> <span class="keyword">str</span>(uuid.<span class="function">uuid4</span>())
+    start = time.<span class="function">time</span>()
+
+    <span class="keyword">try</span>:
+        result = <span class="keyword">await</span> agent.<span class="function">ainvoke</span>({
+            <span class="string">"messages"</span>: [(<span class="string">"user"</span>, request.message)],
+            <span class="string">"session_id"</span>: session_id
+        })
+        latency = <span class="keyword">int</span>((time.<span class="function">time</span>() - start) * <span class="number">1000</span>)
+
+        <span class="comment"># 4. Guardrails output</span>
+        answer = guardrails.<span class="function">check_output</span>(result[<span class="string">"output"</span>])
+
+        <span class="comment"># 5. Logger le resultat</span>
+        logger.<span class="function">info</span>(<span class="string">f"Session {session_id} | Latence: {latency}ms | Tokens: {result.get('tokens', 0)}"</span>)
+
+        <span class="keyword">return</span> AgentResponse(
+            answer=answer,
+            session_id=session_id,
+            tool_calls=result.get(<span class="string">"tool_calls"</span>, []),
+            tokens_used=result.get(<span class="string">"tokens"</span>, <span class="number">0</span>),
+            cost=result.get(<span class="string">"cost"</span>, <span class="number">0.0</span>),
+            latency_ms=latency
+        )
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        logger.<span class="function">error</span>(<span class="string">f"Erreur agent session {session_id}: {str(e)}"</span>)
+        <span class="keyword">raise</span> HTTPException(status_code=<span class="number">500</span>, detail=<span class="string">"Erreur interne du service agent"</span>)</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3 : STREAMING -->
+    <!-- ============================================================ -->
+
+    <h2>3. Streaming : Server-Sent Events (SSE)</h2>
+
+    <p>Les agents IA sont lents par nature : ils effectuent plusieurs appels LLM, utilisent des outils, raisonnent. Sans streaming, l'utilisateur attend 10-30 secondes sans aucun retour, ce qui est inacceptable pour l'experience utilisateur.</p>
+
+    <div class="definition">
+        Le <strong>streaming SSE (Server-Sent Events)</strong> permet d'envoyer des donnees du serveur vers le client de maniere incrementale. L'utilisateur voit la reponse se construire en temps reel, mot par mot, etape par etape.
+    </div>
+
+    <h3>3.1 Types de streaming pour un agent</h3>
+
+    <table>
+        <tr>
+            <th>Type</th>
+            <th>Ce qu'on streame</th>
+            <th>Interet</th>
+        </tr>
+        <tr>
+            <td><strong>Token streaming</strong></td>
+            <td>Les tokens du LLM un par un</td>
+            <td>L'utilisateur voit la reponse s'ecrire en direct</td>
+        </tr>
+        <tr>
+            <td><strong>Event streaming</strong></td>
+            <td>Les evenements de l'agent (tool call, reasoning step)</td>
+            <td>L'utilisateur voit ce que l'agent fait</td>
+        </tr>
+        <tr>
+            <td><strong>Hybrid streaming</strong></td>
+            <td>Les deux combines</td>
+            <td>Experience optimale mais plus complexe</td>
+        </tr>
+    </table>
+
+    <h3>3.2 Implementation SSE avec FastAPI</h3>
+
+    <div class="code-block"><span class="comment"># Endpoint de streaming SSE</span>
+<span class="keyword">from</span> fastapi.responses <span class="keyword">import</span> StreamingResponse
+<span class="keyword">import</span> json
+<span class="keyword">import</span> asyncio
+
+<span class="keyword">@app.post</span>(<span class="string">"/agent/stream"</span>)
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">stream_agent</span>(request: AgentRequest):
+    <span class="string">"""Endpoint SSE pour streamer les reponses de l'agent."""</span>
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">event_generator</span>():
+        session_id = request.session_id <span class="keyword">or</span> <span class="keyword">str</span>(uuid.<span class="function">uuid4</span>())
+
+        <span class="comment"># Streamer les evenements de l'agent</span>
+        <span class="keyword">async</span> <span class="keyword">for</span> event <span class="keyword">in</span> agent.<span class="function">astream_events</span>(
+            {<span class="string">"messages"</span>: [(<span class="string">"user"</span>, request.message)]},
+            version=<span class="string">"v2"</span>
+        ):
+            kind = event[<span class="string">"event"</span>]
+
+            <span class="comment"># Evenement : debut d'appel outil</span>
+            <span class="keyword">if</span> kind == <span class="string">"on_tool_start"</span>:
+                data = {
+                    <span class="string">"type"</span>: <span class="string">"tool_start"</span>,
+                    <span class="string">"tool"</span>: event[<span class="string">"name"</span>],
+                    <span class="string">"input"</span>: <span class="keyword">str</span>(event.get(<span class="string">"data"</span>, {}).get(<span class="string">"input"</span>, <span class="string">""</span>))
+                }
+                <span class="keyword">yield</span> <span class="string">f"data: {json.<span class="function">dumps</span>(data)}\n\n"</span>
+
+            <span class="comment"># Evenement : resultat d'outil</span>
+            <span class="keyword">elif</span> kind == <span class="string">"on_tool_end"</span>:
+                data = {
+                    <span class="string">"type"</span>: <span class="string">"tool_end"</span>,
+                    <span class="string">"tool"</span>: event[<span class="string">"name"</span>],
+                    <span class="string">"output"</span>: <span class="keyword">str</span>(event.get(<span class="string">"data"</span>, {}).get(<span class="string">"output"</span>, <span class="string">""</span>))[:<span class="number">200</span>]
+                }
+                <span class="keyword">yield</span> <span class="string">f"data: {json.<span class="function">dumps</span>(data)}\n\n"</span>
+
+            <span class="comment"># Evenement : tokens du LLM</span>
+            <span class="keyword">elif</span> kind == <span class="string">"on_chat_model_stream"</span>:
+                chunk = event.get(<span class="string">"data"</span>, {}).get(<span class="string">"chunk"</span>)
+                <span class="keyword">if</span> chunk <span class="keyword">and</span> chunk.content:
+                    data = {<span class="string">"type"</span>: <span class="string">"token"</span>, <span class="string">"content"</span>: chunk.content}
+                    <span class="keyword">yield</span> <span class="string">f"data: {json.<span class="function">dumps</span>(data)}\n\n"</span>
+
+        <span class="comment"># Signal de fin</span>
+        <span class="keyword">yield</span> <span class="string">f"data: {json.<span class="function">dumps</span>({'type': 'done'})}\n\n"</span>
+
+    <span class="keyword">return</span> StreamingResponse(
+        <span class="function">event_generator</span>(),
+        media_type=<span class="string">"text/event-stream"</span>,
+        headers={
+            <span class="string">"Cache-Control"</span>: <span class="string">"no-cache"</span>,
+            <span class="string">"Connection"</span>: <span class="string">"keep-alive"</span>
+        }
+    )</div>
+
+    <h3>3.3 Client JavaScript pour consommer le SSE</h3>
+
+    <div class="code-block"><span class="comment">// Client SSE en JavaScript</span>
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="function">streamAgent</span>(message) {
+    <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="function">fetch</span>(<span class="string">'/agent/stream'</span>, {
+        method: <span class="string">'POST'</span>,
+        headers: {<span class="string">'Content-Type'</span>: <span class="string">'application/json'</span>},
+        body: JSON.<span class="function">stringify</span>({message: message, stream: <span class="keyword">true</span>})
+    });
+
+    <span class="keyword">const</span> reader = response.body.<span class="function">getReader</span>();
+    <span class="keyword">const</span> decoder = <span class="keyword">new</span> TextDecoder();
+
+    <span class="keyword">while</span> (<span class="keyword">true</span>) {
+        <span class="keyword">const</span> {done, value} = <span class="keyword">await</span> reader.<span class="function">read</span>();
+        <span class="keyword">if</span> (done) <span class="keyword">break</span>;
+
+        <span class="keyword">const</span> text = decoder.<span class="function">decode</span>(value);
+        <span class="keyword">const</span> lines = text.<span class="function">split</span>(<span class="string">'\n'</span>);
+
+        <span class="keyword">for</span> (<span class="keyword">const</span> line <span class="keyword">of</span> lines) {
+            <span class="keyword">if</span> (line.<span class="function">startsWith</span>(<span class="string">'data: '</span>)) {
+                <span class="keyword">const</span> data = JSON.<span class="function">parse</span>(line.<span class="function">slice</span>(<span class="number">6</span>));
+
+                <span class="keyword">if</span> (data.type === <span class="string">'token'</span>) {
+                    <span class="comment">// Afficher le token dans l'interface</span>
+                    document.<span class="function">getElementById</span>(<span class="string">'output'</span>).textContent += data.content;
+                } <span class="keyword">else if</span> (data.type === <span class="string">'tool_start'</span>) {
+                    <span class="function">showToolIndicator</span>(data.tool);
+                } <span class="keyword">else if</span> (data.type === <span class="string">'done'</span>) {
+                    <span class="function">hideLoadingIndicator</span>();
+                }
+            }
+        }
+    }
+}</div>
+
+    <div class="effect">Le streaming transforme l'experience utilisateur : au lieu d'attendre 15 secondes dans le noir, l'utilisateur voit le raisonnement de l'agent se derouler en temps reel. Il voit quel outil est appele, quelle information est recherchee, et comment la reponse se construit.</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4 : OBSERVABILITE - LANGSMITH -->
+    <!-- ============================================================ -->
+
+    <h2>4. Observabilite : LangSmith</h2>
+
+    <div class="definition">
+        <strong>LangSmith</strong> est la plateforme d'observabilite de LangChain. Elle capture automatiquement les traces d'execution de vos agents : chaque appel LLM, chaque outil utilise, chaque decision de routage. C'est l'equivalent de Datadog/New Relic pour les applications LLM.
+    </div>
+
+    <h3>4.1 Configuration de LangSmith</h3>
+
+    <div class="code-block"><span class="comment"># Configuration via variables d'environnement</span>
+<span class="keyword">import</span> os
+
+os.environ[<span class="string">"LANGCHAIN_TRACING_V2"</span>] = <span class="string">"true"</span>
+os.environ[<span class="string">"LANGCHAIN_API_KEY"</span>] = <span class="string">"lsv2_..."</span>
+os.environ[<span class="string">"LANGCHAIN_PROJECT"</span>] = <span class="string">"agent-production"</span>
+os.environ[<span class="string">"LANGCHAIN_ENDPOINT"</span>] = <span class="string">"https://api.smith.langchain.com"</span>
+
+<span class="comment"># C'est tout ! LangSmith capture automatiquement toutes les traces</span>
+<span class="comment"># de vos appels LangChain/LangGraph</span></div>
+
+    <h3>4.2 Ce que LangSmith capture</h3>
+
+    <div class="concept-box">
+        <h3>Informations tracees automatiquement</h3>
+        <ul>
+            <li><strong>Runs</strong> : chaque execution de l'agent, avec entree et sortie completes</li>
+            <li><strong>Spans</strong> : chaque etape interne (appel LLM, appel outil, routage)</li>
+            <li><strong>Latence</strong> : temps de chaque etape et temps total</li>
+            <li><strong>Tokens</strong> : nombre de tokens en entree et sortie pour chaque appel LLM</li>
+            <li><strong>Cout</strong> : cout estime de chaque execution</li>
+            <li><strong>Erreurs</strong> : stacktrace complete en cas d'erreur</li>
+            <li><strong>Arbre d'execution</strong> : visualisation hierarchique de toutes les etapes</li>
+        </ul>
+    </div>
+
+    <h3>4.3 Feedback utilisateur avec LangSmith</h3>
+
+    <div class="code-block"><span class="comment"># Envoyer du feedback utilisateur a LangSmith</span>
+<span class="keyword">from</span> langsmith <span class="keyword">import</span> Client
+
+ls_client = Client()
+
+<span class="comment"># Apres l'execution de l'agent, enregistrer le feedback</span>
+<span class="keyword">def</span> <span class="function">record_feedback</span>(run_id: <span class="keyword">str</span>, score: <span class="keyword">float</span>, comment: <span class="keyword">str</span> = <span class="string">""</span>):
+    <span class="string">"""Enregistre le feedback utilisateur pour une execution."""</span>
+    ls_client.<span class="function">create_feedback</span>(
+        run_id=run_id,
+        key=<span class="string">"user_satisfaction"</span>,
+        score=score,          <span class="comment"># 0.0 a 1.0</span>
+        comment=comment
+    )
+
+<span class="comment"># Endpoint FastAPI pour recevoir le feedback</span>
+<span class="keyword">@app.post</span>(<span class="string">"/feedback"</span>)
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">submit_feedback</span>(run_id: <span class="keyword">str</span>, thumbs_up: <span class="keyword">bool</span>, comment: <span class="keyword">str</span> = <span class="string">""</span>):
+    score = <span class="number">1.0</span> <span class="keyword">if</span> thumbs_up <span class="keyword">else</span> <span class="number">0.0</span>
+    <span class="function">record_feedback</span>(run_id, score, comment)
+    <span class="keyword">return</span> {<span class="string">"status"</span>: <span class="string">"feedback recorded"</span>}</div>
+
+    <div class="prof-note">LangSmith est gratuit jusqu'a 5000 traces par mois, ce qui suffit largement pour le developpement et les petits projets. Pour la production a grande echelle, les plans payants commencent a 39$/mois.</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5 : LANGFUSE -->
+    <!-- ============================================================ -->
+
+    <h2>5. LangFuse : Alternative Open-Source</h2>
+
+    <div class="definition">
+        <strong>LangFuse</strong> est une plateforme d'observabilite open-source pour les applications LLM. Contrairement a LangSmith, vous pouvez l'heberger vous-meme (self-hosted), ce qui est un avantage pour les entreprises soucieuses de la confidentialite des donnees.
+    </div>
+
+    <h3>5.1 Integration LangFuse</h3>
+
+    <div class="code-block"><span class="comment"># Installation: pip install langfuse</span>
+<span class="keyword">from</span> langfuse <span class="keyword">import</span> Langfuse
+<span class="keyword">from</span> langfuse.callback <span class="keyword">import</span> CallbackHandler
+
+<span class="comment"># Initialisation</span>
+langfuse = Langfuse(
+    public_key=<span class="string">"pk-..."</span>,
+    secret_key=<span class="string">"sk-..."</span>,
+    host=<span class="string">"https://cloud.langfuse.com"</span>  <span class="comment"># ou votre serveur self-hosted</span>
+)
+
+<span class="comment"># Callback handler pour LangChain</span>
+langfuse_handler = CallbackHandler(
+    public_key=<span class="string">"pk-..."</span>,
+    secret_key=<span class="string">"sk-..."</span>,
+    host=<span class="string">"https://cloud.langfuse.com"</span>
+)
+
+<span class="comment"># Utilisation avec l'agent LangGraph</span>
+result = agent.<span class="function">invoke</span>(
+    {<span class="string">"messages"</span>: [(<span class="string">"user"</span>, <span class="string">"Quelle est la meteo a Paris ?"</span>)]},
+    config={<span class="string">"callbacks"</span>: [langfuse_handler]}
+)</div>
+
+    <h3>5.2 Traces manuelles avec LangFuse</h3>
+
+    <div class="code-block"><span class="comment"># Traces manuelles pour plus de controle</span>
+<span class="keyword">from</span> langfuse <span class="keyword">import</span> Langfuse
+
+langfuse = Langfuse()
+
+<span class="comment"># Creer une trace pour une execution complete</span>
+trace = langfuse.<span class="function">trace</span>(
+    name=<span class="string">"agent_execution"</span>,
+    input={<span class="string">"question"</span>: <span class="string">"Analyse des ventes Q3"</span>},
+    metadata={<span class="string">"user_id"</span>: <span class="string">"user_123"</span>, <span class="string">"session_id"</span>: <span class="string">"sess_456"</span>}
+)
+
+<span class="comment"># Span pour l'etape de retrieval</span>
+retrieval_span = trace.<span class="function">span</span>(
+    name=<span class="string">"retrieval"</span>,
+    input={<span class="string">"query"</span>: <span class="string">"ventes Q3 2025"</span>}
+)
+<span class="comment"># ... executer le retrieval ...</span>
+retrieval_span.<span class="function">end</span>(output={<span class="string">"docs_count"</span>: <span class="number">5</span>})
+
+<span class="comment"># Span pour l'appel LLM (generation)</span>
+generation = trace.<span class="function">generation</span>(
+    name=<span class="string">"llm_generation"</span>,
+    model=<span class="string">"gpt-4"</span>,
+    input=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Analyse..."</span>}],
+    model_parameters={<span class="string">"temperature"</span>: <span class="number">0.3</span>}
+)
+<span class="comment"># ... appeler le LLM ...</span>
+generation.<span class="function">end</span>(
+    output=<span class="string">"Voici l'analyse des ventes..."</span>,
+    usage={<span class="string">"input"</span>: <span class="number">500</span>, <span class="string">"output"</span>: <span class="number">300</span>}
+)
+
+<span class="comment"># Score de qualite</span>
+trace.<span class="function">score</span>(name=<span class="string">"quality"</span>, value=<span class="number">0.9</span>, comment=<span class="string">"Bonne analyse"</span>)
+
+<span class="comment"># Finaliser la trace</span>
+trace.<span class="function">update</span>(output={<span class="string">"answer"</span>: <span class="string">"Analyse des ventes Q3..."</span>})</div>
+
+    <table>
+        <tr>
+            <th>Critere</th>
+            <th>LangSmith</th>
+            <th>LangFuse</th>
+        </tr>
+        <tr>
+            <td><strong>Hebergement</strong></td>
+            <td>Cloud uniquement</td>
+            <td>Cloud + Self-hosted</td>
+        </tr>
+        <tr>
+            <td><strong>Open Source</strong></td>
+            <td>Non</td>
+            <td>Oui (MIT License)</td>
+        </tr>
+        <tr>
+            <td><strong>Integration LangChain</strong></td>
+            <td>Native, automatique</td>
+            <td>Via callback handler</td>
+        </tr>
+        <tr>
+            <td><strong>Prix (production)</strong></td>
+            <td>A partir de 39$/mois</td>
+            <td>Gratuit (self-hosted) ou plans cloud</td>
+        </tr>
+        <tr>
+            <td><strong>Playground</strong></td>
+            <td>Oui (riche)</td>
+            <td>Oui (basique)</td>
+        </tr>
+        <tr>
+            <td><strong>Evaluations</strong></td>
+            <td>Natives</td>
+            <td>Natives</td>
+        </tr>
+        <tr>
+            <td><strong>Ideal pour</strong></td>
+            <td>Ecosysteme LangChain complet</td>
+            <td>Conformite donnees, budget limite</td>
+        </tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6 : LOGGING STRUCTURE -->
+    <!-- ============================================================ -->
+
+    <h2>6. Logging Structure</h2>
+
+    <p>Au-dela de LangSmith/LangFuse, votre application doit avoir un systeme de logging structure pour le debug, l'audit et la conformite.</p>
+
+    <h3>6.1 Ce qu'il faut logger</h3>
+
+    <div class="concept-box">
+        <h3>Informations essentielles a logger</h3>
+        <ul>
+            <li><strong>Input utilisateur</strong> : la requete originale (attention aux PII)</li>
+            <li><strong>Output agent</strong> : la reponse generee</li>
+            <li><strong>Tool calls</strong> : chaque outil appele, avec parametres et resultats</li>
+            <li><strong>Erreurs</strong> : stacktrace complete, message d'erreur, contexte</li>
+            <li><strong>Couts</strong> : tokens consommes, cout estime en dollars</li>
+            <li><strong>Latence</strong> : temps total et temps par etape</li>
+            <li><strong>Metadata</strong> : session_id, user_id, model utilise, version de l'agent</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Logging structure avec structlog</span>
+<span class="keyword">import</span> structlog
+<span class="keyword">import</span> json
+
+<span class="comment"># Configuration de structlog</span>
+structlog.<span class="function">configure</span>(
+    processors=[
+        structlog.stdlib.<span class="function">filter_by_level</span>,
+        structlog.stdlib.<span class="function">add_logger_name</span>,
+        structlog.stdlib.<span class="function">add_log_level</span>,
+        structlog.<span class="function">processors</span>.TimeStamper(fmt=<span class="string">"iso"</span>),
+        structlog.<span class="function">processors</span>.JSONRenderer()
+    ],
+    wrapper_class=structlog.stdlib.BoundLogger,
+    context_class=<span class="keyword">dict</span>,
+    logger_factory=structlog.<span class="function">PrintLoggerFactory</span>()
+)
+
+logger = structlog.<span class="function">get_logger</span>(<span class="string">"agent"</span>)
+
+<span class="keyword">class</span> <span class="function">AgentLogger</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.logger = structlog.<span class="function">get_logger</span>(<span class="string">"agent"</span>)
+
+    <span class="keyword">def</span> <span class="function">log_request</span>(self, session_id: <span class="keyword">str</span>, message: <span class="keyword">str</span>):
+        self.logger.<span class="function">info</span>(
+            <span class="string">"agent_request"</span>,
+            session_id=session_id,
+            message_length=<span class="function">len</span>(message),
+            message_preview=message[:<span class="number">100</span>]  <span class="comment"># Ne pas logger le message complet (PII)</span>
+        )
+
+    <span class="keyword">def</span> <span class="function">log_tool_call</span>(self, session_id: <span class="keyword">str</span>, tool_name: <span class="keyword">str</span>,
+                      tool_input: <span class="keyword">dict</span>, tool_output: <span class="keyword">str</span>, duration_ms: <span class="keyword">int</span>):
+        self.logger.<span class="function">info</span>(
+            <span class="string">"tool_call"</span>,
+            session_id=session_id,
+            tool_name=tool_name,
+            tool_input=json.<span class="function">dumps</span>(tool_input),
+            output_length=<span class="function">len</span>(tool_output),
+            duration_ms=duration_ms
+        )
+
+    <span class="keyword">def</span> <span class="function">log_response</span>(self, session_id: <span class="keyword">str</span>, tokens: <span class="keyword">int</span>,
+                      cost: <span class="keyword">float</span>, latency_ms: <span class="keyword">int</span>):
+        self.logger.<span class="function">info</span>(
+            <span class="string">"agent_response"</span>,
+            session_id=session_id,
+            tokens_used=tokens,
+            cost_usd=cost,
+            latency_ms=latency_ms
+        )
+
+    <span class="keyword">def</span> <span class="function">log_error</span>(self, session_id: <span class="keyword">str</span>, error: Exception):
+        self.logger.<span class="function">error</span>(
+            <span class="string">"agent_error"</span>,
+            session_id=session_id,
+            error_type=<span class="keyword">type</span>(error).__name__,
+            error_message=<span class="keyword">str</span>(error)
+        )</div>
+
+    <div class="output-block">{"event": "agent_request", "session_id": "abc-123", "message_length": 45, "message_preview": "Quels sont les resultats de ventes du Q3 2025", "timestamp": "2025-06-15T14:23:01Z", "level": "info"}
+{"event": "tool_call", "session_id": "abc-123", "tool_name": "query_database", "duration_ms": 234, "level": "info"}
+{"event": "agent_response", "session_id": "abc-123", "tokens_used": 1523, "cost_usd": 0.08, "latency_ms": 3456, "level": "info"}</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7 : RETRY ET FALLBACK -->
+    <!-- ============================================================ -->
+
+    <h2>7. Retry et Fallback : Strategies de Resilience</h2>
+
+    <p>Les agents dependent de services externes (APIs LLM, outils, bases de donnees) qui peuvent echouer. Une strategie de resilience robuste est essentielle.</p>
+
+    <h3>7.1 Exponential Backoff</h3>
+
+    <div class="definition">
+        L'<strong>exponential backoff</strong> est une strategie de retry ou le delai entre les tentatives augmente de maniere exponentielle : 1s, 2s, 4s, 8s, 16s... Cela evite de surcharger un service deja en difficulte.
+    </div>
+
+    <div class="code-block"><span class="comment"># Retry avec exponential backoff</span>
+<span class="keyword">import</span> asyncio
+<span class="keyword">import</span> random
+<span class="keyword">from</span> functools <span class="keyword">import</span> wraps
+
+<span class="keyword">def</span> <span class="function">retry_with_backoff</span>(max_retries=<span class="number">3</span>, base_delay=<span class="number">1.0</span>, max_delay=<span class="number">60.0</span>,
+                       exceptions=(Exception,)):
+    <span class="string">"""Decorateur de retry avec exponential backoff et jitter."""</span>
+    <span class="keyword">def</span> <span class="function">decorator</span>(func):
+        <span class="keyword">@wraps</span>(func)
+        <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">wrapper</span>(*args, **kwargs):
+            <span class="keyword">for</span> attempt <span class="keyword">in</span> <span class="function">range</span>(max_retries + <span class="number">1</span>):
+                <span class="keyword">try</span>:
+                    <span class="keyword">return</span> <span class="keyword">await</span> func(*args, **kwargs)
+                <span class="keyword">except</span> exceptions <span class="keyword">as</span> e:
+                    <span class="keyword">if</span> attempt == max_retries:
+                        <span class="keyword">raise</span>
+
+                    <span class="comment"># Calcul du delai avec jitter</span>
+                    delay = <span class="function">min</span>(base_delay * (<span class="number">2</span> ** attempt), max_delay)
+                    jitter = random.<span class="function">uniform</span>(<span class="number">0</span>, delay * <span class="number">0.1</span>)
+                    wait_time = delay + jitter
+
+                    logger.<span class="function">warning</span>(
+                        <span class="string">f"Tentative {attempt + 1}/{max_retries} echouee: {e}. "</span>
+                        <span class="string">f"Retry dans {wait_time:.1f}s"</span>
+                    )
+                    <span class="keyword">await</span> asyncio.<span class="function">sleep</span>(wait_time)
+        <span class="keyword">return</span> wrapper
+    <span class="keyword">return</span> decorator
+
+<span class="comment"># Utilisation</span>
+<span class="keyword">@retry_with_backoff</span>(max_retries=<span class="number">3</span>, base_delay=<span class="number">1.0</span>)
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">call_llm</span>(prompt):
+    <span class="keyword">return</span> <span class="keyword">await</span> llm.<span class="function">ainvoke</span>(prompt)</div>
+
+    <h3>7.2 Model Fallback</h3>
+
+    <div class="code-block"><span class="comment"># Fallback entre modeles LLM</span>
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_anthropic <span class="keyword">import</span> ChatAnthropic
+
+<span class="keyword">class</span> <span class="function">LLMWithFallback</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.models = [
+            {<span class="string">"name"</span>: <span class="string">"gpt-4"</span>, <span class="string">"llm"</span>: ChatOpenAI(model=<span class="string">"gpt-4"</span>)},
+            {<span class="string">"name"</span>: <span class="string">"gpt-3.5-turbo"</span>, <span class="string">"llm"</span>: ChatOpenAI(model=<span class="string">"gpt-3.5-turbo"</span>)},
+            {<span class="string">"name"</span>: <span class="string">"claude-3-haiku"</span>, <span class="string">"llm"</span>: ChatAnthropic(model=<span class="string">"claude-3-haiku-20240307"</span>)},
+        ]
+
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">invoke</span>(self, messages) -> <span class="keyword">str</span>:
+        <span class="string">"""Essaie chaque modele en sequence jusqu'a ce qu'un fonctionne."""</span>
+        last_error = <span class="keyword">None</span>
+        <span class="keyword">for</span> model_config <span class="keyword">in</span> self.models:
+            <span class="keyword">try</span>:
+                logger.<span class="function">info</span>(<span class="string">f"Essai du modele: {model_config['name']}"</span>)
+                result = <span class="keyword">await</span> model_config[<span class="string">"llm"</span>].<span class="function">ainvoke</span>(messages)
+                <span class="keyword">return</span> result
+            <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+                last_error = e
+                logger.<span class="function">warning</span>(
+                    <span class="string">f"Modele {model_config['name']} echoue: {e}. Fallback..."</span>
+                )
+
+        <span class="keyword">raise</span> Exception(<span class="string">f"Tous les modeles ont echoue. Derniere erreur: {last_error}"</span>)
+
+<span class="comment"># Ou plus simplement avec LangChain</span>
+<span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnableWithFallbacks
+
+llm_with_fallback = ChatOpenAI(model=<span class="string">"gpt-4"</span>).<span class="function">with_fallbacks</span>([
+    ChatOpenAI(model=<span class="string">"gpt-3.5-turbo"</span>),
+    ChatAnthropic(model=<span class="string">"claude-3-haiku-20240307"</span>)
+])</div>
+
+    <div class="effect">Le model fallback est une strategie puissante pour maintenir la disponibilite. Si GPT-4 est en panne, l'agent bascule automatiquement sur GPT-3.5, puis sur Claude. La qualite peut baisser, mais le service reste disponible.</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 8 : GESTION DES COUTS -->
+    <!-- ============================================================ -->
+
+    <h2>8. Gestion des Couts</h2>
+
+    <p>Les couts des API LLM peuvent exploser rapidement. Un agent non maitrise peut consommer des centaines de dollars par jour. La gestion des couts est une responsabilite de production critique.</p>
+
+    <h3>8.1 Token Counting</h3>
+
+    <div class="code-block"><span class="comment"># Comptage precis des tokens</span>
+<span class="keyword">import</span> tiktoken
+
+<span class="keyword">class</span> <span class="function">CostTracker</span>:
+    <span class="comment"># Prix par 1000 tokens (USD) - mise a jour selon le modele</span>
+    PRICING = {
+        <span class="string">"gpt-4"</span>: {<span class="string">"input"</span>: <span class="number">0.03</span>, <span class="string">"output"</span>: <span class="number">0.06</span>},
+        <span class="string">"gpt-4-turbo"</span>: {<span class="string">"input"</span>: <span class="number">0.01</span>, <span class="string">"output"</span>: <span class="number">0.03</span>},
+        <span class="string">"gpt-3.5-turbo"</span>: {<span class="string">"input"</span>: <span class="number">0.0005</span>, <span class="string">"output"</span>: <span class="number">0.0015</span>},
+        <span class="string">"gpt-4o"</span>: {<span class="string">"input"</span>: <span class="number">0.005</span>, <span class="string">"output"</span>: <span class="number">0.015</span>},
+        <span class="string">"gpt-4o-mini"</span>: {<span class="string">"input"</span>: <span class="number">0.00015</span>, <span class="string">"output"</span>: <span class="number">0.0006</span>},
+    }
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, model: <span class="keyword">str</span> = <span class="string">"gpt-4"</span>):
+        self.model = model
+        self.encoder = tiktoken.<span class="function">encoding_for_model</span>(model)
+        self.total_input_tokens = <span class="number">0</span>
+        self.total_output_tokens = <span class="number">0</span>
+
+    <span class="keyword">def</span> <span class="function">count_tokens</span>(self, text: <span class="keyword">str</span>) -> <span class="keyword">int</span>:
+        <span class="keyword">return</span> <span class="function">len</span>(self.encoder.<span class="function">encode</span>(text))
+
+    <span class="keyword">def</span> <span class="function">track</span>(self, input_text: <span class="keyword">str</span>, output_text: <span class="keyword">str</span>):
+        self.total_input_tokens += self.<span class="function">count_tokens</span>(input_text)
+        self.total_output_tokens += self.<span class="function">count_tokens</span>(output_text)
+
+    <span class="keyword">def</span> <span class="function">get_cost</span>(self) -> <span class="keyword">float</span>:
+        pricing = self.PRICING.get(self.model, self.PRICING[<span class="string">"gpt-4"</span>])
+        input_cost = (self.total_input_tokens / <span class="number">1000</span>) * pricing[<span class="string">"input"</span>]
+        output_cost = (self.total_output_tokens / <span class="number">1000</span>) * pricing[<span class="string">"output"</span>]
+        <span class="keyword">return</span> input_cost + output_cost
+
+    <span class="keyword">def</span> <span class="function">get_summary</span>(self) -> <span class="keyword">dict</span>:
+        <span class="keyword">return</span> {
+            <span class="string">"model"</span>: self.model,
+            <span class="string">"input_tokens"</span>: self.total_input_tokens,
+            <span class="string">"output_tokens"</span>: self.total_output_tokens,
+            <span class="string">"total_cost_usd"</span>: <span class="function">round</span>(self.<span class="function">get_cost</span>(), <span class="number">4</span>)
+        }</div>
+
+    <h3>8.2 Strategies de reduction des couts</h3>
+
+    <table>
+        <tr>
+            <th>Strategie</th>
+            <th>Description</th>
+            <th>Economies</th>
+        </tr>
+        <tr>
+            <td><strong>Caching semantique</strong></td>
+            <td>Mettre en cache les reponses aux questions similaires</td>
+            <td>30-70% selon le taux de repetition</td>
+        </tr>
+        <tr>
+            <td><strong>Model routing</strong></td>
+            <td>Utiliser GPT-4 pour les questions complexes, GPT-4o-mini pour les simples</td>
+            <td>50-80% sur les requetes simples</td>
+        </tr>
+        <tr>
+            <td><strong>Prompt compression</strong></td>
+            <td>Reduire la taille des prompts (historique, contexte)</td>
+            <td>20-40% de tokens en moins</td>
+        </tr>
+        <tr>
+            <td><strong>Truncation intelligente</strong></td>
+            <td>Limiter l'historique de conversation aux N derniers messages</td>
+            <td>Variable mais significatif</td>
+        </tr>
+        <tr>
+            <td><strong>Modeles locaux</strong></td>
+            <td>Utiliser Llama, Mistral pour les taches simples</td>
+            <td>Cout token nul (cout infra uniquement)</td>
+        </tr>
+    </table>
+
+    <div class="code-block"><span class="comment"># Caching semantique avec Redis</span>
+<span class="keyword">import</span> hashlib
+<span class="keyword">import</span> json
+<span class="keyword">import</span> redis
+
+<span class="keyword">class</span> <span class="function">SemanticCache</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, redis_url: <span class="keyword">str</span>, ttl: <span class="keyword">int</span> = <span class="number">3600</span>):
+        self.redis = redis.Redis.<span class="function">from_url</span>(redis_url)
+        self.ttl = ttl
+
+    <span class="keyword">def</span> <span class="function">_make_key</span>(self, query: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+        <span class="comment"># Hash de la question normalisee</span>
+        normalized = query.strip().lower()
+        <span class="keyword">return</span> <span class="string">f"agent_cache:{hashlib.<span class="function">md5</span>(normalized.encode()).<span class="function">hexdigest</span>()}"</span>
+
+    <span class="keyword">def</span> <span class="function">get</span>(self, query: <span class="keyword">str</span>):
+        key = self.<span class="function">_make_key</span>(query)
+        cached = self.redis.<span class="function">get</span>(key)
+        <span class="keyword">if</span> cached:
+            <span class="keyword">return</span> json.<span class="function">loads</span>(cached)
+        <span class="keyword">return</span> <span class="keyword">None</span>
+
+    <span class="keyword">def</span> <span class="function">set</span>(self, query: <span class="keyword">str</span>, response: <span class="keyword">dict</span>):
+        key = self.<span class="function">_make_key</span>(query)
+        self.redis.<span class="function">setex</span>(key, self.ttl, json.<span class="function">dumps</span>(response))
+
+<span class="comment"># Utilisation dans l'agent</span>
+cache = SemanticCache(redis_url=<span class="string">"redis://localhost:6379"</span>)
+
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">agent_with_cache</span>(query: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="comment"># Verifier le cache</span>
+    cached = cache.<span class="function">get</span>(query)
+    <span class="keyword">if</span> cached:
+        logger.<span class="function">info</span>(<span class="string">"Cache hit !"</span>)
+        <span class="keyword">return</span> cached
+
+    <span class="comment"># Executer l'agent</span>
+    result = <span class="keyword">await</span> agent.<span class="function">ainvoke</span>({<span class="string">"messages"</span>: [(<span class="string">"user"</span>, query)]})
+
+    <span class="comment"># Mettre en cache</span>
+    cache.<span class="function">set</span>(query, result)
+    <span class="keyword">return</span> result</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 9 : RATE LIMITING -->
+    <!-- ============================================================ -->
+
+    <h2>9. Rate Limiting</h2>
+
+    <p>Le rate limiting protege a la fois votre agent (pour eviter les abus) et les APIs externes (pour ne pas depasser les quotas).</p>
+
+    <div class="code-block"><span class="comment"># Rate limiter avec fenetre glissante</span>
+<span class="keyword">import</span> time
+<span class="keyword">from</span> collections <span class="keyword">import</span> defaultdict
+
+<span class="keyword">class</span> <span class="function">RateLimiter</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, max_requests: <span class="keyword">int</span> = <span class="number">60</span>, window_seconds: <span class="keyword">int</span> = <span class="number">60</span>):
+        self.max_requests = max_requests
+        self.window = window_seconds
+        self.requests = defaultdict(list)  <span class="comment"># user_id -> [timestamps]</span>
+
+    <span class="keyword">def</span> <span class="function">allow</span>(self, user_id: <span class="keyword">str</span> = <span class="string">"default"</span>) -> <span class="keyword">bool</span>:
+        <span class="string">"""Verifie si la requete est autorisee."""</span>
+        now = time.<span class="function">time</span>()
+        window_start = now - self.window
+
+        <span class="comment"># Nettoyer les anciennes requetes</span>
+        self.requests[user_id] = [
+            ts <span class="keyword">for</span> ts <span class="keyword">in</span> self.requests[user_id]
+            <span class="keyword">if</span> ts > window_start
+        ]
+
+        <span class="comment"># Verifier la limite</span>
+        <span class="keyword">if</span> <span class="function">len</span>(self.requests[user_id]) >= self.max_requests:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+
+        self.requests[user_id].append(now)
+        <span class="keyword">return</span> <span class="keyword">True</span>
+
+    <span class="keyword">def</span> <span class="function">remaining</span>(self, user_id: <span class="keyword">str</span> = <span class="string">"default"</span>) -> <span class="keyword">int</span>:
+        <span class="string">"""Nombre de requetes restantes dans la fenetre."""</span>
+        now = time.<span class="function">time</span>()
+        window_start = now - self.window
+        current = [ts <span class="keyword">for</span> ts <span class="keyword">in</span> self.requests[user_id] <span class="keyword">if</span> ts > window_start]
+        <span class="keyword">return</span> <span class="function">max</span>(<span class="number">0</span>, self.max_requests - <span class="function">len</span>(current))
+
+<span class="comment"># Middleware FastAPI</span>
+<span class="keyword">from</span> fastapi <span class="keyword">import</span> Request
+
+rate_limiter = RateLimiter(max_requests=<span class="number">60</span>, window_seconds=<span class="number">60</span>)
+
+<span class="keyword">@app.middleware</span>(<span class="string">"http"</span>)
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">rate_limit_middleware</span>(request: Request, call_next):
+    <span class="comment"># Identifier l'utilisateur (IP, API key, etc.)</span>
+    client_ip = request.client.host
+
+    <span class="keyword">if</span> <span class="keyword">not</span> rate_limiter.<span class="function">allow</span>(client_ip):
+        <span class="keyword">return</span> JSONResponse(
+            status_code=<span class="number">429</span>,
+            content={<span class="string">"detail"</span>: <span class="string">"Trop de requetes. Reessayez plus tard."</span>},
+            headers={<span class="string">"Retry-After"</span>: <span class="string">"60"</span>}
+        )
+
+    response = <span class="keyword">await</span> <span class="function">call_next</span>(request)
+    response.headers[<span class="string">"X-RateLimit-Remaining"</span>] = <span class="keyword">str</span>(rate_limiter.<span class="function">remaining</span>(client_ip))
+    <span class="keyword">return</span> response</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 10 : HUMAN-IN-THE-LOOP -->
+    <!-- ============================================================ -->
+
+    <h2>10. Human-in-the-Loop en Production</h2>
+
+    <p>Certaines actions d'agent sont trop critiques pour etre executees sans validation humaine. Le Human-in-the-Loop (HITL) introduit des points d'arret ou un humain doit approuver avant de continuer.</p>
+
+    <h3>10.1 Quand exiger une validation humaine</h3>
+
+    <ul>
+        <li>Envoi d'emails ou de notifications</li>
+        <li>Transactions financieres (paiements, remboursements)</li>
+        <li>Modifications de base de donnees (DELETE, UPDATE en masse)</li>
+        <li>Actions irreversibles (suppression de comptes, envoi de donnees)</li>
+        <li>Decisions impactant des personnes (recrutement, notation, diagnostic)</li>
+    </ul>
+
+    <h3>10.2 Implementation avec LangGraph</h3>
+
+    <div class="code-block"><span class="comment"># Human-in-the-loop avec LangGraph interrupt</span>
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> ToolNode
+<span class="keyword">from</span> langgraph.types <span class="keyword">import</span> interrupt, Command
+
+<span class="keyword">def</span> <span class="function">sensitive_action_node</span>(state):
+    <span class="string">"""Noeud qui demande une approbation humaine."""</span>
+    action = state[<span class="string">"pending_action"</span>]
+
+    <span class="comment"># Interruption : demander l'approbation humaine</span>
+    approval = <span class="function">interrupt</span>({
+        <span class="string">"action"</span>: action[<span class="string">"type"</span>],
+        <span class="string">"details"</span>: action[<span class="string">"details"</span>],
+        <span class="string">"message"</span>: <span class="string">f"L'agent veut executer: {action['type']}. Approuvez-vous ?"</span>
+    })
+
+    <span class="keyword">if</span> approval == <span class="string">"approve"</span>:
+        <span class="comment"># Executer l'action</span>
+        result = <span class="function">execute_action</span>(action)
+        <span class="keyword">return</span> {<span class="string">"action_result"</span>: result}
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> {<span class="string">"action_result"</span>: <span class="string">"Action refusee par l'utilisateur"</span>}
+
+<span class="comment"># Construire le graphe avec checkpointing</span>
+memory = MemorySaver()
+graph = StateGraph(AgentState)
+<span class="comment"># ... ajouter les noeuds ...</span>
+app = graph.<span class="function">compile</span>(checkpointer=memory)
+
+<span class="comment"># Execution avec interruption</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"user_123"</span>}}
+
+<span class="comment"># Premier appel : l'agent s'execute jusqu'a l'interruption</span>
+result = app.<span class="function">invoke</span>(input_data, config)
+<span class="comment"># -> L'agent s'arrete et attend l'approbation</span>
+
+<span class="comment"># L'humain approuve via l'API</span>
+result = app.<span class="function">invoke</span>(
+    Command(resume=<span class="string">"approve"</span>),
+    config
+)
+<span class="comment"># -> L'agent reprend et execute l'action</span></div>
+
+    <div class="svg-container">
+        <svg width="700" height="200" viewBox="0 0 700 200">
+            <text x="350" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Human-in-the-Loop : Workflow d'Approbation</text>
+            <!-- Agent -->
+            <rect x="30" y="70" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="90" y="100" fill="#569cd6" font-size="12" text-anchor="middle">Agent</text>
+            <!-- Fleche -->
+            <line x1="150" y1="95" x2="200" y2="95" stroke="#569cd6" stroke-width="2" marker-end="url(#arr1)"/>
+            <!-- Interrupt -->
+            <rect x="200" y="60" width="140" height="70" rx="10" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="270" y="85" fill="#ff4444" font-size="11" text-anchor="middle">INTERRUPTION</text>
+            <text x="270" y="105" fill="#aaa" font-size="10" text-anchor="middle">En attente</text>
+            <text x="270" y="120" fill="#aaa" font-size="10" text-anchor="middle">d'approbation</text>
+            <!-- Humain -->
+            <rect x="400" y="70" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#dcdcaa" stroke-width="2"/>
+            <text x="460" y="100" fill="#dcdcaa" font-size="12" text-anchor="middle">Humain</text>
+            <line x1="340" y1="95" x2="400" y2="95" stroke="#ff4444" stroke-width="2" marker-end="url(#arr1)"/>
+            <!-- Decision -->
+            <line x1="520" y1="80" x2="580" y2="60" stroke="#00ff88" stroke-width="2" marker-end="url(#arr3)"/>
+            <text x="610" y="55" fill="#00ff88" font-size="11">Approuve</text>
+            <rect x="580" y="42" width="100" height="28" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="630" y="60" fill="#00ff88" font-size="10" text-anchor="middle">Executer</text>
+            <line x1="520" y1="110" x2="580" y2="130" stroke="#ff4444" stroke-width="2" marker-end="url(#arr4)"/>
+            <text x="610" y="145" fill="#ff4444" font-size="11">Refuse</text>
+            <rect x="580" y="122" width="100" height="28" rx="6" fill="#1a1a2e" stroke="#ff4444" stroke-width="1.5"/>
+            <text x="630" y="140" fill="#ff4444" font-size="10" text-anchor="middle">Annuler</text>
+            <defs>
+                <marker id="arr3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/></marker>
+                <marker id="arr4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 11 : MONITORING DASHBOARDS -->
+    <!-- ============================================================ -->
+
+    <h2>11. Monitoring Dashboards</h2>
+
+    <p>Un dashboard de monitoring centralise les metriques cles de votre agent en production. Il permet de detecter les problemes rapidement et de suivre la sante du systeme.</p>
+
+    <h3>11.1 Metriques cles a surveiller</h3>
+
+    <div class="concept-box">
+        <h3>Metriques temps reel</h3>
+        <table>
+            <tr>
+                <th>Metrique</th>
+                <th>Seuil d'alerte</th>
+                <th>Action</th>
+            </tr>
+            <tr>
+                <td>Latence P95</td>
+                <td>> 15 secondes</td>
+                <td>Investiguer les requetes lentes</td>
+            </tr>
+            <tr>
+                <td>Taux d'erreur</td>
+                <td>> 5%</td>
+                <td>Verifier les logs, activer le fallback</td>
+            </tr>
+            <tr>
+                <td>Cout/heure</td>
+                <td>> 10$</td>
+                <td>Verifier les boucles, activer le cache</td>
+            </tr>
+            <tr>
+                <td>Requetes/minute</td>
+                <td>> 80% du rate limit</td>
+                <td>Scaler ou augmenter les limites</td>
+            </tr>
+            <tr>
+                <td>Iterations/requete</td>
+                <td>> 10</td>
+                <td>Verifier les boucles infinies</td>
+            </tr>
+            <tr>
+                <td>Satisfaction utilisateur</td>
+                <td>< 3.5/5</td>
+                <td>Analyser les feedbacks negatifs</td>
+            </tr>
+        </table>
+    </div>
+
+    <h3>11.2 Export Prometheus</h3>
+
+    <div class="code-block"><span class="comment"># Metriques Prometheus pour l'agent</span>
+<span class="keyword">from</span> prometheus_client <span class="keyword">import</span> Counter, Histogram, Gauge, generate_latest
+<span class="keyword">from</span> fastapi.responses <span class="keyword">import</span> Response
+
+<span class="comment"># Definition des metriques</span>
+REQUEST_COUNT = Counter(
+    <span class="string">"agent_requests_total"</span>,
+    <span class="string">"Nombre total de requetes agent"</span>,
+    [<span class="string">"status"</span>]  <span class="comment"># Labels: success, error</span>
+)
+
+REQUEST_LATENCY = Histogram(
+    <span class="string">"agent_request_duration_seconds"</span>,
+    <span class="string">"Latence des requetes agent"</span>,
+    buckets=[<span class="number">0.5</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">15</span>, <span class="number">30</span>, <span class="number">60</span>]
+)
+
+TOKENS_USED = Counter(
+    <span class="string">"agent_tokens_total"</span>,
+    <span class="string">"Tokens consommes"</span>,
+    [<span class="string">"type"</span>]  <span class="comment"># input, output</span>
+)
+
+COST_TOTAL = Counter(
+    <span class="string">"agent_cost_usd_total"</span>,
+    <span class="string">"Cout total en USD"</span>
+)
+
+ACTIVE_SESSIONS = Gauge(
+    <span class="string">"agent_active_sessions"</span>,
+    <span class="string">"Nombre de sessions actives"</span>
+)
+
+TOOL_CALLS = Counter(
+    <span class="string">"agent_tool_calls_total"</span>,
+    <span class="string">"Nombre d'appels outils"</span>,
+    [<span class="string">"tool_name"</span>, <span class="string">"status"</span>]
+)
+
+<span class="comment"># Endpoint pour Prometheus</span>
+<span class="keyword">@app.get</span>(<span class="string">"/metrics"</span>)
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">metrics</span>():
+    <span class="keyword">return</span> Response(
+        content=<span class="function">generate_latest</span>(),
+        media_type=<span class="string">"text/plain"</span>
+    )
+
+<span class="comment"># Utilisation dans l'endpoint agent</span>
+<span class="keyword">@app.post</span>(<span class="string">"/agent/invoke"</span>)
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">invoke_agent</span>(request: AgentRequest):
+    start = time.<span class="function">time</span>()
+    <span class="keyword">try</span>:
+        result = <span class="keyword">await</span> agent.<span class="function">ainvoke</span>(...)
+        latency = time.<span class="function">time</span>() - start
+
+        <span class="comment"># Enregistrer les metriques</span>
+        REQUEST_COUNT.labels(status=<span class="string">"success"</span>).<span class="function">inc</span>()
+        REQUEST_LATENCY.<span class="function">observe</span>(latency)
+        TOKENS_USED.labels(type=<span class="string">"input"</span>).<span class="function">inc</span>(result[<span class="string">"input_tokens"</span>])
+        TOKENS_USED.labels(type=<span class="string">"output"</span>).<span class="function">inc</span>(result[<span class="string">"output_tokens"</span>])
+        COST_TOTAL.<span class="function">inc</span>(result[<span class="string">"cost"</span>])
+
+        <span class="keyword">return</span> result
+    <span class="keyword">except</span> Exception:
+        REQUEST_COUNT.labels(status=<span class="string">"error"</span>).<span class="function">inc</span>()
+        <span class="keyword">raise</span></div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 12 : CHECKLIST PRODUCTION -->
+    <!-- ============================================================ -->
+
+    <h2>12. Checklist Production Complete</h2>
+
+    <div class="concept-box green">
+        <h3>Checklist avant mise en production</h3>
+
+        <p><strong>Securite</strong></p>
+        <ul>
+            <li>Secrets dans un Secrets Manager (pas dans le code ni les .env commites)</li>
+            <li>Input sanitization et detection d'injection active</li>
+            <li>Output validation (PII, toxicite)</li>
+            <li>Authentification et autorisation sur les endpoints</li>
+            <li>HTTPS uniquement</li>
+            <li>Principe du moindre privilege pour les outils</li>
+            <li>Sandboxing pour l'execution de code</li>
+        </ul>
+
+        <p><strong>Performance</strong></p>
+        <ul>
+            <li>Streaming SSE implemente</li>
+            <li>Caching semantique actif (Redis)</li>
+            <li>Rate limiting par utilisateur</li>
+            <li>Timeout global par requete (30-60s max)</li>
+            <li>Limite d'iterations de l'agent (15-20 max)</li>
+            <li>Model fallback configure</li>
+            <li>Retry avec exponential backoff</li>
+        </ul>
+
+        <p><strong>Couts</strong></p>
+        <ul>
+            <li>Token counting actif</li>
+            <li>Budget par requete defini</li>
+            <li>Budget quotidien avec alerte a 80%</li>
+            <li>Model routing (modele leger pour les requetes simples)</li>
+            <li>Dashboard de suivi des couts en temps reel</li>
+        </ul>
+
+        <p><strong>Monitoring</strong></p>
+        <ul>
+            <li>LangSmith ou LangFuse integre</li>
+            <li>Logging structure (structlog/JSON)</li>
+            <li>Metriques Prometheus exposees</li>
+            <li>Dashboard Grafana configure</li>
+            <li>Alertes sur les metriques critiques</li>
+            <li>Health check endpoint (/health)</li>
+        </ul>
+
+        <p><strong>Operations</strong></p>
+        <ul>
+            <li>Dockerfile optimise (multi-stage build)</li>
+            <li>CI/CD pipeline avec tests automatiques</li>
+            <li>Rollback rapide possible</li>
+            <li>Documentation API (OpenAPI/Swagger)</li>
+            <li>Runbook pour les incidents courants</li>
+            <li>Plan de capacite (combien de requetes par seconde ?)</li>
+        </ul>
+
+        <p><strong>Qualite</strong></p>
+        <ul>
+            <li>Suite de tests end-to-end executee</li>
+            <li>Tests de regression sur les cas critiques</li>
+            <li>Evaluation LLM-as-Judge validee</li>
+            <li>Feedback utilisateur collecte et analyse</li>
+            <li>A/B testing possible</li>
+        </ul>
+    </div>
+
+    <h3>Resume du cours et de la section</h3>
+
+    <div class="concept-box">
+        <p>Ce dernier cours a couvert tous les aspects du deploiement d'agents en production :</p>
+        <ul>
+            <li><strong>Architecture</strong> : FastAPI + LangServe/LangGraph</li>
+            <li><strong>Streaming</strong> : SSE pour l'experience utilisateur temps reel</li>
+            <li><strong>Observabilite</strong> : LangSmith et LangFuse pour les traces et metriques</li>
+            <li><strong>Logging</strong> : structlog pour le logging structure</li>
+            <li><strong>Resilience</strong> : retry, fallback, circuit breaker</li>
+            <li><strong>Couts</strong> : token counting, caching, model routing</li>
+            <li><strong>Rate limiting</strong> : protection contre les abus</li>
+            <li><strong>Human-in-the-loop</strong> : approbation humaine pour les actions critiques</li>
+            <li><strong>Monitoring</strong> : Prometheus + Grafana</li>
+        </ul>
+        <p>Felicitations ! Vous avez termine la section <strong>Agents IA</strong>. Vous maitrisez maintenant les fondamentaux des agents, les outils, la memoire, les architectures, les systemes multi-agents, le RAG agentique, l'evaluation, la securite, et le deploiement en production.</p>
+    </div>
+
+    <div class="prof-note">Le domaine des agents IA evolue extremement vite. Les frameworks, les bonnes pratiques et les capacites des modeles changent tous les mois. Restez a jour en suivant les releases de LangGraph, les publications d'Anthropic et d'OpenAI, et les retours d'experience de la communaute. La meilleure facon d'apprendre est de construire : lancez un projet d'agent et iterez en production.</div>
+
+    <div class="nav">
+        <a href="ag_09_evaluation_securite.html">&larr; Evaluation et Securite</a>
+        <span style="color: #666;">(Cours 10/10 - Agents IA)</span>
+        <span style="color: #666;">Fin de la section</span>
+    </div>
+</div>
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

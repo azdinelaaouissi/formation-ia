@@ -295,21 +295,14 @@ Predictions : [0.0, 1.0, 0.0, 1.0]  # Ne converge pas vers la bonne solution</di
         <p><strong>Avantages :</strong> Non monotone, auto-regulee, performante dans les reseaux profonds. Proposee par Google Brain en 2017.</p>
     </div>
 
-    <div class="code-block"><span class="keyword">import</span> torch
-<span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F
-
+    <div class="code-block"><span class="keyword">import</span> torch; <span class="keyword">import</span> torch.nn.functional <span class="keyword">as</span> F
 z = torch.<span class="function">linspace</span>(-<span class="number">3</span>, <span class="number">3</span>, <span class="number">7</span>)
-<span class="function">print</span>(<span class="string">"z         :"</span>, z.<span class="function">tolist</span>())
-<span class="function">print</span>(<span class="string">"Sigmoid   :"</span>, torch.<span class="function">sigmoid</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
-<span class="function">print</span>(<span class="string">"Tanh      :"</span>, torch.<span class="function">tanh</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
-<span class="function">print</span>(<span class="string">"ReLU      :"</span>, F.<span class="function">relu</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
-<span class="function">print</span>(<span class="string">"LeakyReLU :"</span>, F.<span class="function">leaky_relu</span>(z, <span class="number">0.01</span>).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
-<span class="function">print</span>(<span class="string">"ELU       :"</span>, F.<span class="function">elu</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
-<span class="function">print</span>(<span class="string">"GELU      :"</span>, F.<span class="function">gelu</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())
-<span class="function">print</span>(<span class="string">"Swish/SiLU:"</span>, F.<span class="function">silu</span>(z).<span class="function">round</span>(decimals=<span class="number">3</span>).<span class="function">tolist</span>())</div>
+<span class="keyword">for</span> nom, fn <span class="keyword">in</span> [(<span class="string">"Sigmoid"</span>, torch.sigmoid), (<span class="string">"Tanh"</span>, torch.tanh),
+    (<span class="string">"ReLU"</span>, F.relu), (<span class="string">"LeakyReLU"</span>, <span class="keyword">lambda</span> z: F.<span class="function">leaky_relu</span>(z, <span class="number">0.01</span>)),
+    (<span class="string">"ELU"</span>, F.elu), (<span class="string">"GELU"</span>, F.gelu), (<span class="string">"Swish/SiLU"</span>, F.silu)]:
+    <span class="function">print</span>(<span class="string">f"{nom:10s}: {fn(z).round(decimals=3).tolist()}"</span>)</div>
 
-    <div class="output-block">z         : [-3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0]
-Sigmoid   : [0.047, 0.119, 0.269, 0.5, 0.731, 0.881, 0.953]
+    <div class="output-block">Sigmoid   : [0.047, 0.119, 0.269, 0.5, 0.731, 0.881, 0.953]
 Tanh      : [-0.995, -0.964, -0.762, 0.0, 0.762, 0.964, 0.995]
 ReLU      : [0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0]
 LeakyReLU : [-0.03, -0.02, -0.01, 0.0, 1.0, 2.0, 3.0]
@@ -534,36 +527,20 @@ Predictions finales :
         y_pred = sigma(0.37) = 1 / (1 + exp(-0.37)) = <strong>0.5914</strong>
     </div>
 
-    <div class="code-block"><span class="comment"># Verification de l'exemple numerique avec PyTorch</span>
-<span class="keyword">import</span> torch
-
+    <div class="code-block"><span class="keyword">import</span> torch
 x = torch.<span class="function">tensor</span>([<span class="number">1.0</span>, <span class="number">0.5</span>])
-
-<span class="comment"># Couche cachee</span>
-W1 = torch.<span class="function">tensor</span>([[<span class="number">0.3</span>, -<span class="number">0.2</span>],
-                   [<span class="number">0.7</span>,  <span class="number">0.1</span>]])
+W1 = torch.<span class="function">tensor</span>([[<span class="number">0.3</span>, -<span class="number">0.2</span>], [<span class="number">0.7</span>, <span class="number">0.1</span>]])
 b1 = torch.<span class="function">tensor</span>([<span class="number">0.1</span>, -<span class="number">0.1</span>])
-
-z1 = W1 @ x + b1
-<span class="function">print</span>(<span class="string">f"z1 (pre-activation)  : {z1.tolist()}"</span>)
-
-a1 = torch.<span class="function">relu</span>(z1)
-<span class="function">print</span>(<span class="string">f"a1 (apres ReLU)      : {a1.tolist()}"</span>)
-
-<span class="comment"># Couche de sortie</span>
 W2 = torch.<span class="function">tensor</span>([[<span class="number">0.5</span>], [<span class="number">0.8</span>]])
 b2 = torch.<span class="function">tensor</span>([-<span class="number">0.3</span>])
 
-z2 = W2.T @ a1 + b2
-<span class="function">print</span>(<span class="string">f"z2 (pre-activation)  : {z2.item():.4f}"</span>)
+z1 = W1 @ x + b1;  a1 = torch.<span class="function">relu</span>(z1)
+z2 = W2.T @ a1 + b2;  y_pred = torch.<span class="function">sigmoid</span>(z2)
+<span class="function">print</span>(<span class="string">f"z1 = {z1.tolist()}, a1 = {a1.tolist()}"</span>)
+<span class="function">print</span>(<span class="string">f"z2 = {z2.item():.4f}, y_pred = {y_pred.item():.4f}"</span>)</div>
 
-y_pred = torch.<span class="function">sigmoid</span>(z2)
-<span class="function">print</span>(<span class="string">f"y_pred (sortie)      : {y_pred.item():.4f}"</span>)</div>
-
-    <div class="output-block">z1 (pre-activation)  : [0.3, 0.65]
-a1 (apres ReLU)      : [0.3, 0.65]
-z2 (pre-activation)  : 0.3700
-y_pred (sortie)      : 0.5914</div>
+    <div class="output-block">z1 = [0.3, 0.65], a1 = [0.3, 0.65]
+z2 = 0.3700, y_pred = 0.5914</div>
 
     <!-- ============================================================ -->
     <!-- CHAPITRE 6 : Fonction de cout                                -->
@@ -604,38 +581,26 @@ y_pred (sortie)      : 0.5914</div>
         <p><strong>Remarque :</strong> En PyTorch, <code>nn.CrossEntropyLoss</code> combine softmax + log + NLLLoss en interne.</p>
     </div>
 
-    <div class="code-block"><span class="keyword">import</span> torch
-<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
+    <div class="code-block"><span class="keyword">import</span> torch, torch.nn <span class="keyword">as</span> nn
 
-<span class="comment"># --- MSE pour la regression ---</span>
-y_reel = torch.<span class="function">tensor</span>([<span class="number">2.5</span>, <span class="number">0.0</span>, <span class="number">2.1</span>, <span class="number">1.5</span>])
-y_pred = torch.<span class="function">tensor</span>([<span class="number">3.0</span>, -<span class="number">0.5</span>, <span class="number">2.0</span>, <span class="number">1.8</span>])
+<span class="comment"># MSE (regression)</span>
+y_r = torch.<span class="function">tensor</span>([<span class="number">2.5</span>, <span class="number">0.0</span>, <span class="number">2.1</span>, <span class="number">1.5</span>])
+y_p = torch.<span class="function">tensor</span>([<span class="number">3.0</span>, -<span class="number">0.5</span>, <span class="number">2.0</span>, <span class="number">1.8</span>])
+<span class="function">print</span>(<span class="string">f"MSE : {nn.MSELoss()(y_p, y_r).item():.4f}"</span>)
 
-mse = nn.<span class="function">MSELoss</span>()
-perte_mse = <span class="function">mse</span>(y_pred, y_reel)
-<span class="function">print</span>(<span class="string">f"MSE : {perte_mse.item():.4f}"</span>)
+<span class="comment"># Binary Cross-Entropy (classification binaire)</span>
+y_rb = torch.<span class="function">tensor</span>([<span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">0.0</span>])
+y_pb = torch.<span class="function">tensor</span>([<span class="number">0.9</span>, <span class="number">0.1</span>, <span class="number">0.8</span>, <span class="number">0.3</span>])
+<span class="function">print</span>(<span class="string">f"BCE : {nn.BCELoss()(y_pb, y_rb).item():.4f}"</span>)
 
-<span class="comment"># --- Binary Cross-Entropy pour la classification binaire ---</span>
-y_reel_bin = torch.<span class="function">tensor</span>([<span class="number">1.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>, <span class="number">0.0</span>])
-y_pred_bin = torch.<span class="function">tensor</span>([<span class="number">0.9</span>, <span class="number">0.1</span>, <span class="number">0.8</span>, <span class="number">0.3</span>])
-
-bce = nn.<span class="function">BCELoss</span>()
-perte_bce = <span class="function">bce</span>(y_pred_bin, y_reel_bin)
-<span class="function">print</span>(<span class="string">f"BCE : {perte_bce.item():.4f}"</span>)
-
-<span class="comment"># --- Cross-Entropy pour la classification multi-classes ---</span>
-y_reel_multi = torch.<span class="function">tensor</span>([<span class="number">2</span>, <span class="number">0</span>, <span class="number">1</span>])  <span class="comment"># indices des classes</span>
-y_pred_logits = torch.<span class="function">tensor</span>([[<span class="number">0.1</span>, <span class="number">0.2</span>, <span class="number">2.5</span>],  <span class="comment"># classe 2 favorisee</span>
-                              [<span class="number">2.0</span>, <span class="number">0.3</span>, <span class="number">0.1</span>],  <span class="comment"># classe 0 favorisee</span>
-                              [<span class="number">0.1</span>, <span class="number">1.8</span>, <span class="number">0.2</span>]]) <span class="comment"># classe 1 favorisee</span>
-
-ce = nn.<span class="function">CrossEntropyLoss</span>()
-perte_ce = <span class="function">ce</span>(y_pred_logits, y_reel_multi)
-<span class="function">print</span>(<span class="string">f"Cross-Entropy : {perte_ce.item():.4f}"</span>)</div>
+<span class="comment"># Cross-Entropy (classification multi-classes)</span>
+y_rm = torch.<span class="function">tensor</span>([<span class="number">2</span>, <span class="number">0</span>, <span class="number">1</span>])
+logits = torch.<span class="function">tensor</span>([[<span class="number">0.1</span>,<span class="number">0.2</span>,<span class="number">2.5</span>], [<span class="number">2.0</span>,<span class="number">0.3</span>,<span class="number">0.1</span>], [<span class="number">0.1</span>,<span class="number">1.8</span>,<span class="number">0.2</span>]])
+<span class="function">print</span>(<span class="string">f"CE  : {nn.CrossEntropyLoss()(logits, y_rm).item():.4f}"</span>)</div>
 
     <div class="output-block">MSE : 0.1975
 BCE : 0.2014
-Cross-Entropy : 0.2139</div>
+CE  : 0.2139</div>
 
     <div class="warning">
         Ne confondez pas <code>nn.BCELoss</code> (attend des probabilites entre 0 et 1 en entree) et <code>nn.BCEWithLogitsLoss</code> (attend des logits bruts et applique sigmoid en interne). Cette derniere est numeriquement plus stable. De meme, <code>nn.CrossEntropyLoss</code> applique softmax en interne : ne mettez jamais de softmax dans votre couche de sortie si vous utilisez cette fonction de cout.
@@ -709,39 +674,28 @@ Cross-Entropy : 0.2139</div>
 
     <div class="code-block"><span class="keyword">import</span> torch
 
-<span class="comment"># Parametres avec suivi des gradients</span>
-x = torch.<span class="function">tensor</span>([<span class="number">1.0</span>, <span class="number">0.5</span>])
-y_reel = torch.<span class="function">tensor</span>([<span class="number">1.0</span>])
-
+x = torch.<span class="function">tensor</span>([<span class="number">1.0</span>, <span class="number">0.5</span>]); y_reel = torch.<span class="function">tensor</span>([<span class="number">1.0</span>])
 W1 = torch.<span class="function">tensor</span>([[<span class="number">0.3</span>, -<span class="number">0.2</span>], [<span class="number">0.7</span>, <span class="number">0.1</span>]], requires_grad=<span class="keyword">True</span>)
 b1 = torch.<span class="function">tensor</span>([<span class="number">0.1</span>, -<span class="number">0.1</span>], requires_grad=<span class="keyword">True</span>)
 W2 = torch.<span class="function">tensor</span>([[<span class="number">0.5</span>], [<span class="number">0.8</span>]], requires_grad=<span class="keyword">True</span>)
 b2 = torch.<span class="function">tensor</span>([-<span class="number">0.3</span>], requires_grad=<span class="keyword">True</span>)
 
-<span class="comment"># Forward pass</span>
-z1 = W1 @ x + b1
-a1 = torch.<span class="function">relu</span>(z1)
-z2 = W2.T @ a1 + b2
-y_pred = torch.<span class="function">sigmoid</span>(z2)
-
-<span class="comment"># Calcul de la perte et backpropagation</span>
+<span class="comment"># Forward + backward</span>
+z1 = W1 @ x + b1; a1 = torch.<span class="function">relu</span>(z1)
+z2 = W2.T @ a1 + b2; y_pred = torch.<span class="function">sigmoid</span>(z2)
 perte = (y_pred - y_reel) ** <span class="number">2</span>
 perte.<span class="function">backward</span>()
 
-<span class="function">print</span>(<span class="string">"=== Gradients calcules par PyTorch autograd ==="</span>)
+<span class="function">print</span>(<span class="string">"=== Gradients (PyTorch autograd) ==="</span>)
 <span class="function">print</span>(<span class="string">f"dJ/dW2 : {W2.grad.flatten().tolist()}"</span>)
 <span class="function">print</span>(<span class="string">f"dJ/db2 : {b2.grad.tolist()}"</span>)
-<span class="function">print</span>(<span class="string">f"dJ/dW1 :"</span>)
-<span class="keyword">for</span> ligne <span class="keyword">in</span> W1.grad.<span class="function">tolist</span>():
-    <span class="function">print</span>(<span class="string">f"  {[round(v, 4) for v in ligne]}"</span>)
-<span class="function">print</span>(<span class="string">f"dJ/db1 : {[round(v, 4) for v in b1.grad.tolist()]}"</span>)</div>
+<span class="function">print</span>(<span class="string">f"dJ/dW1 : {W1.grad.tolist()}"</span>)
+<span class="function">print</span>(<span class="string">f"dJ/db1 : {b1.grad.tolist()}"</span>)</div>
 
-    <div class="output-block">=== Gradients calcules par PyTorch autograd ===
+    <div class="output-block">=== Gradients (PyTorch autograd) ===
 dJ/dW2 : [-0.0593, -0.1284]
 dJ/db2 : [-0.1975]
-dJ/dW1 :
-  [-0.0988, -0.0494]
-  [-0.158, -0.079]
+dJ/dW1 : [[-0.0988, -0.0494], [-0.158, -0.079]]
 dJ/db1 : [-0.0988, -0.158]</div>
 
     <div class="effect">
@@ -771,42 +725,27 @@ dJ/db1 : [-0.0988, -0.158]</div>
         </ul>
     </div>
 
-    <div class="code-block"><span class="keyword">import</span> torch
-<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn
-<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim
+    <div class="code-block"><span class="keyword">import</span> torch, torch.nn <span class="keyword">as</span> nn, torch.optim <span class="keyword">as</span> optim
 <span class="keyword">from</span> torch.utils.data <span class="keyword">import</span> DataLoader, TensorDataset
 <span class="keyword">import</span> numpy <span class="keyword">as</span> np
 
 <span class="comment"># --- Generation de donnees : cercles concentriques (2 classes) ---</span>
-np.random.<span class="function">seed</span>(<span class="number">42</span>)
-torch.<span class="function">manual_seed</span>(<span class="number">42</span>)
-
-n_echantillons = <span class="number">500</span>
-bruit = <span class="number">0.1</span>
-
-<span class="comment"># Classe 0 : cercle interieur</span>
-theta_0 = np.random.<span class="function">uniform</span>(<span class="number">0</span>, <span class="number">2</span> * np.pi, n_echantillons // <span class="number">2</span>)
-r_0 = <span class="number">0.5</span> + np.random.<span class="function">randn</span>(n_echantillons // <span class="number">2</span>) * bruit
-X_0 = np.<span class="function">column_stack</span>([r_0 * np.<span class="function">cos</span>(theta_0), r_0 * np.<span class="function">sin</span>(theta_0)])
-
-<span class="comment"># Classe 1 : cercle exterieur</span>
-theta_1 = np.random.<span class="function">uniform</span>(<span class="number">0</span>, <span class="number">2</span> * np.pi, n_echantillons // <span class="number">2</span>)
-r_1 = <span class="number">1.5</span> + np.random.<span class="function">randn</span>(n_echantillons // <span class="number">2</span>) * bruit
-X_1 = np.<span class="function">column_stack</span>([r_1 * np.<span class="function">cos</span>(theta_1), r_1 * np.<span class="function">sin</span>(theta_1)])
-
+np.random.<span class="function">seed</span>(<span class="number">42</span>); torch.<span class="function">manual_seed</span>(<span class="number">42</span>)
+n = <span class="number">250</span>  <span class="comment"># echantillons par classe</span>
+theta_0 = np.random.<span class="function">uniform</span>(<span class="number">0</span>, <span class="number">2</span>*np.pi, n)
+theta_1 = np.random.<span class="function">uniform</span>(<span class="number">0</span>, <span class="number">2</span>*np.pi, n)
+r_0, r_1 = <span class="number">0.5</span> + np.random.<span class="function">randn</span>(n)*<span class="number">0.1</span>, <span class="number">1.5</span> + np.random.<span class="function">randn</span>(n)*<span class="number">0.1</span>
+X_0 = np.<span class="function">column_stack</span>([r_0*np.<span class="function">cos</span>(theta_0), r_0*np.<span class="function">sin</span>(theta_0)])
+X_1 = np.<span class="function">column_stack</span>([r_1*np.<span class="function">cos</span>(theta_1), r_1*np.<span class="function">sin</span>(theta_1)])
 X = torch.<span class="function">tensor</span>(np.<span class="function">vstack</span>([X_0, X_1]), dtype=torch.float32)
-y = torch.<span class="function">tensor</span>(np.<span class="function">array</span>([<span class="number">0</span>] * (n_echantillons // <span class="number">2</span>) + [<span class="number">1</span>] * (n_echantillons // <span class="number">2</span>)),
-                 dtype=torch.float32).<span class="function">unsqueeze</span>(<span class="number">1</span>)
+y = torch.<span class="function">tensor</span>([<span class="number">0</span>]*n + [<span class="number">1</span>]*n, dtype=torch.float32).<span class="function">unsqueeze</span>(<span class="number">1</span>)
+<span class="function">print</span>(<span class="string">f"Donnees : {X.shape[0]} echantillons, {X.shape[1]} features"</span>)</div>
 
-<span class="function">print</span>(<span class="string">f"Donnees : {X.shape[0]} echantillons, {X.shape[1]} features"</span>)
-<span class="function">print</span>(<span class="string">f"Classes : {int(y.sum().item())} positifs, {int((1-y).sum().item())} negatifs"</span>)</div>
-
-    <div class="output-block">Donnees : 500 echantillons, 2 features
-Classes : 250 positifs, 250 negatifs</div>
+    <div class="output-block">Donnees : 500 echantillons, 2 features</div>
 
     <h3>8.2 Architecture du MLP</h3>
 
-    <div class="code-block"><span class="comment"># Methode 1 : Classe personnalisee (recommandee pour la flexibilite)</span>
+    <div class="code-block"><span class="comment"># Methode 1 : Classe personnalisee (recommandee)</span>
 <span class="keyword">class</span> <span class="function">ClassifieurMLP</span>(nn.Module):
     <span class="keyword">def</span> <span class="function">__init__</span>(self, dim_entree, dim_cachee1, dim_cachee2, dim_sortie):
         <span class="function">super</span>().__init__()
@@ -815,35 +754,22 @@ Classes : 250 positifs, 250 negatifs</div>
         self.couche3 = nn.<span class="function">Linear</span>(dim_cachee2, dim_sortie)
         self.relu = nn.<span class="function">ReLU</span>()
         self.sigmoid = nn.<span class="function">Sigmoid</span>()
-
     <span class="keyword">def</span> <span class="function">forward</span>(self, x):
         x = self.<span class="function">relu</span>(self.<span class="function">couche1</span>(x))
         x = self.<span class="function">relu</span>(self.<span class="function">couche2</span>(x))
-        x = self.<span class="function">sigmoid</span>(self.<span class="function">couche3</span>(x))
-        <span class="keyword">return</span> x
+        <span class="keyword">return</span> self.<span class="function">sigmoid</span>(self.<span class="function">couche3</span>(x))
 
-<span class="comment"># Methode 2 : nn.Sequential (plus concise, moins flexible)</span>
+<span class="comment"># Methode 2 equivalente : nn.Sequential</span>
 modele_seq = nn.<span class="function">Sequential</span>(
-    nn.<span class="function">Linear</span>(<span class="number">2</span>, <span class="number">32</span>),
-    nn.<span class="function">ReLU</span>(),
-    nn.<span class="function">Linear</span>(<span class="number">32</span>, <span class="number">16</span>),
-    nn.<span class="function">ReLU</span>(),
-    nn.<span class="function">Linear</span>(<span class="number">16</span>, <span class="number">1</span>),
-    nn.<span class="function">Sigmoid</span>()
-)
+    nn.<span class="function">Linear</span>(<span class="number">2</span>, <span class="number">32</span>), nn.<span class="function">ReLU</span>(), nn.<span class="function">Linear</span>(<span class="number">32</span>, <span class="number">16</span>), nn.<span class="function">ReLU</span>(),
+    nn.<span class="function">Linear</span>(<span class="number">16</span>, <span class="number">1</span>), nn.<span class="function">Sigmoid</span>())
 
-<span class="comment"># Utilisons la classe personnalisee</span>
 modele = <span class="function">ClassifieurMLP</span>(dim_entree=<span class="number">2</span>, dim_cachee1=<span class="number">32</span>, dim_cachee2=<span class="number">16</span>, dim_sortie=<span class="number">1</span>)
-
-<span class="comment"># Compter les parametres</span>
 n_params = <span class="function">sum</span>(p.<span class="function">numel</span>() <span class="keyword">for</span> p <span class="keyword">in</span> modele.<span class="function">parameters</span>())
-<span class="function">print</span>(<span class="string">f"\nArchitecture du modele :\n{modele}"</span>)
-<span class="function">print</span>(<span class="string">f"\nNombre total de parametres : {n_params}"</span>)
-<span class="function">print</span>(<span class="string">f"  - couche1 : 2*32 + 32 = {2*32 + 32} (poids + biais)"</span>)
-<span class="function">print</span>(<span class="string">f"  - couche2 : 32*16 + 16 = {32*16 + 16} (poids + biais)"</span>)
-<span class="function">print</span>(<span class="string">f"  - couche3 : 16*1 + 1 = {16*1 + 1} (poids + biais)"</span>)</div>
+<span class="function">print</span>(<span class="string">f"Architecture :\n{modele}"</span>)
+<span class="function">print</span>(<span class="string">f"\nTotal : {n_params} parametres (96 + 528 + 17 = couche1 + couche2 + couche3)"</span>)</div>
 
-    <div class="output-block">Architecture du modele :
+    <div class="output-block">Architecture :
 ClassifieurMLP(
   (couche1): Linear(in_features=2, out_features=32, bias=True)
   (couche2): Linear(in_features=32, out_features=16, bias=True)
@@ -852,62 +778,35 @@ ClassifieurMLP(
   (sigmoid): Sigmoid()
 )
 
-Nombre total de parametres : 625
-  - couche1 : 2*32 + 32 = 96 (poids + biais)
-  - couche2 : 32*16 + 16 = 528 (poids + biais)
-  - couche3 : 16*1 + 1 = 17 (poids + biais)</div>
+Total : 625 parametres (96 + 528 + 17 = couche1 + couche2 + couche3)</div>
 
     <h3>8.3 Boucle d'entrainement complete</h3>
 
-    <div class="code-block"><span class="comment"># Configuration de l'entrainement</span>
-critere = nn.<span class="function">BCELoss</span>()
+    <div class="code-block">critere = nn.<span class="function">BCELoss</span>()
 optimiseur = optim.<span class="function">Adam</span>(modele.<span class="function">parameters</span>(), lr=<span class="number">0.01</span>)
-
-<span class="comment"># DataLoader pour le mini-batch</span>
-dataset = <span class="function">TensorDataset</span>(X, y)
-chargeur = <span class="function">DataLoader</span>(dataset, batch_size=<span class="number">32</span>, shuffle=<span class="keyword">True</span>)
-
-<span class="comment"># Historique pour la visualisation</span>
+chargeur = <span class="function">DataLoader</span>(<span class="function">TensorDataset</span>(X, y), batch_size=<span class="number">32</span>, shuffle=<span class="keyword">True</span>)
 historique = {<span class="string">"perte"</span>: [], <span class="string">"precision"</span>: []}
 
-<span class="comment"># Boucle d'entrainement</span>
 n_epoques = <span class="number">100</span>
 <span class="keyword">for</span> epoque <span class="keyword">in</span> <span class="function">range</span>(n_epoques):
-    perte_totale = <span class="number">0.0</span>
-    correct = <span class="number">0</span>
-    total = <span class="number">0</span>
-
-    modele.<span class="function">train</span>()  <span class="comment"># Mode entrainement</span>
+    perte_totale, correct, total = <span class="number">0.0</span>, <span class="number">0</span>, <span class="number">0</span>
+    modele.<span class="function">train</span>()
     <span class="keyword">for</span> X_batch, y_batch <span class="keyword">in</span> chargeur:
-        <span class="comment"># 1. Forward pass</span>
-        predictions = <span class="function">modele</span>(X_batch)
-
-        <span class="comment"># 2. Calcul de la perte</span>
-        perte = <span class="function">critere</span>(predictions, y_batch)
-
-        <span class="comment"># 3. Backward pass (backpropagation)</span>
-        optimiseur.<span class="function">zero_grad</span>()  <span class="comment"># RAZ des gradients accumules</span>
-        perte.<span class="function">backward</span>()          <span class="comment"># Calcul des gradients</span>
-        optimiseur.<span class="function">step</span>()           <span class="comment"># Mise a jour des poids</span>
-
-        <span class="comment"># Statistiques du batch</span>
+        predictions = <span class="function">modele</span>(X_batch)             <span class="comment"># 1. Forward pass</span>
+        perte = <span class="function">critere</span>(predictions, y_batch)      <span class="comment"># 2. Calcul de la perte</span>
+        optimiseur.<span class="function">zero_grad</span>()                     <span class="comment"># 3. RAZ des gradients</span>
+        perte.<span class="function">backward</span>()                            <span class="comment"># 4. Backpropagation</span>
+        optimiseur.<span class="function">step</span>()                            <span class="comment"># 5. Mise a jour des poids</span>
         perte_totale += perte.<span class="function">item</span>() * X_batch.<span class="function">size</span>(<span class="number">0</span>)
-        pred_classes = (predictions >= <span class="number">0.5</span>).<span class="function">float</span>()
-        correct += (pred_classes == y_batch).<span class="function">sum</span>().<span class="function">item</span>()
+        correct += ((predictions >= <span class="number">0.5</span>).<span class="function">float</span>() == y_batch).<span class="function">sum</span>().<span class="function">item</span>()
         total += y_batch.<span class="function">size</span>(<span class="number">0</span>)
-
-    <span class="comment"># Metriques de l'epoque</span>
-    perte_moy = perte_totale / total
-    precision = correct / total
+    perte_moy, precision = perte_totale / total, correct / total
     historique[<span class="string">"perte"</span>].<span class="function">append</span>(perte_moy)
     historique[<span class="string">"precision"</span>].<span class="function">append</span>(precision)
-
     <span class="keyword">if</span> (epoque + <span class="number">1</span>) % <span class="number">20</span> == <span class="number">0</span>:
         <span class="function">print</span>(<span class="string">f"Epoque {epoque+1:3d}/{n_epoques} | Perte : {perte_moy:.4f} | Precision : {precision:.2%}"</span>)
 
-<span class="function">print</span>(<span class="string">f"\n--- Entrainement termine ---"</span>)
-<span class="function">print</span>(<span class="string">f"Perte finale    : {historique['perte'][-1]:.4f}"</span>)
-<span class="function">print</span>(<span class="string">f"Precision finale : {historique['precision'][-1]:.2%}"</span>)</div>
+<span class="function">print</span>(<span class="string">f"\nPerte finale : {historique['perte'][-1]:.4f} | Precision : {historique['precision'][-1]:.2%}"</span>)</div>
 
     <div class="output-block">Epoque  20/100 | Perte : 0.2847 | Precision : 88.40%
 Epoque  40/100 | Perte : 0.0612 | Precision : 97.80%
@@ -915,9 +814,7 @@ Epoque  60/100 | Perte : 0.0198 | Precision : 99.60%
 Epoque  80/100 | Perte : 0.0094 | Precision : 100.00%
 Epoque 100/100 | Perte : 0.0058 | Precision : 100.00%
 
---- Entrainement termine ---
-Perte finale    : 0.0058
-Precision finale : 100.00%</div>
+Perte finale : 0.0058 | Precision : 100.00%</div>
 
     <div class="prof-note">
         La boucle d'entrainement en PyTorch suit toujours le meme schema en 5 etapes : (1) forward pass, (2) calcul de la perte, (3) <code>zero_grad()</code>, (4) <code>backward()</code>, (5) <code>step()</code>. L'ordre est crucial. Si vous oubliez <code>zero_grad()</code>, les gradients s'accumuleront d'un batch a l'autre et l'entrainement deviendra instable ou divergera.

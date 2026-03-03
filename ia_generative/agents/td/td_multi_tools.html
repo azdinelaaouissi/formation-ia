@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Agent avec Outils Multiples</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        p { margin-bottom: 12px; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .svg-container { text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Agent avec Outils Multiples</h1>
+    <p class="subtitle">Agents IA - TD 2/5 : Concevoir et intégrer 5+ outils spécialisés dans un agent intelligent avec routing automatique</p>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 1 : RECAPITULATIF -->
+    <!-- ============================================ -->
+    <h2>1. Récapitulatif : Tools, Function Calling et @tool</h2>
+
+    <p>Dans le TD précédent, nous avons construit un agent ReAct avec 3 outils simples. Maintenant, nous allons créer un agent robuste avec <strong>5 outils spécialisés</strong> et un système de routing intelligent.</p>
+
+    <div class="definition">
+        Un <strong>Tool (outil)</strong> dans le contexte des agents IA est une fonction exécutable que le LLM peut appeler pour interagir avec le monde extérieur. Chaque outil possède un nom, une description (utilisée par le LLM pour décider quand l'utiliser), un schéma d'entrée, et une fonction d'exécution.
+    </div>
+
+    <h3>Function Calling vs Parsing Texte</h3>
+    <p>Il existe deux approches pour connecter un LLM à des outils :</p>
+
+    <table>
+        <tr>
+            <th>Approche</th>
+            <th>Mécanisme</th>
+            <th>Avantages</th>
+            <th>Inconvénients</th>
+        </tr>
+        <tr>
+            <td><strong>Parsing texte</strong> (TD 1)</td>
+            <td>Le LLM écrit "Action: tool_name" et on parse avec regex</td>
+            <td>Fonctionne avec tout LLM</td>
+            <td>Fragile, pas de validation de schéma</td>
+        </tr>
+        <tr>
+            <td><strong>Function Calling</strong></td>
+            <td>Le LLM retourne un JSON structuré avec le nom de l'outil et les arguments typés</td>
+            <td>Fiable, typé, appels parallèles possibles</td>
+            <td>Nécessite un LLM compatible (GPT-4, Claude, etc.)</td>
+        </tr>
+    </table>
+
+    <h3>Le décorateur @tool de LangChain</h3>
+    <p>LangChain fournit le décorateur <code>@tool</code> qui transforme automatiquement une fonction Python en outil compatible avec le function calling :</p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">mon_outil</span>(param1: <span class="keyword">str</span>, param2: <span class="keyword">int</span> = <span class="number">10</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Description de l'outil utilisée par le LLM pour décider quand l'appeler.
+
+    Args:
+        param1: Description du premier paramètre.
+        param2: Description du second paramètre (défaut: 10).
+    """</span>
+    <span class="keyword">return</span> <span class="string">f"Résultat avec {param1} et {param2}"</span></div>
+
+    <div class="prof-note">
+        La docstring est CRUCIALE : c'est elle que le LLM lit pour décider quand et comment utiliser l'outil. Une mauvaise description mène à un mauvais routing. Soyez précis, concis, et donnez des exemples si nécessaire.
+    </div>
+
+    <h3>Les 5 outils que nous allons construire</h3>
+    <ol>
+        <li><strong>Web Search Tool</strong> : Recherche d'informations actuelles via Tavily</li>
+        <li><strong>Calculator Tool</strong> : Évaluation sécurisée d'expressions mathématiques</li>
+        <li><strong>Python Executor Tool</strong> : Exécution de code Python dans un sandbox</li>
+        <li><strong>File Reader Tool</strong> : Lecture et analyse de fichiers documents</li>
+        <li><strong>API Caller Tool</strong> : Appels REST API génériques</li>
+    </ol>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 2 : ARCHITECTURE -->
+    <!-- ============================================ -->
+    <h2>2. Architecture : Agent Hub avec Tool Spokes</h2>
+
+    <p>Notre agent fonctionne comme un hub central qui dispatche les requêtes vers les outils appropriés. Le LLM joue le rôle de routeur intelligent.</p>
+
+    <div class="svg-container">
+        <svg width="800" height="550" viewBox="0 0 800 550" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="800" height="550" fill="#0f0f23" rx="12"/>
+
+            <!-- Title -->
+            <text x="400" y="35" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Architecture Agent Multi-Tools</text>
+
+            <!-- Central Agent Hub -->
+            <circle cx="400" cy="270" r="70" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="3"/>
+            <text x="400" y="260" text-anchor="middle" fill="#ff6b35" font-size="14" font-weight="bold">Agent LLM</text>
+            <text x="400" y="280" text-anchor="middle" fill="#ff8c42" font-size="11">(Router Intelligent)</text>
+
+            <!-- User Input -->
+            <rect x="300" y="55" width="200" height="40" rx="8" fill="none" stroke="#569cd6" stroke-width="2"/>
+            <text x="400" y="80" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Question Utilisateur</text>
+            <line x1="400" y1="95" x2="400" y2="200" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+            <!-- Tool 1: Web Search (top-left) -->
+            <rect x="60" y="100" width="150" height="55" rx="8" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="135" y="122" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Web Search</text>
+            <text x="135" y="142" text-anchor="middle" fill="#aaa" font-size="10">Tavily API</text>
+            <line x1="210" y1="127" x2="335" y2="240" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+            <!-- Tool 2: Calculator (top-right) -->
+            <rect x="590" y="100" width="150" height="55" rx="8" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="665" y="122" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Calculator</text>
+            <text x="665" y="142" text-anchor="middle" fill="#aaa" font-size="10">Safe Math Eval</text>
+            <line x1="590" y1="127" x2="465" y2="240" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+            <!-- Tool 3: Python Executor (left) -->
+            <rect x="40" y="245" width="150" height="55" rx="8" fill="rgba(86,156,214,0.08)" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="115" y="267" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">Python Executor</text>
+            <text x="115" y="287" text-anchor="middle" fill="#aaa" font-size="10">Sandboxed Code</text>
+            <line x1="190" y1="272" x2="330" y2="270" stroke="#569cd6" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+            <!-- Tool 4: File Reader (right) -->
+            <rect x="610" y="245" width="150" height="55" rx="8" fill="rgba(86,156,214,0.08)" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="685" y="267" text-anchor="middle" fill="#569cd6" font-size="12" font-weight="bold">File Reader</text>
+            <text x="685" y="287" text-anchor="middle" fill="#aaa" font-size="10">Documents & CSV</text>
+            <line x1="610" y1="272" x2="470" y2="270" stroke="#569cd6" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+            <!-- Tool 5: API Caller (bottom-left) -->
+            <rect x="110" y="395" width="150" height="55" rx="8" fill="rgba(255,140,66,0.08)" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="185" y="417" text-anchor="middle" fill="#ff8c42" font-size="12" font-weight="bold">API Caller</text>
+            <text x="185" y="437" text-anchor="middle" fill="#aaa" font-size="10">REST API Generic</text>
+            <line x1="250" y1="410" x2="360" y2="330" stroke="#ff8c42" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+            <!-- Error Handler (bottom-right) -->
+            <rect x="540" y="395" width="150" height="55" rx="8" fill="rgba(255,68,68,0.08)" stroke="#ff4444" stroke-width="1.5"/>
+            <text x="615" y="417" text-anchor="middle" fill="#ff4444" font-size="12" font-weight="bold">Error Handler</text>
+            <text x="615" y="437" text-anchor="middle" fill="#aaa" font-size="10">Retry & Fallback</text>
+            <line x1="550" y1="410" x2="440" y2="330" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+            <!-- Output -->
+            <rect x="300" y="480" width="200" height="40" rx="8" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="400" y="505" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Réponse Structurée</text>
+            <line x1="400" y1="340" x2="400" y2="480" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowGreen)"/>
+
+            <!-- Arrow markers -->
+            <defs>
+                <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Le LLM agit comme un routeur intelligent : il analyse la question, détermine quels outils sont nécessaires, et les appelle dans le bon ordre. Avec le function calling, il peut même appeler plusieurs outils en parallèle dans une seule itération.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 3 : WEB SEARCH TOOL -->
+    <!-- ============================================ -->
+    <h2>3. Exercice : Web Search Tool (Tavily API)</h2>
+
+    <p>Notre premier outil permettra à l'agent de rechercher des informations actuelles sur internet via l'API Tavily, spécialement conçue pour les agents IA.</p>
+
+    <div class="step-box">
+        <strong>Étape 3.1 :</strong> Installer et configurer Tavily.
+    </div>
+
+    <div class="code-block"><span class="comment"># Installation</span>
+pip install tavily-python
+
+<span class="comment"># Dans .env</span>
+TAVILY_API_KEY=tvly-votre-cle-ici</div>
+
+    <div class="step-box">
+        <strong>Étape 3.2 :</strong> Implémenter le Web Search Tool avec des options avancées.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> os
+<span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> tavily <span class="keyword">import</span> TavilyClient
+
+<span class="function">load_dotenv</span>()
+tavily = <span class="function">TavilyClient</span>(api_key=os.<span class="function">getenv</span>(<span class="string">"TAVILY_API_KEY"</span>))
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">web_search</span>(query: <span class="keyword">str</span>, max_results: <span class="keyword">int</span> = <span class="number">3</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Rechercher des informations actuelles et récentes sur internet.
+
+    Utilise cette fonction quand tu as besoin d'informations à jour,
+    de faits récents, d'actualités, ou de données que tu ne connais pas.
+
+    Args:
+        query: La requête de recherche en langage naturel.
+        max_results: Nombre maximum de résultats (défaut: 3, max: 5).
+    """</span>
+    <span class="keyword">try</span>:
+        <span class="comment"># Limiter le nombre de résultats</span>
+        max_results = <span class="function">min</span>(max_results, <span class="number">5</span>)
+
+        response = tavily.<span class="function">search</span>(
+            query=query,
+            max_results=max_results,
+            search_depth=<span class="string">"advanced"</span>,  <span class="comment"># "basic" ou "advanced"</span>
+            include_answer=<span class="keyword">True</span>,       <span class="comment"># Inclure une réponse directe</span>
+        )
+
+        <span class="comment"># Formater les résultats</span>
+        output_parts = []
+
+        <span class="comment"># Réponse directe de Tavily si disponible</span>
+        <span class="keyword">if</span> response.<span class="function">get</span>(<span class="string">"answer"</span>):
+            output_parts.<span class="function">append</span>(<span class="string">f"Réponse directe: {response['answer']}\n"</span>)
+
+        <span class="comment"># Résultats détaillés</span>
+        <span class="keyword">for</span> i, result <span class="keyword">in</span> <span class="function">enumerate</span>(response[<span class="string">"results"</span>], <span class="number">1</span>):
+            output_parts.<span class="function">append</span>(
+                <span class="string">f"[{i}] {result['title']}\n"</span>
+                <span class="string">f"    URL: {result['url']}\n"</span>
+                <span class="string">f"    {result['content'][:250]}\n"</span>
+            )
+
+        <span class="keyword">return</span> <span class="string">"\n"</span>.<span class="function">join</span>(output_parts) <span class="keyword">if</span> output_parts <span class="keyword">else</span> <span class="string">"Aucun résultat trouvé."</span>
+
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur lors de la recherche: {str(e)}"</span></div>
+
+    <div class="step-box">
+        <strong>Étape 3.3 :</strong> Tester le Web Search Tool.
+    </div>
+
+    <div class="code-block"><span class="comment"># Test direct de l'outil</span>
+result = web_search.<span class="function">invoke</span>({<span class="string">"query"</span>: <span class="string">"dernières avancées intelligence artificielle 2025"</span>})
+<span class="function">print</span>(result)</div>
+
+    <div class="output-block">
+Réponse directe: Les avancées majeures en IA en 2025 incluent les modèles
+multimodaux de nouvelle génération, les agents autonomes...
+
+[1] Les tendances IA 2025 : agents, multimodal et raisonnement
+    URL: https://example.com/tendances-ia-2025
+    Les grands laboratoires comme OpenAI, Google DeepMind et Anthropic...
+
+[2] Rapport sur l'état de l'IA en 2025
+    URL: https://example.com/rapport-ia-2025
+    Le marché de l'IA générative a dépassé les 100 milliards de dollars...</div>
+
+    <div class="effect">
+        Le search tool retourne des résultats structurés avec une réponse directe, des titres, URLs et extraits. Le LLM pourra facilement exploiter ces informations pour formuler sa réponse.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 4 : CALCULATOR TOOL -->
+    <!-- ============================================ -->
+    <h2>4. Exercice : Calculator Tool (Safe Math Evaluation)</h2>
+
+    <p>Notre calculatrice doit pouvoir gérer des expressions mathématiques complexes tout en restant sécurisée contre l'injection de code.</p>
+
+    <div class="step-box">
+        <strong>Étape 4.1 :</strong> Implémenter une calculatrice avancée avec support des fonctions mathématiques.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> ast
+<span class="keyword">import</span> math
+<span class="keyword">import</span> operator
+
+<span class="comment"># Opérateurs binaires autorisés</span>
+SAFE_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.FloorDiv: operator.floordiv,
+    ast.Pow: operator.pow,
+    ast.Mod: operator.mod,
+}
+
+<span class="comment"># Opérateurs unaires autorisés</span>
+SAFE_UNARY = {
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
+
+<span class="comment"># Fonctions mathématiques autorisées</span>
+SAFE_FUNCTIONS = {
+    <span class="string">"sqrt"</span>: math.sqrt,
+    <span class="string">"abs"</span>: abs,
+    <span class="string">"round"</span>: round,
+    <span class="string">"log"</span>: math.log,
+    <span class="string">"log10"</span>: math.log10,
+    <span class="string">"sin"</span>: math.sin,
+    <span class="string">"cos"</span>: math.cos,
+    <span class="string">"tan"</span>: math.tan,
+    <span class="string">"pi"</span>: math.pi,
+    <span class="string">"e"</span>: math.e,
+}
+
+<span class="keyword">def</span> <span class="function">safe_eval_node</span>(node):
+    <span class="string">"""Évalue récursivement un noeud AST de manière sécurisée."""</span>
+    <span class="keyword">if</span> <span class="function">isinstance</span>(node, ast.Constant):
+        <span class="keyword">if</span> <span class="function">isinstance</span>(node.value, (<span class="keyword">int</span>, <span class="keyword">float</span>)):
+            <span class="keyword">return</span> node.value
+        <span class="keyword">raise</span> ValueError(<span class="string">f"Type non autorisé: {type(node.value)}"</span>)
+
+    <span class="keyword">elif</span> <span class="function">isinstance</span>(node, ast.BinOp):
+        left = <span class="function">safe_eval_node</span>(node.left)
+        right = <span class="function">safe_eval_node</span>(node.right)
+        op = SAFE_OPERATORS.<span class="function">get</span>(<span class="function">type</span>(node.op))
+        <span class="keyword">if</span> op <span class="keyword">is</span> <span class="keyword">None</span>:
+            <span class="keyword">raise</span> ValueError(<span class="string">f"Opérateur non autorisé"</span>)
+        <span class="keyword">return</span> <span class="function">op</span>(left, right)
+
+    <span class="keyword">elif</span> <span class="function">isinstance</span>(node, ast.UnaryOp):
+        operand = <span class="function">safe_eval_node</span>(node.operand)
+        op = SAFE_UNARY.<span class="function">get</span>(<span class="function">type</span>(node.op))
+        <span class="keyword">if</span> op <span class="keyword">is</span> <span class="keyword">None</span>:
+            <span class="keyword">raise</span> ValueError(<span class="string">f"Opérateur unaire non autorisé"</span>)
+        <span class="keyword">return</span> <span class="function">op</span>(operand)
+
+    <span class="keyword">elif</span> <span class="function">isinstance</span>(node, ast.Call):
+        <span class="comment"># Appel de fonction (sqrt, log, etc.)</span>
+        func_name = node.func.id <span class="keyword">if</span> <span class="function">isinstance</span>(node.func, ast.Name) <span class="keyword">else</span> <span class="keyword">None</span>
+        <span class="keyword">if</span> func_name <span class="keyword">not in</span> SAFE_FUNCTIONS:
+            <span class="keyword">raise</span> ValueError(<span class="string">f"Fonction non autorisée: {func_name}"</span>)
+        func = SAFE_FUNCTIONS[func_name]
+        <span class="keyword">if</span> <span class="function">callable</span>(func):
+            args = [<span class="function">safe_eval_node</span>(a) <span class="keyword">for</span> a <span class="keyword">in</span> node.args]
+            <span class="keyword">return</span> <span class="function">func</span>(*args)
+        <span class="keyword">return</span> func  <span class="comment"># Pour les constantes comme pi, e</span>
+
+    <span class="keyword">elif</span> <span class="function">isinstance</span>(node, ast.Name):
+        <span class="comment"># Variable (pi, e)</span>
+        <span class="keyword">if</span> node.id <span class="keyword">in</span> SAFE_FUNCTIONS:
+            <span class="keyword">return</span> SAFE_FUNCTIONS[node.id]
+        <span class="keyword">raise</span> ValueError(<span class="string">f"Variable non autorisée: {node.id}"</span>)
+
+    <span class="keyword">raise</span> ValueError(<span class="string">f"Expression non autorisée: {type(node)}"</span>)
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculator</span>(expression: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Effectuer un calcul mathématique de manière sécurisée.
+
+    Supporte : +, -, *, /, **, %, sqrt(), log(), sin(), cos(), tan(), pi, e.
+    Exemples: '25 * 4 + 10', 'sqrt(144)', '2 ** 10', 'pi * 5 ** 2'.
+
+    Args:
+        expression: L'expression mathématique à évaluer.
+    """</span>
+    <span class="keyword">try</span>:
+        tree = ast.<span class="function">parse</span>(expression, mode=<span class="string">"eval"</span>)
+        result = <span class="function">safe_eval_node</span>(tree.body)
+        <span class="comment"># Formater le résultat</span>
+        <span class="keyword">if</span> <span class="function">isinstance</span>(result, <span class="keyword">float</span>) <span class="keyword">and</span> result == <span class="function">int</span>(result):
+            result = <span class="function">int</span>(result)
+        <span class="keyword">return</span> <span class="string">f"{expression} = {result}"</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur de calcul pour '{expression}': {str(e)}"</span></div>
+
+    <div class="step-box">
+        <strong>Étape 4.2 :</strong> Tester la calculatrice avec différentes expressions.
+    </div>
+
+    <div class="code-block"><span class="comment"># Tests variés</span>
+tests = [
+    <span class="string">"25 * 4 + 10"</span>,
+    <span class="string">"sqrt(144)"</span>,
+    <span class="string">"2 ** 10"</span>,
+    <span class="string">"pi * 5 ** 2"</span>,
+    <span class="string">"log10(1000)"</span>,
+    <span class="string">"sin(pi / 2)"</span>,
+]
+
+<span class="keyword">for</span> expr <span class="keyword">in</span> tests:
+    result = calculator.<span class="function">invoke</span>({<span class="string">"expression"</span>: expr})
+    <span class="function">print</span>(result)</div>
+
+    <div class="output-block">
+25 * 4 + 10 = 110
+sqrt(144) = 12
+2 ** 10 = 1024
+pi * 5 ** 2 = 78.53981633974483
+log10(1000) = 3
+sin(pi / 2) = 1.0</div>
+
+    <div class="warning">
+        Notre calculatrice refuse automatiquement les appels dangereux comme <code>__import__('os').system('rm -rf /')</code>. Seules les opérations mathématiques pures sont autorisées grâce à la validation AST.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 5 : PYTHON EXECUTOR -->
+    <!-- ============================================ -->
+    <h2>5. Exercice : Python Executor Tool (Sandboxed)</h2>
+
+    <p>Parfois, la calculatrice ne suffit pas et l'agent a besoin d'exécuter du code Python arbitraire. Nous allons créer un environnement d'exécution sécurisé.</p>
+
+    <div class="step-box">
+        <strong>Étape 5.1 :</strong> Implémenter un exécuteur Python sandboxé.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> sys
+<span class="keyword">import</span> io
+<span class="keyword">import</span> signal
+<span class="keyword">import</span> traceback
+
+<span class="keyword">class</span> <span class="function">TimeoutError</span>(Exception):
+    <span class="keyword">pass</span>
+
+<span class="keyword">def</span> <span class="function">timeout_handler</span>(signum, frame):
+    <span class="keyword">raise</span> <span class="function">TimeoutError</span>(<span class="string">"Exécution interrompue: timeout de 10 secondes dépassé"</span>)
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">python_executor</span>(code: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Exécuter du code Python dans un environnement sécurisé.
+
+    Utilise cet outil pour des calculs complexes, du traitement de données,
+    ou des opérations qui ne peuvent pas être faites avec la calculatrice simple.
+
+    Le code est exécuté dans un sandbox avec un timeout de 10 secondes.
+    Les modules autorisés: math, statistics, collections, itertools, json, re.
+
+    Args:
+        code: Le code Python à exécuter. Utilise print() pour afficher les résultats.
+    """</span>
+    <span class="comment"># Modules autorisés dans le sandbox</span>
+    safe_builtins = {
+        <span class="string">"print"</span>: <span class="keyword">print</span>,
+        <span class="string">"range"</span>: <span class="keyword">range</span>,
+        <span class="string">"len"</span>: <span class="keyword">len</span>,
+        <span class="string">"int"</span>: <span class="keyword">int</span>,
+        <span class="string">"float"</span>: <span class="keyword">float</span>,
+        <span class="string">"str"</span>: <span class="keyword">str</span>,
+        <span class="string">"list"</span>: <span class="keyword">list</span>,
+        <span class="string">"dict"</span>: <span class="keyword">dict</span>,
+        <span class="string">"tuple"</span>: <span class="keyword">tuple</span>,
+        <span class="string">"set"</span>: <span class="keyword">set</span>,
+        <span class="string">"sorted"</span>: <span class="keyword">sorted</span>,
+        <span class="string">"enumerate"</span>: <span class="keyword">enumerate</span>,
+        <span class="string">"zip"</span>: <span class="keyword">zip</span>,
+        <span class="string">"map"</span>: <span class="keyword">map</span>,
+        <span class="string">"filter"</span>: <span class="keyword">filter</span>,
+        <span class="string">"sum"</span>: <span class="keyword">sum</span>,
+        <span class="string">"min"</span>: <span class="keyword">min</span>,
+        <span class="string">"max"</span>: <span class="keyword">max</span>,
+        <span class="string">"abs"</span>: <span class="keyword">abs</span>,
+        <span class="string">"round"</span>: <span class="keyword">round</span>,
+        <span class="string">"isinstance"</span>: <span class="keyword">isinstance</span>,
+        <span class="string">"True"</span>: <span class="keyword">True</span>,
+        <span class="string">"False"</span>: <span class="keyword">False</span>,
+        <span class="string">"None"</span>: <span class="keyword">None</span>,
+    }
+
+    <span class="comment"># Modules autorisés pour import</span>
+    safe_modules = {
+        <span class="string">"math"</span>: math,
+        <span class="string">"statistics"</span>: __import__(<span class="string">"statistics"</span>),
+        <span class="string">"collections"</span>: __import__(<span class="string">"collections"</span>),
+        <span class="string">"itertools"</span>: __import__(<span class="string">"itertools"</span>),
+        <span class="string">"json"</span>: __import__(<span class="string">"json"</span>),
+        <span class="string">"re"</span>: __import__(<span class="string">"re"</span>),
+    }
+
+    <span class="comment"># Capturer stdout</span>
+    old_stdout = sys.stdout
+    sys.stdout = captured = io.<span class="function">StringIO</span>()
+
+    <span class="keyword">try</span>:
+        <span class="comment"># Préparer l'environnement d'exécution</span>
+        exec_globals = {<span class="string">"__builtins__"</span>: safe_builtins}
+        exec_globals.<span class="function">update</span>(safe_modules)
+
+        <span class="comment"># Exécuter avec timeout (Linux/Mac seulement)</span>
+        <span class="keyword">try</span>:
+            signal.<span class="function">signal</span>(signal.SIGALRM, timeout_handler)
+            signal.<span class="function">alarm</span>(<span class="number">10</span>)  <span class="comment"># 10 secondes max</span>
+        <span class="keyword">except</span> (AttributeError, ValueError):
+            <span class="keyword">pass</span>  <span class="comment"># Windows n'a pas SIGALRM</span>
+
+        <span class="function">exec</span>(code, exec_globals)
+
+        <span class="keyword">try</span>:
+            signal.<span class="function">alarm</span>(<span class="number">0</span>)  <span class="comment"># Désactiver le timeout</span>
+        <span class="keyword">except</span> (AttributeError, ValueError):
+            <span class="keyword">pass</span>
+
+        output = captured.<span class="function">getvalue</span>()
+        <span class="keyword">return</span> output <span class="keyword">if</span> output <span class="keyword">else</span> <span class="string">"Code exécuté avec succès (pas de sortie print)."</span>
+
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur d'exécution:\n{traceback.format_exc()}"</span>
+    <span class="keyword">finally</span>:
+        sys.stdout = old_stdout</div>
+
+    <div class="step-box">
+        <strong>Étape 5.2 :</strong> Tester le Python Executor avec du code complexe.
+    </div>
+
+    <div class="code-block"><span class="comment"># Test : calcul statistique</span>
+code_test = <span class="string">"""
+données = [23, 45, 67, 89, 12, 34, 56, 78, 90, 11]
+moyenne = sum(données) / len(données)
+données_triées = sorted(données)
+n = len(données_triées)
+if n % 2 == 0:
+    médiane = (données_triées[n//2 - 1] + données_triées[n//2]) / 2
+else:
+    médiane = données_triées[n//2]
+
+print(f"Données: {données}")
+print(f"Moyenne: {moyenne}")
+print(f"Médiane: {médiane}")
+print(f"Min: {min(données)}, Max: {max(données)}")
+print(f"Étendue: {max(données) - min(données)}")
+"""</span>
+
+result = python_executor.<span class="function">invoke</span>({<span class="string">"code"</span>: code_test})
+<span class="function">print</span>(result)</div>
+
+    <div class="output-block">
+Données: [23, 45, 67, 89, 12, 34, 56, 78, 90, 11]
+Moyenne: 50.5
+Médiane: 50.5
+Min: 11, Max: 90
+Étendue: 79</div>
+
+    <div class="effect">
+        Le Python Executor permet à l'agent de résoudre des problèmes arbitrairement complexes. Il est sandboxé : pas d'accès au système de fichiers, pas d'import de modules dangereux, et un timeout de 10 secondes.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 6 : FILE READER TOOL -->
+    <!-- ============================================ -->
+    <h2>6. Exercice : File Reader Tool</h2>
+
+    <p>Cet outil permet à l'agent de lire et analyser des fichiers texte, CSV, JSON, etc. C'est essentiel pour les tâches d'analyse de données.</p>
+
+    <div class="step-box">
+        <strong>Étape 6.1 :</strong> Implémenter le File Reader avec support multi-format.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> csv
+<span class="keyword">import</span> json
+<span class="keyword">from</span> pathlib <span class="keyword">import</span> Path
+
+<span class="comment"># Répertoire autorisé pour la lecture de fichiers</span>
+ALLOWED_DIR = Path(<span class="string">"./workspace"</span>).<span class="function">resolve</span>()
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">file_reader</span>(file_path: <span class="keyword">str</span>, max_lines: <span class="keyword">int</span> = <span class="number">50</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Lire le contenu d'un fichier texte, CSV ou JSON.
+
+    Utilise cet outil quand tu dois analyser le contenu d'un fichier.
+    Les fichiers doivent être dans le répertoire workspace/.
+
+    Args:
+        file_path: Chemin du fichier relatif au workspace (ex: 'data.csv').
+        max_lines: Nombre maximum de lignes à lire (défaut: 50).
+    """</span>
+    <span class="keyword">try</span>:
+        <span class="comment"># Sécurité : vérifier que le chemin est dans le répertoire autorisé</span>
+        full_path = (ALLOWED_DIR / file_path).<span class="function">resolve</span>()
+        <span class="keyword">if</span> <span class="keyword">not</span> <span class="function">str</span>(full_path).<span class="function">startswith</span>(<span class="function">str</span>(ALLOWED_DIR)):
+            <span class="keyword">return</span> <span class="string">"Erreur: Accès refusé. Le fichier doit être dans workspace/"</span>
+
+        <span class="keyword">if</span> <span class="keyword">not</span> full_path.<span class="function">exists</span>():
+            <span class="keyword">return</span> <span class="string">f"Erreur: Fichier '{file_path}' non trouvé dans workspace/"</span>
+
+        suffix = full_path.suffix.<span class="function">lower</span>()
+
+        <span class="comment"># Lecture CSV</span>
+        <span class="keyword">if</span> suffix == <span class="string">".csv"</span>:
+            <span class="keyword">with</span> <span class="function">open</span>(full_path, <span class="string">"r"</span>, encoding=<span class="string">"utf-8"</span>) <span class="keyword">as</span> f:
+                reader = csv.<span class="function">DictReader</span>(f)
+                rows = []
+                <span class="keyword">for</span> i, row <span class="keyword">in</span> <span class="function">enumerate</span>(reader):
+                    <span class="keyword">if</span> i >= max_lines:
+                        <span class="keyword">break</span>
+                    rows.<span class="function">append</span>(<span class="function">dict</span>(row))
+
+                header = <span class="string">f"Fichier CSV: {file_path}\n"</span>
+                header += <span class="string">f"Colonnes: {list(rows[0].keys()) if rows else 'vide'}\n"</span>
+                header += <span class="string">f"Lignes affichées: {len(rows)}\n\n"</span>
+
+                <span class="keyword">for</span> row <span class="keyword">in</span> rows:
+                    header += <span class="string">" | "</span>.<span class="function">join</span>(<span class="string">f"{k}: {v}"</span> <span class="keyword">for</span> k, v <span class="keyword">in</span> row.<span class="function">items</span>()) + <span class="string">"\n"</span>
+                <span class="keyword">return</span> header
+
+        <span class="comment"># Lecture JSON</span>
+        <span class="keyword">elif</span> suffix == <span class="string">".json"</span>:
+            <span class="keyword">with</span> <span class="function">open</span>(full_path, <span class="string">"r"</span>, encoding=<span class="string">"utf-8"</span>) <span class="keyword">as</span> f:
+                data = json.<span class="function">load</span>(f)
+            formatted = json.<span class="function">dumps</span>(data, indent=<span class="number">2</span>, ensure_ascii=<span class="keyword">False</span>)
+            lines = formatted.<span class="function">split</span>(<span class="string">"\n"</span>)
+            <span class="keyword">if</span> <span class="function">len</span>(lines) > max_lines:
+                formatted = <span class="string">"\n"</span>.<span class="function">join</span>(lines[:max_lines]) + <span class="string">"\n... (tronqué)"</span>
+            <span class="keyword">return</span> <span class="string">f"Fichier JSON: {file_path}\n\n{formatted}"</span>
+
+        <span class="comment"># Lecture texte générique</span>
+        <span class="keyword">else</span>:
+            <span class="keyword">with</span> <span class="function">open</span>(full_path, <span class="string">"r"</span>, encoding=<span class="string">"utf-8"</span>) <span class="keyword">as</span> f:
+                lines = f.<span class="function">readlines</span>()[:max_lines]
+            content = <span class="string">""</span>.<span class="function">join</span>(lines)
+            <span class="keyword">return</span> <span class="string">f"Fichier: {file_path} ({len(lines)} lignes)\n\n{content}"</span>
+
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur lors de la lecture: {str(e)}"</span></div>
+
+    <div class="warning">
+        La sécurité est primordiale pour les outils d'accès fichier. Notre implémentation vérifie que le chemin demandé reste dans le répertoire <code>workspace/</code> autorisé, empêchant les attaques par traversée de répertoire (<code>../../../etc/passwd</code>).
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 6.2 :</strong> Créer un fichier de test et tester l'outil.
+    </div>
+
+    <div class="code-block"><span class="comment"># Créer le répertoire et un fichier de test</span>
+<span class="keyword">import</span> os
+os.<span class="function">makedirs</span>(<span class="string">"workspace"</span>, exist_ok=<span class="keyword">True</span>)
+
+<span class="comment"># Créer un CSV de test</span>
+<span class="keyword">with</span> <span class="function">open</span>(<span class="string">"workspace/ventes.csv"</span>, <span class="string">"w"</span>) <span class="keyword">as</span> f:
+    f.<span class="function">write</span>(<span class="string">"produit,quantite,prix_unitaire,total\n"</span>)
+    f.<span class="function">write</span>(<span class="string">"Laptop,15,999.99,14999.85\n"</span>)
+    f.<span class="function">write</span>(<span class="string">"Souris,120,29.99,3598.80\n"</span>)
+    f.<span class="function">write</span>(<span class="string">"Clavier,85,59.99,5099.15\n"</span>)
+    f.<span class="function">write</span>(<span class="string">"Écran,30,349.99,10499.70\n"</span>)
+
+<span class="comment"># Test de lecture</span>
+result = file_reader.<span class="function">invoke</span>({<span class="string">"file_path"</span>: <span class="string">"ventes.csv"</span>})
+<span class="function">print</span>(result)</div>
+
+    <div class="output-block">
+Fichier CSV: ventes.csv
+Colonnes: ['produit', 'quantite', 'prix_unitaire', 'total']
+Lignes affichées: 4
+
+produit: Laptop | quantite: 15 | prix_unitaire: 999.99 | total: 14999.85
+produit: Souris | quantite: 120 | prix_unitaire: 29.99 | total: 3598.80
+produit: Clavier | quantite: 85 | prix_unitaire: 59.99 | total: 5099.15
+produit: Écran | quantite: 30 | prix_unitaire: 349.99 | total: 10499.70</div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 7 : API CALLER TOOL -->
+    <!-- ============================================ -->
+    <h2>7. Exercice : API Caller Tool (REST API)</h2>
+
+    <p>Cet outil générique permet à l'agent d'appeler n'importe quelle API REST publique. C'est un outil puissant pour intégrer des services externes.</p>
+
+    <div class="step-box">
+        <strong>Étape 7.1 :</strong> Implémenter l'API Caller avec support GET et POST.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> requests
+<span class="keyword">from</span> urllib.parse <span class="keyword">import</span> urlparse
+
+<span class="comment"># Domaines autorisés (whitelist de sécurité)</span>
+ALLOWED_DOMAINS = [
+    <span class="string">"api.open-meteo.com"</span>,
+    <span class="string">"jsonplaceholder.typicode.com"</span>,
+    <span class="string">"api.exchangerate-api.com"</span>,
+    <span class="string">"api.github.com"</span>,
+    <span class="string">"restcountries.com"</span>,
+]
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">api_caller</span>(
+    url: <span class="keyword">str</span>,
+    method: <span class="keyword">str</span> = <span class="string">"GET"</span>,
+    body: <span class="keyword">str</span> = <span class="string">""</span>
+) -> <span class="keyword">str</span>:
+    <span class="string">"""Effectuer un appel API REST vers un service externe.
+
+    Domaines autorisés: open-meteo.com, jsonplaceholder.typicode.com,
+    exchangerate-api.com, api.github.com, restcountries.com.
+
+    Args:
+        url: L'URL complète de l'API à appeler.
+        method: Méthode HTTP (GET ou POST, défaut: GET).
+        body: Corps de la requête en JSON pour les POST (optionnel).
+    """</span>
+    <span class="keyword">try</span>:
+        <span class="comment"># Vérification du domaine</span>
+        parsed = <span class="function">urlparse</span>(url)
+        <span class="keyword">if</span> parsed.hostname <span class="keyword">not in</span> ALLOWED_DOMAINS:
+            <span class="keyword">return</span> (
+                <span class="string">f"Erreur: Domaine '{parsed.hostname}' non autorisé.\n"</span>
+                <span class="string">f"Domaines autorisés: {', '.join(ALLOWED_DOMAINS)}"</span>
+            )
+
+        <span class="comment"># Exécuter la requête</span>
+        headers = {<span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>}
+
+        <span class="keyword">if</span> method.<span class="function">upper</span>() == <span class="string">"GET"</span>:
+            resp = requests.<span class="function">get</span>(url, headers=headers, timeout=<span class="number">10</span>)
+        <span class="keyword">elif</span> method.<span class="function">upper</span>() == <span class="string">"POST"</span>:
+            resp = requests.<span class="function">post</span>(
+                url, headers=headers,
+                data=body <span class="keyword">if</span> body <span class="keyword">else</span> <span class="keyword">None</span>,
+                timeout=<span class="number">10</span>
+            )
+        <span class="keyword">else</span>:
+            <span class="keyword">return</span> <span class="string">f"Erreur: Méthode '{method}' non supportée. Utiliser GET ou POST."</span>
+
+        <span class="comment"># Formater la réponse</span>
+        <span class="keyword">if</span> resp.status_code == <span class="number">200</span>:
+            <span class="keyword">try</span>:
+                data = resp.<span class="function">json</span>()
+                formatted = json.<span class="function">dumps</span>(data, indent=<span class="number">2</span>, ensure_ascii=<span class="keyword">False</span>)
+                <span class="comment"># Tronquer si trop long</span>
+                <span class="keyword">if</span> <span class="function">len</span>(formatted) > <span class="number">2000</span>:
+                    formatted = formatted[:<span class="number">2000</span>] + <span class="string">"\n... (tronqué)"</span>
+                <span class="keyword">return</span> <span class="string">f"Status: {resp.status_code}\n\n{formatted}"</span>
+            <span class="keyword">except</span>:
+                <span class="keyword">return</span> <span class="string">f"Status: {resp.status_code}\n\n{resp.text[:2000]}"</span>
+        <span class="keyword">else</span>:
+            <span class="keyword">return</span> <span class="string">f"Erreur HTTP {resp.status_code}: {resp.text[:500]}"</span>
+
+    <span class="keyword">except</span> requests.Timeout:
+        <span class="keyword">return</span> <span class="string">"Erreur: Timeout (l'API n'a pas répondu en 10 secondes)"</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur lors de l'appel API: {str(e)}"</span></div>
+
+    <div class="step-box">
+        <strong>Étape 7.2 :</strong> Tester avec des API publiques.
+    </div>
+
+    <div class="code-block"><span class="comment"># Test 1 : Météo actuelle à Paris</span>
+meteo_url = <span class="string">"https://api.open-meteo.com/v1/forecast?latitude=48.86&amp;longitude=2.35&amp;current_weather=true"</span>
+result = api_caller.<span class="function">invoke</span>({<span class="string">"url"</span>: meteo_url})
+<span class="function">print</span>(<span class="string">"=== Météo Paris ==="</span>)
+<span class="function">print</span>(result[:500])
+
+<span class="comment"># Test 2 : Infos sur un pays</span>
+pays_url = <span class="string">"https://restcountries.com/v3.1/name/france?fields=name,population,capital,currencies"</span>
+result2 = api_caller.<span class="function">invoke</span>({<span class="string">"url"</span>: pays_url})
+<span class="function">print</span>(<span class="string">"\n=== Info France ==="</span>)
+<span class="function">print</span>(result2[:500])</div>
+
+    <div class="output-block">
+=== Météo Paris ===
+Status: 200
+
+{
+  "current_weather": {
+    "temperature": 12.5,
+    "windspeed": 15.2,
+    "weathercode": 3,
+    "time": "2026-03-03T14:00"
+  }
+}
+
+=== Info France ===
+Status: 200
+
+[
+  {
+    "name": {"common": "France", "official": "République française"},
+    "population": 67390000,
+    "capital": ["Paris"],
+    "currencies": {"EUR": {"name": "Euro", "symbol": "€"}}
+  }
+]</div>
+
+    <div class="effect">
+        L'API Caller permet à l'agent d'accéder à des données en temps réel : météo, taux de change, informations géographiques, etc. La whitelist de domaines garantit la sécurité.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 8 : ASSEMBLAGE COMPLET -->
+    <!-- ============================================ -->
+    <h2>8. Exercice : Assembler l'agent complet avec routing intelligent</h2>
+
+    <p>Assemblons maintenant tous nos outils dans un agent LangGraph complet avec gestion d'erreurs robuste.</p>
+
+    <div class="step-box">
+        <strong>Étape 8.1 :</strong> Créer l'agent multi-tools avec LangGraph.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> create_react_agent
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, SystemMessage
+
+<span class="comment"># Rassembler tous les outils</span>
+all_tools = [web_search, calculator, python_executor, file_reader, api_caller]
+
+<span class="comment"># System prompt spécialisé pour le routing</span>
+SYSTEM_PROMPT = <span class="string">"""Tu es un assistant IA expert avec accès à 5 outils spécialisés.
+
+## Stratégie de sélection d'outils :
+
+1. **web_search** : Pour les informations actuelles, actualités, faits récents
+2. **calculator** : Pour les calculs mathématiques simples (expressions)
+3. **python_executor** : Pour les calculs complexes, statistiques, traitement de données
+4. **file_reader** : Pour lire et analyser des fichiers dans le workspace/
+5. **api_caller** : Pour obtenir des données en temps réel (météo, devises, etc.)
+
+## Règles :
+- Utilise le bon outil pour chaque sous-tâche
+- Tu peux combiner plusieurs outils dans une même réponse
+- Vérifie toujours les résultats avant de les présenter
+- Réponds en français de manière structurée et claire
+"""</span>
+
+<span class="comment"># Créer le modèle et l'agent</span>
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+
+agent = <span class="function">create_react_agent</span>(
+    model=llm,
+    tools=all_tools,
+    state_modifier=SYSTEM_PROMPT,
+)
+
+<span class="function">print</span>(<span class="string">f"Agent créé avec {len(all_tools)} outils :"</span>)
+<span class="keyword">for</span> t <span class="keyword">in</span> all_tools:
+    <span class="function">print</span>(<span class="string">f"  - {t.name}: {t.description[:60]}..."</span>)</div>
+
+    <div class="output-block">
+Agent créé avec 5 outils :
+  - web_search: Rechercher des informations actuelles et récentes sur in...
+  - calculator: Effectuer un calcul mathématique de manière sécurisée...
+  - python_executor: Exécuter du code Python dans un environnement sécurisé...
+  - file_reader: Lire le contenu d'un fichier texte, CSV ou JSON...
+  - api_caller: Effectuer un appel API REST vers un service externe...</div>
+
+    <div class="step-box">
+        <strong>Étape 8.2 :</strong> Ajouter un wrapper avec error handling et logging.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> time
+
+<span class="keyword">def</span> <span class="function">run_agent</span>(question: <span class="keyword">str</span>, verbose: <span class="keyword">bool</span> = <span class="keyword">True</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Exécuter l'agent avec logging et error handling."""</span>
+    start = time.<span class="function">time</span>()
+
+    <span class="keyword">try</span>:
+        inputs = {
+            <span class="string">"messages"</span>: [<span class="function">HumanMessage</span>(content=question)]
+        }
+
+        <span class="keyword">if</span> verbose:
+            <span class="function">print</span>(<span class="string">f"\n{'='*60}"</span>)
+            <span class="function">print</span>(<span class="string">f"Question: {question}"</span>)
+            <span class="function">print</span>(<span class="string">f"{'='*60}"</span>)
+
+        <span class="comment"># Stream pour voir les étapes</span>
+        final_response = <span class="string">""</span>
+        tool_calls_count = <span class="number">0</span>
+
+        <span class="keyword">for</span> event <span class="keyword">in</span> agent.<span class="function">stream</span>(inputs, stream_mode=<span class="string">"values"</span>):
+            last_msg = event[<span class="string">"messages"</span>][<span class="number">-1</span>]
+
+            <span class="keyword">if</span> <span class="function">hasattr</span>(last_msg, <span class="string">"tool_calls"</span>) <span class="keyword">and</span> last_msg.tool_calls:
+                <span class="keyword">for</span> tc <span class="keyword">in</span> last_msg.tool_calls:
+                    tool_calls_count += <span class="number">1</span>
+                    <span class="keyword">if</span> verbose:
+                        <span class="function">print</span>(<span class="string">f"  [{tool_calls_count}] {tc['name']}({str(tc['args'])[:80]}...)"</span>)
+
+            <span class="keyword">if</span> last_msg.__class__.__name__ == <span class="string">"AIMessage"</span> <span class="keyword">and</span> last_msg.content:
+                <span class="keyword">if</span> <span class="keyword">not</span> (<span class="function">hasattr</span>(last_msg, <span class="string">"tool_calls"</span>) <span class="keyword">and</span> last_msg.tool_calls):
+                    final_response = last_msg.content
+
+        elapsed = time.<span class="function">time</span>() - start
+
+        <span class="keyword">if</span> verbose:
+            <span class="function">print</span>(<span class="string">f"\n--- Résultat ({elapsed:.1f}s, {tool_calls_count} appels outils) ---"</span>)
+            <span class="function">print</span>(final_response)
+
+        <span class="keyword">return</span> final_response
+
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        error_msg = <span class="string">f"Erreur de l'agent: {str(e)}"</span>
+        <span class="keyword">if</span> verbose:
+            <span class="function">print</span>(<span class="string">f"\nERREUR: {error_msg}"</span>)
+        <span class="keyword">return</span> error_msg</div>
+
+    <div class="step-box">
+        <strong>Étape 8.3 :</strong> Test final avec une question complexe combinant plusieurs outils.
+    </div>
+
+    <div class="code-block"><span class="comment"># Question complexe multi-outils</span>
+<span class="function">run_agent</span>(<span class="string">"""
+Voici ce que je veux savoir :
+1. Quelle est la température actuelle à Paris ? (utilise l'API météo)
+2. Lis le fichier ventes.csv dans le workspace et dis-moi le total des ventes
+3. Calcule la TVA à 20% sur ce total
+4. Recherche le taux de change EUR/USD actuel
+"""</span>)</div>
+
+    <div class="output-block">
+============================================================
+Question: Voici ce que je veux savoir...
+============================================================
+  [1] api_caller({'url': 'https://api.open-meteo.com/v1/forecast?latitude=48.86...')
+  [2] file_reader({'file_path': 'ventes.csv'})
+  [3] web_search({'query': 'taux change EUR USD actuel'})
+  [4] calculator({'expression': '14999.85 + 3598.80 + 5099.15 + 10499.70'})
+  [5] calculator({'expression': '34197.5 * 0.20'})
+
+--- Résultat (4.2s, 5 appels outils) ---
+Voici les réponses à vos questions :
+
+1. **Température à Paris** : Il fait actuellement 12,5°C avec un vent de 15 km/h.
+
+2. **Total des ventes** : D'après le fichier ventes.csv, le total des ventes
+   est de 34 197,50 €.
+
+3. **TVA à 20%** : La TVA sur ce total est de 6 839,50 €,
+   soit un total TTC de 41 037,00 €.
+
+4. **Taux EUR/USD** : Le taux de change actuel est d'environ 1 EUR = 1,08 USD.</div>
+
+    <div class="effect">
+        L'agent a intelligemment combiné 5 appels d'outils différents pour répondre à une question multi-facettes. Notez comment il a d'abord lu le fichier, calculé le total, puis appliqué la TVA de manière séquentielle.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 9 : POINTS CLES -->
+    <!-- ============================================ -->
+    <h2>9. Points clés à retenir</h2>
+
+    <div class="concept-box green">
+        <h3>Résumé du TD - Agent Multi-Tools</h3>
+        <ul>
+            <li><strong>Le décorateur @tool</strong> transforme une fonction Python en outil compatible function calling. La docstring est la clé : c'est elle que le LLM utilise pour décider quand et comment appeler l'outil.</li>
+            <li><strong>Chaque outil doit être spécialisé</strong> : un seul rôle bien défini. Si un outil fait trop de choses, le LLM aura du mal à l'utiliser correctement.</li>
+            <li><strong>La sécurité est non-négociable</strong> : sandboxer l'exécution de code, valider les chemins de fichiers, whitelister les domaines API, limiter les timeouts.</li>
+            <li><strong>Le function calling natif</strong> (GPT-4, Claude) est bien plus fiable que le parsing texte. Il permet aussi les appels d'outils parallèles.</li>
+            <li><strong>Le system prompt de routing</strong> guide le LLM dans le choix des outils. Décrivez quand utiliser chaque outil et dans quel ordre.</li>
+            <li><strong>Le wrapper avec error handling</strong> est essentiel en production : logging, timing, gestion des exceptions, retry logic.</li>
+            <li><strong>Testez chaque outil individuellement</strong> avant de les assembler. Un outil défaillant peut faire échouer tout l'agent.</li>
+            <li><strong>LangGraph gère automatiquement</strong> la boucle ReAct, le parsing, et le routing. Utilisez <code>create_react_agent</code> pour un démarrage rapide.</li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3>Checklist de création d'un outil</h3>
+        <ol>
+            <li>Nom clair et descriptif (snake_case)</li>
+            <li>Docstring détaillée avec exemples d'utilisation</li>
+            <li>Types explicites pour tous les paramètres</li>
+            <li>Gestion d'erreurs complète (try/except)</li>
+            <li>Validation des entrées (sécurité)</li>
+            <li>Timeout pour les opérations externes</li>
+            <li>Tests unitaires indépendants</li>
+        </ol>
+    </div>
+
+    <div class="nav">
+        <a href="td_react_agent.html">&larr; Agent ReAct</a>
+        <span style="color: #666;">(TD 2/5 - Agents IA)</span>
+        <a href="td_multi_agents.html">Multi-Agents &rarr;</a>
+    </div>
+</div>
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agents IA - Cours 3 : Tools et Function Calling</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Defintion : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Agents IA - Cours 3 : Tools et Function Calling</h1>
+    <p class="subtitle">Section Agents IA - Donner des capacites d'action aux modeles de langage</p>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1 : LE CONCEPT DE TOOL / FUNCTION CALLING            -->
+    <!-- ============================================================ -->
+
+    <h2>1. Pourquoi les LLM ont besoin d'outils</h2>
+
+    <p>
+        Un LLM, aussi puissant soit-il, reste fondamentalement un modele statistique qui
+        genere du texte. Il ne peut pas, par lui-meme, acceder a Internet, effectuer un
+        calcul mathematique precis, interroger une base de donnees ou envoyer un e-mail.
+        Ces limites inherentes sont la raison pour laquelle le concept de <strong>Tool Use</strong>
+        (ou <strong>Function Calling</strong>) a ete developpe.
+    </p>
+
+    <div class="definition">
+        Le <strong>Function Calling</strong> est un mecanisme par lequel un LLM peut exprimer,
+        sous forme de JSON structure, son intention d'appeler une fonction externe avec des
+        parametres precis, sans executer cette fonction lui-meme. Le systeme hote se charge
+        de l'execution reelle et retourne le resultat au modele.
+    </div>
+
+    <p>
+        Avant l'invention du function calling, les developpeurs devaient ecrire des prompts
+        complexes demandant au modele de repondre dans un format precis (souvent fragile),
+        puis parser manuellement la sortie textuelle. Cette approche etait sujette aux erreurs,
+        car le modele pouvait devier du format attendu a tout moment.
+    </p>
+
+    <div class="concept-box">
+        <h3>Les limites fondamentales des LLM sans outils</h3>
+        <ul>
+            <li><strong>Pas d'acces aux donnees en temps reel</strong> : le modele ne connait que ses donnees d'entrainement</li>
+            <li><strong>Calculs imprecis</strong> : les LLM font des erreurs arithmetiques frequentes</li>
+            <li><strong>Pas d'interaction avec le monde exterieur</strong> : impossible d'envoyer un email, creer un fichier, ou interroger une API</li>
+            <li><strong>Connaissances figees</strong> : la date de coupure des donnees d'entrainement limite l'actualite des reponses</li>
+            <li><strong>Pas de persistance</strong> : le modele ne peut pas sauvegarder de donnees entre les sessions</li>
+        </ul>
+    </div>
+
+    <p>
+        Les outils transforment un LLM passif en un <strong>agent actif</strong> capable d'agir
+        sur le monde. C'est la difference entre un assistant qui dit "vous devriez chercher
+        sur Google" et un assistant qui effectue la recherche pour vous.
+    </p>
+
+    <div class="prof-note">
+        Pensez aux outils comme les bras et les jambes d'un cerveau. Le LLM est le cerveau
+        qui reflechit et decide ; les outils sont les membres qui agissent. Sans outils,
+        le LLM est un cerveau brillant dans un bocal - intelligent mais impuissant.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2 : COMMENT FONCTIONNE LE FUNCTION CALLING           -->
+    <!-- ============================================================ -->
+
+    <h2>2. Comment fonctionne le Function Calling</h2>
+
+    <p>
+        Le function calling repose sur un protocole en plusieurs etapes entre l'utilisateur,
+        le LLM et le systeme d'execution. Le LLM ne fait <strong>jamais</strong> d'execution
+        directe : il genere une intention structuree que le systeme intercepte et execute.
+    </p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="max-width:850px;">
+            <!-- Background -->
+            <rect width="900" height="320" fill="#0f0f23" rx="12"/>
+
+            <!-- Title -->
+            <text x="450" y="30" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Flux complet du Function Calling</text>
+
+            <!-- Step 1: User -->
+            <rect x="20" y="60" width="120" height="60" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="85" fill="#569cd6" font-size="11" text-anchor="middle" font-weight="bold">Utilisateur</text>
+            <text x="80" y="105" fill="#e0e0e0" font-size="10" text-anchor="middle">"Quel temps</text>
+            <text x="80" y="115" fill="#e0e0e0" font-size="10" text-anchor="middle">a Paris ?"</text>
+
+            <!-- Arrow 1 -->
+            <line x1="140" y1="90" x2="185" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="162" y="82" fill="#aaa" font-size="9" text-anchor="middle">1</text>
+
+            <!-- Step 2: LLM -->
+            <rect x="190" y="50" width="140" height="80" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="260" y="75" fill="#ff6b35" font-size="11" text-anchor="middle" font-weight="bold">LLM</text>
+            <text x="260" y="95" fill="#e0e0e0" font-size="10" text-anchor="middle">Analyse + decide</text>
+            <text x="260" y="110" fill="#e0e0e0" font-size="10" text-anchor="middle">d'appeler un outil</text>
+
+            <!-- Arrow 2 -->
+            <line x1="330" y1="90" x2="375" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="352" y="82" fill="#aaa" font-size="9" text-anchor="middle">2</text>
+
+            <!-- Step 3: JSON -->
+            <rect x="380" y="50" width="140" height="80" rx="10" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="450" y="75" fill="#ff8c42" font-size="11" text-anchor="middle" font-weight="bold">JSON Structure</text>
+            <text x="450" y="93" fill="#ce9178" font-size="9" text-anchor="middle">{"tool": "get_weather",</text>
+            <text x="450" y="107" fill="#ce9178" font-size="9" text-anchor="middle">"args": {"city":</text>
+            <text x="450" y="121" fill="#ce9178" font-size="9" text-anchor="middle">"Paris"}}</text>
+
+            <!-- Arrow 3 -->
+            <line x1="520" y1="90" x2="565" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead)"/>
+            <text x="542" y="82" fill="#aaa" font-size="9" text-anchor="middle">3</text>
+
+            <!-- Step 4: Execution -->
+            <rect x="570" y="50" width="140" height="80" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="640" y="75" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">Execution</text>
+            <text x="640" y="95" fill="#e0e0e0" font-size="10" text-anchor="middle">Appel API meteo</text>
+            <text x="640" y="110" fill="#e0e0e0" font-size="10" text-anchor="middle">reelle</text>
+
+            <!-- Arrow 4 (down) -->
+            <line x1="640" y1="130" x2="640" y2="170" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowhead2)"/>
+            <text x="650" y="155" fill="#aaa" font-size="9">4</text>
+
+            <!-- Step 5: Result -->
+            <rect x="570" y="175" width="140" height="60" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="640" y="200" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">Resultat</text>
+            <text x="640" y="218" fill="#e0e0e0" font-size="10" text-anchor="middle">"22C, ensoleille"</text>
+
+            <!-- Arrow 5 (back to LLM) -->
+            <path d="M 570 205 L 330 205 L 290 130" fill="none" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowhead3)"/>
+            <text x="430" y="198" fill="#aaa" font-size="9">5</text>
+
+            <!-- Step 6: Final LLM -->
+            <rect x="190" y="180" width="140" height="60" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="260" y="200" fill="#ff6b35" font-size="11" text-anchor="middle" font-weight="bold">LLM</text>
+            <text x="260" y="220" fill="#e0e0e0" font-size="10" text-anchor="middle">Formule la reponse</text>
+
+            <!-- Arrow 6 -->
+            <line x1="190" y1="210" x2="140" y2="210" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrowhead4)"/>
+            <text x="165" y="202" fill="#aaa" font-size="9">6</text>
+
+            <!-- Step 7: Response to User -->
+            <rect x="20" y="180" width="120" height="60" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="80" y="200" fill="#569cd6" font-size="11" text-anchor="middle" font-weight="bold">Reponse</text>
+            <text x="80" y="218" fill="#e0e0e0" font-size="9" text-anchor="middle">"Il fait 22C a</text>
+            <text x="80" y="230" fill="#e0e0e0" font-size="9" text-anchor="middle">Paris, ensoleille"</text>
+
+            <!-- Legend -->
+            <rect x="20" y="270" width="860" height="40" rx="6" fill="#16213e" stroke="#333"/>
+            <circle cx="50" cy="290" r="6" fill="#569cd6"/><text x="62" y="294" fill="#e0e0e0" font-size="10">Utilisateur</text>
+            <circle cx="180" cy="290" r="6" fill="#ff6b35"/><text x="192" y="294" fill="#e0e0e0" font-size="10">LLM (decision)</text>
+            <circle cx="340" cy="290" r="6" fill="#ff8c42"/><text x="352" y="294" fill="#e0e0e0" font-size="10">JSON genere</text>
+            <circle cx="490" cy="290" r="6" fill="#00ff88"/><text x="502" y="294" fill="#e0e0e0" font-size="10">Execution systeme</text>
+
+            <!-- Arrowheads -->
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker>
+                <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/></marker>
+                <marker id="arrowhead3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/></marker>
+                <marker id="arrowhead4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>Les 6 etapes du function calling</h3>
+
+    <div class="step-box">
+        <strong>Etape 1 :</strong> L'utilisateur pose une question ou fait une demande au systeme.
+    </div>
+    <div class="step-box">
+        <strong>Etape 2 :</strong> Le LLM recoit la question ainsi que la liste des outils disponibles
+        (leurs noms, descriptions et schemas de parametres). Il decide s'il doit utiliser un outil.
+    </div>
+    <div class="step-box">
+        <strong>Etape 3 :</strong> Si un outil est necessaire, le LLM genere un objet JSON structure
+        contenant le nom de l'outil et les arguments a lui passer.
+    </div>
+    <div class="step-box">
+        <strong>Etape 4 :</strong> Le systeme hote intercepte ce JSON, identifie la fonction correspondante,
+        et l'execute avec les arguments fournis.
+    </div>
+    <div class="step-box">
+        <strong>Etape 5 :</strong> Le resultat de l'execution est renvoye au LLM sous forme de message.
+    </div>
+    <div class="step-box">
+        <strong>Etape 6 :</strong> Le LLM integre le resultat et formule une reponse naturelle a l'utilisateur.
+    </div>
+
+    <div class="warning">
+        Le LLM n'execute <strong>jamais</strong> directement du code. Il genere une intention.
+        C'est le systeme hote (votre code Python) qui se charge de l'execution reelle.
+        Cela garantit un controle total sur la securite et les permissions.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3 : OPENAI FUNCTION CALLING                          -->
+    <!-- ============================================================ -->
+
+    <h2>3. OpenAI Function Calling</h2>
+
+    <p>
+        OpenAI a ete le premier fournisseur a proposer un mecanisme natif de function calling
+        dans ses modeles GPT. Le format repose sur la definition d'outils avec un schema
+        JSON conforme a la specification JSON Schema.
+    </p>
+
+    <h3>3.1 Definition d'un outil OpenAI</h3>
+
+    <p>
+        Chaque outil est decrit par un dictionnaire contenant son type (<code>function</code>),
+        son nom, sa description, et le schema de ses parametres.
+    </p>
+
+    <div class="code-block"><span class="keyword">import</span> openai
+<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+client = OpenAI()
+
+<span class="comment"># Definition des outils disponibles</span>
+tools = [
+    {
+        <span class="string">"type"</span>: <span class="string">"function"</span>,
+        <span class="string">"function"</span>: {
+            <span class="string">"name"</span>: <span class="string">"get_weather"</span>,
+            <span class="string">"description"</span>: <span class="string">"Obtenir la meteo actuelle pour une ville donnee"</span>,
+            <span class="string">"parameters"</span>: {
+                <span class="string">"type"</span>: <span class="string">"object"</span>,
+                <span class="string">"properties"</span>: {
+                    <span class="string">"city"</span>: {
+                        <span class="string">"type"</span>: <span class="string">"string"</span>,
+                        <span class="string">"description"</span>: <span class="string">"Le nom de la ville, ex: Paris"</span>
+                    },
+                    <span class="string">"unit"</span>: {
+                        <span class="string">"type"</span>: <span class="string">"string"</span>,
+                        <span class="string">"enum"</span>: [<span class="string">"celsius"</span>, <span class="string">"fahrenheit"</span>],
+                        <span class="string">"description"</span>: <span class="string">"Unite de temperature"</span>
+                    }
+                },
+                <span class="string">"required"</span>: [<span class="string">"city"</span>]
+            }
+        }
+    }
+]</div>
+
+    <h3>3.2 Appel complet avec gestion du tool call</h3>
+
+    <div class="code-block"><span class="keyword">import</span> json
+
+<span class="comment"># Fonction reelle qui sera appelee</span>
+<span class="keyword">def</span> <span class="function">get_weather</span>(city: str, unit: str = <span class="string">"celsius"</span>) -> dict:
+    <span class="string">"""Simule un appel API meteo"""</span>
+    <span class="comment"># En production, appel a une vraie API (OpenWeatherMap, etc.)</span>
+    fake_data = {
+        <span class="string">"Paris"</span>: {<span class="string">"temp"</span>: <span class="number">22</span>, <span class="string">"condition"</span>: <span class="string">"ensoleille"</span>},
+        <span class="string">"Lyon"</span>: {<span class="string">"temp"</span>: <span class="number">19</span>, <span class="string">"condition"</span>: <span class="string">"nuageux"</span>},
+        <span class="string">"Marseille"</span>: {<span class="string">"temp"</span>: <span class="number">26</span>, <span class="string">"condition"</span>: <span class="string">"ensoleille"</span>},
+    }
+    <span class="keyword">return</span> fake_data.get(city, {<span class="string">"temp"</span>: <span class="number">15</span>, <span class="string">"condition"</span>: <span class="string">"inconnu"</span>})
+
+<span class="comment"># Etape 1 : Envoyer le message avec les outils</span>
+messages = [
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Quel temps fait-il a Paris ?"</span>}
+]
+
+response = client.<span class="function">chat.completions.create</span>(
+    model=<span class="string">"gpt-4"</span>,
+    messages=messages,
+    tools=tools,
+    tool_choice=<span class="string">"auto"</span>  <span class="comment"># Le modele decide s'il utilise un outil</span>
+)
+
+<span class="comment"># Etape 2 : Verifier si le modele veut appeler un outil</span>
+message = response.choices[<span class="number">0</span>].message
+
+<span class="keyword">if</span> message.tool_calls:
+    <span class="comment"># Etape 3 : Executer chaque appel d'outil</span>
+    <span class="keyword">for</span> tool_call <span class="keyword">in</span> message.tool_calls:
+        function_name = tool_call.function.name
+        arguments = json.<span class="function">loads</span>(tool_call.function.arguments)
+
+        <span class="comment"># Dispatcher vers la bonne fonction</span>
+        <span class="keyword">if</span> function_name == <span class="string">"get_weather"</span>:
+            result = <span class="function">get_weather</span>(**arguments)
+
+        <span class="comment"># Etape 4 : Ajouter le resultat aux messages</span>
+        messages.<span class="function">append</span>(message)  <span class="comment"># Le message du modele avec tool_calls</span>
+        messages.<span class="function">append</span>({
+            <span class="string">"role"</span>: <span class="string">"tool"</span>,
+            <span class="string">"tool_call_id"</span>: tool_call.id,
+            <span class="string">"content"</span>: json.<span class="function">dumps</span>(result)
+        })
+
+    <span class="comment"># Etape 5 : Renvoyer au modele pour obtenir la reponse finale</span>
+    final_response = client.<span class="function">chat.completions.create</span>(
+        model=<span class="string">"gpt-4"</span>,
+        messages=messages,
+        tools=tools
+    )
+    <span class="function">print</span>(final_response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block">Il fait actuellement 22 degres a Paris avec un temps ensoleille. Profitez du beau temps !</div>
+
+    <div class="param-box">
+        <h4>Le parametre tool_choice</h4>
+        <table>
+            <tr><th>Valeur</th><th>Comportement</th></tr>
+            <tr><td><code>"auto"</code></td><td>Le modele decide lui-meme s'il appelle un outil ou repond directement</td></tr>
+            <tr><td><code>"none"</code></td><td>Le modele ne doit appeler aucun outil, reponse textuelle uniquement</td></tr>
+            <tr><td><code>"required"</code></td><td>Le modele doit obligatoirement appeler au moins un outil</td></tr>
+            <tr><td><code>{"type": "function", "function": {"name": "..."}}</code></td><td>Force l'appel d'un outil specifique</td></tr>
+        </table>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4 : ANTHROPIC TOOL USE                               -->
+    <!-- ============================================================ -->
+
+    <h2>4. Anthropic Tool Use</h2>
+
+    <p>
+        Anthropic propose son propre format de tool use pour les modeles Claude. Le principe
+        est identique mais le format des messages differe. Anthropic utilise un systeme de
+        <strong>content blocks</strong> avec des types specifiques : <code>tool_use</code>
+        pour les appels d'outils et <code>tool_result</code> pour les resultats.
+    </p>
+
+    <h3>4.1 Definition des outils Anthropic</h3>
+
+    <div class="code-block"><span class="keyword">import</span> anthropic
+
+client = anthropic.<span class="function">Anthropic</span>()
+
+<span class="comment"># Definition des outils au format Anthropic</span>
+tools = [
+    {
+        <span class="string">"name"</span>: <span class="string">"get_weather"</span>,
+        <span class="string">"description"</span>: <span class="string">"Obtenir la meteo actuelle pour une ville donnee. "</span>
+                     <span class="string">"Retourne la temperature et les conditions meteorologiques."</span>,
+        <span class="string">"input_schema"</span>: {
+            <span class="string">"type"</span>: <span class="string">"object"</span>,
+            <span class="string">"properties"</span>: {
+                <span class="string">"city"</span>: {
+                    <span class="string">"type"</span>: <span class="string">"string"</span>,
+                    <span class="string">"description"</span>: <span class="string">"Le nom de la ville"</span>
+                },
+                <span class="string">"country"</span>: {
+                    <span class="string">"type"</span>: <span class="string">"string"</span>,
+                    <span class="string">"description"</span>: <span class="string">"Le code pays ISO 3166-1 alpha-2"</span>
+                }
+            },
+            <span class="string">"required"</span>: [<span class="string">"city"</span>]
+        }
+    },
+    {
+        <span class="string">"name"</span>: <span class="string">"search_web"</span>,
+        <span class="string">"description"</span>: <span class="string">"Rechercher des informations sur le web"</span>,
+        <span class="string">"input_schema"</span>: {
+            <span class="string">"type"</span>: <span class="string">"object"</span>,
+            <span class="string">"properties"</span>: {
+                <span class="string">"query"</span>: {
+                    <span class="string">"type"</span>: <span class="string">"string"</span>,
+                    <span class="string">"description"</span>: <span class="string">"La requete de recherche"</span>
+                }
+            },
+            <span class="string">"required"</span>: [<span class="string">"query"</span>]
+        }
+    }
+]</div>
+
+    <h3>4.2 Boucle complete avec Anthropic</h3>
+
+    <div class="code-block"><span class="keyword">import</span> json
+
+<span class="comment"># Fonctions d'execution</span>
+<span class="keyword">def</span> <span class="function">execute_tool</span>(name: str, inputs: dict) -> str:
+    <span class="keyword">if</span> name == <span class="string">"get_weather"</span>:
+        <span class="keyword">return</span> json.<span class="function">dumps</span>({
+            <span class="string">"temperature"</span>: <span class="number">22</span>,
+            <span class="string">"condition"</span>: <span class="string">"ensoleille"</span>,
+            <span class="string">"humidity"</span>: <span class="number">45</span>
+        })
+    <span class="keyword">elif</span> name == <span class="string">"search_web"</span>:
+        <span class="keyword">return</span> json.<span class="function">dumps</span>({
+            <span class="string">"results"</span>: [<span class="string">"Resultat 1..."</span>, <span class="string">"Resultat 2..."</span>]
+        })
+    <span class="keyword">return</span> <span class="string">"Outil inconnu"</span>
+
+<span class="comment"># Premiere requete</span>
+messages = [
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Quel temps fait-il a Paris ?"</span>}
+]
+
+response = client.messages.<span class="function">create</span>(
+    model=<span class="string">"claude-sonnet-4-20250514"</span>,
+    max_tokens=<span class="number">1024</span>,
+    tools=tools,
+    messages=messages
+)
+
+<span class="comment"># Boucle d'execution des outils</span>
+<span class="keyword">while</span> response.stop_reason == <span class="string">"tool_use"</span>:
+    <span class="comment"># Extraire les blocs tool_use</span>
+    tool_use_blocks = [
+        block <span class="keyword">for</span> block <span class="keyword">in</span> response.content
+        <span class="keyword">if</span> block.type == <span class="string">"tool_use"</span>
+    ]
+
+    <span class="comment"># Construire les resultats</span>
+    tool_results = []
+    <span class="keyword">for</span> tool_use <span class="keyword">in</span> tool_use_blocks:
+        result = <span class="function">execute_tool</span>(tool_use.name, tool_use.input)
+        tool_results.<span class="function">append</span>({
+            <span class="string">"type"</span>: <span class="string">"tool_result"</span>,
+            <span class="string">"tool_use_id"</span>: tool_use.id,
+            <span class="string">"content"</span>: result
+        })
+
+    <span class="comment"># Ajouter les messages et renvoyer</span>
+    messages.<span class="function">append</span>({<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: response.content})
+    messages.<span class="function">append</span>({<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: tool_results})
+
+    response = client.messages.<span class="function">create</span>(
+        model=<span class="string">"claude-sonnet-4-20250514"</span>,
+        max_tokens=<span class="number">1024</span>,
+        tools=tools,
+        messages=messages
+    )
+
+<span class="comment"># Reponse finale</span>
+<span class="function">print</span>(response.content[<span class="number">0</span>].text)</div>
+
+    <div class="concept-box blue">
+        <h3>Differences cles entre OpenAI et Anthropic</h3>
+        <table>
+            <tr><th>Aspect</th><th>OpenAI</th><th>Anthropic</th></tr>
+            <tr><td>Cle du schema</td><td><code>parameters</code></td><td><code>input_schema</code></td></tr>
+            <tr><td>Resultat d'outil</td><td>role: <code>"tool"</code></td><td>type: <code>"tool_result"</code></td></tr>
+            <tr><td>Signal d'arret</td><td><code>finish_reason: "tool_calls"</code></td><td><code>stop_reason: "tool_use"</code></td></tr>
+            <tr><td>Contenu du message</td><td>Attribut <code>tool_calls</code></td><td>Content blocks avec <code>type: "tool_use"</code></td></tr>
+            <tr><td>ID de l'appel</td><td><code>tool_call.id</code></td><td><code>tool_use.id</code></td></tr>
+            <tr><td>Arguments</td><td>Chaine JSON a parser</td><td>Dictionnaire Python natif</td></tr>
+        </table>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5 : SCHEMA JSON POUR LES OUTILS                     -->
+    <!-- ============================================================ -->
+
+    <h2>5. Schema JSON pour les outils</h2>
+
+    <p>
+        La qualite du schema JSON que vous fournissez a un impact direct sur la capacite
+        du modele a utiliser correctement vos outils. Un schema bien decrit, avec des
+        descriptions claires et des contraintes precises, permet au modele de generer
+        des appels plus fiables.
+    </p>
+
+    <h3>5.1 Anatomie d'un schema d'outil</h3>
+
+    <div class="code-block"><span class="comment"># Schema complet et bien documente d'un outil</span>
+tool_schema = {
+    <span class="string">"name"</span>: <span class="string">"search_products"</span>,
+    <span class="string">"description"</span>: (
+        <span class="string">"Rechercher des produits dans le catalogue e-commerce. "</span>
+        <span class="string">"Utiliser cet outil quand l'utilisateur cherche un produit, "</span>
+        <span class="string">"veut comparer des prix, ou demande des recommandations. "</span>
+        <span class="string">"Ne PAS utiliser pour les questions sur les commandes existantes."</span>
+    ),
+    <span class="string">"input_schema"</span>: {
+        <span class="string">"type"</span>: <span class="string">"object"</span>,
+        <span class="string">"properties"</span>: {
+            <span class="string">"query"</span>: {
+                <span class="string">"type"</span>: <span class="string">"string"</span>,
+                <span class="string">"description"</span>: <span class="string">"Mots-cles de recherche pour le produit"</span>
+            },
+            <span class="string">"category"</span>: {
+                <span class="string">"type"</span>: <span class="string">"string"</span>,
+                <span class="string">"enum"</span>: [<span class="string">"electronique"</span>, <span class="string">"vetements"</span>, <span class="string">"maison"</span>, <span class="string">"sport"</span>],
+                <span class="string">"description"</span>: <span class="string">"Categorie du produit pour filtrer les resultats"</span>
+            },
+            <span class="string">"price_min"</span>: {
+                <span class="string">"type"</span>: <span class="string">"number"</span>,
+                <span class="string">"description"</span>: <span class="string">"Prix minimum en euros (inclus)"</span>
+            },
+            <span class="string">"price_max"</span>: {
+                <span class="string">"type"</span>: <span class="string">"number"</span>,
+                <span class="string">"description"</span>: <span class="string">"Prix maximum en euros (inclus)"</span>
+            },
+            <span class="string">"sort_by"</span>: {
+                <span class="string">"type"</span>: <span class="string">"string"</span>,
+                <span class="string">"enum"</span>: [<span class="string">"price_asc"</span>, <span class="string">"price_desc"</span>, <span class="string">"rating"</span>, <span class="string">"relevance"</span>],
+                <span class="string">"description"</span>: <span class="string">"Critere de tri des resultats. Defaut: relevance"</span>
+            },
+            <span class="string">"limit"</span>: {
+                <span class="string">"type"</span>: <span class="string">"integer"</span>,
+                <span class="string">"description"</span>: <span class="string">"Nombre maximum de resultats (1-50). Defaut: 10"</span>,
+                <span class="string">"minimum"</span>: <span class="number">1</span>,
+                <span class="string">"maximum"</span>: <span class="number">50</span>
+            }
+        },
+        <span class="string">"required"</span>: [<span class="string">"query"</span>]
+    }
+}</div>
+
+    <div class="prof-note">
+        La description de l'outil est <strong>cruciale</strong>. Elle sert de guide au modele
+        pour savoir quand utiliser cet outil. Incluez toujours : ce que fait l'outil,
+        quand l'utiliser, et quand NE PAS l'utiliser. Plus la description est precise,
+        meilleur sera le choix de l'agent.
+    </div>
+
+    <h3>5.2 Types JSON Schema supportes</h3>
+
+    <table>
+        <tr><th>Type</th><th>Description</th><th>Exemple</th></tr>
+        <tr><td><code>string</code></td><td>Chaine de caracteres</td><td><code>"Paris"</code></td></tr>
+        <tr><td><code>number</code></td><td>Nombre decimal</td><td><code>3.14</code></td></tr>
+        <tr><td><code>integer</code></td><td>Nombre entier</td><td><code>42</code></td></tr>
+        <tr><td><code>boolean</code></td><td>Vrai ou faux</td><td><code>true</code></td></tr>
+        <tr><td><code>array</code></td><td>Liste d'elements</td><td><code>["a", "b"]</code></td></tr>
+        <tr><td><code>object</code></td><td>Dictionnaire cle-valeur</td><td><code>{"key": "val"}</code></td></tr>
+        <tr><td><code>null</code></td><td>Valeur nulle</td><td><code>null</code></td></tr>
+    </table>
+
+    <h3>5.3 Bonnes pratiques pour les schemas</h3>
+
+    <div class="concept-box green">
+        <ul>
+            <li><strong>Descriptions detaillees</strong> : chaque propriete doit avoir une description claire et des exemples si possible</li>
+            <li><strong>Utiliser <code>enum</code></strong> : quand les valeurs possibles sont limitees, listez-les explicitement</li>
+            <li><strong>Marquer les <code>required</code></strong> : ne rendez requis que les parametres absolument necessaires</li>
+            <li><strong>Valeurs par defaut</strong> : indiquez les defauts dans la description pour guider le modele</li>
+            <li><strong>Contraintes numeriques</strong> : utilisez <code>minimum</code> et <code>maximum</code> pour borner les valeurs</li>
+            <li><strong>Noms explicites</strong> : preferez <code>search_products</code> a <code>sp</code> ou <code>func1</code></li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6 : LANGCHAIN @tool DECORATOR                       -->
+    <!-- ============================================================ -->
+
+    <h2>6. LangChain @tool : creer des outils custom facilement</h2>
+
+    <p>
+        LangChain simplifie enormement la creation d'outils grace au decorateur <code>@tool</code>.
+        Ce decorateur transforme automatiquement une fonction Python en un outil compatible
+        avec les agents LangChain, en utilisant la docstring comme description et les
+        type hints comme schema.
+    </p>
+
+    <h3>6.1 Outil simple avec @tool</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculate_bmi</span>(weight_kg: float, height_m: float) -> str:
+    <span class="string">"""Calculer l'indice de masse corporelle (IMC) d'une personne.
+
+    Args:
+        weight_kg: Le poids de la personne en kilogrammes
+        height_m: La taille de la personne en metres
+    """</span>
+    bmi = weight_kg / (height_m ** <span class="number">2</span>)
+    <span class="keyword">if</span> bmi < <span class="number">18.5</span>:
+        category = <span class="string">"insuffisance ponderale"</span>
+    <span class="keyword">elif</span> bmi < <span class="number">25</span>:
+        category = <span class="string">"poids normal"</span>
+    <span class="keyword">elif</span> bmi < <span class="number">30</span>:
+        category = <span class="string">"surpoids"</span>
+    <span class="keyword">else</span>:
+        category = <span class="string">"obesite"</span>
+    <span class="keyword">return</span> <span class="string">f"IMC: {bmi:.1f} - Categorie: {category}"</span>
+
+<span class="comment"># Inspecter l'outil genere</span>
+<span class="function">print</span>(calculate_bmi.name)         <span class="comment"># "calculate_bmi"</span>
+<span class="function">print</span>(calculate_bmi.description)  <span class="comment"># Extrait de la docstring</span>
+<span class="function">print</span>(calculate_bmi.args_schema)  <span class="comment"># Schema Pydantic auto-genere</span></div>
+
+    <div class="output-block">calculate_bmi
+Calculer l'indice de masse corporelle (IMC) d'une personne.
+{'weight_kg': {'title': 'Weight Kg', 'type': 'number'}, 'height_m': {'title': 'Height M', 'type': 'number'}}</div>
+
+    <h3>6.2 Outil avec schema Pydantic personnalise</h3>
+
+    <p>
+        Pour un controle plus fin sur le schema, vous pouvez definir un modele Pydantic
+        et le passer au decorateur via <code>args_schema</code>.
+    </p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field
+<span class="keyword">from</span> typing <span class="keyword">import</span> Optional
+<span class="keyword">from</span> enum <span class="keyword">import</span> Enum
+
+<span class="keyword">class</span> <span class="function">SortOrder</span>(str, Enum):
+    ASC = <span class="string">"ascending"</span>
+    DESC = <span class="string">"descending"</span>
+
+<span class="keyword">class</span> <span class="function">SearchInput</span>(BaseModel):
+    <span class="string">"""Schema d'entree pour la recherche de produits."""</span>
+    query: str = Field(description=<span class="string">"Mots-cles de recherche"</span>)
+    category: Optional[str] = Field(
+        default=<span class="keyword">None</span>,
+        description=<span class="string">"Categorie de produit pour filtrer"</span>
+    )
+    max_results: int = Field(
+        default=<span class="number">5</span>,
+        ge=<span class="number">1</span>,
+        le=<span class="number">20</span>,
+        description=<span class="string">"Nombre maximum de resultats (1-20)"</span>
+    )
+    sort: SortOrder = Field(
+        default=SortOrder.DESC,
+        description=<span class="string">"Ordre de tri des resultats"</span>
+    )
+
+<span class="keyword">@tool</span>(args_schema=SearchInput)
+<span class="keyword">def</span> <span class="function">search_products</span>(
+    query: str,
+    category: Optional[str] = <span class="keyword">None</span>,
+    max_results: int = <span class="number">5</span>,
+    sort: SortOrder = SortOrder.DESC
+) -> str:
+    <span class="string">"""Rechercher des produits dans le catalogue e-commerce.
+    Utiliser cet outil quand l'utilisateur cherche un produit specifique."""</span>
+
+    <span class="comment"># Logique de recherche ici...</span>
+    results = [<span class="string">f"Produit {i+1} pour '{query}'"</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(max_results)]
+    <span class="keyword">return</span> <span class="string">"\n"</span>.<span class="function">join</span>(results)</div>
+
+    <h3>6.3 Outil asynchrone</h3>
+
+    <div class="code-block"><span class="keyword">import</span> aiohttp
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="keyword">@tool</span>
+<span class="keyword">async</span> <span class="keyword">def</span> <span class="function">fetch_url</span>(url: str) -> str:
+    <span class="string">"""Recuperer le contenu textuel d'une page web.
+
+    Args:
+        url: L'URL complete de la page a recuperer (avec http:// ou https://)
+    """</span>
+    <span class="keyword">async</span> <span class="keyword">with</span> aiohttp.<span class="function">ClientSession</span>() <span class="keyword">as</span> session:
+        <span class="keyword">async</span> <span class="keyword">with</span> session.<span class="function">get</span>(url) <span class="keyword">as</span> response:
+            <span class="keyword">if</span> response.status == <span class="number">200</span>:
+                text = <span class="keyword">await</span> response.<span class="function">text</span>()
+                <span class="keyword">return</span> text[:<span class="number">5000</span>]  <span class="comment"># Limiter la taille</span>
+            <span class="keyword">return</span> <span class="string">f"Erreur HTTP {response.status}"</span></div>
+
+    <div class="effect">
+        Le decorateur <code>@tool</code> extrait automatiquement le nom de la fonction,
+        sa docstring pour la description, et les type hints pour le schema JSON.
+        C'est la methode la plus rapide pour creer des outils LangChain.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7 : OUTILS BUILT-IN                                  -->
+    <!-- ============================================================ -->
+
+    <h2>7. Outils built-in de LangChain</h2>
+
+    <p>
+        LangChain fournit de nombreux outils pre-construits que vous pouvez utiliser
+        directement dans vos agents, sans avoir a coder la logique d'execution.
+    </p>
+
+    <h3>7.1 TavilySearchResults - Recherche web</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_community.tools.tavily_search <span class="keyword">import</span> TavilySearchResults
+
+<span class="comment"># Necessite une cle API Tavily (TAVILY_API_KEY)</span>
+search = <span class="function">TavilySearchResults</span>(
+    max_results=<span class="number">3</span>,
+    search_depth=<span class="string">"advanced"</span>,    <span class="comment"># "basic" ou "advanced"</span>
+    include_answer=<span class="keyword">True</span>,        <span class="comment"># Inclure une reponse synthetisee</span>
+    include_raw_content=<span class="keyword">False</span>,  <span class="comment"># Contenu brut des pages</span>
+)
+
+<span class="comment"># Utilisation directe</span>
+results = search.<span class="function">invoke</span>(<span class="string">"derniere version de Python 2025"</span>)
+<span class="function">print</span>(results)</div>
+
+    <div class="output-block">[{"url": "https://python.org/...", "content": "Python 3.13 est sorti..."},
+ {"url": "https://blog.python.org/...", "content": "Nouveautes de Python 3.13..."}]</div>
+
+    <h3>7.2 WikipediaQueryRun - Recherche Wikipedia</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_community.tools <span class="keyword">import</span> WikipediaQueryRun
+<span class="keyword">from</span> langchain_community.utilities <span class="keyword">import</span> WikipediaAPIWrapper
+
+wikipedia = <span class="function">WikipediaQueryRun</span>(
+    api_wrapper=<span class="function">WikipediaAPIWrapper</span>(
+        lang=<span class="string">"fr"</span>,            <span class="comment"># Wikipedia francais</span>
+        top_k_results=<span class="number">2</span>,     <span class="comment"># Nombre de resultats</span>
+        doc_content_chars_max=<span class="number">4000</span>  <span class="comment"># Limite de caracteres</span>
+    )
+)
+
+result = wikipedia.<span class="function">invoke</span>(<span class="string">"Intelligence artificielle"</span>)
+<span class="function">print</span>(result[:<span class="number">200</span>])</div>
+
+    <h3>7.3 PythonREPLTool - Execution de code Python</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_experimental.tools <span class="keyword">import</span> PythonREPLTool
+
+python_repl = <span class="function">PythonREPLTool</span>()
+
+<span class="comment"># L'agent peut executer du code Python</span>
+result = python_repl.<span class="function">invoke</span>(
+    <span class="string">"import math\nprint(f'Pi = {math.pi:.10f}')\nprint(f'sqrt(2) = {math.sqrt(2):.10f}')"</span>
+)
+<span class="function">print</span>(result)</div>
+
+    <div class="output-block">Pi = 3.1415926536
+sqrt(2) = 1.4142135624</div>
+
+    <div class="warning">
+        Le <code>PythonREPLTool</code> execute du code arbitraire sur votre machine.
+        Il faut <strong>toujours</strong> l'utiliser dans un environnement sandboxe (Docker,
+        machine virtuelle) en production. Ne jamais donner cet outil a un agent
+        accessible publiquement sans restrictions de securite.
+    </div>
+
+    <h3>7.4 DuckDuckGoSearchResults - Recherche sans API key</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_community.tools <span class="keyword">import</span> DuckDuckGoSearchResults
+
+search = <span class="function">DuckDuckGoSearchResults</span>(
+    num_results=<span class="number">4</span>,
+    backend=<span class="string">"text"</span>  <span class="comment"># "text", "news", ou "images"</span>
+)
+
+results = search.<span class="function">invoke</span>(<span class="string">"LangChain agents tutorial"</span>)
+<span class="function">print</span>(results)</div>
+
+    <h3>7.5 Tableau recapitulatif des outils built-in</h3>
+
+    <table>
+        <tr><th>Outil</th><th>Fonction</th><th>API Key</th><th>Package</th></tr>
+        <tr><td><code>TavilySearchResults</code></td><td>Recherche web avancee</td><td>Oui</td><td>langchain-community</td></tr>
+        <tr><td><code>WikipediaQueryRun</code></td><td>Recherche Wikipedia</td><td>Non</td><td>langchain-community</td></tr>
+        <tr><td><code>PythonREPLTool</code></td><td>Execution code Python</td><td>Non</td><td>langchain-experimental</td></tr>
+        <tr><td><code>DuckDuckGoSearchResults</code></td><td>Recherche web gratuite</td><td>Non</td><td>langchain-community</td></tr>
+        <tr><td><code>ArxivQueryRun</code></td><td>Recherche articles scientifiques</td><td>Non</td><td>langchain-community</td></tr>
+        <tr><td><code>ShellTool</code></td><td>Execution commandes shell</td><td>Non</td><td>langchain-experimental</td></tr>
+        <tr><td><code>RequestsGetTool</code></td><td>Requetes HTTP GET</td><td>Non</td><td>langchain-community</td></tr>
+        <tr><td><code>HumanInputRun</code></td><td>Demander une saisie humaine</td><td>Non</td><td>langchain-community</td></tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 8 : TOOLKITS                                         -->
+    <!-- ============================================================ -->
+
+    <h2>8. Toolkits : ensembles d'outils pre-packages</h2>
+
+    <p>
+        Un <strong>toolkit</strong> est un ensemble coherent d'outils lies a un meme domaine.
+        Plutot que d'importer et configurer chaque outil individuellement, un toolkit
+        fournit plusieurs outils d'un coup, avec une configuration partagee.
+    </p>
+
+    <h3>8.1 FileManagementToolkit</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_community.agent_toolkits <span class="keyword">import</span> FileManagementToolkit
+
+<span class="comment"># Creer un toolkit pour la gestion de fichiers</span>
+toolkit = <span class="function">FileManagementToolkit</span>(
+    root_dir=<span class="string">"./workspace"</span>,  <span class="comment"># Repertoire de travail (securite)</span>
+    selected_tools=[              <span class="comment"># Selectionner les outils desires</span>
+        <span class="string">"read_file"</span>,
+        <span class="string">"write_file"</span>,
+        <span class="string">"list_directory"</span>
+    ]
+)
+
+<span class="comment"># Obtenir la liste des outils</span>
+tools = toolkit.<span class="function">get_tools</span>()
+<span class="keyword">for</span> t <span class="keyword">in</span> tools:
+    <span class="function">print</span>(<span class="string">f"  - {t.name}: {t.description[:60]}..."</span>)</div>
+
+    <div class="output-block">  - read_file: Lire un fichier a partir du disque...
+  - write_file: Ecrire des donnees dans un fichier...
+  - list_directory: Lister les fichiers et dossiers dans un repertoire...</div>
+
+    <h3>8.2 SQLDatabaseToolkit</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_community.agent_toolkits <span class="keyword">import</span> SQLDatabaseToolkit
+<span class="keyword">from</span> langchain_community.utilities <span class="keyword">import</span> SQLDatabase
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+<span class="comment"># Connexion a la base de donnees</span>
+db = <span class="function">SQLDatabase.from_uri</span>(<span class="string">"sqlite:///ecommerce.db"</span>)
+
+<span class="comment"># Creer le toolkit SQL</span>
+toolkit = <span class="function">SQLDatabaseToolkit</span>(
+    db=db,
+    llm=<span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>)
+)
+
+tools = toolkit.<span class="function">get_tools</span>()
+<span class="keyword">for</span> t <span class="keyword">in</span> tools:
+    <span class="function">print</span>(<span class="string">f"  - {t.name}"</span>)
+
+<span class="comment"># Outils inclus :</span>
+<span class="comment"># - sql_db_list_tables    : Lister les tables</span>
+<span class="comment"># - sql_db_schema         : Voir le schema d'une table</span>
+<span class="comment"># - sql_db_query          : Executer une requete SQL</span>
+<span class="comment"># - sql_db_query_checker  : Valider une requete avant execution</span></div>
+
+    <h3>8.3 Creer un toolkit personnalise</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool, BaseToolkit
+<span class="keyword">from</span> typing <span class="keyword">import</span> List
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> BaseTool
+
+<span class="keyword">class</span> <span class="function">WeatherToolkit</span>(BaseToolkit):
+    <span class="string">"""Toolkit pour les operations meteorologiques."""</span>
+
+    api_key: str
+
+    <span class="keyword">def</span> <span class="function">get_tools</span>(self) -> List[BaseTool]:
+        <span class="keyword">@tool</span>
+        <span class="keyword">def</span> <span class="function">get_current_weather</span>(city: str) -> str:
+            <span class="string">"""Obtenir la meteo actuelle d'une ville."""</span>
+            <span class="keyword">return</span> <span class="string">f"Meteo pour {city}: 22C, ensoleille"</span>
+
+        <span class="keyword">@tool</span>
+        <span class="keyword">def</span> <span class="function">get_forecast</span>(city: str, days: int = <span class="number">3</span>) -> str:
+            <span class="string">"""Obtenir les previsions meteo pour les prochains jours.
+
+            Args:
+                city: Nom de la ville
+                days: Nombre de jours de prevision (1-7)
+            """</span>
+            <span class="keyword">return</span> <span class="string">f"Previsions {days}j pour {city}: stable"</span>
+
+        <span class="keyword">@tool</span>
+        <span class="keyword">def</span> <span class="function">get_alerts</span>(region: str) -> str:
+            <span class="string">"""Verifier les alertes meteo pour une region."""</span>
+            <span class="keyword">return</span> <span class="string">f"Aucune alerte pour {region}"</span>
+
+        <span class="keyword">return</span> [get_current_weather, get_forecast, get_alerts]
+
+<span class="comment"># Utilisation</span>
+weather_tk = <span class="function">WeatherToolkit</span>(api_key=<span class="string">"ma_cle_api"</span>)
+tools = weather_tk.<span class="function">get_tools</span>()
+<span class="function">print</span>(<span class="string">f"{len(tools)} outils disponibles"</span>)</div>
+
+    <div class="output-block">3 outils disponibles</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 9 : BINDING TOOLS AU MODELE                          -->
+    <!-- ============================================================ -->
+
+    <h2>9. Binding tools au modele</h2>
+
+    <p>
+        Le <strong>binding</strong> est le processus par lequel on associe des outils a un modele
+        de langage. Dans LangChain, cela se fait avec la methode <code>.bind_tools()</code>,
+        qui convertit automatiquement les outils au format attendu par le fournisseur
+        du modele (OpenAI, Anthropic, etc.).
+    </p>
+
+    <h3>9.1 bind_tools() basique</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">add</span>(a: int, b: int) -> int:
+    <span class="string">"""Additionner deux nombres entiers."""</span>
+    <span class="keyword">return</span> a + b
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">multiply</span>(a: int, b: int) -> int:
+    <span class="string">"""Multiplier deux nombres entiers."""</span>
+    <span class="keyword">return</span> a * b
+
+<span class="comment"># Creer le modele avec les outils lies</span>
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>)
+llm_with_tools = llm.<span class="function">bind_tools</span>([add, multiply])
+
+<span class="comment"># Invoquer : le modele peut maintenant appeler les outils</span>
+response = llm_with_tools.<span class="function">invoke</span>(<span class="string">"Combien font 15 fois 23 ?"</span>)
+
+<span class="comment"># Le modele genere un tool_call</span>
+<span class="function">print</span>(response.tool_calls)
+<span class="comment"># [{'name': 'multiply', 'args': {'a': 15, 'b': 23}, 'id': '...'}]</span></div>
+
+    <h3>9.2 Forcer l'utilisation d'un outil</h3>
+
+    <div class="code-block"><span class="comment"># Forcer l'utilisation d'un outil specifique</span>
+llm_forced = llm.<span class="function">bind_tools</span>(
+    [add, multiply],
+    tool_choice=<span class="string">"multiply"</span>  <span class="comment"># Force l'appel a "multiply"</span>
+)
+
+<span class="comment"># Meme une question qui ne necessite pas de multiplication</span>
+<span class="comment"># declenchera un appel a multiply</span>
+response = llm_forced.<span class="function">invoke</span>(<span class="string">"Bonjour !"</span>)
+<span class="function">print</span>(response.tool_calls)
+
+<span class="comment"># Forcer un appel d'outil quelconque (sans specifier lequel)</span>
+llm_any_tool = llm.<span class="function">bind_tools</span>(
+    [add, multiply],
+    tool_choice=<span class="string">"any"</span>  <span class="comment"># Doit appeler au moins un outil</span>
+)</div>
+
+    <h3>9.3 Execution complete avec ToolNode</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, ToolMessage
+<span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> ToolNode
+
+<span class="comment"># Creer un noeud d'execution d'outils</span>
+tool_node = <span class="function">ToolNode</span>([add, multiply])
+
+<span class="comment"># Boucle d'agent complete</span>
+llm_with_tools = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>).<span class="function">bind_tools</span>([add, multiply])
+
+messages = [<span class="function">HumanMessage</span>(<span class="string">"Calcule (5+3) * 7"</span>)]
+
+<span class="comment"># Tour 1 : le LLM decide d'appeler add(5, 3)</span>
+response = llm_with_tools.<span class="function">invoke</span>(messages)
+messages.<span class="function">append</span>(response)
+
+<span class="comment"># Executer l'outil</span>
+<span class="keyword">if</span> response.tool_calls:
+    tool_results = tool_node.<span class="function">invoke</span>({<span class="string">"messages"</span>: messages})
+    messages.<span class="function">extend</span>(tool_results[<span class="string">"messages"</span>])
+
+    <span class="comment"># Tour 2 : le LLM voit le resultat et appelle multiply(8, 7)</span>
+    response = llm_with_tools.<span class="function">invoke</span>(messages)
+    messages.<span class="function">append</span>(response)
+
+    <span class="keyword">if</span> response.tool_calls:
+        tool_results = tool_node.<span class="function">invoke</span>({<span class="string">"messages"</span>: messages})
+        messages.<span class="function">extend</span>(tool_results[<span class="string">"messages"</span>])
+
+        <span class="comment"># Tour 3 : reponse finale</span>
+        final = llm_with_tools.<span class="function">invoke</span>(messages)
+        <span class="function">print</span>(final.content)</div>
+
+    <div class="output-block">Le resultat de (5+3) * 7 est 56.</div>
+
+    <div class="concept-box">
+        <h3>Architecture du binding d'outils</h3>
+        <p>
+            Quand vous appelez <code>.bind_tools()</code>, LangChain effectue les operations suivantes :
+        </p>
+        <ol>
+            <li>Convertit chaque outil en son schema JSON (via <code>tool.args_schema</code>)</li>
+            <li>Formate le schema selon le fournisseur (OpenAI, Anthropic, etc.)</li>
+            <li>Attache les schemas au modele pour chaque appel</li>
+            <li>Parse la reponse du modele pour extraire les <code>tool_calls</code></li>
+        </ol>
+        <p>
+            Grace a cette abstraction, le meme code fonctionne avec differents fournisseurs :
+            il suffit de changer le modele, les outils restent identiques.
+        </p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 10 : GESTION DES ERREURS                             -->
+    <!-- ============================================================ -->
+
+    <h2>10. Gestion des erreurs d'outils</h2>
+
+    <p>
+        En production, les outils peuvent echouer pour de nombreuses raisons : API
+        indisponible, parametres invalides, timeout, etc. Une gestion robuste des erreurs
+        est essentielle pour que l'agent puisse se remettre d'un echec et continuer a fonctionner.
+    </p>
+
+    <h3>10.1 ToolException : signaler les erreurs proprement</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool, ToolException
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">divide</span>(a: float, b: float) -> float:
+    <span class="string">"""Diviser a par b. Retourne le resultat de la division.
+
+    Args:
+        a: Le numerateur
+        b: Le denominateur (ne doit pas etre zero)
+    """</span>
+    <span class="keyword">if</span> b == <span class="number">0</span>:
+        <span class="keyword">raise</span> <span class="function">ToolException</span>(
+            <span class="string">"Division par zero impossible. "</span>
+            <span class="string">"Veuillez fournir un denominateur non nul."</span>
+        )
+    <span class="keyword">return</span> a / b
+
+<span class="comment"># Configurer la gestion d'erreur</span>
+divide.handle_tool_error = <span class="keyword">True</span>  <span class="comment"># Retourne le message d'erreur au LLM</span></div>
+
+    <div class="effect">
+        Quand <code>handle_tool_error = True</code>, l'exception est capturee et son message
+        est renvoye au LLM comme resultat de l'outil. Le LLM peut alors comprendre
+        l'erreur et adapter sa strategie (essayer d'autres parametres, utiliser un autre
+        outil, ou expliquer le probleme a l'utilisateur).
+    </div>
+
+    <h3>10.2 Gestionnaire d'erreur personnalise</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool, ToolException
+
+<span class="keyword">def</span> <span class="function">custom_error_handler</span>(error: ToolException) -> str:
+    <span class="string">"""Transforme l'erreur en message utile pour le LLM."""</span>
+    <span class="keyword">return</span> (
+        <span class="string">f"L'outil a rencontre une erreur : {str(error)}. "</span>
+        <span class="string">"Essayez avec des parametres differents ou utilisez un autre outil."</span>
+    )
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">fetch_stock_price</span>(symbol: str) -> str:
+    <span class="string">"""Obtenir le cours actuel d'une action boursiere.
+
+    Args:
+        symbol: Le symbole boursier (ex: AAPL, MSFT, GOOGL)
+    """</span>
+    valid_symbols = [<span class="string">"AAPL"</span>, <span class="string">"MSFT"</span>, <span class="string">"GOOGL"</span>, <span class="string">"AMZN"</span>]
+    <span class="keyword">if</span> symbol.<span class="function">upper</span>() <span class="keyword">not</span> <span class="keyword">in</span> valid_symbols:
+        <span class="keyword">raise</span> <span class="function">ToolException</span>(
+            <span class="string">f"Symbole '{symbol}' non reconnu. "</span>
+            <span class="string">f"Symboles disponibles : {', '.join(valid_symbols)}"</span>
+        )
+    <span class="keyword">return</span> <span class="string">f"{symbol}: 150.25 USD (+1.2%)"</span>
+
+<span class="comment"># Utiliser le gestionnaire personnalise</span>
+fetch_stock_price.handle_tool_error = custom_error_handler</div>
+
+    <h3>10.3 Pattern retry avec fallback</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> langchain_core.runnables <span class="keyword">import</span> RunnableWithFallbacks
+<span class="keyword">import</span> time
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">search_primary</span>(query: str) -> str:
+    <span class="string">"""Recherche via l'API principale (Tavily)."""</span>
+    <span class="comment"># Simuler une API qui peut echouer</span>
+    <span class="keyword">raise</span> <span class="function">Exception</span>(<span class="string">"API Tavily indisponible"</span>)
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">search_fallback</span>(query: str) -> str:
+    <span class="string">"""Recherche via l'API de secours (DuckDuckGo)."""</span>
+    <span class="keyword">return</span> <span class="string">f"Resultats DuckDuckGo pour: {query}"</span>
+
+<span class="comment"># Creer un outil avec fallback</span>
+search_with_fallback = search_primary.<span class="function">with_fallbacks</span>(
+    [search_fallback]
+)
+
+<span class="comment"># Si search_primary echoue, search_fallback prend le relais</span>
+result = search_with_fallback.<span class="function">invoke</span>(<span class="string">"LangChain agents"</span>)
+<span class="function">print</span>(result)</div>
+
+    <div class="output-block">Resultats DuckDuckGo pour: LangChain agents</div>
+
+    <h3>10.4 Retry automatique avec backoff</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> tenacity <span class="keyword">import</span> retry, stop_after_attempt, wait_exponential
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">call_external_api</span>(endpoint: str) -> str:
+    <span class="string">"""Appeler une API externe avec retry automatique.
+
+    Args:
+        endpoint: Le chemin de l'endpoint API
+    """</span>
+
+    <span class="keyword">@retry</span>(
+        stop=<span class="function">stop_after_attempt</span>(<span class="number">3</span>),
+        wait=<span class="function">wait_exponential</span>(multiplier=<span class="number">1</span>, min=<span class="number">2</span>, max=<span class="number">10</span>)
+    )
+    <span class="keyword">def</span> <span class="function">_call</span>(endpoint):
+        <span class="comment"># Logique d'appel API ici</span>
+        <span class="keyword">import</span> requests
+        response = requests.<span class="function">get</span>(<span class="string">f"https://api.example.com/{endpoint}"</span>)
+        response.<span class="function">raise_for_status</span>()
+        <span class="keyword">return</span> response.<span class="function">json</span>()
+
+    <span class="keyword">try</span>:
+        <span class="keyword">return</span> str(<span class="function">_call</span>(endpoint))
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Echec apres 3 tentatives: {str(e)}"</span></div>
+
+    <div class="warning">
+        Ne retournez jamais de stacktrace complet au LLM. Cela consomme des tokens inutilement
+        et peut confondre le modele. Resumez toujours l'erreur en un message clair et actionnable.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 11 : TOOL ROUTING                                    -->
+    <!-- ============================================================ -->
+
+    <h2>11. Tool Routing : comment l'agent choisit le bon outil</h2>
+
+    <p>
+        Le <strong>tool routing</strong> est le processus de selection de l'outil le plus
+        adapte a une requete donnee. C'est une competence emergeante des LLM : en
+        analysant la question de l'utilisateur et les descriptions des outils disponibles,
+        le modele determine quel outil appeler et avec quels arguments.
+    </p>
+
+    <h3>11.1 Facteurs influencant le choix de l'outil</h3>
+
+    <div class="concept-box">
+        <ul>
+            <li><strong>Description de l'outil</strong> : le facteur le plus important. Une description precise et detaillee
+                guide le modele vers le bon choix</li>
+            <li><strong>Nom de l'outil</strong> : un nom explicite comme <code>search_database</code> est plus informatif
+                que <code>tool_1</code></li>
+            <li><strong>Contexte de la conversation</strong> : l'historique des messages precedents aide le modele a comprendre
+                l'intention</li>
+            <li><strong>System prompt</strong> : des instructions claires dans le system prompt peuvent guider le routing</li>
+            <li><strong>Nombre d'outils</strong> : plus il y a d'outils, plus le choix est complexe. Au-dela de 15-20 outils,
+                la precision diminue</li>
+        </ul>
+    </div>
+
+    <h3>11.2 Exemple de routing avec plusieurs outils</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">search_web</span>(query: str) -> str:
+    <span class="string">"""Rechercher des informations actuelles sur Internet.
+    Utiliser pour les questions sur l'actualite, les evenements recents,
+    ou les informations qui changent frequemment."""</span>
+    <span class="keyword">return</span> <span class="string">f"[Web] Resultats pour: {query}"</span>
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">search_database</span>(query: str) -> str:
+    <span class="string">"""Rechercher dans la base de donnees interne de l'entreprise.
+    Utiliser pour les questions sur les clients, les commandes,
+    les produits, ou les donnees internes."""</span>
+    <span class="keyword">return</span> <span class="string">f"[DB] Resultats pour: {query}"</span>
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculate</span>(expression: str) -> str:
+    <span class="string">"""Evaluer une expression mathematique.
+    Utiliser pour les calculs, conversions, ou operations numeriques."""</span>
+    <span class="keyword">try</span>:
+        result = <span class="function">eval</span>(expression)
+        <span class="keyword">return</span> <span class="string">f"Resultat: {result}"</span>
+    <span class="keyword">except</span>:
+        <span class="keyword">return</span> <span class="string">"Expression invalide"</span>
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">send_email</span>(to: str, subject: str, body: str) -> str:
+    <span class="string">"""Envoyer un email a un destinataire.
+    Utiliser uniquement quand l'utilisateur demande explicitement
+    d'envoyer un message par email."""</span>
+    <span class="keyword">return</span> <span class="string">f"Email envoye a {to}"</span>
+
+<span class="comment"># Le modele choisira automatiquement le bon outil</span>
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>).<span class="function">bind_tools</span>(
+    [search_web, search_database, calculate, send_email]
+)
+
+<span class="comment"># Test avec differentes questions</span>
+questions = [
+    <span class="string">"Quelle est la capitale de l'Australie ?"</span>,        <span class="comment"># -> search_web</span>
+    <span class="string">"Combien de commandes a passe le client #1234 ?"</span>, <span class="comment"># -> search_database</span>
+    <span class="string">"Combien font 15% de 2500 ?"</span>,                     <span class="comment"># -> calculate</span>
+    <span class="string">"Envoie un recap a jean@example.com"</span>,              <span class="comment"># -> send_email</span>
+]
+
+<span class="keyword">for</span> q <span class="keyword">in</span> questions:
+    response = llm.<span class="function">invoke</span>(q)
+    <span class="keyword">if</span> response.tool_calls:
+        <span class="function">print</span>(<span class="string">f"Q: {q}"</span>)
+        <span class="function">print</span>(<span class="string">f"  -> Outil: {response.tool_calls[0]['name']}"</span>)
+        <span class="function">print</span>(<span class="string">f"     Args: {response.tool_calls[0]['args']}\n"</span>)</div>
+
+    <div class="output-block">Q: Quelle est la capitale de l'Australie ?
+  -> Outil: search_web
+     Args: {'query': 'capitale Australie'}
+
+Q: Combien de commandes a passe le client #1234 ?
+  -> Outil: search_database
+     Args: {'query': 'commandes client 1234'}
+
+Q: Combien font 15% de 2500 ?
+  -> Outil: calculate
+     Args: {'expression': '0.15 * 2500'}
+
+Q: Envoie un recap a jean@example.com
+  -> Outil: send_email
+     Args: {'to': 'jean@example.com', 'subject': 'Recap', 'body': '...'}</div>
+
+    <h3>11.3 Strategies avancees de routing</h3>
+
+    <div class="concept-box green">
+        <h3>Techniques pour ameliorer le routing</h3>
+        <ul>
+            <li><strong>Exemples few-shot</strong> : inclure des exemples d'utilisation dans la description de l'outil</li>
+            <li><strong>Cas negatifs</strong> : preciser quand NE PAS utiliser l'outil (ex: "Ne pas utiliser pour les questions generales")</li>
+            <li><strong>Hierarchie d'outils</strong> : grouper les outils par categorie et utiliser un meta-outil de selection</li>
+            <li><strong>Validation pre-appel</strong> : un middleware qui verifie la coherence avant d'executer</li>
+            <li><strong>Limitation du nombre</strong> : ne presenter que les outils pertinents au contexte courant</li>
+        </ul>
+    </div>
+
+    <h3>11.4 Pattern de routing hierarchique</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> typing <span class="keyword">import</span> Literal
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">route_category</span>(
+    category: Literal[<span class="string">"recherche"</span>, <span class="string">"calcul"</span>, <span class="string">"communication"</span>, <span class="string">"donnees"</span>]
+) -> str:
+    <span class="string">"""Selectionner la categorie d'outils appropriee avant de traiter la requete.
+
+    Args:
+        category: La categorie d'action necessaire
+            - "recherche": pour chercher des informations (web, Wikipedia, etc.)
+            - "calcul": pour des operations mathematiques ou logiques
+            - "communication": pour envoyer des messages (email, SMS, etc.)
+            - "donnees": pour acceder aux bases de donnees internes
+    """</span>
+    <span class="comment"># Le systeme charge ensuite les outils de la categorie choisie</span>
+    tool_sets = {
+        <span class="string">"recherche"</span>: [<span class="string">"search_web"</span>, <span class="string">"search_wikipedia"</span>, <span class="string">"search_arxiv"</span>],
+        <span class="string">"calcul"</span>: [<span class="string">"calculator"</span>, <span class="string">"python_repl"</span>, <span class="string">"unit_converter"</span>],
+        <span class="string">"communication"</span>: [<span class="string">"send_email"</span>, <span class="string">"send_sms"</span>, <span class="string">"send_slack"</span>],
+        <span class="string">"donnees"</span>: [<span class="string">"query_sql"</span>, <span class="string">"read_file"</span>, <span class="string">"search_vector_db"</span>],
+    }
+    <span class="keyword">return</span> <span class="string">f"Outils disponibles: {tool_sets[category]}"</span></div>
+
+    <div class="prof-note">
+        Le routing hierarchique est particulierement utile quand vous avez un grand nombre
+        d'outils (plus de 20). Il reduit la confusion du modele en decomposant le choix
+        en deux etapes : d'abord la categorie, puis l'outil specifique.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 12 : EXEMPLE COMPLET D'AGENT AVEC OUTILS             -->
+    <!-- ============================================================ -->
+
+    <h2>12. Exemple complet : agent avec outils dans LangGraph</h2>
+
+    <p>
+        Pour conclure ce cours, construisons un agent complet utilisant LangGraph
+        qui combine plusieurs outils et gere le cycle de vie complet des appels.
+    </p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, SystemMessage
+<span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> create_react_agent
+<span class="keyword">import</span> json
+<span class="keyword">import</span> math
+
+<span class="comment"># ---- Definition des outils ----</span>
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculator</span>(expression: str) -> str:
+    <span class="string">"""Evaluer une expression mathematique Python.
+    Supporte: +, -, *, /, **, sqrt, sin, cos, tan, log, pi, e.
+
+    Args:
+        expression: Expression mathematique valide en Python
+    """</span>
+    <span class="comment"># Environnement securise pour eval</span>
+    safe_env = {
+        <span class="string">"sqrt"</span>: math.sqrt,
+        <span class="string">"sin"</span>: math.sin,
+        <span class="string">"cos"</span>: math.cos,
+        <span class="string">"tan"</span>: math.tan,
+        <span class="string">"log"</span>: math.log,
+        <span class="string">"pi"</span>: math.pi,
+        <span class="string">"e"</span>: math.e,
+        <span class="string">"abs"</span>: abs,
+        <span class="string">"round"</span>: round,
+    }
+    <span class="keyword">try</span>:
+        result = <span class="function">eval</span>(expression, {<span class="string">"__builtins__"</span>: {}}, safe_env)
+        <span class="keyword">return</span> <span class="string">f"Resultat: {result}"</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur de calcul: {str(e)}"</span>
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">get_product_info</span>(product_id: str) -> str:
+    <span class="string">"""Rechercher les informations d'un produit dans le catalogue.
+
+    Args:
+        product_id: L'identifiant unique du produit (ex: PRD-001)
+    """</span>
+    catalog = {
+        <span class="string">"PRD-001"</span>: {<span class="string">"nom"</span>: <span class="string">"Laptop Pro 15"</span>, <span class="string">"prix"</span>: <span class="number">1299.99</span>, <span class="string">"stock"</span>: <span class="number">45</span>},
+        <span class="string">"PRD-002"</span>: {<span class="string">"nom"</span>: <span class="string">"Clavier Mecanique"</span>, <span class="string">"prix"</span>: <span class="number">149.99</span>, <span class="string">"stock"</span>: <span class="number">200</span>},
+        <span class="string">"PRD-003"</span>: {<span class="string">"nom"</span>: <span class="string">"Ecran 4K 27 pouces"</span>, <span class="string">"prix"</span>: <span class="number">599.99</span>, <span class="string">"stock"</span>: <span class="number">0</span>},
+    }
+    product = catalog.get(product_id)
+    <span class="keyword">if</span> product:
+        <span class="keyword">return</span> json.<span class="function">dumps</span>(product, ensure_ascii=<span class="keyword">False</span>)
+    <span class="keyword">return</span> <span class="string">f"Produit {product_id} non trouve dans le catalogue"</span>
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">create_order</span>(product_id: str, quantity: int, customer_email: str) -> str:
+    <span class="string">"""Creer une commande pour un client.
+
+    Args:
+        product_id: L'identifiant du produit a commander
+        quantity: La quantite souhaitee (minimum 1)
+        customer_email: L'adresse email du client
+    """</span>
+    <span class="keyword">return</span> json.<span class="function">dumps</span>({
+        <span class="string">"order_id"</span>: <span class="string">"ORD-2025-0042"</span>,
+        <span class="string">"status"</span>: <span class="string">"confirmee"</span>,
+        <span class="string">"product_id"</span>: product_id,
+        <span class="string">"quantity"</span>: quantity,
+        <span class="string">"email"</span>: customer_email
+    })
+
+<span class="comment"># ---- Creation de l'agent ----</span>
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0</span>)
+tools = [calculator, get_product_info, create_order]
+
+system_prompt = <span class="string">"""Tu es un assistant e-commerce intelligent.
+Tu peux consulter le catalogue, faire des calculs de prix,
+et creer des commandes. Sois toujours precis et utile."""</span>
+
+agent = <span class="function">create_react_agent</span>(
+    model=llm,
+    tools=tools,
+    prompt=system_prompt
+)
+
+<span class="comment"># ---- Utilisation ----</span>
+
+result = agent.<span class="function">invoke</span>({
+    <span class="string">"messages"</span>: [
+        <span class="function">HumanMessage</span>(
+            <span class="string">"Je voudrais commander 3 Laptop Pro 15. "</span>
+            <span class="string">"Quel serait le prix total avec 10% de remise ? "</span>
+            <span class="string">"Mon email: jean@example.com"</span>
+        )
+    ]
+})
+
+<span class="comment"># Afficher toute la trace des messages</span>
+<span class="keyword">for</span> msg <span class="keyword">in</span> result[<span class="string">"messages"</span>]:
+    <span class="function">print</span>(<span class="string">f"[{msg.type}] {msg.content[:100]}..."</span>)
+    <span class="keyword">if</span> <span class="function">hasattr</span>(msg, <span class="string">"tool_calls"</span>) <span class="keyword">and</span> msg.tool_calls:
+        <span class="keyword">for</span> tc <span class="keyword">in</span> msg.tool_calls:
+            <span class="function">print</span>(<span class="string">f"  -> Appel: {tc['name']}({tc['args']})"</span>)</div>
+
+    <div class="output-block">[human] Je voudrais commander 3 Laptop Pro 15...
+[ai] ...
+  -> Appel: get_product_info({'product_id': 'PRD-001'})
+[tool] {"nom": "Laptop Pro 15", "prix": 1299.99, "stock": 45}
+[ai] ...
+  -> Appel: calculator({'expression': '3 * 1299.99 * 0.9'})
+[tool] Resultat: 3509.973
+[ai] ...
+  -> Appel: create_order({'product_id': 'PRD-001', 'quantity': 3, 'customer_email': 'jean@example.com'})
+[tool] {"order_id": "ORD-2025-0042", "status": "confirmee", ...}
+[ai] Votre commande a ete creee avec succes ! 3 Laptop Pro 15 a 1299.99 euros chacun,
+     avec 10% de remise, pour un total de 3509.97 euros. Commande ORD-2025-0042 confirmee.</div>
+
+    <h2>Resume du cours</h2>
+
+    <div class="concept-box green">
+        <h3>Points cles a retenir</h3>
+        <ul>
+            <li>Le <strong>function calling</strong> permet aux LLM d'interagir avec le monde exterieur via des intentions structurees en JSON</li>
+            <li>Le LLM ne fait <strong>jamais</strong> d'execution directe : il genere l'intention, le systeme execute</li>
+            <li>Chaque fournisseur (OpenAI, Anthropic) a son propre format, mais le principe reste le meme</li>
+            <li>Un <strong>schema JSON bien decrit</strong> (descriptions, contraintes, exemples) est la cle d'un bon function calling</li>
+            <li>LangChain simplifie la creation d'outils avec le decorateur <code>@tool</code> et le binding via <code>.bind_tools()</code></li>
+            <li>Les <strong>toolkits</strong> regroupent des outils coherents pour un domaine donne</li>
+            <li>La <strong>gestion des erreurs</strong> (ToolException, fallbacks, retry) est essentielle en production</li>
+            <li>Le <strong>tool routing</strong> depend principalement de la qualite des descriptions d'outils</li>
+        </ul>
+    </div>
+
+    <div class="nav">
+        <a href="ag_02_react_reasoning.html">&larr; ReAct et Raisonnement</a>
+        <span style="color: #666;">(Cours 3/10 - Agents IA)</span>
+        <a href="ag_04_memory_context.html">Memoire et Contexte &rarr;</a>
+    </div>
+</div>
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

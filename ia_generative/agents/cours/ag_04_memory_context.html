@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agents IA - Cours 4 : Memoire et Gestion du Contexte</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Definition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Agents IA - Cours 4 : Memoire et Gestion du Contexte</h1>
+    <p class="subtitle">Section Agents IA - Doter les agents d'une memoire persistante et efficace</p>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1 : POURQUOI LA MEMOIRE EST CRUCIALE                 -->
+    <!-- ============================================================ -->
+
+    <h2>1. Pourquoi la memoire est cruciale pour les agents</h2>
+
+    <p>
+        Imaginez un assistant qui oublie tout ce que vous lui avez dit des que vous
+        changez de sujet. Vous devriez repeter votre nom, votre probleme, vos preferences
+        a chaque message. C'est exactement ce qui se passe avec un LLM sans memoire :
+        chaque appel est completement independant, sans aucune notion de continuite.
+    </p>
+
+    <div class="definition">
+        La <strong>memoire d'un agent IA</strong> designe l'ensemble des mecanismes permettant
+        de stocker, organiser et retrouver des informations issues des interactions passees,
+        afin de maintenir une coherence conversationnelle et d'ameliorer la pertinence
+        des reponses futures.
+    </div>
+
+    <p>
+        La memoire remplit trois fonctions essentielles pour un agent :
+    </p>
+
+    <div class="concept-box">
+        <h3>Les trois piliers de la memoire agent</h3>
+        <ul>
+            <li><strong>Continuite</strong> : maintenir le fil de la conversation, se souvenir de ce qui a ete dit,
+                eviter les repetitions et les contradictions</li>
+            <li><strong>Apprentissage</strong> : capitaliser sur les interactions passees pour ameliorer les reponses
+                futures, apprendre les preferences de l'utilisateur</li>
+            <li><strong>Personnalisation</strong> : adapter le comportement de l'agent a chaque utilisateur
+                en fonction de son historique, ses habitudes et ses besoins specifiques</li>
+        </ul>
+    </div>
+
+    <p>
+        Sans memoire, un agent ne peut pas :
+    </p>
+
+    <ul>
+        <li>Suivre une conversation multi-tours (ex: "comme je disais tout a l'heure...")</li>
+        <li>Se souvenir des preferences utilisateur (ex: "tu preferes les reponses courtes")</li>
+        <li>Accumuler des connaissances au fil du temps</li>
+        <li>Resoudre des taches complexes qui necessitent plusieurs etapes avec des resultats intermediaires</li>
+        <li>Detecter et eviter de repeter les memes erreurs</li>
+    </ul>
+
+    <div class="prof-note">
+        La memoire est ce qui transforme un simple chatbot en un veritable assistant personnel.
+        C'est la difference entre parler a un inconnu a chaque message et avoir un collaborateur
+        qui vous connait et s'adapte a vous au fil du temps.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2 : LES 4 TYPES DE MEMOIRE COGNITIVE                 -->
+    <!-- ============================================================ -->
+
+    <h2>2. Les 4 types de memoire cognitive</h2>
+
+    <p>
+        Pour concevoir un systeme de memoire efficace pour les agents IA, nous pouvons
+        nous inspirer de la psychologie cognitive, qui distingue quatre types de memoire
+        dans le cerveau humain. Chaque type a un equivalent direct dans le monde de l'IA.
+    </p>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="max-width:850px;">
+            <rect width="900" height="420" fill="#0f0f23" rx="12"/>
+
+            <!-- Title -->
+            <text x="450" y="30" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Architecture de la memoire : cerveau humain vs agent IA</text>
+
+            <!-- Left Column: Human -->
+            <text x="225" y="60" fill="#569cd6" font-size="14" font-weight="bold" text-anchor="middle">Cerveau Humain</text>
+
+            <!-- Right Column: AI -->
+            <text x="675" y="60" fill="#00ff88" font-size="14" font-weight="bold" text-anchor="middle">Agent IA</text>
+
+            <!-- Center divider -->
+            <line x1="450" y1="50" x2="450" y2="400" stroke="#333" stroke-width="1" stroke-dasharray="5,5"/>
+
+            <!-- Row 1: Working Memory -->
+            <rect x="30" y="80" width="380" height="70" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="220" y="105" fill="#ff6b35" font-size="12" font-weight="bold" text-anchor="middle">Memoire de travail</text>
+            <text x="220" y="125" fill="#e0e0e0" font-size="10" text-anchor="middle">Informations actives, manipulees en temps reel</text>
+            <text x="220" y="140" fill="#aaa" font-size="10" text-anchor="middle">Capacite limitee (7 +/- 2 elements)</text>
+
+            <text x="450" y="118" fill="#ff8c42" font-size="20" text-anchor="middle">=</text>
+
+            <rect x="490" y="80" width="380" height="70" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="680" y="105" fill="#00ff88" font-size="12" font-weight="bold" text-anchor="middle">Context Window</text>
+            <text x="680" y="125" fill="#e0e0e0" font-size="10" text-anchor="middle">Tokens actifs dans le prompt courant</text>
+            <text x="680" y="140" fill="#aaa" font-size="10" text-anchor="middle">Limite: 4K - 200K tokens selon le modele</text>
+
+            <!-- Row 2: Episodic Memory -->
+            <rect x="30" y="165" width="380" height="70" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="220" y="190" fill="#ff6b35" font-size="12" font-weight="bold" text-anchor="middle">Memoire episodique</text>
+            <text x="220" y="210" fill="#e0e0e0" font-size="10" text-anchor="middle">Souvenirs d'evenements vecus personnellement</text>
+            <text x="220" y="225" fill="#aaa" font-size="10" text-anchor="middle">"Je me souviens du jour ou..."</text>
+
+            <text x="450" y="203" fill="#ff8c42" font-size="20" text-anchor="middle">=</text>
+
+            <rect x="490" y="165" width="380" height="70" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="680" y="190" fill="#00ff88" font-size="12" font-weight="bold" text-anchor="middle">Historique de conversation</text>
+            <text x="680" y="210" fill="#e0e0e0" font-size="10" text-anchor="middle">Messages precedents stockes et rappeles</text>
+            <text x="680" y="225" fill="#aaa" font-size="10" text-anchor="middle">ConversationBufferMemory, chat_history</text>
+
+            <!-- Row 3: Semantic Memory -->
+            <rect x="30" y="250" width="380" height="70" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="220" y="275" fill="#ff6b35" font-size="12" font-weight="bold" text-anchor="middle">Memoire semantique</text>
+            <text x="220" y="295" fill="#e0e0e0" font-size="10" text-anchor="middle">Connaissances generales, faits, concepts</text>
+            <text x="220" y="310" fill="#aaa" font-size="10" text-anchor="middle">"La Terre tourne autour du Soleil"</text>
+
+            <text x="450" y="288" fill="#ff8c42" font-size="20" text-anchor="middle">=</text>
+
+            <rect x="490" y="250" width="380" height="70" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="680" y="275" fill="#00ff88" font-size="12" font-weight="bold" text-anchor="middle">Vector Store / Knowledge Base</text>
+            <text x="680" y="295" fill="#e0e0e0" font-size="10" text-anchor="middle">Recherche semantique dans des documents</text>
+            <text x="680" y="310" fill="#aaa" font-size="10" text-anchor="middle">RAG, embeddings, bases vectorielles</text>
+
+            <!-- Row 4: Procedural Memory -->
+            <rect x="30" y="335" width="380" height="70" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="220" y="360" fill="#ff6b35" font-size="12" font-weight="bold" text-anchor="middle">Memoire procedurale</text>
+            <text x="220" y="380" fill="#e0e0e0" font-size="10" text-anchor="middle">Savoir-faire, automatismes, competences</text>
+            <text x="220" y="395" fill="#aaa" font-size="10" text-anchor="middle">"Faire du velo, jouer du piano"</text>
+
+            <text x="450" y="373" fill="#ff8c42" font-size="20" text-anchor="middle">=</text>
+
+            <rect x="490" y="335" width="380" height="70" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="680" y="360" fill="#00ff88" font-size="12" font-weight="bold" text-anchor="middle">Skills / Learned Behaviors</text>
+            <text x="680" y="380" fill="#e0e0e0" font-size="10" text-anchor="middle">Prompts systeme, fine-tuning, outils appris</text>
+            <text x="680" y="395" fill="#aaa" font-size="10" text-anchor="middle">System prompt, few-shot examples caches</text>
+        </svg>
+    </div>
+
+    <h3>2.1 Memoire de travail = Context Window</h3>
+
+    <p>
+        La memoire de travail humaine retient temporairement 7 elements (plus ou moins 2)
+        pour les manipuler. Chez un LLM, la <strong>context window</strong> joue exactement ce role :
+        c'est l'ensemble des tokens actuellement "visibles" par le modele pour generer sa reponse.
+    </p>
+
+    <div class="param-box">
+        <h4>Tailles de context window par modele</h4>
+        <table>
+            <tr><th>Modele</th><th>Context Window</th><th>Equivalent texte</th></tr>
+            <tr><td>GPT-3.5 Turbo</td><td>16K tokens</td><td>~12 000 mots</td></tr>
+            <tr><td>GPT-4</td><td>128K tokens</td><td>~96 000 mots</td></tr>
+            <tr><td>Claude 3.5 Sonnet</td><td>200K tokens</td><td>~150 000 mots</td></tr>
+            <tr><td>Gemini 1.5 Pro</td><td>1M tokens</td><td>~750 000 mots</td></tr>
+            <tr><td>Llama 3</td><td>8K tokens</td><td>~6 000 mots</td></tr>
+        </table>
+    </div>
+
+    <h3>2.2 Memoire episodique = Historique de conversation</h3>
+
+    <p>
+        La memoire episodique stocke les souvenirs personnels lies au temps et au lieu.
+        Pour un agent, cela correspond a l'<strong>historique des conversations</strong> :
+        qui a dit quoi et quand. C'est la forme de memoire la plus directe et la plus
+        couramment implementee.
+    </p>
+
+    <h3>2.3 Memoire semantique = Knowledge Base / Vector Store</h3>
+
+    <p>
+        La memoire semantique contient nos connaissances generales, independamment du
+        contexte ou elles ont ete acquises. Pour un agent, cela se traduit par une
+        <strong>base de connaissances</strong> interrogeable via des embeddings et une
+        recherche vectorielle (RAG).
+    </p>
+
+    <h3>2.4 Memoire procedurale = Skills et comportements appris</h3>
+
+    <p>
+        La memoire procedurale concerne les savoir-faire automatises (faire du velo,
+        taper au clavier). Pour un agent, cela correspond aux <strong>prompts systeme</strong>,
+        aux comportements appris par fine-tuning, et aux regles internes codees en dur.
+    </p>
+
+    <div class="effect">
+        En combinant ces quatre types de memoire, un agent peut maintenir une conversation
+        coherente (episodique), acceder a des connaissances profondes (semantique),
+        gerer efficacement son espace de reflexion (travail), et appliquer des competences
+        acquises (procedurale).
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3 : CONTEXT WINDOW                                   -->
+    <!-- ============================================================ -->
+
+    <h2>3. Context Window : limites et strategies</h2>
+
+    <p>
+        La context window est la contrainte fondamentale de tout systeme base sur un LLM.
+        Tout ce que le modele "sait" a un instant donne doit tenir dans cette fenetre :
+        le system prompt, l'historique, les resultats d'outils, et la question actuelle.
+    </p>
+
+    <h3>3.1 Comprendre le comptage de tokens</h3>
+
+    <div class="code-block"><span class="keyword">import</span> tiktoken
+
+<span class="comment"># Charger l'encodeur pour GPT-4</span>
+encoder = tiktoken.<span class="function">encoding_for_model</span>(<span class="string">"gpt-4"</span>)
+
+<span class="comment"># Compter les tokens d'un texte</span>
+text = <span class="string">"Bonjour, comment allez-vous aujourd'hui ?"</span>
+tokens = encoder.<span class="function">encode</span>(text)
+<span class="function">print</span>(<span class="string">f"Texte: '{text}'"</span>)
+<span class="function">print</span>(<span class="string">f"Nombre de tokens: {len(tokens)}"</span>)
+<span class="function">print</span>(<span class="string">f"Tokens: {tokens}"</span>)
+<span class="function">print</span>(<span class="string">f"Decodage token par token:"</span>)
+<span class="keyword">for</span> t <span class="keyword">in</span> tokens:
+    <span class="function">print</span>(<span class="string">f"  {t} -> '{encoder.decode([t])}'"</span>)</div>
+
+    <div class="output-block">Texte: 'Bonjour, comment allez-vous aujourd'hui ?'
+Nombre de tokens: 11
+Tokens: [40259, 11, 4068, 65203, 12, 57236, 69484, 6, 71245, 949, 949]
+Decodage token par token:
+  40259 -> 'Bonjour'
+  11 -> ','
+  4068 -> ' comment'
+  ...</div>
+
+    <h3>3.2 Estimer la consommation de tokens</h3>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">estimate_conversation_tokens</span>(messages: list, model: str = <span class="string">"gpt-4"</span>) -> dict:
+    <span class="string">"""Estimer le nombre de tokens dans une conversation."""</span>
+    encoder = tiktoken.<span class="function">encoding_for_model</span>(model)
+
+    total_tokens = <span class="number">0</span>
+    breakdown = []
+
+    <span class="keyword">for</span> msg <span class="keyword">in</span> messages:
+        <span class="comment"># Overhead par message (role, separateurs)</span>
+        msg_tokens = <span class="number">4</span>  <span class="comment"># Overhead fixe par message</span>
+        msg_tokens += <span class="function">len</span>(encoder.<span class="function">encode</span>(msg[<span class="string">"role"</span>]))
+        msg_tokens += <span class="function">len</span>(encoder.<span class="function">encode</span>(msg[<span class="string">"content"</span>]))
+
+        breakdown.<span class="function">append</span>({
+            <span class="string">"role"</span>: msg[<span class="string">"role"</span>],
+            <span class="string">"tokens"</span>: msg_tokens,
+            <span class="string">"preview"</span>: msg[<span class="string">"content"</span>][:<span class="number">50</span>] + <span class="string">"..."</span>
+        })
+        total_tokens += msg_tokens
+
+    total_tokens += <span class="number">2</span>  <span class="comment"># Tokens de fin de conversation</span>
+
+    <span class="keyword">return</span> {
+        <span class="string">"total_tokens"</span>: total_tokens,
+        <span class="string">"breakdown"</span>: breakdown,
+        <span class="string">"pct_of_128k"</span>: <span class="string">f"{total_tokens / 128000 * 100:.2f}%"</span>
+    }
+
+<span class="comment"># Exemple d'utilisation</span>
+messages = [
+    {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="string">"Tu es un assistant utile et precis."</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Explique-moi le machine learning."</span>},
+    {<span class="string">"role"</span>: <span class="string">"assistant"</span>, <span class="string">"content"</span>: <span class="string">"Le machine learning est une branche..."</span>},
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Et le deep learning ?"</span>},
+]
+
+result = <span class="function">estimate_conversation_tokens</span>(messages)
+<span class="function">print</span>(<span class="string">f"Total: {result['total_tokens']} tokens ({result['pct_of_128k']} de 128K)"</span>)</div>
+
+    <div class="warning">
+        Le depassement de la context window provoque soit une erreur (chez OpenAI), soit
+        une troncature silencieuse des messages les plus anciens (chez certains fournisseurs).
+        Il est crucial de surveiller et gerer proactivement la consommation de tokens.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4 : ConversationBufferMemory                         -->
+    <!-- ============================================================ -->
+
+    <h2>4. ConversationBufferMemory : le buffer complet</h2>
+
+    <p>
+        <code>ConversationBufferMemory</code> est la forme de memoire la plus simple de LangChain.
+        Elle stocke <strong>tous</strong> les messages de la conversation dans une liste et
+        les injecte integralement dans chaque appel au modele.
+    </p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferMemory
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain.chains <span class="keyword">import</span> ConversationChain
+
+<span class="comment"># Creer la memoire</span>
+memory = <span class="function">ConversationBufferMemory</span>(
+    return_messages=<span class="keyword">True</span>,  <span class="comment"># Retourne des objets Message (pas du texte brut)</span>
+    memory_key=<span class="string">"history"</span>    <span class="comment"># Cle dans le prompt template</span>
+)
+
+<span class="comment"># Creer la chaine de conversation</span>
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0.7</span>)
+conversation = <span class="function">ConversationChain</span>(
+    llm=llm,
+    memory=memory,
+    verbose=<span class="keyword">True</span>  <span class="comment"># Afficher les details internes</span>
+)
+
+<span class="comment"># Premier echange</span>
+response1 = conversation.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Je m'appelle Marie et je suis data scientist."</span>})
+<span class="function">print</span>(response1[<span class="string">"response"</span>])
+
+<span class="comment"># Deuxieme echange - la memoire conserve le contexte</span>
+response2 = conversation.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Quel est mon metier ?"</span>})
+<span class="function">print</span>(response2[<span class="string">"response"</span>])
+
+<span class="comment"># Verifier le contenu de la memoire</span>
+<span class="function">print</span>(<span class="string">"\n--- Contenu de la memoire ---"</span>)
+<span class="keyword">for</span> msg <span class="keyword">in</span> memory.chat_memory.messages:
+    <span class="function">print</span>(<span class="string">f"[{msg.type}] {msg.content[:80]}..."</span>)</div>
+
+    <div class="output-block">Bonjour Marie ! Ravie de vous connaitre. Data scientist, c'est un metier passionnant !
+
+Vous etes data scientist, Marie. Vous me l'avez dit juste avant.
+
+--- Contenu de la memoire ---
+[human] Je m'appelle Marie et je suis data scientist....
+[ai] Bonjour Marie ! Ravie de vous connaitre. Data scientist, c'est un metier pa...
+[human] Quel est mon metier ?...
+[ai] Vous etes data scientist, Marie. Vous me l'avez dit juste avant....</div>
+
+    <div class="concept-box">
+        <h3>Avantages et inconvenients du ConversationBufferMemory</h3>
+        <table>
+            <tr><th>Avantages</th><th>Inconvenients</th></tr>
+            <tr><td>Simple a comprendre et implementer</td><td>Consommation de tokens croissante</td></tr>
+            <tr><td>Aucune perte d'information</td><td>Depasse la context window pour les longues conversations</td></tr>
+            <tr><td>Fidelite totale de l'historique</td><td>Cout API croissant avec chaque message</td></tr>
+            <tr><td>Ideal pour les conversations courtes</td><td>Non viable pour les agents long-running</td></tr>
+        </table>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5 : ConversationBufferWindowMemory                   -->
+    <!-- ============================================================ -->
+
+    <h2>5. ConversationBufferWindowMemory : la fenetre glissante</h2>
+
+    <p>
+        <code>ConversationBufferWindowMemory</code> resout le probleme de croissance infinie
+        en ne conservant que les <strong>k derniers echanges</strong>. C'est comme une fenetre
+        qui glisse sur la conversation, ne gardant que les messages les plus recents.
+    </p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationBufferWindowMemory
+
+<span class="comment"># Garder seulement les 5 derniers echanges</span>
+memory = <span class="function">ConversationBufferWindowMemory</span>(
+    k=<span class="number">5</span>,                    <span class="comment"># Nombre de paires (human, ai) a garder</span>
+    return_messages=<span class="keyword">True</span>,
+    memory_key=<span class="string">"history"</span>
+)
+
+<span class="comment"># Simuler une longue conversation</span>
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">10</span>):
+    memory.<span class="function">save_context</span>(
+        {<span class="string">"input"</span>: <span class="string">f"Question numero {i+1}"</span>},
+        {<span class="string">"output"</span>: <span class="string">f"Reponse numero {i+1}"</span>}
+    )
+
+<span class="comment"># Verifier : seuls les 5 derniers echanges sont gardes</span>
+messages = memory.<span class="function">load_memory_variables</span>({})[<span class="string">"history"</span>]
+<span class="function">print</span>(<span class="string">f"Nombre de messages en memoire: {len(messages)}"</span>)
+<span class="keyword">for</span> msg <span class="keyword">in</span> messages:
+    <span class="function">print</span>(<span class="string">f"  [{msg.type}] {msg.content}"</span>)</div>
+
+    <div class="output-block">Nombre de messages en memoire: 10
+  [human] Question numero 6
+  [ai] Reponse numero 6
+  [human] Question numero 7
+  [ai] Reponse numero 7
+  [human] Question numero 8
+  [ai] Reponse numero 8
+  [human] Question numero 9
+  [ai] Reponse numero 9
+  [human] Question numero 10
+  [ai] Reponse numero 10</div>
+
+    <div class="effect">
+        Avec <code>k=5</code>, la memoire conserve les 5 derniers echanges (10 messages :
+        5 humain + 5 assistant). Les messages plus anciens sont definitivement supprimes.
+        Le nombre de tokens reste ainsi borne, quelle que soit la duree de la conversation.
+    </div>
+
+    <div class="prof-note">
+        Le choix de la valeur <code>k</code> est un compromis : une valeur trop petite (k=2)
+        fait perdre le contexte rapidement, une valeur trop grande (k=50) consomme beaucoup
+        de tokens. En pratique, k=5 a k=10 est un bon point de depart pour la plupart
+        des cas d'usage conversationnels.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6 : ConversationSummaryMemory                        -->
+    <!-- ============================================================ -->
+
+    <h2>6. ConversationSummaryMemory : le resume progressif</h2>
+
+    <p>
+        <code>ConversationSummaryMemory</code> adopte une approche radicalement differente :
+        au lieu de stocker les messages bruts, elle utilise le LLM pour
+        <strong>resumer progressivement</strong> la conversation. A chaque nouvel echange,
+        le resume existant est mis a jour avec les nouvelles informations.
+    </p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationSummaryMemory
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Creer la memoire avec resume</span>
+memory = <span class="function">ConversationSummaryMemory</span>(
+    llm=llm,                    <span class="comment"># LLM utilise pour generer les resumes</span>
+    return_messages=<span class="keyword">False</span>,      <span class="comment"># Retourne du texte (pas des Messages)</span>
+    memory_key=<span class="string">"history"</span>
+)
+
+<span class="comment"># Simuler une conversation</span>
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Bonjour, je suis Pierre. Je travaille chez TechCorp comme ingenieur ML."</span>},
+    {<span class="string">"output"</span>: <span class="string">"Bonjour Pierre ! Bienvenue. Comment puis-je vous aider avec le ML ?"</span>}
+)
+
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Je cherche a ameliorer notre pipeline de RAG. On utilise ChromaDB."</span>},
+    {<span class="string">"output"</span>: <span class="string">"ChromaDB est un bon choix. Quels problemes rencontrez-vous exactement ?"</span>}
+)
+
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Les resultats de recherche ne sont pas assez pertinents. Notre recall est de 60%."</span>},
+    {<span class="string">"output"</span>: <span class="string">"Un recall de 60% peut etre ameliore. Avez-vous essaye le re-ranking ?"</span>}
+)
+
+<span class="comment"># Voir le resume genere</span>
+summary = memory.<span class="function">load_memory_variables</span>({})[<span class="string">"history"</span>]
+<span class="function">print</span>(<span class="string">"Resume de la conversation :"</span>)
+<span class="function">print</span>(summary)</div>
+
+    <div class="output-block">Resume de la conversation :
+Pierre, ingenieur ML chez TechCorp, cherche a ameliorer leur pipeline RAG
+qui utilise ChromaDB. Le recall actuel est de 60%, ce qui n'est pas satisfaisant.
+L'assistant a suggere d'essayer le re-ranking pour ameliorer la pertinence
+des resultats de recherche.</div>
+
+    <div class="concept-box blue">
+        <h3>Comment fonctionne le resume progressif</h3>
+        <p>A chaque nouvel echange, le systeme envoie au LLM :</p>
+        <ol>
+            <li>Le resume precedent de la conversation</li>
+            <li>Les nouveaux messages (question + reponse)</li>
+            <li>L'instruction : "Mets a jour ce resume avec les nouvelles informations"</li>
+        </ol>
+        <p>
+            Le LLM produit alors un nouveau resume qui integre les informations precedentes
+            et nouvelles. Ce processus consomme des tokens a chaque echange (pour generer le
+            resume), mais le resume final reste compact.
+        </p>
+    </div>
+
+    <div class="warning">
+        Le resume est genere par un LLM, ce qui signifie qu'il peut omettre ou deformer
+        certaines informations. Les details precis (nombres, dates, noms techniques) peuvent
+        etre perdus ou alteres. Ce n'est pas adapte aux cas ou la precision factuelle
+        est critique.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7 : ConversationSummaryBufferMemory                  -->
+    <!-- ============================================================ -->
+
+    <h2>7. ConversationSummaryBufferMemory : l'approche hybride</h2>
+
+    <p>
+        <code>ConversationSummaryBufferMemory</code> combine le meilleur des deux mondes :
+        elle conserve les messages recents <strong>en entier</strong> (comme le buffer) et
+        resume les messages plus anciens (comme le summary). La bascule se fait
+        quand le nombre total de tokens depasse un seuil configurable.
+    </p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationSummaryBufferMemory
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Memoire hybride : resume + buffer recent</span>
+memory = <span class="function">ConversationSummaryBufferMemory</span>(
+    llm=llm,
+    max_token_limit=<span class="number">650</span>,      <span class="comment"># Seuil de tokens avant de resumer</span>
+    return_messages=<span class="keyword">True</span>,
+    memory_key=<span class="string">"history"</span>
+)
+
+<span class="comment"># Simuler plusieurs echanges</span>
+conversations = [
+    (<span class="string">"Je m'appelle Sophie, je suis chef de projet chez DataCorp."</span>,
+     <span class="string">"Bonjour Sophie ! Comment puis-je vous aider ?"</span>),
+    (<span class="string">"On developpe un chatbot pour le service client."</span>,
+     <span class="string">"Un chatbot service client, excellent projet ! Quels sont vos besoins ?"</span>),
+    (<span class="string">"Il doit repondre aux questions sur nos 500 produits."</span>,
+     <span class="string">"500 produits, cela necessite un systeme RAG robuste."</span>),
+    (<span class="string">"On hesite entre GPT-4 et Claude pour le LLM."</span>,
+     <span class="string">"Les deux sont d'excellents choix. GPT-4 est polyvalent, Claude excelle en analyse."</span>),
+    (<span class="string">"Notre budget est de 5000 euros par mois pour les API."</span>,
+     <span class="string">"Avec 5000 euros/mois, vous avez de la marge. Je recommande de commencer avec GPT-4."</span>),
+]
+
+<span class="keyword">for</span> human_msg, ai_msg <span class="keyword">in</span> conversations:
+    memory.<span class="function">save_context</span>(
+        {<span class="string">"input"</span>: human_msg},
+        {<span class="string">"output"</span>: ai_msg}
+    )
+
+<span class="comment"># La memoire contient un resume des anciens messages</span>
+<span class="comment"># + les messages recents en entier</span>
+data = memory.<span class="function">load_memory_variables</span>({})[<span class="string">"history"</span>]
+<span class="function">print</span>(<span class="string">f"Messages en memoire: {len(data)}"</span>)
+<span class="keyword">for</span> msg <span class="keyword">in</span> data:
+    <span class="function">print</span>(<span class="string">f"  [{msg.type}] {msg.content[:80]}..."</span>)</div>
+
+    <div class="output-block">Messages en memoire: 5
+  [system] Sophie, chef de projet chez DataCorp, developpe un chatbot service client...
+  [human] On hesite entre GPT-4 et Claude pour le LLM....
+  [ai] Les deux sont d'excellents choix. GPT-4 est polyvalent, Claude excelle en an...
+  [human] Notre budget est de 5000 euros par mois pour les API....
+  [ai] Avec 5000 euros/mois, vous avez de la marge. Je recommande de commencer avec...</div>
+
+    <div class="effect">
+        Les messages anciens sont resumes dans un message systeme, tandis que les messages
+        recents sont conserves integralement. Cela garantit la precision des echanges
+        recents tout en preservant le contexte global de la conversation.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 8 : VectorStoreMemory                                -->
+    <!-- ============================================================ -->
+
+    <h2>8. VectorStoreMemory : recherche semantique dans l'historique</h2>
+
+    <p>
+        <code>VectorStoreMemory</code> stocke chaque message sous forme d'embedding vectoriel
+        dans une base vectorielle. Au lieu de charger tout l'historique, elle effectue une
+        <strong>recherche semantique</strong> pour retrouver les messages les plus pertinents
+        par rapport a la question actuelle.
+    </p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> VectorStoreRetrieverMemory
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">import</span> chromadb
+
+<span class="comment"># Creer le vector store</span>
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+vectorstore = <span class="function">Chroma</span>(
+    collection_name=<span class="string">"conversation_memory"</span>,
+    embedding_function=embeddings,
+    persist_directory=<span class="string">"./memory_db"</span>
+)
+
+<span class="comment"># Creer le retriever</span>
+retriever = vectorstore.<span class="function">as_retriever</span>(
+    search_kwargs={<span class="string">"k"</span>: <span class="number">3</span>}  <span class="comment"># Recuperer les 3 messages les plus pertinents</span>
+)
+
+<span class="comment"># Creer la memoire vectorielle</span>
+memory = <span class="function">VectorStoreRetrieverMemory</span>(
+    retriever=retriever,
+    memory_key=<span class="string">"relevant_history"</span>,
+    input_key=<span class="string">"input"</span>
+)
+
+<span class="comment"># Ajouter des souvenirs</span>
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Mon plat prefere est le couscous."</span>},
+    {<span class="string">"output"</span>: <span class="string">"Note ! Le couscous est un plat delicieux."</span>}
+)
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"J'adore programmer en Python."</span>},
+    {<span class="string">"output"</span>: <span class="string">"Python est un excellent choix de langage."</span>}
+)
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"J'ai un chat qui s'appelle Luna."</span>},
+    {<span class="string">"output"</span>: <span class="string">"Luna est un joli nom pour un chat !"</span>}
+)
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Je travaille dans le domaine de la sante."</span>},
+    {<span class="string">"output"</span>: <span class="string">"Le secteur de la sante est passionnant pour l'IA."</span>}
+)
+
+<span class="comment"># Recherche semantique : retrouver ce qui est pertinent</span>
+relevant = memory.<span class="function">load_memory_variables</span>({<span class="string">"input"</span>: <span class="string">"Quel langage je prefere ?"</span>})
+<span class="function">print</span>(<span class="string">"Question: 'Quel langage je prefere ?'"</span>)
+<span class="function">print</span>(<span class="string">f"Memoire pertinente retrouvee:\n{relevant['relevant_history']}"</span>)</div>
+
+    <div class="output-block">Question: 'Quel langage je prefere ?'
+Memoire pertinente retrouvee:
+input: J'adore programmer en Python.
+output: Python est un excellent choix de langage.</div>
+
+    <div class="concept-box green">
+        <h3>Avantages de la memoire vectorielle</h3>
+        <ul>
+            <li><strong>Scalabilite</strong> : peut stocker des milliers de messages sans surcharger la context window</li>
+            <li><strong>Pertinence</strong> : retrouve les informations semantiquement proches de la question, meme si elles datent de loin</li>
+            <li><strong>Efficience</strong> : ne charge que les k messages les plus utiles, optimisant la consommation de tokens</li>
+            <li><strong>Persistance</strong> : les embeddings sont stockes sur disque, survivant aux redemarrages</li>
+        </ul>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 9 : RAG COMME MEMOIRE LONG TERME                     -->
+    <!-- ============================================================ -->
+
+    <h2>9. RAG comme memoire long terme</h2>
+
+    <p>
+        Le <strong>Retrieval-Augmented Generation (RAG)</strong> peut etre utilise comme un
+        systeme de memoire long terme pour les agents. L'idee est de stocker toutes les
+        interactions et connaissances dans une base vectorielle, puis de les retrouver
+        au moment opportun pour enrichir le contexte de l'agent.
+    </p>
+
+    <h3>9.1 Architecture RAG pour la memoire</h3>
+
+    <div class="svg-container">
+        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" style="max-width:850px;">
+            <rect width="900" height="300" fill="#0f0f23" rx="12"/>
+
+            <text x="450" y="28" fill="#ff6b35" font-size="15" font-weight="bold" text-anchor="middle">RAG comme systeme de memoire long terme</text>
+
+            <!-- New conversation -->
+            <rect x="30" y="50" width="160" height="55" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="110" y="72" fill="#569cd6" font-size="11" text-anchor="middle" font-weight="bold">Nouvelle question</text>
+            <text x="110" y="92" fill="#e0e0e0" font-size="10" text-anchor="middle">"Rappelle-moi mon</text>
+            <text x="110" y="102" fill="#e0e0e0" font-size="9" text-anchor="middle">projet avec ChromaDB"</text>
+
+            <!-- Arrow to Embedding -->
+            <line x1="190" y1="77" x2="230" y2="77" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+            <!-- Embedding -->
+            <rect x="235" y="50" width="130" height="55" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="300" y="72" fill="#ff8c42" font-size="11" text-anchor="middle" font-weight="bold">Embedding</text>
+            <text x="300" y="92" fill="#e0e0e0" font-size="10" text-anchor="middle">[0.12, -0.45, ...]</text>
+
+            <!-- Arrow to Vector Search -->
+            <line x1="365" y1="77" x2="405" y2="77" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+            <!-- Vector DB -->
+            <rect x="410" y="40" width="160" height="75" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="490" y="62" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">Vector Store</text>
+            <text x="490" y="80" fill="#e0e0e0" font-size="9" text-anchor="middle">Historique complet</text>
+            <text x="490" y="94" fill="#e0e0e0" font-size="9" text-anchor="middle">Conversations passees</text>
+            <text x="490" y="108" fill="#e0e0e0" font-size="9" text-anchor="middle">Documents + notes</text>
+
+            <!-- Arrow to Relevant docs -->
+            <line x1="570" y1="77" x2="610" y2="77" stroke="#00ff88" stroke-width="2" marker-end="url(#arr2)"/>
+
+            <!-- Retrieved memories -->
+            <rect x="615" y="45" width="150" height="65" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="690" y="65" fill="#00ff88" font-size="11" text-anchor="middle" font-weight="bold">Top-K resultats</text>
+            <text x="690" y="83" fill="#e0e0e0" font-size="9" text-anchor="middle">Conversations liees</text>
+            <text x="690" y="97" fill="#e0e0e0" font-size="9" text-anchor="middle">a ChromaDB</text>
+
+            <!-- Arrow down to LLM -->
+            <path d="M 690 110 L 690 145 L 490 145 L 490 170" fill="none" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+            <!-- Also arrow from question to LLM -->
+            <path d="M 110 105 L 110 230 L 410 230" fill="none" stroke="#569cd6" stroke-width="2" marker-end="url(#arr3)"/>
+
+            <!-- LLM -->
+            <rect x="410" y="175" width="160" height="65" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="490" y="198" fill="#ff6b35" font-size="12" text-anchor="middle" font-weight="bold">LLM</text>
+            <text x="490" y="218" fill="#e0e0e0" font-size="10" text-anchor="middle">Question + Souvenirs</text>
+            <text x="490" y="232" fill="#e0e0e0" font-size="10" text-anchor="middle">= Reponse contextuelle</text>
+
+            <!-- Arrow to Response -->
+            <line x1="570" y1="207" x2="630" y2="207" stroke="#ff6b35" stroke-width="2" marker-end="url(#arr1)"/>
+
+            <!-- Response -->
+            <rect x="635" y="180" width="220" height="55" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="745" y="200" fill="#569cd6" font-size="11" text-anchor="middle" font-weight="bold">Reponse enrichie</text>
+            <text x="745" y="218" fill="#e0e0e0" font-size="9" text-anchor="middle">"Votre projet RAG avec ChromaDB</text>
+            <text x="745" y="230" fill="#e0e0e0" font-size="9" text-anchor="middle">avait un recall de 60%..."</text>
+
+            <!-- Storage arrow (save new interaction) -->
+            <path d="M 490 240 L 490 270 L 250 270 L 250 170 L 490 170 L 490 115" fill="none" stroke="#aaa" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arr4)"/>
+            <text x="320" y="262" fill="#aaa" font-size="9">Sauvegarde du nouvel echange</text>
+
+            <defs>
+                <marker id="arr1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#ff6b35"/></marker>
+                <marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#00ff88"/></marker>
+                <marker id="arr3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#569cd6"/></marker>
+                <marker id="arr4" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#aaa"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <h3>9.2 Implementation d'un systeme RAG-memory</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings, ChatOpenAI
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+<span class="keyword">import</span> json
+
+<span class="keyword">class</span> <span class="function">RAGMemory</span>:
+    <span class="string">"""Systeme de memoire long terme base sur le RAG."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, collection_name: str = <span class="string">"agent_memory"</span>):
+        self.embeddings = <span class="function">OpenAIEmbeddings</span>(
+            model=<span class="string">"text-embedding-3-small"</span>
+        )
+        self.vectorstore = <span class="function">Chroma</span>(
+            collection_name=collection_name,
+            embedding_function=self.embeddings,
+            persist_directory=<span class="string">"./long_term_memory"</span>
+        )
+        self.llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0</span>)
+
+    <span class="keyword">def</span> <span class="function">store_interaction</span>(self, user_msg: str, ai_msg: str, metadata: dict = <span class="keyword">None</span>):
+        <span class="string">"""Stocker une interaction dans la memoire long terme."""</span>
+        timestamp = datetime.<span class="function">now</span>().<span class="function">isoformat</span>()
+
+        <span class="comment"># Combiner question et reponse en un seul document</span>
+        content = <span class="string">f"Utilisateur: {user_msg}\nAssistant: {ai_msg}"</span>
+
+        doc_metadata = {
+            <span class="string">"timestamp"</span>: timestamp,
+            <span class="string">"type"</span>: <span class="string">"conversation"</span>,
+            <span class="string">"user_query"</span>: user_msg[:<span class="number">200</span>],  <span class="comment"># Pour le filtrage</span>
+        }
+        <span class="keyword">if</span> metadata:
+            doc_metadata.<span class="function">update</span>(metadata)
+
+        doc = <span class="function">Document</span>(
+            page_content=content,
+            metadata=doc_metadata
+        )
+        self.vectorstore.<span class="function">add_documents</span>([doc])
+
+    <span class="keyword">def</span> <span class="function">recall</span>(self, query: str, k: int = <span class="number">3</span>) -> list:
+        <span class="string">"""Retrouver les souvenirs pertinents pour une requete."""</span>
+        results = self.vectorstore.<span class="function">similarity_search_with_score</span>(
+            query, k=k
+        )
+        memories = []
+        <span class="keyword">for</span> doc, score <span class="keyword">in</span> results:
+            memories.<span class="function">append</span>({
+                <span class="string">"content"</span>: doc.page_content,
+                <span class="string">"score"</span>: <span class="function">round</span>(score, <span class="number">3</span>),
+                <span class="string">"timestamp"</span>: doc.metadata.get(<span class="string">"timestamp"</span>, <span class="string">"inconnu"</span>)
+            })
+        <span class="keyword">return</span> memories
+
+    <span class="keyword">def</span> <span class="function">format_memories_for_prompt</span>(self, query: str, k: int = <span class="number">3</span>) -> str:
+        <span class="string">"""Formater les souvenirs pour injection dans le prompt."""</span>
+        memories = self.<span class="function">recall</span>(query, k)
+        <span class="keyword">if</span> <span class="keyword">not</span> memories:
+            <span class="keyword">return</span> <span class="string">"Aucun souvenir pertinent trouve."</span>
+
+        formatted = <span class="string">"Souvenirs pertinents de conversations passees:\n"</span>
+        <span class="keyword">for</span> i, mem <span class="keyword">in</span> <span class="function">enumerate</span>(memories, <span class="number">1</span>):
+            formatted += <span class="string">f"\n--- Souvenir {i} (pertinence: {mem['score']}) ---\n"</span>
+            formatted += mem[<span class="string">"content"</span>] + <span class="string">"\n"</span>
+        <span class="keyword">return</span> formatted
+
+<span class="comment"># Utilisation</span>
+memory = <span class="function">RAGMemory</span>()
+
+<span class="comment"># Stocker des interactions</span>
+memory.<span class="function">store_interaction</span>(
+    <span class="string">"Comment configurer un pipeline RAG ?"</span>,
+    <span class="string">"Voici les etapes : 1) Charger les documents, 2) Creer les embeddings..."</span>,
+    {<span class="string">"topic"</span>: <span class="string">"RAG"</span>}
+)
+
+<span class="comment"># Plus tard, retrouver l'information</span>
+context = memory.<span class="function">format_memories_for_prompt</span>(<span class="string">"Comment ameliorer mon RAG ?"</span>)
+<span class="function">print</span>(context)</div>
+
+    <div class="prof-note">
+        Le RAG comme memoire long terme est particulierement puissant pour les assistants
+        qui interagissent avec le meme utilisateur sur des semaines ou des mois. Les souvenirs
+        sont stockes de maniere permanente et retrouves par pertinence semantique, pas
+        par ordre chronologique.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 10 : ENTITY MEMORY                                   -->
+    <!-- ============================================================ -->
+
+    <h2>10. Entity Memory : extraction et suivi d'entites</h2>
+
+    <p>
+        <code>ConversationEntityMemory</code> utilise le LLM pour extraire et mettre a jour
+        automatiquement des informations sur les <strong>entites</strong> mentionnees dans la
+        conversation : personnes, entreprises, projets, lieux, etc. Chaque entite a sa
+        propre fiche qui est mise a jour au fil des echanges.
+    </p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationEntityMemory
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Creer la memoire d'entites</span>
+memory = <span class="function">ConversationEntityMemory</span>(
+    llm=llm,
+    return_messages=<span class="keyword">True</span>
+)
+
+<span class="comment"># Premier echange : introduction d'entites</span>
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Je travaille avec Alice sur le projet Phoenix chez TechCorp."</span>},
+    {<span class="string">"output"</span>: <span class="string">"Interessant ! Parlez-moi du projet Phoenix."</span>}
+)
+
+<span class="comment"># Deuxieme echange : enrichissement des entites</span>
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"Phoenix est un chatbot IA pour le service client. Alice est la lead developer."</span>},
+    {<span class="string">"output"</span>: <span class="string">"Alice a un role cle dans Phoenix en tant que lead developer."</span>}
+)
+
+<span class="comment"># Troisieme echange : nouvelles informations</span>
+memory.<span class="function">save_context</span>(
+    {<span class="string">"input"</span>: <span class="string">"On utilise LangChain et GPT-4. Le budget est de 50K euros."</span>},
+    {<span class="string">"output"</span>: <span class="string">"Un bon budget pour un projet de cette envergure."</span>}
+)
+
+<span class="comment"># Consulter les entites extraites</span>
+<span class="function">print</span>(<span class="string">"=== Entites en memoire ==="</span>)
+<span class="keyword">for</span> entity, description <span class="keyword">in</span> memory.entity_store.store.<span class="function">items</span>():
+    <span class="function">print</span>(<span class="string">f"\n[{entity}]"</span>)
+    <span class="function">print</span>(<span class="string">f"  {description}"</span>)</div>
+
+    <div class="output-block">=== Entites en memoire ===
+
+[Alice]
+  Alice est la lead developer du projet Phoenix chez TechCorp. Elle travaille
+  avec l'utilisateur sur un chatbot IA pour le service client.
+
+[Phoenix]
+  Phoenix est un projet de chatbot IA pour le service client chez TechCorp.
+  Il utilise LangChain et GPT-4, avec un budget de 50K euros.
+  Alice en est la lead developer.
+
+[TechCorp]
+  TechCorp est l'entreprise ou travaille l'utilisateur et Alice.
+  Elle developpe le projet Phoenix, un chatbot IA.</div>
+
+    <div class="effect">
+        L'entity memory cree automatiquement une "fiche" pour chaque entite mentionnee,
+        et la met a jour incrementalement a chaque nouvel echange. C'est comme si l'agent
+        tenait un carnet de notes organise par sujet.
+    </div>
+
+    <h3>10.2 Entity Memory avec persistence</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationEntityMemory
+<span class="keyword">from</span> langchain.memory.entity <span class="keyword">import</span> SQLiteEntityStore
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+
+<span class="comment"># Memoire d'entites persistante avec SQLite</span>
+entity_store = <span class="function">SQLiteEntityStore</span>(
+    session_id=<span class="string">"user_12345"</span>,
+    db_file=<span class="string">"entities.db"</span>
+)
+
+memory = <span class="function">ConversationEntityMemory</span>(
+    llm=<span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>),
+    entity_store=entity_store,
+    return_messages=<span class="keyword">True</span>
+)
+
+<span class="comment"># Les entites survivent aux redemarrages de l'application</span>
+<span class="comment"># car elles sont stockees dans SQLite</span>
+
+<span class="comment"># Recuperer les informations sur une entite specifique</span>
+alice_info = entity_store.<span class="function">get</span>(<span class="string">"Alice"</span>, <span class="string">"Aucune information disponible"</span>)
+<span class="function">print</span>(<span class="string">f"Info sur Alice: {alice_info}"</span>)</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 11 : SYSTEME MULTI-NIVEAUX                           -->
+    <!-- ============================================================ -->
+
+    <h2>11. Systeme de memoire multi-niveaux</h2>
+
+    <p>
+        En production, un agent performant combine plusieurs types de memoire. Construisons
+        un systeme complet qui integre la memoire de conversation recente, le resume,
+        la recherche vectorielle et le suivi d'entites.
+    </p>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI, OpenAIEmbeddings
+<span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain.schema <span class="keyword">import</span> Document, SystemMessage, HumanMessage
+<span class="keyword">from</span> typing <span class="keyword">import</span> List, Dict
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+<span class="keyword">import</span> json
+
+<span class="keyword">class</span> <span class="function">MultiLevelMemory</span>:
+    <span class="string">"""Systeme de memoire multi-niveaux pour agents IA.
+
+    Niveau 1 : Buffer recent (derniers k echanges, haute fidelite)
+    Niveau 2 : Resume compresse (conversation entiere resumee)
+    Niveau 3 : Memoire vectorielle (recherche semantique, long terme)
+    Niveau 4 : Entites (fiches structurees sur les sujets cles)
+    """</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, k: int = <span class="number">5</span>):
+        self.llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0</span>)
+        self.embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)
+        self.k = k
+
+        <span class="comment"># Niveau 1 : Buffer recent</span>
+        self.recent_buffer: List[Dict] = []
+
+        <span class="comment"># Niveau 2 : Resume</span>
+        self.summary: str = <span class="string">""</span>
+
+        <span class="comment"># Niveau 3 : Vector store</span>
+        self.vectorstore = <span class="function">Chroma</span>(
+            collection_name=<span class="string">"multi_level_memory"</span>,
+            embedding_function=self.embeddings,
+        )
+
+        <span class="comment"># Niveau 4 : Entites</span>
+        self.entities: Dict[str, str] = {}
+
+    <span class="keyword">def</span> <span class="function">add_interaction</span>(self, user_msg: str, ai_msg: str):
+        <span class="string">"""Ajouter un echange a tous les niveaux de memoire."""</span>
+        interaction = {
+            <span class="string">"human"</span>: user_msg,
+            <span class="string">"ai"</span>: ai_msg,
+            <span class="string">"timestamp"</span>: datetime.<span class="function">now</span>().<span class="function">isoformat</span>()
+        }
+
+        <span class="comment"># Niveau 1 : Ajouter au buffer (garder k derniers)</span>
+        self.recent_buffer.<span class="function">append</span>(interaction)
+        <span class="keyword">if</span> <span class="function">len</span>(self.recent_buffer) > self.k:
+            self.recent_buffer = self.recent_buffer[-self.k:]
+
+        <span class="comment"># Niveau 2 : Mettre a jour le resume</span>
+        self.<span class="function">_update_summary</span>(user_msg, ai_msg)
+
+        <span class="comment"># Niveau 3 : Stocker dans le vector store</span>
+        doc = <span class="function">Document</span>(
+            page_content=<span class="string">f"Q: {user_msg}\nR: {ai_msg}"</span>,
+            metadata={<span class="string">"timestamp"</span>: interaction[<span class="string">"timestamp"</span>]}
+        )
+        self.vectorstore.<span class="function">add_documents</span>([doc])
+
+        <span class="comment"># Niveau 4 : Extraire les entites</span>
+        self.<span class="function">_extract_entities</span>(user_msg, ai_msg)
+
+    <span class="keyword">def</span> <span class="function">_update_summary</span>(self, user_msg: str, ai_msg: str):
+        <span class="string">"""Mettre a jour le resume de la conversation."""</span>
+        prompt = <span class="string">f"""Resume actuel de la conversation:
+{self.summary if self.summary else '(Debut de conversation)'}
+
+Nouveau message utilisateur: {user_msg}
+Nouvelle reponse assistant: {ai_msg}
+
+Mets a jour le resume pour inclure les nouvelles informations.
+Garde le resume concis (max 200 mots). Conserve les faits importants."""</span>
+
+        response = self.llm.<span class="function">invoke</span>(prompt)
+        self.summary = response.content
+
+    <span class="keyword">def</span> <span class="function">_extract_entities</span>(self, user_msg: str, ai_msg: str):
+        <span class="string">"""Extraire et mettre a jour les entites."""</span>
+        existing = json.<span class="function">dumps</span>(self.entities, ensure_ascii=<span class="keyword">False</span>)
+        prompt = <span class="string">f"""Entites connues: {existing}
+
+Nouveau message: {user_msg}
+Reponse: {ai_msg}
+
+Extrais les entites (personnes, projets, entreprises, technologies)
+mentionnees. Retourne un JSON avec les entites mises a jour.
+Format: {{"nom_entite": "description mise a jour"}}"""</span>
+
+        response = self.llm.<span class="function">invoke</span>(prompt)
+        <span class="keyword">try</span>:
+            new_entities = json.<span class="function">loads</span>(response.content)
+            self.entities.<span class="function">update</span>(new_entities)
+        <span class="keyword">except</span> json.JSONDecodeError:
+            <span class="keyword">pass</span>  <span class="comment"># Ignorer si le format n'est pas valide</span>
+
+    <span class="keyword">def</span> <span class="function">get_context</span>(self, current_query: str) -> str:
+        <span class="string">"""Construire le contexte memoire complet pour le prompt."""</span>
+        sections = []
+
+        <span class="comment"># Resume global</span>
+        <span class="keyword">if</span> self.summary:
+            sections.<span class="function">append</span>(<span class="string">f"## Resume de la conversation\n{self.summary}"</span>)
+
+        <span class="comment"># Entites pertinentes</span>
+        <span class="keyword">if</span> self.entities:
+            entity_text = <span class="string">"\n"</span>.<span class="function">join</span>(
+                <span class="string">f"- {k}: {v}"</span> <span class="keyword">for</span> k, v <span class="keyword">in</span> self.entities.<span class="function">items</span>()
+            )
+            sections.<span class="function">append</span>(<span class="string">f"## Entites connues\n{entity_text}"</span>)
+
+        <span class="comment"># Souvenirs pertinents (vector search)</span>
+        relevant = self.vectorstore.<span class="function">similarity_search</span>(
+            current_query, k=<span class="number">2</span>
+        )
+        <span class="keyword">if</span> relevant:
+            mem_text = <span class="string">"\n"</span>.<span class="function">join</span>(
+                doc.page_content <span class="keyword">for</span> doc <span class="keyword">in</span> relevant
+            )
+            sections.<span class="function">append</span>(<span class="string">f"## Souvenirs pertinents\n{mem_text}"</span>)
+
+        <span class="comment"># Messages recents (buffer)</span>
+        <span class="keyword">if</span> self.recent_buffer:
+            recent = <span class="string">"\n"</span>.<span class="function">join</span>(
+                <span class="string">f"User: {m['human']}\nAI: {m['ai']}"</span>
+                <span class="keyword">for</span> m <span class="keyword">in</span> self.recent_buffer[-<span class="number">3</span>:]
+            )
+            sections.<span class="function">append</span>(<span class="string">f"## Echanges recents\n{recent}"</span>)
+
+        <span class="keyword">return</span> <span class="string">"\n\n"</span>.<span class="function">join</span>(sections)
+
+<span class="comment"># ---- Utilisation ----</span>
+
+memory = <span class="function">MultiLevelMemory</span>(k=<span class="number">5</span>)
+
+<span class="comment"># Conversation simulee</span>
+memory.<span class="function">add_interaction</span>(
+    <span class="string">"Je suis Marc, CTO de StartupAI. On lance un projet de RAG."</span>,
+    <span class="string">"Bonjour Marc ! Un projet RAG pour StartupAI, c'est un excellent choix."</span>
+)
+memory.<span class="function">add_interaction</span>(
+    <span class="string">"On utilise LangChain avec Pinecone et GPT-4."</span>,
+    <span class="string">"LangChain + Pinecone + GPT-4 est un stack tres solide pour le RAG."</span>
+)
+
+<span class="comment"># Recuperer le contexte pour une nouvelle question</span>
+context = memory.<span class="function">get_context</span>(<span class="string">"Quelles ameliorations pour notre RAG ?"</span>)
+<span class="function">print</span>(context)</div>
+
+    <div class="output-block">## Resume de la conversation
+Marc, CTO de StartupAI, travaille sur un projet RAG utilisant LangChain,
+Pinecone et GPT-4. Le projet vient de demarrer.
+
+## Entites connues
+- Marc: CTO de StartupAI, responsable du projet RAG
+- StartupAI: Startup qui developpe un systeme RAG
+- Pinecone: Base vectorielle utilisee pour le projet RAG
+
+## Souvenirs pertinents
+Q: On utilise LangChain avec Pinecone et GPT-4.
+R: LangChain + Pinecone + GPT-4 est un stack tres solide pour le RAG.
+
+## Echanges recents
+User: On utilise LangChain avec Pinecone et GPT-4.
+AI: LangChain + Pinecone + GPT-4 est un stack tres solide pour le RAG.</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 12 : MEMORY DANS LANGGRAPH                           -->
+    <!-- ============================================================ -->
+
+    <h2>12. Memory dans LangGraph : State et Persistence</h2>
+
+    <p>
+        LangGraph, le framework de graphes pour agents de LangChain, a une approche
+        differente de la memoire. Au lieu des classes <code>Memory</code> de LangChain legacy,
+        LangGraph utilise le concept de <strong>State</strong> (etat) qui est persiste via
+        un systeme de <strong>checkpointing</strong>.
+    </p>
+
+    <h3>12.1 State avec messages et memoire</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, MessagesState, START, END
+<span class="keyword">from</span> langgraph.checkpoint.memory <span class="keyword">import</span> MemorySaver
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, SystemMessage
+<span class="keyword">from</span> typing <span class="keyword">import</span> Annotated, TypedDict
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+
+<span class="comment"># State avec messages et memoire supplementaire</span>
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    messages: Annotated[list, add_messages]
+    summary: str          <span class="comment"># Resume de la conversation</span>
+    user_profile: dict    <span class="comment"># Informations sur l'utilisateur</span>
+
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0</span>)
+
+<span class="keyword">def</span> <span class="function">chatbot</span>(state: AgentState) -> AgentState:
+    <span class="string">"""Noeud principal du chatbot avec gestion de memoire."""</span>
+    <span class="comment"># Construire le contexte memoire</span>
+    system_parts = [<span class="string">"Tu es un assistant utile et attentif."</span>]
+
+    <span class="keyword">if</span> state.get(<span class="string">"summary"</span>):
+        system_parts.<span class="function">append</span>(
+            <span class="string">f"Resume des echanges precedents: {state['summary']}"</span>
+        )
+    <span class="keyword">if</span> state.get(<span class="string">"user_profile"</span>):
+        profile = state[<span class="string">"user_profile"</span>]
+        system_parts.<span class="function">append</span>(
+            <span class="string">f"Profil utilisateur: {profile}"</span>
+        )
+
+    system_msg = <span class="function">SystemMessage</span>(content=<span class="string">"\n"</span>.<span class="function">join</span>(system_parts))
+    messages = [system_msg] + state[<span class="string">"messages"</span>]
+
+    response = llm.<span class="function">invoke</span>(messages)
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [response]}
+
+<span class="keyword">def</span> <span class="function">should_summarize</span>(state: AgentState) -> str:
+    <span class="string">"""Decider si un resume est necessaire."""</span>
+    <span class="keyword">if</span> <span class="function">len</span>(state[<span class="string">"messages"</span>]) > <span class="number">10</span>:
+        <span class="keyword">return</span> <span class="string">"summarize"</span>
+    <span class="keyword">return</span> END
+
+<span class="keyword">def</span> <span class="function">summarize_conversation</span>(state: AgentState) -> AgentState:
+    <span class="string">"""Resumer la conversation et tronquer les messages."""</span>
+    messages = state[<span class="string">"messages"</span>]
+    old_summary = state.get(<span class="string">"summary"</span>, <span class="string">""</span>)
+
+    <span class="comment"># Resumer les anciens messages</span>
+    summary_prompt = <span class="string">f"""Resume precedent: {old_summary}
+
+Messages a resumer:
+{chr(10).join(f'{m.type}: {m.content[:100]}' for m in messages[:-4])}
+
+Produis un resume concis incluant les informations importantes."""</span>
+
+    summary_response = llm.<span class="function">invoke</span>(summary_prompt)
+
+    <span class="comment"># Garder seulement les 4 derniers messages</span>
+    <span class="keyword">return</span> {
+        <span class="string">"summary"</span>: summary_response.content,
+        <span class="string">"messages"</span>: messages[-<span class="number">4</span>:]
+    }
+
+<span class="comment"># Construire le graphe</span>
+graph = <span class="function">StateGraph</span>(AgentState)
+graph.<span class="function">add_node</span>(<span class="string">"chatbot"</span>, chatbot)
+graph.<span class="function">add_node</span>(<span class="string">"summarize"</span>, summarize_conversation)
+
+graph.<span class="function">add_edge</span>(START, <span class="string">"chatbot"</span>)
+graph.<span class="function">add_conditional_edges</span>(<span class="string">"chatbot"</span>, should_summarize)
+graph.<span class="function">add_edge</span>(<span class="string">"summarize"</span>, END)
+
+<span class="comment"># Checkpointer pour la persistence</span>
+checkpointer = <span class="function">MemorySaver</span>()
+app = graph.<span class="function">compile</span>(checkpointer=checkpointer)</div>
+
+    <h3>12.2 Utilisation avec persistence de session</h3>
+
+    <div class="code-block"><span class="comment"># Configuration de la session (thread_id identifie la conversation)</span>
+config = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"session_user_42"</span>}}
+
+<span class="comment"># Premier message</span>
+result = app.<span class="function">invoke</span>(
+    {
+        <span class="string">"messages"</span>: [<span class="function">HumanMessage</span>(<span class="string">"Bonjour, je suis Julie, developpeuse Python."</span>)],
+        <span class="string">"summary"</span>: <span class="string">""</span>,
+        <span class="string">"user_profile"</span>: {}
+    },
+    config=config
+)
+<span class="function">print</span>(result[<span class="string">"messages"</span>][-<span class="number">1</span>].content)
+
+<span class="comment"># Deuxieme message - meme session, le contexte est conserve</span>
+result = app.<span class="function">invoke</span>(
+    {<span class="string">"messages"</span>: [<span class="function">HumanMessage</span>(<span class="string">"Quel est mon prenom ?"</span>)]},
+    config=config
+)
+<span class="function">print</span>(result[<span class="string">"messages"</span>][-<span class="number">1</span>].content)</div>
+
+    <div class="output-block">Bonjour Julie ! Bienvenue, c'est genial que vous soyez developpeuse Python.
+Comment puis-je vous aider ?
+
+Vous vous appelez Julie, vous me l'avez dit juste avant.</div>
+
+    <h3>12.3 Persistence avec SQLite (production)</h3>
+
+    <div class="code-block"><span class="keyword">from</span> langgraph.checkpoint.sqlite <span class="keyword">import</span> SqliteSaver
+
+<span class="comment"># Persistence SQLite pour la production</span>
+<span class="keyword">with</span> <span class="function">SqliteSaver.from_conn_string</span>(<span class="string">"checkpoints.db"</span>) <span class="keyword">as</span> checkpointer:
+    app = graph.<span class="function">compile</span>(checkpointer=checkpointer)
+
+    <span class="comment"># Les conversations survivent aux redemarrages</span>
+    <span class="comment"># Chaque thread_id represente une conversation independante</span>
+
+    config_user_1 = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"user_alice_001"</span>}}
+    config_user_2 = {<span class="string">"configurable"</span>: {<span class="string">"thread_id"</span>: <span class="string">"user_bob_002"</span>}}
+
+    <span class="comment"># Alice et Bob ont des conversations completement separees</span>
+    app.<span class="function">invoke</span>(
+        {<span class="string">"messages"</span>: [<span class="function">HumanMessage</span>(<span class="string">"Je suis Alice."</span>)]},
+        config=config_user_1
+    )
+    app.<span class="function">invoke</span>(
+        {<span class="string">"messages"</span>: [<span class="function">HumanMessage</span>(<span class="string">"Je suis Bob."</span>)]},
+        config=config_user_2
+    )
+
+    <span class="comment"># Recuperer l'historique d'un thread</span>
+    state = app.<span class="function">get_state</span>(config_user_1)
+    <span class="function">print</span>(<span class="string">f"Messages d'Alice: {len(state.values['messages'])}"</span>)</div>
+
+    <div class="prof-note">
+        En production, preferez toujours <code>SqliteSaver</code> ou <code>PostgresSaver</code>
+        a <code>MemorySaver</code>. Le MemorySaver stocke tout en RAM et perd les donnees
+        au redemarrage. Pour les applications a grande echelle, PostgresSaver avec une base
+        de donnees dediee est la solution la plus robuste.
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION : TABLEAU COMPARATIF                                  -->
+    <!-- ============================================================ -->
+
+    <h2>Tableau comparatif des types de memoire</h2>
+
+    <table>
+        <tr>
+            <th>Type de memoire</th>
+            <th>Principe</th>
+            <th>Tokens</th>
+            <th>Perte d'info</th>
+            <th>Cas d'usage ideal</th>
+        </tr>
+        <tr>
+            <td><code>ConversationBuffer</code></td>
+            <td>Stocke tout</td>
+            <td>Croissants</td>
+            <td>Aucune</td>
+            <td>Conversations courtes (&lt;20 tours)</td>
+        </tr>
+        <tr>
+            <td><code>BufferWindow (k)</code></td>
+            <td>Garde les k derniers</td>
+            <td>Fixes</td>
+            <td>Anciens perdus</td>
+            <td>Conversations longues sans besoin de contexte ancien</td>
+        </tr>
+        <tr>
+            <td><code>Summary</code></td>
+            <td>Resume progressif</td>
+            <td>Compacts</td>
+            <td>Details resumes</td>
+            <td>Conversations tres longues, vue d'ensemble</td>
+        </tr>
+        <tr>
+            <td><code>SummaryBuffer</code></td>
+            <td>Resume + buffer recent</td>
+            <td>Moderes</td>
+            <td>Anciens resumes</td>
+            <td>Meilleur compromis general</td>
+        </tr>
+        <tr>
+            <td><code>VectorStore</code></td>
+            <td>Recherche semantique</td>
+            <td>Fixes (top-k)</td>
+            <td>Non-pertinents omis</td>
+            <td>Memoire long terme, knowledge base</td>
+        </tr>
+        <tr>
+            <td><code>Entity</code></td>
+            <td>Fiches par entite</td>
+            <td>Variables</td>
+            <td>Hors-entites perdus</td>
+            <td>Suivi de personnes, projets, concepts</td>
+        </tr>
+        <tr>
+            <td><code>LangGraph State</code></td>
+            <td>Etat persistant du graphe</td>
+            <td>Configurables</td>
+            <td>Configurable</td>
+            <td>Agents complexes, multi-sessions</td>
+        </tr>
+    </table>
+
+    <h2>Resume du cours</h2>
+
+    <div class="concept-box green">
+        <h3>Points cles a retenir</h3>
+        <ul>
+            <li>La <strong>memoire</strong> est essentielle pour la continuite, l'apprentissage et la personnalisation des agents</li>
+            <li>Les <strong>4 types de memoire cognitive</strong> (travail, episodique, semantique, procedurale) trouvent leurs equivalents dans les systemes IA</li>
+            <li>La <strong>context window</strong> est la contrainte fondamentale : tout doit tenir dans cette fenetre de tokens</li>
+            <li><strong>ConversationBufferMemory</strong> est simple mais ne passe pas a l'echelle</li>
+            <li><strong>ConversationBufferWindowMemory</strong> resout le probleme de taille avec une fenetre glissante</li>
+            <li><strong>ConversationSummaryMemory</strong> compresse l'historique en resume, ideal pour les longues conversations</li>
+            <li><strong>SummaryBufferMemory</strong> offre le meilleur compromis resume + messages recents</li>
+            <li><strong>VectorStoreMemory</strong> permet la recherche semantique dans tout l'historique</li>
+            <li>Le <strong>RAG</strong> sert de memoire long terme persistante et scalable</li>
+            <li>L'<strong>Entity Memory</strong> extrait automatiquement des fiches sur les entites mentionnees</li>
+            <li>En production, combinez plusieurs niveaux de memoire pour un systeme robuste</li>
+            <li><strong>LangGraph</strong> offre une approche moderne avec State, checkpointing et persistence SQL</li>
+        </ul>
+    </div>
+
+    <div class="nav">
+        <a href="ag_03_tools_function_calling.html">&larr; Tools et Function Calling</a>
+        <span style="color: #666;">(Cours 4/10 - Agents IA)</span>
+        <a href="ag_05_planning.html">Planification &rarr;</a>
+    </div>
+</div>
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

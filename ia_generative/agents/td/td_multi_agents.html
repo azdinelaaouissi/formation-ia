@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Système Multi-Agents Collaboratifs</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        p { margin-bottom: 12px; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .svg-container { text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Système Multi-Agents Collaboratifs</h1>
+    <p class="subtitle">Agents IA - TD 3/5 : Concevoir un système où 3 agents spécialisés (Researcher, Writer, Reviewer) collaborent sous la supervision d'un Supervisor</p>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 1 : RECAPITULATIF -->
+    <!-- ============================================ -->
+    <h2>1. Récapitulatif : Systèmes Multi-Agents</h2>
+
+    <p>Jusqu'ici, nous avons travaillé avec un seul agent. Mais pour les tâches complexes, un seul agent atteint vite ses limites. Les systèmes multi-agents permettent de décomposer un problème en sous-tâches, chacune gérée par un agent spécialisé.</p>
+
+    <div class="definition">
+        Un <strong>système multi-agents</strong> est une architecture où plusieurs agents IA autonomes collaborent pour résoudre un problème complexe. Chaque agent a un rôle spécifique, un ensemble d'outils dédié, et un système de communication pour échanger des informations avec les autres agents.
+    </div>
+
+    <h3>Patterns de communication multi-agents</h3>
+
+    <table>
+        <tr>
+            <th>Pattern</th>
+            <th>Description</th>
+            <th>Cas d'usage</th>
+        </tr>
+        <tr>
+            <td><strong>Supervisor</strong></td>
+            <td>Un agent central coordonne les autres, décide qui travaille et quand</td>
+            <td>Projets complexes avec workflow défini</td>
+        </tr>
+        <tr>
+            <td><strong>Peer-to-peer</strong></td>
+            <td>Les agents communiquent directement entre eux sans hiérarchie</td>
+            <td>Brainstorming, débats, consensus</td>
+        </tr>
+        <tr>
+            <td><strong>Sequential</strong></td>
+            <td>Les agents travaillent en chaîne : la sortie de l'un est l'entrée du suivant</td>
+            <td>Pipelines de production de contenu</td>
+        </tr>
+        <tr>
+            <td><strong>Hierarchical</strong></td>
+            <td>Arbre de superviseurs et sous-agents avec délégation</td>
+            <td>Organisations complexes, entreprises virtuelles</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        Dans ce TD, nous utilisons le pattern <strong>Supervisor</strong> car c'est le plus courant et le plus facile à contrôler. Le Supervisor décide quel agent doit travailler à chaque étape, et peut renvoyer le travail pour révision si le résultat n'est pas satisfaisant.
+    </div>
+
+    <h3>Notre système : 3 agents + 1 Supervisor</h3>
+    <ul>
+        <li><strong>Researcher</strong> : Recherche d'informations sur le web, synthèse de données, collecte de faits</li>
+        <li><strong>Writer</strong> : Rédaction structurée d'articles, rapports, synthèses</li>
+        <li><strong>Reviewer</strong> : Critique du travail produit, scoring de qualité, suggestions d'amélioration</li>
+        <li><strong>Supervisor</strong> : Orchestre le workflow, décide qui travaille, détecte quand le résultat est suffisant</li>
+    </ul>
+
+    <div class="warning">
+        Les systèmes multi-agents sont plus puissants mais aussi plus complexes à debugger. Chaque interaction agent-agent ajoute de la latence et du coût. Utilisez-les uniquement quand un seul agent ne suffit pas.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 2 : ARCHITECTURE -->
+    <!-- ============================================ -->
+    <h2>2. Architecture : Supervisor avec 3 Agents</h2>
+
+    <p>Voici l'architecture de notre système multi-agents. Le Supervisor est au centre et orchestre le flux de travail entre les trois agents spécialisés.</p>
+
+    <div class="svg-container">
+        <svg width="800" height="580" viewBox="0 0 800 580" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="800" height="580" fill="#0f0f23" rx="12"/>
+
+            <!-- Title -->
+            <text x="400" y="35" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Système Multi-Agents avec Supervisor</text>
+
+            <!-- User Query -->
+            <rect x="300" y="55" width="200" height="40" rx="8" fill="none" stroke="#569cd6" stroke-width="2"/>
+            <text x="400" y="80" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Sujet de recherche</text>
+            <line x1="400" y1="95" x2="400" y2="135" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowB)"/>
+
+            <!-- Supervisor -->
+            <rect x="275" y="135" width="250" height="70" rx="12" fill="rgba(255,107,53,0.2)" stroke="#ff6b35" stroke-width="3"/>
+            <text x="400" y="165" text-anchor="middle" fill="#ff6b35" font-size="15" font-weight="bold">SUPERVISOR</text>
+            <text x="400" y="185" text-anchor="middle" fill="#ff8c42" font-size="11">Décide qui travaille + quand terminer</text>
+
+            <!-- Shared State -->
+            <rect x="300" y="230" width="200" height="35" rx="6" fill="rgba(255,255,255,0.05)" stroke="#666" stroke-width="1"/>
+            <text x="400" y="253" text-anchor="middle" fill="#aaa" font-size="12">State partagé (messages)</text>
+
+            <!-- Arrows from Supervisor to State -->
+            <line x1="400" y1="205" x2="400" y2="230" stroke="#666" stroke-width="1.5"/>
+
+            <!-- Researcher Agent -->
+            <rect x="50" y="310" width="200" height="100" rx="10" fill="rgba(0,255,136,0.08)" stroke="#00ff88" stroke-width="2"/>
+            <text x="150" y="340" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">Researcher Agent</text>
+            <text x="150" y="362" text-anchor="middle" fill="#aaa" font-size="10">web_search</text>
+            <text x="150" y="380" text-anchor="middle" fill="#aaa" font-size="10">summarize</text>
+            <text x="150" y="398" text-anchor="middle" fill="#aaa" font-size="10">extract_facts</text>
+
+            <!-- Writer Agent -->
+            <rect x="300" y="310" width="200" height="100" rx="10" fill="rgba(86,156,214,0.08)" stroke="#569cd6" stroke-width="2"/>
+            <text x="400" y="340" text-anchor="middle" fill="#569cd6" font-size="14" font-weight="bold">Writer Agent</text>
+            <text x="400" y="362" text-anchor="middle" fill="#aaa" font-size="10">structure_article</text>
+            <text x="400" y="380" text-anchor="middle" fill="#aaa" font-size="10">write_section</text>
+            <text x="400" y="398" text-anchor="middle" fill="#aaa" font-size="10">format_output</text>
+
+            <!-- Reviewer Agent -->
+            <rect x="550" y="310" width="200" height="100" rx="10" fill="rgba(255,140,66,0.08)" stroke="#ff8c42" stroke-width="2"/>
+            <text x="650" y="340" text-anchor="middle" fill="#ff8c42" font-size="14" font-weight="bold">Reviewer Agent</text>
+            <text x="650" y="362" text-anchor="middle" fill="#aaa" font-size="10">evaluate_quality</text>
+            <text x="650" y="380" text-anchor="middle" fill="#aaa" font-size="10">score_content</text>
+            <text x="650" y="398" text-anchor="middle" fill="#aaa" font-size="10">suggest_improvements</text>
+
+            <!-- Arrows from State to Agents -->
+            <line x1="330" y1="265" x2="150" y2="310" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="400" y1="265" x2="400" y2="310" stroke="#569cd6" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="470" y1="265" x2="650" y2="310" stroke="#ff8c42" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+            <!-- Cycle arrows back -->
+            <path d="M 150 410 L 150 450 L 400 450 L 400 430" fill="none" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowG)"/>
+            <path d="M 650 410 L 650 450 L 400 450" fill="none" stroke="#ff8c42" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="400" y="468" text-anchor="middle" fill="#aaa" font-size="11">Retour au Supervisor</text>
+
+            <!-- Final Output -->
+            <rect x="300" y="490" width="200" height="40" rx="8" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="400" y="515" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Article Final</text>
+            <line x1="400" y1="470" x2="400" y2="490" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+
+            <!-- Flow Labels -->
+            <text x="110" y="290" fill="#00ff88" font-size="10">1. Recherche</text>
+            <text x="370" y="290" fill="#569cd6" font-size="10">2. Rédaction</text>
+            <text x="610" y="290" fill="#ff8c42" font-size="10">3. Révision</text>
+
+            <!-- Arrow markers -->
+            <defs>
+                <marker id="arrowB" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arrowG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Le workflow typique est : Supervisor envoie la tâche au Researcher, celui-ci collecte les informations. Le Supervisor envoie ensuite au Writer qui rédige. Puis le Reviewer critique le résultat. Si le score est insuffisant, le Supervisor peut renvoyer au Writer pour amélioration.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 3 : STATE ET SUPERVISOR -->
+    <!-- ============================================ -->
+    <h2>3. Exercice : Définir le State partagé et le Supervisor Node</h2>
+
+    <p>Commençons par définir la structure de données partagée entre tous les agents et le noeud Supervisor qui orchestre le workflow.</p>
+
+    <div class="step-box">
+        <strong>Étape 3.1 :</strong> Installer les dépendances et créer les imports.
+    </div>
+
+    <div class="code-block"><span class="comment"># Installation</span>
+pip install langchain langgraph langchain-openai tavily-python
+
+<span class="comment"># Imports</span>
+<span class="keyword">import</span> os
+<span class="keyword">import</span> json
+<span class="keyword">from</span> typing <span class="keyword">import</span> Annotated, TypedDict, Literal
+<span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, SystemMessage, AIMessage
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+
+<span class="function">load_dotenv</span>()
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)</div>
+
+    <div class="step-box">
+        <strong>Étape 3.2 :</strong> Définir le State partagé entre tous les agents.
+    </div>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">MultiAgentState</span>(TypedDict):
+    <span class="string">"""État partagé entre tous les agents du système."""</span>
+
+    <span class="comment"># Historique des messages (accumulé)</span>
+    messages: Annotated[<span class="keyword">list</span>, add_messages]
+
+    <span class="comment"># Le sujet de recherche initial</span>
+    topic: <span class="keyword">str</span>
+
+    <span class="comment"># Données collectées par le Researcher</span>
+    research_data: <span class="keyword">str</span>
+
+    <span class="comment"># Article rédigé par le Writer</span>
+    draft: <span class="keyword">str</span>
+
+    <span class="comment"># Feedback du Reviewer</span>
+    review_feedback: <span class="keyword">str</span>
+    review_score: <span class="keyword">int</span>
+
+    <span class="comment"># Prochain agent à activer (décidé par le Supervisor)</span>
+    next_agent: <span class="keyword">str</span>
+
+    <span class="comment"># Compteur d'itérations</span>
+    iteration: <span class="keyword">int</span></div>
+
+    <div class="effect">
+        Le State centralise toutes les informations. Chaque agent lit ce dont il a besoin et écrit ses résultats. Le Supervisor utilise <code>next_agent</code> pour router vers le bon agent.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 3.3 :</strong> Implémenter le Supervisor Node.
+    </div>
+
+    <div class="code-block">SUPERVISOR_PROMPT = <span class="string">"""Tu es le Supervisor d'une équipe de 3 agents IA.
+Tu coordonnes leur travail pour produire un article de qualité.
+
+## Tes agents :
+- **researcher** : Collecte des informations sur le sujet
+- **writer** : Rédige l'article à partir des recherches
+- **reviewer** : Évalue la qualité et donne un feedback
+
+## Workflow standard :
+1. researcher → collecte les données
+2. writer → rédige un brouillon
+3. reviewer → évalue et note (score /10)
+4. Si score < 7, renvoie au writer avec le feedback
+5. Si score >= 7, terminer (FINISH)
+
+## État actuel :
+- Sujet: {topic}
+- Recherche effectuée: {has_research}
+- Brouillon rédigé: {has_draft}
+- Dernier score review: {review_score}
+- Feedback: {review_feedback}
+- Itération: {iteration}
+
+Réponds UNIQUEMENT avec le nom du prochain agent : researcher, writer, reviewer, ou FINISH."""</span>
+
+<span class="keyword">def</span> <span class="function">supervisor_node</span>(state: MultiAgentState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Le Supervisor décide quel agent doit travailler ensuite."""</span>
+
+    <span class="comment"># Préparer le contexte pour le Supervisor</span>
+    prompt = SUPERVISOR_PROMPT.<span class="function">format</span>(
+        topic=state.<span class="function">get</span>(<span class="string">"topic"</span>, <span class="string">"Non défini"</span>),
+        has_research=<span class="string">"Oui"</span> <span class="keyword">if</span> state.<span class="function">get</span>(<span class="string">"research_data"</span>) <span class="keyword">else</span> <span class="string">"Non"</span>,
+        has_draft=<span class="string">"Oui"</span> <span class="keyword">if</span> state.<span class="function">get</span>(<span class="string">"draft"</span>) <span class="keyword">else</span> <span class="string">"Non"</span>,
+        review_score=state.<span class="function">get</span>(<span class="string">"review_score"</span>, <span class="string">"Pas encore évalué"</span>),
+        review_feedback=state.<span class="function">get</span>(<span class="string">"review_feedback"</span>, <span class="string">"Aucun"</span>)[:200],
+        iteration=state.<span class="function">get</span>(<span class="string">"iteration"</span>, <span class="number">0</span>),
+    )
+
+    response = llm.<span class="function">invoke</span>([
+        <span class="function">SystemMessage</span>(content=prompt),
+        <span class="function">HumanMessage</span>(content=<span class="string">"Quel agent doit travailler maintenant ?"</span>)
+    ])
+
+    next_agent = response.content.<span class="function">strip</span>().<span class="function">lower</span>()
+
+    <span class="comment"># Sécurité : forcer FINISH après 5 itérations</span>
+    current_iter = state.<span class="function">get</span>(<span class="string">"iteration"</span>, <span class="number">0</span>) + <span class="number">1</span>
+    <span class="keyword">if</span> current_iter > <span class="number">5</span>:
+        next_agent = <span class="string">"finish"</span>
+
+    <span class="function">print</span>(<span class="string">f"  [Supervisor] Itération {current_iter} → Prochain: {next_agent}"</span>)
+
+    <span class="keyword">return</span> {
+        <span class="string">"next_agent"</span>: next_agent,
+        <span class="string">"iteration"</span>: current_iter,
+        <span class="string">"messages"</span>: [<span class="function">AIMessage</span>(
+            content=<span class="string">f"[Supervisor] Itération {current_iter}: envoi à {next_agent}"</span>
+        )]
+    }</div>
+
+    <div class="warning">
+        Le compteur d'itérations et la limite à 5 sont essentiels. Sans cela, un cycle reviewer->writer->reviewer pourrait tourner indéfiniment si le score n'atteint jamais 7/10.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 4 : RESEARCHER AGENT -->
+    <!-- ============================================ -->
+    <h2>4. Exercice : Implémenter le Researcher Agent</h2>
+
+    <p>Le Researcher est chargé de collecter des informations pertinentes sur le sujet demandé via la recherche web.</p>
+
+    <div class="step-box">
+        <strong>Étape 4.1 :</strong> Créer le Researcher Agent avec recherche web et synthèse.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> tavily <span class="keyword">import</span> TavilyClient
+
+tavily = <span class="function">TavilyClient</span>(api_key=os.<span class="function">getenv</span>(<span class="string">"TAVILY_API_KEY"</span>))
+
+RESEARCHER_PROMPT = <span class="string">"""Tu es un agent Researcher spécialisé dans la collecte d'informations.
+
+## Ta mission :
+Recherche des informations complètes et fiables sur le sujet suivant : {topic}
+
+## Informations de recherche web :
+{search_results}
+
+## Instructions :
+1. Synthétise les informations trouvées
+2. Organise-les par thème/sous-sujet
+3. Note les sources et les chiffres clés
+4. Identifie les points qui nécessiteraient plus de recherche
+5. Fournis un résumé structuré exploitable par un rédacteur
+
+Rédige ta synthèse de recherche en français, de manière factuelle et structurée."""</span>
+
+<span class="keyword">def</span> <span class="function">researcher_node</span>(state: MultiAgentState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Le Researcher collecte et synthétise les informations."""</span>
+    topic = state[<span class="string">"topic"</span>]
+    <span class="function">print</span>(<span class="string">f"  [Researcher] Recherche sur : {topic}"</span>)
+
+    <span class="comment"># Effectuer 2 recherches complémentaires</span>
+    search1 = tavily.<span class="function">search</span>(
+        query=topic,
+        max_results=<span class="number">3</span>,
+        search_depth=<span class="string">"advanced"</span>,
+        include_answer=<span class="keyword">True</span>
+    )
+
+    search2 = tavily.<span class="function">search</span>(
+        query=<span class="string">f"{topic} statistiques chiffres données récentes"</span>,
+        max_results=<span class="number">2</span>,
+        search_depth=<span class="string">"basic"</span>
+    )
+
+    <span class="comment"># Combiner les résultats</span>
+    all_results = []
+    <span class="keyword">if</span> search1.<span class="function">get</span>(<span class="string">"answer"</span>):
+        all_results.<span class="function">append</span>(<span class="string">f"Réponse directe: {search1['answer']}"</span>)
+
+    <span class="keyword">for</span> r <span class="keyword">in</span> search1[<span class="string">"results"</span>] + search2[<span class="string">"results"</span>]:
+        all_results.<span class="function">append</span>(
+            <span class="string">f"[{r['title']}] ({r['url']})\n{r['content'][:300]}"</span>
+        )
+
+    search_text = <span class="string">"\n\n---\n\n"</span>.<span class="function">join</span>(all_results)
+
+    <span class="comment"># Synthèse par le LLM</span>
+    prompt = RESEARCHER_PROMPT.<span class="function">format</span>(
+        topic=topic,
+        search_results=search_text
+    )
+
+    response = llm.<span class="function">invoke</span>([<span class="function">HumanMessage</span>(content=prompt)])
+    research_data = response.content
+
+    <span class="function">print</span>(<span class="string">f"  [Researcher] Synthèse produite : {len(research_data)} caractères"</span>)
+
+    <span class="keyword">return</span> {
+        <span class="string">"research_data"</span>: research_data,
+        <span class="string">"messages"</span>: [<span class="function">AIMessage</span>(
+            content=<span class="string">f"[Researcher] Recherche terminée. {len(all_results)} sources analysées."</span>
+        )]
+    }</div>
+
+    <div class="effect">
+        Le Researcher effectue deux recherches complémentaires (générale + données chiffrées), combine les résultats, puis utilise le LLM pour produire une synthèse structurée. Ce travail sera passé au Writer.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 5 : WRITER AGENT -->
+    <!-- ============================================ -->
+    <h2>5. Exercice : Implémenter le Writer Agent</h2>
+
+    <p>Le Writer transforme les données brutes du Researcher en un article structuré et bien rédigé.</p>
+
+    <div class="step-box">
+        <strong>Étape 5.1 :</strong> Créer le Writer Agent avec gestion du feedback.
+    </div>
+
+    <div class="code-block">WRITER_PROMPT = <span class="string">"""Tu es un agent Writer spécialisé dans la rédaction d'articles.
+
+## Sujet : {topic}
+
+## Données de recherche :
+{research_data}
+
+{feedback_section}
+
+## Instructions :
+1. Rédige un article complet et structuré en français
+2. Structure avec : Introduction, 2-3 sections principales, Conclusion
+3. Utilise les données factuelles de la recherche
+4. Style professionnel mais accessible
+5. Inclus des chiffres et exemples concrets
+6. L'article doit faire 400-600 mots
+
+Rédige l'article maintenant."""</span>
+
+WRITER_REVISION_SECTION = <span class="string">"""
+## IMPORTANT - Feedback du Reviewer (score: {score}/10) :
+{feedback}
+
+Tu dois améliorer l'article en tenant compte de ce feedback.
+Voici le brouillon précédent à améliorer :
+---
+{previous_draft}
+---
+"""</span>
+
+<span class="keyword">def</span> <span class="function">writer_node</span>(state: MultiAgentState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Le Writer rédige ou améliore l'article."""</span>
+    topic = state[<span class="string">"topic"</span>]
+    research = state.<span class="function">get</span>(<span class="string">"research_data"</span>, <span class="string">"Pas de données de recherche."</span>)
+    feedback = state.<span class="function">get</span>(<span class="string">"review_feedback"</span>, <span class="string">""</span>)
+    previous_draft = state.<span class="function">get</span>(<span class="string">"draft"</span>, <span class="string">""</span>)
+    score = state.<span class="function">get</span>(<span class="string">"review_score"</span>, <span class="number">0</span>)
+
+    <span class="comment"># Si on a du feedback, c'est une révision</span>
+    <span class="keyword">if</span> feedback <span class="keyword">and</span> previous_draft:
+        <span class="function">print</span>(<span class="string">f"  [Writer] Révision de l'article (score précédent: {score}/10)"</span>)
+        feedback_section = WRITER_REVISION_SECTION.<span class="function">format</span>(
+            score=score,
+            feedback=feedback,
+            previous_draft=previous_draft
+        )
+    <span class="keyword">else</span>:
+        <span class="function">print</span>(<span class="string">f"  [Writer] Première rédaction sur : {topic}"</span>)
+        feedback_section = <span class="string">""</span>
+
+    prompt = WRITER_PROMPT.<span class="function">format</span>(
+        topic=topic,
+        research_data=research[:3000],  <span class="comment"># Limiter la taille</span>
+        feedback_section=feedback_section
+    )
+
+    response = llm.<span class="function">invoke</span>([<span class="function">HumanMessage</span>(content=prompt)])
+    draft = response.content
+
+    <span class="function">print</span>(<span class="string">f"  [Writer] Article rédigé : {len(draft)} caractères, ~{len(draft.split())} mots"</span>)
+
+    <span class="keyword">return</span> {
+        <span class="string">"draft"</span>: draft,
+        <span class="string">"messages"</span>: [<span class="function">AIMessage</span>(
+            content=<span class="string">f"[Writer] Article {'révisé' if feedback else 'rédigé'}. {len(draft.split())} mots."</span>
+        )]
+    }</div>
+
+    <div class="prof-note">
+        Le Writer gère deux cas : la première rédaction (à partir des données brutes) et la révision (à partir du feedback du Reviewer). Cette dualité est essentielle pour le cycle d'amélioration itératif.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 6 : REVIEWER AGENT -->
+    <!-- ============================================ -->
+    <h2>6. Exercice : Implémenter le Reviewer Agent</h2>
+
+    <p>Le Reviewer est l'agent de contrôle qualité. Il évalue l'article, attribue un score, et fournit des suggestions d'amélioration concrètes.</p>
+
+    <div class="step-box">
+        <strong>Étape 6.1 :</strong> Créer le Reviewer Agent avec scoring structuré.
+    </div>
+
+    <div class="code-block">REVIEWER_PROMPT = <span class="string">"""Tu es un agent Reviewer expert en évaluation de contenu.
+
+## Sujet de l'article : {topic}
+
+## Article à évaluer :
+{draft}
+
+## Grille d'évaluation (note chaque critère sur 10) :
+1. **Exactitude factuelle** : Les informations sont-elles correctes ?
+2. **Complétude** : Le sujet est-il couvert de manière complète ?
+3. **Structure** : L'article est-il bien organisé ?
+4. **Clarté** : Le style est-il clair et accessible ?
+5. **Sources** : Les données sont-elles sourcées et vérifiables ?
+
+## Format de réponse OBLIGATOIRE (JSON) :
+{{
+    "scores": {{
+        "exactitude": X,
+        "completude": X,
+        "structure": X,
+        "clarte": X,
+        "sources": X
+    }},
+    "score_global": X,
+    "points_forts": ["...", "..."],
+    "points_faibles": ["...", "..."],
+    "suggestions": ["suggestion concrète 1", "suggestion concrète 2", "..."]
+}}
+
+Évalue l'article et retourne UNIQUEMENT le JSON."""</span>
+
+<span class="keyword">def</span> <span class="function">reviewer_node</span>(state: MultiAgentState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Le Reviewer évalue l'article et produit un feedback structuré."""</span>
+    topic = state[<span class="string">"topic"</span>]
+    draft = state.<span class="function">get</span>(<span class="string">"draft"</span>, <span class="string">""</span>)
+
+    <span class="keyword">if</span> <span class="keyword">not</span> draft:
+        <span class="keyword">return</span> {
+            <span class="string">"review_feedback"</span>: <span class="string">"Aucun article à évaluer."</span>,
+            <span class="string">"review_score"</span>: <span class="number">0</span>,
+        }
+
+    <span class="function">print</span>(<span class="string">f"  [Reviewer] Évaluation de l'article ({len(draft.split())} mots)"</span>)
+
+    prompt = REVIEWER_PROMPT.<span class="function">format</span>(
+        topic=topic,
+        draft=draft
+    )
+
+    response = llm.<span class="function">invoke</span>([<span class="function">HumanMessage</span>(content=prompt)])
+
+    <span class="comment"># Parser le JSON de review</span>
+    <span class="keyword">try</span>:
+        <span class="comment"># Extraire le JSON de la réponse</span>
+        content = response.content
+        <span class="comment"># Chercher le JSON dans la réponse</span>
+        json_start = content.<span class="function">find</span>(<span class="string">"{"</span>)
+        json_end = content.<span class="function">rfind</span>(<span class="string">"}"</span>) + <span class="number">1</span>
+        json_str = content[json_start:json_end]
+        review = json.<span class="function">loads</span>(json_str)
+
+        score = review.<span class="function">get</span>(<span class="string">"score_global"</span>, <span class="number">5</span>)
+        feedback_parts = []
+        feedback_parts.<span class="function">append</span>(<span class="string">f"Score global: {score}/10"</span>)
+        feedback_parts.<span class="function">append</span>(<span class="string">f"\nScores détaillés:"</span>)
+        <span class="keyword">for</span> critere, note <span class="keyword">in</span> review.<span class="function">get</span>(<span class="string">"scores"</span>, {}).<span class="function">items</span>():
+            feedback_parts.<span class="function">append</span>(<span class="string">f"  - {critere}: {note}/10"</span>)
+
+        feedback_parts.<span class="function">append</span>(<span class="string">f"\nPoints forts:"</span>)
+        <span class="keyword">for</span> p <span class="keyword">in</span> review.<span class="function">get</span>(<span class="string">"points_forts"</span>, []):
+            feedback_parts.<span class="function">append</span>(<span class="string">f"  + {p}"</span>)
+
+        feedback_parts.<span class="function">append</span>(<span class="string">f"\nÀ améliorer:"</span>)
+        <span class="keyword">for</span> p <span class="keyword">in</span> review.<span class="function">get</span>(<span class="string">"suggestions"</span>, []):
+            feedback_parts.<span class="function">append</span>(<span class="string">f"  → {p}"</span>)
+
+        feedback = <span class="string">"\n"</span>.<span class="function">join</span>(feedback_parts)
+
+    <span class="keyword">except</span> (json.JSONDecodeError, ValueError):
+        score = <span class="number">5</span>
+        feedback = response.content
+
+    <span class="function">print</span>(<span class="string">f"  [Reviewer] Score: {score}/10"</span>)
+
+    <span class="keyword">return</span> {
+        <span class="string">"review_feedback"</span>: feedback,
+        <span class="string">"review_score"</span>: score,
+        <span class="string">"messages"</span>: [<span class="function">AIMessage</span>(
+            content=<span class="string">f"[Reviewer] Évaluation terminée. Score: {score}/10"</span>
+        )]
+    }</div>
+
+    <div class="effect">
+        Le Reviewer produit un feedback structuré avec des scores détaillés par critère. Si le score global est inférieur à 7, le Supervisor renverra l'article au Writer pour amélioration.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 7 : ORCHESTRATION LANGGRAPH -->
+    <!-- ============================================ -->
+    <h2>7. Exercice : Orchestration avec LangGraph</h2>
+
+    <p>Assemblons maintenant tous les noeuds dans un StateGraph LangGraph avec le routing conditionnel du Supervisor.</p>
+
+    <div class="step-box">
+        <strong>Étape 7.1 :</strong> Définir la fonction de routing basée sur la décision du Supervisor.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">route_from_supervisor</span>(state: MultiAgentState) -> <span class="keyword">str</span>:
+    <span class="string">"""Route vers le bon agent selon la décision du Supervisor."""</span>
+    next_agent = state.<span class="function">get</span>(<span class="string">"next_agent"</span>, <span class="string">"finish"</span>).<span class="function">strip</span>().<span class="function">lower</span>()
+
+    <span class="keyword">if</span> <span class="string">"researcher"</span> <span class="keyword">in</span> next_agent:
+        <span class="keyword">return</span> <span class="string">"researcher"</span>
+    <span class="keyword">elif</span> <span class="string">"writer"</span> <span class="keyword">in</span> next_agent:
+        <span class="keyword">return</span> <span class="string">"writer"</span>
+    <span class="keyword">elif</span> <span class="string">"reviewer"</span> <span class="keyword">in</span> next_agent:
+        <span class="keyword">return</span> <span class="string">"reviewer"</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">"end"</span></div>
+
+    <div class="step-box">
+        <strong>Étape 7.2 :</strong> Construire et compiler le graphe multi-agents.
+    </div>
+
+    <div class="code-block"><span class="comment"># Construire le graphe</span>
+workflow = <span class="function">StateGraph</span>(MultiAgentState)
+
+<span class="comment"># Ajouter les noeuds</span>
+workflow.<span class="function">add_node</span>(<span class="string">"supervisor"</span>, supervisor_node)
+workflow.<span class="function">add_node</span>(<span class="string">"researcher"</span>, researcher_node)
+workflow.<span class="function">add_node</span>(<span class="string">"writer"</span>, writer_node)
+workflow.<span class="function">add_node</span>(<span class="string">"reviewer"</span>, reviewer_node)
+
+<span class="comment"># Point d'entrée : toujours le Supervisor</span>
+workflow.<span class="function">set_entry_point</span>(<span class="string">"supervisor"</span>)
+
+<span class="comment"># Routing conditionnel depuis le Supervisor</span>
+workflow.<span class="function">add_conditional_edges</span>(
+    <span class="string">"supervisor"</span>,
+    route_from_supervisor,
+    {
+        <span class="string">"researcher"</span>: <span class="string">"researcher"</span>,
+        <span class="string">"writer"</span>: <span class="string">"writer"</span>,
+        <span class="string">"reviewer"</span>: <span class="string">"reviewer"</span>,
+        <span class="string">"end"</span>: END,
+    }
+)
+
+<span class="comment"># Après chaque agent, retour au Supervisor</span>
+workflow.<span class="function">add_edge</span>(<span class="string">"researcher"</span>, <span class="string">"supervisor"</span>)
+workflow.<span class="function">add_edge</span>(<span class="string">"writer"</span>, <span class="string">"supervisor"</span>)
+workflow.<span class="function">add_edge</span>(<span class="string">"reviewer"</span>, <span class="string">"supervisor"</span>)
+
+<span class="comment"># Compiler</span>
+multi_agent_graph = workflow.<span class="function">compile</span>()
+<span class="function">print</span>(<span class="string">"Graphe multi-agents compilé avec succès !"</span>)</div>
+
+    <div class="output-block">
+Graphe multi-agents compilé avec succès !</div>
+
+    <div class="step-box">
+        <strong>Étape 7.3 :</strong> Visualiser le graphe (optionnel mais utile pour le debug).
+    </div>
+
+    <div class="code-block"><span class="comment"># Afficher la structure du graphe</span>
+<span class="function">print</span>(<span class="string">"Noeuds :"</span>, <span class="function">list</span>(multi_agent_graph.nodes.<span class="function">keys</span>()))
+<span class="function">print</span>(<span class="string">"Point d'entrée : supervisor"</span>)
+<span class="function">print</span>(<span class="string">"Edges :"</span>)
+<span class="function">print</span>(<span class="string">"  supervisor → [researcher | writer | reviewer | END]"</span>)
+<span class="function">print</span>(<span class="string">"  researcher → supervisor"</span>)
+<span class="function">print</span>(<span class="string">"  writer → supervisor"</span>)
+<span class="function">print</span>(<span class="string">"  reviewer → supervisor"</span>)</div>
+
+    <div class="output-block">
+Noeuds : ['supervisor', 'researcher', 'writer', 'reviewer']
+Point d'entrée : supervisor
+Edges :
+  supervisor → [researcher | writer | reviewer | END]
+  researcher → supervisor
+  writer → supervisor
+  reviewer → supervisor</div>
+
+    <div class="prof-note">
+        Le graphe forme un motif en étoile avec le Supervisor au centre. Chaque agent retourne systématiquement au Supervisor après son travail. C'est le Supervisor qui décide de la prochaine étape, permettant des workflows flexibles et des cycles de révision.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 8 : TEST END-TO-END -->
+    <!-- ============================================ -->
+    <h2>8. Exercice : Test end-to-end avec un sujet de recherche</h2>
+
+    <p>Testons notre système multi-agents avec un sujet de recherche complexe et observons les interactions entre les agents.</p>
+
+    <div class="step-box">
+        <strong>Étape 8.1 :</strong> Lancer le système avec un sujet.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> time
+
+<span class="keyword">def</span> <span class="function">run_multi_agent</span>(topic: <span class="keyword">str</span>) -> <span class="keyword">dict</span>:
+    <span class="string">"""Exécuter le système multi-agents sur un sujet."""</span>
+    <span class="function">print</span>(<span class="string">f"\n{'='*60}"</span>)
+    <span class="function">print</span>(<span class="string">f"SUJET : {topic}"</span>)
+    <span class="function">print</span>(<span class="string">f"{'='*60}\n"</span>)
+
+    start = time.<span class="function">time</span>()
+
+    initial_state = {
+        <span class="string">"messages"</span>: [<span class="function">HumanMessage</span>(content=<span class="string">f"Sujet: {topic}"</span>)],
+        <span class="string">"topic"</span>: topic,
+        <span class="string">"research_data"</span>: <span class="string">""</span>,
+        <span class="string">"draft"</span>: <span class="string">""</span>,
+        <span class="string">"review_feedback"</span>: <span class="string">""</span>,
+        <span class="string">"review_score"</span>: <span class="number">0</span>,
+        <span class="string">"next_agent"</span>: <span class="string">""</span>,
+        <span class="string">"iteration"</span>: <span class="number">0</span>,
+    }
+
+    <span class="comment"># Exécuter le graphe</span>
+    final_state = multi_agent_graph.<span class="function">invoke</span>(initial_state)
+
+    elapsed = time.<span class="function">time</span>() - start
+
+    <span class="function">print</span>(<span class="string">f"\n{'='*60}"</span>)
+    <span class="function">print</span>(<span class="string">f"TERMINÉ en {elapsed:.1f}s"</span>)
+    <span class="function">print</span>(<span class="string">f"Itérations: {final_state['iteration']}"</span>)
+    <span class="function">print</span>(<span class="string">f"Score final: {final_state['review_score']}/10"</span>)
+    <span class="function">print</span>(<span class="string">f"{'='*60}\n"</span>)
+
+    <span class="keyword">return</span> final_state
+
+<span class="comment"># Lancer !</span>
+result = <span class="function">run_multi_agent</span>(
+    <span class="string">"L'impact de l'intelligence artificielle générative sur le marché du travail en 2025"</span>
+)</div>
+
+    <div class="output-block">
+============================================================
+SUJET : L'impact de l'intelligence artificielle générative sur le marché du travail en 2025
+============================================================
+
+  [Supervisor] Itération 1 → Prochain: researcher
+  [Researcher] Recherche sur : L'impact de l'intelligence artificielle...
+  [Researcher] Synthèse produite : 2847 caractères
+  [Supervisor] Itération 2 → Prochain: writer
+  [Writer] Première rédaction sur : L'impact de l'intelligence artificielle...
+  [Writer] Article rédigé : 3215 caractères, ~487 mots
+  [Supervisor] Itération 3 → Prochain: reviewer
+  [Reviewer] Évaluation de l'article (487 mots)
+  [Reviewer] Score: 6/10
+  [Supervisor] Itération 4 → Prochain: writer
+  [Writer] Révision de l'article (score précédent: 6/10)
+  [Writer] Article rédigé : 3892 caractères, ~582 mots
+  [Supervisor] Itération 5 → Prochain: reviewer
+  [Reviewer] Évaluation de l'article (582 mots)
+  [Reviewer] Score: 8/10
+  [Supervisor] Itération 6 → Prochain: finish
+
+============================================================
+TERMINÉ en 28.4s
+Itérations: 6
+Score final: 8/10
+============================================================</div>
+
+    <div class="step-box">
+        <strong>Étape 8.2 :</strong> Afficher l'article final.
+    </div>
+
+    <div class="code-block"><span class="comment"># Afficher l'article final</span>
+<span class="function">print</span>(<span class="string">"ARTICLE FINAL :"</span>)
+<span class="function">print</span>(<span class="string">"="</span> * <span class="number">60</span>)
+<span class="function">print</span>(result[<span class="string">"draft"</span>])
+<span class="function">print</span>(<span class="string">"="</span> * <span class="number">60</span>)
+<span class="function">print</span>(<span class="string">f"\nFeedback final :"</span>)
+<span class="function">print</span>(result[<span class="string">"review_feedback"</span>])</div>
+
+    <div class="output-block">
+ARTICLE FINAL :
+============================================================
+# L'impact de l'IA générative sur le marché du travail en 2025
+
+## Introduction
+L'intelligence artificielle générative transforme radicalement le monde
+professionnel. En 2025, les modèles comme GPT-4, Claude et Gemini ne sont
+plus de simples curiosités technologiques...
+
+## 1. Les secteurs les plus impactés
+Selon le rapport McKinsey 2024, les métiers du marketing, de la rédaction,
+du service client et de la programmation sont les plus touchés...
+
+## 2. Création de nouveaux métiers
+Parallèlement aux transformations, de nouveaux rôles émergent :
+prompt engineers, AI trainers, éthiciens de l'IA...
+
+## 3. Enjeux et perspectives
+La transition nécessite un investissement massif dans la formation...
+
+## Conclusion
+L'IA générative n'est pas une menace existentielle mais un catalyseur
+de transformation qui nécessite adaptation et anticipation...
+
+============================================================
+
+Feedback final :
+Score global: 8/10
+Scores détaillés:
+  - exactitude: 8/10
+  - completude: 7/10
+  - structure: 9/10
+  - clarte: 8/10
+  - sources: 7/10
+Points forts:
+  + Article bien structuré avec des sections claires
+  + Bon équilibre entre menaces et opportunités
+À améliorer:
+  → Ajouter des chiffres plus précis sur les emplois créés vs détruits</div>
+
+    <div class="effect">
+        Le système a effectué un cycle complet : recherche, rédaction, évaluation (score 6/10), révision, réévaluation (score 8/10), fin. La collaboration entre agents a produit un article de meilleure qualité que ce qu'un seul agent aurait pu produire.
+    </div>
+
+    <div class="prof-note">
+        Observez le cycle d'amélioration : le premier brouillon a obtenu 6/10 et a été renvoyé pour révision. Le second a obtenu 8/10 et a été accepté. C'est la puissance du feedback loop multi-agents.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 9 : POINTS CLES -->
+    <!-- ============================================ -->
+    <h2>9. Points clés à retenir</h2>
+
+    <div class="concept-box green">
+        <h3>Résumé du TD - Système Multi-Agents</h3>
+        <ul>
+            <li><strong>Le pattern Supervisor</strong> est le plus courant : un agent central coordonne les spécialistes, décide du workflow, et détecte la fin.</li>
+            <li><strong>Le State partagé</strong> est le medium de communication entre agents. Chaque agent lit ce dont il a besoin et écrit ses résultats.</li>
+            <li><strong>Spécialisation des agents</strong> : chaque agent a un rôle unique et un prompt spécialisé. Le Researcher ne rédige pas, le Writer ne critique pas.</li>
+            <li><strong>Le cycle de feedback</strong> (Writer -> Reviewer -> Writer) permet une amélioration itérative de la qualité, comme dans une vraie rédaction humaine.</li>
+            <li><strong>Toujours limiter les itérations</strong> : sans garde-fou, le cycle peut tourner indéfiniment. Fixez un max_iterations ET un score seuil.</li>
+            <li><strong>Le scoring structuré</strong> (JSON avec critères multiples) donne un feedback actionnable au Writer, pas juste "c'est bien" ou "c'est mauvais".</li>
+            <li><strong>LangGraph rend l'orchestration élégante</strong> : les noeuds sont des fonctions, les edges définissent le flux, et les conditional_edges gèrent le routing dynamique.</li>
+            <li><strong>Le coût est multiplicatif</strong> : 3 agents x N itérations = beaucoup d'appels LLM. Optimisez les prompts et limitez les tokens pour contrôler les coûts.</li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3>Quand utiliser un système multi-agents ?</h3>
+        <table>
+            <tr>
+                <th>Situation</th>
+                <th>Single Agent</th>
+                <th>Multi-Agents</th>
+            </tr>
+            <tr>
+                <td>Question simple / lookup</td>
+                <td>Oui</td>
+                <td>Non (overkill)</td>
+            </tr>
+            <tr>
+                <td>Tâche multi-étapes avec outils</td>
+                <td>Oui (ReAct)</td>
+                <td>Possible</td>
+            </tr>
+            <tr>
+                <td>Production de contenu de qualité</td>
+                <td>Résultat moyen</td>
+                <td>Oui (feedback loop)</td>
+            </tr>
+            <tr>
+                <td>Analyse complexe multi-perspective</td>
+                <td>Limité</td>
+                <td>Oui (agents spécialisés)</td>
+            </tr>
+            <tr>
+                <td>Workflow d'entreprise</td>
+                <td>Insuffisant</td>
+                <td>Oui (hiérarchique)</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="nav">
+        <a href="td_multi_tools.html">&larr; Agent Multi-Tools</a>
+        <span style="color: #666;">(TD 3/5 - Agents IA)</span>
+        <a href="td_agentic_rag.html">RAG Agentique &rarr;</a>
+    </div>
+</div>
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agents IA - Cours 7 : Systèmes Multi-Agents</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Cours 7 : Systemes Multi-Agents</h1>
+    <p class="subtitle">Orchestrer plusieurs agents pour resoudre des problemes complexes</p>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1 : INTRODUCTION AUX SYSTEMES MULTI-AGENTS -->
+    <!-- ============================================================ -->
+
+    <h2>1. Introduction aux Systemes Multi-Agents (MAS)</h2>
+
+    <div class="definition">
+        Un <strong>systeme multi-agents (MAS)</strong> est un ensemble d'agents autonomes qui interagissent entre eux pour accomplir des taches qu'un agent seul ne pourrait pas realiser efficacement. Chaque agent possede ses propres competences, son propre role, et communique avec les autres pour coordonner l'action collective.
+    </div>
+
+    <p>Dans les cours precedents, nous avons etudie un agent unique equipe d'outils. Mais de nombreux problemes reels exigent la collaboration de plusieurs specialistes. Pensez a une equipe de developpement logiciel : un architecte, un developpeur, un testeur et un chef de projet travaillent ensemble. Le meme principe s'applique aux agents IA.</p>
+
+    <h3>1.1 Pourquoi plusieurs agents ?</h3>
+
+    <p>Il existe plusieurs raisons fondamentales pour adopter une approche multi-agents :</p>
+
+    <ul>
+        <li><strong>Specialisation</strong> : chaque agent maitrise un domaine precis (recherche, analyse, code, redaction). Un prompt systeme plus cible produit de meilleurs resultats.</li>
+        <li><strong>Decomposition de la complexite</strong> : un probleme complexe est decoupe en sous-taches assignees a des agents specialises.</li>
+        <li><strong>Robustesse</strong> : si un agent echoue, les autres peuvent compenser ou relancer la tache.</li>
+        <li><strong>Scalabilite</strong> : on ajoute de nouveaux agents sans modifier les existants.</li>
+        <li><strong>Parallelisme</strong> : certaines sous-taches peuvent etre executees en parallele par differents agents.</li>
+    </ul>
+
+    <div class="concept-box green">
+        <h3>Analogie : L'equipe de redaction</h3>
+        <p>Imaginez la production d'un article de blog technique :</p>
+        <ul>
+            <li><strong>Agent Chercheur</strong> : collecte les sources et donnees pertinentes</li>
+            <li><strong>Agent Redacteur</strong> : ecrit le brouillon a partir des recherches</li>
+            <li><strong>Agent Editeur</strong> : corrige, ameliore le style, verifie la coherence</li>
+            <li><strong>Agent SEO</strong> : optimise les mots-cles, les titres, la meta-description</li>
+        </ul>
+        <p>Chaque agent a un role clair, des competences specifiques, et le resultat final est meilleur que si un seul agent faisait tout.</p>
+    </div>
+
+    <h3>1.2 Topologies multi-agents</h3>
+
+    <p>Les agents peuvent etre organises selon differentes topologies :</p>
+
+    <table>
+        <tr>
+            <th>Topologie</th>
+            <th>Description</th>
+            <th>Cas d'usage</th>
+        </tr>
+        <tr>
+            <td><strong>Sequentielle</strong></td>
+            <td>Agent A passe a B, B passe a C (pipeline)</td>
+            <td>Chaine de traitement, workflow lineaire</td>
+        </tr>
+        <tr>
+            <td><strong>Hierarchique</strong></td>
+            <td>Un manager delegue aux agents subalternes</td>
+            <td>Gestion de projet, decomposition de taches</td>
+        </tr>
+        <tr>
+            <td><strong>Collaborative</strong></td>
+            <td>Les agents discutent librement pour arriver a un consensus</td>
+            <td>Brainstorming, debat, revision par les pairs</td>
+        </tr>
+        <tr>
+            <td><strong>Competitive</strong></td>
+            <td>Plusieurs agents proposent des solutions, le meilleur gagne</td>
+            <td>Optimisation, encheres, selection de strategie</td>
+        </tr>
+        <tr>
+            <td><strong>Hub-and-Spoke</strong></td>
+            <td>Un agent central orchestre tous les echanges</td>
+            <td>Chatbot avec sous-agents specialises</td>
+        </tr>
+    </table>
+
+    <div class="svg-container">
+        <svg width="800" height="320" viewBox="0 0 800 320">
+            <!-- Topologie Sequentielle -->
+            <text x="120" y="25" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">Sequentielle</text>
+            <rect x="20" y="40" width="80" height="40" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="60" y="65" fill="#e0e0e0" font-size="12" text-anchor="middle">Agent A</text>
+            <line x1="100" y1="60" x2="130" y2="60" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+            <rect x="130" y="40" width="80" height="40" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="170" y="65" fill="#e0e0e0" font-size="12" text-anchor="middle">Agent B</text>
+            <line x1="210" y1="60" x2="240" y2="60" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+            <rect x="240" y="40" width="80" height="40" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="280" y="65" fill="#00ff88" font-size="12" text-anchor="middle">Agent C</text>
+
+            <!-- Topologie Hierarchique -->
+            <text x="580" y="25" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">Hierarchique</text>
+            <rect x="540" y="40" width="80" height="40" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="580" y="65" fill="#e0e0e0" font-size="12" text-anchor="middle">Manager</text>
+            <line x1="555" y1="80" x2="510" y2="110" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow2)"/>
+            <line x1="580" y1="80" x2="580" y2="110" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow2)"/>
+            <line x1="605" y1="80" x2="650" y2="110" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow2)"/>
+            <rect x="470" y="110" width="80" height="35" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="510" y="132" fill="#569cd6" font-size="11" text-anchor="middle">Worker A</text>
+            <rect x="540" y="110" width="80" height="35" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="580" y="132" fill="#569cd6" font-size="11" text-anchor="middle">Worker B</text>
+            <rect x="610" y="110" width="80" height="35" rx="6" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="650" y="132" fill="#569cd6" font-size="11" text-anchor="middle">Worker C</text>
+
+            <!-- Topologie Collaborative -->
+            <text x="160" y="190" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">Collaborative</text>
+            <circle cx="100" cy="250" r="28" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="100" y="255" fill="#00ff88" font-size="11" text-anchor="middle">A</text>
+            <circle cx="220" cy="250" r="28" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="220" y="255" fill="#00ff88" font-size="11" text-anchor="middle">B</text>
+            <circle cx="160" cy="290" r="28" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="160" y="295" fill="#00ff88" font-size="11" text-anchor="middle">C</text>
+            <line x1="128" y1="250" x2="192" y2="250" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="112" y1="275" x2="140" y2="268" stroke="#00ff88" stroke-width="1.5"/>
+            <line x1="180" y1="268" x2="208" y2="275" stroke="#00ff88" stroke-width="1.5"/>
+
+            <!-- Hub and Spoke -->
+            <text x="580" y="190" fill="#ff6b35" font-size="14" font-weight="bold" text-anchor="middle">Hub-and-Spoke</text>
+            <circle cx="580" cy="260" r="30" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="580" y="265" fill="#ff6b35" font-size="11" text-anchor="middle">Hub</text>
+            <circle cx="500" cy="240" r="22" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="500" y="245" fill="#569cd6" font-size="10" text-anchor="middle">S1</text>
+            <circle cx="660" cy="240" r="22" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="660" y="245" fill="#569cd6" font-size="10" text-anchor="middle">S2</text>
+            <circle cx="520" cy="310" r="22" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="520" y="315" fill="#569cd6" font-size="10" text-anchor="middle">S3</text>
+            <circle cx="640" cy="310" r="22" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="640" y="315" fill="#569cd6" font-size="10" text-anchor="middle">S4</text>
+            <line x1="552" y1="250" x2="522" y2="244" stroke="#569cd6" stroke-width="1.5"/>
+            <line x1="608" y1="250" x2="638" y2="244" stroke="#569cd6" stroke-width="1.5"/>
+            <line x1="558" y1="282" x2="538" y2="296" stroke="#569cd6" stroke-width="1.5"/>
+            <line x1="602" y1="282" x2="622" y2="296" stroke="#569cd6" stroke-width="1.5"/>
+
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b35"/></marker>
+                <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2 : COMMUNICATION INTER-AGENTS -->
+    <!-- ============================================================ -->
+
+    <h2>2. Communication Inter-Agents</h2>
+
+    <p>La communication est le pilier fondamental de tout systeme multi-agents. Les agents doivent echanger des informations pour coordonner leurs actions. Il existe trois paradigmes principaux.</p>
+
+    <h3>2.1 Message Passing (Passage de messages)</h3>
+
+    <div class="definition">
+        Le <strong>message passing</strong> est un mode de communication ou les agents s'envoient directement des messages structures. Chaque agent possede une "boite de reception" et traite les messages a leur arrivee.
+    </div>
+
+    <p>C'est le mode le plus courant dans les frameworks modernes. Les messages contiennent generalement :</p>
+    <ul>
+        <li>L'identite de l'emetteur et du destinataire</li>
+        <li>Le type de message (requete, reponse, notification)</li>
+        <li>Le contenu (texte, donnees structurees)</li>
+        <li>Des metadonnees (timestamp, priorite)</li>
+    </ul>
+
+    <div class="code-block"><span class="comment"># Exemple conceptuel de message passing</span>
+<span class="keyword">class</span> <span class="function">Message</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, sender, receiver, content, msg_type=<span class="string">"request"</span>):
+        self.sender = sender
+        self.receiver = receiver
+        self.content = content
+        self.msg_type = msg_type
+        self.timestamp = time.time()
+
+<span class="keyword">class</span> <span class="function">Agent</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, name):
+        self.name = name
+        self.inbox = []
+
+    <span class="keyword">def</span> <span class="function">send</span>(self, receiver, content):
+        msg = Message(self.name, receiver.name, content)
+        receiver.inbox.append(msg)
+
+    <span class="keyword">def</span> <span class="function">process_messages</span>(self):
+        <span class="keyword">for</span> msg <span class="keyword">in</span> self.inbox:
+            <span class="function">print</span>(<span class="string">f"[{self.name}] Message de {msg.sender}: {msg.content}"</span>)
+        self.inbox.clear()</div>
+
+    <h3>2.2 Shared State (Etat partage)</h3>
+
+    <p>Dans ce paradigme, tous les agents lisent et ecrivent dans un espace memoire commun. C'est l'approche utilisee par <strong>LangGraph</strong> avec son <code>State</code> partage entre les noeuds.</p>
+
+    <div class="code-block"><span class="comment"># Etat partage dans LangGraph</span>
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Annotated
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph
+<span class="keyword">import</span> operator
+
+<span class="keyword">class</span> <span class="function">SharedState</span>(TypedDict):
+    messages: Annotated[list, operator.add]  <span class="comment"># Chaque agent ajoute ses messages</span>
+    research_data: <span class="keyword">str</span>                       <span class="comment"># Donnees de recherche</span>
+    draft: <span class="keyword">str</span>                                <span class="comment"># Brouillon de l'article</span>
+    feedback: <span class="keyword">str</span>                             <span class="comment"># Retour de l'editeur</span>
+    final_output: <span class="keyword">str</span>                         <span class="comment"># Resultat final</span></div>
+
+    <div class="effect">L'avantage du shared state est la simplicite : chaque agent lit l'etat global et y ecrit ses contributions. L'inconvenient est le risque de conflits d'ecriture si plusieurs agents modifient la meme cle simultanement.</div>
+
+    <h3>2.3 Blackboard (Tableau noir)</h3>
+
+    <p>Le <strong>blackboard</strong> est un espace de travail commun structure. Les agents surveillent le tableau et interviennent quand ils detectent une information relevant de leur competence. C'est un modele reactif.</p>
+
+    <div class="concept-box blue">
+        <h3>Comparaison des modes de communication</h3>
+        <table>
+            <tr>
+                <th>Critere</th>
+                <th>Message Passing</th>
+                <th>Shared State</th>
+                <th>Blackboard</th>
+            </tr>
+            <tr>
+                <td>Couplage</td>
+                <td>Faible (point-a-point)</td>
+                <td>Moyen (via l'etat)</td>
+                <td>Faible (reactif)</td>
+            </tr>
+            <tr>
+                <td>Scalabilite</td>
+                <td>Bonne</td>
+                <td>Moyenne</td>
+                <td>Bonne</td>
+            </tr>
+            <tr>
+                <td>Complexite</td>
+                <td>Moyenne</td>
+                <td>Faible</td>
+                <td>Elevee</td>
+            </tr>
+            <tr>
+                <td>Framework</td>
+                <td>AutoGen, CrewAI</td>
+                <td>LangGraph</td>
+                <td>Systemes experts</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3 : CREWAI -->
+    <!-- ============================================================ -->
+
+    <h2>3. CrewAI : Equipes d'Agents Specialises</h2>
+
+    <div class="definition">
+        <strong>CrewAI</strong> est un framework multi-agents qui organise les agents en "equipes" (crews). Chaque agent a un role, un objectif et un backstory. Les taches sont assignees aux agents et executees selon un processus defini (sequentiel ou hierarchique).
+    </div>
+
+    <h3>3.1 Les composants de CrewAI</h3>
+
+    <div class="param-box">
+        <h4>Agent</h4>
+        <p>Un agent CrewAI est defini par :</p>
+        <ul>
+            <li><strong>role</strong> : le titre du poste (ex: "Analyste de donnees senior")</li>
+            <li><strong>goal</strong> : l'objectif principal de l'agent</li>
+            <li><strong>backstory</strong> : le contexte qui donne de la personnalite a l'agent</li>
+            <li><strong>tools</strong> : les outils a disposition</li>
+            <li><strong>llm</strong> : le modele de langage utilise</li>
+            <li><strong>allow_delegation</strong> : si l'agent peut deleguer a d'autres</li>
+        </ul>
+    </div>
+
+    <div class="param-box">
+        <h4>Task</h4>
+        <p>Une tache CrewAI contient :</p>
+        <ul>
+            <li><strong>description</strong> : ce que l'agent doit faire</li>
+            <li><strong>agent</strong> : l'agent assigne</li>
+            <li><strong>expected_output</strong> : le format attendu du resultat</li>
+            <li><strong>context</strong> : les taches dont le resultat sert d'input</li>
+        </ul>
+    </div>
+
+    <div class="param-box">
+        <h4>Process</h4>
+        <ul>
+            <li><strong>sequential</strong> : les taches s'executent dans l'ordre, chaque resultat alimente la suivante</li>
+            <li><strong>hierarchical</strong> : un agent manager decompose et delegue les taches automatiquement</li>
+        </ul>
+    </div>
+
+    <h3>3.2 Exemple complet avec CrewAI</h3>
+
+    <div class="code-block"><span class="comment"># Installation: pip install crewai crewai-tools</span>
+<span class="keyword">from</span> crewai <span class="keyword">import</span> Agent, Task, Crew, Process
+<span class="keyword">from</span> crewai_tools <span class="keyword">import</span> SerperDevTool, ScrapeWebsiteTool
+
+<span class="comment"># --- Outils ---</span>
+search_tool = SerperDevTool()
+scrape_tool = ScrapeWebsiteTool()
+
+<span class="comment"># --- Agents ---</span>
+researcher = Agent(
+    role=<span class="string">"Chercheur Senior en IA"</span>,
+    goal=<span class="string">"Trouver les informations les plus recentes et pertinentes sur le sujet"</span>,
+    backstory=<span class="string">"""Tu es un chercheur experimenté avec 15 ans d'experience
+    en intelligence artificielle. Tu excelles dans la recherche
+    d'informations fiables et leur synthese."""</span>,
+    tools=[search_tool, scrape_tool],
+    verbose=<span class="keyword">True</span>,
+    allow_delegation=<span class="keyword">False</span>
+)
+
+writer = Agent(
+    role=<span class="string">"Redacteur Technique"</span>,
+    goal=<span class="string">"Rediger un article clair, engage et pedagogique"</span>,
+    backstory=<span class="string">"""Tu es un redacteur technique reconnu pour ta capacite
+    a vulgariser des concepts complexes. Tu ecris avec precision
+    et clarte, en utilisant des exemples concrets."""</span>,
+    verbose=<span class="keyword">True</span>,
+    allow_delegation=<span class="keyword">False</span>
+)
+
+editor = Agent(
+    role=<span class="string">"Editeur en Chef"</span>,
+    goal=<span class="string">"Garantir la qualite, la coherence et l'exactitude de l'article"</span>,
+    backstory=<span class="string">"""Tu es un editeur meticuleux qui s'assure que chaque
+    article est impeccable. Tu verifies les faits, ameliores
+    le style et t'assures de la coherence globale."""</span>,
+    verbose=<span class="keyword">True</span>,
+    allow_delegation=<span class="keyword">True</span>
+)
+
+<span class="comment"># --- Taches ---</span>
+research_task = Task(
+    description=<span class="string">"""Recherche approfondie sur les systemes multi-agents en IA.
+    Trouve les frameworks principaux, les cas d'usage recents,
+    et les tendances pour 2025. Fournis des sources fiables."""</span>,
+    agent=researcher,
+    expected_output=<span class="string">"Un rapport de recherche detaille avec sources et statistiques"</span>
+)
+
+writing_task = Task(
+    description=<span class="string">"""A partir des recherches fournies, redige un article
+    de blog complet sur les systemes multi-agents.
+    L'article doit etre structure avec des sections claires,
+    des exemples concrets et un ton accessible."""</span>,
+    agent=writer,
+    expected_output=<span class="string">"Un article de blog de 1500 mots minimum, bien structure"</span>,
+    context=[research_task]  <span class="comment"># Utilise le resultat de la recherche</span>
+)
+
+editing_task = Task(
+    description=<span class="string">"""Relis et ameliore l'article. Verifie les faits,
+    corrige les erreurs, ameliore le style.
+    Assure-toi que le ton est professionnel mais accessible."""</span>,
+    agent=editor,
+    expected_output=<span class="string">"L'article final, pret a publier, avec notes de revision"</span>,
+    context=[writing_task]
+)
+
+<span class="comment"># --- Crew ---</span>
+crew = Crew(
+    agents=[researcher, writer, editor],
+    tasks=[research_task, writing_task, editing_task],
+    process=Process.sequential,
+    verbose=<span class="keyword">True</span>
+)
+
+<span class="comment"># Execution</span>
+result = crew.<span class="function">kickoff</span>()
+<span class="function">print</span>(result)</div>
+
+    <div class="svg-container">
+        <svg width="700" height="200" viewBox="0 0 700 200">
+            <text x="350" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Workflow CrewAI Sequentiel</text>
+            <!-- Chercheur -->
+            <rect x="30" y="60" width="160" height="80" rx="12" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="110" y="90" fill="#ff6b35" font-size="13" font-weight="bold" text-anchor="middle">Chercheur</text>
+            <text x="110" y="115" fill="#aaa" font-size="11" text-anchor="middle">Recherche + Sources</text>
+            <!-- Fleche -->
+            <line x1="190" y1="100" x2="250" y2="100" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+            <text x="220" y="90" fill="#666" font-size="10" text-anchor="middle">rapport</text>
+            <!-- Redacteur -->
+            <rect x="250" y="60" width="160" height="80" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="330" y="90" fill="#569cd6" font-size="13" font-weight="bold" text-anchor="middle">Redacteur</text>
+            <text x="330" y="115" fill="#aaa" font-size="11" text-anchor="middle">Brouillon article</text>
+            <!-- Fleche -->
+            <line x1="410" y1="100" x2="470" y2="100" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow2)"/>
+            <text x="440" y="90" fill="#666" font-size="10" text-anchor="middle">draft</text>
+            <!-- Editeur -->
+            <rect x="470" y="60" width="160" height="80" rx="12" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="550" y="90" fill="#00ff88" font-size="13" font-weight="bold" text-anchor="middle">Editeur</text>
+            <text x="550" y="115" fill="#aaa" font-size="11" text-anchor="middle">Article final</text>
+            <!-- Sortie -->
+            <line x1="630" y1="100" x2="680" y2="100" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow3)"/>
+            <text x="685" y="105" fill="#00ff88" font-size="12" text-anchor="start">Resultat</text>
+            <defs>
+                <marker id="arrow3" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">CrewAI est le framework le plus simple pour debuter avec le multi-agents. Son API haut niveau (Agent, Task, Crew) est intuitive et sa documentation est excellente. Cependant, il offre moins de controle fin que LangGraph sur le flux d'execution.</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4 : AUTOGEN / AG2 -->
+    <!-- ============================================================ -->
+
+    <h2>4. AutoGen / AG2 : Conversations Multi-Agents</h2>
+
+    <div class="definition">
+        <strong>AutoGen</strong> (maintenant AG2) est un framework de Microsoft qui modelise les interactions multi-agents sous forme de <strong>conversations</strong>. Les agents communiquent par message passing dans des patterns definis : two-agent chat, group chat, nested chat.
+    </div>
+
+    <h3>4.1 Types d'agents AutoGen</h3>
+
+    <ul>
+        <li><strong>AssistantAgent</strong> : un agent IA qui repond aux messages en utilisant un LLM</li>
+        <li><strong>UserProxyAgent</strong> : represente l'utilisateur humain, peut executer du code et valider</li>
+        <li><strong>GroupChatManager</strong> : orchestre une discussion de groupe entre plusieurs agents</li>
+    </ul>
+
+    <h3>4.2 Conversation a deux agents</h3>
+
+    <div class="code-block"><span class="comment"># Installation: pip install pyautogen</span>
+<span class="keyword">import</span> autogen
+
+<span class="comment"># Configuration du modele</span>
+config_list = [{
+    <span class="string">"model"</span>: <span class="string">"gpt-4"</span>,
+    <span class="string">"api_key"</span>: <span class="string">"sk-..."</span>
+}]
+
+llm_config = {<span class="string">"config_list"</span>: config_list}
+
+<span class="comment"># Agent assistant</span>
+assistant = autogen.AssistantAgent(
+    name=<span class="string">"assistant_python"</span>,
+    system_message=<span class="string">"""Tu es un expert Python. Tu ecris du code propre,
+    bien commente et tu expliques tes choix."""</span>,
+    llm_config=llm_config
+)
+
+<span class="comment"># Agent utilisateur (peut executer du code)</span>
+user_proxy = autogen.UserProxyAgent(
+    name=<span class="string">"utilisateur"</span>,
+    human_input_mode=<span class="string">"NEVER"</span>,  <span class="comment"># Pas d'input humain</span>
+    code_execution_config={
+        <span class="string">"work_dir"</span>: <span class="string">"coding"</span>,
+        <span class="string">"use_docker"</span>: <span class="keyword">False</span>
+    },
+    max_consecutive_auto_reply=<span class="number">5</span>
+)
+
+<span class="comment"># Lancer la conversation</span>
+user_proxy.<span class="function">initiate_chat</span>(
+    assistant,
+    message=<span class="string">"Ecris un script Python qui analyse un fichier CSV de ventes et genere un graphique des tendances mensuelles."</span>
+)</div>
+
+    <div class="effect">AutoGen excelle dans les scenarios ou l'assistant ecrit du code et le UserProxy l'execute automatiquement, creant un cycle d'iteration rapide : ecrire, executer, corriger.</div>
+
+    <h3>4.3 Group Chat (Discussion de groupe)</h3>
+
+    <div class="code-block"><span class="comment"># Plusieurs agents en discussion de groupe</span>
+<span class="keyword">import</span> autogen
+
+config_list = [{<span class="string">"model"</span>: <span class="string">"gpt-4"</span>, <span class="string">"api_key"</span>: <span class="string">"sk-..."</span>}]
+llm_config = {<span class="string">"config_list"</span>: config_list}
+
+<span class="comment"># Agent architecte</span>
+architect = autogen.AssistantAgent(
+    name=<span class="string">"architecte"</span>,
+    system_message=<span class="string">"""Tu es un architecte logiciel senior.
+    Tu concois les architectures et definis les interfaces."""</span>,
+    llm_config=llm_config
+)
+
+<span class="comment"># Agent developpeur</span>
+developer = autogen.AssistantAgent(
+    name=<span class="string">"developpeur"</span>,
+    system_message=<span class="string">"""Tu es un developpeur Python senior.
+    Tu implementes le code a partir des specifications de l'architecte."""</span>,
+    llm_config=llm_config
+)
+
+<span class="comment"># Agent testeur</span>
+tester = autogen.AssistantAgent(
+    name=<span class="string">"testeur"</span>,
+    system_message=<span class="string">"""Tu es un ingenieur QA. Tu ecris des tests
+    unitaires et d'integration pour le code du developpeur."""</span>,
+    llm_config=llm_config
+)
+
+<span class="comment"># Agent utilisateur proxy</span>
+user_proxy = autogen.UserProxyAgent(
+    name=<span class="string">"chef_projet"</span>,
+    human_input_mode=<span class="string">"TERMINATE"</span>,
+    code_execution_config={<span class="string">"work_dir"</span>: <span class="string">"project"</span>}
+)
+
+<span class="comment"># Configuration du group chat</span>
+groupchat = autogen.GroupChat(
+    agents=[user_proxy, architect, developer, tester],
+    messages=[],
+    max_round=<span class="number">15</span>,
+    speaker_selection_method=<span class="string">"auto"</span>  <span class="comment"># Le LLM choisit qui parle</span>
+)
+
+manager = autogen.GroupChatManager(
+    groupchat=groupchat,
+    llm_config=llm_config
+)
+
+<span class="comment"># Lancer le groupe de discussion</span>
+user_proxy.<span class="function">initiate_chat</span>(
+    manager,
+    message=<span class="string">"Construisez une API REST pour gerer une todo-list avec FastAPI."</span>
+)</div>
+
+    <div class="svg-container">
+        <svg width="600" height="280" viewBox="0 0 600 280">
+            <text x="300" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">AutoGen Group Chat</text>
+            <!-- Manager central -->
+            <circle cx="300" cy="150" r="45" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="300" y="145" fill="#ff6b35" font-size="11" font-weight="bold" text-anchor="middle">GroupChat</text>
+            <text x="300" y="162" fill="#ff6b35" font-size="11" font-weight="bold" text-anchor="middle">Manager</text>
+            <!-- Agents autour -->
+            <rect x="60" y="50" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="120" y="80" fill="#569cd6" font-size="12" text-anchor="middle">Architecte</text>
+            <rect x="420" y="50" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="480" y="80" fill="#00ff88" font-size="12" text-anchor="middle">Developpeur</text>
+            <rect x="60" y="200" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#ce9178" stroke-width="2"/>
+            <text x="120" y="230" fill="#ce9178" font-size="12" text-anchor="middle">Testeur</text>
+            <rect x="420" y="200" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#dcdcaa" stroke-width="2"/>
+            <text x="480" y="230" fill="#dcdcaa" font-size="12" text-anchor="middle">Chef Projet</text>
+            <!-- Lignes de connexion -->
+            <line x1="180" y1="80" x2="256" y2="130" stroke="#569cd6" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="420" y1="80" x2="344" y2="130" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="180" y1="220" x2="256" y2="170" stroke="#ce9178" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="420" y1="220" x2="344" y2="170" stroke="#dcdcaa" stroke-width="1.5" stroke-dasharray="5,3"/>
+        </svg>
+    </div>
+
+    <div class="warning">Avec <code>speaker_selection_method="auto"</code>, le LLM decide quel agent parle a chaque tour. Cela peut etre imprevisible. Pour un controle strict, utilisez <code>"round_robin"</code> ou definissez un <code>speaker_selection_func</code> personnalise.</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5 : LANGGRAPH MULTI-AGENTS -->
+    <!-- ============================================================ -->
+
+    <h2>5. LangGraph Multi-Agents</h2>
+
+    <p>LangGraph est le framework le plus flexible pour construire des systemes multi-agents. Chaque agent est un <strong>noeud</strong> dans un graphe d'etat, et les <strong>aretes</strong> definissent les transitions entre agents.</p>
+
+    <h3>5.1 Architecture : Agents comme Noeuds</h3>
+
+    <div class="concept-box">
+        <h3>Principe fondamental</h3>
+        <p>Dans LangGraph multi-agents, chaque agent est encapsule dans une fonction (noeud) qui :</p>
+        <ol>
+            <li>Recoit l'etat global du graphe en entree</li>
+            <li>Execute sa logique (appel LLM, outils, raisonnement)</li>
+            <li>Retourne une mise a jour partielle de l'etat</li>
+        </ol>
+        <p>Le <strong>StateGraph</strong> orchestre les transitions entre agents selon des conditions definies par le developpeur.</p>
+    </div>
+
+    <h3>5.2 Exemple : Systeme de recherche et redaction</h3>
+
+    <div class="code-block"><span class="comment"># LangGraph avec plusieurs agents comme noeuds</span>
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Annotated, Literal
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, SystemMessage
+<span class="keyword">import</span> operator
+
+<span class="comment"># --- Etat partage ---</span>
+<span class="keyword">class</span> <span class="function">MultiAgentState</span>(TypedDict):
+    messages: Annotated[list, operator.add]
+    query: <span class="keyword">str</span>
+    research: <span class="keyword">str</span>
+    draft: <span class="keyword">str</span>
+    review: <span class="keyword">str</span>
+    final_article: <span class="keyword">str</span>
+    iteration: <span class="keyword">int</span>
+
+llm = ChatOpenAI(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0.7</span>)
+
+<span class="comment"># --- Agent Chercheur ---</span>
+<span class="keyword">def</span> <span class="function">researcher_agent</span>(state: MultiAgentState) -> <span class="keyword">dict</span>:
+    query = state[<span class="string">"query"</span>]
+    response = llm.<span class="function">invoke</span>([
+        SystemMessage(content=<span class="string">"""Tu es un chercheur expert. Fournis une
+        analyse detaillee et structuree du sujet demande.
+        Inclus des faits, des chiffres et des sources."""</span>),
+        HumanMessage(content=<span class="string">f"Recherche sur : {query}"</span>)
+    ])
+    <span class="keyword">return</span> {
+        <span class="string">"research"</span>: response.content,
+        <span class="string">"messages"</span>: [(<span class="string">"researcher"</span>, response.content)]
+    }
+
+<span class="comment"># --- Agent Redacteur ---</span>
+<span class="keyword">def</span> <span class="function">writer_agent</span>(state: MultiAgentState) -> <span class="keyword">dict</span>:
+    research = state[<span class="string">"research"</span>]
+    review = state.get(<span class="string">"review"</span>, <span class="string">""</span>)
+    prompt = <span class="string">f"Recherches :\n{research}"</span>
+    <span class="keyword">if</span> review:
+        prompt += <span class="string">f"\n\nRetour de l'editeur :\n{review}"</span>
+    response = llm.<span class="function">invoke</span>([
+        SystemMessage(content=<span class="string">"""Tu es un redacteur technique expert.
+        Ecris un article clair et engage a partir des recherches.
+        Si un feedback de l'editeur est fourni, integre-le."""</span>),
+        HumanMessage(content=prompt)
+    ])
+    <span class="keyword">return</span> {
+        <span class="string">"draft"</span>: response.content,
+        <span class="string">"messages"</span>: [(<span class="string">"writer"</span>, response.content)]
+    }
+
+<span class="comment"># --- Agent Editeur ---</span>
+<span class="keyword">def</span> <span class="function">editor_agent</span>(state: MultiAgentState) -> <span class="keyword">dict</span>:
+    draft = state[<span class="string">"draft"</span>]
+    response = llm.<span class="function">invoke</span>([
+        SystemMessage(content=<span class="string">"""Tu es un editeur en chef exigeant.
+        Evalue l'article : qualite, clarte, exactitude.
+        Reponds UNIQUEMENT par :
+        - "APPROUVE" si l'article est pret
+        - Sinon, donne tes corrections detaillees"""</span>),
+        HumanMessage(content=<span class="string">f"Article a evaluer :\n{draft}"</span>)
+    ])
+    <span class="keyword">return</span> {
+        <span class="string">"review"</span>: response.content,
+        <span class="string">"messages"</span>: [(<span class="string">"editor"</span>, response.content)],
+        <span class="string">"iteration"</span>: state.get(<span class="string">"iteration"</span>, <span class="number">0</span>) + <span class="number">1</span>
+    }
+
+<span class="comment"># --- Routage conditionnel ---</span>
+<span class="keyword">def</span> <span class="function">should_continue</span>(state: MultiAgentState) -> Literal[<span class="string">"writer"</span>, <span class="string">"finalize"</span>]:
+    <span class="keyword">if</span> <span class="string">"APPROUVE"</span> <span class="keyword">in</span> state[<span class="string">"review"</span>].upper():
+        <span class="keyword">return</span> <span class="string">"finalize"</span>
+    <span class="keyword">if</span> state.get(<span class="string">"iteration"</span>, <span class="number">0</span>) >= <span class="number">3</span>:
+        <span class="keyword">return</span> <span class="string">"finalize"</span>  <span class="comment"># Max 3 iterations</span>
+    <span class="keyword">return</span> <span class="string">"writer"</span>
+
+<span class="comment"># --- Noeud de finalisation ---</span>
+<span class="keyword">def</span> <span class="function">finalize_agent</span>(state: MultiAgentState) -> <span class="keyword">dict</span>:
+    <span class="keyword">return</span> {<span class="string">"final_article"</span>: state[<span class="string">"draft"</span>]}
+
+<span class="comment"># --- Construction du graphe ---</span>
+graph = StateGraph(MultiAgentState)
+
+graph.<span class="function">add_node</span>(<span class="string">"researcher"</span>, researcher_agent)
+graph.<span class="function">add_node</span>(<span class="string">"writer"</span>, writer_agent)
+graph.<span class="function">add_node</span>(<span class="string">"editor"</span>, editor_agent)
+graph.<span class="function">add_node</span>(<span class="string">"finalize"</span>, finalize_agent)
+
+graph.<span class="function">set_entry_point</span>(<span class="string">"researcher"</span>)
+graph.<span class="function">add_edge</span>(<span class="string">"researcher"</span>, <span class="string">"writer"</span>)
+graph.<span class="function">add_edge</span>(<span class="string">"writer"</span>, <span class="string">"editor"</span>)
+graph.<span class="function">add_conditional_edges</span>(<span class="string">"editor"</span>, should_continue)
+graph.<span class="function">add_edge</span>(<span class="string">"finalize"</span>, END)
+
+<span class="comment"># Compilation et execution</span>
+app = graph.<span class="function">compile</span>()
+result = app.<span class="function">invoke</span>({<span class="string">"query"</span>: <span class="string">"Les tendances de l'IA generative en 2025"</span>, <span class="string">"iteration"</span>: <span class="number">0</span>})
+<span class="function">print</span>(result[<span class="string">"final_article"</span>])</div>
+
+    <div class="svg-container">
+        <svg width="700" height="350" viewBox="0 0 700 350">
+            <text x="350" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">LangGraph Multi-Agents avec Boucle de Revision</text>
+            <!-- Start -->
+            <circle cx="80" cy="100" r="20" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="80" y="105" fill="#00ff88" font-size="11" text-anchor="middle">Start</text>
+            <!-- Researcher -->
+            <rect x="140" y="75" width="130" height="50" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="205" y="105" fill="#ff6b35" font-size="12" text-anchor="middle">Chercheur</text>
+            <!-- Writer -->
+            <rect x="320" y="75" width="130" height="50" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="385" y="105" fill="#569cd6" font-size="12" text-anchor="middle">Redacteur</text>
+            <!-- Editor -->
+            <rect x="320" y="200" width="130" height="50" rx="10" fill="#1a1a2e" stroke="#ce9178" stroke-width="2"/>
+            <text x="385" y="230" fill="#ce9178" font-size="12" text-anchor="middle">Editeur</text>
+            <!-- Finalize -->
+            <rect x="520" y="200" width="130" height="50" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="585" y="230" fill="#00ff88" font-size="12" text-anchor="middle">Finaliser</text>
+            <!-- End -->
+            <circle cx="585" cy="310" r="20" fill="#1a1a2e" stroke="#ff4444" stroke-width="2"/>
+            <text x="585" y="315" fill="#ff4444" font-size="11" text-anchor="middle">END</text>
+            <!-- Fleches -->
+            <line x1="100" y1="100" x2="140" y2="100" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="270" y1="100" x2="320" y2="100" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="385" y1="125" x2="385" y2="200" stroke="#569cd6" stroke-width="2" marker-end="url(#arrow2)"/>
+            <!-- Boucle retour writer -->
+            <path d="M320 225 L230 225 L230 125 L320 110" fill="none" stroke="#ff4444" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow4)"/>
+            <text x="220" y="175" fill="#ff4444" font-size="10" text-anchor="end">Corrections</text>
+            <!-- Vers finalize -->
+            <line x1="450" y1="225" x2="520" y2="225" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow3)"/>
+            <text x="485" y="215" fill="#00ff88" font-size="10" text-anchor="middle">APPROUVE</text>
+            <!-- Vers end -->
+            <line x1="585" y1="250" x2="585" y2="290" stroke="#00ff88" stroke-width="2" marker-end="url(#arrow3)"/>
+            <defs>
+                <marker id="arrow4" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6 : OPENAI SWARM -->
+    <!-- ============================================================ -->
+
+    <h2>6. OpenAI Swarm : Orchestration Legere</h2>
+
+    <div class="definition">
+        <strong>Swarm</strong> est un framework experimental d'OpenAI qui propose une approche minimaliste du multi-agents, basee sur deux concepts : les <strong>routines</strong> (instructions + outils d'un agent) et les <strong>handoffs</strong> (transfert de la conversation d'un agent a un autre).
+    </div>
+
+    <h3>6.1 Concepts cles</h3>
+
+    <div class="param-box">
+        <h4>Routine</h4>
+        <p>Une routine est la combinaison d'instructions systeme et de fonctions (outils) pour un agent. C'est ce qui definit le "comportement" de l'agent.</p>
+    </div>
+
+    <div class="param-box">
+        <h4>Handoff</h4>
+        <p>Un handoff est le mecanisme par lequel un agent transfere la conversation a un autre agent. L'agent source retourne simplement un objet Agent comme resultat d'une fonction outil, et Swarm redirige automatiquement la conversation.</p>
+    </div>
+
+    <h3>6.2 Exemple complet avec Swarm</h3>
+
+    <div class="code-block"><span class="comment"># Installation: pip install openai-swarm</span>
+<span class="keyword">from</span> swarm <span class="keyword">import</span> Swarm, Agent
+
+client = Swarm()
+
+<span class="comment"># --- Fonctions de handoff ---</span>
+<span class="keyword">def</span> <span class="function">transfer_to_sales</span>():
+    <span class="string">"""Transferer au service commercial."""</span>
+    <span class="keyword">return</span> sales_agent
+
+<span class="keyword">def</span> <span class="function">transfer_to_support</span>():
+    <span class="string">"""Transferer au support technique."""</span>
+    <span class="keyword">return</span> support_agent
+
+<span class="keyword">def</span> <span class="function">transfer_to_billing</span>():
+    <span class="string">"""Transferer au service facturation."""</span>
+    <span class="keyword">return</span> billing_agent
+
+<span class="comment"># --- Fonctions outils ---</span>
+<span class="keyword">def</span> <span class="function">check_order_status</span>(order_id: <span class="keyword">str</span>):
+    <span class="string">"""Verifier le statut d'une commande."""</span>
+    <span class="comment"># Simulation de base de donnees</span>
+    statuses = {
+        <span class="string">"ORD-001"</span>: <span class="string">"En cours de livraison"</span>,
+        <span class="string">"ORD-002"</span>: <span class="string">"Livree"</span>,
+        <span class="string">"ORD-003"</span>: <span class="string">"En preparation"</span>
+    }
+    <span class="keyword">return</span> statuses.get(order_id, <span class="string">"Commande non trouvee"</span>)
+
+<span class="keyword">def</span> <span class="function">process_refund</span>(order_id: <span class="keyword">str</span>, reason: <span class="keyword">str</span>):
+    <span class="string">"""Traiter un remboursement."""</span>
+    <span class="keyword">return</span> <span class="string">f"Remboursement initie pour {order_id}. Raison: {reason}. Delai: 5-7 jours."</span>
+
+<span class="comment"># --- Agents ---</span>
+triage_agent = Agent(
+    name=<span class="string">"Agent de Triage"</span>,
+    instructions=<span class="string">"""Tu es l'agent d'accueil. Determine le besoin du client
+    et redirige vers le bon service :
+    - Questions commerciales -> service commercial
+    - Problemes techniques -> support technique
+    - Questions de facturation/remboursement -> facturation"""</span>,
+    functions=[transfer_to_sales, transfer_to_support, transfer_to_billing]
+)
+
+sales_agent = Agent(
+    name=<span class="string">"Agent Commercial"</span>,
+    instructions=<span class="string">"""Tu es un agent commercial. Tu reponds aux questions
+    sur les produits, les prix et les promotions.
+    Sois enthousiaste et convaincant."""</span>
+)
+
+support_agent = Agent(
+    name=<span class="string">"Agent Support"</span>,
+    instructions=<span class="string">"""Tu es un agent de support technique.
+    Tu aides les clients avec leurs problemes techniques."""</span>,
+    functions=[check_order_status]
+)
+
+billing_agent = Agent(
+    name=<span class="string">"Agent Facturation"</span>,
+    instructions=<span class="string">"""Tu es un agent de facturation.
+    Tu geres les questions de facturation et les remboursements."""</span>,
+    functions=[process_refund, check_order_status]
+)
+
+<span class="comment"># --- Execution ---</span>
+response = client.<span class="function">run</span>(
+    agent=triage_agent,
+    messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Je voudrais un remboursement pour ma commande ORD-001"</span>}]
+)
+
+<span class="function">print</span>(<span class="string">f"Agent actif: {response.agent.name}"</span>)
+<span class="function">print</span>(<span class="string">f"Reponse: {response.messages[-1]['content']}"</span>)</div>
+
+    <div class="output-block">Agent actif: Agent Facturation
+Reponse: J'ai bien pris en compte votre demande de remboursement pour la commande ORD-001. Le remboursement a ete initie et sera traite sous 5 a 7 jours ouvrables.</div>
+
+    <div class="svg-container">
+        <svg width="700" height="280" viewBox="0 0 700 280">
+            <text x="350" y="25" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Swarm - Handoff entre Agents</text>
+            <!-- Utilisateur -->
+            <rect x="10" y="110" width="100" height="50" rx="10" fill="#1a1a2e" stroke="#e0e0e0" stroke-width="2"/>
+            <text x="60" y="140" fill="#e0e0e0" font-size="12" text-anchor="middle">Client</text>
+            <!-- Triage -->
+            <rect x="160" y="110" width="120" height="50" rx="10" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="220" y="140" fill="#ff6b35" font-size="12" text-anchor="middle">Triage</text>
+            <!-- Fleche client -> triage -->
+            <line x1="110" y1="135" x2="160" y2="135" stroke="#e0e0e0" stroke-width="2" marker-end="url(#arrow)"/>
+            <!-- Sales -->
+            <rect x="380" y="40" width="120" height="45" rx="10" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="440" y="68" fill="#569cd6" font-size="12" text-anchor="middle">Commercial</text>
+            <!-- Support -->
+            <rect x="380" y="110" width="120" height="45" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="440" y="138" fill="#00ff88" font-size="12" text-anchor="middle">Support</text>
+            <!-- Billing -->
+            <rect x="380" y="180" width="120" height="45" rx="10" fill="#1a1a2e" stroke="#ce9178" stroke-width="2"/>
+            <text x="440" y="208" fill="#ce9178" font-size="12" text-anchor="middle">Facturation</text>
+            <!-- Fleches handoff -->
+            <line x1="280" y1="120" x2="380" y2="65" stroke="#569cd6" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow2)"/>
+            <line x1="280" y1="135" x2="380" y2="132" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow3)"/>
+            <line x1="280" y1="150" x2="380" y2="198" stroke="#ce9178" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow5)"/>
+            <!-- Labels -->
+            <text x="330" y="82" fill="#569cd6" font-size="9" text-anchor="middle">handoff</text>
+            <text x="330" y="125" fill="#00ff88" font-size="9" text-anchor="middle">handoff</text>
+            <text x="330" y="182" fill="#ce9178" font-size="9" text-anchor="middle">handoff</text>
+            <!-- Outils -->
+            <rect x="560" y="110" width="120" height="35" rx="6" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="620" y="132" fill="#aaa" font-size="10" text-anchor="middle">check_order</text>
+            <rect x="560" y="180" width="120" height="35" rx="6" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+            <text x="620" y="202" fill="#aaa" font-size="10" text-anchor="middle">process_refund</text>
+            <line x1="500" y1="132" x2="560" y2="127" stroke="#333" stroke-width="1"/>
+            <line x1="500" y1="200" x2="560" y2="197" stroke="#333" stroke-width="1"/>
+            <defs>
+                <marker id="arrow5" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ce9178"/></marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">Swarm est un framework "educatif" d'OpenAI, pas destine a la production. Son interet est de montrer les principes du multi-agents avec un minimum de code. Pour la production, preferez LangGraph ou CrewAI.</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7 : PATTERNS DE COLLABORATION -->
+    <!-- ============================================================ -->
+
+    <h2>7. Patterns de Collaboration</h2>
+
+    <p>Au-dela des frameworks, il existe des <strong>patterns de collaboration</strong> generiques que vous pouvez implementer dans n'importe quel systeme multi-agents.</p>
+
+    <h3>7.1 Delegation</h3>
+
+    <div class="concept-box">
+        <p>Un agent <strong>manager</strong> decompose une tache complexe en sous-taches et les delegue a des agents specialises. Le manager synthetise ensuite les resultats.</p>
+        <ul>
+            <li><strong>Quand l'utiliser</strong> : problemes decomposables, equipes avec des roles clairs</li>
+            <li><strong>Framework ideal</strong> : CrewAI (mode hierarchique), LangGraph</li>
+        </ul>
+    </div>
+
+    <h3>7.2 Voting (Vote)</h3>
+
+    <div class="concept-box green">
+        <p>Plusieurs agents produisent chacun une reponse, puis un mecanisme de vote determine la meilleure. C'est similaire au "self-consistency" mais avec des agents differents.</p>
+        <ul>
+            <li><strong>Quand l'utiliser</strong> : decisions critiques necessitant de la fiabilite</li>
+            <li><strong>Implementation</strong> : 3+ agents repondent, un agent juge vote</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Pattern de vote avec LangGraph</span>
+<span class="keyword">def</span> <span class="function">voting_node</span>(state):
+    <span class="string">"""Trois agents votent sur la meilleure approche."""</span>
+    proposals = state[<span class="string">"proposals"</span>]  <span class="comment"># Liste de 3 propositions</span>
+
+    judge_prompt = <span class="string">f"""Voici 3 propositions pour resoudre le probleme :
+
+Proposition 1: {proposals[0]}
+Proposition 2: {proposals[1]}
+Proposition 3: {proposals[2]}
+
+Evalue chaque proposition et choisis la meilleure.
+Reponds avec le numero de la proposition gagnante (1, 2 ou 3)
+et justifie ton choix."""</span>
+
+    response = llm.<span class="function">invoke</span>([
+        SystemMessage(content=<span class="string">"Tu es un juge impartial et expert."</span>),
+        HumanMessage(content=judge_prompt)
+    ])
+
+    <span class="keyword">return</span> {<span class="string">"decision"</span>: response.content}</div>
+
+    <h3>7.3 Consensus</h3>
+
+    <div class="concept-box blue">
+        <p>Les agents discutent jusqu'a atteindre un accord. Chaque agent argumente sa position, ecoute les autres et ajuste son point de vue. Le processus s'arrete quand tous convergent.</p>
+        <ul>
+            <li><strong>Quand l'utiliser</strong> : decisions complexes avec de multiples perspectives</li>
+            <li><strong>Risque</strong> : boucles infinies si les agents ne convergent pas</li>
+        </ul>
+    </div>
+
+    <h3>7.4 Encheres (Auction)</h3>
+
+    <div class="concept-box">
+        <p>Chaque agent "encherit" sur une tache en indiquant sa capacite a la realiser (score de confiance). La tache est attribuee a l'agent avec la meilleure enchere.</p>
+        <ul>
+            <li><strong>Quand l'utiliser</strong> : allocation dynamique de taches, optimisation de ressources</li>
+            <li><strong>Implementation</strong> : chaque agent evalue sa pertinence pour la tache (0-100)</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Pattern d'encheres</span>
+<span class="keyword">def</span> <span class="function">auction_router</span>(state):
+    <span class="string">"""Chaque agent bid sur sa capacite a traiter la requete."""</span>
+    task = state[<span class="string">"task"</span>]
+    agents_config = {
+        <span class="string">"data_analyst"</span>: <span class="string">"Expert en analyse de donnees et statistiques"</span>,
+        <span class="string">"code_expert"</span>: <span class="string">"Expert en programmation Python"</span>,
+        <span class="string">"writer"</span>: <span class="string">"Expert en redaction technique"</span>
+    }
+
+    bids = {}
+    <span class="keyword">for</span> agent_name, expertise <span class="keyword">in</span> agents_config.items():
+        response = llm.<span class="function">invoke</span>([
+            SystemMessage(content=<span class="string">f"Tu es un {expertise}."</span>),
+            HumanMessage(content=<span class="string">f"""Evalue ta capacite a traiter cette tache :
+            '{task}'
+            Reponds uniquement par un score de 0 a 100."""</span>)
+        ])
+        bids[agent_name] = <span class="keyword">int</span>(response.content.strip())
+
+    winner = <span class="function">max</span>(bids, key=bids.get)
+    <span class="keyword">return</span> {<span class="string">"assigned_agent"</span>: winner, <span class="string">"bids"</span>: bids}</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 8 : IMPLEMENTATION COMPLETE 3 AGENTS -->
+    <!-- ============================================================ -->
+
+    <h2>8. Implementation Complete : Systeme 3 Agents</h2>
+
+    <p>Voici une implementation complete et fonctionnelle d'un systeme multi-agents avec LangGraph. Ce systeme analyse une question technique avec trois agents specialises : un planificateur, un executeur et un reviseur.</p>
+
+    <div class="code-block"><span class="comment"># === SYSTEME MULTI-AGENTS COMPLET AVEC LANGGRAPH ===</span>
+<span class="comment"># Systeme de resolution de problemes techniques</span>
+
+<span class="keyword">from</span> typing <span class="keyword">import</span> TypedDict, Annotated, Literal
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, SystemMessage
+<span class="keyword">import</span> operator
+<span class="keyword">import</span> json
+
+<span class="comment"># ---- Etat global du systeme ----</span>
+<span class="keyword">class</span> <span class="function">TeamState</span>(TypedDict):
+    problem: <span class="keyword">str</span>                              <span class="comment"># Le probleme a resoudre</span>
+    plan: <span class="keyword">str</span>                                  <span class="comment"># Plan de l'architecte</span>
+    solution: <span class="keyword">str</span>                              <span class="comment"># Solution du developpeur</span>
+    review_feedback: <span class="keyword">str</span>                       <span class="comment"># Feedback du reviseur</span>
+    is_approved: <span class="keyword">bool</span>                           <span class="comment"># Approuve par le reviseur ?</span>
+    iteration: <span class="keyword">int</span>                              <span class="comment"># Numero d'iteration</span>
+    max_iterations: <span class="keyword">int</span>                         <span class="comment"># Maximum d'iterations</span>
+    messages: Annotated[list, operator.add]    <span class="comment"># Historique complet</span>
+
+<span class="comment"># ---- Initialisation du LLM ----</span>
+llm = ChatOpenAI(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0.3</span>)
+
+<span class="comment"># ---- AGENT 1 : PLANIFICATEUR ----</span>
+<span class="keyword">def</span> <span class="function">planner_agent</span>(state: TeamState) -> <span class="keyword">dict</span>:
+    <span class="string">"""L'architecte analyse le probleme et cree un plan."""</span>
+    problem = state[<span class="string">"problem"</span>]
+    feedback = state.get(<span class="string">"review_feedback"</span>, <span class="string">""</span>)
+
+    context = <span class="string">f"Probleme : {problem}"</span>
+    <span class="keyword">if</span> feedback:
+        context += <span class="string">f"\n\nFeedback du reviseur sur l'iteration precedente :\n{feedback}"</span>
+
+    response = llm.<span class="function">invoke</span>([
+        SystemMessage(content=<span class="string">"""Tu es un architecte logiciel senior.
+        Analyse le probleme et produis un plan structure :
+        1. Decomposition du probleme
+        2. Choix technologiques justifies
+        3. Etapes d'implementation numerotees
+        4. Points d'attention et risques
+
+        Si un feedback est fourni, ajuste ton plan en consequence."""</span>),
+        HumanMessage(content=context)
+    ])
+
+    <span class="keyword">return</span> {
+        <span class="string">"plan"</span>: response.content,
+        <span class="string">"messages"</span>: [{<span class="string">"agent"</span>: <span class="string">"planner"</span>, <span class="string">"content"</span>: response.content}]
+    }
+
+<span class="comment"># ---- AGENT 2 : EXECUTEUR ----</span>
+<span class="keyword">def</span> <span class="function">executor_agent</span>(state: TeamState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Le developpeur implemente la solution selon le plan."""</span>
+    plan = state[<span class="string">"plan"</span>]
+    problem = state[<span class="string">"problem"</span>]
+    feedback = state.get(<span class="string">"review_feedback"</span>, <span class="string">""</span>)
+
+    context = <span class="string">f"Probleme : {problem}\n\nPlan de l'architecte :\n{plan}"</span>
+    <span class="keyword">if</span> feedback:
+        context += <span class="string">f"\n\nCorrections demandees :\n{feedback}"</span>
+
+    response = llm.<span class="function">invoke</span>([
+        SystemMessage(content=<span class="string">"""Tu es un developpeur Python senior.
+        A partir du plan fourni, ecris la solution complete :
+        - Code Python fonctionnel et commente
+        - Gestion des erreurs
+        - Tests unitaires basiques
+        - Explication de chaque partie cle"""</span>),
+        HumanMessage(content=context)
+    ])
+
+    <span class="keyword">return</span> {
+        <span class="string">"solution"</span>: response.content,
+        <span class="string">"messages"</span>: [{<span class="string">"agent"</span>: <span class="string">"executor"</span>, <span class="string">"content"</span>: response.content}]
+    }
+
+<span class="comment"># ---- AGENT 3 : REVISEUR ----</span>
+<span class="keyword">def</span> <span class="function">reviewer_agent</span>(state: TeamState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Le reviseur evalue la solution et decide si elle est acceptable."""</span>
+    solution = state[<span class="string">"solution"</span>]
+    plan = state[<span class="string">"plan"</span>]
+    problem = state[<span class="string">"problem"</span>]
+
+    response = llm.<span class="function">invoke</span>([
+        SystemMessage(content=<span class="string">"""Tu es un ingenieur QA senior et reviseur de code.
+        Evalue la solution par rapport au plan et au probleme initial.
+
+        Criteres d'evaluation :
+        - Correctness : le code resout-il le probleme ?
+        - Qualite : le code est-il propre et maintenable ?
+        - Completude : toutes les fonctionnalites sont-elles implementees ?
+        - Tests : les tests sont-ils suffisants ?
+
+        Reponds EXACTEMENT dans ce format JSON :
+        {
+            "approved": true/false,
+            "score": 0-100,
+            "feedback": "tes commentaires detailles"
+        }"""</span>),
+        HumanMessage(content=<span class="string">f"""Probleme : {problem}
+Plan : {plan}
+Solution : {solution}"""</span>)
+    ])
+
+    <span class="keyword">try</span>:
+        review = json.<span class="function">loads</span>(response.content)
+    <span class="keyword">except</span> json.JSONDecodeError:
+        review = {<span class="string">"approved"</span>: <span class="keyword">False</span>, <span class="string">"score"</span>: <span class="number">0</span>, <span class="string">"feedback"</span>: response.content}
+
+    <span class="keyword">return</span> {
+        <span class="string">"review_feedback"</span>: review.get(<span class="string">"feedback"</span>, <span class="string">""</span>),
+        <span class="string">"is_approved"</span>: review.get(<span class="string">"approved"</span>, <span class="keyword">False</span>),
+        <span class="string">"iteration"</span>: state.get(<span class="string">"iteration"</span>, <span class="number">0</span>) + <span class="number">1</span>,
+        <span class="string">"messages"</span>: [{<span class="string">"agent"</span>: <span class="string">"reviewer"</span>, <span class="string">"content"</span>: json.<span class="function">dumps</span>(review, indent=<span class="number">2</span>)}]
+    }
+
+<span class="comment"># ---- ROUTAGE ----</span>
+<span class="keyword">def</span> <span class="function">route_after_review</span>(state: TeamState) -> Literal[<span class="string">"planner"</span>, <span class="string">"end"</span>]:
+    <span class="string">"""Decide si on continue ou si c'est termine."""</span>
+    <span class="keyword">if</span> state.get(<span class="string">"is_approved"</span>, <span class="keyword">False</span>):
+        <span class="keyword">return</span> <span class="string">"end"</span>
+    <span class="keyword">if</span> state.get(<span class="string">"iteration"</span>, <span class="number">0</span>) >= state.get(<span class="string">"max_iterations"</span>, <span class="number">3</span>):
+        <span class="keyword">return</span> <span class="string">"end"</span>  <span class="comment"># Securite anti-boucle infinie</span>
+    <span class="keyword">return</span> <span class="string">"planner"</span>  <span class="comment"># Retour au planificateur pour correction</span>
+
+<span class="comment"># ---- CONSTRUCTION DU GRAPHE ----</span>
+workflow = StateGraph(TeamState)
+
+<span class="comment"># Ajout des noeuds</span>
+workflow.<span class="function">add_node</span>(<span class="string">"planner"</span>, planner_agent)
+workflow.<span class="function">add_node</span>(<span class="string">"executor"</span>, executor_agent)
+workflow.<span class="function">add_node</span>(<span class="string">"reviewer"</span>, reviewer_agent)
+
+<span class="comment"># Flux de base</span>
+workflow.<span class="function">set_entry_point</span>(<span class="string">"planner"</span>)
+workflow.<span class="function">add_edge</span>(<span class="string">"planner"</span>, <span class="string">"executor"</span>)
+workflow.<span class="function">add_edge</span>(<span class="string">"executor"</span>, <span class="string">"reviewer"</span>)
+
+<span class="comment"># Routage conditionnel apres review</span>
+workflow.<span class="function">add_conditional_edges</span>(
+    <span class="string">"reviewer"</span>,
+    route_after_review,
+    {
+        <span class="string">"planner"</span>: <span class="string">"planner"</span>,
+        <span class="string">"end"</span>: END
+    }
+)
+
+<span class="comment"># Compilation</span>
+app = workflow.<span class="function">compile</span>()
+
+<span class="comment"># ---- EXECUTION ----</span>
+result = app.<span class="function">invoke</span>({
+    <span class="string">"problem"</span>: <span class="string">"""Creer une API REST avec FastAPI qui gere un systeme
+    de gestion de bibliotheque : livres, emprunts, utilisateurs.
+    Inclure l'authentification JWT et la pagination."""</span>,
+    <span class="string">"iteration"</span>: <span class="number">0</span>,
+    <span class="string">"max_iterations"</span>: <span class="number">3</span>,
+    <span class="string">"is_approved"</span>: <span class="keyword">False</span>
+})
+
+<span class="comment"># Affichage des resultats</span>
+<span class="function">print</span>(<span class="string">"=== PLAN ==="</span>)
+<span class="function">print</span>(result[<span class="string">"plan"</span>])
+<span class="function">print</span>(<span class="string">"\n=== SOLUTION ==="</span>)
+<span class="function">print</span>(result[<span class="string">"solution"</span>])
+<span class="function">print</span>(<span class="string">f"\nApprouve: {result['is_approved']}"</span>)
+<span class="function">print</span>(<span class="string">f"Iterations: {result['iteration']}"</span>)</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 9 : COMPARAISON DES FRAMEWORKS -->
+    <!-- ============================================================ -->
+
+    <h2>9. Comparaison des Frameworks Multi-Agents</h2>
+
+    <table>
+        <tr>
+            <th>Critere</th>
+            <th>CrewAI</th>
+            <th>AutoGen/AG2</th>
+            <th>LangGraph</th>
+            <th>Swarm</th>
+        </tr>
+        <tr>
+            <td><strong>Approche</strong></td>
+            <td>Role-based</td>
+            <td>Conversation</td>
+            <td>Graph d'etat</td>
+            <td>Routines + Handoffs</td>
+        </tr>
+        <tr>
+            <td><strong>Complexite</strong></td>
+            <td>Faible</td>
+            <td>Moyenne</td>
+            <td>Elevee</td>
+            <td>Tres faible</td>
+        </tr>
+        <tr>
+            <td><strong>Flexibilite</strong></td>
+            <td>Moyenne</td>
+            <td>Bonne</td>
+            <td>Maximale</td>
+            <td>Limitee</td>
+        </tr>
+        <tr>
+            <td><strong>Execution de code</strong></td>
+            <td>Via outils</td>
+            <td>Native</td>
+            <td>Via outils</td>
+            <td>Non</td>
+        </tr>
+        <tr>
+            <td><strong>Human-in-loop</strong></td>
+            <td>Oui</td>
+            <td>Natif</td>
+            <td>Oui (interrupts)</td>
+            <td>Non</td>
+        </tr>
+        <tr>
+            <td><strong>Streaming</strong></td>
+            <td>Oui</td>
+            <td>Oui</td>
+            <td>Natif</td>
+            <td>Oui</td>
+        </tr>
+        <tr>
+            <td><strong>Persistence</strong></td>
+            <td>Non</td>
+            <td>Non</td>
+            <td>Oui (checkpoints)</td>
+            <td>Non</td>
+        </tr>
+        <tr>
+            <td><strong>Production-ready</strong></td>
+            <td>Oui</td>
+            <td>Oui</td>
+            <td>Oui</td>
+            <td>Non (experimental)</td>
+        </tr>
+        <tr>
+            <td><strong>Communaute</strong></td>
+            <td>Grande</td>
+            <td>Grande</td>
+            <td>Tres grande</td>
+            <td>Moyenne</td>
+        </tr>
+        <tr>
+            <td><strong>Cas d'usage ideal</strong></td>
+            <td>Equipes d'agents simples</td>
+            <td>Coding agents, dialogues</td>
+            <td>Workflows complexes</td>
+            <td>Prototypage, education</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">Mon conseil : commencez avec CrewAI pour comprendre les concepts, puis passez a LangGraph quand vous avez besoin de controle fin. AutoGen est ideal pour les agents de programmation. Swarm est parfait pour apprendre les bases du handoff.</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 10 : GESTION DES CONFLITS -->
+    <!-- ============================================================ -->
+
+    <h2>10. Gestion des Conflits entre Agents</h2>
+
+    <p>Quand plusieurs agents travaillent ensemble, des conflits peuvent apparaitre : recommandations contradictoires, boucles infinies, desaccords sur la strategie. Voici comment les gerer.</p>
+
+    <h3>10.1 Types de conflits</h3>
+
+    <table>
+        <tr>
+            <th>Type de conflit</th>
+            <th>Description</th>
+            <th>Solution</th>
+        </tr>
+        <tr>
+            <td><strong>Contradiction</strong></td>
+            <td>Deux agents donnent des reponses opposees</td>
+            <td>Agent arbitre / vote majoritaire</td>
+        </tr>
+        <tr>
+            <td><strong>Boucle infinie</strong></td>
+            <td>Deux agents se corrigent mutuellement sans fin</td>
+            <td>Compteur d'iterations + timeout</td>
+        </tr>
+        <tr>
+            <td><strong>Deadlock</strong></td>
+            <td>Chaque agent attend l'output de l'autre</td>
+            <td>Valeurs par defaut + timeouts</td>
+        </tr>
+        <tr>
+            <td><strong>Surcharge</strong></td>
+            <td>Un agent recoit trop de taches</td>
+            <td>Load balancing + file d'attente</td>
+        </tr>
+    </table>
+
+    <h3>10.2 Strategies de resolution</h3>
+
+    <div class="step-box"><strong>Strategie 1 : Limite d'iterations</strong> - Toujours definir un nombre maximum de tours de discussion. Si le consensus n'est pas atteint, un agent superviseur tranche.</div>
+
+    <div class="step-box"><strong>Strategie 2 : Agent arbitre</strong> - Un agent special qui n'intervient que pour resoudre les conflits. Il a acces aux arguments des deux parties et prend une decision finale.</div>
+
+    <div class="step-box"><strong>Strategie 3 : Priorite hierarchique</strong> - Definir une hierarchie de priorite : l'agent manager a toujours le dernier mot en cas de desaccord.</div>
+
+    <div class="step-box"><strong>Strategie 4 : Scoring</strong> - Chaque proposition recoit un score de confiance. La proposition avec le meilleur score est selectionnee automatiquement.</div>
+
+    <div class="code-block"><span class="comment"># Gestionnaire de conflits</span>
+<span class="keyword">class</span> <span class="function">ConflictResolver</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, llm, max_iterations=<span class="number">3</span>):
+        self.llm = llm
+        self.max_iterations = max_iterations
+
+    <span class="keyword">def</span> <span class="function">resolve</span>(self, agent_outputs: <span class="keyword">dict</span>) -> <span class="keyword">str</span>:
+        <span class="string">"""Resout un conflit entre agents."""</span>
+        conflict_prompt = <span class="string">"Les agents suivants ont des avis divergents :\n\n"</span>
+        <span class="keyword">for</span> agent, output <span class="keyword">in</span> agent_outputs.items():
+            conflict_prompt += <span class="string">f"Agent '{agent}': {output}\n\n"</span>
+        conflict_prompt += <span class="string">"Analyse les arguments de chaque agent et fournis une decision finale justifiee."</span>
+
+        response = self.llm.<span class="function">invoke</span>([
+            SystemMessage(content=<span class="string">"Tu es un arbitre impartial et expert."</span>),
+            HumanMessage(content=conflict_prompt)
+        ])
+        <span class="keyword">return</span> response.content</div>
+
+    <div class="warning">Les boucles infinies sont le risque numero 1 des systemes multi-agents. Implementez TOUJOURS un compteur d'iterations et un timeout global. Sans ces garde-fous, vos couts API peuvent exploser en quelques minutes.</div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 11 : BONNES PRATIQUES -->
+    <!-- ============================================================ -->
+
+    <h2>11. Bonnes Pratiques pour les Systemes Multi-Agents</h2>
+
+    <div class="concept-box green">
+        <h3>Checklist de conception multi-agents</h3>
+        <ol>
+            <li><strong>Commencez simple</strong> : ne creez pas 10 agents quand 2 suffisent. Chaque agent ajoute de la complexite et du cout.</li>
+            <li><strong>Roles clairs</strong> : chaque agent doit avoir un role precis et non-ambigu. Evitez le chevauchement des responsabilites.</li>
+            <li><strong>Prompts systeme detailles</strong> : plus le prompt systeme est precis, mieux l'agent remplit son role.</li>
+            <li><strong>Limites strictes</strong> : max_iterations, timeouts, budgets tokens. Toujours.</li>
+            <li><strong>Logging complet</strong> : enregistrez chaque echange entre agents pour le debug.</li>
+            <li><strong>Tests unitaires par agent</strong> : testez chaque agent individuellement avant de les assembler.</li>
+            <li><strong>Graceful degradation</strong> : si un agent echoue, le systeme doit continuer avec un resultat partiel plutot que planter.</li>
+            <li><strong>Monitoring des couts</strong> : chaque agent consomme des tokens. Surveillez les couts par execution.</li>
+        </ol>
+    </div>
+
+    <h3>Resume du cours</h3>
+
+    <div class="concept-box">
+        <p>Dans ce cours, nous avons explore les systemes multi-agents sous tous les angles :</p>
+        <ul>
+            <li>Les <strong>topologies</strong> (sequentielle, hierarchique, collaborative, competitive)</li>
+            <li>Les <strong>modes de communication</strong> (message passing, shared state, blackboard)</li>
+            <li>Les <strong>frameworks</strong> : CrewAI, AutoGen, LangGraph, Swarm</li>
+            <li>Les <strong>patterns de collaboration</strong> : delegation, vote, consensus, encheres</li>
+            <li>Une <strong>implementation complete</strong> d'un systeme 3 agents avec LangGraph</li>
+            <li>La <strong>gestion des conflits</strong> et les bonnes pratiques</li>
+        </ul>
+        <p>Dans le prochain cours, nous verrons comment combiner les agents avec le RAG pour creer des systemes de <strong>RAG Agentique</strong>.</p>
+    </div>
+
+    <div class="nav">
+        <a href="ag_06_architectures.html">&larr; Architectures</a>
+        <span style="color: #666;">(Cours 7/10 - Agents IA)</span>
+        <a href="ag_08_agentic_rag.html">RAG Agentique &rarr;</a>
+    </div>
+</div>
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

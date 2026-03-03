@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Pipeline RAG Agentique Complet</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        p { margin-bottom: 12px; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .svg-container { text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Pipeline RAG Agentique Complet</h1>
+    <p class="subtitle">Agents IA - TD 4/5 : Implémenter un pipeline CRAG (Corrective RAG) avec grading, web search fallback et hallucination check via LangGraph</p>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 1 : RECAPITULATIF -->
+    <!-- ============================================ -->
+    <h2>1. Récapitulatif : CRAG, Self-RAG, Adaptive RAG</h2>
+
+    <p>Le RAG classique (Retrieve-then-Generate) a un problème fondamental : il ne vérifie jamais la qualité des documents récupérés ni la véracité de la réponse générée. Les approches agentiques corrigent ces faiblesses.</p>
+
+    <div class="definition">
+        Le <strong>RAG Agentique</strong> désigne les architectures RAG qui intègrent des boucles de contrôle qualité : évaluation de la pertinence des documents récupérés, recherche web de secours, vérification des hallucinations, et régénération conditionnelle. Les variantes principales sont CRAG, Self-RAG et Adaptive RAG.
+    </div>
+
+    <h3>Comparaison des approches RAG</h3>
+
+    <table>
+        <tr>
+            <th>Approche</th>
+            <th>Mécanisme</th>
+            <th>Avantage</th>
+        </tr>
+        <tr>
+            <td><strong>RAG Naif</strong></td>
+            <td>Retrieve -> Generate (sans vérification)</td>
+            <td>Simple, rapide</td>
+        </tr>
+        <tr>
+            <td><strong>CRAG</strong></td>
+            <td>Retrieve -> Grade -> Si mauvais: Web Search -> Generate</td>
+            <td>Corrige les retrieval de mauvaise qualité</td>
+        </tr>
+        <tr>
+            <td><strong>Self-RAG</strong></td>
+            <td>Retrieve -> Generate -> Grade hallucinations -> Si mauvais: Regenerate</td>
+            <td>Détecte et corrige les hallucinations</td>
+        </tr>
+        <tr>
+            <td><strong>Adaptive RAG</strong></td>
+            <td>Analyse la question -> Route vers RAG ou Web ou LLM direct</td>
+            <td>Choisit la meilleure stratégie par question</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        Dans ce TD, nous combinons CRAG et Self-RAG dans un seul pipeline. C'est l'approche la plus robuste : on vérifie à la fois la qualité du retrieval ET la qualité de la génération.
+    </div>
+
+    <h3>Le pipeline que nous allons construire</h3>
+    <ol>
+        <li><strong>Retrieval</strong> : Chercher les documents pertinents dans ChromaDB</li>
+        <li><strong>Grading</strong> : Évaluer la pertinence de chaque document avec un LLM</li>
+        <li><strong>Web Search Fallback</strong> : Si les documents ne sont pas pertinents, chercher sur le web</li>
+        <li><strong>Generation</strong> : Générer la réponse à partir des documents validés</li>
+        <li><strong>Hallucination Check</strong> : Vérifier que la réponse est fidèle aux documents</li>
+        <li><strong>Output</strong> : Retourner la réponse validée ou régénérer</li>
+    </ol>
+
+    <div class="warning">
+        Le RAG agentique consomme plus de tokens qu'un RAG simple (3-5x) car chaque étape de vérification nécessite un appel LLM supplémentaire. C'est un compromis qualité vs coût.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 2 : ARCHITECTURE CRAG -->
+    <!-- ============================================ -->
+    <h2>2. Architecture CRAG Complète</h2>
+
+    <p>Voici l'architecture détaillée de notre pipeline CRAG avec tous les noeuds et les edges conditionnels.</p>
+
+    <div class="svg-container">
+        <svg width="800" height="650" viewBox="0 0 800 650" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="800" height="650" fill="#0f0f23" rx="12"/>
+
+            <!-- Title -->
+            <text x="400" y="35" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Pipeline CRAG - Corrective RAG</text>
+
+            <!-- Query Input -->
+            <rect x="310" y="55" width="180" height="40" rx="8" fill="none" stroke="#569cd6" stroke-width="2"/>
+            <text x="400" y="80" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Question</text>
+            <line x1="400" y1="95" x2="400" y2="125" stroke="#569cd6" stroke-width="2" marker-end="url(#arrowB)"/>
+
+            <!-- Retrieve Node -->
+            <rect x="310" y="125" width="180" height="45" rx="8" fill="rgba(86,156,214,0.15)" stroke="#569cd6" stroke-width="2"/>
+            <text x="400" y="153" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Retrieve (ChromaDB)</text>
+            <line x1="400" y1="170" x2="400" y2="200" stroke="#666" stroke-width="2" marker-end="url(#arrowW)"/>
+
+            <!-- Grade Documents Node -->
+            <rect x="310" y="200" width="180" height="45" rx="8" fill="rgba(255,140,66,0.15)" stroke="#ff8c42" stroke-width="2"/>
+            <text x="400" y="228" text-anchor="middle" fill="#ff8c42" font-size="13" font-weight="bold">Grade Documents</text>
+
+            <!-- Conditional Split -->
+            <line x1="400" y1="245" x2="400" y2="275" stroke="#666" stroke-width="1.5"/>
+            <text x="400" y="268" text-anchor="middle" fill="#aaa" font-size="10">relevant?</text>
+
+            <!-- Branch: Relevant (left) -->
+            <line x1="400" y1="275" x2="250" y2="310" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+            <text x="290" y="290" fill="#00ff88" font-size="10">Oui</text>
+
+            <!-- Branch: Not Relevant (right) -->
+            <line x1="400" y1="275" x2="570" y2="310" stroke="#ff4444" stroke-width="2" marker-end="url(#arrowR)"/>
+            <text x="510" y="290" fill="#ff4444" font-size="10">Non</text>
+
+            <!-- Generate Node (left path) -->
+            <rect x="150" y="310" width="200" height="45" rx="8" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="2"/>
+            <text x="250" y="338" text-anchor="middle" fill="#00ff88" font-size="13" font-weight="bold">Generate (LLM)</text>
+
+            <!-- Web Search Node (right path) -->
+            <rect x="470" y="310" width="200" height="45" rx="8" fill="rgba(255,68,68,0.15)" stroke="#ff4444" stroke-width="2"/>
+            <text x="570" y="338" text-anchor="middle" fill="#ff4444" font-size="13" font-weight="bold">Web Search (Tavily)</text>
+
+            <!-- Web Search also goes to Generate -->
+            <line x1="570" y1="355" x2="570" y2="385" stroke="#666" stroke-width="1.5"/>
+            <line x1="570" y1="385" x2="350" y2="385" stroke="#666" stroke-width="1.5"/>
+            <line x1="350" y1="385" x2="250" y2="385" stroke="#666" stroke-width="1.5"/>
+
+            <!-- Generate to Hallucination Check -->
+            <line x1="250" y1="355" x2="250" y2="415" stroke="#666" stroke-width="1.5"/>
+            <rect x="260" y="390" width="100" height="18" rx="4" fill="#0f0f23" stroke="none"/>
+            <text x="310" y="402" text-anchor="middle" fill="#aaa" font-size="9">+ web results</text>
+
+            <!-- Hallucination Check -->
+            <rect x="150" y="415" width="200" height="45" rx="8" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="250" y="443" text-anchor="middle" fill="#ff6b35" font-size="13" font-weight="bold">Hallucination Check</text>
+
+            <!-- Conditional from hallucination check -->
+            <line x1="250" y1="460" x2="250" y2="490" stroke="#666" stroke-width="1.5"/>
+            <text x="250" y="483" text-anchor="middle" fill="#aaa" font-size="10">grounded?</text>
+
+            <!-- Branch: Grounded (goes to output) -->
+            <line x1="250" y1="490" x2="250" y2="530" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+            <text x="230" y="515" fill="#00ff88" font-size="10">Oui</text>
+
+            <!-- Branch: Not Grounded (loops back) -->
+            <path d="M 250 490 L 100 490 L 100 338 L 150 338" fill="none" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrowR)"/>
+            <text x="70" y="420" fill="#ff4444" font-size="10" transform="rotate(-90, 70, 420)">Regenerate</text>
+
+            <!-- Answer Useful Check -->
+            <rect x="150" y="530" width="200" height="45" rx="8" fill="rgba(86,156,214,0.15)" stroke="#569cd6" stroke-width="2"/>
+            <text x="250" y="558" text-anchor="middle" fill="#569cd6" font-size="13" font-weight="bold">Answer Useful?</text>
+
+            <!-- Final Output -->
+            <line x1="250" y1="575" x2="250" y2="610" stroke="#00ff88" stroke-width="2" marker-end="url(#arrowG)"/>
+            <rect x="150" y="610" width="200" height="35" rx="8" fill="rgba(0,255,136,0.2)" stroke="#00ff88" stroke-width="2"/>
+            <text x="250" y="633" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">Réponse Validée</text>
+
+            <!-- Arrow markers -->
+            <defs>
+                <marker id="arrowB" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#569cd6"/>
+                </marker>
+                <marker id="arrowG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#00ff88"/>
+                </marker>
+                <marker id="arrowR" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff4444"/>
+                </marker>
+                <marker id="arrowW" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Le pipeline comporte deux points de contrôle qualité : le grading des documents (avant la génération) et le hallucination check (après la génération). Ce double filtre garantit une réponse à la fois pertinente et fidèle aux sources.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 3 : SETUP CHROMADB -->
+    <!-- ============================================ -->
+    <h2>3. Exercice : Setup (ChromaDB, Embeddings, Ingestion)</h2>
+
+    <p>Commençons par mettre en place notre base vectorielle et y ingérer des documents de test.</p>
+
+    <div class="step-box">
+        <strong>Étape 3.1 :</strong> Installer les dépendances et créer les imports.
+    </div>
+
+    <div class="code-block"><span class="comment"># Installation</span>
+pip install chromadb langchain-chroma langchain-openai langchain-text-splitters tavily-python
+
+<span class="comment"># Imports</span>
+<span class="keyword">import</span> os
+<span class="keyword">from</span> typing <span class="keyword">import</span> Annotated, TypedDict, List
+<span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI, OpenAIEmbeddings
+<span class="keyword">from</span> langchain_chroma <span class="keyword">import</span> Chroma
+<span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter
+<span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage, SystemMessage
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+
+<span class="function">load_dotenv</span>()
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+embeddings = <span class="function">OpenAIEmbeddings</span>(model=<span class="string">"text-embedding-3-small"</span>)</div>
+
+    <div class="step-box">
+        <strong>Étape 3.2 :</strong> Préparer des documents de test et les ingérer dans ChromaDB.
+    </div>
+
+    <div class="code-block"><span class="comment"># Documents de test sur l'IA</span>
+documents_textes = [
+    <span class="string">"""L'intelligence artificielle générative (IA générative) est une branche de l'IA
+    qui se concentre sur la création de nouveau contenu. Les modèles génératifs comme
+    GPT-4, Claude et Gemini utilisent des architectures Transformer pour générer du texte,
+    des images, du code et de l'audio. En 2024, le marché de l'IA générative a dépassé
+    les 60 milliards de dollars, avec une croissance annuelle de plus de 35%."""</span>,
+
+    <span class="string">"""Le RAG (Retrieval-Augmented Generation) est une technique qui combine la recherche
+    d'information avec la génération de texte. Au lieu de se fier uniquement aux
+    connaissances internes du modèle, le RAG récupère d'abord des documents pertinents
+    dans une base de données vectorielle, puis les utilise comme contexte pour la
+    génération. Cette approche réduit significativement les hallucinations et permet
+    de travailler avec des données privées ou récentes."""</span>,
+
+    <span class="string">"""Les agents IA sont des systèmes autonomes capables de raisonner, planifier et
+    agir pour atteindre un objectif. Contrairement aux chatbots simples, les agents
+    peuvent utiliser des outils externes (recherche web, calculatrice, APIs), maintenir
+    un état conversationnel, et décomposer des problèmes complexes en sous-tâches.
+    Le pattern ReAct (Reasoning + Acting) est le plus utilisé pour les agents."""</span>,
+
+    <span class="string">"""Les embeddings vectoriels sont des représentations numériques de texte dans un
+    espace de haute dimension. Chaque mot, phrase ou document est transformé en un
+    vecteur de nombres réels (typiquement 768 ou 1536 dimensions). La similarité
+    entre deux textes se mesure par la distance cosinus entre leurs vecteurs.
+    Les modèles d'embeddings modernes comme text-embedding-3-small d'OpenAI
+    atteignent des performances remarquables sur les benchmarks de retrieval."""</span>,
+
+    <span class="string">"""LangChain est un framework open-source pour construire des applications avec
+    des modèles de langage. Il fournit des abstractions pour les chaînes de traitement
+    (chains), les agents, la mémoire, et l'intégration de multiples LLMs et outils.
+    LangGraph, son extension pour les graphes, permet de construire des workflows
+    complexes avec des boucles et du branching conditionnel."""</span>,
+
+    <span class="string">"""Le fine-tuning est le processus d'adaptation d'un modèle pré-entraîné à une
+    tâche spécifique en le réentraînant sur un dataset dédié. Contrairement au RAG
+    qui apporte des connaissances au moment de l'inférence, le fine-tuning modifie
+    les poids du modèle. LoRA (Low-Rank Adaptation) est une technique populaire qui
+    réduit le coût du fine-tuning en ne modifiant qu'une fraction des paramètres."""</span>,
+]
+
+<span class="comment"># Créer les documents LangChain</span>
+docs = []
+<span class="keyword">for</span> i, text <span class="keyword">in</span> <span class="function">enumerate</span>(documents_textes):
+    docs.<span class="function">append</span>(<span class="function">Document</span>(
+        page_content=text.<span class="function">strip</span>(),
+        metadata={<span class="string">"source"</span>: <span class="string">f"doc_{i+1}"</span>, <span class="string">"topic"</span>: <span class="string">"IA"</span>}
+    ))
+
+<span class="comment"># Splitter (au cas où les documents seraient plus longs)</span>
+splitter = <span class="function">RecursiveCharacterTextSplitter</span>(
+    chunk_size=<span class="number">500</span>,
+    chunk_overlap=<span class="number">50</span>
+)
+splits = splitter.<span class="function">split_documents</span>(docs)
+
+<span class="comment"># Ingérer dans ChromaDB</span>
+vectorstore = Chroma.<span class="function">from_documents</span>(
+    documents=splits,
+    embedding=embeddings,
+    collection_name=<span class="string">"crag_demo"</span>,
+    persist_directory=<span class="string">"./chroma_crag"</span>
+)
+
+retriever = vectorstore.<span class="function">as_retriever</span>(search_kwargs={<span class="string">"k"</span>: <span class="number">3</span>})
+
+<span class="function">print</span>(<span class="string">f"Documents ingérés : {len(splits)} chunks dans ChromaDB"</span>)</div>
+
+    <div class="output-block">
+Documents ingérés : 6 chunks dans ChromaDB</div>
+
+    <div class="step-box">
+        <strong>Étape 3.3 :</strong> Définir le State du pipeline CRAG.
+    </div>
+
+    <div class="code-block"><span class="keyword">class</span> <span class="function">CRAGState</span>(TypedDict):
+    <span class="string">"""État du pipeline CRAG."""</span>
+    question: <span class="keyword">str</span>                    <span class="comment"># Question de l'utilisateur</span>
+    documents: List[Document]          <span class="comment"># Documents récupérés</span>
+    filtered_documents: List[Document] <span class="comment"># Documents après grading</span>
+    web_results: <span class="keyword">str</span>                  <span class="comment"># Résultats de recherche web</span>
+    generation: <span class="keyword">str</span>                   <span class="comment"># Réponse générée</span>
+    is_relevant: <span class="keyword">bool</span>                 <span class="comment"># Documents pertinents ?</span>
+    is_grounded: <span class="keyword">bool</span>                 <span class="comment"># Réponse fidèle aux sources ?</span>
+    is_useful: <span class="keyword">bool</span>                   <span class="comment"># Réponse utile ?</span>
+    retry_count: <span class="keyword">int</span>                  <span class="comment"># Compteur de retry</span></div>
+
+    <div class="effect">
+        Le State contient toutes les informations nécessaires au pipeline : la question, les documents à chaque étape de filtrage, la réponse générée, et les flags de qualité.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 4 : RETRIEVAL NODE -->
+    <!-- ============================================ -->
+    <h2>4. Exercice : Implémenter le Retrieval Node</h2>
+
+    <p>Le premier noeud récupère les documents pertinents depuis ChromaDB en utilisant la similarité vectorielle.</p>
+
+    <div class="step-box">
+        <strong>Étape 4.1 :</strong> Créer le noeud de retrieval.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">retrieve_node</span>(state: CRAGState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Récupère les documents pertinents depuis ChromaDB."""</span>
+    question = state[<span class="string">"question"</span>]
+    <span class="function">print</span>(<span class="string">f"  [Retrieve] Recherche pour : '{question[:60]}...'"</span>)
+
+    <span class="comment"># Recherche vectorielle</span>
+    documents = retriever.<span class="function">invoke</span>(question)
+
+    <span class="function">print</span>(<span class="string">f"  [Retrieve] {len(documents)} documents trouvés"</span>)
+    <span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(documents):
+        <span class="function">print</span>(<span class="string">f"    Doc {i+1}: {doc.page_content[:80]}..."</span>)
+
+    <span class="keyword">return</span> {<span class="string">"documents"</span>: documents}
+
+<span class="comment"># Test</span>
+test_state = {<span class="string">"question"</span>: <span class="string">"Comment fonctionne le RAG ?"</span>}
+result = <span class="function">retrieve_node</span>(test_state)
+<span class="function">print</span>(<span class="string">f"\nDocuments récupérés : {len(result['documents'])}"</span>)</div>
+
+    <div class="output-block">
+  [Retrieve] Recherche pour : 'Comment fonctionne le RAG ?...'
+  [Retrieve] 3 documents trouvés
+    Doc 1: Le RAG (Retrieval-Augmented Generation) est une technique qui combine la r...
+    Doc 2: Les embeddings vectoriels sont des représentations numériques de texte dans...
+    Doc 3: Les agents IA sont des systèmes autonomes capables de raisonner, planifier ...
+
+Documents récupérés : 3</div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 5 : GRADING NODE -->
+    <!-- ============================================ -->
+    <h2>5. Exercice : Implémenter le Grading Node</h2>
+
+    <p>Le Grading Node évalue la pertinence de chaque document récupéré par rapport à la question. C'est le coeur du "Corrective" dans CRAG.</p>
+
+    <div class="step-box">
+        <strong>Étape 5.1 :</strong> Créer le grader de pertinence des documents.
+    </div>
+
+    <div class="code-block">GRADER_PROMPT = <span class="string">"""Tu es un grader qui évalue si un document est pertinent pour répondre à une question.
+
+Question : {question}
+
+Document : {document}
+
+Évalue si ce document contient des informations utiles pour répondre à la question.
+Réponds UNIQUEMENT par "yes" ou "no".
+
+Un document est pertinent s'il contient des faits, données ou explications
+qui aident directement à répondre à la question, même partiellement."""</span>
+
+<span class="keyword">def</span> <span class="function">grade_documents_node</span>(state: CRAGState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Évalue la pertinence de chaque document récupéré."""</span>
+    question = state[<span class="string">"question"</span>]
+    documents = state[<span class="string">"documents"</span>]
+
+    <span class="function">print</span>(<span class="string">f"  [Grader] Évaluation de {len(documents)} documents..."</span>)
+
+    filtered_docs = []
+    <span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(documents):
+        prompt = GRADER_PROMPT.<span class="function">format</span>(
+            question=question,
+            document=doc.page_content[:500]
+        )
+
+        response = llm.<span class="function">invoke</span>([<span class="function">HumanMessage</span>(content=prompt)])
+        grade = response.content.<span class="function">strip</span>().<span class="function">lower</span>()
+
+        is_relevant = <span class="string">"yes"</span> <span class="keyword">in</span> grade
+        <span class="function">print</span>(<span class="string">f"    Doc {i+1}: {'PERTINENT' if is_relevant else 'NON PERTINENT'}"</span>)
+
+        <span class="keyword">if</span> is_relevant:
+            filtered_docs.<span class="function">append</span>(doc)
+
+    <span class="comment"># Décider si on a assez de documents pertinents</span>
+    has_relevant = <span class="function">len</span>(filtered_docs) > <span class="number">0</span>
+
+    <span class="function">print</span>(<span class="string">f"  [Grader] {len(filtered_docs)}/{len(documents)} documents pertinents"</span>)
+    <span class="function">print</span>(<span class="string">f"  [Grader] → {'Génération directe' if has_relevant else 'Fallback Web Search'}"</span>)
+
+    <span class="keyword">return</span> {
+        <span class="string">"filtered_documents"</span>: filtered_docs,
+        <span class="string">"is_relevant"</span>: has_relevant,
+    }</div>
+
+    <div class="step-box">
+        <strong>Étape 5.2 :</strong> Créer la fonction de routing après le grading.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">route_after_grading</span>(state: CRAGState) -> <span class="keyword">str</span>:
+    <span class="string">"""Route vers generate ou web_search selon la pertinence des documents."""</span>
+    <span class="keyword">if</span> state[<span class="string">"is_relevant"</span>]:
+        <span class="keyword">return</span> <span class="string">"generate"</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">"web_search"</span></div>
+
+    <div class="effect">
+        Le grader élimine les documents non pertinents. Si aucun document pertinent n'est trouvé, le pipeline bascule automatiquement sur la recherche web. C'est le mécanisme "correctif" de CRAG.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 6 : WEB SEARCH FALLBACK -->
+    <!-- ============================================ -->
+    <h2>6. Exercice : Implémenter le Web Search Fallback</h2>
+
+    <p>Quand les documents locaux ne sont pas pertinents, le pipeline bascule sur Tavily pour chercher l'information sur le web.</p>
+
+    <div class="step-box">
+        <strong>Étape 6.1 :</strong> Créer le noeud de recherche web de secours.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> tavily <span class="keyword">import</span> TavilyClient
+
+tavily = <span class="function">TavilyClient</span>(api_key=os.<span class="function">getenv</span>(<span class="string">"TAVILY_API_KEY"</span>))
+
+<span class="keyword">def</span> <span class="function">web_search_node</span>(state: CRAGState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Recherche web quand les documents locaux ne sont pas pertinents."""</span>
+    question = state[<span class="string">"question"</span>]
+
+    <span class="function">print</span>(<span class="string">f"  [Web Search] Recherche web pour : '{question[:50]}...'"</span>)
+
+    <span class="keyword">try</span>:
+        response = tavily.<span class="function">search</span>(
+            query=question,
+            max_results=<span class="number">3</span>,
+            search_depth=<span class="string">"advanced"</span>,
+            include_answer=<span class="keyword">True</span>
+        )
+
+        <span class="comment"># Formater les résultats</span>
+        web_results_parts = []
+
+        <span class="keyword">if</span> response.<span class="function">get</span>(<span class="string">"answer"</span>):
+            web_results_parts.<span class="function">append</span>(<span class="string">f"Réponse: {response['answer']}"</span>)
+
+        <span class="keyword">for</span> r <span class="keyword">in</span> response[<span class="string">"results"</span>]:
+            web_results_parts.<span class="function">append</span>(
+                <span class="string">f"Source: {r['title']} ({r['url']})\n{r['content'][:300]}"</span>
+            )
+
+        web_results = <span class="string">"\n\n"</span>.<span class="function">join</span>(web_results_parts)
+
+        <span class="comment"># Convertir en documents pour la génération</span>
+        web_docs = []
+        <span class="keyword">for</span> r <span class="keyword">in</span> response[<span class="string">"results"</span>]:
+            web_docs.<span class="function">append</span>(<span class="function">Document</span>(
+                page_content=r[<span class="string">"content"</span>],
+                metadata={<span class="string">"source"</span>: r[<span class="string">"url"</span>], <span class="string">"title"</span>: r[<span class="string">"title"</span>]}
+            ))
+
+        <span class="function">print</span>(<span class="string">f"  [Web Search] {len(web_docs)} résultats trouvés"</span>)
+
+        <span class="keyword">return</span> {
+            <span class="string">"web_results"</span>: web_results,
+            <span class="string">"filtered_documents"</span>: web_docs,
+        }
+
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="function">print</span>(<span class="string">f"  [Web Search] Erreur : {str(e)}"</span>)
+        <span class="keyword">return</span> {
+            <span class="string">"web_results"</span>: <span class="string">f"Erreur de recherche : {str(e)}"</span>,
+            <span class="string">"filtered_documents"</span>: [],
+        }</div>
+
+    <div class="prof-note">
+        Le web search fallback est crucial pour la robustesse du système. Si la base de données ne contient pas l'information, le pipeline ne donne pas une mauvaise réponse : il va la chercher sur le web.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 7 : GENERATION + HALLUCINATION CHECK -->
+    <!-- ============================================ -->
+    <h2>7. Exercice : Génération avec Hallucination Check</h2>
+
+    <p>Le noeud de génération produit la réponse, puis le hallucination check vérifie que la réponse est fidèle aux documents sources.</p>
+
+    <div class="step-box">
+        <strong>Étape 7.1 :</strong> Créer le noeud de génération.
+    </div>
+
+    <div class="code-block">GENERATE_PROMPT = <span class="string">"""Tu es un assistant qui répond aux questions en utilisant UNIQUEMENT
+les documents fournis comme contexte.
+
+## Question :
+{question}
+
+## Documents sources :
+{context}
+
+## Instructions :
+1. Réponds UNIQUEMENT à partir des informations des documents
+2. Si les documents ne contiennent pas assez d'info, dis-le clairement
+3. Cite les sources quand c'est pertinent
+4. Sois précis et structuré dans ta réponse
+5. Réponds en français"""</span>
+
+<span class="keyword">def</span> <span class="function">generate_node</span>(state: CRAGState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Génère la réponse à partir des documents filtrés."""</span>
+    question = state[<span class="string">"question"</span>]
+    docs = state.<span class="function">get</span>(<span class="string">"filtered_documents"</span>, [])
+
+    <span class="function">print</span>(<span class="string">f"  [Generate] Génération à partir de {len(docs)} documents"</span>)
+
+    <span class="comment"># Construire le contexte</span>
+    context_parts = []
+    <span class="keyword">for</span> i, doc <span class="keyword">in</span> <span class="function">enumerate</span>(docs):
+        source = doc.metadata.<span class="function">get</span>(<span class="string">"source"</span>, <span class="string">f"doc_{i+1}"</span>)
+        context_parts.<span class="function">append</span>(
+            <span class="string">f"[Document {i+1} - Source: {source}]\n{doc.page_content}"</span>
+        )
+    context = <span class="string">"\n\n"</span>.<span class="function">join</span>(context_parts)
+
+    prompt = GENERATE_PROMPT.<span class="function">format</span>(
+        question=question,
+        context=context
+    )
+
+    response = llm.<span class="function">invoke</span>([<span class="function">HumanMessage</span>(content=prompt)])
+    generation = response.content
+
+    <span class="function">print</span>(<span class="string">f"  [Generate] Réponse générée : {len(generation)} caractères"</span>)
+
+    <span class="keyword">return</span> {<span class="string">"generation"</span>: generation}</div>
+
+    <div class="step-box">
+        <strong>Étape 7.2 :</strong> Créer le noeud de vérification des hallucinations.
+    </div>
+
+    <div class="code-block">HALLUCINATION_PROMPT = <span class="string">"""Tu es un grader qui évalue si une réponse est fidèle aux documents sources.
+
+## Documents sources :
+{documents}
+
+## Réponse à évaluer :
+{generation}
+
+## Critères :
+- La réponse contient-elle des informations qui NE SONT PAS dans les documents ?
+- La réponse déforme-t-elle les informations des documents ?
+- La réponse invente-t-elle des chiffres ou des faits ?
+
+Réponds UNIQUEMENT par un JSON :
+{{"is_grounded": true/false, "explanation": "..."}}"""</span>
+
+<span class="keyword">def</span> <span class="function">hallucination_check_node</span>(state: CRAGState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Vérifie que la réponse est fidèle aux documents sources."""</span>
+    docs = state.<span class="function">get</span>(<span class="string">"filtered_documents"</span>, [])
+    generation = state.<span class="function">get</span>(<span class="string">"generation"</span>, <span class="string">""</span>)
+
+    <span class="function">print</span>(<span class="string">f"  [Hallucination Check] Vérification de la réponse..."</span>)
+
+    docs_text = <span class="string">"\n\n"</span>.<span class="function">join</span>([d.page_content <span class="keyword">for</span> d <span class="keyword">in</span> docs])
+
+    prompt = HALLUCINATION_PROMPT.<span class="function">format</span>(
+        documents=docs_text[:3000],
+        generation=generation
+    )
+
+    response = llm.<span class="function">invoke</span>([<span class="function">HumanMessage</span>(content=prompt)])
+
+    <span class="keyword">import</span> json
+    <span class="keyword">try</span>:
+        content = response.content
+        json_start = content.<span class="function">find</span>(<span class="string">"{"</span>)
+        json_end = content.<span class="function">rfind</span>(<span class="string">"}"</span>) + <span class="number">1</span>
+        result = json.<span class="function">loads</span>(content[json_start:json_end])
+        is_grounded = result.<span class="function">get</span>(<span class="string">"is_grounded"</span>, <span class="keyword">True</span>)
+        explanation = result.<span class="function">get</span>(<span class="string">"explanation"</span>, <span class="string">""</span>)
+    <span class="keyword">except</span>:
+        is_grounded = <span class="keyword">True</span>
+        explanation = <span class="string">"Parsing error, assume grounded"</span>
+
+    <span class="function">print</span>(<span class="string">f"  [Hallucination Check] Grounded: {is_grounded}"</span>)
+    <span class="keyword">if</span> <span class="keyword">not</span> is_grounded:
+        <span class="function">print</span>(<span class="string">f"  [Hallucination Check] Raison: {explanation}"</span>)
+
+    <span class="keyword">return</span> {
+        <span class="string">"is_grounded"</span>: is_grounded,
+        <span class="string">"retry_count"</span>: state.<span class="function">get</span>(<span class="string">"retry_count"</span>, <span class="number">0</span>) + <span class="number">1</span>,
+    }</div>
+
+    <div class="step-box">
+        <strong>Étape 7.3 :</strong> Créer le noeud de vérification d'utilité et le routing.
+    </div>
+
+    <div class="code-block">USEFULNESS_PROMPT = <span class="string">"""La réponse suivante répond-elle bien à la question posée ?
+
+Question : {question}
+Réponse : {generation}
+
+Réponds UNIQUEMENT par "yes" ou "no"."""</span>
+
+<span class="keyword">def</span> <span class="function">answer_useful_node</span>(state: CRAGState) -> <span class="keyword">dict</span>:
+    <span class="string">"""Vérifie que la réponse est utile pour la question."""</span>
+    question = state[<span class="string">"question"</span>]
+    generation = state.<span class="function">get</span>(<span class="string">"generation"</span>, <span class="string">""</span>)
+
+    prompt = USEFULNESS_PROMPT.<span class="function">format</span>(
+        question=question,
+        generation=generation
+    )
+    response = llm.<span class="function">invoke</span>([<span class="function">HumanMessage</span>(content=prompt)])
+    is_useful = <span class="string">"yes"</span> <span class="keyword">in</span> response.content.<span class="function">strip</span>().<span class="function">lower</span>()
+
+    <span class="function">print</span>(<span class="string">f"  [Useful Check] Réponse utile: {is_useful}"</span>)
+
+    <span class="keyword">return</span> {<span class="string">"is_useful"</span>: is_useful}
+
+<span class="keyword">def</span> <span class="function">route_after_hallucination</span>(state: CRAGState) -> <span class="keyword">str</span>:
+    <span class="string">"""Route selon le résultat du hallucination check."""</span>
+    <span class="keyword">if</span> state.<span class="function">get</span>(<span class="string">"retry_count"</span>, <span class="number">0</span>) > <span class="number">2</span>:
+        <span class="keyword">return</span> <span class="string">"end"</span>  <span class="comment"># Max 2 retries</span>
+    <span class="keyword">if</span> state.<span class="function">get</span>(<span class="string">"is_grounded"</span>, <span class="keyword">False</span>):
+        <span class="keyword">return</span> <span class="string">"useful_check"</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">"regenerate"</span>
+
+<span class="keyword">def</span> <span class="function">route_after_useful</span>(state: CRAGState) -> <span class="keyword">str</span>:
+    <span class="string">"""Route selon l'utilité de la réponse."""</span>
+    <span class="keyword">if</span> state.<span class="function">get</span>(<span class="string">"is_useful"</span>, <span class="keyword">False</span>):
+        <span class="keyword">return</span> <span class="string">"end"</span>
+    <span class="keyword">else</span>:
+        <span class="keyword">return</span> <span class="string">"web_search"</span>  <span class="comment"># Chercher plus d'info</span></div>
+
+    <div class="warning">
+        Le <code>retry_count</code> est essentiel pour éviter les boucles infinies. Si après 2 tentatives la réponse n'est toujours pas fidèle aux sources, on retourne quand même le meilleur résultat avec un avertissement.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 8 : ASSEMBLAGE PIPELINE -->
+    <!-- ============================================ -->
+    <h2>8. Exercice : Assembler le pipeline CRAG complet</h2>
+
+    <p>Assemblons tous les noeuds dans un StateGraph LangGraph avec les edges conditionnels.</p>
+
+    <div class="step-box">
+        <strong>Étape 8.1 :</strong> Construire et compiler le graphe CRAG.
+    </div>
+
+    <div class="code-block"><span class="comment"># Construire le graphe CRAG</span>
+crag_workflow = <span class="function">StateGraph</span>(CRAGState)
+
+<span class="comment"># Ajouter les noeuds</span>
+crag_workflow.<span class="function">add_node</span>(<span class="string">"retrieve"</span>, retrieve_node)
+crag_workflow.<span class="function">add_node</span>(<span class="string">"grade"</span>, grade_documents_node)
+crag_workflow.<span class="function">add_node</span>(<span class="string">"web_search"</span>, web_search_node)
+crag_workflow.<span class="function">add_node</span>(<span class="string">"generate"</span>, generate_node)
+crag_workflow.<span class="function">add_node</span>(<span class="string">"hallucination_check"</span>, hallucination_check_node)
+crag_workflow.<span class="function">add_node</span>(<span class="string">"useful_check"</span>, answer_useful_node)
+
+<span class="comment"># Point d'entrée</span>
+crag_workflow.<span class="function">set_entry_point</span>(<span class="string">"retrieve"</span>)
+
+<span class="comment"># Edges fixes</span>
+crag_workflow.<span class="function">add_edge</span>(<span class="string">"retrieve"</span>, <span class="string">"grade"</span>)
+crag_workflow.<span class="function">add_edge</span>(<span class="string">"web_search"</span>, <span class="string">"generate"</span>)
+crag_workflow.<span class="function">add_edge</span>(<span class="string">"generate"</span>, <span class="string">"hallucination_check"</span>)
+
+<span class="comment"># Edges conditionnels</span>
+crag_workflow.<span class="function">add_conditional_edges</span>(
+    <span class="string">"grade"</span>,
+    route_after_grading,
+    {<span class="string">"generate"</span>: <span class="string">"generate"</span>, <span class="string">"web_search"</span>: <span class="string">"web_search"</span>}
+)
+
+crag_workflow.<span class="function">add_conditional_edges</span>(
+    <span class="string">"hallucination_check"</span>,
+    route_after_hallucination,
+    {<span class="string">"useful_check"</span>: <span class="string">"useful_check"</span>, <span class="string">"regenerate"</span>: <span class="string">"generate"</span>, <span class="string">"end"</span>: END}
+)
+
+crag_workflow.<span class="function">add_conditional_edges</span>(
+    <span class="string">"useful_check"</span>,
+    route_after_useful,
+    {<span class="string">"end"</span>: END, <span class="string">"web_search"</span>: <span class="string">"web_search"</span>}
+)
+
+<span class="comment"># Compiler</span>
+crag_graph = crag_workflow.<span class="function">compile</span>()
+<span class="function">print</span>(<span class="string">"Pipeline CRAG compilé avec succès !"</span>)</div>
+
+    <div class="output-block">
+Pipeline CRAG compilé avec succès !</div>
+
+    <div class="step-box">
+        <strong>Étape 8.2 :</strong> Tester avec une question qui trouve des documents pertinents.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">run_crag</span>(question: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Exécuter le pipeline CRAG et retourner la réponse."""</span>
+    <span class="function">print</span>(<span class="string">f"\n{'='*60}"</span>)
+    <span class="function">print</span>(<span class="string">f"QUESTION : {question}"</span>)
+    <span class="function">print</span>(<span class="string">f"{'='*60}"</span>)
+
+    initial_state = {
+        <span class="string">"question"</span>: question,
+        <span class="string">"documents"</span>: [],
+        <span class="string">"filtered_documents"</span>: [],
+        <span class="string">"web_results"</span>: <span class="string">""</span>,
+        <span class="string">"generation"</span>: <span class="string">""</span>,
+        <span class="string">"is_relevant"</span>: <span class="keyword">False</span>,
+        <span class="string">"is_grounded"</span>: <span class="keyword">False</span>,
+        <span class="string">"is_useful"</span>: <span class="keyword">False</span>,
+        <span class="string">"retry_count"</span>: <span class="number">0</span>,
+    }
+
+    result = crag_graph.<span class="function">invoke</span>(initial_state)
+
+    <span class="function">print</span>(<span class="string">f"\n--- RÉPONSE FINALE ---"</span>)
+    <span class="function">print</span>(result[<span class="string">"generation"</span>])
+    <span class="function">print</span>(<span class="string">f"{'='*60}"</span>)
+
+    <span class="keyword">return</span> result[<span class="string">"generation"</span>]
+
+<span class="comment"># Test 1 : Question avec documents pertinents locaux</span>
+<span class="function">run_crag</span>(<span class="string">"Comment fonctionne le RAG et quels sont ses avantages ?"</span>)</div>
+
+    <div class="output-block">
+============================================================
+QUESTION : Comment fonctionne le RAG et quels sont ses avantages ?
+============================================================
+  [Retrieve] Recherche pour : 'Comment fonctionne le RAG et quels sont ses avan...'
+  [Retrieve] 3 documents trouvés
+    Doc 1: Le RAG (Retrieval-Augmented Generation) est une technique qui combine...
+    Doc 2: Les embeddings vectoriels sont des représentations numériques de texte...
+    Doc 3: LangChain est un framework open-source pour construire des application...
+  [Grader] Évaluation de 3 documents...
+    Doc 1: PERTINENT
+    Doc 2: PERTINENT
+    Doc 3: NON PERTINENT
+  [Grader] 2/3 documents pertinents
+  [Grader] → Génération directe
+  [Generate] Génération à partir de 2 documents
+  [Generate] Réponse générée : 856 caractères
+  [Hallucination Check] Vérification de la réponse...
+  [Hallucination Check] Grounded: True
+  [Useful Check] Réponse utile: True
+
+--- RÉPONSE FINALE ---
+Le RAG (Retrieval-Augmented Generation) est une technique qui combine la
+recherche d'information avec la génération de texte par un LLM.
+
+**Fonctionnement :**
+Le RAG récupère d'abord des documents pertinents dans une base de données
+vectorielle en utilisant des embeddings, puis utilise ces documents comme
+contexte pour la génération de la réponse.
+
+**Avantages :**
+- Réduit significativement les hallucinations du modèle
+- Permet de travailler avec des données privées ou récentes
+- Ne nécessite pas de réentraîner le modèle (contrairement au fine-tuning)
+============================================================</div>
+
+    <div class="step-box">
+        <strong>Étape 8.3 :</strong> Tester avec une question nécessitant le web search fallback.
+    </div>
+
+    <div class="code-block"><span class="comment"># Test 2 : Question non couverte par les documents locaux → web search</span>
+<span class="function">run_crag</span>(<span class="string">"Quel est le prix de l'abonnement ChatGPT Plus en 2025 ?"</span>)</div>
+
+    <div class="output-block">
+============================================================
+QUESTION : Quel est le prix de l'abonnement ChatGPT Plus en 2025 ?
+============================================================
+  [Retrieve] Recherche pour : 'Quel est le prix de l'abonnement ChatGPT Plus...'
+  [Retrieve] 3 documents trouvés
+  [Grader] Évaluation de 3 documents...
+    Doc 1: NON PERTINENT
+    Doc 2: NON PERTINENT
+    Doc 3: NON PERTINENT
+  [Grader] 0/3 documents pertinents
+  [Grader] → Fallback Web Search
+  [Web Search] Recherche web pour : 'Quel est le prix de l'abonnement ChatGPT...'
+  [Web Search] 3 résultats trouvés
+  [Generate] Génération à partir de 3 documents
+  [Generate] Réponse générée : 623 caractères
+  [Hallucination Check] Grounded: True
+  [Useful Check] Réponse utile: True
+
+--- RÉPONSE FINALE ---
+L'abonnement ChatGPT Plus coûte 20 USD par mois (environ 18,40 EUR).
+Il donne accès à GPT-4o, au mode vocal avancé, à la génération d'images
+avec DALL-E, et à une fenêtre de contexte étendue.
+============================================================</div>
+
+    <div class="effect">
+        Le pipeline a correctement détecté que les documents locaux ne contenaient pas l'information sur le prix, a basculé sur la recherche web, et a généré une réponse fidèle aux résultats web. C'est la puissance du CRAG.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 9 : POINTS CLES -->
+    <!-- ============================================ -->
+    <h2>9. Points clés à retenir</h2>
+
+    <div class="concept-box green">
+        <h3>Résumé du TD - Pipeline RAG Agentique</h3>
+        <ul>
+            <li><strong>CRAG ajoute un grading</strong> entre le retrieval et la génération. Les documents non pertinents sont éliminés et un web search prend le relais si nécessaire.</li>
+            <li><strong>Le hallucination check</strong> vérifie que la réponse est fidèle aux documents sources. Si la réponse "invente" des informations, elle est régénérée.</li>
+            <li><strong>Le web search fallback</strong> est le filet de sécurité : quand la base vectorielle ne contient pas l'info, le système va la chercher sur internet.</li>
+            <li><strong>Le grading avec LLM</strong> est plus fiable qu'un simple seuil de similarité cosinus. Le LLM comprend le sens, pas juste la proximité vectorielle.</li>
+            <li><strong>Chaque étape de vérification</strong> coûte un appel LLM supplémentaire. En production, optimisez avec des modèles plus petits pour le grading (GPT-4o-mini).</li>
+            <li><strong>Les retry limits</strong> sont essentiels : max 2 régénérations pour éviter les boucles infinies et le gaspillage de tokens.</li>
+            <li><strong>LangGraph est idéal</strong> pour ce type de pipeline : les conditional edges permettent de router dynamiquement selon la qualité du contenu.</li>
+            <li><strong>En production</strong>, ajoutez un cache sur les résultats de grading et de recherche web pour réduire les coûts et la latence.</li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3>Quand utiliser quel type de RAG ?</h3>
+        <table>
+            <tr>
+                <th>Situation</th>
+                <th>RAG recommandé</th>
+            </tr>
+            <tr>
+                <td>Données fiables, questions simples</td>
+                <td>RAG Naif (retrieve + generate)</td>
+            </tr>
+            <tr>
+                <td>Base documentaire parfois incomplète</td>
+                <td>CRAG (grading + web fallback)</td>
+            </tr>
+            <tr>
+                <td>Applications critiques (médical, juridique)</td>
+                <td>Self-RAG (hallucination check)</td>
+            </tr>
+            <tr>
+                <td>Mix de questions factuelles et complexes</td>
+                <td>Adaptive RAG (routing par type)</td>
+            </tr>
+            <tr>
+                <td>Production avec exigence qualité maximale</td>
+                <td>CRAG + Self-RAG combiné (ce TD)</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="nav">
+        <a href="td_multi_agents.html">&larr; Multi-Agents</a>
+        <span style="color: #666;">(TD 4/5 - Agents IA)</span>
+        <a href="td_agent_production.html">Agent en Production &rarr;</a>
+    </div>
+</div>
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

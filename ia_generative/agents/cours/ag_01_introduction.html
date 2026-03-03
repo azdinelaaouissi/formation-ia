@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agents IA - Cours 1 : Introduction aux Agents IA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; font-size: 1.2rem; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1rem; margin-bottom: 30px; }
+        p { margin-bottom: 12px; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; } .code-block .keyword { color: #569cd6; } .code-block .string { color: #ce9178; } .code-block .function { color: #dcdcaa; } .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; } .concept-box.blue { border-color: #569cd6; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .param-box h4 { color: #ff6b35; margin: 0 0 10px; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Defintion : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #333; }
+        .svg-container { text-align: center; margin: 20px 0; }
+        ul, ol { margin: 10px 0 15px 25px; } li { margin-bottom: 6px; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>Cours 1 : Introduction aux Agents IA</h1>
+    <p class="subtitle">Section Agents IA - Comprendre les fondements, l'histoire et l'ecosysteme des agents intelligents</p>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 1 : DEFINITION                                                  -->
+    <!-- ====================================================================== -->
+
+    <h2>1. Qu'est-ce qu'un Agent IA ?</h2>
+
+    <p>Depuis l'emergence de ChatGPT fin 2022, le grand public a decouvert la puissance des grands modeles de langage (LLM). Mais un LLM seul, aussi performant soit-il, reste fondamentalement un systeme de <strong>generation de texte</strong>. Il recoit une entree (le prompt) et produit une sortie (la completion). C'est un outil passif qui attend qu'on lui pose une question.</p>
+
+    <p>Un <strong>agent IA</strong>, en revanche, est un systeme capable d'agir de maniere <strong>autonome</strong> pour atteindre un objectif. C'est une difference fondamentale qui change completement le paradigme d'interaction avec l'intelligence artificielle.</p>
+
+    <div class="definition">
+        Un <strong>agent IA</strong> est un systeme logiciel autonome qui percoit son environnement, raisonne sur ses observations, prend des decisions et execute des actions pour atteindre un objectif donne, tout en s'adaptant aux resultats de ses actions.
+    </div>
+
+    <h3>1.1 Les quatre proprietes fondamentales d'un agent</h3>
+
+    <p>Pour qu'un systeme soit qualifie d'agent, il doit posseder quatre proprietes essentielles :</p>
+
+    <div class="concept-box">
+        <h3>Les 4 piliers d'un agent IA</h3>
+        <ul>
+            <li><strong>Autonomie</strong> : L'agent agit sans intervention humaine directe a chaque etape. Il decide lui-meme des actions a entreprendre.</li>
+            <li><strong>Perception</strong> : L'agent observe son environnement (donnees, reponses d'API, resultats de recherche, fichiers, etc.).</li>
+            <li><strong>Raisonnement</strong> : L'agent analyse ses observations et planifie ses prochaines actions en fonction de son objectif.</li>
+            <li><strong>Action</strong> : L'agent execute des actions concretes qui modifient son environnement (appels API, ecriture de fichiers, envoi de messages, etc.).</li>
+        </ul>
+    </div>
+
+    <h3>1.2 Taxonomie : Chatbot vs Assistant vs Agent</h3>
+
+    <p>Il est crucial de bien distinguer ces trois concepts que l'on confond souvent dans le langage courant :</p>
+
+    <div class="param-box">
+        <h4>Chatbot</h4>
+        <p>Un chatbot est un programme conversationnel qui repond a des questions en suivant des regles predefinies ou en utilisant un modele de langage. Il est <strong>reactif</strong> : il attend une question et fournit une reponse. Il ne prend pas d'initiative et n'execute pas d'actions dans le monde reel.</p>
+        <p><strong>Exemple</strong> : Un chatbot de FAQ qui repond aux questions frequentes sur un site web.</p>
+    </div>
+
+    <div class="param-box">
+        <h4>Assistant IA</h4>
+        <p>Un assistant IA est un chatbot ameliore qui dispose de certaines capacites d'action limitees. Il peut par exemple planifier des rendez-vous, envoyer des emails ou effectuer des recherches. Cependant, il agit toujours sous le controle direct de l'utilisateur et chaque action est explicitement demandee.</p>
+        <p><strong>Exemple</strong> : Siri, Google Assistant, Alexa - ils executent des commandes vocales specifiques.</p>
+    </div>
+
+    <div class="param-box">
+        <h4>Agent IA</h4>
+        <p>Un agent IA est un systeme autonome qui recoit un <strong>objectif de haut niveau</strong> et determine lui-meme la sequence d'actions necessaires pour l'atteindre. Il planifie, execute, observe les resultats, et adapte sa strategie en consequence. Il peut fonctionner sans intervention humaine pendant de longues periodes.</p>
+        <p><strong>Exemple</strong> : Un agent de recherche qui recoit la tache "Redige un rapport comparatif sur les solutions cloud AWS vs Azure pour une PME" et qui autonomement cherche des sources, lit des articles, compare les prix, et produit un rapport structure.</p>
+    </div>
+
+    <div class="prof-note">
+        La distinction essentielle est le <strong>niveau d'autonomie</strong>. Un chatbot a zero autonomie, un assistant a une autonomie limitee et supervisee, et un agent possede une autonomie significative avec capacite de planification et d'adaptation.
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 2 : HISTOIRE                                                    -->
+    <!-- ====================================================================== -->
+
+    <h2>2. Histoire des Agents Intelligents</h2>
+
+    <p>L'idee de creer des entites artificielles capables d'agir de maniere autonome est aussi ancienne que l'informatique elle-meme. Retracons les grandes etapes de cette histoire fascinante.</p>
+
+    <h3>2.1 Les pionniers (1960-1980)</h3>
+
+    <div class="step-box">
+        <strong>1966 - ELIZA (Joseph Weizenbaum, MIT)</strong><br>
+        ELIZA est souvent considere comme le premier chatbot. Il simulait un psychotherapeute rogerien en utilisant de simples regles de correspondance de motifs (pattern matching). Bien qu'il ne soit pas un veritable agent, ELIZA a demontre que des interactions homme-machine etaient possibles et a ouvert la voie a la recherche sur les agents conversationnels.
+    </div>
+
+    <div class="step-box">
+        <strong>1970 - SHRDLU (Terry Winograd, MIT)</strong><br>
+        SHRDLU est l'un des premiers vrais "agents" au sens moderne. Il pouvait comprendre des instructions en langage naturel pour manipuler des blocs dans un monde virtuel. L'utilisateur pouvait dire "Pose le bloc rouge sur la pyramide bleue" et SHRDLU planifiait et executait la sequence d'actions necessaires. C'etait revolutionnaire mais limite a un "micro-monde" tres restreint.
+    </div>
+
+    <div class="step-box">
+        <strong>1972 - MYCIN (Stanford)</strong><br>
+        MYCIN etait un systeme expert medical capable de diagnostiquer des infections bacteriennes et de recommander des antibiotiques. Il utilisait un moteur d'inference avec environ 600 regles. MYCIN est considere comme l'un des premiers "agents deliberatifs" car il raisonnait sur les donnees avant de prendre une decision.
+    </div>
+
+    <h3>2.2 L'ere des systemes experts et du GOFAI (1980-1995)</h3>
+
+    <p>Le terme <strong>GOFAI</strong> (Good Old-Fashioned Artificial Intelligence) designe l'approche symbolique de l'IA, basee sur la logique formelle et les regles explicites. Durant cette periode, les agents etaient construits avec des bases de connaissances et des moteurs d'inference.</p>
+
+    <div class="step-box">
+        <strong>1986 - Architecture BDI (Bratman)</strong><br>
+        Michael Bratman propose le modele <strong>Belief-Desire-Intention</strong> (Croyance-Desir-Intention) qui deviendra le fondement theorique des agents rationnels. Un agent BDI maintient un ensemble de croyances sur le monde, des desirs (objectifs) et des intentions (plans en cours d'execution).
+    </div>
+
+    <div class="step-box">
+        <strong>1991 - Architecture de subsomption (Rodney Brooks, MIT)</strong><br>
+        Brooks propose une approche radicalement differente : des agents <strong>reactifs</strong> sans representation interne du monde. Ses robots insectes agissaient par couches de comportements simples. Cette approche bottom-up s'opposait au GOFAI top-down et a inspire la robotique moderne.
+    </div>
+
+    <div class="step-box">
+        <strong>1995 - Agents logiciels et Internet</strong><br>
+        Avec l'avenement du Web, les agents logiciels (softbots) emergent : agents de recherche, agents de filtrage d'information, agents de commerce electronique. Le concept de "systeme multi-agents" (SMA) se developpe dans la recherche academique.
+    </div>
+
+    <h3>2.3 L'ere moderne : les agents bases sur les LLM (2023-present)</h3>
+
+    <div class="step-box">
+        <strong>Mars 2023 - AutoGPT</strong><br>
+        AutoGPT est le premier agent autonome base sur GPT-4 a devenir viral. Il pouvait recevoir un objectif, decomposer la tache, naviguer sur le web, ecrire du code et iterer. Le projet a atteint 150 000 etoiles sur GitHub en quelques semaines, lancant la "ruee vers les agents".
+    </div>
+
+    <div class="step-box">
+        <strong>Avril 2023 - BabyAGI</strong><br>
+        BabyAGI a demontre qu'un systeme minimaliste (environ 100 lignes de Python) pouvait gerer une file de taches, les executer avec GPT-4, et generer de nouvelles taches en fonction des resultats. C'est l'essence meme d'un agent : la boucle tache-execution-reflexion.
+    </div>
+
+    <div class="step-box">
+        <strong>2023-2024 - Frameworks d'agents</strong><br>
+        LangChain, LangGraph, CrewAI, AutoGen, et bien d'autres frameworks emergent pour faciliter la creation d'agents. Les fournisseurs de LLM (OpenAI, Anthropic, Google) integrent directement le "function calling" (appel de fonctions/outils) dans leurs modeles, permettant aux agents d'interagir avec des outils externes de maniere native.
+    </div>
+
+    <div class="step-box">
+        <strong>2024-2025 - L'ere des agents en production</strong><br>
+        Les agents passent du prototype a la production. Claude d'Anthropic, GPT-4 d'OpenAI et Gemini de Google sont utilises comme "cerveaux" d'agents deployes en entreprise. Des agents de code (GitHub Copilot Workspace, Devin), des agents de recherche (Perplexity), et des agents de support client sont deployes a grande echelle.
+    </div>
+
+    <div class="prof-note">
+        L'histoire des agents montre un pendule entre deux approches : la planification symbolique (GOFAI) et les comportements reactifs (Brooks). Les agents modernes bases sur les LLM representent une synthese de ces deux traditions : ils raisonnent en langage naturel (deliberatif) tout en s'adaptant en temps reel aux observations (reactif).
+    </div>
+
+    <!-- SVG Timeline -->
+    <div class="svg-container">
+        <svg viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+            <!-- Ligne principale -->
+            <line x1="50" y1="110" x2="850" y2="110" stroke="#ff6b35" stroke-width="3"/>
+            <!-- Points et labels -->
+            <circle cx="100" cy="110" r="8" fill="#ff6b35"/>
+            <text x="100" y="90" fill="#ff8c42" font-size="12" text-anchor="middle">1966</text>
+            <text x="100" y="140" fill="#e0e0e0" font-size="10" text-anchor="middle">ELIZA</text>
+
+            <circle cx="200" cy="110" r="8" fill="#ff6b35"/>
+            <text x="200" y="90" fill="#ff8c42" font-size="12" text-anchor="middle">1970</text>
+            <text x="200" y="140" fill="#e0e0e0" font-size="10" text-anchor="middle">SHRDLU</text>
+
+            <circle cx="300" cy="110" r="8" fill="#ff6b35"/>
+            <text x="300" y="90" fill="#ff8c42" font-size="12" text-anchor="middle">1986</text>
+            <text x="300" y="140" fill="#e0e0e0" font-size="10" text-anchor="middle">BDI</text>
+
+            <circle cx="400" cy="110" r="8" fill="#ff6b35"/>
+            <text x="400" y="90" fill="#ff8c42" font-size="12" text-anchor="middle">1991</text>
+            <text x="400" y="140" fill="#e0e0e0" font-size="10" text-anchor="middle">Subsomption</text>
+
+            <circle cx="520" cy="110" r="8" fill="#ff6b35"/>
+            <text x="520" y="90" fill="#ff8c42" font-size="12" text-anchor="middle">1995</text>
+            <text x="520" y="140" fill="#e0e0e0" font-size="10" text-anchor="middle">Softbots</text>
+
+            <circle cx="640" cy="110" r="8" fill="#00ff88"/>
+            <text x="640" y="90" fill="#00ff88" font-size="12" text-anchor="middle">2023</text>
+            <text x="640" y="140" fill="#e0e0e0" font-size="10" text-anchor="middle">AutoGPT</text>
+
+            <circle cx="740" cy="110" r="8" fill="#00ff88"/>
+            <text x="740" y="90" fill="#00ff88" font-size="12" text-anchor="middle">2024</text>
+            <text x="740" y="140" fill="#e0e0e0" font-size="10" text-anchor="middle">Frameworks</text>
+
+            <circle cx="820" cy="110" r="8" fill="#00ff88"/>
+            <text x="820" y="90" fill="#00ff88" font-size="12" text-anchor="middle">2025</text>
+            <text x="820" y="140" fill="#e0e0e0" font-size="10" text-anchor="middle">Production</text>
+
+            <!-- Legende -->
+            <rect x="50" y="175" width="12" height="12" fill="#ff6b35" rx="2"/>
+            <text x="68" y="186" fill="#aaa" font-size="11">Ere classique</text>
+            <rect x="200" y="175" width="12" height="12" fill="#00ff88" rx="2"/>
+            <text x="218" y="186" fill="#aaa" font-size="11">Ere LLM-native</text>
+        </svg>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 3 : TYPES D'AGENTS                                              -->
+    <!-- ====================================================================== -->
+
+    <h2>3. Types d'Agents</h2>
+
+    <p>Les agents IA peuvent etre classes en plusieurs categories selon leur architecture interne et leur mode de prise de decision. Comprendre ces categories est essentiel pour choisir la bonne architecture pour chaque cas d'usage.</p>
+
+    <h3>3.1 Agents reactifs (Reactive Agents)</h3>
+
+    <div class="concept-box">
+        <h3>Agent reactif</h3>
+        <p>Un agent reactif repond directement aux stimuli de son environnement sans maintenir de modele interne du monde. Il suit des regles de type <strong>condition-action</strong> : "Si je percois X, alors je fais Y".</p>
+        <ul>
+            <li><strong>Avantage</strong> : Tres rapide, pas de latence de planification</li>
+            <li><strong>Inconvenient</strong> : Pas de memoire, pas de capacite de planification a long terme</li>
+            <li><strong>Exemple</strong> : Un thermostat intelligent qui ajuste la temperature en fonction de la lecture du capteur</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemple d'agent reactif simple</span>
+<span class="keyword">class</span> <span class="function">AgentReactif</span>:
+    <span class="keyword">def</span> <span class="function">agir</span>(self, perception):
+        <span class="string">"""Repond directement a la perception sans etat interne."""</span>
+        <span class="keyword">if</span> perception[<span class="string">"temperature"</span>] > <span class="number">25</span>:
+            <span class="keyword">return</span> <span class="string">"activer_climatisation"</span>
+        <span class="keyword">elif</span> perception[<span class="string">"temperature"</span>] < <span class="number">18</span>:
+            <span class="keyword">return</span> <span class="string">"activer_chauffage"</span>
+        <span class="keyword">else</span>:
+            <span class="keyword">return</span> <span class="string">"maintenir"</span>
+
+agent = <span class="function">AgentReactif</span>()
+action = agent.<span class="function">agir</span>({<span class="string">"temperature"</span>: <span class="number">30</span>})
+<span class="function">print</span>(f<span class="string">"Action choisie : {action}"</span>)</div>
+
+    <div class="output-block">Action choisie : activer_climatisation</div>
+
+    <h3>3.2 Agents deliberatifs (Deliberative Agents)</h3>
+
+    <div class="concept-box">
+        <h3>Agent deliberatif</h3>
+        <p>Un agent deliberatif maintient un <strong>modele interne du monde</strong> et utilise ce modele pour <strong>planifier</strong> ses actions. Il raisonne sur les consequences possibles de ses actions avant de les executer.</p>
+        <ul>
+            <li><strong>Avantage</strong> : Capable de planification a long terme et d'anticipation</li>
+            <li><strong>Inconvenient</strong> : Plus lent, necessite un modele du monde precis</li>
+            <li><strong>Exemple</strong> : Un agent de planification de voyages qui considere les contraintes de budget, de temps et de preferences</li>
+        </ul>
+    </div>
+
+    <h3>3.3 Agents hybrides</h3>
+
+    <div class="concept-box">
+        <h3>Agent hybride</h3>
+        <p>Un agent hybride combine les approches reactive et deliberative en utilisant une <strong>architecture en couches</strong>. La couche reactive gere les reponses urgentes et immediates, tandis que la couche deliberative planifie les actions a plus long terme.</p>
+        <ul>
+            <li><strong>Avantage</strong> : Combine rapidite de reaction et capacite de planification</li>
+            <li><strong>Inconvenient</strong> : Plus complexe a concevoir et a maintenir</li>
+            <li><strong>Exemple</strong> : Un agent moderne base sur un LLM qui utilise le pattern ReAct (on verra cela au cours 2)</li>
+        </ul>
+    </div>
+
+    <h3>3.4 Agents BDI (Belief-Desire-Intention)</h3>
+
+    <div class="concept-box green">
+        <h3>Le modele BDI</h3>
+        <p>Le modele BDI est le cadre theorique le plus influent pour les agents rationnels. Un agent BDI possede trois composantes mentales :</p>
+        <ul>
+            <li><strong>Beliefs (Croyances)</strong> : Ce que l'agent croit savoir sur le monde. Ces croyances sont mises a jour par les perceptions.</li>
+            <li><strong>Desires (Desirs)</strong> : Les objectifs que l'agent souhaite atteindre. Tous les desirs ne sont pas necessairement compatibles entre eux.</li>
+            <li><strong>Intentions (Intentions)</strong> : Les plans concrets que l'agent s'est engage a realiser. Une intention est un desir qui a ete selectionne pour execution.</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Modele simplifie d'un agent BDI</span>
+<span class="keyword">class</span> <span class="function">AgentBDI</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.beliefs = {}       <span class="comment"># Croyances sur le monde</span>
+        self.desires = []       <span class="comment"># Objectifs souhaites</span>
+        self.intentions = []    <span class="comment"># Plans en cours d'execution</span>
+
+    <span class="keyword">def</span> <span class="function">percevoir</span>(self, environnement):
+        <span class="string">"""Met a jour les croyances a partir des observations."""</span>
+        self.beliefs.<span class="function">update</span>(environnement)
+
+    <span class="keyword">def</span> <span class="function">deliberer</span>(self):
+        <span class="string">"""Selectionne les desirs a poursuivre en fonction des croyances."""</span>
+        <span class="keyword">for</span> desir <span class="keyword">in</span> self.desires:
+            <span class="keyword">if</span> self.<span class="function">est_realisable</span>(desir):
+                self.intentions.<span class="function">append</span>(desir)
+
+    <span class="keyword">def</span> <span class="function">planifier</span>(self):
+        <span class="string">"""Genere un plan d'actions pour chaque intention."""</span>
+        plans = []
+        <span class="keyword">for</span> intention <span class="keyword">in</span> self.intentions:
+            plan = self.<span class="function">generer_plan</span>(intention)
+            plans.<span class="function">append</span>(plan)
+        <span class="keyword">return</span> plans
+
+    <span class="keyword">def</span> <span class="function">agir</span>(self, plan):
+        <span class="string">"""Execute la prochaine action du plan."""</span>
+        <span class="keyword">if</span> plan:
+            action = plan.<span class="function">pop</span>(<span class="number">0</span>)
+            <span class="keyword">return</span> self.<span class="function">executer</span>(action)
+
+    <span class="keyword">def</span> <span class="function">est_realisable</span>(self, desir):
+        <span class="keyword">return</span> <span class="keyword">True</span>  <span class="comment"># Simplifie pour l'exemple</span>
+
+    <span class="keyword">def</span> <span class="function">generer_plan</span>(self, intention):
+        <span class="keyword">return</span> [<span class="string">"action1"</span>, <span class="string">"action2"</span>]  <span class="comment"># Simplifie</span>
+
+    <span class="keyword">def</span> <span class="function">executer</span>(self, action):
+        <span class="function">print</span>(f<span class="string">"Execution de : {action}"</span>)
+        <span class="keyword">return</span> <span class="keyword">True</span></div>
+
+    <!-- SVG : Types d'agents -->
+    <div class="svg-container">
+        <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+            <text x="450" y="30" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">Taxonomie des Agents IA</text>
+
+            <!-- Agent Reactif -->
+            <rect x="30" y="60" width="180" height="100" rx="12" fill="none" stroke="#ff6b35" stroke-width="2"/>
+            <text x="120" y="85" fill="#ff8c42" font-size="13" font-weight="bold" text-anchor="middle">Reactif</text>
+            <text x="120" y="110" fill="#e0e0e0" font-size="10" text-anchor="middle">Perception -> Action</text>
+            <text x="120" y="130" fill="#aaa" font-size="10" text-anchor="middle">Pas de memoire</text>
+            <text x="120" y="150" fill="#aaa" font-size="10" text-anchor="middle">Rapide, simple</text>
+
+            <!-- Agent Deliberatif -->
+            <rect x="250" y="60" width="180" height="100" rx="12" fill="none" stroke="#569cd6" stroke-width="2"/>
+            <text x="340" y="85" fill="#569cd6" font-size="13" font-weight="bold" text-anchor="middle">Deliberatif</text>
+            <text x="340" y="110" fill="#e0e0e0" font-size="10" text-anchor="middle">Modele du monde</text>
+            <text x="340" y="130" fill="#aaa" font-size="10" text-anchor="middle">Planification</text>
+            <text x="340" y="150" fill="#aaa" font-size="10" text-anchor="middle">Lent, precis</text>
+
+            <!-- Agent Hybride -->
+            <rect x="470" y="60" width="180" height="100" rx="12" fill="none" stroke="#00ff88" stroke-width="2"/>
+            <text x="560" y="85" fill="#00ff88" font-size="13" font-weight="bold" text-anchor="middle">Hybride</text>
+            <text x="560" y="110" fill="#e0e0e0" font-size="10" text-anchor="middle">Couches reactives +</text>
+            <text x="560" y="130" fill="#aaa" font-size="10" text-anchor="middle">deliberatives</text>
+            <text x="560" y="150" fill="#aaa" font-size="10" text-anchor="middle">Equilibre</text>
+
+            <!-- Agent BDI -->
+            <rect x="690" y="60" width="180" height="100" rx="12" fill="none" stroke="#ff8c42" stroke-width="2"/>
+            <text x="780" y="85" fill="#ff8c42" font-size="13" font-weight="bold" text-anchor="middle">BDI</text>
+            <text x="780" y="110" fill="#e0e0e0" font-size="10" text-anchor="middle">Croyances, Desirs,</text>
+            <text x="780" y="130" fill="#aaa" font-size="10" text-anchor="middle">Intentions</text>
+            <text x="780" y="150" fill="#aaa" font-size="10" text-anchor="middle">Le plus complet</text>
+
+            <!-- Fleche de complexite -->
+            <line x1="60" y1="200" x2="840" y2="200" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+                </marker>
+            </defs>
+            <text x="450" y="230" fill="#aaa" font-size="12" text-anchor="middle">Complexite et autonomie croissantes</text>
+
+            <!-- Agents modernes -->
+            <rect x="200" y="250" width="500" height="35" rx="8" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="5,5"/>
+            <text x="450" y="273" fill="#00ff88" font-size="12" text-anchor="middle">Agents LLM modernes = Architecture hybride + raisonnement en langage naturel</text>
+        </svg>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 4 : BOUCLE PERCEIVE THINK ACT                                  -->
+    <!-- ====================================================================== -->
+
+    <h2>4. Le Workflow Fondamental : Percevoir, Raisonner, Agir</h2>
+
+    <p>Quel que soit le type d'agent, le workflow fondamental suit toujours la meme boucle en trois etapes. Cette boucle est le coeur de tout systeme agentique.</p>
+
+    <div class="concept-box green">
+        <h3>La boucle PRA (Perceive - Reason - Act)</h3>
+        <ol>
+            <li><strong>Percevoir (Perceive)</strong> : L'agent recoit des informations de son environnement. Pour un agent LLM, cela inclut le prompt initial, les resultats d'outils, les reponses d'API, les messages d'erreur, etc.</li>
+            <li><strong>Raisonner (Reason/Think)</strong> : L'agent analyse ses observations, les compare a son objectif, et decide de la prochaine action. Pour un agent LLM, c'est la generation de texte qui "reflechit" a la situation.</li>
+            <li><strong>Agir (Act)</strong> : L'agent execute une action concrete : appeler un outil, ecrire du code, envoyer une requete, ou communiquer un resultat final a l'utilisateur.</li>
+        </ol>
+        <p style="margin-top: 10px;">Cette boucle se repete jusqu'a ce que l'objectif soit atteint ou qu'une condition d'arret soit rencontree.</p>
+    </div>
+
+    <!-- SVG : Boucle PRA -->
+    <div class="svg-container">
+        <svg viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">
+            <text x="350" y="30" fill="#ff6b35" font-size="18" font-weight="bold" text-anchor="middle">Boucle Percevoir - Raisonner - Agir</text>
+
+            <!-- Percevoir -->
+            <rect x="250" y="60" width="200" height="70" rx="15" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="350" y="95" fill="#ff6b35" font-size="16" font-weight="bold" text-anchor="middle">PERCEVOIR</text>
+            <text x="350" y="115" fill="#aaa" font-size="11" text-anchor="middle">Observer l'environnement</text>
+
+            <!-- Fleche Percevoir -> Raisonner -->
+            <line x1="450" y1="95" x2="530" y2="180" stroke="#ff8c42" stroke-width="2"/>
+            <polygon points="530,180 520,170 528,173" fill="#ff8c42"/>
+
+            <!-- Raisonner -->
+            <rect x="430" y="170" width="200" height="70" rx="15" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="530" y="205" fill="#569cd6" font-size="16" font-weight="bold" text-anchor="middle">RAISONNER</text>
+            <text x="530" y="225" fill="#aaa" font-size="11" text-anchor="middle">Analyser et planifier</text>
+
+            <!-- Fleche Raisonner -> Agir -->
+            <line x1="430" y1="240" x2="350" y2="290" stroke="#ff8c42" stroke-width="2"/>
+            <polygon points="350,290 360,280 357,288" fill="#ff8c42"/>
+
+            <!-- Agir -->
+            <rect x="150" y="280" width="200" height="70" rx="15" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="250" y="315" fill="#00ff88" font-size="16" font-weight="bold" text-anchor="middle">AGIR</text>
+            <text x="250" y="335" fill="#aaa" font-size="11" text-anchor="middle">Executer l'action</text>
+
+            <!-- Fleche Agir -> Percevoir (boucle) -->
+            <path d="M 150,315 Q 80,315 80,200 Q 80,95 250,95" fill="none" stroke="#ff8c42" stroke-width="2" stroke-dasharray="8,4"/>
+            <polygon points="250,95 240,88 240,102" fill="#ff8c42"/>
+            <text x="55" y="205" fill="#ff8c42" font-size="11" text-anchor="middle" transform="rotate(-90, 55, 205)">Boucle</text>
+
+            <!-- Objectif atteint -->
+            <rect x="400" y="330" width="200" height="45" rx="10" fill="#1a1a2e" stroke="#00ff88" stroke-width="2" stroke-dasharray="5,5"/>
+            <text x="500" y="358" fill="#00ff88" font-size="13" text-anchor="middle">Objectif atteint !</text>
+            <line x1="350" y1="340" x2="400" y2="350" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="4,4"/>
+        </svg>
+    </div>
+
+    <h3>4.1 Exemple concret de la boucle</h3>
+
+    <p>Imaginons un agent qui doit repondre a la question : "Quel temps fait-il a Paris et dois-je prendre un parapluie ?"</p>
+
+    <div class="step-box">
+        <strong>Iteration 1 - Percevoir :</strong> L'agent recoit la question de l'utilisateur.<br>
+        <strong>Iteration 1 - Raisonner :</strong> "Je dois connaitre la meteo actuelle a Paris. Je vais utiliser l'outil meteo."<br>
+        <strong>Iteration 1 - Agir :</strong> Appel de l'API meteo pour Paris.
+    </div>
+
+    <div class="step-box">
+        <strong>Iteration 2 - Percevoir :</strong> L'agent recoit le resultat : "Paris, 15C, pluie legere, 70% humidite".<br>
+        <strong>Iteration 2 - Raisonner :</strong> "Il pleut a Paris. L'utilisateur devrait prendre un parapluie."<br>
+        <strong>Iteration 2 - Agir :</strong> Reponse a l'utilisateur : "Il fait 15C a Paris avec de la pluie legere. Oui, prenez un parapluie !"
+    </div>
+
+    <div class="effect">
+        La boucle s'est executee deux fois. A la premiere iteration, l'agent a collecte des informations. A la seconde, il a synthetise et repondu. C'est le pattern fondamental de tous les agents.
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 5 : ANATOMIE D'UN AGENT MODERNE                                -->
+    <!-- ====================================================================== -->
+
+    <h2>5. Anatomie d'un Agent Moderne</h2>
+
+    <p>Un agent moderne base sur un LLM est compose de quatre modules principaux qui travaillent ensemble pour accomplir des taches complexes.</p>
+
+    <!-- SVG : Anatomie -->
+    <div class="svg-container">
+        <svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+            <text x="400" y="30" fill="#ff6b35" font-size="18" font-weight="bold" text-anchor="middle">Anatomie d'un Agent LLM Moderne</text>
+
+            <!-- Cerveau LLM (centre) -->
+            <rect x="270" y="160" width="260" height="100" rx="20" fill="#1a1a2e" stroke="#ff6b35" stroke-width="3"/>
+            <text x="400" y="200" fill="#ff6b35" font-size="18" font-weight="bold" text-anchor="middle">CERVEAU (LLM)</text>
+            <text x="400" y="225" fill="#aaa" font-size="12" text-anchor="middle">GPT-4 / Claude / Gemini / Llama</text>
+            <text x="400" y="245" fill="#aaa" font-size="11" text-anchor="middle">Raisonnement en langage naturel</text>
+
+            <!-- Outils (gauche) -->
+            <rect x="20" y="50" width="180" height="140" rx="12" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="110" y="80" fill="#00ff88" font-size="14" font-weight="bold" text-anchor="middle">OUTILS</text>
+            <text x="110" y="100" fill="#e0e0e0" font-size="11" text-anchor="middle">Recherche web</text>
+            <text x="110" y="118" fill="#e0e0e0" font-size="11" text-anchor="middle">Execution de code</text>
+            <text x="110" y="136" fill="#e0e0e0" font-size="11" text-anchor="middle">APIs externes</text>
+            <text x="110" y="154" fill="#e0e0e0" font-size="11" text-anchor="middle">Lecture de fichiers</text>
+            <text x="110" y="172" fill="#e0e0e0" font-size="11" text-anchor="middle">Base de donnees</text>
+            <line x1="200" y1="130" x2="270" y2="200" stroke="#00ff88" stroke-width="2"/>
+
+            <!-- Memoire (droite) -->
+            <rect x="600" y="50" width="180" height="140" rx="12" fill="#1a1a2e" stroke="#569cd6" stroke-width="2"/>
+            <text x="690" y="80" fill="#569cd6" font-size="14" font-weight="bold" text-anchor="middle">MEMOIRE</text>
+            <text x="690" y="100" fill="#e0e0e0" font-size="11" text-anchor="middle">Court terme (contexte)</text>
+            <text x="690" y="118" fill="#e0e0e0" font-size="11" text-anchor="middle">Long terme (vectorDB)</text>
+            <text x="690" y="136" fill="#e0e0e0" font-size="11" text-anchor="middle">Episodique</text>
+            <text x="690" y="154" fill="#e0e0e0" font-size="11" text-anchor="middle">Semantique</text>
+            <text x="690" y="172" fill="#e0e0e0" font-size="11" text-anchor="middle">Procedurale</text>
+            <line x1="600" y1="130" x2="530" y2="200" stroke="#569cd6" stroke-width="2"/>
+
+            <!-- Planification (bas) -->
+            <rect x="270" y="310" width="260" height="110" rx="12" fill="#1a1a2e" stroke="#ff8c42" stroke-width="2"/>
+            <text x="400" y="340" fill="#ff8c42" font-size="14" font-weight="bold" text-anchor="middle">PLANIFICATION</text>
+            <text x="400" y="365" fill="#e0e0e0" font-size="11" text-anchor="middle">Decomposition de taches</text>
+            <text x="400" y="383" fill="#e0e0e0" font-size="11" text-anchor="middle">Ordonnancement des etapes</text>
+            <text x="400" y="401" fill="#e0e0e0" font-size="11" text-anchor="middle">Reflexion et auto-correction</text>
+            <line x1="400" y1="260" x2="400" y2="310" stroke="#ff8c42" stroke-width="2"/>
+        </svg>
+    </div>
+
+    <h3>5.1 Le Cerveau : le LLM</h3>
+
+    <p>Le LLM est le moteur de raisonnement de l'agent. C'est lui qui interprete les observations, genere les plans d'action et formule les reponses. Les LLM les plus utilises comme cerveaux d'agents sont :</p>
+
+    <table>
+        <tr>
+            <th>Modele</th>
+            <th>Fournisseur</th>
+            <th>Forces pour les agents</th>
+        </tr>
+        <tr>
+            <td>GPT-4 / GPT-4o</td>
+            <td>OpenAI</td>
+            <td>Function calling natif, tres bon raisonnement</td>
+        </tr>
+        <tr>
+            <td>Claude 3.5 / Claude 4</td>
+            <td>Anthropic</td>
+            <td>Tool use natif, fenetre de contexte large, reflexion approfondie</td>
+        </tr>
+        <tr>
+            <td>Gemini 2.0</td>
+            <td>Google</td>
+            <td>Multimodal, acces natif a Google Search</td>
+        </tr>
+        <tr>
+            <td>Llama 3.1 / 4</td>
+            <td>Meta (open source)</td>
+            <td>Deploiement local, pas de cout API, personnalisable</td>
+        </tr>
+        <tr>
+            <td>Mistral Large</td>
+            <td>Mistral AI</td>
+            <td>Function calling, bon ratio performance/cout</td>
+        </tr>
+    </table>
+
+    <h3>5.2 Les Outils (Tools)</h3>
+
+    <p>Les outils sont les "mains" de l'agent. Sans eux, le LLM ne peut que generer du texte. Avec des outils, il peut interagir avec le monde reel :</p>
+
+    <ul>
+        <li><strong>Recherche web</strong> : Chercher des informations actualisees sur Internet</li>
+        <li><strong>Execution de code</strong> : Ecrire et executer du Python, JavaScript, etc.</li>
+        <li><strong>Acces fichiers</strong> : Lire, ecrire, modifier des fichiers locaux</li>
+        <li><strong>APIs externes</strong> : Appeler des services tiers (meteo, bases de donnees, CRM, etc.)</li>
+        <li><strong>Envoi d'emails</strong> : Communiquer avec des humains ou d'autres systemes</li>
+        <li><strong>Manipulation d'images</strong> : Generer, analyser ou modifier des images</li>
+    </ul>
+
+    <h3>5.3 La Memoire</h3>
+
+    <p>La memoire permet a l'agent de retenir des informations au-dela de la fenetre de contexte du LLM :</p>
+
+    <div class="param-box">
+        <h4>Types de memoire</h4>
+        <ul>
+            <li><strong>Memoire a court terme</strong> : La fenetre de contexte du LLM (historique de la conversation en cours). Limitee en taille.</li>
+            <li><strong>Memoire a long terme</strong> : Stockage externe (bases de donnees vectorielles, fichiers) permettant de retrouver des informations de sessions precedentes.</li>
+            <li><strong>Memoire episodique</strong> : Souvenir d'experiences passees specifiques ("La derniere fois que j'ai essaye cette approche, elle a echoue").</li>
+            <li><strong>Memoire semantique</strong> : Connaissances generales accumulees ("Python utilise l'indentation pour les blocs").</li>
+            <li><strong>Memoire procedurale</strong> : Savoir-faire stocke sous forme de procedures ("Pour deployer, d'abord tester, puis build, puis deploy").</li>
+        </ul>
+    </div>
+
+    <h3>5.4 La Planification</h3>
+
+    <p>La planification est la capacite de l'agent a decomposer un objectif complexe en sous-taches ordonnees et a adapter son plan en fonction des resultats intermediaires.</p>
+
+    <div class="code-block"><span class="comment"># Exemple conceptuel : decomposition de tache par un agent</span>
+objectif = <span class="string">"Rediger un rapport sur les tendances IA 2025"</span>
+
+<span class="comment"># L'agent decompose automatiquement en sous-taches :</span>
+plan = [
+    <span class="string">"1. Rechercher les dernieres publications sur les tendances IA"</span>,
+    <span class="string">"2. Identifier les 5 tendances principales"</span>,
+    <span class="string">"3. Pour chaque tendance, trouver des exemples concrets"</span>,
+    <span class="string">"4. Rediger l'introduction du rapport"</span>,
+    <span class="string">"5. Rediger une section par tendance"</span>,
+    <span class="string">"6. Rediger la conclusion avec perspectives"</span>,
+    <span class="string">"7. Relire et corriger le rapport final"</span>,
+]
+
+<span class="keyword">for</span> i, tache <span class="keyword">in</span> <span class="function">enumerate</span>(plan):
+    <span class="function">print</span>(f<span class="string">"Etape {i+1}: {tache}"</span>)</div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 6 : ECOSYSTEME DES FRAMEWORKS                                  -->
+    <!-- ====================================================================== -->
+
+    <h2>6. Ecosysteme des Frameworks d'Agents</h2>
+
+    <p>Depuis 2023, un ecosysteme riche de frameworks s'est developpe pour faciliter la creation d'agents IA. Chaque framework a ses forces et ses cas d'usage privilegies.</p>
+
+    <h3>6.1 LangChain</h3>
+
+    <div class="concept-box">
+        <h3>LangChain</h3>
+        <p>LangChain est le framework le plus populaire pour construire des applications basees sur les LLM. Il fournit des abstractions pour les chaines (chains), les agents, les outils, et la memoire.</p>
+        <ul>
+            <li><strong>Points forts</strong> : Large ecosysteme, beaucoup d'integrations, documentation abondante</li>
+            <li><strong>Points faibles</strong> : Abstraction parfois trop lourde, courbe d'apprentissage</li>
+            <li><strong>Usage typique</strong> : Prototypage rapide, agents simples a moyens</li>
+        </ul>
+    </div>
+
+    <div class="code-block"><span class="comment"># Exemple minimal d'agent LangChain</span>
+<span class="keyword">from</span> langchain.agents <span class="keyword">import</span> create_react_agent, AgentExecutor
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langchain.tools <span class="keyword">import</span> Tool
+
+<span class="comment"># Definir le LLM</span>
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Definir les outils</span>
+tools = [
+    <span class="function">Tool</span>(
+        name=<span class="string">"calculatrice"</span>,
+        func=<span class="keyword">lambda</span> x: <span class="function">str</span>(<span class="function">eval</span>(x)),
+        description=<span class="string">"Utile pour effectuer des calculs mathematiques"</span>
+    )
+]
+
+<span class="comment"># Creer et executer l'agent</span>
+agent = <span class="function">create_react_agent</span>(llm, tools, prompt)
+executor = <span class="function">AgentExecutor</span>(agent=agent, tools=tools, verbose=<span class="keyword">True</span>)
+resultat = executor.<span class="function">invoke</span>({<span class="string">"input"</span>: <span class="string">"Combien font 15% de 2450 ?"</span>})</div>
+
+    <h3>6.2 LangGraph</h3>
+
+    <div class="concept-box blue">
+        <h3>LangGraph</h3>
+        <p>LangGraph est une extension de LangChain qui permet de modeliser les agents comme des <strong>graphes d'etats</strong>. Chaque noeud du graphe est une etape de traitement, et les aretes definissent les transitions conditionnelles.</p>
+        <ul>
+            <li><strong>Points forts</strong> : Controle fin du flux, gestion des etats, boucles conditionnelles</li>
+            <li><strong>Points faibles</strong> : Plus verbeux que LangChain, necessite plus de code</li>
+            <li><strong>Usage typique</strong> : Agents complexes en production, workflows multi-etapes</li>
+        </ul>
+    </div>
+
+    <h3>6.3 CrewAI</h3>
+
+    <div class="concept-box">
+        <h3>CrewAI</h3>
+        <p>CrewAI est specialise dans les <strong>systemes multi-agents</strong>. Il permet de definir des "equipages" (crews) d'agents qui collaborent pour accomplir des taches complexes. Chaque agent a un role, un objectif et des outils specifiques.</p>
+        <ul>
+            <li><strong>Points forts</strong> : Multi-agent natif, roles et delegations, simple a utiliser</li>
+            <li><strong>Usage typique</strong> : Taches necessitant plusieurs roles (chercheur + redacteur + editeur)</li>
+        </ul>
+    </div>
+
+    <h3>6.4 AutoGen (Microsoft)</h3>
+
+    <div class="concept-box">
+        <h3>AutoGen</h3>
+        <p>AutoGen de Microsoft est un framework pour creer des <strong>conversations multi-agents</strong>. Les agents communiquent entre eux par messages, comme dans un chat de groupe. Un agent peut etre un LLM, un humain ou un outil.</p>
+        <ul>
+            <li><strong>Points forts</strong> : Conversations multi-agents, integration humain-dans-la-boucle</li>
+            <li><strong>Usage typique</strong> : Resolution de problemes collaboratifs, revue de code multi-agents</li>
+        </ul>
+    </div>
+
+    <h3>6.5 APIs natives des fournisseurs</h3>
+
+    <div class="param-box">
+        <h4>OpenAI Assistants API</h4>
+        <p>OpenAI propose une API d'assistants avec gestion integree des threads (conversations), du code interpreter, du file search et du function calling. C'est une solution cle en main mais proprietaire.</p>
+    </div>
+
+    <div class="param-box">
+        <h4>Anthropic Tool Use</h4>
+        <p>Anthropic propose le "tool use" (utilisation d'outils) directement dans l'API Claude. L'agent definit des outils avec des schemas JSON et Claude decide quand et comment les utiliser. C'est la base du pattern ReAct que nous verrons au cours 2.</p>
+    </div>
+
+    <table>
+        <tr>
+            <th>Framework</th>
+            <th>Specialite</th>
+            <th>Complexite</th>
+            <th>Multi-agent</th>
+        </tr>
+        <tr>
+            <td>LangChain</td>
+            <td>Generaliste</td>
+            <td>Moyenne</td>
+            <td>Basique</td>
+        </tr>
+        <tr>
+            <td>LangGraph</td>
+            <td>Graphes d'etats</td>
+            <td>Haute</td>
+            <td>Oui</td>
+        </tr>
+        <tr>
+            <td>CrewAI</td>
+            <td>Multi-agents</td>
+            <td>Faible</td>
+            <td>Natif</td>
+        </tr>
+        <tr>
+            <td>AutoGen</td>
+            <td>Conversations</td>
+            <td>Moyenne</td>
+            <td>Natif</td>
+        </tr>
+        <tr>
+            <td>OpenAI Assistants</td>
+            <td>Cloud manage</td>
+            <td>Faible</td>
+            <td>Non</td>
+        </tr>
+        <tr>
+            <td>Anthropic Tool Use</td>
+            <td>API directe</td>
+            <td>Faible</td>
+            <td>Non</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        Dans cette formation, nous utiliserons principalement <strong>LangChain</strong> et <strong>LangGraph</strong> car ils offrent le meilleur equilibre entre flexibilite et fonctionnalites. Nous explorerons aussi CrewAI pour les systemes multi-agents. L'important est de comprendre les <strong>concepts</strong> sous-jacents, car les frameworks evoluent rapidement mais les principes restent stables.
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 7 : CAS D'USAGE ENTREPRISE                                     -->
+    <!-- ====================================================================== -->
+
+    <h2>7. Cas d'Usage en Entreprise</h2>
+
+    <p>Les agents IA ne sont plus une curiosite de laboratoire. Ils sont deja deployes en production dans de nombreuses entreprises. Voici les principaux cas d'usage :</p>
+
+    <h3>7.1 Support client autonome</h3>
+
+    <div class="concept-box">
+        <p>Un agent de support client peut analyser la demande d'un client, consulter la base de connaissances, verifier l'historique du compte, proposer une solution et meme executer des actions (remboursement, modification de commande) sans intervention humaine.</p>
+        <p><strong>ROI typique</strong> : Reduction de 40-60% du volume de tickets traites par les humains.</p>
+        <p><strong>Entreprises</strong> : Klarna (agent IA gerant 2/3 des demandes clients), Intercom, Zendesk.</p>
+    </div>
+
+    <h3>7.2 Generation et revue de code</h3>
+
+    <div class="concept-box">
+        <p>Les agents de code ne se contentent pas d'autocompleter : ils comprennent le contexte du projet, generent des fonctions completes, ecrivent des tests, effectuent des revues de code et proposent des corrections de bugs.</p>
+        <p><strong>Outils</strong> : GitHub Copilot Workspace, Devin, Cursor, Claude Code.</p>
+        <p><strong>Impact</strong> : Acceleration du developpement de 30-50% selon les etudes.</p>
+    </div>
+
+    <h3>7.3 Assistants de recherche</h3>
+
+    <div class="concept-box">
+        <p>Les agents de recherche peuvent parcourir des centaines de documents, extraire les informations pertinentes, croiser les sources et produire des syntheses structurees. Ils sont utilises en veille concurrentielle, en recherche scientifique et en due diligence juridique.</p>
+        <p><strong>Outils</strong> : Perplexity AI, Elicit, Consensus.</p>
+    </div>
+
+    <h3>7.4 Analyse de donnees</h3>
+
+    <div class="concept-box">
+        <p>Un agent d'analyse de donnees peut recevoir une question business ("Quels sont nos produits les plus rentables au Q3 ?"), se connecter a la base de donnees, ecrire et executer les requetes SQL necessaires, analyser les resultats et produire un rapport avec des visualisations.</p>
+        <p><strong>Avantage</strong> : Democratise l'acces aux donnees pour les non-techniciens.</p>
+    </div>
+
+    <h3>7.5 Automatisation de workflows</h3>
+
+    <div class="concept-box">
+        <p>Les agents peuvent orchestrer des workflows complexes impliquant plusieurs systemes : CRM, ERP, email, calendrier, gestion de projet. Par exemple, un agent peut recevoir un email de prospect, l'analyser, creer un lead dans le CRM, planifier un appel et envoyer un email de bienvenue personnalise.</p>
+    </div>
+
+    <div class="warning">
+        Le deploiement d'agents en production necessite une attention particuliere a la <strong>securite</strong>, a la <strong>fiabilite</strong> et a la <strong>supervision humaine</strong>. Un agent mal configure peut prendre des decisions couteuses ou compromettre des donnees sensibles. Nous aborderons ces aspects en detail dans les cours 8 et 9.
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 8 : TABLE COMPARATIVE                                           -->
+    <!-- ====================================================================== -->
+
+    <h2>8. Tableau Comparatif Detaille</h2>
+
+    <p>Voici une comparaison exhaustive des quatre niveaux de systemes conversationnels IA, du plus simple au plus complexe :</p>
+
+    <table>
+        <tr>
+            <th>Critere</th>
+            <th>Chatbot</th>
+            <th>Assistant IA</th>
+            <th>Agent IA</th>
+            <th>Multi-Agent</th>
+        </tr>
+        <tr>
+            <td><strong>Autonomie</strong></td>
+            <td>Aucune</td>
+            <td>Limitee</td>
+            <td>Elevee</td>
+            <td>Tres elevee</td>
+        </tr>
+        <tr>
+            <td><strong>Prise d'initiative</strong></td>
+            <td>Non</td>
+            <td>Non</td>
+            <td>Oui</td>
+            <td>Oui</td>
+        </tr>
+        <tr>
+            <td><strong>Planification</strong></td>
+            <td>Non</td>
+            <td>Basique</td>
+            <td>Oui</td>
+            <td>Collaborative</td>
+        </tr>
+        <tr>
+            <td><strong>Outils</strong></td>
+            <td>Non</td>
+            <td>Quelques-uns</td>
+            <td>Multiples</td>
+            <td>Distribues</td>
+        </tr>
+        <tr>
+            <td><strong>Memoire</strong></td>
+            <td>Session</td>
+            <td>Session</td>
+            <td>Long terme</td>
+            <td>Partagee</td>
+        </tr>
+        <tr>
+            <td><strong>Adaptation</strong></td>
+            <td>Non</td>
+            <td>Limitee</td>
+            <td>Oui</td>
+            <td>Collective</td>
+        </tr>
+        <tr>
+            <td><strong>Boucle feedback</strong></td>
+            <td>Non</td>
+            <td>Non</td>
+            <td>Oui</td>
+            <td>Oui</td>
+        </tr>
+        <tr>
+            <td><strong>Complexite dev</strong></td>
+            <td>Faible</td>
+            <td>Moyenne</td>
+            <td>Elevee</td>
+            <td>Tres elevee</td>
+        </tr>
+        <tr>
+            <td><strong>Cout d'execution</strong></td>
+            <td>Faible</td>
+            <td>Moyen</td>
+            <td>Eleve</td>
+            <td>Tres eleve</td>
+        </tr>
+        <tr>
+            <td><strong>Exemple</strong></td>
+            <td>FAQ bot</td>
+            <td>Siri, Alexa</td>
+            <td>Devin, Claude Code</td>
+            <td>CrewAI, AutoGen</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        Il n'y a pas de solution universelle. Un simple chatbot peut suffire pour une FAQ, tandis qu'un systeme multi-agents est necessaire pour des workflows complexes. Le bon choix depend toujours du cas d'usage, du budget et du niveau de risque acceptable.
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 9 : NIVEAUX D'AUTONOMIE                                         -->
+    <!-- ====================================================================== -->
+
+    <h2>9. Niveaux d'Autonomie des Agents (L0 a L5)</h2>
+
+    <p>Par analogie avec les niveaux de conduite autonome des vehicules, nous pouvons definir six niveaux d'autonomie pour les agents IA. Cette echelle permet de classifier les systemes et de mieux comprendre les enjeux de chaque niveau.</p>
+
+    <!-- SVG : Niveaux d'autonomie -->
+    <div class="svg-container">
+        <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg">
+            <text x="450" y="30" fill="#ff6b35" font-size="18" font-weight="bold" text-anchor="middle">Les 6 Niveaux d'Autonomie des Agents IA</text>
+
+            <!-- L0 -->
+            <rect x="50" y="55" width="800" height="55" rx="8" fill="#1a1a2e" stroke="#666" stroke-width="1.5"/>
+            <text x="90" y="80" fill="#aaa" font-size="16" font-weight="bold">L0</text>
+            <text x="140" y="75" fill="#ff6b35" font-size="13" font-weight="bold">Pas d'autonomie</text>
+            <text x="140" y="95" fill="#e0e0e0" font-size="11">L'humain fait tout. L'IA ne fournit aucune assistance. Outil classique sans IA.</text>
+
+            <!-- L1 -->
+            <rect x="50" y="120" width="800" height="55" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="90" y="145" fill="#ff6b35" font-size="16" font-weight="bold">L1</text>
+            <text x="140" y="140" fill="#ff6b35" font-size="13" font-weight="bold">Assistance</text>
+            <text x="140" y="160" fill="#e0e0e0" font-size="11">L'IA suggere, l'humain decide et execute. Ex: autocompletion, suggestions de code.</text>
+
+            <!-- L2 -->
+            <rect x="50" y="185" width="800" height="55" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="90" y="210" fill="#ff8c42" font-size="16" font-weight="bold">L2</text>
+            <text x="140" y="205" fill="#ff8c42" font-size="13" font-weight="bold">Automatisation partielle</text>
+            <text x="140" y="225" fill="#e0e0e0" font-size="11">L'IA execute des actions specifiques sous supervision directe. Ex: chatbot avec outils.</text>
+
+            <!-- L3 -->
+            <rect x="50" y="250" width="800" height="55" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="90" y="275" fill="#569cd6" font-size="16" font-weight="bold">L3</text>
+            <text x="140" y="270" fill="#569cd6" font-size="13" font-weight="bold">Automatisation conditionnelle</text>
+            <text x="140" y="290" fill="#e0e0e0" font-size="11">L'agent gere des taches completes mais demande validation pour les decisions critiques.</text>
+
+            <!-- L4 -->
+            <rect x="50" y="315" width="800" height="55" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="90" y="340" fill="#00ff88" font-size="16" font-weight="bold">L4</text>
+            <text x="140" y="335" fill="#00ff88" font-size="13" font-weight="bold">Haute autonomie</text>
+            <text x="140" y="355" fill="#e0e0e0" font-size="11">L'agent gere la plupart des situations sans intervention. L'humain supervise a posteriori.</text>
+
+            <!-- L5 -->
+            <rect x="50" y="380" width="800" height="55" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="90" y="405" fill="#00ff88" font-size="16" font-weight="bold">L5</text>
+            <text x="140" y="400" fill="#00ff88" font-size="13" font-weight="bold">Autonomie totale</text>
+            <text x="140" y="420" fill="#e0e0e0" font-size="11">L'agent fonctionne de maniere 100% autonome dans tous les scenarios. (Objectif futur)</text>
+
+            <!-- Fleche de risque -->
+            <text x="880" y="80" fill="#aaa" font-size="10" text-anchor="end">Risque faible</text>
+            <text x="880" y="420" fill="#ff4444" font-size="10" text-anchor="end">Risque eleve</text>
+            <line x1="870" y1="90" x2="870" y2="405" stroke="#ff4444" stroke-width="2" stroke-dasharray="4,4"/>
+            <polygon points="870,405 865,395 875,395" fill="#ff4444"/>
+        </svg>
+    </div>
+
+    <div class="concept-box green">
+        <h3>Ou en sommes-nous en 2025 ?</h3>
+        <p>La majorite des agents deployes en production se situent entre les niveaux <strong>L2 et L3</strong>. Les agents les plus avances (comme certains agents de code ou de recherche) atteignent le niveau L4 dans des domaines tres specifiques. Le niveau L5 reste un objectif de recherche a long terme.</p>
+        <p>La progression vers des niveaux plus eleves necessite des avancees en :</p>
+        <ul>
+            <li><strong>Fiabilite</strong> : Reduire les hallucinations et les erreurs</li>
+            <li><strong>Raisonnement</strong> : Ameliorer la planification a long terme</li>
+            <li><strong>Securite</strong> : Garantir des garde-fous robustes</li>
+            <li><strong>Alignment</strong> : S'assurer que l'agent agit conformement aux intentions humaines</li>
+        </ul>
+    </div>
+
+    <div class="warning">
+        Augmenter le niveau d'autonomie augmente aussi le risque. Un agent L4 qui prend une mauvaise decision peut avoir des consequences importantes. C'est pourquoi la plupart des deployments entreprise restent a L2-L3 avec des points de validation humaine strategiques.
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 10 : ROADMAP DU COURS                                           -->
+    <!-- ====================================================================== -->
+
+    <h2>10. Roadmap du Cours Complet</h2>
+
+    <p>Cette section vous presente l'ensemble du programme de la formation "Agents IA". Le cursus est compose de <strong>10 cours theoriques</strong> et <strong>5 travaux diriges (TD)</strong> pratiques.</p>
+
+    <!-- SVG : Roadmap -->
+    <div class="svg-container">
+        <svg viewBox="0 0 900 700" xmlns="http://www.w3.org/2000/svg">
+            <text x="450" y="30" fill="#ff6b35" font-size="18" font-weight="bold" text-anchor="middle">Roadmap de la Formation Agents IA</text>
+
+            <!-- Module 1 : Fondamentaux -->
+            <rect x="30" y="55" width="840" height="30" rx="5" fill="#ff6b35" opacity="0.2"/>
+            <text x="450" y="75" fill="#ff6b35" font-size="13" font-weight="bold" text-anchor="middle">MODULE 1 : FONDAMENTAUX</text>
+
+            <rect x="50" y="95" width="250" height="50" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="2"/>
+            <text x="175" y="118" fill="#ff6b35" font-size="11" font-weight="bold" text-anchor="middle">Cours 1 : Introduction</text>
+            <text x="175" y="135" fill="#aaa" font-size="9" text-anchor="middle">Concepts, histoire, taxonomie</text>
+
+            <rect x="325" y="95" width="250" height="50" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="450" y="118" fill="#ff6b35" font-size="11" font-weight="bold" text-anchor="middle">Cours 2 : ReAct</text>
+            <text x="450" y="135" fill="#aaa" font-size="9" text-anchor="middle">Raisonnement et pattern ReAct</text>
+
+            <rect x="600" y="95" width="250" height="50" rx="8" fill="#1a1a2e" stroke="#ff6b35" stroke-width="1.5"/>
+            <text x="725" y="118" fill="#ff6b35" font-size="11" font-weight="bold" text-anchor="middle">Cours 3 : Tools</text>
+            <text x="725" y="135" fill="#aaa" font-size="9" text-anchor="middle">Outils et Function Calling</text>
+
+            <!-- TD1 -->
+            <rect x="50" y="155" width="800" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,5"/>
+            <text x="450" y="177" fill="#00ff88" font-size="11" text-anchor="middle">TD 1 : Construire un agent ReAct from scratch</text>
+
+            <!-- Module 2 : Architecture -->
+            <rect x="30" y="205" width="840" height="30" rx="5" fill="#569cd6" opacity="0.2"/>
+            <text x="450" y="225" fill="#569cd6" font-size="13" font-weight="bold" text-anchor="middle">MODULE 2 : ARCHITECTURE</text>
+
+            <rect x="50" y="245" width="250" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="175" y="268" fill="#569cd6" font-size="11" font-weight="bold" text-anchor="middle">Cours 4 : Memoire</text>
+            <text x="175" y="285" fill="#aaa" font-size="9" text-anchor="middle">Court/long terme, vectorDB, RAG</text>
+
+            <rect x="325" y="245" width="250" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="450" y="268" fill="#569cd6" font-size="11" font-weight="bold" text-anchor="middle">Cours 5 : Planification</text>
+            <text x="450" y="285" fill="#aaa" font-size="9" text-anchor="middle">Task decomposition, reflexion</text>
+
+            <rect x="600" y="245" width="250" height="50" rx="8" fill="#1a1a2e" stroke="#569cd6" stroke-width="1.5"/>
+            <text x="725" y="268" fill="#569cd6" font-size="11" font-weight="bold" text-anchor="middle">Cours 6 : LangGraph</text>
+            <text x="725" y="285" fill="#aaa" font-size="9" text-anchor="middle">Graphes d'etats, workflows</text>
+
+            <!-- TD2 et TD3 -->
+            <rect x="50" y="305" width="390" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,5"/>
+            <text x="245" y="327" fill="#00ff88" font-size="11" text-anchor="middle">TD 2 : Agent RAG avec memoire vectorielle</text>
+            <rect x="460" y="305" width="390" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,5"/>
+            <text x="655" y="327" fill="#00ff88" font-size="11" text-anchor="middle">TD 3 : Workflow LangGraph complet</text>
+
+            <!-- Module 3 : Avance -->
+            <rect x="30" y="360" width="840" height="30" rx="5" fill="#ff8c42" opacity="0.2"/>
+            <text x="450" y="380" fill="#ff8c42" font-size="13" font-weight="bold" text-anchor="middle">MODULE 3 : AVANCE</text>
+
+            <rect x="50" y="400" width="250" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="175" y="423" fill="#ff8c42" font-size="11" font-weight="bold" text-anchor="middle">Cours 7 : Multi-Agents</text>
+            <text x="175" y="440" fill="#aaa" font-size="9" text-anchor="middle">CrewAI, AutoGen, collaboration</text>
+
+            <rect x="325" y="400" width="250" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="450" y="423" fill="#ff8c42" font-size="11" font-weight="bold" text-anchor="middle">Cours 8 : Securite</text>
+            <text x="450" y="440" fill="#aaa" font-size="9" text-anchor="middle">Guardrails, prompt injection</text>
+
+            <rect x="600" y="400" width="250" height="50" rx="8" fill="#1a1a2e" stroke="#ff8c42" stroke-width="1.5"/>
+            <text x="725" y="423" fill="#ff8c42" font-size="11" font-weight="bold" text-anchor="middle">Cours 9 : Evaluation</text>
+            <text x="725" y="440" fill="#aaa" font-size="9" text-anchor="middle">Metriques, benchmarks, tests</text>
+
+            <!-- TD4 -->
+            <rect x="50" y="460" width="800" height="35" rx="6" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5" stroke-dasharray="5,5"/>
+            <text x="450" y="482" fill="#00ff88" font-size="11" text-anchor="middle">TD 4 : Systeme multi-agents avec CrewAI</text>
+
+            <!-- Module 4 : Projet -->
+            <rect x="30" y="515" width="840" height="30" rx="5" fill="#00ff88" opacity="0.2"/>
+            <text x="450" y="535" fill="#00ff88" font-size="13" font-weight="bold" text-anchor="middle">MODULE 4 : MISE EN PRODUCTION ET PROJET</text>
+
+            <rect x="150" y="555" width="300" height="50" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="300" y="578" fill="#00ff88" font-size="11" font-weight="bold" text-anchor="middle">Cours 10 : Production</text>
+            <text x="300" y="595" fill="#aaa" font-size="9" text-anchor="middle">Deploiement, monitoring, scaling</text>
+
+            <rect x="480" y="555" width="300" height="50" rx="8" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
+            <text x="630" y="578" fill="#00ff88" font-size="11" font-weight="bold" text-anchor="middle">TD 5 : Projet Final</text>
+            <text x="630" y="595" fill="#aaa" font-size="9" text-anchor="middle">Agent complet de bout en bout</text>
+
+            <!-- Legende -->
+            <rect x="300" y="640" width="15" height="15" rx="3" fill="none" stroke="#ff6b35" stroke-width="2"/>
+            <text x="322" y="653" fill="#aaa" font-size="10">Cours theorique</text>
+            <rect x="460" y="640" width="15" height="15" rx="3" fill="none" stroke="#00ff88" stroke-width="2" stroke-dasharray="3,3"/>
+            <text x="482" y="653" fill="#aaa" font-size="10">Travaux diriges</text>
+        </svg>
+    </div>
+
+    <h3>10.1 Description des modules</h3>
+
+    <div class="step-box">
+        <strong>Module 1 - Fondamentaux (Cours 1-3, TD 1)</strong><br>
+        Nous posons les bases : qu'est-ce qu'un agent, comment il raisonne (ReAct), et comment il utilise des outils (function calling). Le TD 1 met en pratique ces concepts en construisant un agent ReAct minimal.
+    </div>
+
+    <div class="step-box">
+        <strong>Module 2 - Architecture (Cours 4-6, TD 2-3)</strong><br>
+        Nous approfondissons les composantes cles : la memoire (court et long terme, RAG), la planification (decomposition de taches, reflexion), et l'orchestration avec LangGraph. Les TD permettent de construire des agents de plus en plus sophistiques.
+    </div>
+
+    <div class="step-box">
+        <strong>Module 3 - Avance (Cours 7-9, TD 4)</strong><br>
+        Nous explorons les sujets avances : les systemes multi-agents, la securite (prompt injection, guardrails), et l'evaluation des agents. Le TD 4 construit un systeme multi-agents collaboratif.
+    </div>
+
+    <div class="step-box">
+        <strong>Module 4 - Production et Projet (Cours 10, TD 5)</strong><br>
+        Nous abordons le deploiement en production : monitoring, scaling, gestion des erreurs. Le TD final est un projet complet qui integre tous les concepts vus durant la formation.
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- SECTION 11 : CODE COMPLET AGENT SIMPLE                                  -->
+    <!-- ====================================================================== -->
+
+    <h2>11. Premier Agent : Implementation en Python</h2>
+
+    <p>Pour conclure ce premier cours, construisons un agent minimaliste en Python pur (sans framework) pour bien comprendre les mecanismes internes. Cet agent illustre la boucle Percevoir-Raisonner-Agir.</p>
+
+    <div class="code-block"><span class="comment"># agent_minimal.py - Un agent IA minimaliste pour comprendre les bases</span>
+<span class="keyword">import</span> json
+
+<span class="keyword">class</span> <span class="function">OutilCalcul</span>:
+    <span class="string">"""Outil permettant d'effectuer des calculs."""</span>
+    name = <span class="string">"calculatrice"</span>
+    description = <span class="string">"Effectue un calcul mathematique. Entree: expression mathematique."</span>
+
+    <span class="keyword">def</span> <span class="function">executer</span>(self, expression):
+        <span class="keyword">try</span>:
+            resultat = <span class="function">eval</span>(expression)
+            <span class="keyword">return</span> f<span class="string">"Le resultat de {expression} est {resultat}"</span>
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            <span class="keyword">return</span> f<span class="string">"Erreur de calcul: {e}"</span>
+
+<span class="keyword">class</span> <span class="function">OutilMeteo</span>:
+    <span class="string">"""Outil simulant une API meteo."""</span>
+    name = <span class="string">"meteo"</span>
+    description = <span class="string">"Donne la meteo d'une ville. Entree: nom de la ville."</span>
+
+    <span class="keyword">def</span> <span class="function">executer</span>(self, ville):
+        <span class="comment"># Simulation - en production, on appellerait une vraie API</span>
+        meteo_db = {
+            <span class="string">"paris"</span>: <span class="string">"15C, nuageux, risque de pluie 60%"</span>,
+            <span class="string">"lyon"</span>: <span class="string">"18C, ensoleille, risque de pluie 10%"</span>,
+            <span class="string">"marseille"</span>: <span class="string">"22C, grand soleil, risque de pluie 5%"</span>,
+        }
+        ville_lower = ville.<span class="function">lower</span>()
+        <span class="keyword">if</span> ville_lower <span class="keyword">in</span> meteo_db:
+            <span class="keyword">return</span> f<span class="string">"Meteo a {ville}: {meteo_db[ville_lower]}"</span>
+        <span class="keyword">return</span> f<span class="string">"Meteo non disponible pour {ville}"</span>
+
+<span class="keyword">class</span> <span class="function">AgentMinimal</span>:
+    <span class="string">"""Agent minimaliste illustrant la boucle PRA."""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, outils):
+        self.outils = {outil.name: outil <span class="keyword">for</span> outil <span class="keyword">in</span> outils}
+        self.historique = []
+        self.max_iterations = <span class="number">5</span>
+
+    <span class="keyword">def</span> <span class="function">percevoir</span>(self, observation):
+        <span class="string">"""Enregistre une nouvelle observation."""</span>
+        self.historique.<span class="function">append</span>({<span class="string">"role"</span>: <span class="string">"observation"</span>, <span class="string">"contenu"</span>: observation})
+        <span class="function">print</span>(f<span class="string">"[PERCEVOIR] {observation}"</span>)
+
+    <span class="keyword">def</span> <span class="function">raisonner</span>(self):
+        <span class="string">"""Decide de la prochaine action (simule ici)."""</span>
+        derniere_obs = self.historique[-<span class="number">1</span>][<span class="string">"contenu"</span>]
+        <span class="comment"># En production, c'est le LLM qui raisonne ici</span>
+        <span class="keyword">if</span> <span class="string">"meteo"</span> <span class="keyword">in</span> derniere_obs.<span class="function">lower</span>() <span class="keyword">or</span> <span class="string">"temps"</span> <span class="keyword">in</span> derniere_obs.<span class="function">lower</span>():
+            <span class="keyword">return</span> {<span class="string">"outil"</span>: <span class="string">"meteo"</span>, <span class="string">"argument"</span>: <span class="string">"paris"</span>}
+        <span class="keyword">elif</span> <span class="string">"calcul"</span> <span class="keyword">in</span> derniere_obs.<span class="function">lower</span>():
+            <span class="keyword">return</span> {<span class="string">"outil"</span>: <span class="string">"calculatrice"</span>, <span class="string">"argument"</span>: <span class="string">"15 * 2450 / 100"</span>}
+        <span class="keyword">return</span> {<span class="string">"outil"</span>: <span class="keyword">None</span>, <span class="string">"reponse"</span>: <span class="string">"Je n'ai pas compris la demande."</span>}
+
+    <span class="keyword">def</span> <span class="function">agir</span>(self, decision):
+        <span class="string">"""Execute l'action decidee."""</span>
+        <span class="keyword">if</span> decision[<span class="string">"outil"</span>] <span class="keyword">is</span> <span class="keyword">None</span>:
+            <span class="function">print</span>(f<span class="string">"[AGIR] Reponse finale: {decision['reponse']}"</span>)
+            <span class="keyword">return</span> decision[<span class="string">"reponse"</span>]
+
+        outil = self.outils[decision[<span class="string">"outil"</span>]]
+        resultat = outil.<span class="function">executer</span>(decision[<span class="string">"argument"</span>])
+        <span class="function">print</span>(f<span class="string">"[AGIR] Outil '{decision['outil']}' -> {resultat}"</span>)
+        <span class="keyword">return</span> resultat
+
+    <span class="keyword">def</span> <span class="function">executer</span>(self, question):
+        <span class="string">"""Boucle principale de l'agent."""</span>
+        <span class="function">print</span>(f<span class="string">"\n{'='*50}"</span>)
+        <span class="function">print</span>(f<span class="string">"Question : {question}"</span>)
+        <span class="function">print</span>(f<span class="string">"{'='*50}"</span>)
+
+        self.<span class="function">percevoir</span>(question)
+
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(self.max_iterations):
+            <span class="function">print</span>(f<span class="string">"\n--- Iteration {i+1} ---"</span>)
+            decision = self.<span class="function">raisonner</span>()
+            <span class="function">print</span>(f<span class="string">"[RAISONNER] Decision: {decision}"</span>)
+            resultat = self.<span class="function">agir</span>(decision)
+
+            <span class="keyword">if</span> decision[<span class="string">"outil"</span>] <span class="keyword">is</span> <span class="keyword">None</span>:
+                <span class="keyword">return</span> resultat
+
+            self.<span class="function">percevoir</span>(f<span class="string">"Resultat de l'outil: {resultat}"</span>)
+
+        <span class="keyword">return</span> <span class="string">"Nombre maximum d'iterations atteint."</span>
+
+<span class="comment"># Utilisation</span>
+outils = [<span class="function">OutilCalcul</span>(), <span class="function">OutilMeteo</span>()]
+agent = <span class="function">AgentMinimal</span>(outils)
+agent.<span class="function">executer</span>(<span class="string">"Quel temps fait-il a Paris ?"</span>)</div>
+
+    <div class="output-block">==================================================
+Question : Quel temps fait-il a Paris ?
+==================================================
+[PERCEVOIR] Quel temps fait-il a Paris ?
+
+--- Iteration 1 ---
+[RAISONNER] Decision: {'outil': 'meteo', 'argument': 'paris'}
+[AGIR] Outil 'meteo' -> Meteo a paris: 15C, nuageux, risque de pluie 60%
+[PERCEVOIR] Resultat de l'outil: Meteo a paris: 15C, nuageux, risque de pluie 60%
+
+--- Iteration 2 ---
+[RAISONNER] Decision: {'outil': None, 'reponse': 'Il fait 15C a Paris, nuageux avec 60% de risque de pluie.'}
+[AGIR] Reponse finale: Il fait 15C a Paris, nuageux avec 60% de risque de pluie.</div>
+
+    <div class="prof-note">
+        Cet agent est evidemment simpliste : la logique de raisonnement est codee en dur. Dans un vrai agent, c'est le LLM qui decide quel outil utiliser et avec quels parametres. Nous verrons cela en detail dans le <strong>cours 2 sur le pattern ReAct</strong> et le <strong>cours 3 sur le function calling</strong>. L'objectif ici est de comprendre la <strong>structure</strong> : la boucle percevoir-raisonner-agir avec un historique et des outils.
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- CONCLUSION                                                              -->
+    <!-- ====================================================================== -->
+
+    <h2>Conclusion</h2>
+
+    <p>Ce premier cours nous a permis de poser les fondations necessaires pour comprendre les agents IA :</p>
+
+    <div class="concept-box green">
+        <h3>Points cles a retenir</h3>
+        <ul>
+            <li>Un agent IA est un systeme <strong>autonome</strong> qui percoit, raisonne et agit pour atteindre un objectif.</li>
+            <li>Les agents modernes utilisent un <strong>LLM comme cerveau</strong>, augmente d'outils, de memoire et de capacites de planification.</li>
+            <li>Il existe differents types d'agents (reactifs, deliberatifs, hybrides, BDI), et les agents LLM modernes sont des <strong>agents hybrides</strong>.</li>
+            <li>La <strong>boucle PRA</strong> (Percevoir-Raisonner-Agir) est le workflow fondamental de tout agent.</li>
+            <li>L'ecosysteme des frameworks (LangChain, LangGraph, CrewAI) facilite la construction d'agents mais les <strong>concepts</strong> restent plus importants que les outils.</li>
+            <li>Les niveaux d'autonomie (L0-L5) aident a classifier et a evaluer les risques des agents.</li>
+        </ul>
+    </div>
+
+    <p>Dans le prochain cours, nous plongerons dans le <strong>pattern ReAct</strong> (Reason + Act), qui est le mecanisme de raisonnement le plus utilise dans les agents modernes. Nous verrons comment un LLM peut "reflechir" a voix haute avant d'agir, et nous implementerons ce pattern de zero.</p>
+
+    <div class="nav">
+        <span style="color: #666;">Debut du cours</span>
+        <span style="color: #666;">(Cours 1/10 - Agents IA)</span>
+        <a href="ag_02_react_reasoning.html">Le Pattern ReAct &rarr;</a>
+    </div>
+</div>
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>

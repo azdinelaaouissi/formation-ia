@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pratique - Construire un Agent ReAct from Scratch</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0f23; color: #e0e0e0; line-height: 1.8; }
+        .main { max-width: 1000px; margin: 0 auto; padding: 40px; }
+        h1 { color: #ff6b35; font-size: 2rem; margin-bottom: 10px; }
+        h2 { color: #ff6b35; font-size: 1.5rem; margin: 35px 0 15px; padding-bottom: 8px; border-bottom: 2px solid #ff6b35; }
+        h3 { color: #ff8c42; margin: 20px 0 10px; }
+        .subtitle { color: #aaa; font-size: 1.1rem; margin-bottom: 30px; }
+        .definition { background: rgba(255,140,66,0.08); border: 2px solid #ff8c42; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .definition::before { content: "Définition : "; color: #ff8c42; font-weight: bold; font-size: 1.1rem; }
+        .prof-note { background: rgba(86,156,214,0.08); border-left: 4px solid #569cd6; padding: 15px 20px; margin: 10px 0; }
+        .prof-note::before { content: "Note du professeur : "; color: #569cd6; font-weight: bold; }
+        .step-box { background: rgba(255,107,53,0.05); border-left: 4px solid #ff6b35; padding: 12px 20px; margin: 8px 0; }
+        .param-box { background: rgba(255,107,53,0.08); border: 1px solid #ff6b35; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .warning { background: rgba(255,68,68,0.08); border-left: 4px solid #ff4444; padding: 15px 20px; margin: 10px 0; }
+        .warning::before { content: "Attention : "; color: #ff4444; font-weight: bold; }
+        .effect { background: rgba(0,255,136,0.08); border-left: 4px solid #00ff88; padding: 15px 20px; margin: 10px 0; }
+        .effect::before { content: "Effet : "; color: #00ff88; font-weight: bold; }
+        .code-block { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.9rem; overflow-x: auto; white-space: pre; }
+        .code-block .comment { color: #6a9955; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .string { color: #ce9178; }
+        .code-block .function { color: #dcdcaa; }
+        .code-block .number { color: #b5cea8; }
+        .output-block { background: #0d1117; border: 1px solid #00ff88; border-radius: 8px; padding: 15px 20px; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #00ff88; }
+        .output-block::before { content: "Sortie : "; color: #aaa; font-weight: bold; }
+        .concept-box { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #ff6b35; border-radius: 12px; padding: 25px; margin: 20px 0; }
+        .concept-box.green { border-color: #00ff88; }
+        .concept-box.blue { border-color: #569cd6; }
+        .nav { display: flex; justify-content: space-between; margin-top: 40px; padding: 20px 0; border-top: 1px solid #333; }
+        .nav a { color: #ff6b35; text-decoration: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #ff6b35; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #333; }
+        tr:hover { background: rgba(255,107,53,0.05); }
+        p { margin-bottom: 12px; }
+        ul, ol { margin: 10px 0 15px 25px; }
+        li { margin-bottom: 6px; }
+        .svg-container { text-align: center; margin: 20px 0; }
+    </style>
+</head>
+<body>
+<div class="main">
+
+    <h1>TD Pratique - Construire un Agent ReAct from Scratch</h1>
+    <p class="subtitle">Agents IA - TD 1/5 : Implémenter le pattern Thought / Action / Observation en Python puis migrer vers LangGraph</p>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 1 : RECAPITULATIF -->
+    <!-- ============================================ -->
+    <h2>1. Récapitulatif du pattern ReAct</h2>
+
+    <p>Avant de plonger dans le code, rappelons les concepts fondamentaux du pattern <strong>ReAct</strong> (Reasoning + Acting), introduit par Yao et al. en 2022. Ce paradigme permet à un LLM de résoudre des tâches complexes en alternant entre raisonnement et action.</p>
+
+    <div class="definition">
+        Le pattern <strong>ReAct</strong> est un framework d'agent où le modèle de langage alterne entre trois phases : <strong>Thought</strong> (raisonnement interne sur la situation), <strong>Action</strong> (appel à un outil externe), et <strong>Observation</strong> (lecture du résultat de l'outil). Cette boucle se répète jusqu'à ce que l'agent puisse fournir une réponse finale.
+    </div>
+
+    <h3>Pourquoi ReAct est révolutionnaire</h3>
+    <p>Avant ReAct, deux approches existaient séparément :</p>
+    <ul>
+        <li><strong>Chain-of-Thought (CoT)</strong> : Le modèle raisonne étape par étape mais ne peut pas agir sur le monde extérieur. Il est limité à ses connaissances internes.</li>
+        <li><strong>Action-only agents</strong> : Le modèle exécute des actions sans expliciter son raisonnement, rendant le debug difficile et les erreurs fréquentes.</li>
+    </ul>
+    <p>ReAct fusionne les deux approches : le modèle <em>pense à voix haute</em> puis agit, ce qui améliore considérablement la fiabilité et la traçabilité.</p>
+
+    <h3>Le cycle Thought / Action / Observation</h3>
+
+    <table>
+        <tr>
+            <th>Phase</th>
+            <th>Rôle</th>
+            <th>Exemple</th>
+        </tr>
+        <tr>
+            <td><strong>Thought</strong></td>
+            <td>Le modèle réfléchit à ce qu'il doit faire ensuite</td>
+            <td>"Je dois chercher la population actuelle de la France pour répondre"</td>
+        </tr>
+        <tr>
+            <td><strong>Action</strong></td>
+            <td>Le modèle choisit un outil et formule l'appel</td>
+            <td>Action: search("population France 2024")</td>
+        </tr>
+        <tr>
+            <td><strong>Observation</strong></td>
+            <td>Le résultat de l'outil est injecté dans le contexte</td>
+            <td>Observation: "La France compte 68,4 millions d'habitants..."</td>
+        </tr>
+    </table>
+
+    <div class="prof-note">
+        Le pattern ReAct est la base de la plupart des agents modernes. Comprendre son fonctionnement interne est essentiel avant d'utiliser des frameworks comme LangGraph qui l'abstraient. Dans ce TD, nous allons d'abord le coder from scratch, puis migrer vers LangGraph.
+    </div>
+
+    <h3>Quand le cycle s'arrête</h3>
+    <p>L'agent termine sa boucle dans deux cas :</p>
+    <ol>
+        <li><strong>Réponse finale</strong> : L'agent estime avoir assez d'informations et produit un "Final Answer".</li>
+        <li><strong>Limite d'itérations</strong> : On fixe un nombre maximum de tours (typiquement 5-10) pour éviter les boucles infinies.</li>
+    </ol>
+
+    <div class="warning">
+        Sans limite d'itérations, un agent peut tourner en boucle indéfiniment, consommant des tokens (et donc de l'argent) sans jamais converger. Toujours définir un <code>max_iterations</code>.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 2 : ARCHITECTURE -->
+    <!-- ============================================ -->
+    <h2>2. Architecture de notre Agent ReAct</h2>
+
+    <p>Voici l'architecture complète de l'agent que nous allons construire dans ce TD. Nous commencerons par une implémentation Python pure, puis nous migrerons vers LangGraph.</p>
+
+    <div class="svg-container">
+        <svg width="800" height="520" viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background -->
+            <rect width="800" height="520" fill="#0f0f23" rx="12"/>
+
+            <!-- Title -->
+            <text x="400" y="35" text-anchor="middle" fill="#ff6b35" font-size="18" font-weight="bold">Architecture Agent ReAct</text>
+
+            <!-- User Query -->
+            <rect x="300" y="55" width="200" height="45" rx="8" fill="none" stroke="#569cd6" stroke-width="2"/>
+            <text x="400" y="83" text-anchor="middle" fill="#569cd6" font-size="14" font-weight="bold">Question Utilisateur</text>
+
+            <!-- Arrow down -->
+            <line x1="400" y1="100" x2="400" y2="130" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- ReAct Loop Box -->
+            <rect x="100" y="130" width="600" height="280" rx="12" fill="none" stroke="#ff6b35" stroke-width="2" stroke-dasharray="8,4"/>
+            <text x="130" y="155" fill="#ff6b35" font-size="13" font-weight="bold">Boucle ReAct (max N itérations)</text>
+
+            <!-- Thought -->
+            <rect x="280" y="170" width="240" height="45" rx="8" fill="rgba(255,107,53,0.15)" stroke="#ff6b35" stroke-width="2"/>
+            <text x="400" y="198" text-anchor="middle" fill="#ff8c42" font-size="14" font-weight="bold">Thought (Raisonnement)</text>
+
+            <!-- Arrow down -->
+            <line x1="400" y1="215" x2="400" y2="245" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Action -->
+            <rect x="280" y="245" width="240" height="45" rx="8" fill="rgba(86,156,214,0.15)" stroke="#569cd6" stroke-width="2"/>
+            <text x="400" y="273" text-anchor="middle" fill="#569cd6" font-size="14" font-weight="bold">Action (Choix d'outil)</text>
+
+            <!-- Arrow to tools -->
+            <line x1="520" y1="267" x2="620" y2="267" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Tools box -->
+            <rect x="620" y="175" width="140" height="140" rx="8" fill="rgba(0,255,136,0.05)" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="690" y="200" text-anchor="middle" fill="#00ff88" font-size="12" font-weight="bold">Outils</text>
+            <text x="690" y="225" text-anchor="middle" fill="#aaa" font-size="11">search()</text>
+            <text x="690" y="248" text-anchor="middle" fill="#aaa" font-size="11">calculate()</text>
+            <text x="690" y="271" text-anchor="middle" fill="#aaa" font-size="11">datetime()</text>
+            <text x="690" y="294" text-anchor="middle" fill="#aaa" font-size="11">...</text>
+
+            <!-- Arrow back from tools -->
+            <line x1="620" y1="300" x2="520" y2="340" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Observation -->
+            <rect x="280" y="320" width="240" height="45" rx="8" fill="rgba(0,255,136,0.15)" stroke="#00ff88" stroke-width="2"/>
+            <text x="400" y="348" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">Observation (Résultat)</text>
+
+            <!-- Loop arrow back to Thought -->
+            <path d="M 280 342 L 160 342 L 160 192 L 280 192" fill="none" stroke="#ff8c42" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow2)"/>
+            <text x="145" y="270" fill="#ff8c42" font-size="11" text-anchor="middle" transform="rotate(-90, 145, 270)">Boucle</text>
+
+            <!-- Arrow down to Final Answer -->
+            <line x1="400" y1="365" x2="400" y2="430" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+            <text x="430" y="400" fill="#aaa" font-size="11">Final Answer?</text>
+
+            <!-- Final Answer -->
+            <rect x="280" y="430" width="240" height="45" rx="8" fill="rgba(0,255,136,0.2)" stroke="#00ff88" stroke-width="2"/>
+            <text x="400" y="458" text-anchor="middle" fill="#00ff88" font-size="14" font-weight="bold">Réponse Finale</text>
+
+            <!-- Arrow markers -->
+            <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+                </marker>
+                <marker id="arrow2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+                    <polygon points="0 0, 10 3.5, 0 7" fill="#ff8c42"/>
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <div class="prof-note">
+        Observez la boucle : Thought, Action, Observation se répètent. Le LLM décide à chaque itération s'il a assez d'information pour répondre ou s'il doit exécuter une nouvelle action. C'est ce qu'on appelle le <strong>raisonnement agentic</strong>.
+    </div>
+
+    <h3>Composants de notre implémentation</h3>
+    <table>
+        <tr>
+            <th>Composant</th>
+            <th>Rôle</th>
+            <th>Technologies</th>
+        </tr>
+        <tr>
+            <td>LLM</td>
+            <td>Moteur de raisonnement</td>
+            <td>OpenAI GPT-4o via API</td>
+        </tr>
+        <tr>
+            <td>Prompt ReAct</td>
+            <td>Instructions structurées</td>
+            <td>Template Python</td>
+        </tr>
+        <tr>
+            <td>Outils</td>
+            <td>Actions exécutables</td>
+            <td>Fonctions Python</td>
+        </tr>
+        <tr>
+            <td>Boucle Agent</td>
+            <td>Orchestration du cycle</td>
+            <td>Python pur, puis LangGraph</td>
+        </tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 3 : SETUP -->
+    <!-- ============================================ -->
+    <h2>3. Exercice : Setup de l'environnement</h2>
+
+    <p>Commençons par mettre en place notre environnement de développement. Nous aurons besoin de plusieurs bibliothèques Python.</p>
+
+    <div class="step-box">
+        <strong>Étape 3.1 :</strong> Créer un environnement virtuel et installer les dépendances.
+    </div>
+
+    <div class="code-block"><span class="comment"># Créer et activer l'environnement virtuel</span>
+python -m venv react_agent_env
+source react_agent_env/bin/activate  <span class="comment"># Linux/Mac</span>
+<span class="comment"># react_agent_env\Scripts\activate  # Windows</span>
+
+<span class="comment"># Installer les dépendances</span>
+pip install openai python-dotenv langchain langgraph langchain-openai tavily-python</div>
+
+    <div class="effect">
+        Ces packages nous fournissent : <code>openai</code> pour l'API GPT, <code>python-dotenv</code> pour les variables d'environnement, <code>langchain</code> et <code>langgraph</code> pour la migration finale, <code>tavily-python</code> pour la recherche web.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 3.2 :</strong> Créer le fichier <code>.env</code> pour stocker les clés API.
+    </div>
+
+    <div class="code-block"><span class="comment"># Fichier .env à la racine du projet</span>
+OPENAI_API_KEY=sk-votre-cle-openai-ici
+TAVILY_API_KEY=tvly-votre-cle-tavily-ici</div>
+
+    <div class="warning">
+        Ne jamais committer le fichier <code>.env</code> dans Git. Ajoutez-le à votre <code>.gitignore</code>. Les clés API sont des secrets sensibles.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 3.3 :</strong> Créer le fichier principal <code>react_agent.py</code> avec les imports nécessaires.
+    </div>
+
+    <div class="code-block"><span class="comment"># react_agent.py - Agent ReAct from scratch</span>
+<span class="keyword">import</span> os
+<span class="keyword">import</span> re
+<span class="keyword">import</span> json
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+<span class="keyword">from</span> dotenv <span class="keyword">import</span> load_dotenv
+<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+
+<span class="comment"># Charger les variables d'environnement</span>
+<span class="function">load_dotenv</span>()
+
+<span class="comment"># Initialiser le client OpenAI</span>
+client = <span class="function">OpenAI</span>(api_key=os.getenv(<span class="string">"OPENAI_API_KEY"</span>))
+
+<span class="comment"># Vérifier que la clé est bien chargée</span>
+<span class="keyword">assert</span> os.getenv(<span class="string">"OPENAI_API_KEY"</span>), <span class="string">"OPENAI_API_KEY non trouvée dans .env"</span>
+
+<span class="function">print</span>(<span class="string">"✓ Environnement initialisé avec succès"</span>)
+<span class="function">print</span>(<span class="string">f"  Modèle utilisé : gpt-4o"</span>)</div>
+
+    <div class="output-block">
+✓ Environnement initialisé avec succès
+  Modèle utilisé : gpt-4o</div>
+
+    <div class="prof-note">
+        Nous utilisons le client OpenAI directement (pas LangChain) pour la première partie afin de bien comprendre les mécanismes internes. On migrera vers LangGraph dans l'exercice 7.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 4 : CREER LES OUTILS -->
+    <!-- ============================================ -->
+    <h2>4. Exercice : Créer les outils de l'agent</h2>
+
+    <p>Un agent ReAct a besoin d'outils pour interagir avec le monde extérieur. Nous allons créer trois outils simples mais fonctionnels.</p>
+
+    <div class="step-box">
+        <strong>Étape 4.1 :</strong> Définir la structure d'un outil. Chaque outil doit avoir un nom, une description et une fonction d'exécution.
+    </div>
+
+    <div class="code-block"><span class="comment"># Dictionnaire de description des outils (pour le prompt)</span>
+TOOL_DESCRIPTIONS = {
+    <span class="string">"search"</span>: <span class="string">"Rechercher des informations sur internet. Input: une requête de recherche."</span>,
+    <span class="string">"calculate"</span>: <span class="string">"Effectuer un calcul mathématique. Input: une expression mathématique."</span>,
+    <span class="string">"get_datetime"</span>: <span class="string">"Obtenir la date et l'heure actuelles. Input: aucun (mettre 'now')."</span>,
+}</div>
+
+    <div class="step-box">
+        <strong>Étape 4.2 :</strong> Implémenter l'outil de recherche web avec Tavily.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> tavily <span class="keyword">import</span> TavilyClient
+
+tavily_client = <span class="function">TavilyClient</span>(api_key=os.getenv(<span class="string">"TAVILY_API_KEY"</span>))
+
+<span class="keyword">def</span> <span class="function">search</span>(query: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Recherche web via Tavily API."""</span>
+    <span class="keyword">try</span>:
+        response = tavily_client.<span class="function">search</span>(
+            query=query,
+            max_results=<span class="number">3</span>,
+            search_depth=<span class="string">"basic"</span>
+        )
+        results = []
+        <span class="keyword">for</span> r <span class="keyword">in</span> response[<span class="string">"results"</span>]:
+            results.<span class="function">append</span>(
+                <span class="string">f"Titre: {r['title']}\nContenu: {r['content'][:300]}\n"</span>
+            )
+        <span class="keyword">return</span> <span class="string">"\n---\n"</span>.<span class="function">join</span>(results) <span class="keyword">if</span> results <span class="keyword">else</span> <span class="string">"Aucun résultat trouvé."</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur de recherche: {str(e)}"</span></div>
+
+    <div class="step-box">
+        <strong>Étape 4.3 :</strong> Implémenter l'outil calculatrice sécurisé.
+    </div>
+
+    <div class="code-block"><span class="keyword">import</span> ast
+<span class="keyword">import</span> operator
+
+<span class="comment"># Opérateurs autorisés pour la sécurité</span>
+SAFE_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Pow: operator.pow,
+    ast.Mod: operator.mod,
+    ast.USub: operator.neg,
+}
+
+<span class="keyword">def</span> <span class="function">safe_eval</span>(node):
+    <span class="string">"""Évalue une expression mathématique de manière sécurisée."""</span>
+    <span class="keyword">if</span> <span class="function">isinstance</span>(node, ast.Constant):
+        <span class="keyword">if</span> <span class="function">isinstance</span>(node.value, (<span class="keyword">int</span>, <span class="keyword">float</span>)):
+            <span class="keyword">return</span> node.value
+        <span class="keyword">raise</span> ValueError(<span class="string">f"Type non autorisé: {type(node.value)}"</span>)
+    <span class="keyword">elif</span> <span class="function">isinstance</span>(node, ast.BinOp):
+        left = <span class="function">safe_eval</span>(node.left)
+        right = <span class="function">safe_eval</span>(node.right)
+        op = SAFE_OPERATORS.<span class="function">get</span>(<span class="function">type</span>(node.op))
+        <span class="keyword">if</span> op <span class="keyword">is</span> <span class="keyword">None</span>:
+            <span class="keyword">raise</span> ValueError(<span class="string">f"Opérateur non autorisé: {type(node.op)}"</span>)
+        <span class="keyword">return</span> <span class="function">op</span>(left, right)
+    <span class="keyword">elif</span> <span class="function">isinstance</span>(node, ast.UnaryOp):
+        operand = <span class="function">safe_eval</span>(node.operand)
+        op = SAFE_OPERATORS.<span class="function">get</span>(<span class="function">type</span>(node.op))
+        <span class="keyword">if</span> op <span class="keyword">is</span> <span class="keyword">None</span>:
+            <span class="keyword">raise</span> ValueError(<span class="string">f"Opérateur unaire non autorisé"</span>)
+        <span class="keyword">return</span> <span class="function">op</span>(operand)
+    <span class="keyword">else</span>:
+        <span class="keyword">raise</span> ValueError(<span class="string">f"Noeud AST non autorisé: {type(node)}"</span>)
+
+<span class="keyword">def</span> <span class="function">calculate</span>(expression: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Calculatrice sécurisée utilisant l'AST Python."""</span>
+    <span class="keyword">try</span>:
+        tree = ast.<span class="function">parse</span>(expression, mode=<span class="string">"eval"</span>)
+        result = <span class="function">safe_eval</span>(tree.body)
+        <span class="keyword">return</span> <span class="string">f"Résultat de {expression} = {result}"</span>
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="keyword">return</span> <span class="string">f"Erreur de calcul: {str(e)}"</span></div>
+
+    <div class="warning">
+        N'utilisez JAMAIS <code>eval()</code> directement sur une entrée utilisateur. C'est une faille de sécurité critique. Notre implémentation utilise l'AST Python pour n'autoriser que les opérations mathématiques sûres.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 4.4 :</strong> Implémenter l'outil date/heure.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">get_datetime</span>(query: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Retourne la date et l'heure actuelles."""</span>
+    now = datetime.<span class="function">now</span>()
+    <span class="keyword">return</span> (
+        <span class="string">f"Date actuelle : {now.strftime('%d/%m/%Y')}\n"</span>
+        <span class="string">f"Heure actuelle : {now.strftime('%H:%M:%S')}\n"</span>
+        <span class="string">f"Jour de la semaine : {now.strftime('%A')}\n"</span>
+        <span class="string">f"Timestamp : {now.isoformat()}"</span>
+    )</div>
+
+    <div class="step-box">
+        <strong>Étape 4.5 :</strong> Créer le registre d'outils (mapping nom vers fonction).
+    </div>
+
+    <div class="code-block"><span class="comment"># Registre des outils : nom -> fonction</span>
+TOOLS = {
+    <span class="string">"search"</span>: search,
+    <span class="string">"calculate"</span>: calculate,
+    <span class="string">"get_datetime"</span>: get_datetime,
+}
+
+<span class="keyword">def</span> <span class="function">execute_tool</span>(tool_name: <span class="keyword">str</span>, tool_input: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Exécute un outil par son nom avec l'input donné."""</span>
+    <span class="keyword">if</span> tool_name <span class="keyword">not in</span> TOOLS:
+        <span class="keyword">return</span> <span class="string">f"Erreur: Outil '{tool_name}' inconnu. Outils disponibles: {list(TOOLS.keys())}"</span>
+    <span class="keyword">return</span> TOOLS[tool_name](tool_input)
+
+<span class="comment"># Test rapide</span>
+<span class="function">print</span>(<span class="function">execute_tool</span>(<span class="string">"calculate"</span>, <span class="string">"25 * 4 + 10"</span>))
+<span class="function">print</span>(<span class="function">execute_tool</span>(<span class="string">"get_datetime"</span>, <span class="string">"now"</span>))</div>
+
+    <div class="output-block">
+Résultat de 25 * 4 + 10 = 110
+Date actuelle : 03/03/2026
+Heure actuelle : 14:32:18
+Jour de la semaine : Tuesday
+Timestamp : 2026-03-03T14:32:18.456789</div>
+
+    <div class="effect">
+        Nous avons maintenant trois outils fonctionnels avec un système de registre extensible. Pour ajouter un nouvel outil, il suffit de créer la fonction et de l'ajouter au dictionnaire <code>TOOLS</code>.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 5 : PROMPT REACT -->
+    <!-- ============================================ -->
+    <h2>5. Exercice : Construire le prompt ReAct</h2>
+
+    <p>Le prompt est le coeur de l'agent ReAct. Il doit instruire le LLM sur le format Thought/Action/Observation et lui présenter les outils disponibles.</p>
+
+    <div class="step-box">
+        <strong>Étape 5.1 :</strong> Créer le system prompt ReAct. Ce prompt doit être très précis sur le format attendu.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">build_system_prompt</span>() -> <span class="keyword">str</span>:
+    <span class="string">"""Construit le system prompt ReAct avec la liste des outils."""</span>
+
+    <span class="comment"># Générer la description des outils dynamiquement</span>
+    tools_desc = <span class="string">"\n"</span>.<span class="function">join</span>(
+        <span class="string">f"  - {name}: {desc}"</span>
+        <span class="keyword">for</span> name, desc <span class="keyword">in</span> TOOL_DESCRIPTIONS.<span class="function">items</span>()
+    )
+
+    <span class="keyword">return</span> <span class="string">f"""Tu es un assistant IA qui résout les problèmes étape par étape
+en utilisant le format ReAct (Reasoning + Acting).
+
+## Outils disponibles :
+{tools_desc}
+
+## Format STRICT à respecter :
+
+Pour chaque étape de raisonnement, utilise EXACTEMENT ce format :
+
+Thought: [ton raisonnement sur ce que tu dois faire]
+Action: [nom_outil]
+Action Input: [entrée pour l'outil]
+
+Après avoir reçu le résultat de l'outil (Observation), tu peux :
+- Continuer avec un nouveau Thought/Action si tu as besoin de plus d'info
+- Donner ta réponse finale avec ce format :
+
+Thought: J'ai maintenant assez d'informations pour répondre.
+Final Answer: [ta réponse complète et détaillée]
+
+## Règles importantes :
+1. Toujours commencer par un Thought
+2. Un seul Action par étape
+3. Attendre l'Observation avant le prochain Thought
+4. Ne jamais inventer de données - utiliser les outils
+5. Répondre en français
+"""</span></div>
+
+    <div class="prof-note">
+        La qualité du prompt ReAct détermine directement la qualité de l'agent. Chaque mot compte. Notez que nous imposons un format STRICT pour faciliter le parsing automatique des réponses.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 5.2 :</strong> Créer la fonction de formatage de l'historique de conversation.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">format_history</span>(question: <span class="keyword">str</span>, steps: <span class="keyword">list</span>) -> <span class="keyword">list</span>:
+    <span class="string">"""Formate l'historique pour l'API OpenAI."""</span>
+    messages = [
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: <span class="function">build_system_prompt</span>()},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: question},
+    ]
+
+    <span class="comment"># Ajouter chaque étape précédente</span>
+    <span class="keyword">for</span> step <span class="keyword">in</span> steps:
+        <span class="comment"># La réponse du LLM (Thought + Action)</span>
+        messages.<span class="function">append</span>({
+            <span class="string">"role"</span>: <span class="string">"assistant"</span>,
+            <span class="string">"content"</span>: step[<span class="string">"llm_output"</span>]
+        })
+        <span class="comment"># L'observation (résultat de l'outil)</span>
+        <span class="keyword">if</span> <span class="string">"observation"</span> <span class="keyword">in</span> step:
+            messages.<span class="function">append</span>({
+                <span class="string">"role"</span>: <span class="string">"user"</span>,
+                <span class="string">"content"</span>: <span class="string">f"Observation: {step['observation']}"</span>
+            })
+
+    <span class="keyword">return</span> messages</div>
+
+    <div class="step-box">
+        <strong>Étape 5.3 :</strong> Tester le prompt en isolation pour vérifier que le LLM respecte le format.
+    </div>
+
+    <div class="code-block"><span class="comment"># Test du prompt</span>
+test_messages = <span class="function">format_history</span>(<span class="string">"Quelle est la date aujourd'hui ?"</span>, [])
+
+response = client.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-4o"</span>,
+    messages=test_messages,
+    temperature=<span class="number">0</span>,
+    max_tokens=<span class="number">500</span>
+)
+
+<span class="function">print</span>(response.choices[<span class="number">0</span>].message.content)</div>
+
+    <div class="output-block">
+Thought: L'utilisateur demande la date actuelle. Je vais utiliser l'outil get_datetime pour obtenir cette information.
+Action: get_datetime
+Action Input: now</div>
+
+    <div class="effect">
+        Le LLM respecte parfaitement le format Thought/Action/Action Input. Notre prompt fonctionne. Nous pouvons maintenant parser cette sortie automatiquement.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 6 : BOUCLE AGENT -->
+    <!-- ============================================ -->
+    <h2>6. Exercice : Implémenter la boucle agent</h2>
+
+    <p>C'est le coeur de notre implémentation : la boucle qui orchestre le cycle Thought/Action/Observation jusqu'à obtenir une réponse finale.</p>
+
+    <div class="step-box">
+        <strong>Étape 6.1 :</strong> Créer le parser qui extrait Action et Action Input de la réponse du LLM.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">parse_llm_output</span>(output: <span class="keyword">str</span>) -> <span class="keyword">dict</span>:
+    <span class="string">"""Parse la sortie du LLM pour extraire l'action ou la réponse finale."""</span>
+
+    <span class="comment"># Vérifier s'il y a une réponse finale</span>
+    <span class="keyword">if</span> <span class="string">"Final Answer:"</span> <span class="keyword">in</span> output:
+        final = output.<span class="function">split</span>(<span class="string">"Final Answer:"</span>)[<span class="number">1</span>].<span class="function">strip</span>()
+        <span class="keyword">return</span> {<span class="string">"type"</span>: <span class="string">"final"</span>, <span class="string">"answer"</span>: final}
+
+    <span class="comment"># Extraire Action et Action Input avec regex</span>
+    action_match = re.<span class="function">search</span>(
+        <span class="string">r"Action:\s*(\w+)"</span>, output
+    )
+    input_match = re.<span class="function">search</span>(
+        <span class="string">r"Action Input:\s*(.+)"</span>, output
+    )
+
+    <span class="keyword">if</span> action_match <span class="keyword">and</span> input_match:
+        <span class="keyword">return</span> {
+            <span class="string">"type"</span>: <span class="string">"action"</span>,
+            <span class="string">"tool"</span>: action_match.<span class="function">group</span>(<span class="number">1</span>),
+            <span class="string">"input"</span>: input_match.<span class="function">group</span>(<span class="number">1</span>).<span class="function">strip</span>()
+        }
+
+    <span class="comment"># Format non reconnu</span>
+    <span class="keyword">return</span> {<span class="string">"type"</span>: <span class="string">"error"</span>, <span class="string">"message"</span>: <span class="string">"Format de sortie non reconnu"</span>}
+
+<span class="comment"># Tests du parser</span>
+test1 = <span class="string">"""Thought: Je dois chercher l'info.
+Action: search
+Action Input: population France 2024"""</span>
+
+test2 = <span class="string">"""Thought: J'ai assez d'informations.
+Final Answer: La population de la France est de 68 millions."""</span>
+
+<span class="function">print</span>(<span class="function">parse_llm_output</span>(test1))
+<span class="function">print</span>(<span class="function">parse_llm_output</span>(test2))</div>
+
+    <div class="output-block">
+{'type': 'action', 'tool': 'search', 'input': 'population France 2024'}
+{'type': 'final', 'answer': 'La population de la France est de 68 millions.'}</div>
+
+    <div class="step-box">
+        <strong>Étape 6.2 :</strong> Implémenter la boucle principale de l'agent ReAct.
+    </div>
+
+    <div class="code-block"><span class="keyword">def</span> <span class="function">react_agent</span>(question: <span class="keyword">str</span>, max_iterations: <span class="keyword">int</span> = <span class="number">5</span>, verbose: <span class="keyword">bool</span> = <span class="keyword">True</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""
+    Agent ReAct complet.
+
+    Args:
+        question: La question de l'utilisateur
+        max_iterations: Nombre max de cycles Thought/Action/Observation
+        verbose: Afficher les étapes intermédiaires
+
+    Returns:
+        La réponse finale de l'agent
+    """</span>
+    steps = []
+
+    <span class="keyword">if</span> verbose:
+        <span class="function">print</span>(<span class="string">f"\n{'='*60}"</span>)
+        <span class="function">print</span>(<span class="string">f"Question : {question}"</span>)
+        <span class="function">print</span>(<span class="string">f"{'='*60}\n"</span>)
+
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(max_iterations):
+        <span class="keyword">if</span> verbose:
+            <span class="function">print</span>(<span class="string">f"--- Itération {i+1}/{max_iterations} ---"</span>)
+
+        <span class="comment"># 1. Appeler le LLM</span>
+        messages = <span class="function">format_history</span>(question, steps)
+        response = client.chat.completions.<span class="function">create</span>(
+            model=<span class="string">"gpt-4o"</span>,
+            messages=messages,
+            temperature=<span class="number">0</span>,
+            max_tokens=<span class="number">1000</span>
+        )
+        llm_output = response.choices[<span class="number">0</span>].message.content
+
+        <span class="keyword">if</span> verbose:
+            <span class="function">print</span>(<span class="string">f"\nLLM Output:\n{llm_output}\n"</span>)
+
+        <span class="comment"># 2. Parser la sortie</span>
+        parsed = <span class="function">parse_llm_output</span>(llm_output)
+
+        <span class="comment"># 3. Vérifier si c'est une réponse finale</span>
+        <span class="keyword">if</span> parsed[<span class="string">"type"</span>] == <span class="string">"final"</span>:
+            <span class="keyword">if</span> verbose:
+                <span class="function">print</span>(<span class="string">f"\n{'='*60}"</span>)
+                <span class="function">print</span>(<span class="string">f"RÉPONSE FINALE (après {i+1} itérations):"</span>)
+                <span class="function">print</span>(parsed[<span class="string">"answer"</span>])
+                <span class="function">print</span>(<span class="string">f"{'='*60}"</span>)
+            <span class="keyword">return</span> parsed[<span class="string">"answer"</span>]
+
+        <span class="comment"># 4. Exécuter l'outil</span>
+        <span class="keyword">if</span> parsed[<span class="string">"type"</span>] == <span class="string">"action"</span>:
+            tool_name = parsed[<span class="string">"tool"</span>]
+            tool_input = parsed[<span class="string">"input"</span>]
+
+            <span class="keyword">if</span> verbose:
+                <span class="function">print</span>(<span class="string">f"→ Exécution : {tool_name}({tool_input})"</span>)
+
+            observation = <span class="function">execute_tool</span>(tool_name, tool_input)
+
+            <span class="keyword">if</span> verbose:
+                <span class="function">print</span>(<span class="string">f"← Observation : {observation[:200]}..."</span>)
+
+            <span class="comment"># 5. Sauvegarder l'étape</span>
+            steps.<span class="function">append</span>({
+                <span class="string">"llm_output"</span>: llm_output,
+                <span class="string">"observation"</span>: observation
+            })
+        <span class="keyword">else</span>:
+            <span class="comment"># Erreur de parsing</span>
+            steps.<span class="function">append</span>({
+                <span class="string">"llm_output"</span>: llm_output,
+                <span class="string">"observation"</span>: <span class="string">"Erreur: format non reconnu. Réessaie avec le format Thought/Action/Action Input."</span>
+            })
+
+    <span class="keyword">return</span> <span class="string">"Limite d'itérations atteinte sans réponse finale."</span></div>
+
+    <div class="effect">
+        Notre agent ReAct est maintenant complet. Il suit le cycle Thought/Action/Observation, parse automatiquement les réponses du LLM, exécute les outils, et accumule le contexte à chaque itération.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 6.3 :</strong> Premier test de l'agent complet.
+    </div>
+
+    <div class="code-block"><span class="comment"># Test simple</span>
+result = <span class="function">react_agent</span>(<span class="string">"Quel jour sommes-nous et combien font 365 * 24 ?"</span>)
+<span class="function">print</span>(<span class="string">f"\nRéponse : {result}"</span>)</div>
+
+    <div class="output-block">
+============================================================
+Question : Quel jour sommes-nous et combien font 365 * 24 ?
+============================================================
+
+--- Itération 1/5 ---
+
+LLM Output:
+Thought: L'utilisateur pose deux questions. Je vais d'abord obtenir la date actuelle.
+Action: get_datetime
+Action Input: now
+
+→ Exécution : get_datetime(now)
+← Observation : Date actuelle : 03/03/2026
+Heure actuelle : 14:35:22
+Jour de la semaine : Tuesday...
+
+--- Itération 2/5 ---
+
+LLM Output:
+Thought: J'ai la date. Maintenant je dois calculer 365 * 24.
+Action: calculate
+Action Input: 365 * 24
+
+→ Exécution : calculate(365 * 24)
+← Observation : Résultat de 365 * 24 = 8760...
+
+--- Itération 3/5 ---
+
+LLM Output:
+Thought: J'ai maintenant assez d'informations pour répondre.
+Final Answer: Nous sommes le mardi 3 mars 2026, et 365 * 24 = 8 760 heures dans une année.
+
+============================================================
+RÉPONSE FINALE (après 3 itérations):
+Nous sommes le mardi 3 mars 2026, et 365 * 24 = 8 760 heures dans une année.
+============================================================</div>
+
+    <div class="prof-note">
+        Observez comment l'agent décompose le problème : il utilise d'abord <code>get_datetime</code> puis <code>calculate</code>, et combine les deux résultats dans sa réponse finale. C'est la puissance du raisonnement séquentiel.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 7 : MIGRATION LANGGRAPH -->
+    <!-- ============================================ -->
+    <h2>7. Exercice : Migrer vers LangGraph</h2>
+
+    <p>Maintenant que nous comprenons le fonctionnement interne d'un agent ReAct, migrons vers LangGraph qui gère automatiquement la boucle, le parsing et l'exécution des outils.</p>
+
+    <div class="step-box">
+        <strong>Étape 7.1 :</strong> Définir les outils avec le décorateur <code>@tool</code> de LangChain.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool
+<span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI
+<span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> create_react_agent
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">web_search</span>(query: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Rechercher des informations actuelles sur internet.
+    Args:
+        query: La requête de recherche en langage naturel.
+    """</span>
+    <span class="keyword">return</span> <span class="function">search</span>(query)
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">calculator</span>(expression: <span class="keyword">str</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Effectuer un calcul mathématique.
+    Args:
+        expression: L'expression mathématique à évaluer (ex: '25 * 4 + 10').
+    """</span>
+    <span class="keyword">return</span> <span class="function">calculate</span>(expression)
+
+<span class="keyword">@tool</span>
+<span class="keyword">def</span> <span class="function">current_datetime</span>(query: <span class="keyword">str</span> = <span class="string">"now"</span>) -> <span class="keyword">str</span>:
+    <span class="string">"""Obtenir la date et l'heure actuelles.
+    Args:
+        query: Inutilisé, mettre 'now'.
+    """</span>
+    <span class="keyword">return</span> <span class="function">get_datetime</span>(query)
+
+tools = [web_search, calculator, current_datetime]
+<span class="function">print</span>(<span class="string">f"Outils enregistrés : {[t.name for t in tools]}"</span>)</div>
+
+    <div class="output-block">
+Outils enregistrés : ['web_search', 'calculator', 'current_datetime']</div>
+
+    <div class="step-box">
+        <strong>Étape 7.2 :</strong> Créer l'agent ReAct avec LangGraph en une seule ligne.
+    </div>
+
+    <div class="code-block"><span class="comment"># Initialiser le modèle</span>
+llm = <span class="function">ChatOpenAI</span>(model=<span class="string">"gpt-4o"</span>, temperature=<span class="number">0</span>)
+
+<span class="comment"># Créer l'agent ReAct avec LangGraph</span>
+agent = <span class="function">create_react_agent</span>(
+    model=llm,
+    tools=tools,
+)
+
+<span class="function">print</span>(<span class="string">"Agent LangGraph créé avec succès !"</span>)
+<span class="function">print</span>(<span class="string">f"Type : {type(agent)}"</span>)</div>
+
+    <div class="output-block">
+Agent LangGraph créé avec succès !
+Type : &lt;class 'langgraph.graph.state.CompiledStateGraph'&gt;</div>
+
+    <div class="step-box">
+        <strong>Étape 7.3 :</strong> Exécuter l'agent et observer le flux de traitement.
+    </div>
+
+    <div class="code-block"><span class="comment"># Exécuter avec stream pour voir chaque étape</span>
+<span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage
+
+inputs = {
+    <span class="string">"messages"</span>: [<span class="function">HumanMessage</span>(content=<span class="string">"Quel jour sommes-nous et combien font 365 * 24 ?"</span>)]
+}
+
+<span class="keyword">for</span> event <span class="keyword">in</span> agent.<span class="function">stream</span>(inputs, stream_mode=<span class="string">"values"</span>):
+    <span class="comment"># Afficher le dernier message de chaque étape</span>
+    last_msg = event[<span class="string">"messages"</span>][<span class="number">-1</span>]
+    <span class="function">print</span>(<span class="string">f"\n[{last_msg.__class__.__name__}]"</span>)
+    <span class="keyword">if</span> <span class="function">hasattr</span>(last_msg, <span class="string">"tool_calls"</span>) <span class="keyword">and</span> last_msg.tool_calls:
+        <span class="keyword">for</span> tc <span class="keyword">in</span> last_msg.tool_calls:
+            <span class="function">print</span>(<span class="string">f"  Tool Call: {tc['name']}({tc['args']})"</span>)
+    <span class="keyword">elif</span> <span class="function">hasattr</span>(last_msg, <span class="string">"content"</span>):
+        <span class="function">print</span>(<span class="string">f"  {last_msg.content[:200]}"</span>)</div>
+
+    <div class="output-block">
+[HumanMessage]
+  Quel jour sommes-nous et combien font 365 * 24 ?
+
+[AIMessage]
+  Tool Call: current_datetime({'query': 'now'})
+  Tool Call: calculator({'expression': '365 * 24'})
+
+[ToolMessage]
+  Date actuelle : 03/03/2026...
+
+[ToolMessage]
+  Résultat de 365 * 24 = 8760
+
+[AIMessage]
+  Nous sommes le mardi 3 mars 2026. Et 365 * 24 = 8 760.</div>
+
+    <div class="concept-box blue">
+        <h3>Comparaison : Python pur vs LangGraph</h3>
+        <table>
+            <tr>
+                <th>Aspect</th>
+                <th>Python pur (notre code)</th>
+                <th>LangGraph</th>
+            </tr>
+            <tr>
+                <td>Lignes de code</td>
+                <td>~100 lignes</td>
+                <td>~10 lignes</td>
+            </tr>
+            <tr>
+                <td>Parsing</td>
+                <td>Regex manuelle</td>
+                <td>Automatique (function calling)</td>
+            </tr>
+            <tr>
+                <td>Appels parallèles</td>
+                <td>Non supporté</td>
+                <td>Supporté nativement</td>
+            </tr>
+            <tr>
+                <td>Gestion d'état</td>
+                <td>Liste Python</td>
+                <td>State typé, persistable</td>
+            </tr>
+            <tr>
+                <td>Compréhension</td>
+                <td>Totale (on a tout écrit)</td>
+                <td>Abstraction à comprendre</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 7.4 :</strong> Construire manuellement le même agent avec StateGraph pour comprendre l'architecture LangGraph.
+    </div>
+
+    <div class="code-block"><span class="keyword">from</span> typing <span class="keyword">import</span> Annotated, TypedDict
+<span class="keyword">from</span> langgraph.graph <span class="keyword">import</span> StateGraph, END
+<span class="keyword">from</span> langgraph.graph.message <span class="keyword">import</span> add_messages
+<span class="keyword">from</span> langgraph.prebuilt <span class="keyword">import</span> ToolNode
+
+<span class="comment"># 1. Définir le State</span>
+<span class="keyword">class</span> <span class="function">AgentState</span>(TypedDict):
+    messages: Annotated[<span class="keyword">list</span>, add_messages]
+
+<span class="comment"># 2. Node : appeler le LLM</span>
+llm_with_tools = llm.<span class="function">bind_tools</span>(tools)
+
+<span class="keyword">def</span> <span class="function">call_model</span>(state: AgentState):
+    response = llm_with_tools.<span class="function">invoke</span>(state[<span class="string">"messages"</span>])
+    <span class="keyword">return</span> {<span class="string">"messages"</span>: [response]}
+
+<span class="comment"># 3. Node : exécuter les outils</span>
+tool_node = <span class="function">ToolNode</span>(tools)
+
+<span class="comment"># 4. Condition : continuer ou terminer ?</span>
+<span class="keyword">def</span> <span class="function">should_continue</span>(state: AgentState) -> <span class="keyword">str</span>:
+    last_message = state[<span class="string">"messages"</span>][<span class="number">-1</span>]
+    <span class="keyword">if</span> last_message.tool_calls:
+        <span class="keyword">return</span> <span class="string">"tools"</span>
+    <span class="keyword">return</span> END
+
+<span class="comment"># 5. Construire le graphe</span>
+graph = <span class="function">StateGraph</span>(AgentState)
+graph.<span class="function">add_node</span>(<span class="string">"agent"</span>, call_model)
+graph.<span class="function">add_node</span>(<span class="string">"tools"</span>, tool_node)
+graph.<span class="function">set_entry_point</span>(<span class="string">"agent"</span>)
+graph.<span class="function">add_conditional_edges</span>(<span class="string">"agent"</span>, should_continue)
+graph.<span class="function">add_edge</span>(<span class="string">"tools"</span>, <span class="string">"agent"</span>)
+
+<span class="comment"># 6. Compiler</span>
+react_graph = graph.<span class="function">compile</span>()
+<span class="function">print</span>(<span class="string">"Graphe ReAct compilé avec succès !"</span>)</div>
+
+    <div class="effect">
+        Cette version explicite montre exactement ce que <code>create_react_agent</code> fait sous le capot : un noeud agent, un noeud outils, et une arête conditionnelle qui décide si on continue ou si on termine.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 8 : TESTS COMPLEXES -->
+    <!-- ============================================ -->
+    <h2>8. Exercice : Tester avec des questions complexes multi-étapes</h2>
+
+    <p>Testons maintenant notre agent avec des questions qui nécessitent plusieurs étapes de raisonnement et l'utilisation de plusieurs outils.</p>
+
+    <div class="step-box">
+        <strong>Étape 8.1 :</strong> Question nécessitant recherche + calcul.
+    </div>
+
+    <div class="code-block"><span class="comment"># Test 1 : Question multi-outils</span>
+question1 = <span class="string">"""Si la France a environ 68 millions d'habitants et que chaque
+habitant consomme en moyenne 150 litres d'eau par jour,
+quelle est la consommation totale d'eau par an en France ?
+Vérifie d'abord la population actuelle de la France."""</span>
+
+result1 = <span class="function">react_agent</span>(question1, verbose=<span class="keyword">True</span>)</div>
+
+    <div class="output-block">
+============================================================
+Question : Si la France a environ 68 millions d'habitants...
+============================================================
+
+--- Itération 1/5 ---
+Thought: Je dois d'abord vérifier la population actuelle de la France.
+Action: search
+Action Input: population France 2024
+
+→ Exécution : search(population France 2024)
+← Observation : La France métropolitaine compte environ 68,4 millions d'habitants...
+
+--- Itération 2/5 ---
+Thought: La population est d'environ 68,4 millions. Calculons : 68400000 * 150 * 365.
+Action: calculate
+Action Input: 68400000 * 150 * 365
+
+→ Exécution : calculate(68400000 * 150 * 365)
+← Observation : Résultat de 68400000 * 150 * 365 = 3743100000000...
+
+--- Itération 3/5 ---
+Thought: J'ai maintenant assez d'informations pour répondre.
+Final Answer: Avec une population de 68,4 millions d'habitants et une consommation
+de 150 litres/jour/personne, la France consomme environ 3 743 milliards de litres
+d'eau par an, soit environ 3,74 milliards de mètres cubes.
+============================================================</div>
+
+    <div class="step-box">
+        <strong>Étape 8.2 :</strong> Question nécessitant plusieurs recherches successives.
+    </div>
+
+    <div class="code-block"><span class="comment"># Test 2 : Comparaison nécessitant deux recherches</span>
+question2 = <span class="string">"""Compare les PIB de la France et de l'Allemagne.
+Lequel est le plus élevé et de combien en pourcentage ?"""</span>
+
+inputs2 = {
+    <span class="string">"messages"</span>: [<span class="function">HumanMessage</span>(content=question2)]
+}
+
+<span class="keyword">for</span> event <span class="keyword">in</span> react_graph.<span class="function">stream</span>(inputs2, stream_mode=<span class="string">"values"</span>):
+    last_msg = event[<span class="string">"messages"</span>][<span class="number">-1</span>]
+    <span class="function">print</span>(<span class="string">f"[{last_msg.__class__.__name__}] {str(last_msg.content)[:150]}"</span>)</div>
+
+    <div class="output-block">
+[HumanMessage] Compare les PIB de la France et de l'Allemagne...
+[AIMessage] Tool calls: web_search(PIB France 2024), web_search(PIB Allemagne 2024)
+[ToolMessage] Le PIB de la France s'élève à environ 2 780 milliards d'euros...
+[ToolMessage] Le PIB de l'Allemagne atteint environ 4 070 milliards d'euros...
+[AIMessage] Tool calls: calculator({'expression': '((4070 - 2780) / 2780) * 100'})
+[ToolMessage] Résultat = 46.40
+[AIMessage] Le PIB de l'Allemagne (~4 070 Md€) est supérieur à celui de la France (~2 780 Md€) d'environ 46,4%.</div>
+
+    <div class="prof-note">
+        Remarquez que LangGraph a exécuté les deux recherches <strong>en parallèle</strong> (deux tool_calls dans le même message). C'est un avantage majeur par rapport à notre implémentation Python pure qui ne peut exécuter qu'un outil à la fois.
+    </div>
+
+    <div class="step-box">
+        <strong>Étape 8.3 :</strong> Mettre en place un test systématique avec différents types de questions.
+    </div>
+
+    <div class="code-block"><span class="comment"># Suite de tests automatisée</span>
+test_questions = [
+    <span class="string">"Quelle heure est-il et quel est le prochain nombre premier après 100 ?"</span>,
+    <span class="string">"Recherche qui est le président actuel du Brésil et depuis quand."</span>,
+    <span class="string">"Calcule la racine carrée de 144 puis multiplie par 3.14159."</span>,
+]
+
+<span class="keyword">for</span> i, q <span class="keyword">in</span> <span class="function">enumerate</span>(test_questions, <span class="number">1</span>):
+    <span class="function">print</span>(<span class="string">f"\n{'='*50}"</span>)
+    <span class="function">print</span>(<span class="string">f"Test {i}: {q}"</span>)
+    <span class="function">print</span>(<span class="string">f"{'='*50}"</span>)
+
+    inputs = {<span class="string">"messages"</span>: [<span class="function">HumanMessage</span>(content=q)]}
+    result = react_graph.<span class="function">invoke</span>(inputs)
+    final = result[<span class="string">"messages"</span>][<span class="number">-1</span>].content
+    <span class="function">print</span>(<span class="string">f"Réponse: {final[:200]}"</span>)
+    <span class="function">print</span>(<span class="string">f"Nombre de messages: {len(result['messages'])}"</span>)</div>
+
+    <div class="output-block">
+==================================================
+Test 1: Quelle heure est-il et quel est le prochain nombre premier après 100 ?
+==================================================
+Réponse: Il est 14h42. Le prochain nombre premier après 100 est 101.
+Nombre de messages: 5
+
+==================================================
+Test 2: Recherche qui est le président actuel du Brésil et depuis quand.
+==================================================
+Réponse: Le président actuel du Brésil est Luiz Inácio Lula da Silva, en fonction depuis le 1er janvier 2023.
+Nombre de messages: 4
+
+==================================================
+Test 3: Calcule la racine carrée de 144 puis multiplie par 3.14159.
+==================================================
+Réponse: La racine carrée de 144 est 12, et 12 × 3.14159 = 37.699 08.
+Nombre de messages: 5</div>
+
+    <div class="effect">
+        Tous les tests passent correctement. L'agent sait choisir les bons outils, combiner les résultats, et fournir des réponses structurées.
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIE 9 : POINTS CLES -->
+    <!-- ============================================ -->
+    <h2>9. Points clés à retenir</h2>
+
+    <div class="concept-box green">
+        <h3>Résumé du TD - Agent ReAct from Scratch</h3>
+        <ul>
+            <li><strong>Le pattern ReAct</strong> alterne entre Thought (raisonnement), Action (appel d'outil), et Observation (résultat). Ce cycle se répète jusqu'à obtention d'une réponse finale.</li>
+            <li><strong>Le prompt est crucial</strong> : il doit imposer un format strict et décrire précisément chaque outil disponible. Un mauvais prompt donne un mauvais agent.</li>
+            <li><strong>Le parsing regex</strong> permet d'extraire les actions du texte libre du LLM. En production, préférer le function calling natif.</li>
+            <li><strong>La boucle agent</strong> est simple : appeler le LLM, parser, exécuter l'outil, réinjecter le résultat, recommencer.</li>
+            <li><strong>Toujours limiter les itérations</strong> avec un <code>max_iterations</code> pour éviter les boucles infinies et la surconsommation de tokens.</li>
+            <li><strong>LangGraph simplifie énormément</strong> l'implémentation : <code>create_react_agent</code> fait en 3 lignes ce que nous avons codé en 100. Il ajoute aussi le support des appels parallèles.</li>
+            <li><strong>Sécurité des outils</strong> : ne jamais utiliser <code>eval()</code> directement. Toujours valider et sandboxer les entrées utilisateur.</li>
+            <li><strong>Le debug est plus facile</strong> avec le mode verbose qui affiche chaque étape du raisonnement. En production, utilisez LangSmith pour le tracing.</li>
+        </ul>
+    </div>
+
+    <div class="concept-box">
+        <h3>Architecture à retenir</h3>
+        <p>L'agent ReAct suit une architecture en boucle conditionnelle :</p>
+        <ol>
+            <li><strong>Entrée</strong> : Question utilisateur + contexte des étapes précédentes</li>
+            <li><strong>LLM</strong> : Produit un Thought + Action (ou Final Answer)</li>
+            <li><strong>Router</strong> : Si Action -> exécuter l'outil ; Si Final Answer -> retourner la réponse</li>
+            <li><strong>Outil</strong> : Exécute l'action et retourne une Observation</li>
+            <li><strong>Boucle</strong> : L'Observation est ajoutée au contexte et on retourne à l'étape 2</li>
+        </ol>
+    </div>
+
+    <div class="nav">
+        <span style="color: #666;">Début de section</span>
+        <span style="color: #666;">(TD 1/5 - Agents IA)</span>
+        <a href="td_multi_tools.html">Agent Multi-Tools &rarr;</a>
+    </div>
+</div>
+<div style="text-align:center; padding:30px 20px; border-top:1px solid #333; margin-top:40px;">
+    <p style="font-size:1.2rem; color:#ff6b35; font-weight:700; margin-bottom:4px;">Azdine Laaouissi</p>
+    <p style="color:#666; font-size:0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
+</div>
+</body>
+</html>
