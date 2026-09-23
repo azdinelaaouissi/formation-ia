@@ -1,57 +1,64 @@
-# Formation IA Complete - Machine Learning & IA Generative
+# Formation IA complète — Machine Learning, Deep Learning & IA générative
 
-**Par Azdine Laaouissi**
+**Par Azdine Laaouissi** · Site : https://formation-ia-eta.vercel.app
 
-Formation complete en francais couvrant le Machine Learning et l'Intelligence Artificielle Generative, avec cours theoriques et travaux diriges pratiques.
+Formation complète en français, en accès libre : cours théoriques suivis de travaux dirigés pratiques (code exécutable et commenté), du premier concept de machine learning jusqu'aux agents IA déployés en production.
 
 ## Contenu
 
-### Machine Learning (23 fichiers)
-- **12 cours** : Introduction, Maths, Donnees, Regression, Classification, Ensemble, Non Supervise, Reseaux de Neurones, Deep Learning, NLP, Evaluation, Pipeline
-- **11 TDs** : Regression Lineaire, Regression Logistique, KNN, SVM, Arbre de Decision, Random Forest, XGBoost, MLP, K-Means, DBSCAN, PCA
+| Module | Cours | TD | Dossier |
+|---|---|---|---|
+| Machine Learning | 12 | 11 (8 supervisé + 3 non supervisé) | `machine_learning/` |
+| Deep Learning (PyTorch) | 12 | 5 | `deep_learning/` |
+| LLM | 5 | 2 | `ia_generative/llm/` |
+| LangChain | 8 | 4 | `ia_generative/langchain/` |
+| LangGraph | 6 | 3 | `ia_generative/langgraph/` |
+| RAG | 7 | 4 | `ia_generative/rag/` |
+| Agents IA | 10 | 5 | `ia_generative/agents/` |
+| **Total** | **60** | **34** | |
 
-### IA Generative (39 fichiers)
-
-| Section | Cours | TDs |
-|---------|-------|-----|
-| **LLM** | 5 (Transformer, Tokenisation, Prompting, API) | 2 |
-| **LangChain** | 8 (LCEL, Models, Memory, Loaders, VectorStores, Retrievers, Agents) | 4 |
-| **LangGraph** | 6 (StateGraph, State Management, Routing, Human-in-Loop, Advanced) | 3 |
-| **RAG** | 7 (Ingestion, Embeddings, Retrieval, Generation, Evaluation, Advanced) | 4 |
+Ressources complémentaires à la racine : plan de formation RAG (`00_PLAN_FORMATION.html`), plan ML (`machine_learning/00_PLAN_ML.html`), projet pratique RAG commenté ligne par ligne (`projet_pratique_rag.html`), cours complets monolithiques (`cours_rag*.html`, `cours_langchain.html`, `cours_langgraph.html`, `cours_langsmith.html`) et documentation technique FHIR / RAG (`DOCUMENTATION_*.md`).
 
 ## Chiffres
 
-- **63+ fichiers HTML**
-- **77 000+ lignes** de contenu pedagogique
-- **38 cours** theoriques
-- **24 TDs** pratiques
-- **100% en francais**
+- **103 pages HTML** autonomes (60 cours, 34 TD, 9 ressources)
+- **7 modules** progressifs : ML → DL → LLM → LangChain → LangGraph → RAG → Agents
+- **100 % en français**, thème sombre, diagrammes SVG
 
-## Approche Pedagogique
+## Page d'accueil
+
+`index.html` regroupe tout le contenu : parcours recommandé, recherche instantanée (touche `/`), filtres cours / TD / ressources, et suivi de progression par module (enregistré dans le navigateur, aucune donnée envoyée).
+
+## Approche pédagogique
 
 Chaque TD suit une structure en 9 parties :
-1. Recapitulatif (definition, analogie, avantages/inconvenients)
-2. Principe de fonctionnement (etapes, schemas SVG, formules)
-3. Les donnees (types, preparation)
-4. Les parametres (impact detaille avec code + sortie)
-5. Les metriques (formules, calcul des erreurs)
-6. Implementation complete (pipeline de A a Z)
-7. Experimentation (preuves concretes)
-8. Erreurs courantes (6 pieges)
-9. Resume (tableaux recapitulatifs)
+1. Récapitulatif (définition, analogie, avantages / inconvénients)
+2. Principe de fonctionnement (étapes, schémas SVG, formules)
+3. Les données (types, préparation)
+4. Les paramètres (impact détaillé avec code + sortie)
+5. Les métriques (formules, calcul des erreurs)
+6. Implémentation complète (pipeline de A à Z)
+7. Expérimentation (preuves concrètes)
+8. Erreurs courantes (6 pièges)
+9. Résumé (tableaux récapitulatifs)
 
 ## Technologies
 
-- Python, Scikit-learn
-- LangChain v0.3+, LangGraph
+- Python, scikit-learn, PyTorch
+- LangChain v0.3+, LangGraph, LangSmith
 - OpenAI API, FAISS, Chroma
-- RAGAS (evaluation RAG)
-- HTML/CSS (theme sombre, diagrammes SVG)
+- RAGAS (évaluation RAG)
+- HTML / CSS statique, sans dépendance à installer
 
 ## Utilisation
 
-Ouvrez `index.html` dans votre navigateur pour acceder au menu principal avec navigation vers tous les cours et TDs.
+- **En ligne :** https://formation-ia-eta.vercel.app
+- **En local :** cloner le dépôt et ouvrir `index.html` dans un navigateur (ou `python3 -m http.server 8080`).
+
+## Déploiement
+
+Site statique déployé sur Vercel ; chaque `git push` sur `main` redéploie automatiquement. `vercel.json` active les URL propres (`/cours_rag` au lieu de `/cours_rag.html`).
 
 ## Auteur
 
-**Azdine Laaouissi** - 2025
+**Azdine Laaouissi** — 2025-2026 · https://github.com/azdinelaaouissi

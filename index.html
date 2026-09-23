@@ -1,1009 +1,447 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formation IA Complete - Machine Learning, Deep Learning & IA Generative</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f0f23;
-            color: #e0e0e0;
-            line-height: 1.8;
-            min-height: 100vh;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Formation IA complète — Machine Learning, Deep Learning, LLM, LangChain, LangGraph, RAG, Agents</title>
+<meta name="description" content="Formation IA complète en français par Azdine Laaouissi : 60 cours, 34 TD pratiques et projets couvrant Machine Learning, Deep Learning, LLM, LangChain, LangGraph, RAG et Agents IA." />
+<meta property="og:title" content="Formation IA complète — ML, DL, LLM, LangChain, LangGraph, RAG, Agents" />
+<meta property="og:description" content="60 cours, 34 TD pratiques, projets et cours complets en français, en accès libre." />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0f0f23;--bg-2:#13132b;--panel:#1a1a2e;--panel-2:#20203a;--panel-3:#272746;
+    --line:#2a2a4a;--line-2:#363660;--ink:#e8e8f2;--soft:#b8b8cc;--muted:#8484a3;
+    --orange:#ff6b35;--blue:#569cd6;--green:#4ec9b0;--yellow:#dcdcaa;--purple:#c586c0;--cyan:#4fc1ff;--red:#f47067;--lime:#00ff88;
+    --r:14px;--r-sm:9px;--shadow:0 18px 50px -28px rgba(0,0,0,.9);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"Segoe UI",Tahoma,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(900px 500px at 85% -10%, rgba(255,107,53,.10), transparent 60%),radial-gradient(800px 500px at -10% 10%, rgba(86,156,214,.10), transparent 55%)}
+  a{color:inherit;text-decoration:none}
+  h1,h2,h3{margin:0;line-height:1.15;font-weight:700;letter-spacing:-.01em}
+  .mono{font-family:"JetBrains Mono","Courier New",monospace}
+  .wrap{max-width:1220px;margin:0 auto;padding:0 28px}
+  button{font:inherit}
 
-        /* ===== HEADER ===== */
-        .hero {
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
-            text-align: center;
-            padding: 60px 20px 40px;
-            border-bottom: 3px solid #ff6b35;
-            position: relative;
-            overflow: hidden;
-        }
-        .hero::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at 30% 50%, rgba(255,107,53,0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 50%, rgba(86,156,214,0.08) 0%, transparent 50%);
-        }
-        .hero h1 {
-            font-size: 2.8rem;
-            color: #ff6b35;
-            margin-bottom: 10px;
-            position: relative;
-        }
-        .hero .tagline {
-            font-size: 1.2rem;
-            color: #aaa;
-            margin-bottom: 25px;
-            position: relative;
-        }
-        .stats {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            flex-wrap: wrap;
-            position: relative;
-        }
-        .stat {
-            text-align: center;
-        }
-        .stat .number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #ff6b35;
-            display: block;
-        }
-        .stat .label {
-            font-size: 0.9rem;
-            color: #888;
-        }
+  /* top bar */
+  .top{position:sticky;top:0;z-index:20;background:rgba(15,15,35,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .top .wrap{display:flex;align-items:center;gap:18px;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
+  .brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--orange),#ff9a5c);display:grid;place-items:center;font-family:"JetBrains Mono",monospace;font-weight:600;font-size:.8rem;color:#1a1020}
+  .brand b{font-size:1rem;font-weight:700}
+  .brand small{display:block;font-family:"JetBrains Mono",monospace;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .topnav{display:flex;gap:2px;margin-left:8px;overflow-x:auto}
+  .topnav a{font-size:.8rem;color:var(--soft);padding:6px 10px;border-radius:8px;white-space:nowrap}
+  .topnav a:hover{background:var(--panel-2);color:var(--ink)}
+  .search{margin-left:auto;position:relative;flex:0 1 320px;min-width:180px}
+  .search input{width:100%;background:var(--panel);border:1px solid var(--line-2);color:var(--ink);padding:9px 38px 9px 14px;border-radius:999px;font-size:.9rem;outline:none;transition:.15s}
+  .search input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,107,53,.18)}
+  .search input::placeholder{color:var(--muted)}
+  .search kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:"JetBrains Mono",monospace;font-size:.62rem;color:var(--muted);border:1px solid var(--line-2);border-radius:5px;padding:1px 6px;background:var(--panel-2)}
 
-        /* ===== NAV TABS ===== */
-        .nav-tabs {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            padding: 20px;
-            background: #0a0a1a;
-            border-bottom: 1px solid #333;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            flex-wrap: wrap;
-        }
-        .nav-tab {
-            padding: 10px 25px;
-            border-radius: 8px;
-            text-decoration: none;
-            color: #aaa;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: 1px solid #333;
-        }
-        .nav-tab:hover {
-            color: #ff6b35;
-            border-color: #ff6b35;
-            background: rgba(255,107,53,0.08);
-        }
-        .nav-tab.ml { border-left: 3px solid #00ff88; }
-        .nav-tab.llm { border-left: 3px solid #569cd6; }
-        .nav-tab.lc { border-left: 3px solid #ff6b35; }
-        .nav-tab.lg { border-left: 3px solid #c678dd; }
-        .nav-tab.dl { border-left: 3px solid #e06c75; }
-        .nav-tab.rag { border-left: 3px solid #e5c07b; }
-        .nav-tab.ag { border-left: 3px solid #56b6c2; }
+  /* hero */
+  .hero{padding:64px 0 36px;display:grid;grid-template-columns:1.35fr 1fr;gap:34px;align-items:center}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--orange);margin-bottom:14px}
+  .hero h1{font-size:2.9rem;max-width:20ch}
+  .hero h1 span{color:var(--orange)}
+  .hero p.lead{color:var(--soft);font-size:1.08rem;max-width:62ch;margin:18px 0 0}
+  .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:10px;font-weight:600;font-size:.92rem;border:1px solid var(--line-2);background:var(--panel);color:var(--ink);transition:.15s;cursor:pointer}
+  .btn:hover{border-color:var(--orange);color:var(--orange)}
+  .btn.primary{background:var(--orange);border-color:var(--orange);color:#1a1020}
+  .btn.primary:hover{background:#ff8452;color:#1a1020}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow)}
+  .stat b{display:block;font-size:2rem;font-weight:800;line-height:1;color:var(--ink)}
+  .stat span{display:block;font-size:.78rem;color:var(--muted);margin-top:6px}
+  .stat.accent b{color:var(--orange)}
 
-        /* ===== MAIN ===== */
-        .main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
+  /* section headings */
+  section{scroll-margin-top:84px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin:54px 0 16px}
+  .sec-head h2{font-size:1.55rem}
+  .sec-head p{margin:0;color:var(--muted);font-size:.9rem}
 
-        /* ===== SECTION ===== */
-        .section {
-            margin-bottom: 60px;
-        }
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid #ff6b35;
-        }
-        .section-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-        .section-icon.ml { background: rgba(0,255,136,0.15); border: 1px solid #00ff88; }
-        .section-icon.llm { background: rgba(86,156,214,0.15); border: 1px solid #569cd6; }
-        .section-icon.lc { background: rgba(255,107,53,0.15); border: 1px solid #ff6b35; }
-        .section-icon.lg { background: rgba(198,120,221,0.15); border: 1px solid #c678dd; }
-        .section-icon.dl { background: rgba(224,108,117,0.15); border: 1px solid #e06c75; }
-        .section-icon.rag { background: rgba(229,192,123,0.15); border: 1px solid #e5c07b; }
-        .section-icon.ag { background: rgba(86,182,194,0.15); border: 1px solid #56b6c2; }
-        .section-title {
-            font-size: 1.8rem;
-            color: #ff6b35;
-        }
-        .section-desc {
-            color: #888;
-            font-size: 0.95rem;
-        }
+  /* parcours */
+  .path{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .step{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 12px 12px;transition:.15s;border-top:3px solid var(--mc)}
+  .step:hover{transform:translateY(-2px);border-color:var(--mc)}
+  .step .k{font-family:"JetBrains Mono",monospace;font-size:.62rem;color:var(--mc);letter-spacing:.14em}
+  .step b{display:block;font-size:.95rem;margin:4px 0 2px}
+  .step span{font-size:.74rem;color:var(--muted)}
+  .step::after{content:"→";position:absolute;right:-13px;top:44%;color:var(--muted);font-size:.9rem}
+  .step:last-child::after{content:""}
 
-        /* ===== SUBSECTION ===== */
-        .subsection-label {
-            font-size: 1.1rem;
-            color: #ff8c42;
-            margin: 25px 0 12px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .subsection-label::before {
-            content: "";
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .subsection-label.cours::before { background: #569cd6; }
-        .subsection-label.td::before { background: #00ff88; }
+  /* toolbar */
+  .toolbar{position:sticky;top:64px;z-index:15;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(15,15,35,.9);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:30px 0 8px}
+  .chip{font-family:"JetBrains Mono",monospace;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;background:var(--panel);border:1px solid var(--line-2);color:var(--soft);padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s}
+  .chip:hover{background:var(--panel-2)}
+  .chip.on{background:var(--orange);border-color:var(--orange);color:#1a1020;font-weight:600}
+  .progress-global{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.8rem;color:var(--soft)}
+  .progress-global .bar{width:140px;height:7px;border-radius:4px;background:var(--panel-3);overflow:hidden}
+  .progress-global .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--lime));transition:width .3s}
+  .progress-global button{background:none;border:1px solid var(--line-2);color:var(--muted);border-radius:7px;padding:4px 9px;font-size:.7rem;cursor:pointer}
+  .progress-global button:hover{color:var(--red);border-color:var(--red)}
 
-        /* ===== CARDS GRID ===== */
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-        }
-        .card {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 20px;
-            text-decoration: none;
-            color: #e0e0e0;
-            transition: all 0.3s;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .card:hover {
-            border-color: #ff6b35;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(255,107,53,0.15);
-        }
-        .card .card-number {
-            font-size: 0.75rem;
-            color: #666;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .card .card-title {
-            font-size: 1.05rem;
-            color: #fff;
-            font-weight: 600;
-        }
-        .card .card-desc {
-            font-size: 0.85rem;
-            color: #888;
-            line-height: 1.5;
-        }
-        .card.cours-card { border-left: 3px solid #569cd6; }
-        .card.td-card { border-left: 3px solid #00ff88; }
-        .card.td-card .card-number { color: #00ff88; }
-        .card.cours-card .card-number { color: #569cd6; }
+  /* modules */
+  .module{margin-top:40px;background:linear-gradient(180deg,rgba(255,255,255,.015),transparent);border:1px solid var(--line);border-left:4px solid var(--mc);border-radius:var(--r);padding:24px 26px 22px}
+  .mod-head{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:start}
+  .mod-head .idx{font-family:"JetBrains Mono",monospace;font-size:2rem;font-weight:600;color:var(--mc);line-height:1;opacity:.9}
+  .mod-head h2{font-size:1.5rem}
+  .mod-head p{margin:6px 0 0;color:var(--soft);font-size:.93rem;max-width:80ch}
+  .mod-meta{text-align:right;font-family:"JetBrains Mono",monospace;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+  .mod-meta .bar{width:150px;height:6px;border-radius:4px;background:var(--panel-3);overflow:hidden;margin:8px 0 0 auto}
+  .mod-meta .bar i{display:block;height:100%;width:0;background:var(--mc);transition:width .3s}
+  .group{margin-top:18px}
+  .group[hidden]{display:none}
+  .group-label{display:flex;align-items:center;gap:10px;font-family:"JetBrains Mono",monospace;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .group-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .group-label .n{color:var(--mc)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
 
-        /* ===== PARCOURS ===== */
-        .parcours-box {
-            background: rgba(255,107,53,0.05);
-            border: 2px solid #ff6b35;
-            border-radius: 12px;
-            padding: 25px;
-            margin: 40px 0;
-            text-align: center;
-        }
-        .parcours-box h2 {
-            color: #ff6b35;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-        }
-        .parcours-flow {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 15px 0;
-        }
-        .parcours-step {
-            background: #1a1a2e;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .parcours-step.active { border-color: #ff6b35; color: #ff6b35; }
-        .parcours-arrow { color: #ff6b35; font-size: 1.3rem; }
+  /* cards */
+  .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);transition:.15s;display:flex}
+  .card:hover{border-color:var(--mc);transform:translateY(-2px);box-shadow:var(--shadow)}
+  .card[hidden]{display:none}
+  .card-link{display:flex;flex-direction:column;gap:3px;padding:13px 40px 12px 14px;flex:1;min-width:0}
+  .card .num{font-family:"JetBrains Mono",monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mc)}
+  .card[data-type="td"] .num{color:var(--lime)}
+  .card[data-type="ressource"] .num{color:var(--yellow)}
+  .card .title{font-weight:600;font-size:.95rem;line-height:1.3}
+  .card .desc{font-size:.78rem;color:var(--muted);line-height:1.45}
+  .card .done{position:absolute;right:10px;top:10px;width:24px;height:24px;border-radius:50%;border:1px solid var(--line-2);background:var(--panel-2);color:transparent;font-size:.75rem;cursor:pointer;transition:.15s;display:grid;place-items:center;line-height:1}
+  .card .done:hover{border-color:var(--green);color:var(--green)}
+  .card.is-done{opacity:.72}
+  .card.is-done .done{background:var(--green);border-color:var(--green);color:#0f0f23}
+  .card.is-done .title{text-decoration:line-through;text-decoration-color:var(--muted);text-decoration-thickness:1px}
 
-        /* ===== HOSTING SECTION ===== */
-        .hosting {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            border: 1px solid #569cd6;
-            border-radius: 12px;
-            padding: 30px;
-            margin: 40px 0;
-        }
-        .hosting h2 {
-            color: #569cd6;
-            font-size: 1.4rem;
-            margin-bottom: 15px;
-        }
-        .hosting-step {
-            background: rgba(86,156,214,0.05);
-            border-left: 3px solid #569cd6;
-            padding: 12px 20px;
-            margin: 10px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        .hosting-step strong { color: #569cd6; }
-        .hosting code {
-            background: #0d1117;
-            color: #00ff88;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-        }
+  .empty{display:none;color:var(--muted);text-align:center;padding:40px 0;font-size:.95rem}
 
-        /* ===== FOOTER ===== */
-        .footer {
-            text-align: center;
-            padding: 30px;
-            border-top: 1px solid #333;
-            color: #666;
-            font-size: 0.85rem;
-        }
+  /* ressources / about */
+  .res .module{--mc:var(--yellow)}
+  .about{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-top:44px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px}
+  .tile h3{font-size:1.1rem;margin-bottom:8px}
+  .tile p,.tile li{color:var(--soft);font-size:.92rem;margin:0}
+  .tile ul{margin:8px 0 0;padding-left:18px}
+  .tile li{margin:3px 0}
+  .tile a.l{color:var(--cyan);border-bottom:1px dotted var(--cyan)}
+  footer{margin-top:56px;border-top:1px solid var(--line);padding:22px 0 44px;font-size:.76rem;color:var(--muted);font-family:"JetBrains Mono",monospace;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  footer a{color:var(--soft)}
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 1.8rem; }
-            .stats { gap: 20px; }
-            .stat .number { font-size: 1.8rem; }
-            .cards { grid-template-columns: 1fr; }
-            .nav-tabs { gap: 5px; }
-            .nav-tab { padding: 8px 15px; font-size: 0.85rem; }
-        }
-    </style>
+  @media (max-width:1000px){.hero{grid-template-columns:1fr}.path{grid-template-columns:repeat(4,1fr)}.step::after{display:none}.topnav{display:none}}
+  @media (max-width:640px){.wrap{padding:0 16px}.hero h1{font-size:2.1rem}.path{grid-template-columns:1fr 1fr}.stats{grid-template-columns:1fr 1fr}.mod-head{grid-template-columns:auto 1fr}.mod-meta{grid-column:1/-1;text-align:left}.mod-meta .bar{margin-left:0}.about{grid-template-columns:1fr}.search{flex:1}.toolbar{top:0}}
+</style>
 </head>
 <body>
-
-<!-- ===== HERO ===== -->
-<div class="hero">
-    <h1>Formation IA Complete</h1>
-    <p class="tagline">Machine Learning, Deep Learning & Intelligence Artificielle Generative</p>
-    <p style="color: #ff8c42; font-size: 1rem; margin-bottom: 10px; position: relative; font-weight: 600;">par Azdine Laaouissi</p>
-    <div class="stats">
-        <div class="stat">
-            <span class="number">95</span>
-            <span class="label">Fichiers HTML</span>
-        </div>
-        <div class="stat">
-            <span class="number">60</span>
-            <span class="label">Cours</span>
-        </div>
-        <div class="stat">
-            <span class="number">34</span>
-            <span class="label">TDs Pratiques</span>
-        </div>
-        <div class="stat">
-            <span class="number">90 000+</span>
-            <span class="label">Lignes de contenu</span>
-        </div>
-    </div>
-</div>
-
-<!-- ===== NAVIGATION ===== -->
-<nav class="nav-tabs">
-    <a href="#ml" class="nav-tab ml">Machine Learning</a>
-    <a href="#dl" class="nav-tab dl">Deep Learning</a>
-    <a href="#llm" class="nav-tab llm">LLM</a>
-    <a href="#langchain" class="nav-tab lc">LangChain</a>
-    <a href="#langgraph" class="nav-tab lg">LangGraph</a>
-    <a href="#rag" class="nav-tab rag">RAG</a>
-    <a href="#agents" class="nav-tab ag">Agents IA</a>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Accueil"><span class="logo">IA</span><div><b>Formation IA</b><small>Azdine Laaouissi</small></div></a>
+    <nav class="topnav" aria-label="Modules">
+<a href="#parcours">Parcours</a>
+<a href="#ml">Machine Learning</a>
+<a href="#dl">Deep Learning</a>
+<a href="#llm">LLM</a>
+<a href="#langchain">LangChain</a>
+<a href="#langgraph">LangGraph</a>
+<a href="#rag">RAG</a>
+<a href="#agents">Agents IA</a>
+<a href="#ressources">Ressources</a><a href="#apropos">À propos</a>
 </nav>
+    <div class="search"><input id="q" type="search" placeholder="Rechercher un cours, un TD, un mot-clé…" aria-label="Rechercher" autocomplete="off" /><kbd>/</kbd></div>
+  </div>
+</header>
 
-<div class="main">
-
-<!-- ===== PARCOURS RECOMMANDE ===== -->
-<div class="parcours-box">
-    <h2>Parcours Recommande</h2>
-    <div class="parcours-flow">
-        <div class="parcours-step active">ML</div>
-        <span class="parcours-arrow">&rarr;</span>
-        <div class="parcours-step">Deep Learning</div>
-        <span class="parcours-arrow">&rarr;</span>
-        <div class="parcours-step">LLM</div>
-        <span class="parcours-arrow">&rarr;</span>
-        <div class="parcours-step">LangChain</div>
-        <span class="parcours-arrow">&rarr;</span>
-        <div class="parcours-step">LangGraph</div>
-        <span class="parcours-arrow">&rarr;</span>
-        <div class="parcours-step">RAG</div>
-        <span class="parcours-arrow">&rarr;</span>
-        <div class="parcours-step">Agents IA</div>
+<main class="wrap" id="top">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Formation complète · en français · accès libre</div>
+      <h1>Machine Learning, Deep Learning et <span>IA générative</span>, du premier concept à la mise en production.</h1>
+      <p class="lead">Un parcours structuré en sept modules : chaque cours théorique est suivi de travaux dirigés pratiques (scikit-learn, PyTorch, LangChain, LangGraph), jusqu'aux agents IA déployés. Cochez les cours terminés pour suivre votre progression, elle est enregistrée dans votre navigateur.</p>
+      <div class="cta">
+        <a class="btn primary" href="machine_learning/cours/ml_01_introduction.html">Commencer par le cours ML 01</a>
+        <a class="btn" href="#parcours">Voir le parcours recommandé</a>
+        <a class="btn" href="https://github.com/azdinelaaouissi/formation-ia" target="_blank" rel="noopener">Code source sur GitHub</a>
+      </div>
     </div>
-    <p style="color: #888; font-size: 0.9rem;">Suivez cet ordre pour une progression optimale. Chaque section s'appuie sur la precedente.</p>
+    <div class="stats">
+<div class="stat accent"><b>60</b><span>cours théoriques</span></div>
+<div class="stat"><b>34</b><span>TD pratiques avec code</span></div>
+<div class="stat"><b>7</b><span>modules progressifs</span></div>
+<div class="stat"><b>9</b><span>cours complets, projet et plans</span></div>
 </div>
+  </section>
 
-<!-- =============================================== -->
-<!-- ===== MACHINE LEARNING ===== -->
-<!-- =============================================== -->
-<div class="section" id="ml">
-    <div class="section-header">
-        <div class="section-icon ml">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m-7.07-2.93l2.83-2.83m8.48-8.48l2.83-2.83M2 12h4m12 0h4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83"/></svg>
-        </div>
-        <div>
-            <div class="section-title">Machine Learning</div>
-            <div class="section-desc">12 cours theoriques + 11 TDs pratiques - Scikit-learn, algorithmes, evaluation</div>
-        </div>
-    </div>
-
-    <div class="subsection-label cours">Cours (12)</div>
-    <div class="cards">
-        <a href="machine_learning/cours/ml_01_introduction.html" class="card cours-card">
-            <span class="card-number">Cours 01</span>
-            <span class="card-title">Introduction au ML</span>
-            <span class="card-desc">Types d'apprentissage, workflow ML, premiers concepts</span>
-        </a>
-        <a href="machine_learning/cours/ml_02_maths_visuelles.html" class="card cours-card">
-            <span class="card-number">Cours 02</span>
-            <span class="card-title">Mathematiques Visuelles</span>
-            <span class="card-desc">Algebre lineaire, statistiques, derivees pour le ML</span>
-        </a>
-        <a href="machine_learning/cours/ml_03_donnees.html" class="card cours-card">
-            <span class="card-number">Cours 03</span>
-            <span class="card-title">Les Donnees</span>
-            <span class="card-desc">Preprocessing, features, normalisation, encodage</span>
-        </a>
-        <a href="machine_learning/cours/ml_04_regression.html" class="card cours-card">
-            <span class="card-number">Cours 04</span>
-            <span class="card-title">Regression</span>
-            <span class="card-desc">Regression lineaire, polynomiale, Ridge, Lasso</span>
-        </a>
-        <a href="machine_learning/cours/ml_05_classification.html" class="card cours-card">
-            <span class="card-number">Cours 05</span>
-            <span class="card-title">Classification</span>
-            <span class="card-desc">KNN, SVM, regression logistique, arbres de decision</span>
-        </a>
-        <a href="machine_learning/cours/ml_06_ensemble.html" class="card cours-card">
-            <span class="card-number">Cours 06</span>
-            <span class="card-title">Methodes d'Ensemble</span>
-            <span class="card-desc">Random Forest, Bagging, Boosting, XGBoost</span>
-        </a>
-        <a href="machine_learning/cours/ml_07_non_supervise.html" class="card cours-card">
-            <span class="card-number">Cours 07</span>
-            <span class="card-title">Apprentissage Non Supervise</span>
-            <span class="card-desc">K-Means, DBSCAN, PCA, reduction de dimensions</span>
-        </a>
-        <a href="machine_learning/cours/ml_08_reseaux_neurones.html" class="card cours-card">
-            <span class="card-number">Cours 08</span>
-            <span class="card-title">Reseaux de Neurones</span>
-            <span class="card-desc">Perceptron, MLP, backpropagation, activations</span>
-        </a>
-        <a href="machine_learning/cours/ml_09_deep_learning.html" class="card cours-card">
-            <span class="card-number">Cours 09</span>
-            <span class="card-title">Deep Learning</span>
-            <span class="card-desc">CNN, RNN, LSTM, architectures profondes</span>
-        </a>
-        <a href="machine_learning/cours/ml_10_nlp.html" class="card cours-card">
-            <span class="card-number">Cours 10</span>
-            <span class="card-title">NLP</span>
-            <span class="card-desc">Traitement du langage naturel, TF-IDF, Word2Vec</span>
-        </a>
-        <a href="machine_learning/cours/ml_11_evaluation.html" class="card cours-card">
-            <span class="card-number">Cours 11</span>
-            <span class="card-title">Evaluation</span>
-            <span class="card-desc">Metriques, validation croisee, overfitting, biais-variance</span>
-        </a>
-        <a href="machine_learning/cours/ml_12_pipeline.html" class="card cours-card">
-            <span class="card-number">Cours 12</span>
-            <span class="card-title">Pipeline ML</span>
-            <span class="card-desc">Pipeline complet, feature engineering, deploiement</span>
-        </a>
-    </div>
-
-    <div class="subsection-label td">TDs Pratiques - Supervise (8)</div>
-    <div class="cards">
-        <a href="machine_learning/td/supervise/td_regression_lineaire.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Regression Lineaire</span>
-            <span class="card-desc">MSE, RMSE, R2, Ridge/Lasso, pipeline complet</span>
-        </a>
-        <a href="machine_learning/td/supervise/td_regression_logistique.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Regression Logistique</span>
-            <span class="card-desc">Sigmoide, seuil de decision, ROC-AUC</span>
-        </a>
-        <a href="machine_learning/td/supervise/td_knn.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">K-Nearest Neighbors</span>
-            <span class="card-desc">Distance euclidienne, choix de K, normalisation</span>
-        </a>
-        <a href="machine_learning/td/supervise/td_svm.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">SVM</span>
-            <span class="card-desc">Hyperplan, kernel trick, marge maximale</span>
-        </a>
-        <a href="machine_learning/td/supervise/td_arbre_decision.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Arbre de Decision</span>
-            <span class="card-desc">Gini, entropie, elagage, profondeur</span>
-        </a>
-        <a href="machine_learning/td/supervise/td_random_forest.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Random Forest</span>
-            <span class="card-desc">Bagging, OOB score, importance des features</span>
-        </a>
-        <a href="machine_learning/td/supervise/td_xgboost.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">XGBoost</span>
-            <span class="card-desc">Gradient Boosting, early stopping, tuning</span>
-        </a>
-        <a href="machine_learning/td/supervise/td_reseau_neurones.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Reseau de Neurones (MLP)</span>
-            <span class="card-desc">Architecture MLP, backpropagation, activations</span>
-        </a>
-    </div>
-
-    <div class="subsection-label td">TDs Pratiques - Non Supervise (3)</div>
-    <div class="cards">
-        <a href="machine_learning/td/non_supervise/td_kmeans.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">K-Means</span>
-            <span class="card-desc">Elbow method, silhouette score, centroides</span>
-        </a>
-        <a href="machine_learning/td/non_supervise/td_dbscan.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">DBSCAN</span>
-            <span class="card-desc">Points core/border/noise, epsilon, min_samples</span>
-        </a>
-        <a href="machine_learning/td/non_supervise/td_pca.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">PCA</span>
-            <span class="card-desc">Variance expliquee, reduction de dimensions, projection</span>
-        </a>
-    </div>
+  <section id="parcours">
+    <div class="sec-head"><h2>Parcours recommandé</h2><p>chaque module s'appuie sur le précédent</p></div>
+    <div class="path">
+<a class="step" href="#ml" style="--mc:#4ec9b0"><span class="k">ÉTAPE 1</span><b>Machine Learning</b><span>12 cours · 11 TD</span></a>
+<a class="step" href="#dl" style="--mc:#569cd6"><span class="k">ÉTAPE 2</span><b>Deep Learning</b><span>12 cours · 5 TD</span></a>
+<a class="step" href="#llm" style="--mc:#dcdcaa"><span class="k">ÉTAPE 3</span><b>LLM</b><span>5 cours · 2 TD</span></a>
+<a class="step" href="#langchain" style="--mc:#ff6b35"><span class="k">ÉTAPE 4</span><b>LangChain</b><span>8 cours · 4 TD</span></a>
+<a class="step" href="#langgraph" style="--mc:#c586c0"><span class="k">ÉTAPE 5</span><b>LangGraph</b><span>6 cours · 3 TD</span></a>
+<a class="step" href="#rag" style="--mc:#4fc1ff"><span class="k">ÉTAPE 6</span><b>RAG</b><span>7 cours · 4 TD</span></a>
+<a class="step" href="#agents" style="--mc:#f47067"><span class="k">ÉTAPE 7</span><b>Agents IA</b><span>10 cours · 5 TD</span></a>
 </div>
+  </section>
 
-<!-- =============================================== -->
-<!-- ===== DEEP LEARNING ===== -->
-<!-- =============================================== -->
-<div class="section" id="dl">
-    <div class="section-header">
-        <div class="section-icon dl">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e06c75" stroke-width="2"><path d="M12 2a4 4 0 014 4v1a4 4 0 01-8 0V6a4 4 0 014-4z"/><path d="M8 10v2a4 4 0 008 0v-2"/><path d="M6 14v1a6 6 0 0012 0v-1"/><circle cx="12" cy="18" r="1"/></svg>
-        </div>
-        <div>
-            <div class="section-title">Deep Learning</div>
-            <div class="section-desc">12 cours theoriques + 5 TDs pratiques - PyTorch, CNN, RNN, Transformer, GAN, Diffusion</div>
-        </div>
+  <div class="toolbar" id="toolbar">
+    <button class="chip on" data-f="all" type="button">Tous</button>
+    <button class="chip" data-f="cours" type="button">Cours</button>
+    <button class="chip" data-f="td" type="button">TD pratiques</button>
+    <button class="chip" data-f="ressource" type="button">Ressources</button>
+    <div class="progress-global"><span id="pg-text">0 / 103 terminés</span><div class="bar"><i id="pg-bar"></i></div><button type="button" id="pg-reset" title="Réinitialiser la progression">réinitialiser</button></div>
+  </div>
+
+<section class="module" id="ml" style="--mc:#4ec9b0" data-mod="ml">
+<div class="mod-head"><div class="idx">01</div><div><h2>Machine Learning</h2><p>Les fondations : données, régression, classification, méthodes d&#x27;ensemble, non supervisé, évaluation et pipeline complet avec scikit-learn.</p></div><div class="mod-meta"><span class="mod-count">24 éléments</span><div class="bar"><i class="mod-bar"></i></div></div></div>
+<div class="group"><div class="group-label">Cours <span class="n">(12)</span></div><div class="grid">
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 01 introduction au ml types d&#x27;apprentissage, workflow ml, premiers concepts"><a class="card-link" href="machine_learning/cours/ml_01_introduction.html"><span class="num">Cours 01</span><span class="title">Introduction au ML</span><span class="desc">Types d&#x27;apprentissage, workflow ML, premiers concepts</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_01_introduction.html" aria-label="Marquer « Introduction au ML » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 02 mathématiques visuelles algèbre linéaire, statistiques, dérivées pour le ml"><a class="card-link" href="machine_learning/cours/ml_02_maths_visuelles.html"><span class="num">Cours 02</span><span class="title">Mathématiques visuelles</span><span class="desc">Algèbre linéaire, statistiques, dérivées pour le ML</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_02_maths_visuelles.html" aria-label="Marquer « Mathématiques visuelles » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 03 les données preprocessing, features, normalisation, encodage"><a class="card-link" href="machine_learning/cours/ml_03_donnees.html"><span class="num">Cours 03</span><span class="title">Les données</span><span class="desc">Preprocessing, features, normalisation, encodage</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_03_donnees.html" aria-label="Marquer « Les données » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 04 régression régression linéaire, polynomiale, ridge, lasso"><a class="card-link" href="machine_learning/cours/ml_04_regression.html"><span class="num">Cours 04</span><span class="title">Régression</span><span class="desc">Régression linéaire, polynomiale, Ridge, Lasso</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_04_regression.html" aria-label="Marquer « Régression » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 05 classification knn, svm, régression logistique, arbres de décision"><a class="card-link" href="machine_learning/cours/ml_05_classification.html"><span class="num">Cours 05</span><span class="title">Classification</span><span class="desc">KNN, SVM, régression logistique, arbres de décision</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_05_classification.html" aria-label="Marquer « Classification » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 06 méthodes d&#x27;ensemble random forest, bagging, boosting, xgboost"><a class="card-link" href="machine_learning/cours/ml_06_ensemble.html"><span class="num">Cours 06</span><span class="title">Méthodes d&#x27;ensemble</span><span class="desc">Random Forest, Bagging, Boosting, XGBoost</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_06_ensemble.html" aria-label="Marquer « Méthodes d&#x27;ensemble » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 07 apprentissage non supervisé k-means, dbscan, pca, réduction de dimensions"><a class="card-link" href="machine_learning/cours/ml_07_non_supervise.html"><span class="num">Cours 07</span><span class="title">Apprentissage non supervisé</span><span class="desc">K-Means, DBSCAN, PCA, réduction de dimensions</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_07_non_supervise.html" aria-label="Marquer « Apprentissage non supervisé » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 08 réseaux de neurones perceptron, mlp, backpropagation, activations"><a class="card-link" href="machine_learning/cours/ml_08_reseaux_neurones.html"><span class="num">Cours 08</span><span class="title">Réseaux de neurones</span><span class="desc">Perceptron, MLP, backpropagation, activations</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_08_reseaux_neurones.html" aria-label="Marquer « Réseaux de neurones » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 09 deep learning cnn, rnn, lstm, architectures profondes"><a class="card-link" href="machine_learning/cours/ml_09_deep_learning.html"><span class="num">Cours 09</span><span class="title">Deep Learning</span><span class="desc">CNN, RNN, LSTM, architectures profondes</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_09_deep_learning.html" aria-label="Marquer « Deep Learning » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 10 nlp traitement du langage naturel, tf-idf, word2vec"><a class="card-link" href="machine_learning/cours/ml_10_nlp.html"><span class="num">Cours 10</span><span class="title">NLP</span><span class="desc">Traitement du langage naturel, TF-IDF, Word2Vec</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_10_nlp.html" aria-label="Marquer « NLP » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 11 évaluation métriques, validation croisée, overfitting, biais-variance"><a class="card-link" href="machine_learning/cours/ml_11_evaluation.html"><span class="num">Cours 11</span><span class="title">Évaluation</span><span class="desc">Métriques, validation croisée, overfitting, biais-variance</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_11_evaluation.html" aria-label="Marquer « Évaluation » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="ml" data-kw="cours 12 pipeline ml pipeline complet, feature engineering, déploiement"><a class="card-link" href="machine_learning/cours/ml_12_pipeline.html"><span class="num">Cours 12</span><span class="title">Pipeline ML</span><span class="desc">Pipeline complet, feature engineering, déploiement</span></a><button class="done" type="button" data-id="machine_learning/cours/ml_12_pipeline.html" aria-label="Marquer « Pipeline ML » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">TD · supervisé <span class="n">(8)</span></div><div class="grid">
+<article class="card" data-type="td" data-mod="ml" data-kw="td régression linéaire mse, rmse, r², ridge/lasso, pipeline complet"><a class="card-link" href="machine_learning/td/supervise/td_regression_lineaire.html"><span class="num">TD</span><span class="title">Régression linéaire</span><span class="desc">MSE, RMSE, R², Ridge/Lasso, pipeline complet</span></a><button class="done" type="button" data-id="machine_learning/td/supervise/td_regression_lineaire.html" aria-label="Marquer « Régression linéaire » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="ml" data-kw="td régression logistique sigmoïde, seuil de décision, roc-auc"><a class="card-link" href="machine_learning/td/supervise/td_regression_logistique.html"><span class="num">TD</span><span class="title">Régression logistique</span><span class="desc">Sigmoïde, seuil de décision, ROC-AUC</span></a><button class="done" type="button" data-id="machine_learning/td/supervise/td_regression_logistique.html" aria-label="Marquer « Régression logistique » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="ml" data-kw="td k-nearest neighbors distance euclidienne, choix de k, normalisation"><a class="card-link" href="machine_learning/td/supervise/td_knn.html"><span class="num">TD</span><span class="title">K-Nearest Neighbors</span><span class="desc">Distance euclidienne, choix de K, normalisation</span></a><button class="done" type="button" data-id="machine_learning/td/supervise/td_knn.html" aria-label="Marquer « K-Nearest Neighbors » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="ml" data-kw="td svm hyperplan, kernel trick, marge maximale"><a class="card-link" href="machine_learning/td/supervise/td_svm.html"><span class="num">TD</span><span class="title">SVM</span><span class="desc">Hyperplan, kernel trick, marge maximale</span></a><button class="done" type="button" data-id="machine_learning/td/supervise/td_svm.html" aria-label="Marquer « SVM » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="ml" data-kw="td arbre de décision gini, entropie, élagage, profondeur"><a class="card-link" href="machine_learning/td/supervise/td_arbre_decision.html"><span class="num">TD</span><span class="title">Arbre de décision</span><span class="desc">Gini, entropie, élagage, profondeur</span></a><button class="done" type="button" data-id="machine_learning/td/supervise/td_arbre_decision.html" aria-label="Marquer « Arbre de décision » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="ml" data-kw="td random forest bagging, oob score, importance des features"><a class="card-link" href="machine_learning/td/supervise/td_random_forest.html"><span class="num">TD</span><span class="title">Random Forest</span><span class="desc">Bagging, OOB score, importance des features</span></a><button class="done" type="button" data-id="machine_learning/td/supervise/td_random_forest.html" aria-label="Marquer « Random Forest » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="ml" data-kw="td xgboost gradient boosting, early stopping, tuning"><a class="card-link" href="machine_learning/td/supervise/td_xgboost.html"><span class="num">TD</span><span class="title">XGBoost</span><span class="desc">Gradient Boosting, early stopping, tuning</span></a><button class="done" type="button" data-id="machine_learning/td/supervise/td_xgboost.html" aria-label="Marquer « XGBoost » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="ml" data-kw="td réseau de neurones (mlp) architecture mlp, backpropagation, activations"><a class="card-link" href="machine_learning/td/supervise/td_reseau_neurones.html"><span class="num">TD</span><span class="title">Réseau de neurones (MLP)</span><span class="desc">Architecture MLP, backpropagation, activations</span></a><button class="done" type="button" data-id="machine_learning/td/supervise/td_reseau_neurones.html" aria-label="Marquer « Réseau de neurones (MLP) » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">TD · non supervisé <span class="n">(3)</span></div><div class="grid">
+<article class="card" data-type="td" data-mod="ml" data-kw="td k-means elbow method, silhouette score, centroïdes"><a class="card-link" href="machine_learning/td/non_supervise/td_kmeans.html"><span class="num">TD</span><span class="title">K-Means</span><span class="desc">Elbow method, silhouette score, centroïdes</span></a><button class="done" type="button" data-id="machine_learning/td/non_supervise/td_kmeans.html" aria-label="Marquer « K-Means » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="ml" data-kw="td dbscan points core/border/noise, epsilon, min_samples"><a class="card-link" href="machine_learning/td/non_supervise/td_dbscan.html"><span class="num">TD</span><span class="title">DBSCAN</span><span class="desc">Points core/border/noise, epsilon, min_samples</span></a><button class="done" type="button" data-id="machine_learning/td/non_supervise/td_dbscan.html" aria-label="Marquer « DBSCAN » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="ml" data-kw="td pca variance expliquée, réduction de dimensions, projection"><a class="card-link" href="machine_learning/td/non_supervise/td_pca.html"><span class="num">TD</span><span class="title">PCA</span><span class="desc">Variance expliquée, réduction de dimensions, projection</span></a><button class="done" type="button" data-id="machine_learning/td/non_supervise/td_pca.html" aria-label="Marquer « PCA » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">Plan du module <span class="n">(1)</span></div><div class="grid">
+<article class="card" data-type="ressource" data-mod="ml" data-kw="plan plan de formation machine learning objectifs, progression et organisation des 12 cours et 11 td"><a class="card-link" href="machine_learning/00_PLAN_ML.html"><span class="num">Plan</span><span class="title">Plan de formation Machine Learning</span><span class="desc">Objectifs, progression et organisation des 12 cours et 11 TD</span></a><button class="done" type="button" data-id="machine_learning/00_PLAN_ML.html" aria-label="Marquer « Plan de formation Machine Learning » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+</section>
+<section class="module" id="dl" style="--mc:#569cd6" data-mod="dl">
+<div class="mod-head"><div class="idx">02</div><div><h2>Deep Learning</h2><p>Réseaux profonds avec PyTorch : optimisation, CNN, RNN/LSTM, Transformer, GAN, autoencoders, diffusion, puis déploiement.</p></div><div class="mod-meta"><span class="mod-count">17 éléments</span><div class="bar"><i class="mod-bar"></i></div></div></div>
+<div class="group"><div class="group-label">Cours <span class="n">(12)</span></div><div class="grid">
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 01 introduction au deep learning dl vs ml, histoire, frameworks, gpu, applications"><a class="card-link" href="deep_learning/cours/dl_01_introduction.html"><span class="num">Cours 01</span><span class="title">Introduction au Deep Learning</span><span class="desc">DL vs ML, histoire, frameworks, GPU, applications</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_01_introduction.html" aria-label="Marquer « Introduction au Deep Learning » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 02 réseaux de neurones perceptron, mlp, forward/backpropagation détaillée"><a class="card-link" href="deep_learning/cours/dl_02_reseaux_neurones.html"><span class="num">Cours 02</span><span class="title">Réseaux de neurones</span><span class="desc">Perceptron, MLP, forward/backpropagation détaillée</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_02_reseaux_neurones.html" aria-label="Marquer « Réseaux de neurones » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 03 optimisation sgd, adam, learning rate scheduling, régularisation"><a class="card-link" href="deep_learning/cours/dl_03_optimisation.html"><span class="num">Cours 03</span><span class="title">Optimisation</span><span class="desc">SGD, Adam, learning rate scheduling, régularisation</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_03_optimisation.html" aria-label="Marquer « Optimisation » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 04 cnn convolution, pooling, lenet, alexnet, vgg, resnet"><a class="card-link" href="deep_learning/cours/dl_04_cnn.html"><span class="num">Cours 04</span><span class="title">CNN</span><span class="desc">Convolution, pooling, LeNet, AlexNet, VGG, ResNet</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_04_cnn.html" aria-label="Marquer « CNN » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 05 cnn avancé transfer learning, détection d&#x27;objets, segmentation"><a class="card-link" href="deep_learning/cours/dl_05_cnn_avance.html"><span class="num">Cours 05</span><span class="title">CNN avancé</span><span class="desc">Transfer learning, détection d&#x27;objets, segmentation</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_05_cnn_avance.html" aria-label="Marquer « CNN avancé » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 06 rnn, lstm, gru séquences, séries temporelles, gates, bptt"><a class="card-link" href="deep_learning/cours/dl_06_rnn_lstm.html"><span class="num">Cours 06</span><span class="title">RNN, LSTM, GRU</span><span class="desc">Séquences, séries temporelles, gates, BPTT</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_06_rnn_lstm.html" aria-label="Marquer « RNN, LSTM, GRU » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 07 transformer self-attention, positional encoding, bert, gpt"><a class="card-link" href="deep_learning/cours/dl_07_transformer.html"><span class="num">Cours 07</span><span class="title">Transformer</span><span class="desc">Self-attention, positional encoding, BERT, GPT</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_07_transformer.html" aria-label="Marquer « Transformer » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 08 gan generator/discriminator, dcgan, stylegan"><a class="card-link" href="deep_learning/cours/dl_08_gan.html"><span class="num">Cours 08</span><span class="title">GAN</span><span class="desc">Generator/Discriminator, DCGAN, StyleGAN</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_08_gan.html" aria-label="Marquer « GAN » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 09 autoencoders &amp; vae espace latent, denoising, vae, détection d&#x27;anomalies"><a class="card-link" href="deep_learning/cours/dl_09_autoencoders.html"><span class="num">Cours 09</span><span class="title">Autoencoders &amp; VAE</span><span class="desc">Espace latent, denoising, VAE, détection d&#x27;anomalies</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_09_autoencoders.html" aria-label="Marquer « Autoencoders &amp; VAE » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 10 modèles de diffusion ddpm, stable diffusion, dall-e, guidance"><a class="card-link" href="deep_learning/cours/dl_10_diffusion.html"><span class="num">Cours 10</span><span class="title">Modèles de diffusion</span><span class="desc">DDPM, Stable Diffusion, DALL-E, guidance</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_10_diffusion.html" aria-label="Marquer « Modèles de diffusion » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 11 pytorch en pratique tensors, autograd, dataloader, training loop"><a class="card-link" href="deep_learning/cours/dl_11_pytorch.html"><span class="num">Cours 11</span><span class="title">PyTorch en pratique</span><span class="desc">Tensors, autograd, DataLoader, training loop</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_11_pytorch.html" aria-label="Marquer « PyTorch en pratique » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="dl" data-kw="cours 12 déploiement &amp; production onnx, quantization, pruning, mlops"><a class="card-link" href="deep_learning/cours/dl_12_production.html"><span class="num">Cours 12</span><span class="title">Déploiement &amp; production</span><span class="desc">ONNX, quantization, pruning, MLOps</span></a><button class="done" type="button" data-id="deep_learning/cours/dl_12_production.html" aria-label="Marquer « Déploiement &amp; production » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">TD <span class="n">(5)</span></div><div class="grid">
+<article class="card" data-type="td" data-mod="dl" data-kw="td classification mlp mlp pytorch sur mnist, training loop, évaluation"><a class="card-link" href="deep_learning/td/td_mlp.html"><span class="num">TD</span><span class="title">Classification MLP</span><span class="desc">MLP PyTorch sur MNIST, training loop, évaluation</span></a><button class="done" type="button" data-id="deep_learning/td/td_mlp.html" aria-label="Marquer « Classification MLP » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="dl" data-kw="td classification cnn cnn sur cifar-10, data augmentation, feature maps"><a class="card-link" href="deep_learning/td/td_cnn.html"><span class="num">TD</span><span class="title">Classification CNN</span><span class="desc">CNN sur CIFAR-10, data augmentation, feature maps</span></a><button class="done" type="button" data-id="deep_learning/td/td_cnn.html" aria-label="Marquer « Classification CNN » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="dl" data-kw="td prédiction lstm séries temporelles, classification de texte, lstm vs gru"><a class="card-link" href="deep_learning/td/td_rnn_lstm.html"><span class="num">TD</span><span class="title">Prédiction LSTM</span><span class="desc">Séries temporelles, classification de texte, LSTM vs GRU</span></a><button class="done" type="button" data-id="deep_learning/td/td_rnn_lstm.html" aria-label="Marquer « Prédiction LSTM » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="dl" data-kw="td transfer learning fine-tuning resnet, feature extraction, data augmentation"><a class="card-link" href="deep_learning/td/td_transfer_learning.html"><span class="num">TD</span><span class="title">Transfer Learning</span><span class="desc">Fine-tuning ResNet, feature extraction, data augmentation</span></a><button class="done" type="button" data-id="deep_learning/td/td_transfer_learning.html" aria-label="Marquer « Transfer Learning » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="dl" data-kw="td génération gan dcgan pytorch, génération d&#x27;images, interpolation latente"><a class="card-link" href="deep_learning/td/td_gan.html"><span class="num">TD</span><span class="title">Génération GAN</span><span class="desc">DCGAN PyTorch, génération d&#x27;images, interpolation latente</span></a><button class="done" type="button" data-id="deep_learning/td/td_gan.html" aria-label="Marquer « Génération GAN » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+</section>
+<section class="module" id="llm" style="--mc:#dcdcaa" data-mod="llm">
+<div class="mod-head"><div class="idx">03</div><div><h2>LLM</h2><p>Comprendre les grands modèles de langage : Transformer, tokenisation, embeddings, prompt engineering et utilisation des API.</p></div><div class="mod-meta"><span class="mod-count">7 éléments</span><div class="bar"><i class="mod-bar"></i></div></div></div>
+<div class="group"><div class="group-label">Cours <span class="n">(5)</span></div><div class="grid">
+<article class="card" data-type="cours" data-mod="llm" data-kw="cours 01 introduction aux llm histoire, gpt, claude, llama, comparaison des modèles"><a class="card-link" href="ia_generative/llm/cours/llm_01_introduction.html"><span class="num">Cours 01</span><span class="title">Introduction aux LLM</span><span class="desc">Histoire, GPT, Claude, Llama, comparaison des modèles</span></a><button class="done" type="button" data-id="ia_generative/llm/cours/llm_01_introduction.html" aria-label="Marquer « Introduction aux LLM » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="llm" data-kw="cours 02 architecture transformer self-attention, multi-head attention, encoder/decoder"><a class="card-link" href="ia_generative/llm/cours/llm_02_transformer.html"><span class="num">Cours 02</span><span class="title">Architecture Transformer</span><span class="desc">Self-attention, multi-head attention, encoder/decoder</span></a><button class="done" type="button" data-id="ia_generative/llm/cours/llm_02_transformer.html" aria-label="Marquer « Architecture Transformer » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="llm" data-kw="cours 03 tokenisation &amp; embeddings bpe, wordpiece, similarité cosinus, espaces vectoriels"><a class="card-link" href="ia_generative/llm/cours/llm_03_tokenisation_embeddings.html"><span class="num">Cours 03</span><span class="title">Tokenisation &amp; embeddings</span><span class="desc">BPE, WordPiece, similarité cosinus, espaces vectoriels</span></a><button class="done" type="button" data-id="ia_generative/llm/cours/llm_03_tokenisation_embeddings.html" aria-label="Marquer « Tokenisation &amp; embeddings » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="llm" data-kw="cours 04 prompt engineering zero-shot, few-shot, chain of thought, tree of thoughts"><a class="card-link" href="ia_generative/llm/cours/llm_04_prompting.html"><span class="num">Cours 04</span><span class="title">Prompt Engineering</span><span class="desc">Zero-shot, few-shot, Chain of Thought, Tree of Thoughts</span></a><button class="done" type="button" data-id="ia_generative/llm/cours/llm_04_prompting.html" aria-label="Marquer « Prompt Engineering » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="llm" data-kw="cours 05 api &amp; paramètres temperature, top_p, streaming, gestion des coûts"><a class="card-link" href="ia_generative/llm/cours/llm_05_api_parametres.html"><span class="num">Cours 05</span><span class="title">API &amp; paramètres</span><span class="desc">Temperature, top_p, streaming, gestion des coûts</span></a><button class="done" type="button" data-id="ia_generative/llm/cours/llm_05_api_parametres.html" aria-label="Marquer « API &amp; paramètres » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">TD <span class="n">(2)</span></div><div class="grid">
+<article class="card" data-type="td" data-mod="llm" data-kw="td prompt engineering exercices de prompting, techniques avancées"><a class="card-link" href="ia_generative/llm/td/td_prompting.html"><span class="num">TD</span><span class="title">Prompt Engineering</span><span class="desc">Exercices de prompting, techniques avancées</span></a><button class="done" type="button" data-id="ia_generative/llm/td/td_prompting.html" aria-label="Marquer « Prompt Engineering » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="llm" data-kw="td api llm utilisation des api, paramètres, streaming"><a class="card-link" href="ia_generative/llm/td/td_api_llm.html"><span class="num">TD</span><span class="title">API LLM</span><span class="desc">Utilisation des API, paramètres, streaming</span></a><button class="done" type="button" data-id="ia_generative/llm/td/td_api_llm.html" aria-label="Marquer « API LLM » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+</section>
+<section class="module" id="langchain" style="--mc:#ff6b35" data-mod="langchain">
+<div class="mod-head"><div class="idx">04</div><div><h2>LangChain</h2><p>Le framework des applications LLM : modèles, prompts, LCEL, mémoire, loaders, vector stores, retrievers, agents.</p></div><div class="mod-meta"><span class="mod-count">12 éléments</span><div class="bar"><i class="mod-bar"></i></div></div></div>
+<div class="group"><div class="group-label">Cours <span class="n">(8)</span></div><div class="grid">
+<article class="card" data-type="cours" data-mod="langchain" data-kw="cours 01 introduction à langchain écosystème, installation, premiers pas avec lcel"><a class="card-link" href="ia_generative/langchain/cours/lc_01_introduction.html"><span class="num">Cours 01</span><span class="title">Introduction à LangChain</span><span class="desc">Écosystème, installation, premiers pas avec LCEL</span></a><button class="done" type="button" data-id="ia_generative/langchain/cours/lc_01_introduction.html" aria-label="Marquer « Introduction à LangChain » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langchain" data-kw="cours 02 models &amp; prompts chatmodels, prompttemplates, outputparsers"><a class="card-link" href="ia_generative/langchain/cours/lc_02_models_prompts.html"><span class="num">Cours 02</span><span class="title">Models &amp; Prompts</span><span class="desc">ChatModels, PromptTemplates, OutputParsers</span></a><button class="done" type="button" data-id="ia_generative/langchain/cours/lc_02_models_prompts.html" aria-label="Marquer « Models &amp; Prompts » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langchain" data-kw="cours 03 lcel &amp; chains runnables, pipe operator, runnableparallel, streaming"><a class="card-link" href="ia_generative/langchain/cours/lc_03_lcel_chains.html"><span class="num">Cours 03</span><span class="title">LCEL &amp; Chains</span><span class="desc">Runnables, pipe operator, RunnableParallel, streaming</span></a><button class="done" type="button" data-id="ia_generative/langchain/cours/lc_03_lcel_chains.html" aria-label="Marquer « LCEL &amp; Chains » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langchain" data-kw="cours 04 memory buffer, window, summary, token memory types"><a class="card-link" href="ia_generative/langchain/cours/lc_04_memory.html"><span class="num">Cours 04</span><span class="title">Memory</span><span class="desc">Buffer, Window, Summary, Token memory types</span></a><button class="done" type="button" data-id="ia_generative/langchain/cours/lc_04_memory.html" aria-label="Marquer « Memory » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langchain" data-kw="cours 05 document loaders pdf, web, csv loaders, text splitters, chunking"><a class="card-link" href="ia_generative/langchain/cours/lc_05_document_loaders.html"><span class="num">Cours 05</span><span class="title">Document Loaders</span><span class="desc">PDF, Web, CSV loaders, Text Splitters, chunking</span></a><button class="done" type="button" data-id="ia_generative/langchain/cours/lc_05_document_loaders.html" aria-label="Marquer « Document Loaders » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langchain" data-kw="cours 06 embeddings &amp; vectorstores faiss, chroma, mmr, similarité, indexation"><a class="card-link" href="ia_generative/langchain/cours/lc_06_embeddings_vectorstores.html"><span class="num">Cours 06</span><span class="title">Embeddings &amp; VectorStores</span><span class="desc">FAISS, Chroma, MMR, similarité, indexation</span></a><button class="done" type="button" data-id="ia_generative/langchain/cours/lc_06_embeddings_vectorstores.html" aria-label="Marquer « Embeddings &amp; VectorStores » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langchain" data-kw="cours 07 retrievers multiquery, compression, selfquery, ensemble"><a class="card-link" href="ia_generative/langchain/cours/lc_07_retrievers.html"><span class="num">Cours 07</span><span class="title">Retrievers</span><span class="desc">MultiQuery, Compression, SelfQuery, Ensemble</span></a><button class="done" type="button" data-id="ia_generative/langchain/cours/lc_07_retrievers.html" aria-label="Marquer « Retrievers » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langchain" data-kw="cours 08 agents &amp; tools react, tools, agentexecutor, create_react_agent"><a class="card-link" href="ia_generative/langchain/cours/lc_08_agents_tools.html"><span class="num">Cours 08</span><span class="title">Agents &amp; Tools</span><span class="desc">ReAct, Tools, AgentExecutor, create_react_agent</span></a><button class="done" type="button" data-id="ia_generative/langchain/cours/lc_08_agents_tools.html" aria-label="Marquer « Agents &amp; Tools » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">TD <span class="n">(4)</span></div><div class="grid">
+<article class="card" data-type="td" data-mod="langchain" data-kw="td prompts &amp; chains lcel, prompttemplate, outputparser, runnableparallel"><a class="card-link" href="ia_generative/langchain/td/td_prompts_chains.html"><span class="num">TD</span><span class="title">Prompts &amp; Chains</span><span class="desc">LCEL, PromptTemplate, OutputParser, RunnableParallel</span></a><button class="done" type="button" data-id="ia_generative/langchain/td/td_prompts_chains.html" aria-label="Marquer « Prompts &amp; Chains » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="langchain" data-kw="td memory buffer, window, summary, runnablewithmessagehistory"><a class="card-link" href="ia_generative/langchain/td/td_memory.html"><span class="num">TD</span><span class="title">Memory</span><span class="desc">Buffer, Window, Summary, RunnableWithMessageHistory</span></a><button class="done" type="button" data-id="ia_generative/langchain/td/td_memory.html" aria-label="Marquer « Memory » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="langchain" data-kw="td vectorstores faiss, chroma, embeddings, similarity search, mmr"><a class="card-link" href="ia_generative/langchain/td/td_vectorstores.html"><span class="num">TD</span><span class="title">VectorStores</span><span class="desc">FAISS, Chroma, embeddings, similarity search, MMR</span></a><button class="done" type="button" data-id="ia_generative/langchain/td/td_vectorstores.html" aria-label="Marquer « VectorStores » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="langchain" data-kw="td agents &amp; tools react, @tool, agentexecutor, multi-tools"><a class="card-link" href="ia_generative/langchain/td/td_agents.html"><span class="num">TD</span><span class="title">Agents &amp; Tools</span><span class="desc">ReAct, @tool, AgentExecutor, multi-tools</span></a><button class="done" type="button" data-id="ia_generative/langchain/td/td_agents.html" aria-label="Marquer « Agents &amp; Tools » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+</section>
+<section class="module" id="langgraph" style="--mc:#c586c0" data-mod="langgraph">
+<div class="mod-head"><div class="idx">05</div><div><h2>LangGraph</h2><p>Orchestrer des workflows LLM sous forme de graphes : état, routing, cycles, human-in-the-loop, persistance, multi-agents.</p></div><div class="mod-meta"><span class="mod-count">9 éléments</span><div class="bar"><i class="mod-bar"></i></div></div></div>
+<div class="group"><div class="group-label">Cours <span class="n">(6)</span></div><div class="grid">
+<article class="card" data-type="cours" data-mod="langgraph" data-kw="cours 01 introduction à langgraph langgraph vs langchain, graphes, premier workflow"><a class="card-link" href="ia_generative/langgraph/cours/lg_01_introduction.html"><span class="num">Cours 01</span><span class="title">Introduction à LangGraph</span><span class="desc">LangGraph vs LangChain, graphes, premier workflow</span></a><button class="done" type="button" data-id="ia_generative/langgraph/cours/lg_01_introduction.html" aria-label="Marquer « Introduction à LangGraph » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langgraph" data-kw="cours 02 stategraph, nœuds &amp; edges construire des graphes, nœuds, edges, compilation"><a class="card-link" href="ia_generative/langgraph/cours/lg_02_state_graph.html"><span class="num">Cours 02</span><span class="title">StateGraph, nœuds &amp; edges</span><span class="desc">Construire des graphes, nœuds, edges, compilation</span></a><button class="done" type="button" data-id="ia_generative/langgraph/cours/lg_02_state_graph.html" aria-label="Marquer « StateGraph, nœuds &amp; edges » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langgraph" data-kw="cours 03 state management typeddict, reducers, channels, validation pydantic"><a class="card-link" href="ia_generative/langgraph/cours/lg_03_state_management.html"><span class="num">Cours 03</span><span class="title">State Management</span><span class="desc">TypedDict, reducers, channels, validation Pydantic</span></a><button class="done" type="button" data-id="ia_generative/langgraph/cours/lg_03_state_management.html" aria-label="Marquer « State Management » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langgraph" data-kw="cours 04 routing &amp; cycles conditional edges, boucles, react, recursion_limit"><a class="card-link" href="ia_generative/langgraph/cours/lg_04_routing_cycles.html"><span class="num">Cours 04</span><span class="title">Routing &amp; cycles</span><span class="desc">Conditional edges, boucles, ReAct, recursion_limit</span></a><button class="done" type="button" data-id="ia_generative/langgraph/cours/lg_04_routing_cycles.html" aria-label="Marquer « Routing &amp; cycles » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langgraph" data-kw="cours 05 human-in-the-loop interrupt_before/after, approbation, time travel"><a class="card-link" href="ia_generative/langgraph/cours/lg_05_human_in_loop.html"><span class="num">Cours 05</span><span class="title">Human-in-the-Loop</span><span class="desc">interrupt_before/after, approbation, time travel</span></a><button class="done" type="button" data-id="ia_generative/langgraph/cours/lg_05_human_in_loop.html" aria-label="Marquer « Human-in-the-Loop » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="langgraph" data-kw="cours 06 avancé subgraphs, persistence, multi-agents, production"><a class="card-link" href="ia_generative/langgraph/cours/lg_06_advanced.html"><span class="num">Cours 06</span><span class="title">Avancé</span><span class="desc">Subgraphs, persistence, multi-agents, production</span></a><button class="done" type="button" data-id="ia_generative/langgraph/cours/lg_06_advanced.html" aria-label="Marquer « Avancé » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">TD <span class="n">(3)</span></div><div class="grid">
+<article class="card" data-type="td" data-mod="langgraph" data-kw="td graphe simple premier stategraph, nœuds, edges conditionnels"><a class="card-link" href="ia_generative/langgraph/td/td_graphe_simple.html"><span class="num">TD</span><span class="title">Graphe simple</span><span class="desc">Premier StateGraph, nœuds, edges conditionnels</span></a><button class="done" type="button" data-id="ia_generative/langgraph/td/td_graphe_simple.html" aria-label="Marquer « Graphe simple » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="langgraph" data-kw="td chatbot chatbot avec memory, tools, multi-sessions"><a class="card-link" href="ia_generative/langgraph/td/td_chatbot.html"><span class="num">TD</span><span class="title">Chatbot</span><span class="desc">Chatbot avec memory, tools, multi-sessions</span></a><button class="done" type="button" data-id="ia_generative/langgraph/td/td_chatbot.html" aria-label="Marquer « Chatbot » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="langgraph" data-kw="td agent autonome react loop, multi-tools, rag agent"><a class="card-link" href="ia_generative/langgraph/td/td_agent_autonome.html"><span class="num">TD</span><span class="title">Agent autonome</span><span class="desc">ReAct loop, multi-tools, RAG agent</span></a><button class="done" type="button" data-id="ia_generative/langgraph/td/td_agent_autonome.html" aria-label="Marquer « Agent autonome » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+</section>
+<section class="module" id="rag" style="--mc:#4fc1ff" data-mod="rag">
+<div class="mod-head"><div class="idx">06</div><div><h2>RAG</h2><p>Retrieval-Augmented Generation de A à Z : ingestion, embeddings, stratégies de retrieval, génération, évaluation, techniques avancées.</p></div><div class="mod-meta"><span class="mod-count">11 éléments</span><div class="bar"><i class="mod-bar"></i></div></div></div>
+<div class="group"><div class="group-label">Cours <span class="n">(7)</span></div><div class="grid">
+<article class="card" data-type="cours" data-mod="rag" data-kw="cours 01 introduction au rag architecture rag, naive vs advanced, cas d&#x27;usage"><a class="card-link" href="ia_generative/rag/cours/rag_01_introduction.html"><span class="num">Cours 01</span><span class="title">Introduction au RAG</span><span class="desc">Architecture RAG, Naive vs Advanced, cas d&#x27;usage</span></a><button class="done" type="button" data-id="ia_generative/rag/cours/rag_01_introduction.html" aria-label="Marquer « Introduction au RAG » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="rag" data-kw="cours 02 pipeline d&#x27;ingestion document loaders, text splitters, chunking"><a class="card-link" href="ia_generative/rag/cours/rag_02_ingestion.html"><span class="num">Cours 02</span><span class="title">Pipeline d&#x27;ingestion</span><span class="desc">Document Loaders, Text Splitters, chunking</span></a><button class="done" type="button" data-id="ia_generative/rag/cours/rag_02_ingestion.html" aria-label="Marquer « Pipeline d&#x27;ingestion » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="rag" data-kw="cours 03 embeddings &amp; vectorstores openai/huggingface embeddings, faiss, chroma, hnsw"><a class="card-link" href="ia_generative/rag/cours/rag_03_embeddings_vectorstores.html"><span class="num">Cours 03</span><span class="title">Embeddings &amp; VectorStores</span><span class="desc">OpenAI/HuggingFace embeddings, FAISS, Chroma, HNSW</span></a><button class="done" type="button" data-id="ia_generative/rag/cours/rag_03_embeddings_vectorstores.html" aria-label="Marquer « Embeddings &amp; VectorStores » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="rag" data-kw="cours 04 stratégies de retrieval multiquery, compression, re-ranking, hybrid search"><a class="card-link" href="ia_generative/rag/cours/rag_04_retrieval.html"><span class="num">Cours 04</span><span class="title">Stratégies de retrieval</span><span class="desc">MultiQuery, Compression, re-ranking, hybrid search</span></a><button class="done" type="button" data-id="ia_generative/rag/cours/rag_04_retrieval.html" aria-label="Marquer « Stratégies de retrieval » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="rag" data-kw="cours 05 génération &amp; prompts prompts rag, stuffing/map-reduce, rag conversationnel"><a class="card-link" href="ia_generative/rag/cours/rag_05_generation.html"><span class="num">Cours 05</span><span class="title">Génération &amp; prompts</span><span class="desc">Prompts RAG, stuffing/map-reduce, RAG conversationnel</span></a><button class="done" type="button" data-id="ia_generative/rag/cours/rag_05_generation.html" aria-label="Marquer « Génération &amp; prompts » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="rag" data-kw="cours 06 évaluation &amp; métriques ragas, faithfulness, relevancy, llm-as-judge"><a class="card-link" href="ia_generative/rag/cours/rag_06_evaluation.html"><span class="num">Cours 06</span><span class="title">Évaluation &amp; métriques</span><span class="desc">RAGAS, faithfulness, relevancy, LLM-as-Judge</span></a><button class="done" type="button" data-id="ia_generative/rag/cours/rag_06_evaluation.html" aria-label="Marquer « Évaluation &amp; métriques » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="rag" data-kw="cours 07 techniques avancées hyde, crag, self-rag, agentic rag, rag fusion"><a class="card-link" href="ia_generative/rag/cours/rag_07_advanced.html"><span class="num">Cours 07</span><span class="title">Techniques avancées</span><span class="desc">HyDE, CRAG, Self-RAG, Agentic RAG, RAG Fusion</span></a><button class="done" type="button" data-id="ia_generative/rag/cours/rag_07_advanced.html" aria-label="Marquer « Techniques avancées » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">TD <span class="n">(4)</span></div><div class="grid">
+<article class="card" data-type="td" data-mod="rag" data-kw="td rag basique premier pipeline rag de a à z"><a class="card-link" href="ia_generative/rag/td/td_rag_basique.html"><span class="num">TD</span><span class="title">RAG basique</span><span class="desc">Premier pipeline RAG de A à Z</span></a><button class="done" type="button" data-id="ia_generative/rag/td/td_rag_basique.html" aria-label="Marquer « RAG basique » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="rag" data-kw="td stratégies de chunking chunk_size, overlap, splitters, expérimentation"><a class="card-link" href="ia_generative/rag/td/td_chunking.html"><span class="num">TD</span><span class="title">Stratégies de chunking</span><span class="desc">chunk_size, overlap, splitters, expérimentation</span></a><button class="done" type="button" data-id="ia_generative/rag/td/td_chunking.html" aria-label="Marquer « Stratégies de chunking » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="rag" data-kw="td retrieval avancé mmr, multiquery, compression, ensemble"><a class="card-link" href="ia_generative/rag/td/td_retrieval_avance.html"><span class="num">TD</span><span class="title">Retrieval avancé</span><span class="desc">MMR, MultiQuery, Compression, Ensemble</span></a><button class="done" type="button" data-id="ia_generative/rag/td/td_retrieval_avance.html" aria-label="Marquer « Retrieval avancé » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="rag" data-kw="td pipeline rag complet projet final : rag de a à z avec évaluation"><a class="card-link" href="ia_generative/rag/td/td_rag_complet.html"><span class="num">TD</span><span class="title">Pipeline RAG complet</span><span class="desc">Projet final : RAG de A à Z avec évaluation</span></a><button class="done" type="button" data-id="ia_generative/rag/td/td_rag_complet.html" aria-label="Marquer « Pipeline RAG complet » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+</section>
+<section class="module" id="agents" style="--mc:#f47067" data-mod="agents">
+<div class="mod-head"><div class="idx">07</div><div><h2>Agents IA</h2><p>Concevoir des agents : ReAct, outils et function calling, mémoire, planification, architectures multi-agents, RAG agentique, sécurité, production.</p></div><div class="mod-meta"><span class="mod-count">15 éléments</span><div class="bar"><i class="mod-bar"></i></div></div></div>
+<div class="group"><div class="group-label">Cours <span class="n">(10)</span></div><div class="grid">
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 01 introduction aux agents ia définition, taxonomie, histoire, workflow perceive-think-act"><a class="card-link" href="ia_generative/agents/cours/ag_01_introduction.html"><span class="num">Cours 01</span><span class="title">Introduction aux agents IA</span><span class="desc">Définition, taxonomie, histoire, workflow Perceive-Think-Act</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_01_introduction.html" aria-label="Marquer « Introduction aux agents IA » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 02 react et raisonnement pattern react, chain-of-thought, boucle thought-action-observation"><a class="card-link" href="ia_generative/agents/cours/ag_02_react_reasoning.html"><span class="num">Cours 02</span><span class="title">ReAct et raisonnement</span><span class="desc">Pattern ReAct, Chain-of-Thought, boucle Thought-Action-Observation</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_02_react_reasoning.html" aria-label="Marquer « ReAct et raisonnement » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 03 tools et function calling outils, function calling, intégration api, custom tools"><a class="card-link" href="ia_generative/agents/cours/ag_03_tools_function_calling.html"><span class="num">Cours 03</span><span class="title">Tools et function calling</span><span class="desc">Outils, function calling, intégration API, custom tools</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_03_tools_function_calling.html" aria-label="Marquer « Tools et function calling » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 04 mémoire et contexte mémoire court/long terme, context window, architectures mémoire"><a class="card-link" href="ia_generative/agents/cours/ag_04_memory_context.html"><span class="num">Cours 04</span><span class="title">Mémoire et contexte</span><span class="desc">Mémoire court/long terme, context window, architectures mémoire</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_04_memory_context.html" aria-label="Marquer « Mémoire et contexte » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 05 planification décomposition de tâches, tree of thoughts, plan-and-execute"><a class="card-link" href="ia_generative/agents/cours/ag_05_planning.html"><span class="num">Cours 05</span><span class="title">Planification</span><span class="desc">Décomposition de tâches, Tree of Thoughts, Plan-and-Execute</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_05_planning.html" aria-label="Marquer « Planification » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 06 architectures d&#x27;agents single agent, multi-agent, supervisor, swarm, hiérarchique"><a class="card-link" href="ia_generative/agents/cours/ag_06_architectures.html"><span class="num">Cours 06</span><span class="title">Architectures d&#x27;agents</span><span class="desc">Single agent, multi-agent, supervisor, swarm, hiérarchique</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_06_architectures.html" aria-label="Marquer « Architectures d&#x27;agents » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 07 systèmes multi-agents crewai, autogen, langgraph multi-agents, collaboration"><a class="card-link" href="ia_generative/agents/cours/ag_07_multi_agents.html"><span class="num">Cours 07</span><span class="title">Systèmes multi-agents</span><span class="desc">CrewAI, AutoGen, LangGraph multi-agents, collaboration</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_07_multi_agents.html" aria-label="Marquer « Systèmes multi-agents » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 08 rag agentique crag, self-rag, adaptive rag, routing, workflows"><a class="card-link" href="ia_generative/agents/cours/ag_08_agentic_rag.html"><span class="num">Cours 08</span><span class="title">RAG agentique</span><span class="desc">CRAG, Self-RAG, Adaptive RAG, routing, workflows</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_08_agentic_rag.html" aria-label="Marquer « RAG agentique » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 09 évaluation et sécurité benchmarks, guardrails, sandboxing, prompt injection, éthique"><a class="card-link" href="ia_generative/agents/cours/ag_09_evaluation_securite.html"><span class="num">Cours 09</span><span class="title">Évaluation et sécurité</span><span class="desc">Benchmarks, guardrails, sandboxing, prompt injection, éthique</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_09_evaluation_securite.html" aria-label="Marquer « Évaluation et sécurité » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="cours" data-mod="agents" data-kw="cours 10 agents en production déploiement fastapi, langsmith, monitoring, coûts, docker"><a class="card-link" href="ia_generative/agents/cours/ag_10_production.html"><span class="num">Cours 10</span><span class="title">Agents en production</span><span class="desc">Déploiement FastAPI, LangSmith, monitoring, coûts, Docker</span></a><button class="done" type="button" data-id="ia_generative/agents/cours/ag_10_production.html" aria-label="Marquer « Agents en production » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">TD <span class="n">(5)</span></div><div class="grid">
+<article class="card" data-type="td" data-mod="agents" data-kw="td agent react from scratch construire un agent react avec boucle thought-action-observation"><a class="card-link" href="ia_generative/agents/td/td_react_agent.html"><span class="num">TD</span><span class="title">Agent ReAct from scratch</span><span class="desc">Construire un agent ReAct avec boucle Thought-Action-Observation</span></a><button class="done" type="button" data-id="ia_generative/agents/td/td_react_agent.html" aria-label="Marquer « Agent ReAct from scratch » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="agents" data-kw="td agent multi-tools agent avec 5+ outils : search, calcul, api, fichiers"><a class="card-link" href="ia_generative/agents/td/td_multi_tools.html"><span class="num">TD</span><span class="title">Agent multi-tools</span><span class="desc">Agent avec 5+ outils : search, calcul, API, fichiers</span></a><button class="done" type="button" data-id="ia_generative/agents/td/td_multi_tools.html" aria-label="Marquer « Agent multi-tools » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="agents" data-kw="td multi-agents collaboratifs système researcher-writer-reviewer avec langgraph"><a class="card-link" href="ia_generative/agents/td/td_multi_agents.html"><span class="num">TD</span><span class="title">Multi-agents collaboratifs</span><span class="desc">Système Researcher-Writer-Reviewer avec LangGraph</span></a><button class="done" type="button" data-id="ia_generative/agents/td/td_multi_agents.html" aria-label="Marquer « Multi-agents collaboratifs » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="agents" data-kw="td rag agentique complet pipeline crag : grading, web search fallback, self-correction"><a class="card-link" href="ia_generative/agents/td/td_agentic_rag.html"><span class="num">TD</span><span class="title">RAG agentique complet</span><span class="desc">Pipeline CRAG : grading, web search fallback, self-correction</span></a><button class="done" type="button" data-id="ia_generative/agents/td/td_agentic_rag.html" aria-label="Marquer « RAG agentique complet » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="td" data-mod="agents" data-kw="td agent en production fastapi, streaming, langsmith, docker, monitoring"><a class="card-link" href="ia_generative/agents/td/td_agent_production.html"><span class="num">TD</span><span class="title">Agent en production</span><span class="desc">FastAPI, streaming, LangSmith, Docker, monitoring</span></a><button class="done" type="button" data-id="ia_generative/agents/td/td_agent_production.html" aria-label="Marquer « Agent en production » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+</section>
+<section class="res" id="ressources"><div class="module" style="--mc:var(--yellow)" data-mod="ressources">
+<div class="mod-head"><div class="idx">+</div><div><h2>Ressources : cours complets, projet, documentation</h2><p>Les cours monolithiques d'origine (un seul document par thème), la roadmap RAG, le projet pratique commenté ligne par ligne et la documentation technique.</p></div><div class="mod-meta"><span class="mod-count">10 éléments</span><div class="bar"><i class="mod-bar"></i></div></div></div>
+<div class="group"><div class="group-label">Cours complets, roadmap et projet <span class="n">(8)</span></div><div class="grid">
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="roadmap plan de formation rag — roadmap complète feuille de route : étapes, prérequis et ordre conseillé des cours et td"><a class="card-link" href="00_PLAN_FORMATION.html"><span class="num">Roadmap</span><span class="title">Plan de formation RAG — roadmap complète</span><span class="desc">Feuille de route : étapes, prérequis et ordre conseillé des cours et TD</span></a><button class="done" type="button" data-id="00_PLAN_FORMATION.html" aria-label="Marquer « Plan de formation RAG — roadmap complète » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="projet projet pratique rag — chaque ligne expliquée application rag de bout en bout, code commenté ligne par ligne"><a class="card-link" href="projet_pratique_rag.html"><span class="num">Projet</span><span class="title">Projet pratique RAG — chaque ligne expliquée</span><span class="desc">Application RAG de bout en bout, code commenté ligne par ligne</span></a><button class="done" type="button" data-id="projet_pratique_rag.html" aria-label="Marquer « Projet pratique RAG — chaque ligne expliquée » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="cours complet rag — retrieval augmented generation tout le rag en un seul document, de la théorie au code"><a class="card-link" href="cours_rag.html"><span class="num">Cours complet</span><span class="title">RAG — Retrieval Augmented Generation</span><span class="desc">Tout le RAG en un seul document, de la théorie au code</span></a><button class="done" type="button" data-id="cours_rag.html" aria-label="Marquer « RAG — Retrieval Augmented Generation » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="cours complet rag avancé — types, workflows &amp; nouveautés 2025-2026 variantes de rag, workflows agentiques, état de l&#x27;art récent"><a class="card-link" href="cours_rag_avance.html"><span class="num">Cours complet</span><span class="title">RAG avancé — types, workflows &amp; nouveautés 2025-2026</span><span class="desc">Variantes de RAG, workflows agentiques, état de l&#x27;art récent</span></a><button class="done" type="button" data-id="cours_rag_avance.html" aria-label="Marquer « RAG avancé — types, workflows &amp; nouveautés 2025-2026 » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="cours complet rag complet enrichi compléments, cas limites et sources web pour aller plus loin"><a class="card-link" href="cours_rag_complet_enrichi.html"><span class="num">Cours complet</span><span class="title">RAG complet enrichi</span><span class="desc">Compléments, cas limites et sources web pour aller plus loin</span></a><button class="done" type="button" data-id="cours_rag_complet_enrichi.html" aria-label="Marquer « RAG complet enrichi » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="cours complet langchain — de zéro à expert version monolithique : tout langchain en un document"><a class="card-link" href="cours_langchain.html"><span class="num">Cours complet</span><span class="title">LangChain — de zéro à expert</span><span class="desc">Version monolithique : tout LangChain en un document</span></a><button class="done" type="button" data-id="cours_langchain.html" aria-label="Marquer « LangChain — de zéro à expert » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="cours complet langgraph complet graphes, état, routing, agents : le cours intégral"><a class="card-link" href="cours_langgraph.html"><span class="num">Cours complet</span><span class="title">LangGraph complet</span><span class="desc">Graphes, état, routing, agents : le cours intégral</span></a><button class="done" type="button" data-id="cours_langgraph.html" aria-label="Marquer « LangGraph complet » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="cours complet langsmith complet tracing, évaluation et monitoring des applications llm"><a class="card-link" href="cours_langsmith.html"><span class="num">Cours complet</span><span class="title">LangSmith complet</span><span class="desc">Tracing, évaluation et monitoring des applications LLM</span></a><button class="done" type="button" data-id="cours_langsmith.html" aria-label="Marquer « LangSmith complet » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div>
+<div class="group"><div class="group-label">Documentation technique (Markdown, ouverte sur GitHub) <span class="n">(2)</span></div><div class="grid">
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="doc convertisseur fhir et rag formats, workflows et récupération de données de santé (markdown, sur github)"><a class="card-link" href="https://github.com/azdinelaaouissi/formation-ia/blob/main/DOCUMENTATION_COMPLETE.md" target="_blank" rel="noopener"><span class="num">Doc</span><span class="title">Convertisseur FHIR et RAG</span><span class="desc">Formats, workflows et récupération de données de santé (Markdown, sur GitHub)</span></a><button class="done" type="button" data-id="https://github.com/azdinelaaouissi/formation-ia/blob/main/DOCUMENTATION_COMPLETE.md" aria-label="Marquer « Convertisseur FHIR et RAG » comme terminé" title="Marquer comme terminé">✓</button></article>
+<article class="card" data-type="ressource" data-mod="ressources" data-kw="doc rag avec fhir récupération et génération sans base vectorielle (markdown, sur github)"><a class="card-link" href="https://github.com/azdinelaaouissi/formation-ia/blob/main/DOCUMENTATION_RAG_FHIR.md" target="_blank" rel="noopener"><span class="num">Doc</span><span class="title">RAG avec FHIR</span><span class="desc">Récupération et génération sans base vectorielle (Markdown, sur GitHub)</span></a><button class="done" type="button" data-id="https://github.com/azdinelaaouissi/formation-ia/blob/main/DOCUMENTATION_RAG_FHIR.md" aria-label="Marquer « RAG avec FHIR » comme terminé" title="Marquer comme terminé">✓</button></article>
+</div></div></div></section>
+
+  <p class="empty" id="empty">Aucun cours ne correspond à cette recherche.</p>
+
+  <section class="about" id="apropos">
+    <div class="tile">
+      <h3>Comment utiliser cette formation</h3>
+      <p>Suivez les modules dans l'ordre du parcours : chaque cours introduit les notions, chaque TD les met en pratique avec du code exécutable et commenté. Les cours complets de la section Ressources reprennent un thème entier en un seul document, utiles pour réviser.</p>
+      <ul>
+        <li><strong>Recherche</strong> : tapez <span class="mono">/</span> pour chercher un cours ou un mot-clé (ex. « transformer », « FAISS », « ReAct »).</li>
+        <li><strong>Progression</strong> : cliquez sur le rond à droite d'une carte pour la marquer terminée. La progression est stockée localement dans votre navigateur, rien n'est envoyé.</li>
+        <li><strong>Hors-ligne</strong> : chaque page est autonome ; clonez le dépôt et ouvrez <span class="mono">index.html</span>.</li>
+      </ul>
     </div>
-
-    <div class="subsection-label cours">Cours (12)</div>
-    <div class="cards">
-        <a href="deep_learning/cours/dl_01_introduction.html" class="card cours-card">
-            <span class="card-number">Cours 01</span>
-            <span class="card-title">Introduction au Deep Learning</span>
-            <span class="card-desc">DL vs ML, histoire, frameworks, GPU, applications</span>
-        </a>
-        <a href="deep_learning/cours/dl_02_reseaux_neurones.html" class="card cours-card">
-            <span class="card-number">Cours 02</span>
-            <span class="card-title">Reseaux de Neurones</span>
-            <span class="card-desc">Perceptron, MLP, forward/backpropagation detaillee</span>
-        </a>
-        <a href="deep_learning/cours/dl_03_optimisation.html" class="card cours-card">
-            <span class="card-number">Cours 03</span>
-            <span class="card-title">Optimisation</span>
-            <span class="card-desc">SGD, Adam, learning rate scheduling, regularisation</span>
-        </a>
-        <a href="deep_learning/cours/dl_04_cnn.html" class="card cours-card">
-            <span class="card-number">Cours 04</span>
-            <span class="card-title">CNN</span>
-            <span class="card-desc">Convolution, pooling, LeNet, AlexNet, VGG, ResNet</span>
-        </a>
-        <a href="deep_learning/cours/dl_05_cnn_avance.html" class="card cours-card">
-            <span class="card-number">Cours 05</span>
-            <span class="card-title">CNN Avance</span>
-            <span class="card-desc">Transfer learning, detection d'objets, segmentation</span>
-        </a>
-        <a href="deep_learning/cours/dl_06_rnn_lstm.html" class="card cours-card">
-            <span class="card-number">Cours 06</span>
-            <span class="card-title">RNN, LSTM, GRU</span>
-            <span class="card-desc">Sequences, series temporelles, gates, BPTT</span>
-        </a>
-        <a href="deep_learning/cours/dl_07_transformer.html" class="card cours-card">
-            <span class="card-number">Cours 07</span>
-            <span class="card-title">Transformer</span>
-            <span class="card-desc">Self-attention, positional encoding, BERT, GPT</span>
-        </a>
-        <a href="deep_learning/cours/dl_08_gan.html" class="card cours-card">
-            <span class="card-number">Cours 08</span>
-            <span class="card-title">GAN</span>
-            <span class="card-desc">Generator/Discriminator, DCGAN, StyleGAN</span>
-        </a>
-        <a href="deep_learning/cours/dl_09_autoencoders.html" class="card cours-card">
-            <span class="card-number">Cours 09</span>
-            <span class="card-title">Autoencoders & VAE</span>
-            <span class="card-desc">Espace latent, denoising, VAE, detection d'anomalies</span>
-        </a>
-        <a href="deep_learning/cours/dl_10_diffusion.html" class="card cours-card">
-            <span class="card-number">Cours 10</span>
-            <span class="card-title">Modeles de Diffusion</span>
-            <span class="card-desc">DDPM, Stable Diffusion, DALL-E, guidance</span>
-        </a>
-        <a href="deep_learning/cours/dl_11_pytorch.html" class="card cours-card">
-            <span class="card-number">Cours 11</span>
-            <span class="card-title">PyTorch en Pratique</span>
-            <span class="card-desc">Tensors, autograd, DataLoader, training loop</span>
-        </a>
-        <a href="deep_learning/cours/dl_12_production.html" class="card cours-card">
-            <span class="card-number">Cours 12</span>
-            <span class="card-title">Deploiement & Production</span>
-            <span class="card-desc">ONNX, quantization, pruning, MLOps</span>
-        </a>
+    <div class="tile">
+      <h3>Auteur</h3>
+      <p><strong>Azdine Laaouissi</strong>, ingénieur IA / ML, chercheur associé (LIAS / LTIM, Faculté des Sciences Ben M'Sick, Université Hassan II de Casablanca). Domaines : machine learning, deep learning, LLM et systèmes agentiques, IA appliquée au terrain marocain.</p>
+      <ul>
+        <li>Dépôt : <a class="l" href="https://github.com/azdinelaaouissi/formation-ia" target="_blank" rel="noopener">github.com/azdinelaaouissi/formation-ia</a></li>
+        <li>Profil : <a class="l" href="https://github.com/azdinelaaouissi" target="_blank" rel="noopener">github.com/azdinelaaouissi</a></li>
+        <li>Une erreur, une suggestion ? Ouvrez une issue sur le dépôt.</li>
+      </ul>
     </div>
+  </section>
 
-    <div class="subsection-label td">TDs Pratiques (5)</div>
-    <div class="cards">
-        <a href="deep_learning/td/td_mlp.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Classification MLP</span>
-            <span class="card-desc">MLP PyTorch sur MNIST, training loop, evaluation</span>
-        </a>
-        <a href="deep_learning/td/td_cnn.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Classification CNN</span>
-            <span class="card-desc">CNN sur CIFAR-10, data augmentation, feature maps</span>
-        </a>
-        <a href="deep_learning/td/td_rnn_lstm.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Prediction LSTM</span>
-            <span class="card-desc">Series temporelles, classification de texte, LSTM vs GRU</span>
-        </a>
-        <a href="deep_learning/td/td_transfer_learning.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Transfer Learning</span>
-            <span class="card-desc">Fine-tuning ResNet, feature extraction, data augmentation</span>
-        </a>
-        <a href="deep_learning/td/td_gan.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Generation GAN</span>
-            <span class="card-desc">DCGAN PyTorch, generation d'images, interpolation latente</span>
-        </a>
-    </div>
-</div>
+  <footer>
+    <span>© 2026 Azdine Laaouissi · Formation IA</span>
+    <span>60 cours · 34 TD · 9 ressources · <a href="https://github.com/azdinelaaouissi/formation-ia" target="_blank" rel="noopener">GitHub</a></span>
+  </footer>
+</main>
 
-<!-- =============================================== -->
-<!-- ===== LLM ===== -->
-<!-- =============================================== -->
-<div class="section" id="llm">
-    <div class="section-header">
-        <div class="section-icon llm">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#569cd6" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
-        </div>
-        <div>
-            <div class="section-title">LLM - Large Language Models</div>
-            <div class="section-desc">5 cours + 2 TDs - Transformer, tokenisation, prompting, API</div>
-        </div>
-    </div>
+<script>
+(function(){
+  const KEY='formation-ia:done:v1';
+  const cards=Array.from(document.querySelectorAll('.card'));
+  const groups=Array.from(document.querySelectorAll('.group'));
+  const modules=Array.from(document.querySelectorAll('.module'));
+  const chips=Array.from(document.querySelectorAll('#toolbar .chip'));
+  const q=document.getElementById('q'), empty=document.getElementById('empty');
+  const pgText=document.getElementById('pg-text'), pgBar=document.getElementById('pg-bar');
+  const total=cards.length;
+  let filter='all';
+  let done=new Set();
+  try{ done=new Set(JSON.parse(localStorage.getItem(KEY)||'[]')); }catch(e){}
 
-    <div class="subsection-label cours">Cours (5)</div>
-    <div class="cards">
-        <a href="ia_generative/llm/cours/llm_01_introduction.html" class="card cours-card">
-            <span class="card-number">Cours 01</span>
-            <span class="card-title">Introduction aux LLM</span>
-            <span class="card-desc">Histoire, GPT, Claude, Llama, comparaison des modeles</span>
-        </a>
-        <a href="ia_generative/llm/cours/llm_02_transformer.html" class="card cours-card">
-            <span class="card-number">Cours 02</span>
-            <span class="card-title">Architecture Transformer</span>
-            <span class="card-desc">Self-attention, multi-head attention, encoder/decoder</span>
-        </a>
-        <a href="ia_generative/llm/cours/llm_03_tokenisation_embeddings.html" class="card cours-card">
-            <span class="card-number">Cours 03</span>
-            <span class="card-title">Tokenisation & Embeddings</span>
-            <span class="card-desc">BPE, WordPiece, similarite cosinus, espaces vectoriels</span>
-        </a>
-        <a href="ia_generative/llm/cours/llm_04_prompting.html" class="card cours-card">
-            <span class="card-number">Cours 04</span>
-            <span class="card-title">Prompt Engineering</span>
-            <span class="card-desc">Zero-shot, few-shot, Chain of Thought, Tree of Thoughts</span>
-        </a>
-        <a href="ia_generative/llm/cours/llm_05_api_parametres.html" class="card cours-card">
-            <span class="card-number">Cours 05</span>
-            <span class="card-title">API & Parametres</span>
-            <span class="card-desc">Temperature, top_p, streaming, gestion des couts</span>
-        </a>
-    </div>
-
-    <div class="subsection-label td">TDs Pratiques (2)</div>
-    <div class="cards">
-        <a href="ia_generative/llm/td/td_prompting.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Prompt Engineering</span>
-            <span class="card-desc">Exercices de prompting, techniques avancees</span>
-        </a>
-        <a href="ia_generative/llm/td/td_api_llm.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">API LLM</span>
-            <span class="card-desc">Utilisation des API, parametres, streaming</span>
-        </a>
-    </div>
-</div>
-
-<!-- =============================================== -->
-<!-- ===== LANGCHAIN ===== -->
-<!-- =============================================== -->
-<div class="section" id="langchain">
-    <div class="section-header">
-        <div class="section-icon lc">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ff6b35" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-        </div>
-        <div>
-            <div class="section-title">LangChain</div>
-            <div class="section-desc">8 cours + 4 TDs - LCEL, Models, Memory, VectorStores, Agents</div>
-        </div>
-    </div>
-
-    <div class="subsection-label cours">Cours (8)</div>
-    <div class="cards">
-        <a href="ia_generative/langchain/cours/lc_01_introduction.html" class="card cours-card">
-            <span class="card-number">Cours 01</span>
-            <span class="card-title">Introduction a LangChain</span>
-            <span class="card-desc">Ecosysteme, installation, premiers pas avec LCEL</span>
-        </a>
-        <a href="ia_generative/langchain/cours/lc_02_models_prompts.html" class="card cours-card">
-            <span class="card-number">Cours 02</span>
-            <span class="card-title">Models & Prompts</span>
-            <span class="card-desc">ChatModels, PromptTemplates, OutputParsers</span>
-        </a>
-        <a href="ia_generative/langchain/cours/lc_03_lcel_chains.html" class="card cours-card">
-            <span class="card-number">Cours 03</span>
-            <span class="card-title">LCEL & Chains</span>
-            <span class="card-desc">Runnables, pipe operator, RunnableParallel, streaming</span>
-        </a>
-        <a href="ia_generative/langchain/cours/lc_04_memory.html" class="card cours-card">
-            <span class="card-number">Cours 04</span>
-            <span class="card-title">Memory</span>
-            <span class="card-desc">Buffer, Window, Summary, Token memory types</span>
-        </a>
-        <a href="ia_generative/langchain/cours/lc_05_document_loaders.html" class="card cours-card">
-            <span class="card-number">Cours 05</span>
-            <span class="card-title">Document Loaders</span>
-            <span class="card-desc">PDF, Web, CSV loaders, Text Splitters, chunking</span>
-        </a>
-        <a href="ia_generative/langchain/cours/lc_06_embeddings_vectorstores.html" class="card cours-card">
-            <span class="card-number">Cours 06</span>
-            <span class="card-title">Embeddings & VectorStores</span>
-            <span class="card-desc">FAISS, Chroma, MMR, similarite, indexation</span>
-        </a>
-        <a href="ia_generative/langchain/cours/lc_07_retrievers.html" class="card cours-card">
-            <span class="card-number">Cours 07</span>
-            <span class="card-title">Retrievers</span>
-            <span class="card-desc">MultiQuery, Compression, SelfQuery, Ensemble</span>
-        </a>
-        <a href="ia_generative/langchain/cours/lc_08_agents_tools.html" class="card cours-card">
-            <span class="card-number">Cours 08</span>
-            <span class="card-title">Agents & Tools</span>
-            <span class="card-desc">ReAct, Tools, AgentExecutor, create_react_agent</span>
-        </a>
-    </div>
-
-    <div class="subsection-label td">TDs Pratiques (4)</div>
-    <div class="cards">
-        <a href="ia_generative/langchain/td/td_prompts_chains.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Prompts & Chains</span>
-            <span class="card-desc">LCEL, PromptTemplate, OutputParser, RunnableParallel</span>
-        </a>
-        <a href="ia_generative/langchain/td/td_memory.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Memory</span>
-            <span class="card-desc">Buffer, Window, Summary, RunnableWithMessageHistory</span>
-        </a>
-        <a href="ia_generative/langchain/td/td_vectorstores.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">VectorStores</span>
-            <span class="card-desc">FAISS, Chroma, embeddings, similarity search, MMR</span>
-        </a>
-        <a href="ia_generative/langchain/td/td_agents.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Agents & Tools</span>
-            <span class="card-desc">ReAct, @tool, AgentExecutor, multi-tools</span>
-        </a>
-    </div>
-</div>
-
-<!-- =============================================== -->
-<!-- ===== LANGGRAPH ===== -->
-<!-- =============================================== -->
-<div class="section" id="langgraph">
-    <div class="section-header">
-        <div class="section-icon lg">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c678dd" stroke-width="2"><circle cx="5" cy="6" r="3"/><circle cx="19" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><path d="M7.5 7.5l3 6m4-6l-3 6"/></svg>
-        </div>
-        <div>
-            <div class="section-title">LangGraph</div>
-            <div class="section-desc">6 cours + 3 TDs - StateGraph, routing, cycles, human-in-the-loop</div>
-        </div>
-    </div>
-
-    <div class="subsection-label cours">Cours (6)</div>
-    <div class="cards">
-        <a href="ia_generative/langgraph/cours/lg_01_introduction.html" class="card cours-card">
-            <span class="card-number">Cours 01</span>
-            <span class="card-title">Introduction a LangGraph</span>
-            <span class="card-desc">LangGraph vs LangChain, graphes, premier workflow</span>
-        </a>
-        <a href="ia_generative/langgraph/cours/lg_02_state_graph.html" class="card cours-card">
-            <span class="card-number">Cours 02</span>
-            <span class="card-title">StateGraph, Noeuds & Edges</span>
-            <span class="card-desc">Construire des graphes, noeuds, edges, compilation</span>
-        </a>
-        <a href="ia_generative/langgraph/cours/lg_03_state_management.html" class="card cours-card">
-            <span class="card-number">Cours 03</span>
-            <span class="card-title">State Management</span>
-            <span class="card-desc">TypedDict, reducers, channels, validation Pydantic</span>
-        </a>
-        <a href="ia_generative/langgraph/cours/lg_04_routing_cycles.html" class="card cours-card">
-            <span class="card-number">Cours 04</span>
-            <span class="card-title">Routing & Cycles</span>
-            <span class="card-desc">Conditional edges, boucles, ReAct, recursion_limit</span>
-        </a>
-        <a href="ia_generative/langgraph/cours/lg_05_human_in_loop.html" class="card cours-card">
-            <span class="card-number">Cours 05</span>
-            <span class="card-title">Human-in-the-Loop</span>
-            <span class="card-desc">interrupt_before/after, approbation, time travel</span>
-        </a>
-        <a href="ia_generative/langgraph/cours/lg_06_advanced.html" class="card cours-card">
-            <span class="card-number">Cours 06</span>
-            <span class="card-title">Avance</span>
-            <span class="card-desc">Subgraphs, persistence, multi-agents, production</span>
-        </a>
-    </div>
-
-    <div class="subsection-label td">TDs Pratiques (3)</div>
-    <div class="cards">
-        <a href="ia_generative/langgraph/td/td_graphe_simple.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Graphe Simple</span>
-            <span class="card-desc">Premier StateGraph, noeuds, edges conditionnels</span>
-        </a>
-        <a href="ia_generative/langgraph/td/td_chatbot.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Chatbot</span>
-            <span class="card-desc">Chatbot avec memory, tools, multi-sessions</span>
-        </a>
-        <a href="ia_generative/langgraph/td/td_agent_autonome.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Agent Autonome</span>
-            <span class="card-desc">ReAct loop, multi-tools, RAG agent</span>
-        </a>
-    </div>
-</div>
-
-<!-- =============================================== -->
-<!-- ===== RAG ===== -->
-<!-- =============================================== -->
-<div class="section" id="rag">
-    <div class="section-header">
-        <div class="section-icon rag">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#e5c07b" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M8 7h8m-8 4h8"/></svg>
-        </div>
-        <div>
-            <div class="section-title">RAG - Retrieval-Augmented Generation</div>
-            <div class="section-desc">7 cours + 4 TDs - Ingestion, embeddings, retrieval, evaluation, techniques avancees</div>
-        </div>
-    </div>
-
-    <div class="subsection-label cours">Cours (7)</div>
-    <div class="cards">
-        <a href="ia_generative/rag/cours/rag_01_introduction.html" class="card cours-card">
-            <span class="card-number">Cours 01</span>
-            <span class="card-title">Introduction au RAG</span>
-            <span class="card-desc">Architecture RAG, Naive vs Advanced, cas d'usage</span>
-        </a>
-        <a href="ia_generative/rag/cours/rag_02_ingestion.html" class="card cours-card">
-            <span class="card-number">Cours 02</span>
-            <span class="card-title">Pipeline d'Ingestion</span>
-            <span class="card-desc">Document Loaders, Text Splitters, chunking</span>
-        </a>
-        <a href="ia_generative/rag/cours/rag_03_embeddings_vectorstores.html" class="card cours-card">
-            <span class="card-number">Cours 03</span>
-            <span class="card-title">Embeddings & VectorStores</span>
-            <span class="card-desc">OpenAI/HuggingFace embeddings, FAISS, Chroma, HNSW</span>
-        </a>
-        <a href="ia_generative/rag/cours/rag_04_retrieval.html" class="card cours-card">
-            <span class="card-number">Cours 04</span>
-            <span class="card-title">Strategies de Retrieval</span>
-            <span class="card-desc">MultiQuery, Compression, re-ranking, hybrid search</span>
-        </a>
-        <a href="ia_generative/rag/cours/rag_05_generation.html" class="card cours-card">
-            <span class="card-number">Cours 05</span>
-            <span class="card-title">Generation & Prompts</span>
-            <span class="card-desc">Prompts RAG, stuffing/map-reduce, RAG conversationnel</span>
-        </a>
-        <a href="ia_generative/rag/cours/rag_06_evaluation.html" class="card cours-card">
-            <span class="card-number">Cours 06</span>
-            <span class="card-title">Evaluation & Metriques</span>
-            <span class="card-desc">RAGAS, faithfulness, relevancy, LLM-as-Judge</span>
-        </a>
-        <a href="ia_generative/rag/cours/rag_07_advanced.html" class="card cours-card">
-            <span class="card-number">Cours 07</span>
-            <span class="card-title">Techniques Avancees</span>
-            <span class="card-desc">HyDE, CRAG, Self-RAG, Agentic RAG, RAG Fusion</span>
-        </a>
-    </div>
-
-    <div class="subsection-label td">TDs Pratiques (4)</div>
-    <div class="cards">
-        <a href="ia_generative/rag/td/td_rag_basique.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">RAG Basique</span>
-            <span class="card-desc">Premier pipeline RAG de A a Z</span>
-        </a>
-        <a href="ia_generative/rag/td/td_chunking.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Strategies de Chunking</span>
-            <span class="card-desc">chunk_size, overlap, splitters, experimentation</span>
-        </a>
-        <a href="ia_generative/rag/td/td_retrieval_avance.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Retrieval Avance</span>
-            <span class="card-desc">MMR, MultiQuery, Compression, Ensemble</span>
-        </a>
-        <a href="ia_generative/rag/td/td_rag_complet.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Pipeline RAG Complet</span>
-            <span class="card-desc">Projet final : RAG de A a Z avec evaluation</span>
-        </a>
-    </div>
-</div>
-
-<!-- =============================================== -->
-<!-- ===== AGENTS IA ===== -->
-<!-- =============================================== -->
-<div class="section" id="agents">
-    <div class="section-header">
-        <div class="section-icon ag">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#56b6c2" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/><path d="M16 3l2 2-2 2"/><path d="M19 5h-3"/><path d="M8 3L6 5l2 2"/><path d="M5 5h3"/></svg>
-        </div>
-        <div>
-            <div class="section-title">Agents IA</div>
-            <div class="section-desc">10 cours + 5 TDs - ReAct, Tools, Memory, Multi-Agents, RAG Agentique, Production</div>
-        </div>
-    </div>
-
-    <div class="subsection-label cours">Cours (10)</div>
-    <div class="cards">
-        <a href="ia_generative/agents/cours/ag_01_introduction.html" class="card cours-card">
-            <span class="card-number">Cours 01</span>
-            <span class="card-title">Introduction aux Agents IA</span>
-            <span class="card-desc">Definition, taxonomie, histoire, workflow Perceive-Think-Act</span>
-        </a>
-        <a href="ia_generative/agents/cours/ag_02_react_reasoning.html" class="card cours-card">
-            <span class="card-number">Cours 02</span>
-            <span class="card-title">ReAct et Raisonnement</span>
-            <span class="card-desc">Pattern ReAct, Chain-of-Thought, boucle Thought-Action-Observation</span>
-        </a>
-        <a href="ia_generative/agents/cours/ag_03_tools_function_calling.html" class="card cours-card">
-            <span class="card-number">Cours 03</span>
-            <span class="card-title">Tools et Function Calling</span>
-            <span class="card-desc">Outils, function calling, API integration, custom tools</span>
-        </a>
-        <a href="ia_generative/agents/cours/ag_04_memory_context.html" class="card cours-card">
-            <span class="card-number">Cours 04</span>
-            <span class="card-title">Memoire et Contexte</span>
-            <span class="card-desc">Memoire court/long terme, context window, architectures memoire</span>
-        </a>
-        <a href="ia_generative/agents/cours/ag_05_planning.html" class="card cours-card">
-            <span class="card-number">Cours 05</span>
-            <span class="card-title">Planification</span>
-            <span class="card-desc">Decomposition de taches, Tree of Thoughts, Plan-and-Execute</span>
-        </a>
-        <a href="ia_generative/agents/cours/ag_06_architectures.html" class="card cours-card">
-            <span class="card-number">Cours 06</span>
-            <span class="card-title">Architectures d'Agents</span>
-            <span class="card-desc">Single agent, multi-agent, supervisor, swarm, hierarchique</span>
-        </a>
-        <a href="ia_generative/agents/cours/ag_07_multi_agents.html" class="card cours-card">
-            <span class="card-number">Cours 07</span>
-            <span class="card-title">Systemes Multi-Agents</span>
-            <span class="card-desc">CrewAI, AutoGen, LangGraph multi-agents, collaboration</span>
-        </a>
-        <a href="ia_generative/agents/cours/ag_08_agentic_rag.html" class="card cours-card">
-            <span class="card-number">Cours 08</span>
-            <span class="card-title">RAG Agentique</span>
-            <span class="card-desc">CRAG, Self-RAG, Adaptive RAG, routing, workflows</span>
-        </a>
-        <a href="ia_generative/agents/cours/ag_09_evaluation_securite.html" class="card cours-card">
-            <span class="card-number">Cours 09</span>
-            <span class="card-title">Evaluation et Securite</span>
-            <span class="card-desc">Benchmarks, guardrails, sandboxing, prompt injection, ethique</span>
-        </a>
-        <a href="ia_generative/agents/cours/ag_10_production.html" class="card cours-card">
-            <span class="card-number">Cours 10</span>
-            <span class="card-title">Agents en Production</span>
-            <span class="card-desc">Deploiement FastAPI, LangSmith, monitoring, couts, Docker</span>
-        </a>
-    </div>
-
-    <div class="subsection-label td">TDs Pratiques (5)</div>
-    <div class="cards">
-        <a href="ia_generative/agents/td/td_react_agent.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Agent ReAct from Scratch</span>
-            <span class="card-desc">Construire un agent ReAct avec boucle Thought-Action-Observation</span>
-        </a>
-        <a href="ia_generative/agents/td/td_multi_tools.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Agent Multi-Tools</span>
-            <span class="card-desc">Agent avec 5+ outils : search, calcul, API, fichiers</span>
-        </a>
-        <a href="ia_generative/agents/td/td_multi_agents.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Multi-Agents Collaboratifs</span>
-            <span class="card-desc">Systeme Researcher-Writer-Reviewer avec LangGraph</span>
-        </a>
-        <a href="ia_generative/agents/td/td_agentic_rag.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">RAG Agentique Complet</span>
-            <span class="card-desc">Pipeline CRAG : grading, web search fallback, self-correction</span>
-        </a>
-        <a href="ia_generative/agents/td/td_agent_production.html" class="card td-card">
-            <span class="card-number">TD Pratique</span>
-            <span class="card-title">Agent en Production</span>
-            <span class="card-desc">FastAPI, streaming, LangSmith, Docker, monitoring</span>
-        </a>
-    </div>
-</div>
-
-
-<!-- ===== FOOTER / SIGNATURE ===== -->
-<div class="footer">
-    <div style="margin-bottom: 20px;">
-        <svg width="60" height="60" viewBox="0 0 60 60">
-            <circle cx="30" cy="30" r="28" fill="none" stroke="#ff6b35" stroke-width="2"/>
-            <text x="30" y="35" text-anchor="middle" fill="#ff6b35" font-size="20" font-weight="bold" font-family="Segoe UI, sans-serif">AL</text>
-        </svg>
-    </div>
-    <p style="font-size: 1.4rem; color: #ff6b35; font-weight: 700; margin-bottom: 5px;">Azdine Laaouissi</p>
-    <p style="color: #888; font-size: 0.95rem; margin-bottom: 15px;">Auteur & Concepteur de cette formation</p>
-    <div style="width: 60px; height: 2px; background: #ff6b35; margin: 0 auto 15px;"></div>
-    <p>Formation IA Complete - 95 fichiers HTML | 90 000+ lignes de contenu pedagogique</p>
-    <p style="margin-top: 5px;">Cours et TDs en francais avec approche pedagogique professorale</p>
-    <p style="margin-top: 10px; color: #555; font-size: 0.8rem;">&copy; 2025 Azdine Laaouissi - Tous droits reserves</p>
-</div>
-
-</div>
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(Array.from(done))); }catch(e){} }
+  function paint(){
+    cards.forEach(c=>{ const id=c.querySelector('.done').dataset.id; c.classList.toggle('is-done', done.has(id)); });
+    modules.forEach(m=>{
+      const cs=Array.from(m.querySelectorAll('.card')); const d=cs.filter(c=>c.classList.contains('is-done')).length;
+      const bar=m.querySelector('.mod-bar'); if(bar) bar.style.width=(cs.length?100*d/cs.length:0)+'%';
+      const cnt=m.querySelector('.mod-count'); if(cnt) cnt.textContent=d+' / '+cs.length+' terminés';
+    });
+    const n=cards.filter(c=>c.classList.contains('is-done')).length;
+    pgText.textContent=n+' / '+total+' terminés'; pgBar.style.width=(100*n/total)+'%';
+  }
+  function apply(){
+    const term=q.value.trim().toLowerCase();
+    let shown=0;
+    cards.forEach(c=>{
+      const okF = filter==='all' || c.dataset.type===filter;
+      const okQ = !term || (c.dataset.kw||'').includes(term) || (c.closest('.module')?.querySelector('h2')?.textContent||'').toLowerCase().includes(term);
+      c.hidden = !(okF && okQ); if(!c.hidden) shown++;
+    });
+    groups.forEach(g=>{ g.hidden = !g.querySelector('.card:not([hidden])'); });
+    modules.forEach(m=>{ m.style.display = m.querySelector('.card:not([hidden])') ? '' : 'none'; });
+    const res=document.getElementById('ressources'); if(res) res.style.display = res.querySelector('.card:not([hidden])') ? '' : 'none';
+    empty.style.display = shown ? 'none' : 'block';
+  }
+  cards.forEach(c=>{
+    c.querySelector('.done').addEventListener('click', ev=>{
+      ev.preventDefault(); const id=ev.currentTarget.dataset.id;
+      done.has(id) ? done.delete(id) : done.add(id); save(); paint();
+    });
+  });
+  chips.forEach(b=>b.addEventListener('click', ()=>{ chips.forEach(x=>x.classList.remove('on')); b.classList.add('on'); filter=b.dataset.f; apply(); }));
+  q.addEventListener('input', apply);
+  document.addEventListener('keydown', ev=>{ if(ev.key==='/' && document.activeElement!==q){ ev.preventDefault(); q.focus(); } if(ev.key==='Escape' && document.activeElement===q){ q.value=''; apply(); q.blur(); } });
+  document.getElementById('pg-reset').addEventListener('click', ()=>{ if(confirm('Réinitialiser toute la progression ?')){ done.clear(); save(); paint(); } });
+  paint(); apply();
+})();
+</script>
 </body>
 </html>
